@@ -1,6 +1,9 @@
+import { DateTiles } from '../dashboard/quantified-self-dashboard/components/date-tiles'
+import { SideRail } from '../dashboard/quantified-self-dashboard/components/side-rail'
+import { TopChip } from '../dashboard/quantified-self-dashboard/components/top-chip'
 import type { AppPath } from '../dashboard/quantified-self-dashboard/data'
 
-import { RouteOverviewFrame } from './RouteOverviewFrame'
+import { NutritionOverviewDashboard } from './nutrition-overview'
 
 type NutritionOverviewProps = {
   activePath: AppPath
@@ -9,13 +12,14 @@ type NutritionOverviewProps = {
 
 function NutritionOverview({ activePath, onNavigate }: NutritionOverviewProps) {
   return (
-    <RouteOverviewFrame
-      activePath={activePath}
-      eyebrow="Nutrition route"
-      title="Nutrition Overview"
-      body="Dummy nutrition content for now. The route is ready for meal, protein, and habit widgets once the backend exists."
-      onNavigate={onNavigate}
-    />
+    <main className="dashboard-shell">
+      <div className="dashboard-stage" aria-label="Nutrition overview">
+        <DateTiles />
+        <SideRail activePath={activePath} onNavigate={onNavigate} />
+        <TopChip />
+        <NutritionOverviewDashboard />
+      </div>
+    </main>
   )
 }
 
