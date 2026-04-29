@@ -29,10 +29,11 @@ export interface DashboardNavItem {
 
 export interface CostCardConfig {
   titleLines: [string, string]
+  histogramData: number[]
   histogramActiveIndex: number
   value: string
   percent: string
-  variant: 'business' | 'travel' | 'saving'
+  variant: 'food' | 'travel' | 'saving'
 }
 
 export const dateTiles = [
@@ -82,12 +83,12 @@ export const assetRowLabels = ['0.34 BNB', '1.9 SOL', '0.09 BTC', '0.8 ETH']
 
 export const savingsMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
 
-export const waveform = [6, 10, 7, 14, 34, 47, 62, 38, 76, 31, 20, 13, 9, 6, 8, 17, 28, 49, 74, 91, 56, 44, 26, 18, 12, 7]
+export const waveform = [30, 45, 60, 40, 80, 100, 75]
 
 export const earningsMetricRows = [
-  { value: '$2,268', suffix: 'USD', label: 'Target' },
-  { value: '-0,260', label: 'Difference' },
-  { value: '+0,99', label: 'Goals' },
+  { value: '₹14,500', suffix: 'INR', label: 'Target' },
+  { value: '-₹1,200', label: 'Difference' },
+  { value: '+₹2,400', label: 'Goals' },
 ] as const
 
 export const earningsFooterItems = [
@@ -98,24 +99,24 @@ export const earningsFooterItems = [
 
 export const costCards: CostCardConfig[] = [
   {
-    titleLines: ['Business', 'Costs'],
+    titleLines: ['Food', 'Costs'],
     histogramActiveIndex: 4,
-    value: '4.9k',
+    value: '₹4.9k',
     percent: '28.3%',
     variant: 'business',
   },
   {
     titleLines: ['Travel', 'Costs'],
-    histogramActiveIndex: 9,
-    value: '2.5k',
+    histogramActiveIndex: 5,
+    value: '₹2.5k',
     percent: '42.7%',
     variant: 'travel',
   },
   {
-    titleLines: ['Saving', 'Monthly'],
-    histogramActiveIndex: 12,
-    value: '$0.8',
-    percent: '7.9%',
+    titleLines: ['Savings', 'Monthly'],
+    histogramActiveIndex: 6,
+    value: '₹10k',
+    percent: '15.9%',
     variant: 'saving',
   },
 ]
@@ -123,3 +124,23 @@ export const costCards: CostCardConfig[] = [
 export const monthSwitchLabels = ['M', 'M', 'W'] as const
 
 export const monthSwitchNumbers = ['29', '30', '31'] as const
+
+export const mockTasksData: Record<number, { time: string; title: string }[]> = {
+  1: [{ time: '10:00 AM', title: 'Design Review' }, { time: '02:00 PM', title: 'Team Sync' }],
+  6: [{ time: '09:00 AM', title: 'Coffee Run' }, { time: '01:00 PM', title: 'Lunch with Client' }],
+  8: [{ time: '11:00 AM', title: 'Client Sync' }],
+  10: [
+    { time: '08:00 AM', title: 'Gym Session' },
+    { time: '10:30 AM', title: 'Daily Standup' },
+    { time: '02:00 PM', title: 'Code Review' },
+    { time: '04:00 PM', title: 'Deployment' },
+  ],
+  14: [{ time: '12:00 PM', title: 'Doctor Appointment' }],
+  15: [{ time: '03:00 PM', title: 'Interview Candidate' }],
+  20: [{ time: '09:30 AM', title: 'Quarterly Planning' }],
+  30: [
+    { time: '09:00 AM', title: 'End of Month Review' },
+    { time: '01:30 PM', title: 'Strategy Meeting' },
+    { time: '03:00 PM', title: 'Project Kickoff' }
+  ],
+}

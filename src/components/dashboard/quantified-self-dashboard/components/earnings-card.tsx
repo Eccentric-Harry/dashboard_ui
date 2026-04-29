@@ -1,15 +1,17 @@
 import { earningsMetricRows, waveform, earningsFooterItems } from '../data'
 
 function EarningsCard() {
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
   return (
     <section className="earnings-panel">
       <div className="earnings-top">
-        <p>Earnings</p>
+        <p>Spendings</p>
         <div>
-          <h1>$8,498</h1>
-          <span>+1.6%</span>
+          <h1>₹68,498</h1>
+          <span>-4.2%</span>
         </div>
-        <small>Compared to Last Month, 28 Sep</small>
+        <small>Compared to Last Week</small>
       </div>
       <div className="earning-metrics">
         {earningsMetricRows.map((metric) => (
@@ -22,16 +24,20 @@ function EarningsCard() {
           </div>
         ))}
       </div>
-      <div className="waveform" aria-hidden="true">
+      <div className="weekly-spending-graph" aria-hidden="true">
         {waveform.map((height, index) => (
-          <span key={index} style={{ height }} className={index === 13 || index === 18 ? 'dark' : undefined} />
+          <div key={index} className="bar-container">
+            <span 
+              className={`bar ${index === 5 ? 'dark' : index === 4 || index === 6 ? 'darker' : ''}`} 
+              style={{ height: `${height}%` }} 
+            />
+          </div>
         ))}
-        <i />
       </div>
-      <div className="date-row">
-        <span>12 Aug</span>
-        <span>19 Sep</span>
-        <span>26 Oct</span>
+      <div className="date-row" style={{ marginTop: '12px', opacity: 0.6 }}>
+        {days.map((day) => (
+          <span key={day} style={{ fontSize: '10px' }}>{day}</span>
+        ))}
       </div>
       <div className="earnings-footer">
         {earningsFooterItems.map(({ value, label, icon: Icon }) => (

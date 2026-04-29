@@ -651,6 +651,10 @@ button {
     rgba(214, 223, 29, 0.62);
 }
 
+.calendar-grid .active-date {
+  box-shadow: 0 0 0 2px #0d1110;
+}
+
 .scale-card {
   position: absolute;
   left: 0;
@@ -660,6 +664,47 @@ button {
   border-radius: 28px 28px 0 0;
   background: #fff;
   box-shadow: 0 -15px 34px rgba(240, 255, 39, 0.18);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px 20px;
+}
+
+.tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.task-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed rgba(20, 24, 23, 0.2);
+}
+
+.task-item:last-child {
+  border-bottom: none;
+}
+
+.task-time {
+  font-size: 10px;
+  font-weight: 700;
+  color: #0d1110;
+}
+
+.task-title {
+  font-size: 11px;
+  color: #1c211f;
+  font-weight: 500;
+}
+
+.no-tasks {
+  font-size: 11px;
+  color: #888;
+  text-align: center;
+  padding-top: 20px;
+  font-weight: 600;
 }
 
 .scale-labels,
@@ -876,35 +921,37 @@ button {
   font-size: 7px;
 }
 
-.waveform {
-  position: relative;
+.weekly-spending-graph {
   display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
   height: 116px;
+  margin: 8px 30px 0;
+  position: relative;
+}
+
+.weekly-spending-graph .bar-container {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 7px;
-  margin: 8px 20px 0;
+  justify-content: flex-end;
+  height: 100%;
 }
 
-.waveform span {
-  width: 3px;
-  border-radius: 3px;
+.weekly-spending-graph span.bar {
+  width: 14px;
   background: #151918;
-  opacity: 0.34;
+  border-radius: 4px;
+  opacity: 0.2;
+  transition: opacity 0.3s;
 }
 
-.waveform span.dark {
+.weekly-spending-graph span.bar.dark {
   opacity: 1;
 }
 
-.waveform i {
-  position: absolute;
-  left: 157px;
-  top: 17px;
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
-  background: #bfc5bc;
+.weekly-spending-graph span.bar.darker {
+  opacity: 0.8;
 }
 
 .date-row {
