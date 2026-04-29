@@ -1,12 +1,9 @@
 import type { LucideIcon } from 'lucide-react'
 import {
-  BadgeCheck,
   Bell,
   CheckSquare,
   CircleDollarSign,
   Compass,
-  Crosshair,
-  Eye,
   Home,
   Utensils,
   MessageCircle,
@@ -14,6 +11,9 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Users,
+  TrendingDown,
+  TrendingUp,
+  Wallet,
 } from 'lucide-react'
 
 export type AppPath = '/home' | '/finance' | '/nutrition'
@@ -92,21 +92,23 @@ export const earningsMetricRows = [
 ] as const
 
 export const earningsFooterItems = [
-  { value: '23°', label: 'Success Rate', icon: Crosshair },
-  { value: '19 m/s', label: 'Goes Up Percent', icon: BadgeCheck },
-  { value: '64%', label: 'Positive', icon: Eye },
+  { value: '₹1.5L', label: 'Total Income', icon: TrendingUp },
+  { value: '₹80k', label: 'Expenses', icon: TrendingDown },
+  { value: '₹70k', label: 'Net Savings', icon: Wallet },
 ] as const
 
 export const costCards: CostCardConfig[] = [
   {
     titleLines: ['Food', 'Costs'],
+    histogramData: [30, 45, 20, 60, 90, 45, 55, 30, 20, 15, 80, 50, 40],
     histogramActiveIndex: 4,
     value: '₹4.9k',
     percent: '28.3%',
-    variant: 'business',
+    variant: 'food',
   },
   {
     titleLines: ['Travel', 'Costs'],
+    histogramData: [10, 20, 60, 45, 50, 90, 80, 30, 20, 40, 50, 60, 70],
     histogramActiveIndex: 5,
     value: '₹2.5k',
     percent: '42.7%',
@@ -114,16 +116,17 @@ export const costCards: CostCardConfig[] = [
   },
   {
     titleLines: ['Savings', 'Monthly'],
-    histogramActiveIndex: 6,
+    histogramData: [10, 30, 50, 60, 40, 20, 80, 100, 70, 50, 30, 60, 90],
+    histogramActiveIndex: 7,
     value: '₹10k',
     percent: '15.9%',
     variant: 'saving',
   },
 ]
 
-export const monthSwitchLabels = ['M', 'M', 'W'] as const
+export const monthSwitchLabels = ['T', 'W', 'T'] as const
 
-export const monthSwitchNumbers = ['29', '30', '31'] as const
+export const monthSwitchNumbers = ['28', '29', '30'] as const
 
 export const mockTasksData: Record<number, { time: string; title: string }[]> = {
   1: [{ time: '10:00 AM', title: 'Design Review' }, { time: '02:00 PM', title: 'Team Sync' }],

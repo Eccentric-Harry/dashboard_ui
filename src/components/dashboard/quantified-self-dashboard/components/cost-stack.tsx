@@ -11,7 +11,7 @@ function CostStack() {
             <br />
             {card.titleLines[1]}
           </h3>
-          <MiniHistogram active={card.histogramActiveIndex} />
+          <MiniHistogram active={card.histogramActiveIndex} data={card.histogramData} />
           <b>{card.value}</b>
           <span>{card.percent}</span>
         </div>

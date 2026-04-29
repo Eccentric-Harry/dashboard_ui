@@ -3,8 +3,8 @@ import { monthSwitchLabels, monthSwitchNumbers } from '../data'
 function MonthSwitch() {
   return (
     <div className="month-switch">
-      {monthSwitchLabels.map((label) => (
-        <small key={label}>{label}</small>
+      {monthSwitchLabels.map((label, index) => (
+        <small key={`${label}-${index}`}>{label}</small>
       ))}
       <div>
         {monthSwitchNumbers.map((value, index) => (
