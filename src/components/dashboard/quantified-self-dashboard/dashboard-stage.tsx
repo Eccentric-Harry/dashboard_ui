@@ -14,7 +14,7 @@ import { type AppPath } from './data'
 
 type DashboardStageProps = {
   activePath: AppPath
-  onNavigate: (pathname: AppPath) => void
+  onNavigate: (pathname: AppPath, search?: string) => void
 }
 
 function DashboardStage({ activePath, onNavigate }: DashboardStageProps) {
@@ -26,7 +26,7 @@ function DashboardStage({ activePath, onNavigate }: DashboardStageProps) {
       <RunnerCardPanel />
       <IndicatorCard />
       <CalendarCard />
-      <SavingsCard />
+      <SavingsCard onNavigate={onNavigate} />
       <EarningsCard />
       <ProductsCard />
       <CostStack />

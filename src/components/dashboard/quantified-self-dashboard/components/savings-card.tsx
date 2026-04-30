@@ -8,7 +8,9 @@ import {
 } from '../learning-data'
 import type { LearningCategory } from '../learning-data'
 
-function SavingsCard() {
+import { type AppPath } from '../data'
+
+function SavingsCard({ onNavigate }: { onNavigate?: (path: AppPath, search?: string) => void }) {
   const [filter, setFilter] = useState<LearningCategory>('All');
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -147,13 +149,14 @@ function SavingsCard() {
             return (
               <div
                 key={i}
+                onClick={() => onNavigate?.('/learnings', `?date=${encodeURIComponent(dateLabel)}`)}
                 title={`${dateLabel} · ${intensity > 0 ? `${intensity} session${intensity > 1 ? 's' : ''}` : 'No activity'}`}
                 style={{
                   aspectRatio: '1/1',
                   background: intensityColors[intensity],
                   borderRadius: '2px',
                   transition: 'background-color 0.25s ease, transform 0.1s ease',
-                  cursor: 'default',
+                  cursor: 'pointer',
                 }}
                 onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'scale(1.3)'; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'scale(1)'; }}

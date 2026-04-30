@@ -14,9 +14,10 @@ import {
   TrendingDown,
   TrendingUp,
   Wallet,
+  BrainCircuit,
 } from 'lucide-react'
 
-export type AppPath = '/home' | '/finance' | '/nutrition'
+export type AppPath = '/home' | '/finance' | '/nutrition' | '/learnings'
 
 export interface DashboardNavItem {
   label: string
@@ -45,6 +46,7 @@ export const navItems: DashboardNavItem[] = [
   { label: 'Home', icon: Home, to: '/home' },
   { label: 'Nutrition Overview', icon: Utensils, to: '/nutrition' },
   { label: 'Finance Overview', icon: CircleDollarSign, to: '/finance' },
+  { label: 'Learnings Map', icon: BrainCircuit, to: '/learnings' },
   { label: 'Adjust', icon: SlidersHorizontal },
   { label: 'Tasks', icon: CheckSquare, muted: true },
   { label: 'People', icon: Users, muted: true },
@@ -130,17 +132,33 @@ export const monthSwitchNumbers = ['28', '29', '30'] as const
 
 export const mockTasksData: Record<number, { time: string; title: string }[]> = {
   1: [{ time: '10:00 AM', title: 'Design Review' }, { time: '02:00 PM', title: 'Team Sync' }],
+  2: [{ time: '09:00 AM', title: 'Coffee Run' }, { time: '01:00 PM', title: 'Lunch with Client' }],
+  3: [{ time: '11:00 AM', title: 'Client Sync' }],
+  4: [{ time: '09:00 AM', title: 'Drafting Proposal' }, { time: '02:30 PM', title: 'Status Check' }],
+  5: [{ time: '11:00 AM', title: '1on1 Meeting' }],
   6: [{ time: '09:00 AM', title: 'Coffee Run' }, { time: '01:00 PM', title: 'Lunch with Client' }],
+  7: [{ time: '10:00 AM', title: 'Project Kickoff' }, { time: '02:00 PM', title: 'Sprint Planning' }],
   8: [{ time: '11:00 AM', title: 'Client Sync' }],
+  9: [{ time: '01:00 PM', title: 'Performance Review' }],
   10: [
     { time: '08:00 AM', title: 'Gym Session' },
     { time: '10:30 AM', title: 'Daily Standup' },
     { time: '02:00 PM', title: 'Code Review' },
     { time: '04:00 PM', title: 'Deployment' },
   ],
+  11: [{ time: '09:00 AM', title: 'Tech Talk' }, { time: '01:00 PM', title: 'Architecture Review' }],
+  12: [{ time: '10:00 AM', title: 'Weekly Sync' }],
   14: [{ time: '12:00 PM', title: 'Doctor Appointment' }],
   15: [{ time: '03:00 PM', title: 'Interview Candidate' }],
+  18: [{ time: '11:00 AM', title: 'Town Hall' }, { time: '02:30 PM', title: 'Bug Bash' }],
+  19: [{ time: '09:00 AM', title: 'Team Building Activity' }],
   20: [{ time: '09:30 AM', title: 'Quarterly Planning' }],
+  21: [{ time: '01:00 PM', title: 'Release Setup' }, { time: '04:00 PM', title: 'Retrospective' }],
+  23: [{ time: '10:00 AM', title: 'Vendor Meeting' }],
+  24: [{ time: '02:00 PM', title: 'Design Review' }],
+  25: [{ time: '11:30 AM', title: 'Lunch and Learn' }],
+  28: [{ time: '09:00 AM', title: 'Code Freeze' }],
+  29: [{ time: '10:00 AM', title: 'Demo Preparation' }, { time: '01:00 PM', title: 'Stakeholder Demo' }],
   30: [
     { time: '09:00 AM', title: 'End of Month Review' },
     { time: '01:30 PM', title: 'Strategy Meeting' },
