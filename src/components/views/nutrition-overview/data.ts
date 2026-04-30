@@ -54,6 +54,16 @@ export interface QuickLogShortcut {
   tone: string
 }
 
+export interface FoodLog {
+  id: string
+  food: string
+  meal: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snack' | 'Pre-Workout' | 'Post-Workout'
+  protein: number
+  calories: number
+  icon: LucideIcon
+  iconColor: string
+}
+
 export const calorieSummary: CalorieSummary = {
   logged: 1840,
   target: 2400,
@@ -127,3 +137,14 @@ export const nutritionStatus = {
   recoveryTarget: '160 g recovery target',
 }
 
+export const foodLogs: FoodLog[] = [
+  { id: 'fl-1', food: 'Chicken Breast', meal: 'Lunch', protein: 54, calories: 285, icon: Drumstick, iconColor: '#35b64b' },
+  { id: 'fl-2', food: 'Greek Yogurt', meal: 'Breakfast', protein: 17, calories: 100, icon: Milk, iconColor: '#d9ff8a' },
+  { id: 'fl-3', food: 'Whole Eggs (2)', meal: 'Breakfast', protein: 12, calories: 148, icon: Egg, iconColor: '#ffc45f' },
+  { id: 'fl-4', food: 'Protein Shake', meal: 'Post-Workout', protein: 32, calories: 180, icon: CupSoda, iconColor: '#76e4ff' },
+  { id: 'fl-5', food: 'Lean Beef', meal: 'Dinner', protein: 26, calories: 240, icon: Beef, iconColor: '#ffb0a4' },
+  { id: 'fl-6', food: 'Lentil Soup', meal: 'Dinner', protein: 18, calories: 230, icon: Bean, iconColor: '#9dc8a6' },
+  { id: 'fl-7', food: 'Protein Bar', meal: 'Snack', protein: 21, calories: 230, icon: Sandwich, iconColor: '#ffc45f' },
+  { id: 'fl-8', food: 'Fruit Bowl', meal: 'Breakfast', protein: 2, calories: 210, icon: Apple, iconColor: '#9df7a5' },
+  { id: 'fl-9', food: 'Salad Bowl', meal: 'Lunch', protein: 8, calories: 160, icon: Salad, iconColor: '#36bd49' },
+]

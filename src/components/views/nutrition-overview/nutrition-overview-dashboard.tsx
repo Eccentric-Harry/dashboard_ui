@@ -1,8 +1,7 @@
+import { FoodLogCard } from './components/food-log-card'
 import { MacroBalanceCard } from './components/macro-balance-card'
 import { NutritionHeader } from './components/nutrition-header'
-import { ProteinCompletenessCard } from './components/protein-completeness-card'
 import { ProteinTrendCard } from './components/protein-trend-card'
-import { QuickLogCard } from './components/quick-log-card'
 
 import './nutrition-overview.css'
 
@@ -13,8 +12,7 @@ function NutritionOverviewDashboard() {
       <div className="nutrition-dashboard-grid">
         <MacroBalanceCard />
         <ProteinTrendCard />
-        <ProteinCompletenessCard />
-        <QuickLogCard />
+        <FoodLogCard />
       </div>
     </section>
   )

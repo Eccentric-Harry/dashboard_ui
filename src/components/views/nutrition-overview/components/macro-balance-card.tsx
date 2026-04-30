@@ -1,15 +1,12 @@
-import type { CSSProperties } from 'react'
 import { useState } from 'react'
 
-import { calorieSummary, macroNutrients, nutritionStatus } from '../data'
+import { calorieSummary, macroNutrients } from '../data'
 import { RingProgress } from './ring-progress'
 
 function MacroBalanceCard() {
   const [selectedMacroId, setSelectedMacroId] = useState(macroNutrients[0].id)
-  const selectedMacro = macroNutrients.find((macro) => macro.id === selectedMacroId) ?? macroNutrients[0]
 
   const caloriesRemaining = Math.max(calorieSummary.target - calorieSummary.logged, 0)
-  const selectedRemaining = Math.max(selectedMacro.target - selectedMacro.logged, 0)
   const calorieProgress = Math.round((calorieSummary.logged / calorieSummary.target) * 100)
 
   return (
@@ -19,7 +16,7 @@ function MacroBalanceCard() {
           <p>Daily Macro Balance</p>
           <h2>{calorieProgress}% of calories logged</h2>
         </div>
-        <span>{nutritionStatus.recoveryTarget}</span>
+        <span>160 g recovery target</span>
       </div>
 
       <div className="nutrition-calorie-summary">
@@ -48,20 +45,6 @@ function MacroBalanceCard() {
         ))}
       </div>
 
-      <div className="nutrition-selected-macro" style={{ '--macro-soft': selectedMacro.softColor } as CSSProperties}>
-        <span>{selectedMacro.label}</span>
-        <b>
-          {selectedMacro.logged}
-          {selectedMacro.unit} logged
-        </b>
-        <em>
-          {selectedRemaining}
-          {selectedMacro.unit} remaining
-        </em>
-        <small>{selectedMacro.calories} kcal from this macro</small>
-      </div>
-
-      <p className="nutrition-status-message">{nutritionStatus.message}</p>
     </section>
   )
 }

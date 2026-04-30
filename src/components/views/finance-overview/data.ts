@@ -2,15 +2,12 @@ import type { LucideIcon } from 'lucide-react'
 import {
   ArrowDownLeft,
   ArrowUpRight,
-  CalendarClock,
   Coffee,
   CreditCard,
   Landmark,
   Lightbulb,
   PiggyBank,
-  Plus,
   ReceiptText,
-  Send,
   ShieldCheck,
   ShoppingBag,
   WalletCards,
@@ -33,14 +30,10 @@ export interface SpendingCategory {
   icon: LucideIcon
 }
 
-export interface QuickAction {
-  label: string
-  icon: LucideIcon
-}
-
 export interface Transaction {
   merchant: string
   detail: string
+  category: string
   amount: string
   tone: 'income' | 'expense'
   icon: LucideIcon
@@ -62,24 +55,24 @@ export interface Recommendation {
 export const financeMetrics: FinanceMetric[] = [
   {
     label: 'Monthly Income',
-    value: '$553,600',
-    cents: '.07',
+    value: '₹5,53,600',
+    cents: '',
     change: '+7.1%',
     tone: 'positive',
     icon: ArrowUpRight,
   },
   {
     label: 'Monthly Expenses',
-    value: '$850,000',
-    cents: '.12',
+    value: '₹8,50,000',
+    cents: '',
     change: '+3.6%',
     tone: 'negative',
     icon: ArrowDownLeft,
   },
   {
     label: 'Monthly Savings',
-    value: '$721,480',
-    cents: '.13',
+    value: '₹7,21,480',
+    cents: '',
     change: '+8.3%',
     tone: 'positive',
     icon: PiggyBank,
@@ -87,53 +80,89 @@ export const financeMetrics: FinanceMetric[] = [
 ]
 
 export const spendingCategories: SpendingCategory[] = [
-  { label: 'Food & Dining', value: '$650', share: '32%', tone: '#10201a', icon: Coffee },
-  { label: 'Transport', value: '$400', share: '20%', tone: '#748277', icon: WalletCards },
-  { label: 'Shopping', value: '$350', share: '18%', tone: '#35b64b', icon: ShoppingBag },
-  { label: 'Bills & Utilities', value: '$300', share: '14%', tone: '#9df7a5', icon: ReceiptText },
-  { label: 'Others', value: '$250', share: '10%', tone: '#dfe4df', icon: CreditCard },
-]
-
-export const quickActions: QuickAction[] = [
-  { label: 'Send Money', icon: Send },
-  { label: 'Add Funds', icon: Plus },
-  { label: 'Pay Bills', icon: ReceiptText },
-  { label: 'Schedule', icon: CalendarClock },
+  { label: 'Food & Dining', value: '₹6,500', share: '32%', tone: '#10201a', icon: Coffee },
+  { label: 'Transport', value: '₹4,000', share: '20%', tone: '#748277', icon: WalletCards },
+  { label: 'Shopping', value: '₹3,500', share: '18%', tone: '#35b64b', icon: ShoppingBag },
+  { label: 'Bills & Utilities', value: '₹3,000', share: '14%', tone: '#9df7a5', icon: ReceiptText },
+  { label: 'Others', value: '₹2,500', share: '10%', tone: '#dfe4df', icon: CreditCard },
 ]
 
 export const recentTransactions: Transaction[] = [
   {
-    merchant: 'Starbucks Coffee',
-    detail: 'March 21, 9:42am',
-    amount: '-$2,300',
+    merchant: 'Starbucks Reserve',
+    detail: 'Today, 9:42 AM',
+    category: 'Dining',
+    amount: '-₹460',
     tone: 'expense',
     icon: Coffee,
   },
   {
     merchant: 'Salary Deposit',
-    detail: 'March 16, 1:18pm',
-    amount: '+$350,00',
+    detail: 'Today, 7:10 AM',
+    category: 'Income',
+    amount: '+₹6,85,000',
     tone: 'income',
     icon: Landmark,
   },
   {
-    merchant: 'Grocery Run',
-    detail: 'March 15, 10:01pm',
-    amount: '-$4,200',
+    merchant: 'Whole Foods Market',
+    detail: 'Yesterday, 6:28 PM',
+    category: 'Groceries',
+    amount: '-₹4,216',
     tone: 'expense',
     icon: ShoppingBag,
+  },
+  {
+    merchant: 'Metro Tap Card',
+    detail: 'Yesterday, 8:05 AM',
+    category: 'Transport',
+    amount: '-₹350',
+    tone: 'expense',
+    icon: WalletCards,
+  },
+  {
+    merchant: 'Electric Utility',
+    detail: 'Mar 19, 2:14 PM',
+    category: 'Bills',
+    amount: '-₹2,147',
+    tone: 'expense',
+    icon: ReceiptText,
+  },
+  {
+    merchant: 'Client Transfer',
+    detail: 'Mar 18, 11:32 AM',
+    category: 'Income',
+    amount: '+₹2,40,000',
+    tone: 'income',
+    icon: ArrowUpRight,
+  },
+  {
+    merchant: 'Apple Store',
+    detail: 'Mar 17, 4:48 PM',
+    category: 'Shopping',
+    amount: '-₹32,900',
+    tone: 'expense',
+    icon: CreditCard,
+  },
+  {
+    merchant: 'Savings Sweep',
+    detail: 'Mar 16, 9:00 AM',
+    category: 'Transfer',
+    amount: '+₹95,000',
+    tone: 'income',
+    icon: PiggyBank,
   },
 ]
 
 export const subscriptions: Subscription[] = [
-  { service: 'Netflix', detail: 'Renews Apr 28', amount: '$100', status: 'Today' },
-  { service: 'Spotify', detail: 'Renews May 03', amount: '$18', status: '5 days' },
-  { service: 'iCloud', detail: 'Renews May 12', amount: '$9', status: '14 days' },
+  { service: 'Netflix', detail: 'Renews Apr 28', amount: '₹499', status: 'Today' },
+  { service: 'Spotify', detail: 'Renews May 03', amount: '₹119', status: '5 days' },
+  { service: 'iCloud', detail: 'Renews May 12', amount: '₹75', status: '14 days' },
 ]
 
 export const recommendations: Recommendation[] = [
   {
-    title: 'Save $5,000',
+    title: 'Save ₹5,000',
     detail: 'Shift extra cash to the laptop goal',
     icon: PiggyBank,
   },
@@ -151,35 +180,29 @@ export const recommendations: Recommendation[] = [
 
 export const totalBalance = {
   label: 'Total Balance',
-  value: '$2,450,800',
-  cents: '.50',
+  value: '₹24,50,800',
+  cents: '',
   change: '+5.2%',
 }
 
 export const subscriptionSummary = {
-  total: '$127',
+  total: '₹693',
   label: 'Monthly subscriptions',
   change: '3 active renewals',
 }
 
 export const spendingOverview = {
-  total: '$215,800',
-  cents: '.19',
+  total: '₹2,15,800',
+  cents: '',
   topCategory: 'Food & Dining',
-}
-
-export const insight = {
-  title: 'AI Smart Insight',
-  body: 'You spent 32% more on food this week. Want tips to reduce it?',
-  action: 'View Suggestions',
 }
 
 export const cashflowBars = [36, 58, 44, 73, 52, 89, 61, 70, 42, 66, 80, 57]
 
 export const savingsGoal = {
   label: 'Emergency Fund',
-  value: '$18,400',
-  target: '$25,000',
+  value: '₹18,400',
+  target: '₹25,000',
   progress: 74,
 }
 

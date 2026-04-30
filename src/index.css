@@ -826,13 +826,14 @@ button {
   left: 519px;
   top: 450px;
   width: 265px;
-  height: 220px;
+  height: 230px;
   display: flex;
   flex-direction: column;
   border-radius: 28px;
-  background: rgba(207, 217, 205, 0.78);
-  box-shadow: 0 22px 52px rgba(54, 69, 53, 0.06);
-  backdrop-filter: blur(10px);
+  background: rgba(236, 245, 238, 0.85); /* More evident background that follows the light green color scheme */
+  box-shadow: 0 22px 52px rgba(54, 69, 53, 0.08), inset 0 2px 0 rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   overflow: visible;
 }
 
@@ -1142,7 +1143,7 @@ button {
 }
 
 .travel {
-  right: -15px;
+  right: -21px;
   top: 23px;
   width: 108px;
   height: 162px;

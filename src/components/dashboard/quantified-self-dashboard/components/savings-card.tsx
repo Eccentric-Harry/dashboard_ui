@@ -28,7 +28,7 @@ function SavingsCard({ onNavigate }: { onNavigate?: (path: AppPath, search?: str
 
   // Green intensity palette — matching the dashboard's earthy green tones
   const intensityColors = [
-    'rgba(187, 225, 202, 0.3)',   // level 0 — faint green
+    'rgba(164, 200, 177, 0.45)',  // level 0 — solid light green distinct from the card background
     'rgba(122, 191, 147, 0.6)',   // level 1 — soft green
     'rgba(76, 175, 115, 0.8)',    // level 2 — mid green
     'rgba(39, 142, 85, 0.95)',    // level 3 — rich green
@@ -128,7 +128,7 @@ function SavingsCard({ onNavigate }: { onNavigate?: (path: AppPath, search?: str
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '12px 18px 14px',
+          padding: '12px 18px 22px',
           flex: 1,
         }}
       >
