@@ -1,0 +1,30 @@
+import { createContext, useContext } from 'react';
+import type { ReactNode } from 'react';
+import { useDashboardData } from '../hooks/useDashboardData';
+
+type DashboardContextType = {
+  data: any;
+  isLoading: boolean;
+  error: Error | null;
+};
+
+const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
+
+export function DashboardProvider({ children, date }: { children: ReactNode; date?: string }) {
+  const dashboardState = useDashboardData(date);
+
+  return (
+    <DashboardContext.Provider value={dashboardState}>
+      {children}
+    </DashboardContext.Provider>
+  );
+}
+
+export function useDashboard() {
+  const context = useContext(DashboardContext);
+  if (context === undefined) {
+    throw new Error('useDashboard must be used within a DashboardProvider');
+  }
+  return context;
+}
+

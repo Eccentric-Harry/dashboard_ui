@@ -1,6 +1,23 @@
+import { useDashboard } from '../../../../contexts/DashboardContext';
+
 function IndicatorCard() {
-  const calories = { current: 1840, target: 2400, color: "text-[#101312]", track: "text-[#101312]/5" };
-  const protein = { current: 145, target: 180, color: "text-[#eaff28]", track: "text-[#eaff28]/20" };
+  const { data, isLoading } = useDashboard();
+  
+  const circularGoals = data?.health?.circularGoals;
+
+  const getGoalData = (label: string, defaultCurrent: number, defaultTarget: number, color: string, track: string) => {
+    if (!circularGoals) return { current: defaultCurrent, target: defaultTarget, color, track };
+    const goal = circularGoals.find((g: any) => g.label.toLowerCase() === label.toLowerCase());
+    return {
+      current: goal ? goal.value : defaultCurrent,
+      target: goal ? goal.target : defaultTarget,
+      color,
+      track
+    };
+  };
+
+  const calories = getGoalData('Calories', 1840, 2400, "text-[#101312]", "text-[#101312]/5");
+  const protein = getGoalData('Protein', 145, 180, "text-[#eaff28]", "text-[#eaff28]/20");
 
   const CircularStat = ({ data, label, unit }: { data: any, label: string, unit: string }) => {
     const radius = 38;
@@ -33,12 +50,12 @@ function IndicatorCard() {
             />
           </svg>
           <div className="absolute flex flex-col items-center justify-center">
-            <span className="text-base font-bold text-slate-800 leading-tight">{Math.round(percentage)}%</span>
+            <span className="text-base font-bold text-slate-800 leading-tight">{isLoading ? '...' : `${Math.round(percentage)}%`}</span>
             <span className="text-[10px] font-medium text-slate-500 leading-none mt-0.5">{label}</span>
           </div>
         </div>
         <div className="mt-2.5 text-center flex flex-col">
-          <span className="text-xs font-bold text-slate-800">{data.current}</span>
+          <span className="text-xs font-bold text-slate-800">{isLoading ? '-' : data.current}</span>
           <span className="text-[9px] text-slate-400 font-medium">/ {data.target}{unit}</span>
         </div>
       </div>
@@ -49,7 +66,7 @@ function IndicatorCard() {
     <section className="indicator-panel" style={{ display: 'flex', flexDirection: 'column', padding: '24px 22px', boxSizing: 'border-box' }}>
       <div className="mb-4">
         <span className="runner-eyebrow">NUTRITION SUMMARY</span>
-        <p className="text-[11px] text-slate-500 font-medium m-0 mt-1.5">77% of calories logged</p>
+        <p className="text-[11px] text-slate-500 font-medium m-0 mt-1.5">{isLoading ? 'Loading...' : `${Math.round(calories.current / calories.target * 100)}% of calories logged`}</p>
       </div>
       
       <div className="flex flex-row gap-4 w-full justify-center items-center flex-1">

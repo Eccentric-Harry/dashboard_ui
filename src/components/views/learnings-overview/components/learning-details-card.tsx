@@ -42,7 +42,7 @@ export function LearningDetailsCard({ selectedDate }: { selectedDate: string }) 
                     </span>
                   </div>
                   <p style={{ fontSize: '14px', lineHeight: 1.5, color: '#333b37', margin: 0 }}>
-                    {log.topic} - {log.title || 'Learning Session'}
+                    {log.topic}
                   </p>
                 </div>
               ))}

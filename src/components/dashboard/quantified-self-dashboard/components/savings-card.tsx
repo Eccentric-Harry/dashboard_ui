@@ -9,8 +9,10 @@ import {
 import type { LearningCategory } from '../learning-data'
 
 import { type AppPath } from '../data'
+import { useDashboard } from '../../../../contexts/DashboardContext';
 
 function SavingsCard({ onNavigate }: { onNavigate?: (path: AppPath, search?: string) => void }) {
+  const { data: apiData, isLoading } = useDashboard();
   const [filter, setFilter] = useState<LearningCategory>('All');
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -38,7 +40,8 @@ function SavingsCard({ onNavigate }: { onNavigate?: (path: AppPath, search?: str
   const filteredLogs = learningLogs.filter(
     l => filter === 'All' || l.category === filter
   );
-  const filteredCount = filteredLogs.length;
+  
+  const heatmapData = apiData?.coding?.learningHeatmap || [];
 
   return (
     <section className="savings-panel">
@@ -47,7 +50,7 @@ function SavingsCard({ onNavigate }: { onNavigate?: (path: AppPath, search?: str
         <div>
           <span className="runner-eyebrow">Synapse Map</span>
           <p style={{ margin: '4px 0 0', fontSize: '9px', color: '#526057', fontWeight: 500 }}>
-            {filteredLogs.slice(-91).length} nodes activated (3m)
+            {isLoading ? '...' : `${heatmapData.length || filteredLogs.slice(-91).length} nodes activated (3m)`}
           </p>
         </div>
 
@@ -144,8 +147,16 @@ function SavingsCard({ onNavigate }: { onNavigate?: (path: AppPath, search?: str
         >
           {Array.from({ length: 91 }).map((_, i) => {
             const daysAgo = 90 - i;
-            const intensity = getIntensityForDay(daysAgo, filter);
             const dateLabel = getDateStringForDay(daysAgo);
+            
+            let intensity = 0;
+            if (heatmapData && heatmapData.length > 0) {
+              const apiEntry = heatmapData.find((entry: any) => entry.date === dateLabel);
+              if (apiEntry) intensity = apiEntry.intensity;
+            } else {
+              intensity = getIntensityForDay(daysAgo, filter);
+            }
+
             return (
               <div
                 key={i}

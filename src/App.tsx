@@ -4,6 +4,7 @@ import { QuantifiedSelfDashboard } from './components/dashboard/quantified-self-
 import type { AppPath } from './components/dashboard/quantified-self-dashboard/data'
 import { FinanceOverview } from './components/views/FinanceOverview'
 import { NutritionOverview } from './components/views/NutritionOverview'
+import { DashboardProvider } from './contexts/DashboardContext'
 
 import { LearningsOverview } from './components/views/LearningsOverview'
 
@@ -55,19 +56,22 @@ function App() {
     setSearchParams(new URLSearchParams(search || ''))
   }
 
+  let content;
   if (pathname === '/finance') {
-    return <FinanceOverview activePath={pathname} onNavigate={navigateTo} />
+    content = <FinanceOverview activePath={pathname} onNavigate={navigateTo} />
+  } else if (pathname === '/nutrition') {
+    content = <NutritionOverview activePath={pathname} onNavigate={navigateTo} />
+  } else if (pathname === '/learnings') {
+    content = <LearningsOverview activePath={pathname} onNavigate={navigateTo} searchParams={searchParams} />
+  } else {
+    content = <QuantifiedSelfDashboard activePath={pathname} onNavigate={navigateTo} />
   }
 
-  if (pathname === '/nutrition') {
-    return <NutritionOverview activePath={pathname} onNavigate={navigateTo} />
-  }
-
-  if (pathname === '/learnings') {
-    return <LearningsOverview activePath={pathname} onNavigate={navigateTo} searchParams={searchParams} />
-  }
-
-  return <QuantifiedSelfDashboard activePath={pathname} onNavigate={navigateTo} />
+  return (
+    <DashboardProvider>
+      {content}
+    </DashboardProvider>
+  );
 }
 
 export default App
