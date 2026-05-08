@@ -16,8 +16,8 @@ function IndicatorCard() {
     };
   };
 
-  const calories = getGoalData('Calories', 1840, 2400, "text-[#101312]", "text-[#101312]/5");
-  const protein = getGoalData('Protein', 145, 180, "text-[#eaff28]", "text-[#eaff28]/20");
+  const calories = { ...getGoalData('Calories', 1840, 2000, "text-[#101312]", "text-[#101312]/5"), target: 2000 };
+  const protein = { ...getGoalData('Protein', 75, 100, "text-[#eaff28]", "text-[#eaff28]/20"), target: 100 };
 
   const CircularStat = ({ data, label, unit }: { data: any, label: string, unit: string }) => {
     const radius = 38;

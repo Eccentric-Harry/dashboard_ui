@@ -6,6 +6,7 @@ type DashboardContextType = {
   data: any;
   isLoading: boolean;
   error: Error | null;
+  refetch: () => Promise<void>;
 };
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);

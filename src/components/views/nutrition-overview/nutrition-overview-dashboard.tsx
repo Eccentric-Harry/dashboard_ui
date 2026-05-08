@@ -1,4 +1,5 @@
 import { FoodLogCard } from './components/food-log-card'
+import { HydrationCard } from './components/hydration-card'
 import { MacroBalanceCard } from './components/macro-balance-card'
 import { NutritionHeader } from './components/nutrition-header'
 import { ProteinTrendCard } from './components/protein-trend-card'
@@ -12,6 +13,7 @@ function NutritionOverviewDashboard() {
       <div className="nutrition-dashboard-grid">
         <MacroBalanceCard />
         <ProteinTrendCard />
+        <HydrationCard />
         <FoodLogCard />
       </div>
     </section>

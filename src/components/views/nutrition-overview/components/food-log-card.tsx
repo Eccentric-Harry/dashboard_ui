@@ -1,96 +1,288 @@
-import { Plus } from 'lucide-react'
-import { foodLogs } from '../data'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { CalendarDays, Flame, Utensils, Wheat } from 'lucide-react'
+import { useDashboard } from '../../../../contexts/DashboardContext'
+import { fetchDashboardData, fetchFoodEntries } from '../../../../lib/api'
 
-const mealColors: Record<string, string> = {
-  Breakfast: 'rgba(255, 196, 95, 0.18)',
-  Lunch: 'rgba(53, 182, 75, 0.14)',
-  Dinner: 'rgba(118, 228, 255, 0.15)',
-  Snack: 'rgba(157, 199, 166, 0.2)',
-  'Pre-Workout': 'rgba(255, 176, 164, 0.18)',
-  'Post-Workout': 'rgba(53, 182, 75, 0.22)',
+const mealDotColors: Record<string, string> = {
+  Breakfast: '#f59e0b',
+  Lunch: '#10b981',
+  Dinner: '#0ea5e9',
+  Snack: '#8b5cf6',
+  Midnight: '#312e81',
+  'Post Workout': '#ef4444',
+  'Mid-Morning': '#f97316',
 }
 
-const mealTextColors: Record<string, string> = {
-  Breakfast: '#b07000',
-  Lunch: '#1f7a34',
-  Dinner: '#0d7a99',
-  Snack: '#3a6645',
-  'Pre-Workout': '#a04030',
-  'Post-Workout': '#1f7a34',
+type FoodEntry = {
+  id?: string
+  description?: string
+  mealType?: string
+  proteinGrams?: number
+  calories?: number
+  date?: string
+  loggedDate?: string
+  createdAt?: string
+}
+
+type FoodEntriesResponse = {
+  data?: FoodEntry[] | {
+    entries?: FoodEntry[]
+    foodEntries?: FoodEntry[]
+  }
+  entries?: FoodEntry[]
+}
+
+const isoDate = (date: Date) => {
+  const year = date.getFullYear()
+  const month = `${date.getMonth() + 1}`.padStart(2, '0')
+  const day = `${date.getDate()}`.padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
+const parseIsoDate = (dateValue?: string) => {
+  if (!dateValue) {
+    return new Date()
+  }
+
+  const [year, month, day] = dateValue.split('-').map(Number)
+  if (!year || !month || !day) {
+    return new Date()
+  }
+
+  return new Date(year, month - 1, day)
+}
+
+const ordinal = (day: number) => {
+  if (day > 3 && day < 21) {
+    return `${day}TH`
+  }
+
+  switch (day % 10) {
+    case 1:
+      return `${day}ST`
+    case 2:
+      return `${day}ND`
+    case 3:
+      return `${day}RD`
+    default:
+      return `${day}TH`
+  }
+}
+
+const formatLogDate = (dateValue: string) => {
+  const date = parseIsoDate(dateValue)
+  const weekday = date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()
+
+  return `${weekday}, ${ordinal(date.getDate())}`
+}
+
+const normalizeEntryDate = (entry: FoodEntry, fallbackDate: string) => {
+  const rawDate = entry.date || entry.loggedDate || entry.createdAt
+  if (typeof rawDate === 'string' && /^\d{4}-\d{2}-\d{2}/.test(rawDate)) {
+    return rawDate.slice(0, 10)
+  }
+
+  if (rawDate) {
+    return isoDate(new Date(rawDate))
+  }
+
+  return fallbackDate
+}
+
+const extractEntries = (response: unknown): FoodEntry[] => {
+  if (Array.isArray(response)) {
+    return response as FoodEntry[]
+  }
+
+  const payload = response as FoodEntriesResponse
+
+  if (Array.isArray(payload?.data)) {
+    return payload.data
+  }
+
+  if (!Array.isArray(payload?.data) && Array.isArray(payload?.data?.entries)) {
+    return payload.data.entries
+  }
+
+  if (!Array.isArray(payload?.data) && Array.isArray(payload?.data?.foodEntries)) {
+    return payload.data.foodEntries
+  }
+
+  if (Array.isArray(payload?.entries)) {
+    return payload.entries
+  }
+
+  return []
+}
+
+const getLogDates = (anchorDate: string) => {
+  const baseDate = parseIsoDate(anchorDate)
+
+  return Array.from({ length: 10 }, (_, index) => {
+    const date = new Date(baseDate)
+    date.setDate(baseDate.getDate() - index)
+    return isoDate(date)
+  })
+}
+
+const entryKey = (entry: FoodEntry, fallbackDate: string) => {
+  if (entry.id) {
+    return entry.id
+  }
+
+  return [
+    normalizeEntryDate(entry, fallbackDate),
+    entry.description || '',
+    entry.mealType || '',
+    Number(entry.proteinGrams) || 0,
+    Number(entry.calories) || 0,
+  ].join('|')
+}
+
+const mergeFoodEntries = (entries: FoodEntry[], fallbackDate: string) => {
+  const seen = new Set<string>()
+
+  return entries.filter((entry) => {
+    const key = entryKey(entry, fallbackDate)
+    if (seen.has(key)) {
+      return false
+    }
+
+    seen.add(key)
+    return true
+  })
 }
 
 function FoodLogCard() {
-  const totalProtein = foodLogs.reduce((s, l) => s + l.protein, 0)
-  const totalCalories = foodLogs.reduce((s, l) => s + l.calories, 0)
+  const { data } = useDashboard()
+  const foodEntries = useMemo<FoodEntry[]>(() => data?.health?.foodEntries || [], [data?.health?.foodEntries])
+  const logAnchorDate = data?.date || isoDate(new Date())
+  const [historyEntries, setHistoryEntries] = useState<FoodEntry[]>([])
+
+  const loadHistoryEntries = useCallback(async () => {
+    const logDates = getLogDates(logAnchorDate)
+
+    try {
+      const [rangeResponse, ...dashboardResponses] = await Promise.allSettled([
+        fetchFoodEntries(undefined, logDates[logDates.length - 1], logAnchorDate),
+        ...logDates.map((dateValue) => fetchDashboardData(dateValue)),
+      ])
+
+      const rangeEntries = rangeResponse.status === 'fulfilled' ? extractEntries(rangeResponse.value) : []
+      const dashboardEntries = dashboardResponses.flatMap((response, index) => {
+        if (response.status !== 'fulfilled') {
+          return []
+        }
+
+        const dateValue = logDates[index]
+        const entries = response.value?.data?.health?.foodEntries
+
+        if (!Array.isArray(entries)) {
+          return []
+        }
+
+        return entries.map((entry: FoodEntry) => ({ ...entry, date: entry.date || dateValue }))
+      })
+      const selectedDateEntries = foodEntries.map((entry) => ({ ...entry, date: entry.date || logAnchorDate }))
+
+      setHistoryEntries(mergeFoodEntries([...rangeEntries, ...dashboardEntries, ...selectedDateEntries], logAnchorDate))
+    } catch (error) {
+      console.error('Failed to load 10 day food history', error)
+      setHistoryEntries(foodEntries.map((entry) => ({ ...entry, date: entry.date || logAnchorDate })))
+    }
+  }, [foodEntries, logAnchorDate])
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadHistoryEntries()
+  }, [loadHistoryEntries])
+
+  const logDays = useMemo(() => {
+    return getLogDates(logAnchorDate).map((dateValue) => {
+      const entries = historyEntries.filter((entry) => normalizeEntryDate(entry, logAnchorDate) === dateValue)
+      const totalProtein = entries.reduce((sum, entry) => sum + (Number(entry.proteinGrams) || 0), 0)
+      const totalCalories = entries.reduce((sum, entry) => sum + (Number(entry.calories) || 0), 0)
+
+      return {
+        dateValue,
+        entries,
+        totalProtein,
+        totalCalories,
+      }
+    })
+  }, [historyEntries, logAnchorDate])
 
   return (
-    <section className="nutrition-card nutrition-food-log-card" aria-label="Food log">
+    <section className="nutrition-food-log-card" aria-label="Food log">
       <div className="nutrition-food-log-head">
         <div className="nutrition-section-head compact">
+          <span className="nutrition-section-icon">
+            <CalendarDays size={15} />
+          </span>
           <div>
             <p>Food Log</p>
-            <h2>Today's intake</h2>
+            <h2>Daily Food Logs</h2>
           </div>
         </div>
-        
-        <div className="nutrition-food-log-actions">
-          <button type="button" className="nutrition-food-log-add-btn">
-            <Plus size={14} strokeWidth={3} />
-            Log Food
-          </button>
-          <div className="nutrition-food-log-totals">
-            <div className="total-stat">
-              <b>{totalProtein}g</b>
-              <small>Protein</small>
-            </div>
-            <div className="total-stat">
-              <b>{totalCalories.toLocaleString()}</b>
-              <small>kcal</small>
-            </div>
-          </div>
-        </div>
+        <span className="nutrition-food-log-count">{logDays.length} days</span>
       </div>
 
-      <div className="nutrition-food-table" role="table" aria-label="Food log entries">
-        {/* Header */}
-        <div className="nutrition-food-row header" role="row">
-          <span role="columnheader">Food</span>
-          <span role="columnheader">Meal</span>
-          <span role="columnheader">Protein</span>
-          <span role="columnheader">Calories</span>
-        </div>
-
-        {/* Scrollable list */}
-        <div className="nutrition-food-list" role="rowgroup">
-          {foodLogs.map(({ id, food, meal, protein, calories, icon: Icon, iconColor }) => (
-            <div className="nutrition-food-row" key={id} role="row">
-              {/* Food */}
-              <div className="nutrition-food-item" role="cell">
-                <span style={{ background: `color-mix(in srgb, ${iconColor} 28%, white)` }}>
-                  <Icon size={14} />
+      <div className="nutrition-daily-log-grid">
+        {logDays.map(({ dateValue, entries, totalProtein, totalCalories }) => (
+          <article className="nutrition-daily-log-card" key={dateValue}>
+            <div className="nutrition-daily-log-card-head">
+              <div className="nutrition-daily-log-title">
+                <span>
+                  <CalendarDays size={14} />
                 </span>
-                <b>{food}</b>
+                <h3>{formatLogDate(dateValue)}</h3>
               </div>
-
-              {/* Meal badge */}
-              <em
-                role="cell"
-                style={{
-                  background: mealColors[meal] ?? 'rgba(20,28,24,0.07)',
-                  color: mealTextColors[meal] ?? '#253028',
-                }}
-              >
-                {meal}
-              </em>
-
-              {/* Protein */}
-              <strong className="nutrition-food-protein" role="cell">{protein}g</strong>
-
-              {/* Calories */}
-              <strong className="nutrition-food-cal" role="cell">{calories} kcal</strong>
+              <div className="nutrition-daily-log-card-actions">
+                <strong><Wheat size={13} /> {totalProtein}g</strong>
+                <strong><Flame size={13} /> {totalCalories.toLocaleString()} kcal</strong>
+              </div>
             </div>
-          ))}
-        </div>
+
+            <div className="nutrition-daily-log-columns" aria-hidden="true">
+              <span>Food</span>
+              <span>Meal</span>
+              <span>Protein</span>
+              <span>Calories</span>
+            </div>
+
+            <div className="nutrition-daily-log-entries">
+              {entries.length === 0 && <p>No food logged.</p>}
+
+              {entries.map((entry, index) => {
+                const { id } = entry
+                const description = entry.description || 'Food item'
+                const mealType = entry.mealType || 'Snack'
+                const proteinGrams = Number(entry.proteinGrams) || 0
+                const calories = Number(entry.calories) || 0
+
+                return (
+                  <div className="nutrition-daily-log-entry" key={id || `${dateValue}-${index}`}>
+                    <div className="nutrition-food-item">
+                      <span style={{ background: '#f3f4f6' }}>
+                        <Utensils size={13} color="#6b7280" />
+                      </span>
+                      <b title={description}>{description}</b>
+                    </div>
+                    <span className="nutrition-meal-tag">
+                      <i style={{ backgroundColor: mealDotColors[mealType] || '#94a3b8' }} />
+                      {mealType}
+                    </span>
+                    <strong className="nutrition-food-protein">{proteinGrams}g</strong>
+                    <strong className="nutrition-food-cal">
+                      {calories}
+                    </strong>
+                  </div>
+                )
+              })}
+            </div>
+          </article>
+        ))}
       </div>
     </section>
   )

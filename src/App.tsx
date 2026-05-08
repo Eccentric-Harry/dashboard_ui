@@ -67,8 +67,10 @@ function App() {
     content = <QuantifiedSelfDashboard activePath={pathname} onNavigate={navigateTo} />
   }
 
+  const currentDate = searchParams.get('date') || undefined;
+
   return (
-    <DashboardProvider>
+    <DashboardProvider date={currentDate}>
       {content}
     </DashboardProvider>
   );

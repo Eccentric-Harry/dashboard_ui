@@ -1,37 +1,129 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { Check, Trash2, Utensils, X, Pencil } from 'lucide-react'
 
-import { calorieSummary, macroNutrients } from '../data'
 import { RingProgress } from './ring-progress'
+import { useDashboard } from '../../../../contexts/DashboardContext'
+import { addFoodEntry, deleteFoodEntry } from '../../../../lib/api'
+
+const PROTEIN_TARGET = 100
+const CALORIE_TARGET = 2000
+
+type CircularGoal = {
+  label: string
+  value: number
+  target: number
+  unit: string
+}
+
+type FoodEntry = {
+  id?: string
+  description?: string
+  mealType?: string
+  proteinGrams?: number
+  calories?: number
+}
+
+const isoDate = (date: Date) => {
+  const year = date.getFullYear()
+  const month = `${date.getMonth() + 1}`.padStart(2, '0')
+  const day = `${date.getDate()}`.padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
 
 function MacroBalanceCard() {
-  const [selectedMacroId, setSelectedMacroId] = useState(macroNutrients[0].id)
+  const { data, refetch } = useDashboard()
+  const selectedDate = data?.date || isoDate(new Date())
+  const dailyFood = data?.health?.dailyFood || { calories: 0, calorieGoal: CALORIE_TARGET }
+  const circularGoals = useMemo<CircularGoal[]>(() => data?.health?.circularGoals || [], [data?.health?.circularGoals])
+  const foodEntries = useMemo<FoodEntry[]>(() => data?.health?.foodEntries || [], [data?.health?.foodEntries])
+  const [selectedMacroId, setSelectedMacroId] = useState('protein')
+  const [isAddingFood, setIsAddingFood] = useState(false)
+  const [isSubmittingFood, setIsSubmittingFood] = useState(false)
+  const [formData, setFormData] = useState({
+    description: '',
+    mealType: 'Snack',
+    proteinGrams: '',
+    calories: '',
+  })
 
-  const caloriesRemaining = Math.max(calorieSummary.target - calorieSummary.logged, 0)
-  const calorieProgress = Math.round((calorieSummary.logged / calorieSummary.target) * 100)
+  const proteinGoal = circularGoals.find((goal) => goal.label === 'Protein')
+  const proteinLogged = proteinGoal?.value || 0
+  const proteinTarget = PROTEIN_TARGET
+  const caloriesLogged = Number(dailyFood.calories) || 0
+  const caloriesTarget = CALORIE_TARGET
+  const calorieProgress = Math.round((caloriesLogged / caloriesTarget) * 100) || 0
+
+  const progressRings = [
+    {
+      id: 'protein',
+      label: 'Protein',
+      logged: proteinLogged,
+      target: proteinTarget,
+      unit: 'g',
+      color: '#35b64b',
+    },
+    {
+      id: 'calories',
+      label: 'Total Calories',
+      logged: caloriesLogged,
+      target: caloriesTarget,
+      unit: ' kcal',
+      color: '#5f7668',
+    },
+  ]
+
+  const resetFoodForm = () => {
+    setFormData({ description: '', mealType: 'Snack', proteinGrams: '', calories: '' })
+  }
+
+  const handleAddSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!formData.description || !formData.calories || !formData.proteinGrams) return
+
+    try {
+      setIsSubmittingFood(true)
+      await addFoodEntry({
+        description: formData.description,
+        mealType: formData.mealType,
+        proteinGrams: parseInt(formData.proteinGrams, 10),
+        calories: parseInt(formData.calories, 10),
+        date: selectedDate,
+      })
+      await refetch()
+      resetFoodForm()
+      setIsAddingFood(false)
+    } catch (error) {
+      console.error('Failed to add food entry', error)
+      alert('Failed to log food. Please check your inputs.')
+    } finally {
+      setIsSubmittingFood(false)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Delete this food entry?')) return
+
+    try {
+      await deleteFoodEntry(id)
+      await refetch()
+    } catch (error) {
+      console.error('Failed to delete', error)
+    }
+  }
 
   return (
     <section className="nutrition-card nutrition-macro-card">
       <div className="nutrition-card-head">
         <div>
-          <p>Daily Macro Balance</p>
-          <h2>{calorieProgress}% of calories logged</h2>
+          <p>Daily Nutrition Summary</p>
+          <h2>{calorieProgress}% of daily calories logged</h2>
         </div>
-        <span>160 g recovery target</span>
+        <span>{proteinTarget} g recovery target</span>
       </div>
 
-      <div className="nutrition-calorie-summary">
-        <div>
-          <strong>{calorieSummary.logged.toLocaleString()}</strong>
-          <small>{calorieSummary.unit} logged</small>
-        </div>
-        <div>
-          <strong>{caloriesRemaining.toLocaleString()}</strong>
-          <small>{calorieSummary.unit} remaining</small>
-        </div>
-      </div>
-
-      <div className="nutrition-rings" aria-label="Macro progress rings">
-        {macroNutrients.map((macro) => (
+      <div className="nutrition-rings nutrition-rings-two" aria-label="Daily nutrition progress rings">
+        {progressRings.map((macro) => (
           <RingProgress
             key={macro.id}
             label={macro.label}
@@ -45,6 +137,113 @@ function MacroBalanceCard() {
         ))}
       </div>
 
+      <div className="nutrition-today-log">
+        <div className="nutrition-today-log-head">
+          <div>
+            <p>Daily Log</p>
+            <h3>Daily Food Log</h3>
+          </div>
+          <div className="nutrition-today-log-actions">
+            <button
+              type="button"
+              className="nutrition-food-log-add-btn compact"
+              onClick={() => {
+                if (isAddingFood) {
+                  resetFoodForm()
+                }
+                setIsAddingFood((value) => !value)
+              }}
+              title={isAddingFood ? 'Cancel' : 'Edit Food Logs'}
+              aria-label={isAddingFood ? 'Cancel adding food' : 'Edit Food Logs'}
+              style={{
+                width: '32px',
+                height: '32px',
+                padding: '0',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                borderRadius: '50%'
+              }}
+            >
+              {isAddingFood ? <X size={16} strokeWidth={2.5} /> : <Pencil size={16} strokeWidth={2.5} />}
+            </button>
+          </div>
+        </div>
+
+        {isAddingFood && (
+          <form onSubmit={handleAddSubmit} className="nutrition-today-log-form">
+            <input
+              type="text"
+              autoFocus
+              placeholder="Food name"
+              value={formData.description}
+              onChange={(event) => setFormData({ ...formData, description: event.target.value })}
+              required
+            />
+            <select
+              value={formData.mealType}
+              onChange={(event) => setFormData({ ...formData, mealType: event.target.value })}
+            >
+              <option value="Breakfast">Breakfast</option>
+              <option value="Lunch">Lunch</option>
+              <option value="Dinner">Dinner</option>
+              <option value="Snack">Snack</option>
+              <option value="Post Workout">Post Workout</option>
+              <option value="Mid-Morning">Mid-Morning</option>
+              <option value="Midnight">Midnight</option>
+            </select>
+            <input
+              type="number"
+              placeholder="Protein (g)"
+              value={formData.proteinGrams}
+              onChange={(event) => setFormData({ ...formData, proteinGrams: event.target.value })}
+              required
+              min="0"
+            />
+            <span>
+              <input
+                type="number"
+                placeholder="Calories (kcal)"
+                value={formData.calories}
+                onChange={(event) => setFormData({ ...formData, calories: event.target.value })}
+                required
+                min="0"
+              />
+              <button type="submit" disabled={isSubmittingFood} aria-label="Save food entry">
+                <Check size={14} />
+              </button>
+            </span>
+          </form>
+        )}
+
+        <div className="nutrition-today-log-list">
+          {foodEntries.length === 0 && <p>No food logged.</p>}
+
+          {foodEntries.map((entry, index) => {
+            const id = entry.id
+            const description = entry.description || 'Food item'
+            const mealType = entry.mealType || 'Snack'
+            const calories = Number(entry.calories) || 0
+
+            return (
+              <div className="nutrition-today-log-row" key={id || `${description}-${index}`}>
+                <span aria-hidden="true">
+                  <Utensils size={16} />
+                </span>
+                <div>
+                  <b title={description}>{description}</b>
+                  <small>{mealType} | {calories.toLocaleString()} kcal</small>
+                </div>
+                {id && isAddingFood && (
+                  <button type="button" onClick={() => handleDelete(id)} title="Delete entry" aria-label="Delete entry">
+                    <Trash2 size={14} />
+                  </button>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </div>
     </section>
   )
 }

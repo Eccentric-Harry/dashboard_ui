@@ -9,7 +9,7 @@ type RingProgressProps = {
 }
 
 function RingProgress({ label, value, target, color, unit, active, onSelect }: RingProgressProps) {
-  const radius = 44
+  const radius = 48
   const circumference = 2 * Math.PI * radius
   const progress = Math.min(value / target, 1)
   const dashOffset = circumference - progress * circumference
@@ -22,11 +22,11 @@ function RingProgress({ label, value, target, color, unit, active, onSelect }: R
       onClick={onSelect}
       aria-pressed={active}
     >
-      <svg viewBox="0 0 108 108" aria-hidden="true">
-        <circle cx="54" cy="54" r={radius} className="track" />
+      <svg viewBox="0 0 128 128" aria-hidden="true">
+        <circle cx="64" cy="64" r={radius} className="track" />
         <circle
-          cx="54"
-          cy="54"
+          cx="64"
+          cy="64"
           r={radius}
           className="value"
           strokeDasharray={circumference}
@@ -37,7 +37,7 @@ function RingProgress({ label, value, target, color, unit, active, onSelect }: R
         <b>{Math.round(progress * 100)}%</b>
         <small>{label}</small>
         <em>
-          {value}/{target}
+          {value.toLocaleString()}/{target.toLocaleString()}
           {unit}
         </em>
       </span>
