@@ -687,7 +687,7 @@
   position: relative;
   display: grid;
   min-width: 0;
-  height: 160px;
+  height: 170px;
   place-items: center;
   border-radius: 20px;
   background: linear-gradient(155deg, rgba(252, 255, 253, 0.9), rgba(245, 252, 248, 0.82), rgba(238, 248, 242, 0.75));
@@ -724,7 +724,7 @@
   stroke: var(--ring-color);
   stroke-linecap: round;
   transition: stroke-dashoffset 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  filter: drop-shadow(0 6px 12px color-mix(in srgb, var(--ring-color) 30%, transparent));
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--ring-color) 40%, transparent));
 }
 
 .nutrition-ring span {
@@ -738,7 +738,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   text-align: center;
 }
 
@@ -749,7 +749,7 @@
 }
 
 .nutrition-ring b {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   line-height: 0.96;
   background: linear-gradient(135deg, #0d1110, #2d3c30);
@@ -768,15 +768,16 @@
 }
 
 .nutrition-ring em {
-  color: rgba(23, 28, 25, 0.5);
-  font-size: 9px;
+  color: rgba(23, 28, 25, 0.45);
+  font-size: 8px;
   font-style: normal;
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1.1;
-  max-width: 100px;
+  max-width: 105px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  letter-spacing: 0.02em;
 }
 
 .nutrition-today-log {

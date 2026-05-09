@@ -93,7 +93,7 @@ function MacroBalanceCard() {
       logged: caloriesLogged,
       target: caloriesTarget,
       unit: ' kcal',
-      color: '#5f7668',
+      color: '#eab308',
     },
   ]
 

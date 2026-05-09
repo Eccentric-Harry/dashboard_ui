@@ -11,11 +11,17 @@ function HydrationCard() {
   const [adding, setAdding] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const getSelectedDate = () => {
+    const params = new URLSearchParams(window.location.search)
+    return params.get('date') || new Date().toISOString().split('T')[0]
+  }
+
   const loadHydration = useCallback(async () => {
     try {
       setError(null)
       setLoading(true)
-      const response = await fetchHydration()
+      const date = getSelectedDate()
+      const response = await fetchHydration(date)
       setData(response.data)
     } catch (err) {
       setError('Failed to load hydration data')
@@ -27,14 +33,22 @@ function HydrationCard() {
 
   useEffect(() => {
     loadHydration()
+
+    // Listen for URL changes (popstate is triggered by NutritionHeader)
+    const handleUrlChange = () => {
+      loadHydration()
+    }
+    window.addEventListener('popstate', handleUrlChange)
+    return () => window.removeEventListener('popstate', handleUrlChange)
   }, [loadHydration])
 
   const handleAddWater = async (amount: number) => {
     if (adding) return
     try {
       setAdding(true)
-      await addWaterIntake(amount)
-      const response = await fetchHydration()
+      const date = getSelectedDate()
+      await addWaterIntake(amount, date)
+      const response = await fetchHydration(date)
       setData(response.data)
     } catch (err) {
       setError('Failed to add water')
@@ -43,6 +57,7 @@ function HydrationCard() {
       setAdding(false)
     }
   }
+
 
   const logged = data?.waterIntakeMl ?? 0
   const target = data?.targetMl ?? TARGET_ML

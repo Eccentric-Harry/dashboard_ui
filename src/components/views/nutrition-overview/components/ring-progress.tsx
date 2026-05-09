@@ -9,7 +9,7 @@ type RingProgressProps = {
 }
 
 function RingProgress({ label, value, target, color, unit, active, onSelect }: RingProgressProps) {
-  const radius = 48
+  const radius = 58
   const circumference = 2 * Math.PI * radius
   const progress = Math.min(value / target, 1)
   const dashOffset = circumference - progress * circumference
