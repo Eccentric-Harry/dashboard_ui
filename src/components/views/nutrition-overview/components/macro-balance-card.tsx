@@ -129,7 +129,7 @@ function MacroBalanceCard() {
     if (!window.confirm('Delete this food entry?')) return
 
     try {
-      await deleteFoodEntry(id)
+      await deleteFoodEntry(selectedDate, id)
       await refetch()
     } catch (error) {
       console.error('Failed to delete', error)

@@ -45,8 +45,8 @@ export async function addFoodEntry(data: { description: string; calories: number
   return response.json();
 }
 
-export async function updateFoodEntry(id: string, data: { description: string; calories: number; proteinGrams: number; mealType: string; date: string }) {
-  const response = await fetch(`${API_BASE_URL}/health/food/${id}`, {
+export async function updateFoodEntry(mealId: string, entryId: string, data: { description: string; calories: number; proteinGrams: number; mealType: string; date: string }) {
+  const response = await fetch(`${API_BASE_URL}/health/food/${mealId}/meal/${entryId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -57,8 +57,8 @@ export async function updateFoodEntry(id: string, data: { description: string; c
   return response.json();
 }
 
-export async function deleteFoodEntry(id: string) {
-  const response = await fetch(`${API_BASE_URL}/health/food/${id}`, {
+export async function deleteFoodEntry(mealId: string, entryId: string) {
+  const response = await fetch(`${API_BASE_URL}/health/food/${mealId}/meal/${entryId}`, {
     method: 'DELETE',
   });
   if (!response.ok) {
