@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef, useCallback, useEffect } from 'react'
 import { Check, Trash2, Utensils, X, Pencil } from 'lucide-react'
 
 import { RingProgress } from './ring-progress'
@@ -40,6 +40,9 @@ function MacroBalanceCard() {
   const [selectedMacroId, setSelectedMacroId] = useState('protein')
   const [isAddingFood, setIsAddingFood] = useState(false)
   const [isSubmittingFood, setIsSubmittingFood] = useState(false)
+  const [isScrolling, setIsScrolling] = useState(false)
+  const listRef = useRef<HTMLDivElement>(null)
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [formData, setFormData] = useState({
     description: '',
     mealType: 'Snack',
@@ -47,12 +50,33 @@ function MacroBalanceCard() {
     calories: '',
   })
 
+  const handleScrollStart = useCallback(() => {
+    setIsScrolling(true)
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current)
+    }
+  }, [])
+
+  const handleScrollEnd = useCallback(() => {
+    scrollTimeoutRef.current = setTimeout(() => {
+      setIsScrolling(false)
+    }, 300)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current)
+      }
+    }
+  }, [])
+
   const proteinGoal = circularGoals.find((goal) => goal.label === 'Protein')
   const proteinLogged = proteinGoal?.value || 0
   const proteinTarget = PROTEIN_TARGET
+  const proteinProgress = Math.round((proteinLogged / proteinTarget) * 100) || 0
   const caloriesLogged = Number(dailyFood.calories) || 0
   const caloriesTarget = CALORIE_TARGET
-  const calorieProgress = Math.round((caloriesLogged / caloriesTarget) * 100) || 0
 
   const progressRings = [
     {
@@ -117,7 +141,7 @@ function MacroBalanceCard() {
       <div className="nutrition-card-head">
         <div>
           <p>Daily Nutrition Summary</p>
-          <h2>{calorieProgress}% of daily calories logged</h2>
+          <h2>{proteinProgress}% of daily protein logged</h2>
         </div>
         <span>{proteinTarget} g recovery target</span>
       </div>
@@ -216,7 +240,16 @@ function MacroBalanceCard() {
           </form>
         )}
 
-        <div className="nutrition-today-log-list">
+        <div
+          ref={listRef}
+          className={`nutrition-today-log-list${isScrolling ? ' scrolling' : ''}`}
+          onScroll={(e) => {
+            if (e.currentTarget.scrollTop === 0) {
+              handleScrollStart()
+            }
+            handleScrollEnd()
+          }}
+        >
           {foodEntries.length === 0 && <p>No food logged.</p>}
 
           {foodEntries.map((entry, index) => {

@@ -83,3 +83,48 @@ export async function fetchWorkoutsData() {
   }
   return response.json();
 }
+
+export interface HydrationData {
+  id?: string;
+  date: string;
+  waterIntakeMl: number;
+  targetMl: number;
+  progress: number;
+  notes?: string;
+}
+
+export async function fetchHydration(date?: string) {
+  const query = date ? `?date=${date}` : '';
+  const response = await fetch(`${API_BASE_URL}/health/hydration${query}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch hydration data');
+  }
+  return response.json();
+}
+
+export async function addWaterIntake(amount: number, date?: string) {
+  const params = new URLSearchParams();
+  params.append('amount', amount.toString());
+  if (date) params.append('date', date);
+  
+  const response = await fetch(`${API_BASE_URL}/health/hydration/add?${params.toString()}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!response.ok) {
+    throw new Error('Failed to add water intake');
+  }
+  return response.json();
+}
+
+export async function updateHydration(id: string, data: { waterIntakeMl: number; targetMl?: number; notes?: string; date: string }) {
+  const response = await fetch(`${API_BASE_URL}/health/hydration/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to update hydration');
+  }
+  return response.json();
+}

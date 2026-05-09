@@ -4,13 +4,13 @@ import { useDashboard } from '../../../../contexts/DashboardContext'
 import { fetchDashboardData, fetchFoodEntries } from '../../../../lib/api'
 
 const mealDotColors: Record<string, string> = {
-  Breakfast: '#f59e0b',
-  Lunch: '#10b981',
-  Dinner: '#0ea5e9',
-  Snack: '#8b5cf6',
-  Midnight: '#312e81',
-  'Post Workout': '#ef4444',
-  'Mid-Morning': '#f97316',
+  Breakfast: '#fbbf24',
+  Lunch: '#34d399',
+  Dinner: '#38bdf8',
+  Snack: '#a78bfa',
+  Midnight: '#6366f1',
+  'Post Workout': '#f87171',
+  'Mid-Morning': '#fb923c',
 }
 
 type FoodEntry = {
@@ -72,9 +72,26 @@ const ordinal = (day: number) => {
 
 const formatLogDate = (dateValue: string) => {
   const date = parseIsoDate(dateValue)
-  const weekday = date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()
+  const today = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
 
-  return `${weekday}, ${ordinal(date.getDate())}`
+  const isToday = date.toDateString() === today.toDateString()
+  const isYesterday = date.toDateString() === yesterday.toDateString()
+
+  if (isToday) {
+    return 'Today'
+  }
+
+  if (isYesterday) {
+    return 'Yesterday'
+  }
+
+  const weekday = date.toLocaleDateString('en-US', { weekday: 'long' })
+  const month = date.toLocaleDateString('en-US', { month: 'short' })
+  const day = date.getDate()
+
+  return `${weekday}, ${month} ${day}`
 }
 
 const normalizeEntryDate = (entry: FoodEntry, fallbackDate: string) => {

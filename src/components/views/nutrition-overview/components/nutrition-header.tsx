@@ -375,7 +375,6 @@ function NutritionHeader() {
           </div>
         )}
       </div>
-      <span>{foodEntries.length} meals logged</span>
     </header>
   )
 }

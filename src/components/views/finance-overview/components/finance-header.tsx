@@ -3,7 +3,7 @@ function FinanceHeader() {
     <header className="finance-header">
       <div>
         <p>Finance Overview</p>
-        <h1>Welcome back, Divine</h1>
+        <h1>Welcome back, Harry!</h1>
       </div>
       <span>Today</span>
     </header>
