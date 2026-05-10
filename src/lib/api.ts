@@ -186,6 +186,7 @@ export async function updateTransaction(id: string, data: { description: string;
 export interface StravaActivity {
   id: string;
   stravaEmbedId?: string;
+  stravaToken?: string;
   date: string;
   activityName: string;
   sportType: string;
@@ -207,7 +208,7 @@ export interface StravaActivityStats {
   countBySportType: Record<string, number>;
   distanceBySportType: Record<string, number>;
   currentStreakWeeks: number;
-  recentEmbedIds: string[];
+  recentEmbeds: Array<{ id: string; token?: string }>;
 }
 
 export async function fetchStravaActivities() {
@@ -234,6 +235,7 @@ export async function createStravaActivity(data: {
   elevationGainMeters: number;
   date: string;
   stravaEmbedId?: string;
+  stravaToken?: string;
 }) {
   const response = await fetch(`${API_BASE_URL}/workouts/activities`, {
     method: 'POST',
@@ -242,6 +244,27 @@ export async function createStravaActivity(data: {
   });
   if (!response.ok) {
     throw new Error('Failed to create Strava activity');
+  }
+  return response.json();
+}
+
+export async function fetchFeaturedStravaEmbed() {
+  const response = await fetch(`${API_BASE_URL}/workouts/featured-embed`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch featured Strava embed');
+  }
+  const result = await response.json();
+  return result.data;
+}
+
+export async function updateFeaturedStravaEmbed(data: { id: string; token?: string }) {
+  const response = await fetch(`${API_BASE_URL}/workouts/featured-embed`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to update featured Strava embed');
   }
   return response.json();
 }

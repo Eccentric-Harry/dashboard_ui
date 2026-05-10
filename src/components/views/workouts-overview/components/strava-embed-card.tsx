@@ -1,83 +1,87 @@
-import { useState } from 'react'
-import { ExternalLink } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { ExternalLink, Pin } from 'lucide-react'
 import type { StravaActivityStats } from '../../../../lib/api'
+import { fetchFeaturedStravaEmbed } from '../../../../lib/api'
 
 type StravaEmbedCardProps = {
   stats: StravaActivityStats | null
+  onEditClick: () => void
 }
 
-function StravaEmbedCard({ stats }: StravaEmbedCardProps) {
-  const [embedHtml, setEmbedHtml] = useState('')
-  const [activeEmbedId, setActiveEmbedId] = useState<string | null>(null)
+function StravaEmbedCard({ stats, onEditClick }: StravaEmbedCardProps) {
+  const [activeEmbed, setActiveEmbed] = useState<{ id: string; token?: string } | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  const extractEmbedId = (html: string): string | null => {
-    // Match data-embed-id="..." from Strava embed HTML
-    const match = html.match(/data-embed-id="(\d+)"/)
-    return match ? match[1] : null
-  }
-
-  const handleLoadEmbed = () => {
-    const id = extractEmbedId(embedHtml)
-    if (id) {
-      setActiveEmbedId(id)
+  // Load featured embed on mount
+  useEffect(() => {
+    const loadFeatured = async () => {
+      try {
+        const featured = await fetchFeaturedStravaEmbed()
+        if (featured) {
+          setActiveEmbed(featured)
+        } else if (stats?.recentEmbeds?.length) {
+          // Fallback to most recent activity if no pinned featured activity exists
+          setActiveEmbed(stats.recentEmbeds[0])
+        }
+      } catch (err) {
+        console.error('Error loading featured embed:', err)
+      } finally {
+        setLoading(false)
+      }
     }
-  }
+    loadFeatured()
+  }, [stats])
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleLoadEmbed()
-    }
-  }
+  const iframeSrc = activeEmbed 
+    ? `https://strava-embeds.com/activity/${activeEmbed.id}${activeEmbed.token ? `?token=${activeEmbed.token}` : ''}`
+    : ''
 
   return (
     <div className="workouts-card workouts-embed-card">
       <div className="workouts-section-head">
         <div>
           <h2>Strava Embed</h2>
-          <p>Paste embed code to preview</p>
+          <p>Featured Activity</p>
         </div>
-        {activeEmbedId && (
-          <a
-            href={`https://www.strava.com/activities/${activeEmbedId}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: '#3dc152', display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 700, textDecoration: 'none' }}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {activeEmbed && (
+            <a
+              href={`https://www.strava.com/activities/${activeEmbed.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="workouts-embed-external-link"
+              title="Open in Strava"
+            >
+              <ExternalLink size={14} />
+            </a>
+          )}
+          <button 
+            className="workouts-embed-pin-btn" 
+            onClick={onEditClick}
+            title="Pin New Activity"
           >
-            Open in Strava <ExternalLink size={12} />
-          </a>
-        )}
+            <Pin size={14} />
+          </button>
+        </div>
       </div>
 
-      <div className="workouts-embed-input-area">
-        <textarea
-          value={embedHtml}
-          onChange={e => setEmbedHtml(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={'Paste Strava embed HTML here…\ne.g. <div class="strava-embed-placeholder" data-embed-id="18451565806" ...>'}
-        />
-        <button
-          className="workouts-embed-load-btn"
-          onClick={handleLoadEmbed}
-          disabled={!embedHtml.trim()}
-          type="button"
-        >
-          Load Embed
-        </button>
-      </div>
-
-      <div className="workouts-embed-frame-wrapper">
-        {activeEmbedId ? (
+      <div className="workouts-embed-frame-wrapper" style={{ marginTop: 0 }}>
+        {loading ? (
+          <div className="workouts-loading" style={{ minHeight: '300px' }}>
+            <span className="workouts-loading-dot">Loading…</span>
+          </div>
+        ) : activeEmbed ? (
           <iframe
-            src={`https://strava-embeds.com/activity/${activeEmbedId}`}
+            key={iframeSrc} // Force reload when src changes
+            src={iframeSrc}
             title="Strava Activity Embed"
             loading="lazy"
             allowFullScreen
           />
         ) : (
-          <div className="workouts-embed-placeholder">
-            <ExternalLink size={28} />
-            <span>Paste a Strava embed snippet above to preview your activity here</span>
+          <div className="workouts-embed-placeholder" onClick={onEditClick} style={{ cursor: 'pointer' }}>
+            <Pin size={28} />
+            <span>Click the pin icon to feature a Strava activity here</span>
           </div>
         )}
       </div>

@@ -22,9 +22,12 @@ function AddActivityModal({ isOpen, onClose, onSuccess }: AddActivityModalProps)
 
   if (!isOpen) return null
 
-  const extractEmbedId = (html: string): string | null => {
-    const match = html.match(/data-embed-id="(\d+)"/)
-    return match ? match[1] : null
+  const extractEmbedInfo = (html: string): { id: string; token?: string } | null => {
+    let idMatch = html.match(/data-embed-id="(\d+)"/) || html.match(/activity\/(\d+)/) || html.match(/\b\d{10,12}\b/)
+    if (!idMatch) return null
+    const id = idMatch[1] || idMatch[0]
+    const tokenMatch = html.match(/data-token="([^"]+)"/) || html.match(/token=([^&" \s]+)/)
+    return { id, token: tokenMatch ? tokenMatch[1] : undefined }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -32,17 +35,22 @@ function AddActivityModal({ isOpen, onClose, onSuccess }: AddActivityModalProps)
     setLoading(true)
 
     try {
-      // If embed HTML is provided, extract the ID
       let embedId = formData.stravaEmbedId
-      if (embedId.includes('<div') || embedId.includes('data-embed-id')) {
-        embedId = extractEmbedId(embedId) || ''
+      let token = ''
+      if (embedId.includes('<') || embedId.includes('data-') || embedId.includes('strava')) {
+        const info = extractEmbedInfo(embedId)
+        if (info) {
+          embedId = info.id
+          token = info.token || ''
+        }
       }
 
       await createStravaActivity({
         ...formData,
         distanceKm: parseFloat(formData.distanceKm) || 0,
         elevationGainMeters: parseInt(formData.elevationGainMeters) || 0,
-        stravaEmbedId: embedId
+        stravaEmbedId: embedId,
+        stravaToken: token
       })
       onSuccess()
       onClose()

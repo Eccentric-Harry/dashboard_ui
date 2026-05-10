@@ -6,6 +6,7 @@ import { SportBreakdownCard } from './components/sport-breakdown-card'
 import { ActivityLogCard } from './components/activity-log-card'
 import { StravaEmbedCard } from './components/strava-embed-card'
 import { AddActivityModal } from './components/add-activity-modal'
+import { UpdateEmbedModal } from './components/update-embed-modal'
 import { fetchStravaActivities, fetchStravaActivityStats } from '../../../lib/api'
 import type { StravaActivity, StravaActivityStats } from '../../../lib/api'
 import { Activity, Mountain, Timer, Flame } from 'lucide-react'
@@ -17,6 +18,7 @@ function WorkoutsOverviewDashboard() {
   const [stats, setStats] = useState<StravaActivityStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [isEmbedModalOpen, setIsEmbedModalOpen] = useState(false)
 
   const refreshData = useCallback(() => {
     setLoading(true)
@@ -75,12 +77,18 @@ function WorkoutsOverviewDashboard() {
         <DistanceTrendCard activities={activities} loading={loading} />
         <SportBreakdownCard stats={stats} loading={loading} />
         <ActivityLogCard activities={activities} loading={loading} />
-        <StravaEmbedCard stats={stats} />
+        <StravaEmbedCard stats={stats} onEditClick={() => setIsEmbedModalOpen(true)} />
       </div>
 
       <AddActivityModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
+        onSuccess={refreshData}
+      />
+
+      <UpdateEmbedModal
+        isOpen={isEmbedModalOpen}
+        onClose={() => setIsEmbedModalOpen(false)}
         onSuccess={refreshData}
       />
     </section>

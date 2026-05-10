@@ -51,14 +51,14 @@ function SportBreakdownCard({ stats, loading }: SportBreakdownCardProps) {
         <div className="workouts-breakdown-body">
           <div className="workouts-breakdown-chart">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                 <Pie
                   data={pieData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={55}
-                  outerRadius={85}
-                  paddingAngle={3}
+                  innerRadius="65%"
+                  outerRadius="90%"
+                  paddingAngle={4}
                   dataKey="value"
                   strokeWidth={0}
                 >
