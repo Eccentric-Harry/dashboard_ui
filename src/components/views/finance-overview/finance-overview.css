@@ -712,6 +712,33 @@
   color: #d83542;
 }
 
+.finance-transaction-amount-group {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  justify-self: end;
+}
+
+.finance-transaction-edit-btn {
+  background: transparent;
+  border: none;
+  color: rgba(23, 28, 25, 0.4);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.finance-transaction-edit-btn:hover {
+  background: rgba(20, 24, 22, 0.06);
+  color: #121c17;
+  transform: scale(1.1);
+}
+
 /* Modal Styling matching Nutrition */
 .finance-modal-backdrop {
   position: fixed;

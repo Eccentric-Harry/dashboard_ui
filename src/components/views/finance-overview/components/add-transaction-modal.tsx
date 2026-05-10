@@ -1,11 +1,20 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, CheckCircle2, Loader2 } from 'lucide-react'
-import { addTransaction } from '../../../../lib/api'
+import { addTransaction, updateTransaction } from '../../../../lib/api'
 
 interface AddTransactionModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
+  isEdit?: boolean
+  initialData?: {
+    id?: string
+    description: string
+    amount: number
+    category: string
+    type: string
+    date: string
+  }
 }
 
 const CATEGORIES = [
@@ -14,7 +23,7 @@ const CATEGORIES = [
   'Lending', 'Waste', 'Miscellaneous', 'Income', 'Salary'
 ]
 
-export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransactionModalProps) {
+export function AddTransactionModal({ isOpen, onClose, onSuccess, isEdit, initialData }: AddTransactionModalProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
@@ -25,6 +34,23 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0])
+
+  useEffect(() => {
+    if (isOpen && isEdit && initialData) {
+      setType(initialData.type)
+      setCategory(initialData.category)
+      setAmount(initialData.amount.toString())
+      setDescription(initialData.description)
+      setDate(initialData.date)
+    } else if (isOpen && !isEdit) {
+      // Reset to defaults for new transaction
+      setType('Expense')
+      setCategory(CATEGORIES[0])
+      setAmount('')
+      setDescription('')
+      setDate(new Date().toISOString().split('T')[0])
+    }
+  }, [isOpen, isEdit, initialData])
 
   if (!isOpen) return null
 
@@ -45,27 +71,28 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
 
     setLoading(true)
     try {
-      await addTransaction({
+      const payload = {
         description,
         amount: numAmount,
         category,
         type,
         date
-      })
+      }
+
+      if (isEdit && initialData?.id) {
+        await updateTransaction(initialData.id, payload)
+      } else {
+        await addTransaction(payload)
+      }
+      
       setSuccess(true)
       setTimeout(() => {
         setSuccess(false)
         onSuccess()
         onClose()
-        // Reset form
-        setDescription('')
-        setAmount('')
-        setCategory(CATEGORIES[0])
-        setType('Expense')
-        setDate(new Date().toISOString().split('T')[0])
       }, 1000)
     } catch (err: any) {
-      setError(err.message || 'Failed to add transaction')
+      setError(err.message || 'Failed to save transaction')
     } finally {
       setLoading(false)
     }
@@ -84,7 +111,9 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
           <X size={15} />
         </button>
         
-        <h2 style={{ fontSize: '22px', marginBottom: '24px' }}>Add Transaction</h2>
+        <h2 style={{ fontSize: '22px', marginBottom: '24px' }}>
+          {isEdit ? 'Edit Transaction' : 'Add Transaction'}
+        </h2>
         
         {success ? (
           <div className="add-tx-success">

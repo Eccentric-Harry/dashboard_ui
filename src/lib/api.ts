@@ -168,3 +168,15 @@ export async function addTransaction(data: { description: string; amount: number
   }
   return response.json();
 }
+
+export async function updateTransaction(id: string, data: { description: string; amount: number; category: string; type: string; date: string }) {
+  const response = await fetch(`${API_BASE_URL}/finance/transactions/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to update transaction');
+  }
+  return response.json();
+}

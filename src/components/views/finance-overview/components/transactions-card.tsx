@@ -1,22 +1,27 @@
 import { useState, useEffect } from 'react'
-import { X } from 'lucide-react'
+import { X, Edit2 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 export interface TransactionProp {
+  id: string
   merchant: string
   detail: string
   category: string
   amount: string
   tone: 'income' | 'expense' | string
   icon: LucideIcon
+  rawAmount: number
+  rawDate: string
+  rawType: string
 }
 
 interface TransactionsCardProps {
   transactions?: TransactionProp[]
   loading?: boolean
+  onEdit?: (transaction: TransactionProp) => void
 }
 
-function TransactionsCard({ transactions = [], loading = false }: TransactionsCardProps) {
+function TransactionsCard({ transactions = [], loading = false, onEdit }: TransactionsCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const displayTransactions = transactions.slice(0, 10)
 
@@ -54,23 +59,38 @@ function TransactionsCard({ transactions = [], loading = false }: TransactionsCa
           ) : displayTransactions.length === 0 ? (
             <div className="p-4 text-center text-sm text-gray-500">No recent transactions</div>
           ) : (
-            displayTransactions.map(({ merchant, detail, category, amount, tone, icon: Icon }, index) => (
-              <div className="finance-transaction-row" key={`${merchant}-${detail}-${index}`} role="row">
-                <div className="finance-transaction-merchant" role="cell">
-                  <span>
-                    <Icon size={16} />
-                  </span>
-                  <p>
-                    <b>{merchant}</b>
-                    <small>{detail}</small>
-                  </p>
+            displayTransactions.map((tx, index) => {
+              const { merchant, detail, category, amount, tone, icon: Icon } = tx;
+              return (
+                <div className="finance-transaction-row" key={`${merchant}-${detail}-${index}`} role="row">
+                  <div className="finance-transaction-merchant" role="cell">
+                    <span>
+                      <Icon size={16} />
+                    </span>
+                    <p>
+                      <b>{merchant}</b>
+                      <small>{detail}</small>
+                    </p>
+                  </div>
+                  <em role="cell">{category}</em>
+                  <div className="finance-transaction-amount-group" role="cell">
+                    <strong className={tone}>
+                      {amount}
+                    </strong>
+                    {onEdit && (
+                      <button 
+                        type="button" 
+                        className="finance-transaction-edit-btn" 
+                        onClick={() => onEdit(tx)}
+                        aria-label="Edit transaction"
+                      >
+                        <Edit2 size={12} />
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <em role="cell">{category}</em>
-                <strong className={tone} role="cell">
-                  {amount}
-                </strong>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
         </div>
@@ -90,23 +110,38 @@ function TransactionsCard({ transactions = [], loading = false }: TransactionsCa
                 <span role="columnheader">Amount (INR)</span>
               </div>
               <div className="finance-transaction-list" role="rowgroup">
-                {transactions.map(({ merchant, detail, category, amount, tone, icon: Icon }, index) => (
-                  <div className="finance-transaction-row" key={`modal-${merchant}-${detail}-${index}`} role="row">
-                    <div className="finance-transaction-merchant" role="cell">
-                      <span>
-                        <Icon size={16} />
-                      </span>
-                      <p>
-                        <b>{merchant}</b>
-                        <small>{detail}</small>
-                      </p>
+                {transactions.map((tx, index) => {
+                  const { merchant, detail, category, amount, tone, icon: Icon } = tx;
+                  return (
+                    <div className="finance-transaction-row" key={`modal-${merchant}-${detail}-${index}`} role="row">
+                      <div className="finance-transaction-merchant" role="cell">
+                        <span>
+                          <Icon size={16} />
+                        </span>
+                        <p>
+                          <b>{merchant}</b>
+                          <small>{detail}</small>
+                        </p>
+                      </div>
+                      <em role="cell">{category}</em>
+                      <div className="finance-transaction-amount-group" role="cell">
+                        <strong className={tone}>
+                          {amount}
+                        </strong>
+                        {onEdit && (
+                          <button 
+                            type="button" 
+                            className="finance-transaction-edit-btn" 
+                            onClick={() => onEdit(tx)}
+                            aria-label="Edit transaction"
+                          >
+                            <Edit2 size={12} />
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    <em role="cell">{category}</em>
-                    <strong className={tone} role="cell">
-                      {amount}
-                    </strong>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>

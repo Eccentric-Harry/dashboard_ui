@@ -74,11 +74,31 @@ function FinanceOverviewDashboard() {
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [editingTransaction, setEditingTransaction] = useState<any>(null)
+  const [selectedMonthKey, setSelectedMonthKey] = useState<string>(() => {
+    const d = new Date()
+    return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`
+  })
 
   const refreshData = () => {
     setLoading(true)
     fetchDailyFinanceLogs(365).then((res) => {
-      setLogs(res.data || [])
+      const fetchedLogs = res.data || []
+      setLogs(fetchedLogs)
+      
+      // If current month has no data, default to most recent month with data
+      if (fetchedLogs.length > 0) {
+        const availableMonthKeys = Array.from(new Set(fetchedLogs.map(log => {
+          const d = new Date(log.date)
+          return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`
+        }))).sort().reverse()
+        
+        const currentMonthKey = `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}`
+        if (!availableMonthKeys.includes(currentMonthKey)) {
+          setSelectedMonthKey(availableMonthKeys[0])
+        }
+      }
+      
       setLoading(false)
     }).catch(err => {
       console.error(err)
@@ -96,13 +116,11 @@ function FinanceOverviewDashboard() {
     let totalIncome = 0
     let totalExpense = 0
     
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
-    
     logs.forEach(log => {
-      const logDate = new Date(log.date);
-      // Only sum up for the current month for "Monthly" metrics
-      if (logDate.getMonth() === currentMonth && logDate.getFullYear() === currentYear) {
+      const d = new Date(log.date)
+      const logMonthKey = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`
+      
+      if (logMonthKey === selectedMonthKey) {
         totalIncome += log.dailyTotals?.totalIncome || 0
         totalExpense += log.dailyTotals?.totalExpense || 0
       }
@@ -136,25 +154,34 @@ function FinanceOverviewDashboard() {
         icon: PiggyBank,
       },
     ]
-  }, [logs])
+  }, [logs, selectedMonthKey])
 
   const recentTransactions = useMemo(() => {
     let allTxs: any[] = []
     logs.forEach(log => {
-      Object.entries(log.transactions || {}).forEach(([category, txs]) => {
-        txs.forEach(tx => {
-          const isIncome = category.toLowerCase().includes('income');
-          allTxs.push({
-            merchant: tx.description,
-            detail: new Date(tx.timestamp).toLocaleDateString(),
-            category: category,
-            amount: `${isIncome ? '+' : '-'}₹${tx.amount.toLocaleString()}`,
-            tone: isIncome ? 'income' : 'expense',
-            icon: getIconForCategory(category),
-            timestamp: new Date(tx.timestamp).getTime()
+      const d = new Date(log.date)
+      const logMonthKey = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`
+      
+      if (logMonthKey === selectedMonthKey) {
+        Object.entries(log.transactions || {}).forEach(([category, txs]) => {
+          txs.forEach(tx => {
+            const isIncome = category.toLowerCase().includes('income');
+            allTxs.push({
+              id: tx.id,
+              merchant: tx.description,
+              detail: new Date(tx.timestamp).toLocaleDateString(),
+              category: category,
+              amount: `${isIncome ? '+' : '-'}₹${tx.amount.toLocaleString()}`,
+              tone: isIncome ? 'income' : 'expense',
+              icon: getIconForCategory(category),
+              timestamp: new Date(tx.timestamp).getTime(),
+              rawAmount: tx.amount,
+              rawDate: new Date(tx.timestamp).toISOString().split('T')[0],
+              rawType: isIncome ? 'Income' : 'Expense'
+            })
           })
         })
-      })
+      }
     })
     
     if (selectedCategory) {
@@ -163,7 +190,18 @@ function FinanceOverviewDashboard() {
 
     // Sort all transactions globally and pass the full array
     return allTxs.sort((a, b) => b.timestamp - a.timestamp)
-  }, [logs, selectedCategory])
+  }, [logs, selectedCategory, selectedMonthKey])
+
+  const handleEdit = (tx: any) => {
+    setEditingTransaction({
+      id: tx.id,
+      description: tx.merchant,
+      amount: tx.rawAmount,
+      category: tx.category,
+      type: tx.rawType,
+      date: tx.rawDate
+    })
+  }
 
   return (
     <section className="finance-dashboard" aria-label="Finance overview dashboard">
@@ -177,16 +215,27 @@ function FinanceOverviewDashboard() {
           logs={logs} 
           selectedCategory={selectedCategory} 
           onCategorySelect={setSelectedCategory} 
+          selectedMonthKey={selectedMonthKey}
+          onMonthSelect={setSelectedMonthKey}
         />
-        <TransactionsCard transactions={recentTransactions} loading={loading} />
+        <TransactionsCard 
+          transactions={recentTransactions} 
+          loading={loading} 
+          onEdit={handleEdit}
+        />
         <SubscriptionsCard />
         <CashflowCard />
         <RecommendationsCard />
       </div>
       
       <AddTransactionModal 
-        isOpen={isAddModalOpen} 
-        onClose={() => setIsAddModalOpen(false)} 
+        isOpen={isAddModalOpen || !!editingTransaction} 
+        isEdit={!!editingTransaction}
+        initialData={editingTransaction}
+        onClose={() => {
+          setIsAddModalOpen(false)
+          setEditingTransaction(null)
+        }} 
         onSuccess={refreshData} 
       />
     </section>

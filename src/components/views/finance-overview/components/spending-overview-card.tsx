@@ -7,6 +7,8 @@ interface SpendingOverviewCardProps {
   logs?: DailyFinancialLog[]
   selectedCategory?: string | null
   onCategorySelect?: (category: string | null) => void
+  selectedMonthKey?: string
+  onMonthSelect?: (monthKey: string) => void
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -78,7 +80,13 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null
 }
 
-function SpendingOverviewCard({ logs = [], selectedCategory = null, onCategorySelect }: SpendingOverviewCardProps) {
+function SpendingOverviewCard({ 
+  logs = [], 
+  selectedCategory = null, 
+  onCategorySelect,
+  selectedMonthKey = '',
+  onMonthSelect
+}: SpendingOverviewCardProps) {
   // Extract all available months from logs
   const availableMonths = useMemo(() => {
     const monthsMap = new Map<string, string>()
@@ -92,18 +100,6 @@ function SpendingOverviewCard({ logs = [], selectedCategory = null, onCategorySe
     // Sort descending (newest first)
     return Array.from(monthsMap.entries()).sort((a, b) => b[0].localeCompare(a[0]))
   }, [logs])
-
-  // Default to the most recent month if available
-  const [selectedMonthKey, setSelectedMonthKey] = useState<string>(() => {
-    return availableMonths.length > 0 ? availableMonths[0][0] : ''
-  })
-
-  // Ensure selected month updates if available months change and current selection is invalid
-  useMemo(() => {
-    if (availableMonths.length > 0 && !availableMonths.find(m => m[0] === selectedMonthKey)) {
-      setSelectedMonthKey(availableMonths[0][0])
-    }
-  }, [availableMonths, selectedMonthKey])
 
   // Calculate spending for the selected month
   const spendingData = useMemo(() => {
@@ -180,7 +176,7 @@ function SpendingOverviewCard({ logs = [], selectedCategory = null, onCategorySe
         {availableMonths.length > 0 && (
           <select
             value={selectedMonthKey}
-            onChange={(e) => setSelectedMonthKey(e.target.value)}
+            onChange={(e) => onMonthSelect && onMonthSelect(e.target.value)}
             style={{
               height: '28px',
               padding: '0 10px',
@@ -203,7 +199,7 @@ function SpendingOverviewCard({ logs = [], selectedCategory = null, onCategorySe
       </div>
 
       <div className="finance-spending-body" style={{ gridTemplateColumns: '400px 1fr', gap: '60px', alignItems: 'center' }}>
-        <div className="finance-donut-container" style={{ position: 'relative', height: '350px', width: '350px', margin: '0 auto' }}>
+        <div className="finance-donut-container" style={{ position: 'relative', height: '400px', width: '400px', margin: '0 auto' }}>
           {spendingData.categories.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -212,8 +208,8 @@ function SpendingOverviewCard({ logs = [], selectedCategory = null, onCategorySe
                   data={spendingData.categories}
                   cx="50%"
                   cy="50%"
-                  innerRadius={135}
-                  outerRadius={175}
+                  innerRadius={130}
+                  outerRadius={170}
                   dataKey="rawAmount"
                   nameKey="label"
                   onMouseEnter={onPieEnter}
