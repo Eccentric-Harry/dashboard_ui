@@ -1,9 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { BalanceSummaryCard } from './components/balance-summary-card'
-import { CashflowCard } from './components/cashflow-card'
 import { FinanceHeader } from './components/finance-header'
 import { MetricCard } from './components/metric-card'
-import { RecommendationsCard } from './components/recommendations-card'
 import { SpendingOverviewCard } from './components/spending-overview-card'
 import { SubscriptionsCard } from './components/subscriptions-card'
 import { TransactionsCard } from './components/transactions-card'
@@ -224,8 +222,6 @@ function FinanceOverviewDashboard() {
           onEdit={handleEdit}
         />
         <SubscriptionsCard onRefresh={refreshData} />
-        <CashflowCard />
-        <RecommendationsCard />
       </div>
       
       <AddTransactionModal 

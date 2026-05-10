@@ -46,11 +46,6 @@ export interface Subscription {
   status: string
 }
 
-export interface Recommendation {
-  title: string
-  detail: string
-  icon: LucideIcon
-}
 
 export const financeMetrics: FinanceMetric[] = [
   {
@@ -160,23 +155,6 @@ export const subscriptions: Subscription[] = [
   { service: 'Jio Prepaid', detail: 'Renews on 30th', amount: '₹349', status: 'Upcoming' },
 ]
 
-export const recommendations: Recommendation[] = [
-  {
-    title: 'Save ₹5,000',
-    detail: 'Shift extra cash to the laptop goal',
-    icon: PiggyBank,
-  },
-  {
-    title: 'Reduce Food Spending',
-    detail: 'Try a weekly food budget',
-    icon: Lightbulb,
-  },
-  {
-    title: 'Protect Cards',
-    detail: 'Review recurring payments',
-    icon: ShieldCheck,
-  },
-]
 
 export const totalBalance = {
   label: 'Total Balance',
@@ -197,14 +175,6 @@ export const spendingOverview = {
   topCategory: 'Food & Dining',
 }
 
-export const cashflowBars = [36, 58, 44, 73, 52, 89, 61, 70, 42, 66, 80, 57]
-
-export const savingsGoal = {
-  label: 'Emergency Fund',
-  value: '₹18,400',
-  target: '₹25,000',
-  progress: 74,
-}
 
 export const financeTrendPoints = [34, 48, 42, 62, 58, 79, 67, 86, 72, 92]
 
