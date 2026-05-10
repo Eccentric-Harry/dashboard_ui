@@ -27,6 +27,7 @@ export function getIconForCategory(category: string) {
 function FinanceOverviewDashboard() {
   const [logs, setLogs] = useState<DailyFinancialLog[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
   useEffect(() => {
     // Fetch a full year of data so we get older transactions as well
@@ -86,7 +87,7 @@ function FinanceOverviewDashboard() {
   }, [logs])
 
   const recentTransactions = useMemo(() => {
-    const allTxs: any[] = []
+    let allTxs: any[] = []
     logs.forEach(log => {
       Object.entries(log.transactions || {}).forEach(([category, txs]) => {
         txs.forEach(tx => {
@@ -103,9 +104,14 @@ function FinanceOverviewDashboard() {
         })
       })
     })
+    
+    if (selectedCategory) {
+      allTxs = allTxs.filter(tx => tx.category === selectedCategory)
+    }
+
     // Sort all transactions globally and pass the full array
     return allTxs.sort((a, b) => b.timestamp - a.timestamp)
-  }, [logs])
+  }, [logs, selectedCategory])
 
   return (
     <section className="finance-dashboard" aria-label="Finance overview dashboard">
@@ -115,7 +121,11 @@ function FinanceOverviewDashboard() {
         {metrics.map((metric) => (
           <MetricCard key={metric.label} metric={metric} />
         ))}
-        <SpendingOverviewCard logs={logs} />
+        <SpendingOverviewCard 
+          logs={logs} 
+          selectedCategory={selectedCategory} 
+          onCategorySelect={setSelectedCategory} 
+        />
         <TransactionsCard transactions={recentTransactions} loading={loading} />
         <SubscriptionsCard />
         <CashflowCard />

@@ -1,10 +1,15 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useCallback } from 'react'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Sector } from 'recharts'
 import type { DailyFinancialLog } from '../../../../lib/api'
 import { getIconForCategory } from '../finance-overview-dashboard'
 
 interface SpendingOverviewCardProps {
   logs?: DailyFinancialLog[]
+  selectedCategory?: string | null
+  onCategorySelect?: (category: string | null) => void
 }
+
+const COLORS = ['#122017', '#35b64b', '#25302a', '#36bd49', '#132319', '#26953a', '#10201a', '#2f9d43']
 
 const formatMonth = (dateString: string) => {
   const d = new Date(dateString)
@@ -16,7 +21,46 @@ const getMonthKey = (dateString: string) => {
   return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`
 }
 
-function SpendingOverviewCard({ logs = [] }: SpendingOverviewCardProps) {
+const renderActiveShape = (props: any) => {
+  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props
+
+  return (
+    <g>
+      <defs>
+        <filter id={`shadow-${fill.replace('#', '')}`} x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="8" stdDeviation="12" floodColor={fill} floodOpacity="0.4" />
+        </filter>
+      </defs>
+      <Sector
+        cx={cx}
+        cy={cy}
+        innerRadius={innerRadius}
+        outerRadius={outerRadius + 8}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={fill}
+        filter={`url(#shadow-${fill.replace('#', '')})`}
+        style={{ cursor: 'pointer', transition: 'all 0.3s ease' }}
+      />
+    </g>
+  )
+}
+
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload
+    return (
+      <div className="finance-chart-tooltip">
+        <p className="label">{data.label}</p>
+        <p className="amount">₹{data.rawAmount.toLocaleString()}</p>
+        <p className="share">{data.share} of total</p>
+      </div>
+    )
+  }
+  return null
+}
+
+function SpendingOverviewCard({ logs = [], selectedCategory = null, onCategorySelect }: SpendingOverviewCardProps) {
   // Extract all available months from logs
   const availableMonths = useMemo(() => {
     const monthsMap = new Map<string, string>()
@@ -64,13 +108,13 @@ function SpendingOverviewCard({ logs = [] }: SpendingOverviewCardProps) {
       }
     })
 
-    const categoriesList = Object.entries(categoryTotals).map(([label, value]) => {
+    const categoriesList = Object.entries(categoryTotals).map(([label, value], index) => {
       const shareValue = totalSpent > 0 ? (value / totalSpent) * 100 : 0
       return {
         label,
         value: `₹${value.toLocaleString()}`,
         share: `${shareValue.toFixed(1)}%`,
-        tone: '#e0e8df', // Using a default neutral green tone for the background
+        tone: COLORS[index % COLORS.length], // Assign vibrant color
         icon: getIconForCategory(label),
         rawAmount: value
       }
@@ -87,6 +131,26 @@ function SpendingOverviewCard({ logs = [] }: SpendingOverviewCardProps) {
       categories: categoriesList
     }
   }, [logs, selectedMonthKey])
+
+  const [activeIndex, setActiveIndex] = useState<number>(-1)
+
+  const onPieEnter = useCallback((_: any, index: number) => {
+    setActiveIndex(index)
+  }, [])
+
+  const onPieLeave = useCallback(() => {
+    setActiveIndex(-1)
+  }, [])
+
+  const onPieClick = useCallback((data: any) => {
+    if (onCategorySelect) {
+      if (selectedCategory === data.label) {
+        onCategorySelect(null) // toggle off
+      } else {
+        onCategorySelect(data.label)
+      }
+    }
+  }, [onCategorySelect, selectedCategory])
 
   return (
     <section className="finance-card finance-spending-card">
@@ -125,12 +189,75 @@ function SpendingOverviewCard({ logs = [] }: SpendingOverviewCardProps) {
         )}
       </div>
 
-      <div className="finance-spending-body">
-        <div className="finance-donut" aria-label={`Top category ${spendingData.topCategory}`}>
-          <div>
-            <span>Top Category</span>
-            <b>{spendingData.topCategory}</b>
-          </div>
+      <div className="finance-spending-body" style={{ gridTemplateColumns: '260px 1fr', gap: '40px' }}>
+        <div className="finance-donut-container" style={{ position: 'relative', height: '260px', width: '260px' }}>
+          {spendingData.categories.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  activeShape={renderActiveShape}
+                  data={spendingData.categories}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={90}
+                  outerRadius={120}
+                  dataKey="rawAmount"
+                  nameKey="label"
+                  onMouseEnter={onPieEnter}
+                  onMouseLeave={onPieLeave}
+                  onClick={onPieClick}
+                  stroke="none"
+                  animationDuration={800}
+                  animationEasing="ease-out"
+                >
+                  {spendingData.categories.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={entry.tone} 
+                      opacity={
+                        selectedCategory === entry.label 
+                        ? 1 
+                        : selectedCategory 
+                          ? 0.3 
+                          : activeIndex === -1 || activeIndex === index 
+                            ? 1 
+                            : 0.5
+                      }
+                      style={{ cursor: 'pointer', outline: 'none' }}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="finance-donut-container">
+               <div>
+                  <span>No Data</span>
+               </div>
+            </div>
+          )}
+          {/* Custom Center Text */}
+          {spendingData.categories.length > 0 && (
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              textAlign: 'center',
+              pointerEvents: 'none'
+            }}>
+              <span style={{ display: 'block', fontSize: '11px', color: 'rgba(23, 28, 25, 0.46)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>
+                {activeIndex !== -1 ? spendingData.categories[activeIndex].label : 'Total'}
+              </span>
+              <b style={{ display: 'block', fontSize: '18px', color: '#101312', marginTop: '2px', fontWeight: 800 }}>
+                {activeIndex !== -1 
+                  ? `₹${spendingData.categories[activeIndex].rawAmount.toLocaleString()}`
+                  : `₹${spendingData.total.toLocaleString()}`
+                }
+              </b>
+            </div>
+          )}
         </div>
 
         <div className="finance-category-list">
@@ -138,11 +265,19 @@ function SpendingOverviewCard({ logs = [] }: SpendingOverviewCardProps) {
             <div className="text-center text-xs text-gray-500 py-4">No spending data</div>
           ) : (
             spendingData.categories.map(({ label, value, share, tone, icon: Icon }) => (
-              <div key={label}>
-                <span style={{ background: tone }}>
-                  <Icon size={12} />
+              <div 
+                key={label}
+                onClick={() => onCategorySelect && onCategorySelect(selectedCategory === label ? null : label)}
+                style={{ 
+                  cursor: 'pointer',
+                  opacity: selectedCategory && selectedCategory !== label ? 0.4 : 1,
+                  transition: 'opacity 0.2s'
+                }}
+              >
+                <span style={{ background: tone, color: '#fff', boxShadow: `0 4px 10px ${tone}40` }}>
+                  <Icon size={12} strokeWidth={2.5} />
                 </span>
-                <p>{label}</p>
+                <p style={{ fontWeight: selectedCategory === label ? 700 : 500 }}>{label}</p>
                 <b>{value}</b>
                 <small>{share}</small>
               </div>

@@ -301,10 +301,10 @@
 }
 
 .finance-spending-card {
-  grid-column: 1 / span 6;
-  grid-row: 2 / span 2;
-  height: 426px;
-  padding: 19px 20px;
+  grid-column: 1 / -1;
+  grid-row: 2;
+  height: auto;
+  padding: 24px 28px;
 }
 
 .finance-spending-body {
@@ -315,35 +315,9 @@
   margin-top: 17px;
 }
 
-.finance-donut {
+.finance-donut-container {
   display: grid;
-  width: 166px;
-  height: 166px;
   place-items: center;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle, #eef4ec 0 39%, transparent 40%),
-    conic-gradient(#10201a 0 32%, #35b64b 32% 50%, #9df7a5 50% 64%, #eef1ed 64% 74%, #748277 74% 100%);
-}
-
-.finance-donut div {
-  display: grid;
-  width: 92px;
-  height: 92px;
-  place-items: center;
-  border-radius: 50%;
-  background: #eef4ec;
-  text-align: center;
-}
-
-.finance-donut span {
-  color: rgba(23, 28, 25, 0.46);
-  font-size: 8px;
-}
-
-.finance-donut b {
-  margin-top: -14px;
-  font-size: 10px;
 }
 
 .finance-category-list {
@@ -387,8 +361,8 @@
 }
 
 .finance-subscription-card {
-  grid-column: 1 / span 3;
-  grid-row: 4;
+  grid-column: 1 / span 4;
+  grid-row: 3;
   padding: 16px;
 }
 
@@ -456,8 +430,8 @@
 }
 
 .finance-cashflow-card {
-  grid-column: 4 / span 3;
-  grid-row: 4;
+  grid-column: 5 / span 4;
+  grid-row: 3;
   padding: 16px;
 }
 
@@ -523,8 +497,8 @@
 }
 
 .finance-recommendations-card {
-  grid-column: 7 / span 3;
-  grid-row: 4;
+  grid-column: 9 / span 4;
+  grid-row: 3;
   padding: 16px;
 }
 
@@ -578,8 +552,8 @@
 
 .finance-transactions-card {
   display: flex;
-  grid-column: 7 / -1;
-  grid-row: 2 / span 2;
+  grid-column: 1 / -1;
+  grid-row: 4;
   height: 426px;
   min-height: 0;
   flex-direction: column;
@@ -780,4 +754,37 @@
 
 .finance-modal-popover .finance-transaction-table {
   margin-top: 0;
+}
+
+/* Custom Chart Tooltip Styling */
+.finance-chart-tooltip {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(245, 252, 248, 0.85));
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: 0 12px 24px rgba(45, 60, 48, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+}
+
+.finance-chart-tooltip .label {
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(23, 28, 25, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 4px 0;
+}
+
+.finance-chart-tooltip .amount {
+  font-size: 18px;
+  font-weight: 700;
+  color: #101312;
+  margin: 0 0 2px 0;
+}
+
+.finance-chart-tooltip .share {
+  font-size: 10px;
+  font-weight: 600;
+  color: #35b64b;
+  margin: 0;
 }
