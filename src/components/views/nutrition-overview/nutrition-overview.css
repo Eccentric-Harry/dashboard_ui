@@ -908,7 +908,6 @@
   max-height: none;
   overflow-y: auto;
   padding: 1px 2px 1px 0;
-  overscroll-behavior: contain;
   scrollbar-gutter: stable;
 }
 
@@ -1968,7 +1967,6 @@
   overflow-x: hidden;
   overflow-y: auto;
   padding: 0 4px 2px 0;
-  overscroll-behavior: contain;
   scrollbar-gutter: stable;
 }
 
@@ -2125,3 +2123,264 @@
 .nutrition-ring.active .value {
   animation: ring-pulse 2s ease-in-out infinite;
 }
+
+/* ===== NUTRITION MOBILE RESPONSIVE ===== */
+
+@media (max-width: 768px) {
+  .nutrition-dashboard {
+    position: static;
+    padding: 24px 16px 80px;
+    overflow: visible;
+  }
+
+  .nutrition-header {
+    flex-direction: column;
+    align-items: flex-start;
+    height: auto;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .nutrition-date-trigger {
+    max-width: 100%;
+  }
+
+  .nutrition-date-trigger strong {
+    font-size: 24px;
+  }
+
+  .nutrition-calendar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 199;
+  }
+
+  .nutrition-calendar-popover {
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    bottom: auto;
+    width: auto;
+    z-index: 200;
+  }
+
+  .nutrition-dashboard-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .nutrition-macro-card {
+    grid-column: unset;
+    grid-row: unset;
+    width: 100%;
+    height: auto;
+    padding: 18px 16px;
+  }
+
+  .nutrition-calorie-summary {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .nutrition-calorie-summary strong {
+    font-size: 28px;
+  }
+
+  .nutrition-rings {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .nutrition-ring {
+    height: 140px;
+  }
+
+  .nutrition-ring svg {
+    width: 100px;
+    height: 100px;
+  }
+
+  .nutrition-ring b {
+    font-size: 16px;
+  }
+
+  .nutrition-ring small {
+    font-size: 8px;
+  }
+
+  .nutrition-trend-card {
+    grid-column: unset;
+    grid-row: unset;
+    width: 100%;
+    height: auto;
+    min-height: 260px;
+  }
+
+  .nutrition-hydration-card {
+    grid-column: unset;
+    grid-row: unset;
+    width: 100%;
+    height: auto;
+    min-height: 200px;
+  }
+
+  .nutrition-food-log-card {
+    grid-column: unset;
+    grid-row: unset;
+    width: 100%;
+  }
+
+  .nutrition-daily-log-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* Fix food entry table — prevent text truncation */
+  .nutrition-daily-log-columns,
+  .nutrition-daily-log-entry,
+  .nutrition-daily-log-form {
+    grid-template-columns: minmax(0, 1fr) minmax(60px, auto) minmax(48px, auto) minmax(52px, auto);
+    gap: 6px;
+  }
+
+  .nutrition-daily-log-entry .nutrition-food-item b {
+    font-size: 11px;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  .nutrition-daily-log-entry .nutrition-food-item {
+    grid-template-columns: 28px 1fr;
+    gap: 6px;
+  }
+
+  .nutrition-daily-log-entry .nutrition-food-item > span {
+    width: 28px;
+    height: 28px;
+  }
+
+  /* Meal tag smaller on mobile */
+  .nutrition-meal-tag {
+    padding: 3px 7px;
+    font-size: 9px;
+  }
+
+  /* Today log form — stack on mobile */
+  .nutrition-today-log-form {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .nutrition-today-log-form > span {
+    grid-column: 1 / -1;
+  }
+
+  /* Rings — fill equal space, taller */
+  .nutrition-rings,
+  .nutrition-rings-two {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .nutrition-ring {
+    height: 160px;
+  }
+
+  .nutrition-ring svg {
+    width: 110px;
+    height: 110px;
+  }
+
+  .nutrition-ring b {
+    font-size: 18px;
+  }
+
+  .nutrition-ring small {
+    font-size: 9px;
+  }
+
+  .nutrition-ring em {
+    font-size: 7px;
+  }
+
+  /* Remove scroll traps on mobile — let page scroll naturally */
+  .nutrition-dashboard,
+  .nutrition-today-log,
+  .nutrition-food-entries,
+  .nutrition-today-log-list,
+  .nutrition-food-list {
+    overscroll-behavior: auto;
+    overflow: visible;
+  }
+
+  .nutrition-daily-log-card-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .nutrition-daily-log-card-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .nutrition-section-head button,
+  .nutrition-card-head button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .nutrition-picked-date-popover {
+    width: calc(100vw - 24px);
+    grid-template-columns: 1fr;
+  }
+
+  .nutrition-picked-date-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .nutrition-picked-date-close {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* Tablet nutrition adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .nutrition-dashboard {
+    inset: 132px 24px 48px 120px;
+  }
+
+  .nutrition-dashboard-grid {
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: auto;
+  }
+
+  .nutrition-macro-card {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+
+  .nutrition-trend-card {
+    grid-column: 1 / span 3;
+    grid-row: auto;
+    height: auto;
+    min-height: 260px;
+  }
+
+  .nutrition-hydration-card {
+    grid-column: 4 / -1;
+    grid-row: auto;
+    height: auto;
+    min-height: 260px;
+  }
+
+  .nutrition-food-log-card {
+    grid-column: 1 / -1;
+  }
+}
+

@@ -5,10 +5,8 @@ import {
   Coffee,
   CreditCard,
   Landmark,
-  Lightbulb,
   PiggyBank,
   ReceiptText,
-  ShieldCheck,
   ShoppingBag,
   WalletCards,
 } from 'lucide-react'

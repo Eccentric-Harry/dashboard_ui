@@ -16,6 +16,11 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
 body {
   min-width: 320px;
   min-height: 100svh;
@@ -1219,15 +1224,282 @@ button {
   background: #f3f4ee;
 }
 
-@media (max-width: 999px) {
-  .dashboard-shell {
-    display: grid;
-    min-height: 100svh;
-    place-items: start center;
+/* ===== MOBILE RESPONSIVE ===== */
+
+@media (max-width: 768px) {
+
+  /* --- Body: ensure native page scroll --- */
+  body, #root {
+    overflow-x: hidden;
+    overflow-y: visible;
+    height: auto;
   }
 
+  /* --- Side Rail: Convert to fixed bottom tab bar --- */
+  .side-rail {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    z-index: 100;
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    justify-content: center;
+    gap: 0;
+    border-radius: 20px 20px 0 0;
+    padding: 8px 12px calc(env(safe-area-inset-bottom, 8px) + 8px);
+    background: rgba(251, 252, 249, 0.92);
+    box-shadow: 0 -4px 24px rgba(42, 49, 43, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(20px);
+  }
+
+  .rail-avatar {
+    display: none;
+  }
+
+  .side-rail nav {
+    flex-direction: row;
+    gap: 0;
+    justify-content: space-around;
+    width: 100%;
+    margin-top: 0;
+  }
+
+  .side-rail button {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+  }
+
+  .side-rail button.muted {
+    display: none;
+  }
+
+  .side-rail button span {
+    display: none;
+  }
+
+  .rail-bottom {
+    display: none;
+  }
+
+  /* --- Top Chip: hidden on mobile --- */
+  .top-chip {
+    display: none;
+  }
+
+  /* --- Dashboard Shell: fully transparent to page scroll --- */
+  .dashboard-shell {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    padding-bottom: 80px;
+    display: block;
+  }
+
+  /* --- Dashboard Stage: flow layout on mobile --- */
   .dashboard-stage {
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    background: #dfe4df;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 16px 0;
+    transform: none !important;
+  }
+
+  .dashboard-stage::before,
+  .dashboard-stage::after {
+    display: none;
+  }
+
+  /* ──────────────────────────────────────── */
+  /* --- Home Widgets: Stack Vertically  --- */
+  /* ──────────────────────────────────────── */
+
+  .runner-card,
+  .calendar-panel,
+  .savings-panel,
+  .earnings-panel,
+  .products-panel,
+  .month-switch,
+  .indicator-panel {
+    position: static;
+    width: 100%;
+    margin-bottom: 16px;
+    transform: none;
+  }
+
+  /* Runner Card */
+  .runner-card {
+    height: auto;
+    min-height: 360px;
+  }
+
+  .runner-card-image-wrapper {
+    min-height: 180px;
+    max-height: 220px;
+  }
+
+  .runner-card-image-wrapper img {
+    transform: scale(1);
+  }
+
+  /* Calendar Panel */
+  .calendar-panel {
+    height: auto;
+    min-height: 280px;
+  }
+
+  .scale-card {
+    position: relative;
+    height: auto;
+    min-height: 100px;
+    border-radius: 22px 22px 0 0;
+  }
+
+  /* Indicator / Nutrition Summary Panel */
+  .indicator-panel {
+    height: auto;
+    min-height: 280px;
+  }
+
+  .indicator-chart {
+    height: 180px;
+    padding: 24px 16px 0;
+  }
+
+  /* Savings Panel */
+  .savings-panel {
+    height: auto;
+    min-height: 200px;
+  }
+
+  .saving-chart {
+    min-height: 100px;
+  }
+
+  .soft-bars {
+    position: relative;
+    inset: auto;
+    height: 80px;
+    padding: 0 8px;
+  }
+
+  .saving-chart svg {
+    inset: auto;
+    position: relative;
+    height: 80px;
+    margin-top: -80px;
+  }
+
+  .saving-chart b {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    display: inline-block;
+    margin-top: 4px;
+    margin-left: 16px;
+  }
+
+  .chart-months {
+    position: relative;
+    inset: auto;
+    padding: 4px 12px 12px;
+  }
+
+  /* Earnings Panel */
+  .earnings-panel {
+    height: auto;
+    min-height: 280px;
+  }
+
+  .earnings-graph {
+    height: 140px;
+  }
+
+  .earnings-footer {
+    margin: 20px 16px 16px;
+  }
+
+  /* Cost Stack — hide on mobile, too complex for small screens */
+  .cost-stack {
+    display: none;
+  }
+
+  /* Products Panel */
+  .products-panel {
+    height: auto;
+    min-height: 140px;
+  }
+
+  .products-panel img {
+    width: 100%;
+    height: auto;
+    max-height: 160px;
+    object-fit: cover;
+  }
+
+  /* Month Switch */
+  .month-switch {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* Date Tiles — hide on mobile */
+  .date-tiles {
+    display: none;
+  }
+
+  /* ──────────────────────────────────────── */
+  /* --- Route Views                     --- */
+  /* ──────────────────────────────────────── */
+
+  .route-view {
+    position: static;
+    inset: auto;
+    padding: 16px;
+  }
+
+  .route-card {
+    padding: 28px 20px;
+  }
+
+  .route-card h1 {
+    font-size: 36px;
+  }
+}
+
+/* Tablet Home dashboard: scale-down approach for the absolute-positioned artistic layout */
+@media (min-width: 769px) and (max-width: 1024px) {
+  /* Only scale the home dashboard — sub-route stages override this */
+  .dashboard-shell:has(.runner-card) .dashboard-stage {
+    width: 1000px;
+    min-width: 1000px;
+    height: 900px;
+    overflow: hidden;
     transform: scale(calc(100vw / 1000));
-    transform-origin: top center;
+    transform-origin: top left;
+  }
+
+  .dashboard-shell:has(.runner-card) {
+    display: block;
+    overflow: hidden;
+    height: calc(900px * (100vw / 1000));
+    min-height: auto;
+  }
+  .side-rail {
+    width: 50px;
+    left: 24px;
+  }
+
+  .top-chip {
+    right: 24px;
   }
 }

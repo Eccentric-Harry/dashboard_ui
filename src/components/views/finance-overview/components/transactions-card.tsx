@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Edit2 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import { getConsistentColor, getIconForCategory } from '../utils'
 
 export interface TransactionProp {
   id: string
@@ -72,7 +73,19 @@ function TransactionsCard({ transactions = [], loading = false, onEdit }: Transa
                       <small>{detail}</small>
                     </p>
                   </div>
-                  <em role="cell">{category}</em>
+                  <div className="finance-transaction-category" role="cell">
+                    <em style={{ 
+                      backgroundColor: `${getConsistentColor(category)}15`, 
+                      color: getConsistentColor(category),
+                      border: `1px solid ${getConsistentColor(category)}30`
+                    }}>
+                      {(() => {
+                        const CatIcon = getIconForCategory(category);
+                        return <CatIcon size={10} style={{ marginRight: '4px' }} />;
+                      })()}
+                      {category}
+                    </em>
+                  </div>
                   <div className="finance-transaction-amount-group" role="cell">
                     <strong className={tone}>
                       {amount}
@@ -123,7 +136,19 @@ function TransactionsCard({ transactions = [], loading = false, onEdit }: Transa
                           <small>{detail}</small>
                         </p>
                       </div>
-                      <em role="cell">{category}</em>
+                      <div className="finance-transaction-category" role="cell">
+                        <em style={{ 
+                          backgroundColor: `${getConsistentColor(category)}15`, 
+                          color: getConsistentColor(category),
+                          border: `1px solid ${getConsistentColor(category)}30`
+                        }}>
+                          {(() => {
+                            const CatIcon = getIconForCategory(category);
+                            return <CatIcon size={10} style={{ marginRight: '4px' }} />;
+                          })()}
+                          {category}
+                        </em>
+                      </div>
                       <div className="finance-transaction-amount-group" role="cell">
                         <strong className={tone}>
                           {amount}

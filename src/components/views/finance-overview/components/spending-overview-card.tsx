@@ -1,7 +1,7 @@
 import { useMemo, useState, useCallback } from 'react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Sector } from 'recharts'
 import type { DailyFinancialLog } from '../../../../lib/api'
-import { getIconForCategory } from '../finance-overview-dashboard'
+import { getIconForCategory, getConsistentColor } from '../utils'
 
 interface SpendingOverviewCardProps {
   logs?: DailyFinancialLog[]
@@ -11,26 +11,6 @@ interface SpendingOverviewCardProps {
   onMonthSelect?: (monthKey: string) => void
 }
 
-const CATEGORY_COLORS: Record<string, string> = {
-  'To Home': '#4684ffff', // Royal Blue
-  'Bills': '#ff6c61ff',   // Crimson
-  'Food': '#039855',    // Emerald Green
-  'Lending': '#7A5AF8', // Royal Purple
-  'Shopping': '#DC6803', // Burnt Orange
-  'Transport': '#0BA5EC', // Light Blue
-  'Entertainment': '#DD2590', // Magenta
-}
-
-const FALLBACK_COLORS = ['#6172F3', '#12B76A', '#F79009', '#F04438', '#EE46BC', '#0E9384']
-
-const getConsistentColor = (label: string) => {
-  if (CATEGORY_COLORS[label]) return CATEGORY_COLORS[label]
-  let hash = 0
-  for (let i = 0; i < label.length; i++) {
-    hash = label.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  return FALLBACK_COLORS[Math.abs(hash) % FALLBACK_COLORS.length]
-}
 const formatMonth = (dateString: string) => {
   const d = new Date(dateString)
   return d.toLocaleString('default', { month: 'long', year: 'numeric' })
@@ -198,8 +178,8 @@ function SpendingOverviewCard({
         )}
       </div>
 
-      <div className="finance-spending-body" style={{ gridTemplateColumns: '400px 1fr', gap: '60px', alignItems: 'center' }}>
-        <div className="finance-donut-container" style={{ position: 'relative', height: '400px', width: '400px', margin: '0 auto' }}>
+      <div className="finance-spending-body">
+        <div className="finance-donut-container">
           {spendingData.categories.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -208,8 +188,8 @@ function SpendingOverviewCard({
                   data={spendingData.categories}
                   cx="50%"
                   cy="50%"
-                  innerRadius={130}
-                  outerRadius={170}
+                  innerRadius={"55%"}
+                  outerRadius={"75%"}
                   dataKey="rawAmount"
                   nameKey="label"
                   onMouseEnter={onPieEnter}

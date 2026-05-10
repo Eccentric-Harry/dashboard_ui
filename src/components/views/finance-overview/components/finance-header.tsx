@@ -22,7 +22,8 @@ function FinanceHeader({ onAddClick }: FinanceHeaderProps) {
               height: '32px', padding: '0 16px', borderRadius: '16px',
               background: '#101312', color: '#fff', fontSize: '12px',
               fontWeight: 700, border: 'none', cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(16, 19, 18, 0.15)'
+              boxShadow: '0 4px 12px rgba(16, 19, 18, 0.15)',
+              minHeight: '44px'
             }}
           >
             <Plus size={14} strokeWidth={3} />

@@ -65,9 +65,34 @@
   align-items: start;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 768px) {
+  .learnings-dashboard {
+    position: static;
+    padding: 24px 16px 80px;
+    overflow: visible;
+    overscroll-behavior: auto;
+  }
+
+  .learnings-header {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+
+  .learnings-dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .learnings-dashboard {
+    inset: 132px 24px 48px 120px;
+  }
+
   .learnings-dashboard-grid {
     grid-template-columns: 1fr;
   }
 }
+
 
