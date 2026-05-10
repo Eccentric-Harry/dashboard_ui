@@ -180,3 +180,68 @@ export async function updateTransaction(id: string, data: { description: string;
   }
   return response.json();
 }
+
+// ─── Strava Activities ───────────────────────────────────────────────
+
+export interface StravaActivity {
+  id: string;
+  stravaEmbedId?: string;
+  date: string;
+  activityName: string;
+  sportType: string;
+  distanceKm: number;
+  movingTime: string;
+  movingTimeMinutes: number;
+  elevationGainMeters: number;
+  paceMinPerKm?: number;
+  source: string;
+}
+
+export interface StravaActivityStats {
+  totalDistanceKm: number;
+  totalActivities: number;
+  totalMovingTimeMinutes: number;
+  totalElevationMeters: number;
+  best5kPaceMinPerKm: number | null;
+  best5kPaceFormatted: string;
+  countBySportType: Record<string, number>;
+  distanceBySportType: Record<string, number>;
+  currentStreakWeeks: number;
+  recentEmbedIds: string[];
+}
+
+export async function fetchStravaActivities() {
+  const response = await fetch(`${API_BASE_URL}/workouts/activities`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch Strava activities');
+  }
+  return response.json();
+}
+
+export async function fetchStravaActivityStats() {
+  const response = await fetch(`${API_BASE_URL}/workouts/activities/stats`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch Strava activity stats');
+  }
+  return response.json();
+}
+
+export async function createStravaActivity(data: {
+  activityName: string;
+  sportType: string;
+  distanceKm: number;
+  movingTime: string;
+  elevationGainMeters: number;
+  date: string;
+  stravaEmbedId?: string;
+}) {
+  const response = await fetch(`${API_BASE_URL}/workouts/activities`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to create Strava activity');
+  }
+  return response.json();
+}

@@ -4,6 +4,7 @@ import { QuantifiedSelfDashboard } from './components/dashboard/quantified-self-
 import type { AppPath } from './components/dashboard/quantified-self-dashboard/data'
 import { FinanceOverview } from './components/views/FinanceOverview'
 import { NutritionOverview } from './components/views/NutritionOverview'
+import { WorkoutsOverview } from './components/views/WorkoutsOverview'
 import { DashboardProvider } from './contexts/DashboardContext'
 
 import { LearningsOverview } from './components/views/LearningsOverview'
@@ -23,6 +24,10 @@ function normalizePathname(pathname: string): AppPath {
 
   if (pathname === '/learnings') {
     return '/learnings'
+  }
+
+  if (pathname === '/workouts') {
+    return '/workouts'
   }
 
   return '/home'
@@ -63,6 +68,8 @@ function App() {
     content = <NutritionOverview activePath={pathname} onNavigate={navigateTo} />
   } else if (pathname === '/learnings') {
     content = <LearningsOverview activePath={pathname} onNavigate={navigateTo} searchParams={searchParams} />
+  } else if (pathname === '/workouts') {
+    content = <WorkoutsOverview activePath={pathname} onNavigate={navigateTo} />
   } else {
     content = <QuantifiedSelfDashboard activePath={pathname} onNavigate={navigateTo} />
   }

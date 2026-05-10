@@ -4,6 +4,7 @@ import {
   CheckSquare,
   CircleDollarSign,
   Compass,
+  Dumbbell,
   Home,
   Utensils,
   MessageCircle,
@@ -17,7 +18,7 @@ import {
   BrainCircuit,
 } from 'lucide-react'
 
-export type AppPath = '/home' | '/finance' | '/nutrition' | '/learnings'
+export type AppPath = '/home' | '/finance' | '/nutrition' | '/learnings' | '/workouts'
 
 export interface DashboardNavItem {
   label: string
@@ -47,6 +48,7 @@ export const navItems: DashboardNavItem[] = [
   { label: 'Nutrition Overview', icon: Utensils, to: '/nutrition' },
   { label: 'Finance Overview', icon: CircleDollarSign, to: '/finance' },
   { label: 'Learnings Map', icon: BrainCircuit, to: '/learnings' },
+  { label: 'Workouts', icon: Dumbbell, to: '/workouts' },
   { label: 'Adjust', icon: SlidersHorizontal },
   { label: 'Tasks', icon: CheckSquare, muted: true },
   { label: 'People', icon: Users, muted: true },
