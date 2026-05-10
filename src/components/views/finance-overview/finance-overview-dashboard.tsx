@@ -103,8 +103,8 @@ function FinanceOverviewDashboard() {
         })
       })
     })
-    // Sort all transactions globally and take the 10 most recent
-    return allTxs.sort((a, b) => b.timestamp - a.timestamp).slice(0, 10)
+    // Sort all transactions globally and pass the full array
+    return allTxs.sort((a, b) => b.timestamp - a.timestamp)
   }, [logs])
 
   return (

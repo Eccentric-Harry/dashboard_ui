@@ -720,3 +720,64 @@
 .finance-transaction-row strong.expense {
   color: #c9424b;
 }
+
+/* Modal Styling matching Nutrition */
+.finance-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background-color: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(4px);
+}
+
+.finance-modal-popover {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(620px, calc(100vw - 42px));
+  max-height: min(78vh, 680px);
+  padding: 24px 18px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(239, 246, 237, 0.82)),
+    rgba(250, 252, 247, 0.9);
+  box-shadow: 0 24px 48px rgba(45, 60, 48, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(18px);
+  overflow: hidden;
+}
+
+.finance-modal-close {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(18, 29, 21, 0.06);
+  color: rgba(16, 19, 18, 0.62);
+  cursor: pointer;
+}
+
+.finance-modal-close:hover {
+  background: rgba(18, 29, 21, 0.1);
+  color: #101312;
+}
+
+.finance-modal-popover h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #101312;
+  margin: 0 0 16px 4px;
+  letter-spacing: -0.02em;
+}
+
+.finance-modal-popover .finance-transaction-table {
+  margin-top: 0;
+}
