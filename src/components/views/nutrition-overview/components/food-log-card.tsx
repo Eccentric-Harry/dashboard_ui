@@ -53,22 +53,7 @@ const parseIsoDate = (dateValue?: string) => {
   return new Date(year, month - 1, day)
 }
 
-const ordinal = (day: number) => {
-  if (day > 3 && day < 21) {
-    return `${day}TH`
-  }
 
-  switch (day % 10) {
-    case 1:
-      return `${day}ST`
-    case 2:
-      return `${day}ND`
-    case 3:
-      return `${day}RD`
-    default:
-      return `${day}TH`
-  }
-}
 
 const formatLogDate = (dateValue: string) => {
   const date = parseIsoDate(dateValue)

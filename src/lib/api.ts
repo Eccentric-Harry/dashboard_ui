@@ -128,3 +128,31 @@ export async function updateHydration(id: string, data: { waterIntakeMl: number;
   }
   return response.json();
 }
+
+export interface FinancialTotals {
+  totalExpense: number;
+  totalIncome: number;
+}
+
+export interface FinancialTransaction {
+  id: string;
+  description: string;
+  amount: number;
+  timestamp: string;
+}
+
+export interface DailyFinancialLog {
+  id: string;
+  date: string;
+  dailyTotals: FinancialTotals;
+  transactions: Record<string, FinancialTransaction[]>;
+}
+
+export async function fetchDailyFinanceLogs(days?: number) {
+  const query = days ? `?days=${days}` : '';
+  const response = await fetch(`${API_BASE_URL}/finance/daily-logs${query}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch daily finance logs');
+  }
+  return response.json();
+}
