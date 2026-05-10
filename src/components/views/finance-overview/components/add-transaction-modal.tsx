@@ -1,0 +1,166 @@
+import { useState } from 'react'
+import { X, CheckCircle2, Loader2 } from 'lucide-react'
+import { addTransaction } from '../../../../lib/api'
+
+interface AddTransactionModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onSuccess: () => void
+}
+
+const CATEGORIES = [
+  'Food', 'Groceries', 'Transport', 'Shopping', 
+  'Bills', 'Entertainment', 'Health', 'To Home', 
+  'Lending', 'Waste', 'Miscellaneous', 'Income', 'Salary'
+]
+
+export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransactionModalProps) {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState(false)
+
+  // Form State
+  const [type, setType] = useState('Expense')
+  const [category, setCategory] = useState(CATEGORIES[0])
+  const [amount, setAmount] = useState('')
+  const [description, setDescription] = useState('')
+  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0])
+
+  if (!isOpen) return null
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    
+    if (!description || !amount || !category || !type || !date) {
+      setError('Please fill in all fields')
+      return
+    }
+
+    const numAmount = parseFloat(amount)
+    if (isNaN(numAmount) || numAmount <= 0) {
+      setError('Amount must be greater than 0')
+      return
+    }
+
+    setLoading(true)
+    try {
+      await addTransaction({
+        description,
+        amount: numAmount,
+        category,
+        type,
+        date
+      })
+      setSuccess(true)
+      setTimeout(() => {
+        setSuccess(false)
+        onSuccess()
+        onClose()
+        // Reset form
+        setDescription('')
+        setAmount('')
+        setCategory(CATEGORIES[0])
+        setType('Expense')
+        setDate(new Date().toISOString().split('T')[0])
+      }, 1000)
+    } catch (err: any) {
+      setError(err.message || 'Failed to add transaction')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="finance-modal-backdrop" role="presentation" onClick={onClose}>
+      <div 
+        className="finance-modal-popover add-tx-modal" 
+        role="dialog" 
+        aria-modal="true" 
+        onClick={(e) => e.stopPropagation()}
+        style={{ width: 'min(440px, calc(100vw - 42px))', padding: '28px' }}
+      >
+        <button type="button" className="finance-modal-close" onClick={onClose}>
+          <X size={15} />
+        </button>
+        
+        <h2 style={{ fontSize: '22px', marginBottom: '24px' }}>Add Transaction</h2>
+        
+        {success ? (
+          <div className="add-tx-success">
+            <CheckCircle2 size={48} color="#10b981" />
+            <h3>Transaction Added!</h3>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="add-tx-form">
+            <div className="form-group type-toggle">
+              <button 
+                type="button" 
+                className={type === 'Expense' ? 'active expense' : ''} 
+                onClick={() => setType('Expense')}
+              >
+                Expense
+              </button>
+              <button 
+                type="button" 
+                className={type === 'Income' ? 'active income' : ''} 
+                onClick={() => setType('Income')}
+              >
+                Income
+              </button>
+            </div>
+
+            <div className="form-group">
+              <label>Amount (₹)</label>
+              <input 
+                type="number" 
+                step="0.01"
+                min="0.01"
+                placeholder="0.00"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                autoFocus
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Merchant / Description</label>
+              <input 
+                type="text" 
+                placeholder="e.g. Starbucks, Netflix..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Category</label>
+                <select value={category} onChange={(e) => setCategory(e.target.value)}>
+                  {CATEGORIES.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Date</label>
+                <input 
+                  type="date" 
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {error && <p className="add-tx-error">{error}</p>}
+
+            <button type="submit" className="add-tx-submit" disabled={loading}>
+              {loading ? <Loader2 className="spinner" size={18} /> : 'Save Transaction'}
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  )
+}

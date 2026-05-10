@@ -9,8 +9,26 @@ interface SpendingOverviewCardProps {
   onCategorySelect?: (category: string | null) => void
 }
 
-const COLORS = ['#122017', '#35b64b', '#25302a', '#36bd49', '#132319', '#26953a', '#10201a', '#2f9d43']
+const CATEGORY_COLORS: Record<string, string> = {
+  'To Home': '#4684ffff', // Royal Blue
+  'Bills': '#ff6c61ff',   // Crimson
+  'Food': '#039855',    // Emerald Green
+  'Lending': '#7A5AF8', // Royal Purple
+  'Shopping': '#DC6803', // Burnt Orange
+  'Transport': '#0BA5EC', // Light Blue
+  'Entertainment': '#DD2590', // Magenta
+}
 
+const FALLBACK_COLORS = ['#6172F3', '#12B76A', '#F79009', '#F04438', '#EE46BC', '#0E9384']
+
+const getConsistentColor = (label: string) => {
+  if (CATEGORY_COLORS[label]) return CATEGORY_COLORS[label]
+  let hash = 0
+  for (let i = 0; i < label.length; i++) {
+    hash = label.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  return FALLBACK_COLORS[Math.abs(hash) % FALLBACK_COLORS.length]
+}
 const formatMonth = (dateString: string) => {
   const d = new Date(dateString)
   return d.toLocaleString('default', { month: 'long', year: 'numeric' })
@@ -70,7 +88,7 @@ function SpendingOverviewCard({ logs = [], selectedCategory = null, onCategorySe
         monthsMap.set(key, formatMonth(log.date))
       }
     })
-    
+
     // Sort descending (newest first)
     return Array.from(monthsMap.entries()).sort((a, b) => b[0].localeCompare(a[0]))
   }, [logs])
@@ -108,13 +126,13 @@ function SpendingOverviewCard({ logs = [], selectedCategory = null, onCategorySe
       }
     })
 
-    const categoriesList = Object.entries(categoryTotals).map(([label, value], index) => {
+    const categoriesList = Object.entries(categoryTotals).map(([label, value]) => {
       const shareValue = totalSpent > 0 ? (value / totalSpent) * 100 : 0
       return {
         label,
         value: `₹${value.toLocaleString()}`,
         share: `${shareValue.toFixed(1)}%`,
-        tone: COLORS[index % COLORS.length], // Assign vibrant color
+        tone: getConsistentColor(label), // Assign vibrant color
         icon: getIconForCategory(label),
         rawAmount: value
       }
@@ -157,26 +175,21 @@ function SpendingOverviewCard({ logs = [], selectedCategory = null, onCategorySe
       <div className="finance-section-head">
         <div>
           <h2>Spending Overview</h2>
-          <p>Total spent</p>
-          <strong>
-            ₹{spendingData.total.toLocaleString()}
-            <small></small>
-          </strong>
         </div>
-        
+
         {availableMonths.length > 0 && (
-          <select 
-            value={selectedMonthKey} 
+          <select
+            value={selectedMonthKey}
             onChange={(e) => setSelectedMonthKey(e.target.value)}
-            style={{ 
-              height: '28px', 
-              padding: '0 10px', 
-              borderRadius: '11px', 
-              background: 'rgba(255, 255, 255, 0.56)', 
-              color: '#111514', 
-              fontSize: '10px', 
-              fontWeight: 700, 
-              border: 'none', 
+            style={{
+              height: '28px',
+              padding: '0 10px',
+              borderRadius: '11px',
+              background: 'rgba(255, 255, 255, 0.56)',
+              color: '#111514',
+              fontSize: '10px',
+              fontWeight: 700,
+              border: 'none',
               boxShadow: 'inset 0 0 0 1px rgba(20, 24, 22, 0.05)',
               outline: 'none',
               cursor: 'pointer'
@@ -189,8 +202,8 @@ function SpendingOverviewCard({ logs = [], selectedCategory = null, onCategorySe
         )}
       </div>
 
-      <div className="finance-spending-body" style={{ gridTemplateColumns: '260px 1fr', gap: '40px' }}>
-        <div className="finance-donut-container" style={{ position: 'relative', height: '260px', width: '260px' }}>
+      <div className="finance-spending-body" style={{ gridTemplateColumns: '400px 1fr', gap: '60px', alignItems: 'center' }}>
+        <div className="finance-donut-container" style={{ position: 'relative', height: '350px', width: '350px', margin: '0 auto' }}>
           {spendingData.categories.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -199,8 +212,8 @@ function SpendingOverviewCard({ logs = [], selectedCategory = null, onCategorySe
                   data={spendingData.categories}
                   cx="50%"
                   cy="50%"
-                  innerRadius={90}
-                  outerRadius={120}
+                  innerRadius={135}
+                  outerRadius={175}
                   dataKey="rawAmount"
                   nameKey="label"
                   onMouseEnter={onPieEnter}
@@ -211,17 +224,17 @@ function SpendingOverviewCard({ logs = [], selectedCategory = null, onCategorySe
                   animationEasing="ease-out"
                 >
                   {spendingData.categories.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={entry.tone} 
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={entry.tone}
                       opacity={
-                        selectedCategory === entry.label 
-                        ? 1 
-                        : selectedCategory 
-                          ? 0.3 
-                          : activeIndex === -1 || activeIndex === index 
-                            ? 1 
-                            : 0.5
+                        selectedCategory === entry.label
+                          ? 1
+                          : selectedCategory
+                            ? 0.3
+                            : activeIndex === -1 || activeIndex === index
+                              ? 1
+                              : 0.5
                       }
                       style={{ cursor: 'pointer', outline: 'none' }}
                     />
@@ -232,9 +245,9 @@ function SpendingOverviewCard({ logs = [], selectedCategory = null, onCategorySe
             </ResponsiveContainer>
           ) : (
             <div className="finance-donut-container">
-               <div>
-                  <span>No Data</span>
-               </div>
+              <div>
+                <span>No Data</span>
+              </div>
             </div>
           )}
           {/* Custom Center Text */}
@@ -247,11 +260,11 @@ function SpendingOverviewCard({ logs = [], selectedCategory = null, onCategorySe
               textAlign: 'center',
               pointerEvents: 'none'
             }}>
-              <span style={{ display: 'block', fontSize: '11px', color: 'rgba(23, 28, 25, 0.46)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>
+              <span style={{ display: 'block', fontSize: '14px', color: 'rgba(23, 28, 25, 0.46)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>
                 {activeIndex !== -1 ? spendingData.categories[activeIndex].label : 'Total'}
               </span>
-              <b style={{ display: 'block', fontSize: '18px', color: '#101312', marginTop: '2px', fontWeight: 800 }}>
-                {activeIndex !== -1 
+              <b style={{ display: 'block', fontSize: '28px', color: '#101312', marginTop: '4px', fontWeight: 800 }}>
+                {activeIndex !== -1
                   ? `₹${spendingData.categories[activeIndex].rawAmount.toLocaleString()}`
                   : `₹${spendingData.total.toLocaleString()}`
                 }
@@ -265,10 +278,10 @@ function SpendingOverviewCard({ logs = [], selectedCategory = null, onCategorySe
             <div className="text-center text-xs text-gray-500 py-4">No spending data</div>
           ) : (
             spendingData.categories.map(({ label, value, share, tone, icon: Icon }) => (
-              <div 
+              <div
                 key={label}
                 onClick={() => onCategorySelect && onCategorySelect(selectedCategory === label ? null : label)}
-                style={{ 
+                style={{
                   cursor: 'pointer',
                   opacity: selectedCategory && selectedCategory !== label ? 0.4 : 1,
                   transition: 'opacity 0.2s'

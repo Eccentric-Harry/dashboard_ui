@@ -7,30 +7,76 @@ import { RecommendationsCard } from './components/recommendations-card'
 import { SpendingOverviewCard } from './components/spending-overview-card'
 import { SubscriptionsCard } from './components/subscriptions-card'
 import { TransactionsCard } from './components/transactions-card'
+import { AddTransactionModal } from './components/add-transaction-modal'
 import { financeMetrics as fallbackMetrics } from './data'
 import { fetchDailyFinanceLogs } from '../../../lib/api'
 import type { DailyFinancialLog } from '../../../lib/api'
-import { ArrowUpRight, ArrowDownLeft, PiggyBank, Coffee, ShoppingBag, Landmark, WalletCards, ReceiptText, CreditCard } from 'lucide-react'
+import { 
+  ArrowUpRight, ArrowDownLeft, PiggyBank, Coffee, ShoppingBag, 
+  Landmark, WalletCards, ReceiptText,
+  Utensils, ShoppingCart, Car, Fuel, Train,
+  Film, MonitorPlay, Ticket, Stethoscope, Pill,
+  Plane, Home, ShieldCheck, TrendingUp, HandCoins,
+  Scissors, Dumbbell, Sparkles, CircleDollarSign
+} from 'lucide-react'
 
 import './finance-overview.css'
 
 export function getIconForCategory(category: string) {
-  const cat = category.toLowerCase();
-  if (cat.includes('food') || cat.includes('dining')) return Coffee;
-  if (cat.includes('shopping') || cat.includes('home')) return ShoppingBag;
-  if (cat.includes('income') || cat.includes('salary')) return Landmark;
-  if (cat.includes('transport')) return WalletCards;
-  if (cat.includes('bills') || cat.includes('utilities')) return ReceiptText;
-  return CreditCard;
+  const cat = category.toLowerCase()
+  
+  // Food & Dining
+  if (cat.includes('food') || cat.includes('restaurant') || cat.includes('dining')) return Utensils
+  if (cat.includes('grocer') || cat.includes('supermarket')) return ShoppingCart
+  if (cat.includes('coffee') || cat.includes('cafe')) return Coffee
+  
+  // Shopping & Personal Care
+  if (cat.includes('shopping') || cat.includes('retail') || cat.includes('clothing')) return ShoppingBag
+  if (cat.includes('salon') || cat.includes('hair') || cat.includes('care')) return Scissors
+  
+  // Transport
+  if (cat.includes('gas') || cat.includes('fuel')) return Fuel
+  if (cat.includes('car') || cat.includes('auto') || cat.includes('uber')) return Car
+  if (cat.includes('train') || cat.includes('transit') || cat.includes('subway') || cat.includes('bus')) return Train
+  if (cat.includes('flight') || cat.includes('travel')) return Plane
+  if (cat.includes('transport')) return Car
+  
+  // Housing & Bills
+  if (cat.includes('home') || cat.includes('rent') || cat.includes('mortgage')) return Home
+  if (cat.includes('bill') || cat.includes('utilit')) return ReceiptText
+  if (cat.includes('insur')) return ShieldCheck
+  
+  // Entertainment & Subs
+  if (cat.includes('movie') || cat.includes('cinema')) return Film
+  if (cat.includes('sub') || cat.includes('streaming') || cat.includes('netflix')) return MonitorPlay
+  if (cat.includes('entertain') || cat.includes('ticket') || cat.includes('event')) return Ticket
+  
+  // Health & Fitness
+  if (cat.includes('health') || cat.includes('medical') || cat.includes('doctor')) return Stethoscope
+  if (cat.includes('gym') || cat.includes('fitness') || cat.includes('sport')) return Dumbbell
+  if (cat.includes('pharmacy') || cat.includes('medicine')) return Pill
+  
+  // Income & Investments
+  if (cat.includes('salary') || cat.includes('income')) return Landmark
+  if (cat.includes('invest') || cat.includes('stock')) return TrendingUp
+  if (cat.includes('lend') || cat.includes('borrow')) return HandCoins
+  
+  // Miscellaneous
+  if (cat.includes('misc') || cat.includes('other')) return Sparkles
+  
+  // Fallbacks
+  if (cat.includes('card')) return WalletCards
+  return CircleDollarSign
 }
 
 function FinanceOverviewDashboard() {
   const [logs, setLogs] = useState<DailyFinancialLog[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
 
-  useEffect(() => {
-    // Fetch a full year of data so we get older transactions as well
+  const refreshData = () => {
+    setLoading(true)
     fetchDailyFinanceLogs(365).then((res) => {
       setLogs(res.data || [])
       setLoading(false)
@@ -38,6 +84,10 @@ function FinanceOverviewDashboard() {
       console.error(err)
       setLoading(false)
     })
+  }
+
+  useEffect(() => {
+    refreshData()
   }, [])
 
   const metrics = useMemo(() => {
@@ -58,6 +108,8 @@ function FinanceOverviewDashboard() {
       }
     })
     
+    const monthlySavings = Math.max(0, totalIncome - totalExpense)
+
     return [
       {
         label: 'Monthly Income',
@@ -77,7 +129,7 @@ function FinanceOverviewDashboard() {
       },
       {
         label: 'Monthly Savings',
-        value: `₹${(totalIncome - totalExpense).toLocaleString()}`,
+        value: `₹${monthlySavings.toLocaleString()}`,
         cents: '',
         change: '',
         tone: 'positive' as const,
@@ -115,7 +167,7 @@ function FinanceOverviewDashboard() {
 
   return (
     <section className="finance-dashboard" aria-label="Finance overview dashboard">
-      <FinanceHeader />
+      <FinanceHeader onAddClick={() => setIsAddModalOpen(true)} />
       <div className="finance-dashboard-grid">
         <BalanceSummaryCard />
         {metrics.map((metric) => (
@@ -131,6 +183,12 @@ function FinanceOverviewDashboard() {
         <CashflowCard />
         <RecommendationsCard />
       </div>
+      
+      <AddTransactionModal 
+        isOpen={isAddModalOpen} 
+        onClose={() => setIsAddModalOpen(false)} 
+        onSuccess={refreshData} 
+      />
     </section>
   )
 }

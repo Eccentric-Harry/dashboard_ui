@@ -156,3 +156,15 @@ export async function fetchDailyFinanceLogs(days?: number) {
   }
   return response.json();
 }
+
+export async function addTransaction(data: { description: string; amount: number; category: string; type: string; date: string }) {
+  const response = await fetch(`${API_BASE_URL}/finance/transactions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to add transaction');
+  }
+  return response.json();
+}
