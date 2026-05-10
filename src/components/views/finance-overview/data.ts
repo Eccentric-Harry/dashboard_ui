@@ -155,9 +155,9 @@ export const recentTransactions: Transaction[] = [
 ]
 
 export const subscriptions: Subscription[] = [
-  { service: 'Netflix', detail: 'Renews Apr 28', amount: '₹499', status: 'Today' },
-  { service: 'Spotify', detail: 'Renews May 03', amount: '₹119', status: '5 days' },
-  { service: 'iCloud', detail: 'Renews May 12', amount: '₹75', status: '14 days' },
+  { service: 'Youtube Premium', detail: 'Renews on 14th', amount: '₹89', status: 'Upcoming' },
+  { service: 'Netflix', detail: 'Renews on 28th', amount: '₹199', status: 'Upcoming' },
+  { service: 'Jio Prepaid', detail: 'Renews on 30th', amount: '₹349', status: 'Upcoming' },
 ]
 
 export const recommendations: Recommendation[] = [
@@ -186,7 +186,7 @@ export const totalBalance = {
 }
 
 export const subscriptionSummary = {
-  total: '₹693',
+  total: '₹637',
   label: 'Monthly subscriptions',
   change: '3 active renewals',
 }

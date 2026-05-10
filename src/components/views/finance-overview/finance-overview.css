@@ -363,70 +363,118 @@
 .finance-subscription-card {
   grid-column: 1 / span 4;
   grid-row: 4;
-  padding: 16px;
+  padding: 20px;
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.9), rgba(244, 248, 243, 0.75));
 }
 
 .finance-subscription-list {
   display: grid;
-  gap: 8px;
-  margin-top: 13px;
+  gap: 12px;
+  margin-top: 18px;
 }
 
-.finance-subscription-list div {
+.finance-subscription-list > div {
   display: grid;
-  grid-template-columns: 28px 1fr auto auto;
+  grid-template-columns: 36px 1fr auto;
   align-items: center;
-  gap: 8px;
-  min-height: 34px;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8), 0 2px 4px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
-.finance-subscription-list > div > span {
+.finance-subscription-list > div:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.finance-subscription-list > div.paid {
+  opacity: 0.8;
+  background: rgba(235, 245, 237, 0.4);
+}
+
+.finance-subscription-list .service-icon {
   display: grid;
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   place-items: center;
-  border-radius: 9px;
-  background: rgba(224, 232, 223, 0.74);
-  color: #243027;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.finance-subscription-list p {
-  min-width: 0;
-  margin: 0;
+  border-radius: 12px;
+  background: #f0f4f1;
+  color: #1a2b21;
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.03), inset 1px 1px 0 #fff;
 }
 
 .finance-subscription-list b {
   display: block;
-  overflow: hidden;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  color: #111514;
 }
 
 .finance-subscription-list small {
   display: block;
-  overflow: hidden;
-  color: rgba(23, 28, 25, 0.45);
-  font-size: 8px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  color: rgba(23, 28, 25, 0.5);
+  font-size: 10px;
+  margin-top: 2px;
 }
 
-.finance-subscription-list em {
-  padding: 4px 6px;
-  border-radius: 8px;
-  background: rgba(54, 189, 73, 0.12);
-  color: #27933a;
-  font-size: 8px;
-  font-style: normal;
+.subscription-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.subscription-actions strong {
+  font-size: 13px;
   font-weight: 800;
+  color: #1a2b21;
 }
 
-.finance-subscription-list strong {
-  font-size: 11px;
+.pay-button {
+  height: 28px;
+  padding: 0 14px;
+  border-radius: 10px;
+  background: #111514;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+}
+
+.pay-button:hover:not(:disabled) {
+  background: #232d28;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(17, 21, 20, 0.2);
+}
+
+.pay-button:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.pay-button.success {
+  background: #36bd49;
+  color: #fff;
+}
+
+.pay-button:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .finance-cashflow-card {

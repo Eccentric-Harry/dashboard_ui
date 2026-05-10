@@ -223,7 +223,7 @@ function FinanceOverviewDashboard() {
           loading={loading} 
           onEdit={handleEdit}
         />
-        <SubscriptionsCard />
+        <SubscriptionsCard onRefresh={refreshData} />
         <CashflowCard />
         <RecommendationsCard />
       </div>
