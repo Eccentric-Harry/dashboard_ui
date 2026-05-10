@@ -14,7 +14,7 @@ import { ArrowUpRight, ArrowDownLeft, PiggyBank, Coffee, ShoppingBag, Landmark, 
 
 import './finance-overview.css'
 
-function getIconForCategory(category: string) {
+export function getIconForCategory(category: string) {
   const cat = category.toLowerCase();
   if (cat.includes('food') || cat.includes('dining')) return Coffee;
   if (cat.includes('shopping') || cat.includes('home')) return ShoppingBag;
@@ -115,7 +115,7 @@ function FinanceOverviewDashboard() {
         {metrics.map((metric) => (
           <MetricCard key={metric.label} metric={metric} />
         ))}
-        <SpendingOverviewCard />
+        <SpendingOverviewCard logs={logs} />
         <TransactionsCard transactions={recentTransactions} loading={loading} />
         <SubscriptionsCard />
         <CashflowCard />
