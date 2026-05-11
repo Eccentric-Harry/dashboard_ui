@@ -833,9 +833,10 @@
   .workouts-activity-name b {
     font-size: 11px;
     white-space: normal;
-    overflow: visible;
+    overflow: hidden;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
   }
 

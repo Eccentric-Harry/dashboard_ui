@@ -18,6 +18,19 @@ const isoDate = (date: Date) => {
   return `${year}-${month}-${day}`
 }
 
+const parseIsoDate = (dateValue?: string) => {
+  if (!dateValue) {
+    return new Date()
+  }
+
+  const [year, month, day] = dateValue.split('-').map(Number)
+  if (!year || !month || !day) {
+    return new Date()
+  }
+
+  return new Date(year, month - 1, day)
+}
+
 function ProteinTrendCard() {
   const { data } = useDashboard()
   const selectedDate = data?.date || isoDate(new Date())
@@ -57,10 +70,9 @@ function ProteinTrendCard() {
 
           setTrendData(formatted)
         } else {
-          const todayStr = isoDate(new Date())
           setTrendData([{
-            day: new Date().toLocaleDateString('en-US', { weekday: 'short' }),
-            dateStr: todayStr,
+            day: parseIsoDate(selectedDate).toLocaleDateString('en-US', { weekday: 'short' }),
+            dateStr: selectedDate,
             grams: todayProtein,
             target: PROTEIN_TARGET
           }])
@@ -78,20 +90,19 @@ function ProteinTrendCard() {
     }
   }, [selectedDate])
 
-  useEffect(() => {
-    const todayStr = isoDate(new Date())
-    if (trendData.length > 0) {
-      setTrendData(prev => {
-        const lastPoint = prev[prev.length - 1]
-        if (lastPoint.dateStr === todayStr && lastPoint.grams !== todayProtein) {
-          return [...prev.slice(0, -1), { ...lastPoint, grams: todayProtein }]
-        }
-        return prev
-      })
+  const displayTrend = useMemo(() => {
+    if (trendData.length === 0) return []
+    const updated = [...trendData]
+    const lastPointIndex = updated.length - 1
+    const lastPoint = updated[lastPointIndex]
+    
+    if (lastPoint.dateStr === selectedDate && lastPoint.grams !== todayProtein) {
+      updated[lastPointIndex] = { ...lastPoint, grams: todayProtein }
     }
-  }, [todayProtein])
+    return updated
+  }, [trendData, todayProtein, selectedDate])
 
-  if (isLoading || trendData.length === 0) {
+  if (isLoading || displayTrend.length === 0) {
     return (
       <section className="nutrition-card nutrition-trend-card">
         <div className="nutrition-dark-head">
@@ -104,13 +115,13 @@ function ProteinTrendCard() {
     )
   }
 
-  const latestPoint = trendData[trendData.length - 1]
-  const maxValue = Math.max(...trendData.map((point) => point.grams), PROTEIN_TARGET + 40)
+  const latestPoint = displayTrend[displayTrend.length - 1]
+  const maxValue = Math.max(...displayTrend.map((point) => point.grams), PROTEIN_TARGET + 40)
   const chartWidth = 300
   const chartHeight = 150
   const padding = 18
-  const points = trendData.map((point, index) => {
-    const x = padding + (index * (chartWidth - padding * 2)) / Math.max(trendData.length - 1, 1)
+  const points = displayTrend.map((point, index) => {
+    const x = padding + (index * (chartWidth - padding * 2)) / Math.max(displayTrend.length - 1, 1)
     const y = chartHeight - padding - (point.grams / maxValue) * (chartHeight - padding * 2)
     return { ...point, x, y }
   })
@@ -122,7 +133,7 @@ function ProteinTrendCard() {
       <div className="nutrition-dark-head">
         <div>
           <p>Weekly Protein Consistency</p>
-          <h2>{latestPoint.grams}g today</h2>
+          <h2>{latestPoint.grams}g {latestPoint.dateStr === isoDate(new Date()) ? 'today' : ''}</h2>
         </div>
         <span>7 days</span>
       </div>
@@ -143,7 +154,7 @@ function ProteinTrendCard() {
       </svg>
 
       <div className="nutrition-trend-days">
-        {trendData.map((point, idx) => (
+        {displayTrend.map((point, idx) => (
           <span key={`${point.dateStr}-${idx}`}>{point.day}</span>
         ))}
       </div>
