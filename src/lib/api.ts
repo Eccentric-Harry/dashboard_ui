@@ -196,6 +196,8 @@ export interface StravaActivity {
   elevationGainMeters: number;
   paceMinPerKm?: number;
   source: string;
+  startTime?: string;
+  activityUrl?: string;
 }
 
 export interface StravaActivityStats {
@@ -244,6 +246,18 @@ export async function createStravaActivity(data: {
   });
   if (!response.ok) {
     throw new Error('Failed to create Strava activity');
+  }
+  return response.json();
+}
+
+export async function importStravaJson(payload: any) {
+  const response = await fetch(`${API_BASE_URL}/workouts/import/strava`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to import Strava JSON');
   }
   return response.json();
 }

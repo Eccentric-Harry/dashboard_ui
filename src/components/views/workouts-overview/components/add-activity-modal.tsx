@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { X, Loader2 } from 'lucide-react'
-import { createStravaActivity } from '../../../../lib/api'
+import { X, Loader2, ClipboardCheck, FileJson } from 'lucide-react'
+import { createStravaActivity, importStravaJson } from '../../../../lib/api'
 
 type AddActivityModalProps = {
   isOpen: boolean
@@ -10,6 +10,9 @@ type AddActivityModalProps = {
 
 function AddActivityModal({ isOpen, onClose, onSuccess }: AddActivityModalProps) {
   const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const [activeTab, setActiveTab] = useState<'manual' | 'strava'>('strava')
+  const [stravaJson, setStravaJson] = useState('')
   const [formData, setFormData] = useState({
     activityName: '',
     sportType: 'Run',
@@ -30,7 +33,7 @@ function AddActivityModal({ isOpen, onClose, onSuccess }: AddActivityModalProps)
     return { id, token: tokenMatch ? tokenMatch[1] : undefined }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
@@ -52,17 +55,13 @@ function AddActivityModal({ isOpen, onClose, onSuccess }: AddActivityModalProps)
         stravaEmbedId: embedId,
         stravaToken: token
       })
+      setSuccess(true)
       onSuccess()
-      onClose()
-      setFormData({
-        activityName: '',
-        sportType: 'Run',
-        distanceKm: '',
-        movingTime: '',
-        elevationGainMeters: '',
-        date: new Date().toISOString().split('T')[0],
-        stravaEmbedId: ''
-      })
+      setTimeout(() => {
+        onClose()
+        setSuccess(false)
+        resetForm()
+      }, 1200)
     } catch (err) {
       console.error('Error creating activity:', err)
       alert('Failed to save activity. Please check your inputs.')
@@ -71,98 +70,173 @@ function AddActivityModal({ isOpen, onClose, onSuccess }: AddActivityModalProps)
     }
   }
 
+  const handleStravaImport = async () => {
+    if (!stravaJson.trim()) return
+
+    try {
+      const payload = JSON.parse(stravaJson)
+      setLoading(true)
+      await importStravaJson(payload)
+      setSuccess(true)
+      onSuccess()
+      setTimeout(() => {
+        onClose()
+        setSuccess(false)
+        setStravaJson('')
+      }, 1200)
+    } catch (err) {
+      console.error('Error importing Strava JSON:', err)
+      alert('Invalid JSON format or import failed. Please paste the raw response from Strava API.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const resetForm = () => {
+    setFormData({
+      activityName: '',
+      sportType: 'Run',
+      distanceKm: '',
+      movingTime: '',
+      elevationGainMeters: '',
+      date: new Date().toISOString().split('T')[0],
+      stravaEmbedId: ''
+    })
+    setStravaJson('')
+  }
+
   return (
     <div className="workouts-modal-backdrop" onClick={onClose}>
       <div className="workouts-modal-popover" onClick={e => e.stopPropagation()}>
         <button className="workouts-modal-close" onClick={onClose} type="button">
           <X size={16} />
         </button>
-        <h2>Record Activity</h2>
-        <form className="workouts-form" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Activity Name</label>
-            <input
-              type="text"
-              required
-              placeholder="e.g., Morning Run"
-              value={formData.activityName}
-              onChange={e => setFormData({ ...formData, activityName: e.target.value })}
-            />
-          </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Sport Type</label>
-              <select
-                value={formData.sportType}
-                onChange={e => setFormData({ ...formData, sportType: e.target.value })}
-              >
-                <option value="Run">Run</option>
-                <option value="Ride">Ride</option>
-                <option value="Walk">Walk</option>
-                <option value="E-Bike Ride">E-Bike Ride</option>
-                <option value="Swim">Swim</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Date</label>
-              <input
-                type="date"
-                required
-                value={formData.date}
-                onChange={e => setFormData({ ...formData, date: e.target.value })}
-              />
-            </div>
-          </div>
+        <h2>Record Workout</h2>
 
-          <div className="form-row">
+        <div className="workouts-modal-tabs">
+          <button 
+            className={`tab-btn ${activeTab === 'manual' ? 'active' : ''}`}
+            onClick={() => setActiveTab('manual')}
+          >
+            <ClipboardCheck size={14} />
+            Manual Entry
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'strava' ? 'active' : ''}`}
+            onClick={() => setActiveTab('strava')}
+          >
+            <FileJson size={14} />
+            Strava JSON
+          </button>
+        </div>
+
+        {activeTab === 'manual' ? (
+          <form className="workouts-form" onSubmit={handleManualSubmit}>
             <div className="form-group">
-              <label>Distance (km)</label>
-              <input
-                type="number"
-                step="0.01"
-                required
-                placeholder="0.00"
-                value={formData.distanceKm}
-                onChange={e => setFormData({ ...formData, distanceKm: e.target.value })}
-              />
-            </div>
-            <div className="form-group">
-              <label>Moving Time</label>
+              <label>Activity Name</label>
               <input
                 type="text"
                 required
-                placeholder="HH:MM:SS or MM:SS"
-                value={formData.movingTime}
-                onChange={e => setFormData({ ...formData, movingTime: e.target.value })}
+                placeholder="e.g., Morning Run"
+                value={formData.activityName}
+                onChange={e => setFormData({ ...formData, activityName: e.target.value })}
               />
             </div>
-          </div>
 
-          <div className="form-group">
-            <label>Elevation Gain (m)</label>
-            <input
-              type="number"
-              required
-              placeholder="0"
-              value={formData.elevationGainMeters}
-              onChange={e => setFormData({ ...formData, elevationGainMeters: e.target.value })}
-            />
-          </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Sport Type</label>
+                <select
+                  value={formData.sportType}
+                  onChange={e => setFormData({ ...formData, sportType: e.target.value })}
+                >
+                  <option value="Run">Run</option>
+                  <option value="Ride">Ride</option>
+                  <option value="Walk">Walk</option>
+                  <option value="E-Bike Ride">E-Bike Ride</option>
+                  <option value="Swim">Swim</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Date</label>
+                <input
+                  type="date"
+                  required
+                  value={formData.date}
+                  onChange={e => setFormData({ ...formData, date: e.target.value })}
+                />
+              </div>
+            </div>
 
-          <div className="form-group">
-            <label>Strava Embed (HTML or ID)</label>
-            <textarea
-              placeholder="Paste Strava embed code here..."
-              value={formData.stravaEmbedId}
-              onChange={e => setFormData({ ...formData, stravaEmbedId: e.target.value })}
-            />
-          </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Distance (km)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  required
+                  placeholder="0.00"
+                  value={formData.distanceKm}
+                  onChange={e => setFormData({ ...formData, distanceKm: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Moving Time</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="HH:MM:SS or MM:SS"
+                  value={formData.movingTime}
+                  onChange={e => setFormData({ ...formData, movingTime: e.target.value })}
+                />
+              </div>
+            </div>
 
-          <button className="workouts-form-submit" type="submit" disabled={loading}>
-            {loading ? <Loader2 className="animate-spin" size={18} /> : 'Save Activity'}
-          </button>
-        </form>
+            <div className="form-group">
+              <label>Elevation Gain (m)</label>
+              <input
+                type="number"
+                required
+                placeholder="0"
+                value={formData.elevationGainMeters}
+                onChange={e => setFormData({ ...formData, elevationGainMeters: e.target.value })}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Strava Embed (HTML or ID)</label>
+              <textarea
+                placeholder="Paste Strava embed code here..."
+                value={formData.stravaEmbedId}
+                onChange={e => setFormData({ ...formData, stravaEmbedId: e.target.value })}
+              />
+            </div>
+
+            <button className={`workouts-form-submit ${success ? 'success' : ''}`} type="submit" disabled={loading || success}>
+              {loading ? <Loader2 className="animate-spin" size={18} /> : success ? 'Activity Saved!' : 'Save Activity'}
+            </button>
+          </form>
+        ) : (
+          <div className="strava-import-container">
+            <p className="import-hint">Paste raw JSON response from Strava activity API endpoint</p>
+            <div className="form-group">
+              <textarea
+                className="json-textarea"
+                placeholder='{ "id": 12345, "name": "...", "sport_type": "Run", ... }'
+                value={stravaJson}
+                onChange={e => setStravaJson(e.target.value)}
+              />
+            </div>
+            <button 
+              className={`workouts-form-submit import-btn ${success ? 'success' : ''}`} 
+              onClick={handleStravaImport} 
+              disabled={loading || success || !stravaJson.trim()}
+            >
+              {loading ? <Loader2 className="animate-spin" size={18} /> : success ? 'Imported Successfully!' : 'Process & Save'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

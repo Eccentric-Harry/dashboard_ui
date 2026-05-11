@@ -2,12 +2,11 @@ import { useEffect, useState } from 'react'
 
 import { QuantifiedSelfDashboard } from './components/dashboard/quantified-self-dashboard'
 import type { AppPath } from './components/dashboard/quantified-self-dashboard/data'
-import { FinanceOverview } from './components/views/FinanceOverview'
-import { NutritionOverview } from './components/views/NutritionOverview'
-import { WorkoutsOverview } from './components/views/WorkoutsOverview'
+import { FinanceOverview } from './components/views/finance-view'
+import { NutritionOverview } from './components/views/nutrition-view'
+import { WorkoutsOverview } from './components/views/workouts-view'
 import { DashboardProvider } from './contexts/DashboardContext'
-
-import { LearningsOverview } from './components/views/LearningsOverview'
+import { LearningsOverview } from './components/views/learnings-view'
 
 function normalizePathname(pathname: string): AppPath {
   if (pathname === '/home' || pathname === '/') {

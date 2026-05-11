@@ -1,12 +1,14 @@
 import { useEffect, useState, useCallback } from 'react'
-import { WorkoutsHeader } from './components/workouts-header'
-import { StatCard } from './components/stat-card'
-import { DistanceTrendCard } from './components/distance-trend-card'
-import { SportBreakdownCard } from './components/sport-breakdown-card'
-import { ActivityLogCard } from './components/activity-log-card'
-import { StravaEmbedCard } from './components/strava-embed-card'
-import { AddActivityModal } from './components/add-activity-modal'
-import { UpdateEmbedModal } from './components/update-embed-modal'
+import { 
+  WorkoutsHeader, 
+  StatCard, 
+  DistanceTrendCard, 
+  SportBreakdownCard, 
+  ActivityLogCard, 
+  StravaEmbedCard, 
+  AddActivityModal, 
+  UpdateEmbedModal 
+} from './components'
 import { fetchStravaActivities, fetchStravaActivityStats } from '../../../lib/api'
 import type { StravaActivity, StravaActivityStats } from '../../../lib/api'
 import { Activity, Mountain, Timer, Flame } from 'lucide-react'
