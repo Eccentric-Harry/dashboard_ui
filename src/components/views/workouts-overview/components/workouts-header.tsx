@@ -14,7 +14,7 @@ function WorkoutsHeader({ onAddClick }: WorkoutsHeaderProps) {
       <div className="workouts-header-actions">
         <button className="workouts-add-btn" onClick={onAddClick} type="button">
           <Plus size={14} strokeWidth={2.5} />
-          Record Activity
+          <span>Record Activity</span>
         </button>
       </div>
     </header>

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Footprints, Bike, PersonStanding, Zap } from 'lucide-react'
+import { Footprints, Bike, PersonStanding, Zap, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { StravaActivity } from '../../../../lib/api'
 
 type ActivityLogCardProps = {
@@ -23,6 +23,8 @@ const sportBadgeCls: Record<string, string> = {
 
 function ActivityLogCard({ activities, loading }: ActivityLogCardProps) {
   const [filter, setFilter] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = 6
 
   const sportTypes = useMemo(() => {
     const types = new Set(activities.map(a => a.sportType))
@@ -30,9 +32,16 @@ function ActivityLogCard({ activities, loading }: ActivityLogCardProps) {
   }, [activities])
 
   const filtered = useMemo(() => {
+    setCurrentPage(1) // Reset page when filter changes
     if (!filter) return activities
     return activities.filter(a => a.sportType === filter)
   }, [activities, filter])
+
+  const totalPages = Math.ceil(filtered.length / pageSize)
+  const paginated = useMemo(() => {
+    const start = (currentPage - 1) * pageSize
+    return filtered.slice(start, start + pageSize)
+  }, [filtered, currentPage])
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr)
@@ -79,16 +88,16 @@ function ActivityLogCard({ activities, loading }: ActivityLogCardProps) {
         <div className="workouts-log-row header">
           <span>Activity</span>
           <span>Distance</span>
-          <span>Time</span>
+          <span className="mobile-hide">Time</span>
           <span>Pace</span>
         </div>
         <div className="workouts-log-list">
           {loading ? (
             <div className="workouts-loading"><span className="workouts-loading-dot">Loading activities…</span></div>
-          ) : filtered.length === 0 ? (
+          ) : paginated.length === 0 ? (
             <div className="workouts-loading">No activities found</div>
           ) : (
-            filtered.map((activity, i) => {
+            paginated.map((activity, i) => {
               const sport = sportIcons[activity.sportType] || sportIcons.Run
               const SportIcon = sport.icon
               const badgeCls = sportBadgeCls[activity.sportType] || 'run'
@@ -101,11 +110,14 @@ function ActivityLogCard({ activities, loading }: ActivityLogCardProps) {
                     </span>
                     <p>
                       <b>{activity.activityName}</b>
-                      <small>{formatDate(activity.date)}</small>
+                      <small>
+                        {formatDate(activity.date)}
+                        <span className="mobile-only"> · {activity.movingTime}</span>
+                      </small>
                     </p>
                   </div>
                   <span>{activity.distanceKm.toFixed(2)} km</span>
-                  <span>{activity.movingTime}</span>
+                  <span className="mobile-hide">{activity.movingTime}</span>
                   <span className={`workouts-sport-badge ${badgeCls}`}>
                     {formatPace(activity.paceMinPerKm)}
                   </span>
@@ -114,6 +126,28 @@ function ActivityLogCard({ activities, loading }: ActivityLogCardProps) {
             })
           )}
         </div>
+
+        {!loading && totalPages > 1 && (
+          <div className="workouts-pagination">
+            <button 
+              disabled={currentPage === 1} 
+              onClick={() => setCurrentPage(p => p - 1)}
+              className="pagination-btn"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span className="pagination-info">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button 
+              disabled={currentPage === totalPages} 
+              onClick={() => setCurrentPage(p => p + 1)}
+              className="pagination-btn"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

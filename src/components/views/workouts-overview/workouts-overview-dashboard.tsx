@@ -1,13 +1,13 @@
 import { useEffect, useState, useCallback } from 'react'
-import { 
-  WorkoutsHeader, 
-  StatCard, 
-  DistanceTrendCard, 
-  SportBreakdownCard, 
-  ActivityLogCard, 
-  StravaEmbedCard, 
-  AddActivityModal, 
-  UpdateEmbedModal 
+import {
+  WorkoutsHeader,
+  StatCard,
+  DistanceTrendCard,
+  SportBreakdownCard,
+  ActivityLogCard,
+  StravaEmbedCard,
+  AddActivityModal,
+  UpdateEmbedModal
 } from './components'
 import { fetchStravaActivities, fetchStravaActivityStats } from '../../../lib/api'
 import type { StravaActivity, StravaActivityStats } from '../../../lib/api'
@@ -37,12 +37,6 @@ function WorkoutsOverviewDashboard() {
   }, [])
 
   useEffect(() => { refreshData() }, [refreshData])
-
-  const formatTime = (mins: number) => {
-    const h = Math.floor(mins / 60)
-    const m = Math.floor(mins % 60)
-    return h > 0 ? `${h}h ${m}m` : `${m}m`
-  }
 
   return (
     <section className="workouts-dashboard" aria-label="Workouts overview dashboard">
