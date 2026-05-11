@@ -667,7 +667,13 @@
   justify-self: end;
 }
 
-.finance-transaction-edit-btn {
+.finance-transaction-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.finance-transaction-action-btn {
   background: transparent;
   border: none;
   color: rgba(23, 28, 25, 0.4);
@@ -680,10 +686,15 @@
   transition: all 0.2s;
 }
 
-.finance-transaction-edit-btn:hover {
+.finance-transaction-action-btn:hover {
   background: rgba(20, 24, 22, 0.06);
   color: #121c17;
   transform: scale(1.1);
+}
+
+.finance-transaction-action-btn.delete:hover {
+  background: rgba(216, 53, 66, 0.1);
+  color: #d83542;
 }
 
 /* Modal Styling matching Nutrition */
@@ -1037,7 +1048,7 @@
     padding: 0 14px;
   }
 
-  .finance-transaction-edit-btn {
+  .finance-transaction-action-btn {
     min-height: 44px;
     min-width: 44px;
   }

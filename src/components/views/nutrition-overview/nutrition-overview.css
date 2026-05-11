@@ -461,7 +461,7 @@
 .nutrition-dashboard-grid {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
-  grid-template-rows: 300px 260px auto;
+  grid-template-rows: 300px 310px auto;
   gap: 18px;
   align-items: stretch;
   min-height: 0;
@@ -1187,390 +1187,340 @@
 .nutrition-hydration-card {
   grid-column: 8 / -1;
   grid-row: 2;
-  display: flex;
-  flex-direction: column;
-  height: 260px;
-  padding: 20px;
-  overflow: hidden;
-  background: linear-gradient(165deg, rgba(240, 250, 255, 0.95), rgba(220, 240, 250, 0.85), rgba(200, 230, 245, 0.75));
-  position: relative;
+  background: linear-gradient(165deg, #f8fcff 0%, #f0f9ff 40%, #e6f4ff 100%);
 }
 
 .nutrition-hydration-card::before {
   content: '';
   position: absolute;
-  top: -60%;
-  right: -30%;
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, rgba(120, 200, 230, 0.25), transparent 70%);
+  top: -10%;
+  right: -5%;
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.05), transparent 70%);
   pointer-events: none;
 }
 
-.nutrition-hydration-card::after {
-  content: '';
-  position: absolute;
-  bottom: -40%;
-  left: -20%;
-  width: 250px;
-  height: 250px;
-  background: radial-gradient(circle, rgba(100, 180, 220, 0.15), transparent 70%);
-  pointer-events: none;
+.nutrition-hydration-card .nutrition-ring {
+  width: 100%;
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.9), rgba(245, 250, 255, 0.82), rgba(235, 245, 255, 0.75));
+}
+
+.nutrition-hydration-card .nutrition-ring:hover {
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.95), rgba(248, 252, 255, 0.88), rgba(240, 248, 255, 0.82));
 }
 
 .hydration-header {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+  position: relative;
+  z-index: 10;
 }
 
-.hydration-icon {
-  display: grid;
-  width: 36px;
-  height: 36px;
-  flex-shrink: 0;
-  place-items: center;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.08));
-  color: #3b82f6;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  transition: box-shadow 0.2s ease;
-}
-
-.hydration-title {
-  flex: 1;
-  min-width: 0;
-}
-
-.hydration-title p {
-  margin: 0;
-  color: rgba(23, 28, 25, 0.55);
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-}
-
-.hydration-title h2 {
-  margin: 4px 0 0;
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-  background: linear-gradient(135deg, #0d1110 0%, #2d4a58 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.hydration-status {
-  display: grid;
-  height: 28px;
-  place-items: center;
-  padding: 0 10px;
-  border-radius: 14px;
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
-  font-size: 11px;
-  font-weight: 800;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  transition: all 0.3s ease;
-}
-
-.hydration-status[data-complete="true"] {
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.08));
-  color: #22c55e;
-  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-}
-
-.hydration-status span {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.status-complete {
-  color: #22c55e;
-}
-
-.hydration-body {
+.hydration-info-group {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 2px;
+}
+
+.hydration-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #3b82f6;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  margin-bottom: 2px;
+}
+
+.hydration-title-main {
+  font-size: 28px;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.04em;
+  margin: 0;
+  line-height: 1;
+}
+
+.hydration-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: #fff;
+  border: 1px solid rgba(59, 130, 246, 0.12);
+  color: #3b82f6;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.06);
+  backdrop-filter: blur(8px);
+}
+
+.hydration-status-pill[data-complete="true"] {
+  background: #f0fdf4;
+  color: #16a34a;
+  border-color: #22c55e20;
+}
+
+.hydration-visual-core {
   flex: 1;
-  min-height: 0;
-}
-
-.hydration-visual-container {
-  position: relative;
   display: grid;
-  height: 110px;
-  border-radius: 16px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(210, 235, 248, 0.6));
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6), 0 4px 16px rgba(59, 130, 246, 0.08);
-  overflow: hidden;
+  place-items: center;
+  position: relative;
+  margin: 4px 0;
 }
 
-.hydration-wave-container {
-  position: absolute;
-  inset: 0;
+/* The "Vessel" - Redesigned for elegance */
+.hydration-vessel {
+  position: relative;
+  width: 170px;
+  height: 170px;
+  border-radius: 54px; /* More of a squircle */
+  background: #fff;
+  box-shadow: 
+    inset 0 0 40px rgba(59, 130, 246, 0.03),
+    0 20px 40px -10px rgba(59, 130, 246, 0.08);
   overflow: hidden;
+  border: 6px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.hydration-water-fill {
+.hydration-liquid-container {
   position: absolute;
   bottom: 0;
   left: 0;
+  width: 100%;
+  background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
+  transition: height 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: inset 0 10px 20px rgba(255, 255, 255, 0.2);
+}
+
+.hydration-liquid-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
   right: 0;
-  background: linear-gradient(180deg, rgba(59, 130, 246, 0.35), rgba(59, 130, 246, 0.25));
-  transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 40px;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.15), transparent);
+  pointer-events: none;
 }
 
-.hydration-wave {
+/* Fluid Wave SVG */
+.hydration-waves-svg {
   position: absolute;
-  left: -10%;
-  right: -10%;
+  top: -18px;
+  left: 0;
+  width: 200%;
   height: 20px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.4);
+  fill: #3b82f6;
+  animation: wave-slide 3s cubic-bezier(0.36, 0.45, 0.63, 0.53) infinite;
 }
 
-.hydration-wave-1 {
-  top: -12px;
-  animation: hydration-wave 3s ease-in-out infinite;
-  background: rgba(255, 255, 255, 0.5);
+.hydration-waves-svg.wave-back {
+  fill: rgba(59, 130, 246, 0.4);
+  top: -16px;
+  animation-duration: 4.5s;
+  animation-direction: reverse;
+  opacity: 0.6;
 }
 
-.hydration-wave-2 {
-  top: -8px;
-  animation: hydration-wave 3s ease-in-out infinite reverse;
-  animation-delay: -1.5s;
-  background: rgba(255, 255, 255, 0.35);
+@keyframes wave-slide {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
-@keyframes hydration-wave {
-  0%, 100% { transform: translateX(-3%) rotate(-1deg); }
-  50% { transform: translateX(3%) rotate(1deg); }
-}
-
-.hydration-bubbles {
-  position: absolute;
-  inset: 0;
-}
-
-.hydration-bubble {
-  position: absolute;
-  display: block;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.4);
-  animation: bubble-rise 4s ease-in-out infinite;
-}
-
-.hydration-bubble-1 { left: 15%; bottom: 20%; width: 6px; height: 6px; animation-delay: 0s; }
-.hydration-bubble-2 { left: 25%; bottom: 35%; width: 4px; height: 4px; animation-delay: -0.8s; }
-.hydration-bubble-3 { right: 20%; bottom: 25%; width: 5px; height: 5px; animation-delay: -1.6s; }
-.hydration-bubble-4 { right: 32%; bottom: 40%; width: 4px; height: 4px; animation-delay: -2.4s; }
-.hydration-bubble-5 { left: 40%; bottom: 15%; width: 5px; height: 5px; animation-delay: -3.2s; }
-.hydration-bubble-6 { left: 55%; bottom: 30%; width: 3px; height: 3px; animation-delay: -0.4s; }
-
-@keyframes bubble-rise {
-  0%, 100% { transform: translateY(0) scale(1); opacity: 0.4; }
-  50% { transform: translateY(-10px) scale(1.1); opacity: 0.7; }
-}
-
-.hydration-progress-ring {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  display: grid;
-  width: 80px;
-  height: 80px;
-  place-items: center;
-  border-radius: 999px;
-  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.9) 0 45%, rgba(255, 255, 255, 0.6) 46%);
-  backdrop-filter: blur(8px);
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  z-index: 2;
-}
-
-.hydration-progress-ring svg {
-  position: absolute;
-  inset: 0;
-  width: 80px;
-  height: 80px;
-  transform: rotate(-90deg);
-}
-
-.hydration-track {
-  fill: none;
-  stroke: rgba(59, 130, 246, 0.15);
-  stroke-width: 7;
-}
-
-.hydration-value {
-  fill: none;
-  stroke: #3b82f6;
-  stroke-width: 7;
-  stroke-linecap: round;
-  transition: stroke-dashoffset 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  filter: drop-shadow(0 4px 8px rgba(59, 130, 246, 0.3));
-}
-
-.hydration-center {
+.hydration-vessel-stats {
   position: relative;
-  z-index: 1;
+  z-index: 20;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 0;
+  text-align: center;
 }
 
-.hydration-value-display {
+.hydration-vessel-value {
   display: flex;
   align-items: baseline;
   gap: 2px;
 }
 
-.hydration-value-display b {
-  font-size: 20px;
-  font-weight: 700;
+.hydration-vessel-value b {
+  font-size: 44px;
+  font-weight: 900;
+  color: #fff;
   line-height: 1;
-  color: #101312;
-  background: linear-gradient(135deg, #0d1110, #2d4a58);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  letter-spacing: -0.05em;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
-.hydration-value-display small {
-  font-size: 12px;
-  font-weight: 700;
-  color: rgba(23, 28, 25, 0.6);
-}
-
-.hydration-target-label {
-  font-size: 9px;
+.hydration-vessel-value span {
+  font-size: 16px;
   font-weight: 800;
-  color: rgba(23, 28, 25, 0.5);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.9);
 }
 
-.hydration-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: auto;
-}
-
-.hydration-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 38px;
-  flex: 1;
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  border-radius: 14px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(240, 250, 255, 0.75));
-  color: #101312;
+.hydration-vessel-goal {
   font-size: 11px;
   font-weight: 800;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-top: -2px;
+}
+
+.hydration-vessel-stats[data-dark="true"] b {
+  color: #0f172a;
+  filter: none;
+}
+
+.hydration-vessel-stats[data-dark="true"] span {
+  color: rgba(15, 23, 42, 0.6);
+}
+
+.hydration-vessel-stats[data-dark="true"] .hydration-vessel-goal {
+  color: rgba(15, 23, 42, 0.4);
+}
+
+.hydration-actions-grid {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  position: relative;
+  z-index: 10;
+}
+
+.hydration-action-tile {
+  flex: 1;
+  display: flex;
+  flex-direction: row; /* Horizontal layout for tiles */
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 58px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.7);
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.03);
 }
 
-.hydration-btn:hover {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(245, 252, 255, 0.85));
+.hydration-action-tile:hover:not(:disabled) {
+  transform: translateY(-3px);
+  background: #fff;
+  box-shadow: 0 10px 20px rgba(59, 130, 246, 0.08);
+  border-color: #3b82f630;
 }
 
-.hydration-btn:active {
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+.hydration-action-tile:active:not(:disabled) {
+  transform: translateY(-1px);
 }
 
-.hydration-btn:disabled {
+.hydration-action-tile:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  transform: none;
 }
 
-.hydration-btn-minus {
-  flex: 0 0 38px;
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
-  color: #dc2626;
+.hydration-action-tile.minus {
+  flex: 0 0 58px;
+  background: rgba(239, 68, 68, 0.04);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.1);
 }
 
-.hydration-btn-minus:hover {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.08));
+.hydration-action-tile.minus:hover:not(:disabled) {
+  background: #fffafb;
+  border-color: #ef444430;
+  box-shadow: 0 10px 20px rgba(239, 68, 68, 0.06);
 }
 
-.hydration-btn-add {
-  position: relative;
-  overflow: hidden;
+.hydration-action-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: rgba(59, 130, 246, 0.08);
+  color: #3b82f6;
 }
 
-.hydration-btn-add::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(var(--btn-color-rgb, 59, 130, 246), 0.08), rgba(var(--btn-color-rgb, 59, 130, 246), 0.04));
-  opacity: 0;
-  transition: opacity 0.2s ease;
+.minus .hydration-action-icon {
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
 }
 
-.hydration-btn-add:hover::before {
-  opacity: 1;
+.hydration-action-label {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1e293b;
 }
 
-.hydration-loading {
+.hydration-loading-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  flex: 1;
-  color: rgba(23, 28, 25, 0.5);
-  font-size: 12px;
+  height: 100%;
+  gap: 16px;
+  color: #3b82f6;
   font-weight: 700;
 }
 
-.spin {
-  animation: spin 1s linear infinite;
+.hydration-error-toast {
+  position: absolute;
+  top: 12px; /* Move to top for better visibility */
+  left: 12px;
+  right: 12px;
+  background: #fff1f2;
+  border: 1px solid #fda4af40;
+  padding: 10px 16px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(225, 29, 72, 0.1);
+  animation: slide-down 0.3s ease-out;
+}
+
+@keyframes slide-down {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.hydration-error-toast span {
+  font-size: 12px;
+  font-weight: 800;
+  color: #be123c;
+}
+
+.hydration-error-toast button {
+  background: #be123c10;
+  border: none;
+  color: #be123c;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.spin-slow {
+  animation: spin 2s linear infinite;
 }
 
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
-}
-
-.hydration-error {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 8px;
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: rgba(239, 68, 68, 0.1);
-  color: #dc2626;
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.hydration-error button {
-  display: grid;
-  width: 20px;
-  height: 20px;
-  place-items: center;
-  border: 0;
-  border-radius: 6px;
-  background: rgba(239, 68, 68, 0.2);
-  color: #dc2626;
-  cursor: pointer;
 }
 
 /* ── Food Log Card ─────────────────────────────── */

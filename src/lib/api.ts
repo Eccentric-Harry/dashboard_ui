@@ -181,6 +181,16 @@ export async function updateTransaction(id: string, data: { description: string;
   return response.json();
 }
 
+export async function deleteTransaction(id: string) {
+  const response = await fetch(`${API_BASE_URL}/finance/transactions/${id}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to delete transaction');
+  }
+  // Delete typically returns 204 No Content, so we don't try to parse JSON.
+}
+
 // ─── Strava Activities ───────────────────────────────────────────────
 
 export interface StravaActivity {

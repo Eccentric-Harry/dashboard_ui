@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Edit2 } from 'lucide-react'
+import { X, Edit2, Trash2 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { getConsistentColor, getIconForCategory } from '../utils'
 
@@ -20,9 +20,10 @@ interface TransactionsCardProps {
   transactions?: TransactionProp[]
   loading?: boolean
   onEdit?: (transaction: TransactionProp) => void
+  onDelete?: (transaction: TransactionProp) => void
 }
 
-function TransactionsCard({ transactions = [], loading = false, onEdit }: TransactionsCardProps) {
+function TransactionsCard({ transactions = [], loading = false, onEdit, onDelete }: TransactionsCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const displayTransactions = transactions.slice(0, 10)
 
@@ -90,16 +91,28 @@ function TransactionsCard({ transactions = [], loading = false, onEdit }: Transa
                     <strong className={tone}>
                       {amount}
                     </strong>
-                    {onEdit && (
-                      <button 
-                        type="button" 
-                        className="finance-transaction-edit-btn" 
-                        onClick={() => onEdit(tx)}
-                        aria-label="Edit transaction"
-                      >
-                        <Edit2 size={12} />
-                      </button>
-                    )}
+                    <div className="finance-transaction-actions">
+                      {onEdit && (
+                        <button 
+                          type="button" 
+                          className="finance-transaction-action-btn" 
+                          onClick={() => onEdit(tx)}
+                          aria-label="Edit transaction"
+                        >
+                          <Edit2 size={12} />
+                        </button>
+                      )}
+                      {onDelete && (
+                        <button 
+                          type="button" 
+                          className="finance-transaction-action-btn delete" 
+                          onClick={() => onDelete(tx)}
+                          aria-label="Delete transaction"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -153,16 +166,28 @@ function TransactionsCard({ transactions = [], loading = false, onEdit }: Transa
                         <strong className={tone}>
                           {amount}
                         </strong>
-                        {onEdit && (
-                          <button 
-                            type="button" 
-                            className="finance-transaction-edit-btn" 
-                            onClick={() => onEdit(tx)}
-                            aria-label="Edit transaction"
-                          >
-                            <Edit2 size={12} />
-                          </button>
-                        )}
+                        <div className="finance-transaction-actions">
+                          {onEdit && (
+                            <button 
+                              type="button" 
+                              className="finance-transaction-action-btn" 
+                              onClick={() => onEdit(tx)}
+                              aria-label="Edit transaction"
+                            >
+                              <Edit2 size={12} />
+                            </button>
+                          )}
+                          {onDelete && (
+                            <button 
+                              type="button" 
+                              className="finance-transaction-action-btn delete" 
+                              onClick={() => onDelete(tx)}
+                              aria-label="Delete transaction"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );

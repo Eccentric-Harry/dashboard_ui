@@ -7,7 +7,7 @@ import { SubscriptionsCard } from './components/subscriptions-card'
 import { TransactionsCard } from './components/transactions-card'
 import { AddTransactionModal } from './components/add-transaction-modal'
 import { financeMetrics as fallbackMetrics } from './data'
-import { fetchDailyFinanceLogs } from '../../../lib/api'
+import { fetchDailyFinanceLogs, deleteTransaction } from '../../../lib/api'
 import type { DailyFinancialLog } from '../../../lib/api'
 import { 
   ArrowUpRight, ArrowDownLeft, PiggyBank
@@ -151,6 +151,16 @@ function FinanceOverviewDashboard() {
     })
   }
 
+  const handleDelete = async (tx: any) => {
+    if (!window.confirm(`Delete transaction "${tx.merchant}" (${tx.amount})?`)) return
+    try {
+      await deleteTransaction(tx.id)
+      refreshData()
+    } catch (err) {
+      console.error('Failed to delete transaction:', err)
+    }
+  }
+
   return (
     <section className="finance-dashboard" aria-label="Finance overview dashboard">
       <FinanceHeader onAddClick={() => setIsAddModalOpen(true)} />
@@ -170,6 +180,7 @@ function FinanceOverviewDashboard() {
           transactions={recentTransactions} 
           loading={loading} 
           onEdit={handleEdit}
+          onDelete={handleDelete}
         />
         <SubscriptionsCard onRefresh={refreshData} />
       </div>

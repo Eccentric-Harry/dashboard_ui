@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Droplets, Minus, RefreshCw, GlassWater, Coffee } from 'lucide-react'
+import { RefreshCw, Minus, GlassWater, Droplets, Milk } from 'lucide-react'
 import { fetchHydration, addWaterIntake } from '../../../../lib/api'
 import type { HydrationData } from '../../../../lib/api'
+import { RingProgress } from './ring-progress'
 
 const TARGET_ML = 4000
 
@@ -24,7 +25,7 @@ function HydrationCard() {
       const response = await fetchHydration(date)
       setData(response.data)
     } catch (err) {
-      setError('Failed to load hydration data')
+      setError('Connection Error')
       console.error(err)
     } finally {
       setLoading(false)
@@ -34,10 +35,7 @@ function HydrationCard() {
   useEffect(() => {
     loadHydration()
 
-    // Listen for URL changes (popstate is triggered by NutritionHeader)
-    const handleUrlChange = () => {
-      loadHydration()
-    }
+    const handleUrlChange = () => loadHydration()
     window.addEventListener('popstate', handleUrlChange)
     return () => window.removeEventListener('popstate', handleUrlChange)
   }, [loadHydration])
@@ -51,13 +49,12 @@ function HydrationCard() {
       const response = await fetchHydration(date)
       setData(response.data)
     } catch (err) {
-      setError('Failed to add water')
+      setError('Failed to log water')
       console.error(err)
     } finally {
       setAdding(false)
     }
   }
-
 
   const logged = data?.waterIntakeMl ?? 0
   const target = data?.targetMl ?? TARGET_ML
@@ -65,118 +62,75 @@ function HydrationCard() {
   const progressPercent = Math.round(progress * 100)
   const isComplete = progress >= 1
 
-  const radius = 52
-  const circumference = 2 * Math.PI * radius
-  const dashOffset = circumference - progress * circumference
-
   const quickAmounts = [
-    { amount: 250, label: '+250ml', icon: GlassWater, color: '#3b82f6' },
-    { amount: 750, label: '+750ml', icon: Coffee, color: '#8b5cf6' },
+    { amount: 250, label: '250ml', icon: GlassWater },
+    { amount: 750, label: '750ml', icon: Milk },
   ]
 
   if (loading) {
     return (
-      <section className="nutrition-card nutrition-hydration-card" aria-label="Daily hydration">
-        <div className="hydration-header">
-          <div className="hydration-icon">
-            <Droplets size={18} />
-          </div>
-          <div className="hydration-title">
-            <p>Daily Hydration</p>
-            <h2>Water Intake</h2>
-          </div>
-        </div>
-        <div className="hydration-loading">
-          <RefreshCw size={24} className="spin" />
-          <span>Loading...</span>
+      <section className="nutrition-card nutrition-hydration-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '24px' }} aria-label="Loading hydration">
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '16px', color: '#3b82f6' }}>
+          <RefreshCw size={36} style={{ animation: 'spin 2s linear infinite' }} />
+          <span>Refreshing...</span>
         </div>
       </section>
     )
   }
 
   return (
-    <section className="nutrition-card nutrition-hydration-card" aria-label="Daily hydration">
-      <div className="hydration-header">
-        <div className="hydration-icon" style={{ '--icon-glow': 'rgba(59, 130, 246, 0.2)' } as React.CSSProperties}>
-          <Droplets size={18} />
-        </div>
-        <div className="hydration-title">
+    <section className="nutrition-card nutrition-hydration-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '20px 24px' }} aria-label="Daily hydration">
+      <div className="nutrition-card-head">
+        <div>
           <p>Daily Hydration</p>
-          <h2>Water Intake</h2>
+          <h2 style={{ fontSize: '18px', paddingTop: '2px' }}>Water Intake</h2>
         </div>
-        <div className="hydration-status" data-complete={isComplete}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           {isComplete ? (
-            <span className="status-complete">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              Goal Met
-            </span>
+            <>Target Met</>
           ) : (
-            <span>
-              <Droplets size={12} />
+            <>
+              <Droplets size={12} strokeWidth={2.5} />
               {progressPercent}%
-            </span>
+            </>
           )}
+        </span>
+      </div>
+
+      <div className="nutrition-rings" style={{ marginTop: 'auto', marginBottom: 'auto', justifyContent: 'center', display: 'flex' }}>
+        <div style={{ width: '170px', height: '170px', display: 'flex' }}>
+          <RingProgress
+            label="Water Intake"
+            value={logged}
+            target={target}
+            color="#3b82f6"
+            unit="ml"
+            active={false}
+            centerTextOverride={`${(logged / 1000).toFixed(1)}L`}
+            hideLabel={true}
+          />
         </div>
       </div>
 
-      <div className="hydration-body">
-        <div className="hydration-visual-container">
-          <div className="hydration-wave-container">
-            <div className="hydration-water-fill" style={{ height: `${Math.max(progress * 100, 8)}%` }}>
-              <div className="hydration-wave hydration-wave-1" />
-              <div className="hydration-wave hydration-wave-2" />
-            </div>
-            <div className="hydration-bubbles">
-              {[...Array(6)].map((_, i) => (
-                <i key={i} className={`hydration-bubble hydration-bubble-${i + 1}`} />
-              ))}
-            </div>
-          </div>
-
-          <div className="hydration-progress-ring">
-            <svg viewBox="0 0 120 120">
-              <circle cx="60" cy="60" r={radius} className="hydration-track" />
-              <circle
-                cx="60"
-                cy="60"
-                r={radius}
-                className="hydration-value"
-                strokeDasharray={circumference}
-                strokeDashoffset={dashOffset}
-              />
-            </svg>
-            <div className="hydration-center">
-              <span className="hydration-value-display">
-                <b>{(logged / 1000).toFixed(1)}</b>
-                <small>L</small>
-              </span>
-              <small className="hydration-target-label">of {target / 1000}L</small>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="hydration-actions">
+      <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
         <button
           type="button"
-          className="hydration-btn hydration-btn-minus"
+          className="nutrition-day-log-btn"
+          style={{ padding: '0 16px', height: '40px', justifyContent: 'center', flexShrink: 0 }}
           onClick={() => handleAddWater(-250)}
           disabled={adding || logged < 250}
-          aria-label="Remove 250ml"
         >
           <Minus size={16} />
         </button>
-        {quickAmounts.map(({ amount, label, icon: Icon, color }) => (
+
+        {quickAmounts.map(({ amount, label, icon: Icon }) => (
           <button
             key={amount}
             type="button"
-            className="hydration-btn hydration-btn-add"
+            className="nutrition-day-log-btn"
+            style={{ flex: 1, padding: '0 10px', height: '40px', justifyContent: 'center' }}
             onClick={() => handleAddWater(amount)}
             disabled={adding}
-            aria-label={label}
-            style={{ '--btn-color': color } as React.CSSProperties}
           >
             <Icon size={16} />
             <span>{label}</span>
@@ -185,10 +139,10 @@ function HydrationCard() {
       </div>
 
       {error && (
-        <div className="hydration-error">
+        <div className="hydration-error-toast">
           <span>{error}</span>
           <button onClick={loadHydration} aria-label="Retry">
-            <RefreshCw size={12} />
+            <RefreshCw size={14} />
           </button>
         </div>
       )}

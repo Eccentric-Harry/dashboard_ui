@@ -11,6 +11,7 @@ export const CATEGORY_COLORS: Record<string, string> = {
   'Bills': '#ff6c61',   // Crimson
   'Food': '#039855',    // Emerald Green
   'Lending': '#7A5AF8', // Royal Purple
+  'Loan Recovery': '#0BA5EC', // Ocean Blue
   'Shopping': '#DC6803', // Burnt Orange
   'Transport': '#0BA5EC', // Light Blue
   'Entertainment': '#DD2590', // Magenta
@@ -74,6 +75,7 @@ export function getIconForCategory(category: string): LucideIcon {
   if (cat.includes('salary') || cat.includes('income')) return Landmark
   if (cat.includes('invest') || cat.includes('stock')) return TrendingUp
   if (cat.includes('lend') || cat.includes('borrow')) return HandCoins
+  if (cat.includes('loan') || cat.includes('recovery') || cat.includes('repay')) return HandCoins
   
   // Miscellaneous
   if (cat.includes('misc') || cat.includes('other')) return Sparkles

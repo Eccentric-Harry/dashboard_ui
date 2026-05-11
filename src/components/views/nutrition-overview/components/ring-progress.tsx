@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'react'
+
 type RingProgressProps = {
   label: string
   value: number
@@ -6,9 +8,11 @@ type RingProgressProps = {
   unit: string
   active?: boolean
   onSelect?: () => void
+  centerTextOverride?: string
+  hideLabel?: boolean
 }
 
-function RingProgress({ label, value, target, color, unit, active, onSelect }: RingProgressProps) {
+function RingProgress({ label, value, target, color, unit, active, onSelect, centerTextOverride, hideLabel }: RingProgressProps) {
   const radius = 58
   const circumference = 2 * Math.PI * radius
   const progress = Math.min(value / target, 1)
@@ -34,8 +38,8 @@ function RingProgress({ label, value, target, color, unit, active, onSelect }: R
         />
       </svg>
       <span>
-        <b>{Math.round(progress * 100)}%</b>
-        <small>{label}</small>
+        <b>{centerTextOverride || `${Math.round(progress * 100)}%`}</b>
+        {!hideLabel && <small>{label}</small>}
         <em>
           {value.toLocaleString()}/{target.toLocaleString()}
           {unit}
@@ -46,4 +50,3 @@ function RingProgress({ label, value, target, color, unit, active, onSelect }: R
 }
 
 export { RingProgress }
-import type { CSSProperties } from 'react'

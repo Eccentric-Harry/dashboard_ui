@@ -18,9 +18,9 @@ interface AddTransactionModalProps {
 }
 
 const CATEGORIES = [
-  'Food', 'Groceries', 'Transport', 'Shopping', 
-  'Bills', 'Entertainment', 'Health', 'To Home', 
-  'Lending', 'Waste', 'Miscellaneous', 'Income', 'Salary'
+  'Food', 'Groceries', 'Transport', 'Shopping',
+  'Bills', 'Entertainment', 'Health', 'To Home',
+  'Lending', 'Loan Recovery', 'Waste', 'Miscellaneous', 'Income', 'Salary'
 ]
 
 export function AddTransactionModal({ isOpen, onClose, onSuccess, isEdit, initialData }: AddTransactionModalProps) {
