@@ -277,7 +277,7 @@
 
 .workouts-log-row {
   display: grid;
-  grid-template-columns: minmax(0,1.8fr) minmax(0,0.7fr) minmax(0,0.7fr) minmax(0,0.7fr) minmax(0,0.6fr);
+  grid-template-columns: minmax(0,1.8fr) minmax(0,0.8fr) minmax(0,0.8fr) minmax(0,0.8fr);
   align-items: center;
   gap: 12px;
   min-height: 50px;

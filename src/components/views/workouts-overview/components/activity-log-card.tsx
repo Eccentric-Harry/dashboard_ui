@@ -81,7 +81,6 @@ function ActivityLogCard({ activities, loading }: ActivityLogCardProps) {
           <span>Distance</span>
           <span>Time</span>
           <span>Pace</span>
-          <span>Elev</span>
         </div>
         <div className="workouts-log-list">
           {loading ? (
@@ -110,7 +109,6 @@ function ActivityLogCard({ activities, loading }: ActivityLogCardProps) {
                   <span className={`workouts-sport-badge ${badgeCls}`}>
                     {formatPace(activity.paceMinPerKm)}
                   </span>
-                  <span>{activity.elevationGainMeters} m</span>
                 </div>
               )
             })
