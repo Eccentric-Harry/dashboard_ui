@@ -212,7 +212,7 @@
 /* Distance Trend Card */
 .workouts-trend-card {
   grid-column: 1 / -1;
-  order: 3;
+  order: 5;
   padding: 24px 32px;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.84), rgba(239, 246, 237, 0.7)), rgba(250, 252, 247, 0.72);
 }
@@ -225,7 +225,7 @@
 /* Sport Breakdown Card */
 .workouts-breakdown-card {
   grid-column: 1 / -1;
-  order: 2;
+  order: 4;
   padding: 24px 32px;
 }
 
@@ -317,7 +317,7 @@
 /* Activity Log Card */
 .workouts-log-card {
   grid-column: 1 / span 7;
-  order: 4;
+  order: 2;
   display: flex;
   flex-direction: column;
   height: 600px;
@@ -514,7 +514,7 @@
 /* Strava Embed Card */
 .workouts-embed-card {
   grid-column: 8 / -1;
-  order: 5;
+  order: 3;
   padding: 20px;
   display: flex;
   flex-direction: column;

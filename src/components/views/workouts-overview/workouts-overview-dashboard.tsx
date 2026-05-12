@@ -70,10 +70,10 @@ function WorkoutsOverviewDashboard() {
           icon={Mountain}
           iconClass="elev"
         />
-        <DistanceTrendCard activities={activities} loading={loading} />
-        <SportBreakdownCard stats={stats} loading={loading} />
         <ActivityLogCard activities={activities} loading={loading} />
         <StravaEmbedCard stats={stats} onEditClick={() => setIsEmbedModalOpen(true)} />
+        <SportBreakdownCard stats={stats} loading={loading} />
+        <DistanceTrendCard activities={activities} loading={loading} />
       </div>
 
       <AddActivityModal

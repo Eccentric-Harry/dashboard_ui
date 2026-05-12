@@ -125,7 +125,21 @@ function ProteinTrendCard() {
     const y = chartHeight - padding - (point.grams / maxValue) * (chartHeight - padding * 2)
     return { ...point, x, y }
   })
-  const path = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ')
+  // Create a smoother curved path using quadratic bezier points
+  const createCurvePath = (pts: any[]) => {
+    if (pts.length === 0) return ""
+    let d = `M ${pts[0].x} ${pts[0].y}`
+    for (let i = 0; i < pts.length - 1; i++) {
+      const xMid = (pts[i].x + pts[i + 1].x) / 2
+      const yMid = (pts[i].y + pts[i + 1].y) / 2
+      d += ` Q ${pts[i].x} ${pts[i].y} ${xMid} ${yMid}`
+    }
+    d += ` L ${pts[pts.length - 1].x} ${pts[pts.length - 1].y}`
+    return d
+  }
+
+  const curvedPath = createCurvePath(points)
+  const areaPath = `${curvedPath} L ${points[points.length - 1].x} ${chartHeight - padding} L ${points[0].x} ${chartHeight - padding} Z`
   const targetY = chartHeight - padding - (PROTEIN_TARGET / maxValue) * (chartHeight - padding * 2)
 
   return (
@@ -135,21 +149,42 @@ function ProteinTrendCard() {
           <p>Weekly Protein Consistency</p>
           <h2>{latestPoint.grams}g {latestPoint.dateStr === isoDate(new Date()) ? 'today' : ''}</h2>
         </div>
-        <span>7 days</span>
+        <span className="nutrition-days-pill">7 days</span>
       </div>
 
-      <svg className="nutrition-line-chart" viewBox={`0 0 ${chartWidth} ${chartHeight}`} role="img" aria-label="Seven day protein intake trend">
+      <svg className="nutrition-line-chart" viewBox={`0 0 ${chartWidth} ${chartHeight}`} preserveAspectRatio="none">
         <defs>
           <linearGradient id="protein-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#2f9d43" />
             <stop offset="50%" stopColor="#35b64b" />
             <stop offset="100%" stopColor="#7ddaa0" />
           </linearGradient>
+          <linearGradient id="area-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#35b64b" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="#35b64b" stopOpacity="0" />
+          </linearGradient>
+          <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
         </defs>
-        <line x1={padding} x2={chartWidth - padding} y1={targetY} y2={targetY} className="target" />
-        <path d={path} />
+        
+        {/* Horizontal grid lines */}
+        <line x1={padding} x2={chartWidth - padding} y1={targetY} y2={targetY} className="target-line" />
+        <text x={chartWidth - padding} y={targetY - 6} className="target-label">TARGET {PROTEIN_TARGET}g</text>
+
+        {/* Area fill */}
+        <path d={areaPath} fill="url(#area-gradient)" className="area-path" />
+        
+        {/* The main line */}
+        <path d={curvedPath} className="trend-line" />
+        
+        {/* Points */}
         {points.map((point, idx) => (
-          <circle key={`${point.dateStr}-${idx}`} cx={point.x} cy={point.y} r="4.5" />
+          <g key={`${point.dateStr}-${idx}`} className="chart-node">
+            <circle cx={point.x} cy={point.y} r="6" className="node-glow" />
+            <circle cx={point.x} cy={point.y} r="3" className="node-center" />
+          </g>
         ))}
       </svg>
 
