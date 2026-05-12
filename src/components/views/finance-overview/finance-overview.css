@@ -758,6 +758,73 @@
   margin-top: 0;
 }
 
+/* Confirm Dialog */
+.finance-confirm-popover {
+  position: relative;
+  width: min(380px, calc(100vw - 42px));
+  padding: 28px 24px 22px;
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(239, 246, 237, 0.88)),
+    rgba(250, 252, 247, 0.92);
+  box-shadow: 0 24px 48px rgba(45, 60, 48, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(18px);
+}
+
+.finance-confirm-popover h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #101312;
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
+}
+
+.finance-confirm-message {
+  font-size: 14px;
+  color: #3a4a40;
+  margin: 0 0 22px;
+  line-height: 1.5;
+}
+
+.finance-confirm-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.finance-confirm-btn {
+  padding: 8px 20px;
+  border-radius: 10px;
+  border: 0;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.finance-confirm-btn:active {
+  transform: scale(0.97);
+}
+
+.finance-confirm-btn.cancel {
+  background: rgba(18, 29, 21, 0.07);
+  color: #2d3c30;
+}
+
+.finance-confirm-btn.cancel:hover {
+  background: rgba(18, 29, 21, 0.12);
+}
+
+.finance-confirm-btn.confirm {
+  background: #d83542;
+  color: #fff;
+}
+
+.finance-confirm-btn.confirm:hover {
+  background: #c02e3a;
+}
+
 /* Custom Chart Tooltip Styling */
 .finance-chart-tooltip {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(245, 252, 248, 0.85));

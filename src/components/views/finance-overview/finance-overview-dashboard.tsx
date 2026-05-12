@@ -6,6 +6,7 @@ import { SpendingOverviewCard } from './components/spending-overview-card'
 import { SubscriptionsCard } from './components/subscriptions-card'
 import { TransactionsCard } from './components/transactions-card'
 import { AddTransactionModal } from './components/add-transaction-modal'
+import { ConfirmDialog } from './components/confirm-dialog'
 import { financeMetrics as fallbackMetrics } from './data'
 import { fetchDailyFinanceLogs, deleteTransaction } from '../../../lib/api'
 import type { DailyFinancialLog } from '../../../lib/api'
@@ -23,6 +24,7 @@ function FinanceOverviewDashboard() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<any>(null)
+  const [deleteTarget, setDeleteTarget] = useState<any>(null)
   const [selectedMonthKey, setSelectedMonthKey] = useState<string>(() => {
     const d = new Date()
     return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`
@@ -152,12 +154,18 @@ function FinanceOverviewDashboard() {
   }
 
   const handleDelete = async (tx: any) => {
-    if (!window.confirm(`Delete transaction "${tx.merchant}" (${tx.amount})?`)) return
+    setDeleteTarget(tx)
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return
     try {
-      await deleteTransaction(tx.id)
+      await deleteTransaction(deleteTarget.id)
+      setDeleteTarget(null)
       refreshData()
     } catch (err) {
       console.error('Failed to delete transaction:', err)
+      setDeleteTarget(null)
     }
   }
 
@@ -185,6 +193,13 @@ function FinanceOverviewDashboard() {
         <SubscriptionsCard onRefresh={refreshData} />
       </div>
       
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Delete transaction"
+        message={deleteTarget ? `Delete transaction "${deleteTarget.merchant}" (${deleteTarget.amount})?` : ''}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
       <AddTransactionModal 
         isOpen={isAddModalOpen || !!editingTransaction} 
         isEdit={!!editingTransaction}

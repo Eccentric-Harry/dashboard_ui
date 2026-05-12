@@ -24,7 +24,7 @@ const sportBadgeCls: Record<string, string> = {
 function ActivityLogCard({ activities, loading }: ActivityLogCardProps) {
   const [filter, setFilter] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
-  const pageSize = 6
+  const pageSize = 7
 
   const sportTypes = useMemo(() => {
     const types = new Set(activities.map(a => a.sportType))

@@ -196,8 +196,7 @@ function SpendingOverviewCard({
                   onMouseLeave={onPieLeave}
                   onClick={onPieClick}
                   stroke="none"
-                  animationDuration={800}
-                  animationEasing="ease-out"
+                  isAnimationActive={false}
                 >
                   {spendingData.categories.map((entry, index) => (
                     <Cell
