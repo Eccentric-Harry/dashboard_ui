@@ -177,13 +177,6 @@ function FinanceOverviewDashboard() {
         {metrics.map((metric) => (
           <MetricCard key={metric.label} metric={metric} />
         ))}
-        <SpendingOverviewCard 
-          logs={logs} 
-          selectedCategory={selectedCategory} 
-          onCategorySelect={setSelectedCategory} 
-          selectedMonthKey={selectedMonthKey}
-          onMonthSelect={setSelectedMonthKey}
-        />
         <TransactionsCard 
           transactions={recentTransactions} 
           loading={loading} 
@@ -191,6 +184,13 @@ function FinanceOverviewDashboard() {
           onDelete={handleDelete}
         />
         <SubscriptionsCard onRefresh={refreshData} />
+        <SpendingOverviewCard 
+          logs={logs} 
+          selectedCategory={selectedCategory} 
+          onCategorySelect={setSelectedCategory} 
+          selectedMonthKey={selectedMonthKey}
+          onMonthSelect={setSelectedMonthKey}
+        />
       </div>
       
       <ConfirmDialog

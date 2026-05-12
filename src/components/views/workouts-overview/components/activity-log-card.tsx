@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Footprints, Bike, PersonStanding, Zap, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { StravaActivity } from '../../../../lib/api'
 
@@ -24,7 +24,7 @@ const sportBadgeCls: Record<string, string> = {
 function ActivityLogCard({ activities, loading }: ActivityLogCardProps) {
   const [filter, setFilter] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
-  const pageSize = 7
+  const pageSize = 6
 
   const sportTypes = useMemo(() => {
     const types = new Set(activities.map(a => a.sportType))
@@ -32,10 +32,13 @@ function ActivityLogCard({ activities, loading }: ActivityLogCardProps) {
   }, [activities])
 
   const filtered = useMemo(() => {
-    setCurrentPage(1) // Reset page when filter changes
     if (!filter) return activities
     return activities.filter(a => a.sportType === filter)
   }, [activities, filter])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [filter])
 
   const totalPages = Math.ceil(filtered.length / pageSize)
   const paginated = useMemo(() => {

@@ -11,26 +11,18 @@ function FinanceHeader({ onAddClick }: FinanceHeaderProps) {
         <p>Finance Overview</p>
         <h1>Welcome back, Harry!</h1>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <span>Today</span>
-        {onAddClick && (
-          <button 
-            type="button" 
+      {onAddClick && (
+        <div className="finance-header-actions">
+          <button
+            type="button"
             onClick={onAddClick}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '6px',
-              height: '32px', padding: '0 16px', borderRadius: '16px',
-              background: '#101312', color: '#fff', fontSize: '12px',
-              fontWeight: 700, border: 'none', cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(16, 19, 18, 0.15)',
-              minHeight: '44px'
-            }}
+            className="finance-add-btn"
           >
             <Plus size={14} strokeWidth={3} />
-            Add
+            <span>Add</span>
           </button>
-        )}
-      </div>
+        </div>
+      )}
     </header>
   )
 }

@@ -106,6 +106,7 @@
 /* Stat Cards */
 .workouts-stat-card {
   grid-column: span 3;
+  order: 1;
   min-height: 128px;
   padding: 18px 18px 16px;
   position: relative;
@@ -210,70 +211,113 @@
 
 /* Distance Trend Card */
 .workouts-trend-card {
-  grid-column: 1 / span 7;
-  padding: 22px 24px;
+  grid-column: 1 / -1;
+  order: 3;
+  padding: 24px 32px;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.84), rgba(239, 246, 237, 0.7)), rgba(250, 252, 247, 0.72);
 }
 
 .workouts-trend-chart {
   margin-top: 16px;
-  height: 220px;
+  height: 280px;
 }
 
 /* Sport Breakdown Card */
 .workouts-breakdown-card {
-  grid-column: 8 / -1;
-  padding: 22px 24px;
+  grid-column: 1 / -1;
+  order: 2;
+  padding: 24px 32px;
 }
 
 .workouts-breakdown-body {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 20px;
+  grid-template-columns: 6fr 4fr;
+  gap: 40px;
   align-items: center;
-  margin-top: 16px;
+  margin-top: 24px;
 }
 
 .workouts-breakdown-chart {
-  height: 220px;
+  height: 340px;
+  width: 100%;
   min-width: 0;
-}
-
-.workouts-breakdown-legend {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  justify-content: center;
 }
 
-.workouts-breakdown-item {
+.workouts-breakdown-list {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+
+.workouts-breakdown-list .workouts-breakdown-header,
+.workouts-breakdown-list .workouts-breakdown-row {
+  display: grid;
+  grid-template-columns: 1fr 64px 72px;
+  align-items: center;
+  gap: 12px;
+  min-height: 32px;
+}
+
+.sport-info {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
 }
 
-.workouts-breakdown-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
+.workouts-breakdown-list .workouts-breakdown-row {
+  border-bottom: 1px solid rgba(22, 28, 24, 0.06);
 }
 
-.workouts-breakdown-item p {
+.workouts-breakdown-list .workouts-breakdown-header {
+  padding-right: 0;
+  margin-bottom: 2px;
+}
+
+.workouts-breakdown-list .workouts-breakdown-header span {
+  font-size: 10px;
+  font-weight: 800;
+  color: rgba(23, 28, 25, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.workouts-breakdown-list .workouts-breakdown-header span.header-sessions,
+.workouts-breakdown-list .workouts-breakdown-header span.header-distance {
+  text-align: right;
+}
+
+.workouts-breakdown-list .workouts-breakdown-row span.icon-cell {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border-radius: 8px;
+}
+
+.workouts-breakdown-list .workouts-breakdown-row p,
+.workouts-breakdown-list .workouts-breakdown-row b,
+.workouts-breakdown-list .workouts-breakdown-row small {
   margin: 0;
-  font-size: 12px;
+  font-size: 11px;
+}
+
+.workouts-breakdown-list .workouts-breakdown-row b {
+  text-align: right;
   font-weight: 600;
 }
 
-.workouts-breakdown-item small {
-  display: block;
-  margin-top: 2px;
-  color: rgba(23, 28, 25, 0.5);
-  font-size: 10px;
+.workouts-breakdown-list .workouts-breakdown-row small {
+  color: rgba(23, 28, 25, 0.54);
+  text-align: right;
 }
 
 /* Activity Log Card */
 .workouts-log-card {
   grid-column: 1 / span 7;
+  order: 4;
   display: flex;
   flex-direction: column;
   height: 600px;
@@ -470,6 +514,7 @@
 /* Strava Embed Card */
 .workouts-embed-card {
   grid-column: 8 / -1;
+  order: 5;
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -715,6 +760,21 @@
   margin: 2px 0 0;
 }
 
+/* Chart Center Label */
+.chart-total-value {
+  font-size: 52px;
+  font-weight: 900;
+  fill: #111514;
+  letter-spacing: -0.04em;
+}
+
+.chart-total-label {
+  font-size: 12px;
+  font-weight: 800;
+  fill: rgba(23, 28, 25, 0.35);
+  letter-spacing: 0.2em;
+}
+
 /* Loading */
 .workouts-loading {
   display: grid;
@@ -796,6 +856,7 @@
   .workouts-log-card,
   .workouts-embed-card {
     grid-column: 1 / -1;
+    order: 0;
   }
 
   .workouts-stat-card {
@@ -875,9 +936,10 @@
   }
 
   .workouts-breakdown-body {
+    display: grid;
     grid-template-columns: 1fr;
     justify-items: center;
-    gap: 0;
+    gap: 16px;
   }
 
   .workouts-breakdown-chart {
@@ -885,11 +947,16 @@
     width: 100%;
   }
 
-  .workouts-breakdown-legend {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+  .workouts-breakdown-list {
+    width: 100%;
+    max-width: 100%;
+    padding: 0 8px;
+  }
+
+  .workouts-breakdown-list .workouts-breakdown-header,
+  .workouts-breakdown-list .workouts-breakdown-row {
+    grid-template-columns: 1fr 64px 64px;
+    gap: 10px;
   }
 }
 

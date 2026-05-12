@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Label } from 'recharts'
+import { Footprints, Bike, PersonStanding, Zap } from 'lucide-react'
 import type { StravaActivityStats } from '../../../../lib/api'
 
 const SPORT_COLORS: Record<string, string> = {
@@ -9,20 +10,32 @@ const SPORT_COLORS: Record<string, string> = {
   'E-Bike Ride': '#8b5cf6',
 }
 
+const sportIcons: Record<string, any> = {
+  Run: Footprints,
+  Ride: Bike,
+  Walk: PersonStanding,
+  'E-Bike Ride': Zap,
+}
+
 type SportBreakdownCardProps = {
   stats: StravaActivityStats | null
   loading: boolean
 }
 
 function SportBreakdownCard({ stats, loading }: SportBreakdownCardProps) {
-  const pieData = useMemo(() => {
-    if (!stats?.countBySportType) return []
-    return Object.entries(stats.countBySportType).map(([sport, count]) => ({
-      name: sport,
-      value: count,
-      distance: stats.distanceBySportType?.[sport] || 0,
-      color: SPORT_COLORS[sport] || '#94a3b8',
-    }))
+  const { pieData, totalSessions } = useMemo(() => {
+    if (!stats?.countBySportType) return { pieData: [], totalSessions: 0 }
+    let total = 0
+    const data = Object.entries(stats.countBySportType).map(([sport, count]) => {
+      total += count
+      return {
+        name: sport,
+        value: count,
+        distance: stats.distanceBySportType?.[sport] || 0,
+        color: SPORT_COLORS[sport] || '#94a3b8',
+      }
+    })
+    return { pieData: data, totalSessions: total }
   }, [stats])
 
   const CustomTooltip = ({ active, payload }: any) => {
@@ -61,25 +74,48 @@ function SportBreakdownCard({ stats, loading }: SportBreakdownCardProps) {
                   paddingAngle={4}
                   dataKey="value"
                   strokeWidth={0}
+                  isAnimationActive={false}
                 >
                   {pieData.map((entry, i) => (
                     <Cell key={i} fill={entry.color} />
                   ))}
+                  <Label
+                    content={({ viewBox }) => {
+                      const { cx, cy } = viewBox as any
+                      return (
+                        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central">
+                          <tspan x={cx} y={cy - 2} className="chart-total-value">{totalSessions}</tspan>
+                          <tspan x={cx} y={cy + 24} className="chart-total-label">SESSIONS</tspan>
+                        </text>
+                      )
+                    }}
+                  />
                 </Pie>
                 <Tooltip content={<CustomTooltip />} />
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="workouts-breakdown-legend">
-            {pieData.map(item => (
-              <div key={item.name} className="workouts-breakdown-item">
-                <span className="workouts-breakdown-dot" style={{ background: item.color }} />
-                <div>
-                  <p>{item.name}</p>
-                  <small>{item.value} sessions · {item.distance.toFixed(1)} km</small>
+          <div className="workouts-breakdown-list">
+            <div className="workouts-breakdown-header">
+              <span className="header-sport">Sport</span>
+              <span className="header-sessions">Sessions</span>
+              <span className="header-distance">Distance</span>
+            </div>
+            {pieData.map(item => {
+              const Icon = sportIcons[item.name] || Footprints
+              return (
+                <div key={item.name} className="workouts-breakdown-row">
+                  <div className="sport-info">
+                    <span className="icon-cell" style={{ background: item.color, color: '#fff', boxShadow: `0 4px 10px ${item.color}40` }}>
+                      <Icon size={12} strokeWidth={2.5} />
+                    </span>
+                    <p>{item.name}</p>
+                  </div>
+                  <b>{item.value}</b>
+                  <small>{item.distance.toFixed(1)} km</small>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}
