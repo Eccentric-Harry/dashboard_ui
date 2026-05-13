@@ -196,7 +196,6 @@ function ProteinTrendCard() {
 
       <div className="nutrition-trend-footer">
         <span>Target line: {PROTEIN_TARGET}g</span>
-        <b>Consistency is key</b>
       </div>
     </section>
   )

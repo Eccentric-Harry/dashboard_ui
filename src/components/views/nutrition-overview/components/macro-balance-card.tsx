@@ -3,7 +3,7 @@ import { Check, Trash2, Utensils, X, Pencil } from 'lucide-react'
 
 import { RingProgress } from './ring-progress'
 import { useDashboard } from '../../../../contexts/DashboardContext'
-import { addFoodEntry, deleteFoodEntry } from '../../../../lib/api'
+import { addFoodEntry, deleteFoodEntry, updateFoodEntry } from '../../../../lib/api'
 
 const PROTEIN_TARGET = 100
 const CALORIE_TARGET = 2000
@@ -39,6 +39,7 @@ function MacroBalanceCard() {
   const foodEntries = useMemo<FoodEntry[]>(() => data?.health?.foodEntries || [], [data?.health?.foodEntries])
   const [selectedMacroId, setSelectedMacroId] = useState('protein')
   const [isAddingFood, setIsAddingFood] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [isSubmittingFood, setIsSubmittingFood] = useState(false)
   const [isScrolling, setIsScrolling] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
@@ -99,6 +100,19 @@ function MacroBalanceCard() {
 
   const resetFoodForm = () => {
     setFormData({ description: '', mealType: 'Snack', proteinGrams: '', calories: '' })
+    setEditingId(null)
+  }
+
+  const handleEditClick = (entry: FoodEntry) => {
+    if (!entry.id) return
+    setFormData({
+      description: entry.description || '',
+      mealType: entry.mealType || 'Snack',
+      proteinGrams: entry.proteinGrams?.toString() || '',
+      calories: entry.calories?.toString() || '',
+    })
+    setEditingId(entry.id)
+    setIsAddingFood(true)
   }
 
   const handleAddSubmit = async (event: React.FormEvent) => {
@@ -107,13 +121,23 @@ function MacroBalanceCard() {
 
     try {
       setIsSubmittingFood(true)
-      await addFoodEntry({
-        description: formData.description,
-        mealType: formData.mealType,
-        proteinGrams: parseInt(formData.proteinGrams, 10),
-        calories: parseInt(formData.calories, 10),
-        date: selectedDate,
-      })
+      if (editingId) {
+        await updateFoodEntry(selectedDate, editingId, {
+          description: formData.description,
+          mealType: formData.mealType,
+          proteinGrams: parseInt(formData.proteinGrams, 10),
+          calories: parseInt(formData.calories, 10),
+          date: selectedDate,
+        })
+      } else {
+        await addFoodEntry({
+          description: formData.description,
+          mealType: formData.mealType,
+          proteinGrams: parseInt(formData.proteinGrams, 10),
+          calories: parseInt(formData.calories, 10),
+          date: selectedDate,
+        })
+      }
       await refetch()
       resetFoodForm()
       setIsAddingFood(false)
@@ -165,7 +189,7 @@ function MacroBalanceCard() {
         <div className="nutrition-today-log-head">
           <div>
             <p>Daily Log</p>
-            <h3>Daily Food Log</h3>
+            <h3>{editingId ? 'Edit Food Entry' : 'Daily Food Log'}</h3>
           </div>
           <div className="nutrition-today-log-actions">
             <button
@@ -268,9 +292,14 @@ function MacroBalanceCard() {
                   <small>{mealType} | {calories.toLocaleString()} kcal</small>
                 </div>
                 {id && isAddingFood && (
-                  <button type="button" onClick={() => handleDelete(id)} title="Delete entry" aria-label="Delete entry">
-                    <Trash2 size={14} />
-                  </button>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <button type="button" onClick={() => handleEditClick(entry)} title="Edit entry" aria-label="Edit entry">
+                      <Pencil size={14} />
+                    </button>
+                    <button type="button" onClick={() => handleDelete(id)} title="Delete entry" aria-label="Delete entry">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 )}
               </div>
             )

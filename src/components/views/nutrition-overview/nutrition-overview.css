@@ -1068,7 +1068,9 @@
   flex-direction: column;
   height: 300px;
   padding: 22px;
-  background: linear-gradient(165deg, #0c1a12 0%, #0a1510 40%, #081210 100%);
+  background: linear-gradient(165deg, #09120d 0%, #060b08 100%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
   color: #fff;
   position: relative;
   overflow: hidden;
@@ -1077,23 +1079,25 @@
 .nutrition-trend-card::before {
   content: '';
   position: absolute;
-  top: -40%;
-  right: -20%;
-  width: 280px;
-  height: 280px;
-  background: radial-gradient(circle, rgba(53, 182, 75, 0.14), transparent 70%);
+  top: -20%;
+  right: -10%;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(53, 182, 75, 0.12), transparent 70%);
   pointer-events: none;
+  filter: blur(20px);
 }
 
 .nutrition-trend-card::after {
   content: '';
   position: absolute;
-  bottom: -30%;
-  left: -15%;
-  width: 220px;
-  height: 220px;
-  background: radial-gradient(circle, rgba(70, 130, 90, 0.1), transparent 70%);
+  bottom: -20%;
+  left: -10%;
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle, rgba(70, 130, 90, 0.08), transparent 70%);
   pointer-events: none;
+  filter: blur(20px);
 }
 
 .nutrition-dark-head p {
