@@ -473,13 +473,14 @@
   overflow: visible;
   border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.75);
-  box-shadow:
-    0 4px 6px rgba(0, 0, 0, 0.02),
-    0 12px 28px rgba(45, 60, 48, 0.06),
-    0 32px 64px rgba(45, 60, 48, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.45);
+  box-shadow: 
+    0 10px 30px rgba(0, 0, 0, 0.05),
+    0 24px 64px rgba(0, 0, 0, 0.04),
+    inset 0 1px 1px rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
 }
@@ -1068,10 +1069,10 @@
   flex-direction: column;
   height: 300px;
   padding: 22px;
-  background: linear-gradient(165deg, #09120d 0%, #060b08 100%);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-  color: #fff;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(239, 246, 237, 0.82)), rgba(250, 252, 247, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.54);
+  box-shadow: 0 22px 52px rgba(45, 60, 48, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  color: #101312;
   position: relative;
   overflow: hidden;
 }
@@ -1083,7 +1084,7 @@
   right: -10%;
   width: 320px;
   height: 320px;
-  background: radial-gradient(circle, rgba(53, 182, 75, 0.12), transparent 70%);
+  background: radial-gradient(circle, rgba(53, 182, 75, 0.06), transparent 70%);
   pointer-events: none;
   filter: blur(20px);
 }
@@ -1095,33 +1096,29 @@
   left: -10%;
   width: 260px;
   height: 260px;
-  background: radial-gradient(circle, rgba(70, 130, 90, 0.08), transparent 70%);
+  background: radial-gradient(circle, rgba(70, 130, 90, 0.04), transparent 70%);
   pointer-events: none;
   filter: blur(20px);
 }
 
 .nutrition-dark-head p {
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(23, 28, 25, 0.54);
 }
 
 .nutrition-dark-head h2 {
-  background: linear-gradient(135deg, #ffffff 0%, #b8e6c3 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #101312;
 }
 
 .nutrition-dark-head .nutrition-days-pill {
   height: 24px;
   padding: 0 10px;
   border-radius: 12px;
-  background: rgba(53, 182, 75, 0.15);
-  color: #7ddaa0;
+  background: rgba(132, 204, 22, 0.1);
+  color: #65a30d;
   font-size: 10px;
   font-weight: 800;
   display: grid;
   place-items: center;
-  box-shadow: 0 2px 8px rgba(53, 182, 75, 0.15);
 }
 
 .nutrition-line-chart {
@@ -1132,12 +1129,12 @@
 }
 
 .nutrition-line-chart .target-line {
-  stroke: rgba(255, 255, 255, 0.1);
+  stroke: rgba(16, 19, 18, 0.08);
   stroke-dasharray: 4 6;
 }
 
 .nutrition-line-chart .target-label {
-  fill: rgba(255, 255, 255, 0.3);
+  fill: rgba(16, 19, 18, 0.3);
   font-size: 7px;
   font-weight: 900;
   text-anchor: end;
@@ -1150,7 +1147,7 @@
   stroke-width: 4;
   stroke-linecap: round;
   stroke-linejoin: round;
-  filter: drop-shadow(0 4px 12px rgba(53, 182, 75, 0.4));
+  filter: drop-shadow(0 2px 6px rgba(132, 204, 22, 0.25));
 }
 
 .chart-node {
@@ -1162,14 +1159,14 @@
 }
 
 .chart-node .node-glow {
-  fill: #35b64b;
-  opacity: 0.4;
+  fill: #84cc16;
+  opacity: 0.2;
   filter: blur(3px);
 }
 
 .chart-node .node-center {
-  fill: #fff;
-  stroke: #35b64b;
+  fill: #f7fee7;
+  stroke: #84cc16;
   stroke-width: 2;
 }
 
@@ -1178,7 +1175,7 @@
   justify-content: space-between;
   padding: 0 18px;
   margin-top: 12px;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(16, 19, 18, 0.4);
   font-size: 9px;
   font-weight: 800;
   text-transform: uppercase;
@@ -1192,7 +1189,7 @@
   gap: 10px;
   margin-top: auto;
   padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(16, 19, 18, 0.06);
 }
 
 .nutrition-trend-footer span,
@@ -1201,14 +1198,11 @@
 }
 
 .nutrition-trend-footer span {
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(16, 19, 18, 0.5);
 }
 
 .nutrition-trend-footer b {
-  background: linear-gradient(135deg, #35b64b, #7ddaa0);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #65a30d;
   font-weight: 700;
 }
 

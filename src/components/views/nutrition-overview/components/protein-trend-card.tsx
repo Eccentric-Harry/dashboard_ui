@@ -155,13 +155,12 @@ function ProteinTrendCard() {
       <svg className="nutrition-line-chart" viewBox={`0 0 ${chartWidth} ${chartHeight}`} preserveAspectRatio="none">
         <defs>
           <linearGradient id="protein-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#2f9d43" />
-            <stop offset="50%" stopColor="#35b64b" />
-            <stop offset="100%" stopColor="#7ddaa0" />
+            <stop offset="0%" stopColor="#84cc16" />
+            <stop offset="100%" stopColor="#22c55e" />
           </linearGradient>
           <linearGradient id="area-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#35b64b" stopOpacity="0.25" />
-            <stop offset="100%" stopColor="#35b64b" stopOpacity="0" />
+            <stop offset="0%" stopColor="#84cc16" stopOpacity="0.2" />
+            <stop offset="100%" stopColor="#84cc16" stopOpacity="0" />
           </linearGradient>
           <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
             <feGaussianBlur stdDeviation="3" result="blur" />
