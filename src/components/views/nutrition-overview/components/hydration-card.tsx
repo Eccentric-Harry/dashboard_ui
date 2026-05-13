@@ -58,9 +58,8 @@ function HydrationCard() {
 
   const logged = data?.waterIntakeMl ?? 0
   const target = data?.targetMl ?? TARGET_ML
-  const progress = Math.min(logged / target, 1)
-  const progressPercent = Math.round(progress * 100)
-  const isComplete = progress >= 1
+  const progressPercent = Math.round((logged / target) * 100)
+  const isComplete = logged >= target
 
   const quickAmounts = [
     { amount: 250, label: '250ml', icon: GlassWater },
@@ -86,14 +85,8 @@ function HydrationCard() {
           <h2 style={{ fontSize: '18px', paddingTop: '2px' }}>Water Intake</h2>
         </div>
         <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-          {isComplete ? (
-            <>Target Met</>
-          ) : (
-            <>
-              <Droplets size={12} strokeWidth={2.5} />
-              {progressPercent}%
-            </>
-          )}
+          <Droplets size={12} strokeWidth={2.5} />
+          {progressPercent}%
         </span>
       </div>
 

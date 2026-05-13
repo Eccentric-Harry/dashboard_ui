@@ -15,8 +15,9 @@ type RingProgressProps = {
 function RingProgress({ label, value, target, color, unit, active, onSelect, centerTextOverride, hideLabel }: RingProgressProps) {
   const radius = 58
   const circumference = 2 * Math.PI * radius
-  const progress = Math.min(value / target, 1)
-  const dashOffset = circumference - progress * circumference
+  const progressRatio = value / target
+  const visualProgress = Math.min(progressRatio, 1)
+  const dashOffset = circumference - visualProgress * circumference
 
   return (
     <button
@@ -38,7 +39,7 @@ function RingProgress({ label, value, target, color, unit, active, onSelect, cen
         />
       </svg>
       <span>
-        <b>{centerTextOverride || `${Math.round(progress * 100)}%`}</b>
+        <b>{centerTextOverride || `${Math.round(progressRatio * 100)}%`}</b>
         {!hideLabel && <small>{label}</small>}
         <em>
           {value.toLocaleString()}/{target.toLocaleString()}
