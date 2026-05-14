@@ -3,26 +3,23 @@ import { RefreshCw, Minus, GlassWater, Droplets, Milk } from 'lucide-react'
 import { fetchHydration, addWaterIntake } from '../../../../lib/api'
 import type { HydrationData } from '../../../../lib/api'
 import { RingProgress } from './ring-progress'
+import { useDashboard } from '../../../../contexts/DashboardContext'
 
 const TARGET_ML = 4000
 
 function HydrationCard() {
+  const { data: dashboardData } = useDashboard()
+  const selectedDate = dashboardData?.date || new Date().toISOString().split('T')[0]
   const [data, setData] = useState<HydrationData | null>(null)
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const getSelectedDate = () => {
-    const params = new URLSearchParams(window.location.search)
-    return params.get('date') || new Date().toISOString().split('T')[0]
-  }
-
   const loadHydration = useCallback(async () => {
     try {
       setError(null)
       setLoading(true)
-      const date = getSelectedDate()
-      const response = await fetchHydration(date)
+      const response = await fetchHydration(selectedDate)
       setData(response.data)
     } catch (err) {
       setError('Connection Error')
@@ -30,23 +27,18 @@ function HydrationCard() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [selectedDate])
 
   useEffect(() => {
     loadHydration()
-
-    const handleUrlChange = () => loadHydration()
-    window.addEventListener('popstate', handleUrlChange)
-    return () => window.removeEventListener('popstate', handleUrlChange)
   }, [loadHydration])
 
   const handleAddWater = async (amount: number) => {
     if (adding) return
     try {
       setAdding(true)
-      const date = getSelectedDate()
-      await addWaterIntake(amount, date)
-      const response = await fetchHydration(date)
+      await addWaterIntake(amount, selectedDate)
+      const response = await fetchHydration(selectedDate)
       setData(response.data)
     } catch (err) {
       setError('Failed to log water')
