@@ -1,15 +1,35 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Video, Tv, Wifi, Check, Loader2 } from 'lucide-react'
 import { subscriptions, subscriptionSummary } from '../data'
 import { addTransaction } from '../../../../lib/api'
 
 interface SubscriptionsCardProps {
+  transactions: any[]
   onRefresh?: () => void
 }
 
-function SubscriptionsCard({ onRefresh }: SubscriptionsCardProps) {
+function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) {
   const [processingId, setProcessingId] = useState<string | null>(null)
-  const [paidIds, setPaidIds] = useState<Set<string>>(new Set())
+  const [optimisticPaidIds, setOptimisticPaidIds] = useState<Set<string>>(new Set())
+
+  const paidIds = useMemo(() => {
+    const ids = new Set<string>()
+    
+    // Check transactions for subscription payments
+    transactions.forEach(tx => {
+      subscriptions.forEach(sub => {
+        // Match by description containing service name
+        if (tx.merchant.toLowerCase().includes(sub.service.toLowerCase())) {
+          ids.add(sub.service)
+        }
+      })
+    })
+    
+    // Add optimistic updates
+    optimisticPaidIds.forEach(id => ids.add(id))
+    
+    return ids
+  }, [transactions, optimisticPaidIds])
 
   const getIcon = (service: string) => {
     const s = service.toLowerCase()
@@ -37,7 +57,7 @@ function SubscriptionsCard({ onRefresh }: SubscriptionsCardProps) {
         date: today
       })
       
-      setPaidIds(prev => new Set(prev).add(id))
+      setOptimisticPaidIds(prev => new Set(prev).add(id))
       if (onRefresh) onRefresh()
     } catch (error) {
       console.error('Failed to record subscription payment:', error)

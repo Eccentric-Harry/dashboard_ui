@@ -183,7 +183,7 @@ function FinanceOverviewDashboard() {
           onEdit={handleEdit}
           onDelete={handleDelete}
         />
-        <SubscriptionsCard onRefresh={refreshData} />
+        <SubscriptionsCard transactions={recentTransactions} onRefresh={refreshData} />
         <SpendingOverviewCard 
           logs={logs} 
           selectedCategory={selectedCategory} 
