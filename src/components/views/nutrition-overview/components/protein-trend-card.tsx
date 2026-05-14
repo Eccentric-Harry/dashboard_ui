@@ -116,30 +116,21 @@ function ProteinTrendCard() {
   }
 
   const latestPoint = displayTrend[displayTrend.length - 1]
-  const maxValue = Math.max(...displayTrend.map((point) => point.grams), PROTEIN_TARGET + 40)
+  const maxValue = Math.max(...displayTrend.map((p) => p.grams), PROTEIN_TARGET + 20)
   const chartWidth = 300
   const chartHeight = 150
-  const padding = 18
-  const points = displayTrend.map((point, index) => {
-    const x = padding + (index * (chartWidth - padding * 2)) / Math.max(displayTrend.length - 1, 1)
-    const y = chartHeight - padding - (point.grams / maxValue) * (chartHeight - padding * 2)
-    return { ...point, x, y }
-  })
-  // Create a smoother curved path using quadratic bezier points
-  const createCurvePath = (pts: any[]) => {
-    if (pts.length === 0) return ""
-    let d = `M ${pts[0].x} ${pts[0].y}`
-    for (let i = 0; i < pts.length - 1; i++) {
-      const xMid = (pts[i].x + pts[i + 1].x) / 2
-      const yMid = (pts[i].y + pts[i + 1].y) / 2
-      d += ` Q ${pts[i].x} ${pts[i].y} ${xMid} ${yMid}`
-    }
-    d += ` L ${pts[pts.length - 1].x} ${pts[pts.length - 1].y}`
-    return d
-  }
+  const padding = 20
+  const barGap = 10
+  const availableWidth = chartWidth - (padding * 2)
+  const barWidth = (availableWidth - (barGap * (displayTrend.length - 1))) / displayTrend.length
 
-  const curvedPath = createCurvePath(points)
-  const areaPath = `${curvedPath} L ${points[points.length - 1].x} ${chartHeight - padding} L ${points[0].x} ${chartHeight - padding} Z`
+  const bars = displayTrend.map((point, index) => {
+    const x = padding + index * (barWidth + barGap)
+    const h = (point.grams / maxValue) * (chartHeight - padding * 2)
+    const y = chartHeight - padding - h
+    return { ...point, x, y, h }
+  })
+
   const targetY = chartHeight - padding - (PROTEIN_TARGET / maxValue) * (chartHeight - padding * 2)
 
   return (
@@ -152,49 +143,65 @@ function ProteinTrendCard() {
         <span className="nutrition-days-pill">7 days</span>
       </div>
 
-      <svg className="nutrition-line-chart" viewBox={`0 0 ${chartWidth} ${chartHeight}`} preserveAspectRatio="none">
+      <svg className="nutrition-bar-chart" viewBox={`0 0 ${chartWidth} ${chartHeight}`} preserveAspectRatio="none">
         <defs>
-          <linearGradient id="protein-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#84cc16" />
-            <stop offset="100%" stopColor="#22c55e" />
+          <linearGradient id="bar-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#34d399" />
+            <stop offset="100%" stopColor="#059669" />
           </linearGradient>
-          <linearGradient id="area-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#84cc16" stopOpacity="0.2" />
-            <stop offset="100%" stopColor="#84cc16" stopOpacity="0" />
-          </linearGradient>
-          <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-          </filter>
         </defs>
         
-        {/* Horizontal grid lines */}
-        <line x1={padding} x2={chartWidth - padding} y1={targetY} y2={targetY} className="target-line" />
-        <text x={chartWidth - padding} y={targetY - 6} className="target-label">TARGET {PROTEIN_TARGET}g</text>
+        {/* Target Line */}
+        <line 
+          x1={padding - 5} 
+          x2={chartWidth - padding + 5} 
+          y1={targetY} 
+          y2={targetY} 
+          className="target-line" 
+        />
+        <text 
+          x={chartWidth - padding} 
+          y={targetY - 8} 
+          className="target-label"
+        >
+          Target {PROTEIN_TARGET}g
+        </text>
 
-        {/* Area fill */}
-        <path d={areaPath} fill="url(#area-gradient)" className="area-path" />
-        
-        {/* The main line */}
-        <path d={curvedPath} className="trend-line" />
-        
-        {/* Points */}
-        {points.map((point, idx) => (
-          <g key={`${point.dateStr}-${idx}`} className="chart-node">
-            <circle cx={point.x} cy={point.y} r="6" className="node-glow" />
-            <circle cx={point.x} cy={point.y} r="3" className="node-center" />
+        {/* Bars */}
+        {bars.map((bar, idx) => (
+          <g key={`${bar.dateStr}-${idx}`} className="chart-bar-group">
+            <rect
+              x={bar.x}
+              y={bar.y}
+              width={barWidth}
+              height={bar.h}
+              rx={barWidth / 4}
+              ry={barWidth / 4}
+              className="chart-bar"
+              fill="url(#bar-gradient)"
+            />
+            {/* Value Label (Hidden by default, shown on hover via CSS) */}
+            <text 
+              x={bar.x + barWidth / 2} 
+              y={bar.y - 8} 
+              className="bar-value-label"
+              textAnchor="middle"
+            >
+              {bar.grams}g
+            </text>
           </g>
         ))}
       </svg>
 
       <div className="nutrition-trend-days">
         {displayTrend.map((point, idx) => (
-          <span key={`${point.dateStr}-${idx}`}>{point.day}</span>
+          <span 
+            key={`${point.dateStr}-${idx}`}
+            className={point.dateStr === selectedDate ? 'active' : ''}
+          >
+            {point.day}
+          </span>
         ))}
-      </div>
-
-      <div className="nutrition-trend-footer">
-        <span>Target line: {PROTEIN_TARGET}g</span>
       </div>
     </section>
   )
