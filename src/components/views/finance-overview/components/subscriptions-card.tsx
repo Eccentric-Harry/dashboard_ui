@@ -99,7 +99,7 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
                   ) : isPaid ? (
                     <Check size={12} />
                   ) : (
-                    'Paid'
+                    'Pay'
                   )}
                 </button>
               </div>

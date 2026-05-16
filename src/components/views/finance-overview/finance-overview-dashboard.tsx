@@ -138,8 +138,20 @@ function FinanceOverviewDashboard() {
       allTxs = allTxs.filter(tx => tx.category === selectedCategory)
     }
 
-    // Sort all transactions globally and pass the full array
-    return allTxs.sort((a, b) => b.timestamp - a.timestamp)
+    // Show the newest added transactions first.
+    // By comparing the IDs (MongoDB ObjectIDs encode exact creation time), 
+    // we guarantee the exact chronological insertion order even if they share the exact same 'date'.
+    return allTxs.sort((a, b) => {
+      // Sort primarily by precise timestamp if available/differ
+      if (b.timestamp !== a.timestamp && !Number.isNaN(b.timestamp) && !Number.isNaN(a.timestamp)) {
+        return b.timestamp - a.timestamp;
+      }
+      // Guarantee exact insertion order
+      if (typeof a.id === 'string' && typeof b.id === 'string') {
+        return b.id.localeCompare(a.id);
+      }
+      return 0;
+    })
   }, [logs, selectedCategory, selectedMonthKey])
 
   const handleEdit = (tx: any) => {
