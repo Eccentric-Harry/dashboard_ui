@@ -2226,8 +2226,7 @@
     grid-column: unset;
     grid-row: unset;
     width: 100%;
-    height: auto;
-    min-height: 260px;
+    height: 260px;
   }
 
   .nutrition-hydration-card {
@@ -2378,8 +2377,7 @@
   .nutrition-trend-card {
     grid-column: 1 / span 3;
     grid-row: auto;
-    height: auto;
-    min-height: 260px;
+    height: 260px;
   }
 
   .nutrition-hydration-card {

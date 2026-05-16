@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { updateFeaturedStravaEmbed } from '../../../../lib/api'
 
 interface UpdateEmbedModalProps {
@@ -30,15 +31,16 @@ export function UpdateEmbedModal({ isOpen, onClose, onSuccess }: UpdateEmbedModa
       const info = extractEmbedInfo(embedHtml)
       if (info) {
         await updateFeaturedStravaEmbed(info)
+        toast.success(`Featured activity updated`)
         onSuccess(info)
         onClose()
         setEmbedHtml('')
       } else {
-        alert('Could not find a valid Strava activity ID in the provided code.')
+        toast.error('Could not find a valid Strava activity ID in the provided code.')
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating featured embed:', error)
-      alert('Failed to update featured activity.')
+      toast.error(error.message || 'Failed to update featured activity.')
     } finally {
       setLoading(false)
     }
@@ -61,8 +63,8 @@ export function UpdateEmbedModal({ isOpen, onClose, onSuccess }: UpdateEmbedModa
               placeholder='Paste Strava embed HTML here...'
               style={{ height: '120px', resize: 'vertical' }}
             />
-            <p style={{ fontSize: '10px', color: 'rgba(0,0,0,0.5)', marginTop: '4px' }}>
-              Paste the full embed snippet from Strava to pin it to your dashboard.
+            <p style={{ fontSize: '10px', color: 'rgba(0,0,0,0.6)', marginTop: '8px', lineHeight: '1.4' }}>
+              <strong>Tip:</strong> For private or "Followers Only" activities, you <em>must</em> paste the full embed snippet from the Strava website (Share &gt; Embed on Blog) to include the required security token. Just pasting the activity URL will result in a 403 error.
             </p>
           </div>
 

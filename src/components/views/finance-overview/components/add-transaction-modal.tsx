@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { X, CheckCircle2, Loader2 } from 'lucide-react'
+import { X, Loader2 } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { addTransaction, updateTransaction } from '../../../../lib/api'
 
 interface AddTransactionModalProps {
@@ -17,7 +18,7 @@ interface AddTransactionModalProps {
   }
 }
 
-const CATEGORIES = [
+  const CATEGORIES = [
   'Food', 'Dining', 'Groceries', 
   'Transport', 'Cycling',
   'Shopping', 'Entertainment', 'Outing',
@@ -30,7 +31,6 @@ const CATEGORIES = [
 export function AddTransactionModal({ isOpen, onClose, onSuccess, isEdit, initialData }: AddTransactionModalProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
 
   // Form State
   const [type, setType] = useState('Expense')
@@ -85,16 +85,14 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, isEdit, initia
 
       if (isEdit && initialData?.id) {
         await updateTransaction(initialData.id, payload)
+        toast.success(`Updated "${description}"`)
       } else {
         await addTransaction(payload)
+        toast.success(`Saved "${description}"`)
       }
       
-      setSuccess(true)
-      setTimeout(() => {
-        setSuccess(false)
-        onSuccess()
-        onClose()
-      }, 1000)
+      onSuccess()
+      onClose()
     } catch (err: any) {
       setError(err.message || 'Failed to save transaction')
     } finally {
@@ -119,80 +117,73 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, isEdit, initia
           {isEdit ? 'Edit Transaction' : 'Add Transaction'}
         </h2>
         
-        {success ? (
-          <div className="add-tx-success">
-            <CheckCircle2 size={48} color="#10b981" />
-            <h3>Transaction Added!</h3>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="add-tx-form">
-            <div className="form-group type-toggle">
-              <button 
-                type="button" 
-                className={type === 'Expense' ? 'active expense' : ''} 
-                onClick={() => setType('Expense')}
-              >
-                Expense
-              </button>
-              <button 
-                type="button" 
-                className={type === 'Income' ? 'active income' : ''} 
-                onClick={() => setType('Income')}
-              >
-                Income
-              </button>
-            </div>
-
-            <div className="form-group">
-              <label>Amount (₹)</label>
-              <input 
-                type="number" 
-                step="0.01"
-                min="0.01"
-                placeholder="0.00"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                autoFocus
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Merchant / Description</label>
-              <input 
-                type="text" 
-                placeholder="e.g. Starbucks, Netflix..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label>Category</label>
-                <select value={category} onChange={(e) => setCategory(e.target.value)}>
-                  {CATEGORIES.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label>Date</label>
-                <input 
-                  type="date" 
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {error && <p className="add-tx-error">{error}</p>}
-
-            <button type="submit" className="add-tx-submit" disabled={loading}>
-              {loading ? <Loader2 className="spinner" size={18} /> : 'Save Transaction'}
+        <form onSubmit={handleSubmit} className="add-tx-form">
+          <div className="form-group type-toggle">
+            <button 
+              type="button" 
+              className={type === 'Expense' ? 'active expense' : ''} 
+              onClick={() => setType('Expense')}
+            >
+              Expense
             </button>
-          </form>
-        )}
+            <button 
+              type="button" 
+              className={type === 'Income' ? 'active income' : ''} 
+              onClick={() => setType('Income')}
+            >
+              Income
+            </button>
+          </div>
+
+          <div className="form-group">
+            <label>Amount (₹)</label>
+            <input 
+              type="number" 
+              step="0.01"
+              min="0.01"
+              placeholder="0.00"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              autoFocus
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Merchant / Description</label>
+            <input 
+              type="text" 
+              placeholder="e.g. Starbucks, Netflix..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Category</label>
+              <select value={category} onChange={(e) => setCategory(e.target.value)}>
+                {CATEGORIES.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Date</label>
+              <input 
+                type="date" 
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {error && <p className="add-tx-error">{error}</p>}
+
+          <button type="submit" className="add-tx-submit" disabled={loading}>
+            {loading ? <Loader2 className="spinner" size={18} /> : 'Save Transaction'}
+          </button>
+        </form>
       </div>
     </div>
   )
