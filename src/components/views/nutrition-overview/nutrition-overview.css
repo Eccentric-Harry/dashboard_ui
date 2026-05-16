@@ -1,3 +1,12 @@
+/* ── CSS Custom Property Declarations ──────────────────────────────
+   --ring-color is set per-element via inline React styles (ring-progress.tsx).
+   --macro-soft is set per-element via inline React styles.
+   Defaults here satisfy static IDE resolution; runtime values override them. */
+:root {
+  --ring-color: #35b64b;
+  --macro-soft: rgba(245, 252, 248, 0.8);
+}
+
 .nutrition-dashboard {
   position: absolute;
   inset: 132px 58px 48px 206px;
@@ -481,7 +490,6 @@
     inset 0 1px 1px rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(28px) saturate(180%);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.5);
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
 }
@@ -723,10 +731,10 @@
 }
 
 .nutrition-ring .value {
-  stroke: var(--ring-color);
+  stroke: var(--ring-color, #35b64b);
   stroke-linecap: round;
   transition: stroke-dashoffset 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--ring-color) 40%, transparent));
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--ring-color, #35b64b) 40%, transparent));
 }
 
 .nutrition-ring span {
@@ -1029,7 +1037,7 @@
   margin-top: 16px;
   padding: 14px;
   border-radius: 16px;
-  background: var(--macro-soft);
+  background: var(--macro-soft, rgba(245, 252, 248, 0.8));
 }
 
 .nutrition-selected-macro span,
@@ -2078,56 +2086,14 @@
 
 /* ── Card Entrance Animations ──────────────────── */
 
-@keyframes card-slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.nutrition-macro-card {
-  animation: card-slide-up 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
-}
-
-.nutrition-trend-card {
-  animation: card-slide-up 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.08s both;
-}
-
-.nutrition-hydration-card {
-  animation: card-slide-up 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.16s both;
-}
-
-.nutrition-food-log-card {
-  animation: card-slide-up 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.24s both;
-}
-
-.nutrition-daily-log-card {
-  animation: card-slide-up 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
-}
-
-.nutrition-daily-log-card:nth-child(1) { animation-delay: 0.28s; }
-.nutrition-daily-log-card:nth-child(2) { animation-delay: 0.32s; }
-.nutrition-daily-log-card:nth-child(3) { animation-delay: 0.36s; }
-.nutrition-daily-log-card:nth-child(4) { animation-delay: 0.40s; }
-.nutrition-daily-log-card:nth-child(5) { animation-delay: 0.44s; }
-.nutrition-daily-log-card:nth-child(6) { animation-delay: 0.48s; }
-.nutrition-daily-log-card:nth-child(7) { animation-delay: 0.52s; }
-.nutrition-daily-log-card:nth-child(8) { animation-delay: 0.56s; }
-.nutrition-daily-log-card:nth-child(9) { animation-delay: 0.60s; }
-.nutrition-daily-log-card:nth-child(10) { animation-delay: 0.64s; }
-
 /* ── Ring Progress Pulse Animation ─────────────── */
 
 @keyframes ring-pulse {
   0%, 100% {
-    filter: drop-shadow(0 6px 12px color-mix(in srgb, var(--ring-color) 25%, transparent));
+    filter: drop-shadow(0 6px 12px color-mix(in srgb, var(--ring-color, #35b64b) 25%, transparent));
   }
   50% {
-    filter: drop-shadow(0 8px 16px color-mix(in srgb, var(--ring-color) 35%, transparent));
+    filter: drop-shadow(0 8px 16px color-mix(in srgb, var(--ring-color, #35b64b) 35%, transparent));
   }
 }
 

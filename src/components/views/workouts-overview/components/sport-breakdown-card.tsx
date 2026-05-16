@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Label } from 'recharts'
-import { Footprints, Bike, PersonStanding, Zap } from 'lucide-react'
+import { Footprints, Bike, PersonStanding, Zap, type LucideIcon } from 'lucide-react'
 import type { StravaActivityStats } from '../../../../lib/api'
 
 const SPORT_COLORS: Record<string, string> = {
@@ -10,11 +10,23 @@ const SPORT_COLORS: Record<string, string> = {
   'E-Bike Ride': '#8b5cf6',
 }
 
-const sportIcons: Record<string, any> = {
+const sportIcons: Record<string, LucideIcon> = {
   Run: Footprints,
   Ride: Bike,
   Walk: PersonStanding,
   'E-Bike Ride': Zap,
+}
+
+function CustomTooltip({ active, payload }: any) {
+  if (!active || !payload?.length) return null
+  const d = payload[0].payload as { name: string; value: number; distance: number }
+  return (
+    <div className="workouts-chart-tooltip">
+      <p className="label">{d.name}</p>
+      <p className="value">{d.value} activities</p>
+      <p className="sub">{d.distance.toFixed(1)} km total</p>
+    </div>
+  )
 }
 
 type SportBreakdownCardProps = {
@@ -38,17 +50,6 @@ function SportBreakdownCard({ stats, loading }: SportBreakdownCardProps) {
     return { pieData: data, totalSessions: total }
   }, [stats])
 
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (!active || !payload?.length) return null
-    const d = payload[0].payload
-    return (
-      <div className="workouts-chart-tooltip">
-        <p className="label">{d.name}</p>
-        <p className="value">{d.value} activities</p>
-        <p className="sub">{d.distance.toFixed(1)} km total</p>
-      </div>
-    )
-  }
 
   return (
     <div className="workouts-card workouts-breakdown-card">
@@ -63,7 +64,7 @@ function SportBreakdownCard({ stats, loading }: SportBreakdownCardProps) {
       ) : (
         <div className="workouts-breakdown-body">
           <div className="workouts-breakdown-chart">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+            <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
               <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                 <Pie
                   data={pieData}
@@ -81,11 +82,13 @@ function SportBreakdownCard({ stats, loading }: SportBreakdownCardProps) {
                   ))}
                   <Label
                     content={({ viewBox }) => {
-                      const { cx, cy } = viewBox as any
+                      const vb = viewBox as { cx?: number; cy?: number }
+                      const cx = vb?.cx ?? 0
+                      const cy = vb?.cy ?? 0
                       return (
                         <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central">
-                          <tspan x={cx} y={cy - 2} className="chart-total-value">{totalSessions}</tspan>
-                          <tspan x={cx} y={cy + 24} className="chart-total-label">SESSIONS</tspan>
+                          <tspan x={cx} y={cy - 2} style={{ fontSize: '52px', fontWeight: 900, fill: '#111514', letterSpacing: '-0.04em' }}>{totalSessions}</tspan>
+                          <tspan x={cx} y={cy + 24} style={{ fontSize: '12px', fontWeight: 800, fill: 'rgba(23, 28, 25, 0.35)', letterSpacing: '0.2em' }}>SESSIONS</tspan>
                         </text>
                       )
                     }}

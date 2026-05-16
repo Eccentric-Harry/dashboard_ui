@@ -1,10 +1,10 @@
 import { useMemo, useState, useRef, useCallback, useEffect } from 'react'
-import { Check, Info, Pencil, Trash2, Utensils, X } from 'lucide-react'
+import { Pencil, Trash2, Utensils } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 import { RingProgress } from './ring-progress'
 import { useDashboard } from '../../../../contexts/DashboardContext'
-import { type CircularGoal, type FoodEntry, deleteFoodEntry } from '../../../../lib/api'
+import { deleteFoodEntry } from '../../../../lib/api'
 import { ConfirmDialog } from '../../../ui/confirm-dialog'
 
 const PROTEIN_TARGET = 100
@@ -74,9 +74,8 @@ function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
   const proteinGoal = circularGoals.find((goal) => goal.label === 'Protein')
   const proteinLogged = proteinGoal?.value || 0
   const proteinTarget = PROTEIN_TARGET
-  const proteinProgress = Math.round((proteinLogged / proteinTarget) * 100) || 0
+  const proteinProgress = Math.round((proteinLogged / PROTEIN_TARGET) * 100) || 0
   const caloriesLogged = Number(dailyFood.calories) || 0
-  const caloriesTarget = CALORIE_TARGET
 
   const progressRings = [
     {
@@ -91,7 +90,7 @@ function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
       id: 'calories',
       label: 'Total Calories',
       logged: caloriesLogged,
-      target: caloriesTarget,
+      target: CALORIE_TARGET,
       unit: ' kcal',
       color: '#eab308',
     },
@@ -106,8 +105,8 @@ function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
       await deleteFoodEntry(selectedDate, itemToDelete.id)
       toast.success('Food entry deleted')
       await refetch()
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to delete food entry')
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Failed to delete food entry')
       console.error('Failed to delete', error)
     } finally {
       setItemToDelete(null)

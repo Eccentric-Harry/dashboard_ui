@@ -1,18 +1,29 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { X, Loader2, ClipboardCheck, FileJson } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createStravaActivity, importStravaJson } from '../../../../lib/api'
+
+type InitialData = {
+  activityName?: string
+  sportType?: string
+  distanceKm?: number | string
+  movingTime?: string
+  elevationGainMeters?: number | string
+  date?: string
+  stravaEmbedId?: string
+}
 
 type AddActivityModalProps = {
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
   isEdit?: boolean
-  initialData?: any
+  initialData?: InitialData | null
 }
 
 function AddActivityModal({ isOpen, onClose, onSuccess, isEdit, initialData }: AddActivityModalProps) {
   const [loading, setLoading] = useState(false)
+  const [isSuccess, setIsSuccess] = useState(false)
   const [activeTab, setActiveTab] = useState<'manual' | 'strava'>('manual')
   const [stravaJson, setStravaJson] = useState('')
   const [formData, setFormData] = useState({
@@ -25,34 +36,49 @@ function AddActivityModal({ isOpen, onClose, onSuccess, isEdit, initialData }: A
     stravaEmbedId: ''
   })
 
+  const resetForm = () => {
+    setFormData({
+      activityName: '',
+      sportType: 'Run',
+      distanceKm: '',
+      movingTime: '',
+      elevationGainMeters: '',
+      date: new Date().toISOString().split('T')[0],
+      stravaEmbedId: ''
+    })
+    setStravaJson('')
+  }
+
   useEffect(() => {
     if (isOpen && isEdit && initialData) {
-      setFormData({
-        activityName: initialData.activityName || '',
-        sportType: initialData.sportType || 'Run',
-        distanceKm: initialData.distanceKm?.toString() || '',
-        movingTime: initialData.movingTime || '',
-        elevationGainMeters: initialData.elevationGainMeters?.toString() || '',
-        date: initialData.date?.split('T')[0] || new Date().toISOString().split('T')[0],
-        stravaEmbedId: initialData.stravaEmbedId || ''
-      })
-      setActiveTab('manual')
+      setTimeout(() => {
+        setFormData({
+          activityName: initialData.activityName || '',
+          sportType: initialData.sportType || 'Run',
+          distanceKm: initialData.distanceKm?.toString() || '',
+          movingTime: initialData.movingTime || '',
+          elevationGainMeters: initialData.elevationGainMeters?.toString() || '',
+          date: initialData.date?.split('T')[0] || new Date().toISOString().split('T')[0],
+          stravaEmbedId: initialData.stravaEmbedId || ''
+        })
+        setActiveTab('manual')
+      }, 0)
     } else if (isOpen && !isEdit) {
-      resetForm()
+      setTimeout(() => resetForm(), 0)
     }
   }, [isOpen, isEdit, initialData])
 
   if (!isOpen) return null
 
   const extractEmbedInfo = (html: string): { id: string; token?: string } | null => {
-    let idMatch = html.match(/data-embed-id="(\d+)"/) || html.match(/activity\/(\d+)/) || html.match(/\b\d{10,12}\b/)
+    const idMatch = html.match(/data-embed-id="(\d+)"/) || html.match(/activity\/(\d+)/) || html.match(/\b\d{10,12}\b/)
     if (!idMatch) return null
     const id = idMatch[1] || idMatch[0]
     const tokenMatch = html.match(/data-token="([^"]+)"/) || html.match(/token=([^&" \s]+)/)
     return { id, token: tokenMatch ? tokenMatch[1] : undefined }
   }
 
-  const handleManualSubmit = async (e: React.FormEvent) => {
+  const handleManualSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault()
     setLoading(true)
 
@@ -76,13 +102,18 @@ function AddActivityModal({ isOpen, onClose, onSuccess, isEdit, initialData }: A
         stravaEmbedId: embedId,
         stravaToken: token
       })
+      setIsSuccess(true)
       toast.success(isEdit ? 'Activity updated' : 'Activity saved manually')
-      onSuccess()
-      onClose()
-      resetForm()
-    } catch (err: any) {
+      setTimeout(() => {
+        onSuccess()
+        onClose()
+        resetForm()
+        setIsSuccess(false)
+      }, 1000)
+    } catch (err: unknown) {
       console.error('Error creating activity:', err)
-      toast.error(err.message || 'Failed to save activity. Please check your inputs.')
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save activity. Please check your inputs.'
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -95,29 +126,21 @@ function AddActivityModal({ isOpen, onClose, onSuccess, isEdit, initialData }: A
       const payload = JSON.parse(stravaJson)
       setLoading(true)
       await importStravaJson(payload)
+      setIsSuccess(true)
       toast.success('Activity imported from Strava')
-      onSuccess()
-      onClose()
-      setStravaJson('')
-    } catch (err: any) {
+      setTimeout(() => {
+        onSuccess()
+        onClose()
+        setStravaJson('')
+        setIsSuccess(false)
+      }, 1000)
+    } catch (err: unknown) {
       console.error('Error importing Strava JSON:', err)
-      toast.error(err.message || 'Invalid JSON format or import failed.')
+      const errorMessage = err instanceof Error ? err.message : 'Invalid JSON format or import failed.'
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
-  }
-
-  const resetForm = () => {
-    setFormData({
-      activityName: '',
-      sportType: 'Run',
-      distanceKm: '',
-      movingTime: '',
-      elevationGainMeters: '',
-      date: new Date().toISOString().split('T')[0],
-      stravaEmbedId: ''
-    })
-    setStravaJson('')
   }
 
   return (
@@ -130,14 +153,14 @@ function AddActivityModal({ isOpen, onClose, onSuccess, isEdit, initialData }: A
         <h2>{isEdit ? 'Edit Workout' : 'Record Workout'}</h2>
 
         <div className="workouts-modal-tabs">
-          <button 
+          <button
             className={`tab-btn ${activeTab === 'manual' ? 'active' : ''}`}
             onClick={() => setActiveTab('manual')}
           >
             <ClipboardCheck size={14} />
             Manual Entry
           </button>
-          <button 
+          <button
             className={`tab-btn ${activeTab === 'strava' ? 'active' : ''}`}
             onClick={() => setActiveTab('strava')}
           >
@@ -228,8 +251,8 @@ function AddActivityModal({ isOpen, onClose, onSuccess, isEdit, initialData }: A
               />
             </div>
 
-            <button className={`workouts-form-submit ${success ? 'success' : ''}`} type="submit" disabled={loading || success}>
-              {loading ? <Loader2 className="animate-spin" size={18} /> : success ? 'Activity Saved!' : 'Save Activity'}
+            <button className={`workouts-form-submit ${isSuccess ? 'success' : ''}`} type="submit" disabled={loading || isSuccess}>
+              {loading ? <Loader2 className="animate-spin" size={18} /> : isSuccess ? 'Activity Saved!' : 'Save Activity'}
             </button>
           </form>
         ) : (
@@ -243,12 +266,12 @@ function AddActivityModal({ isOpen, onClose, onSuccess, isEdit, initialData }: A
                 onChange={e => setStravaJson(e.target.value)}
               />
             </div>
-            <button 
-              className={`workouts-form-submit import-btn ${success ? 'success' : ''}`} 
-              onClick={handleStravaImport} 
-              disabled={loading || success || !stravaJson.trim()}
+            <button
+              className={`workouts-form-submit import-btn ${isSuccess ? 'success' : ''}`}
+              onClick={handleStravaImport}
+              disabled={loading || isSuccess || !stravaJson.trim()}
             >
-              {loading ? <Loader2 className="animate-spin" size={18} /> : success ? 'Imported Successfully!' : 'Process & Save'}
+              {loading ? <Loader2 className="animate-spin" size={18} /> : isSuccess ? 'Imported Successfully!' : 'Process & Save'}
             </button>
           </div>
         )}

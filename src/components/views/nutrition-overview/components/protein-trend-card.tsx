@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { fetchNutritionSummary } from '../../../../lib/api'
 import { useDashboard } from '../../../../contexts/DashboardContext'
 import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip, ReferenceLine, CartesianGrid } from 'recharts'
+import type { TooltipProps } from 'recharts'
 
 type TrendPoint = {
   day: string
@@ -11,6 +12,17 @@ type TrendPoint = {
 }
 
 const PROTEIN_TARGET = 100
+
+function CustomTooltip({ active, payload, label }: any) {
+  if (active && payload && payload.length) {
+    return (
+      <div style={{ background: '#18181b', border: '1px solid rgba(255,255,255,0.1)', padding: '6px 10px', borderRadius: '8px', color: '#fff', fontSize: '12px', fontWeight: 600 }}>
+        <p style={{ margin: 0 }}>{`${label}: ${payload[0].value}g`}</p>
+      </div>
+    )
+  }
+  return null
+}
 
 const isoDate = (date: Date) => {
   const year = date.getFullYear()
@@ -89,7 +101,7 @@ function ProteinTrendCard() {
     return () => {
       cancelled = true
     }
-  }, [selectedDate])
+  }, [selectedDate, todayProtein])
 
   const displayTrend = useMemo(() => {
     if (trendData.length === 0) return []
@@ -118,17 +130,6 @@ function ProteinTrendCard() {
 
   const latestPoint = displayTrend[displayTrend.length - 1]
 
-  // Custom Toolkit
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div style={{ background: '#18181b', border: '1px solid rgba(255,255,255,0.1)', padding: '6px 10px', borderRadius: '8px', color: '#fff', fontSize: '12px', fontWeight: 600 }}>
-          <p style={{ margin: 0 }}>{`${label}: ${payload[0].value}g`}</p>
-        </div>
-      )
-    }
-    return null
-  }
 
   // Set minimum limit so the graph looks proportional
 
@@ -143,7 +144,7 @@ function ProteinTrendCard() {
       </div>
 
       <div style={{ flex: 1, width: '100%', minHeight: 0, marginTop: '20px', marginLeft: '-15px', position: 'relative', zIndex: 1 }}>
-        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+        <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
           <AreaChart data={displayTrend} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="colorGramsArea" x1="0" y1="0" x2="0" y2="1">
