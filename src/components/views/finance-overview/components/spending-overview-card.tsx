@@ -146,6 +146,13 @@ function SpendingOverviewCard({
     }
   }, [onCategorySelect, selectedCategory])
 
+  const selectedIndex = useMemo(() => {
+    if (!selectedCategory) return -1
+    return spendingData.categories.findIndex((entry) => entry.label === selectedCategory)
+  }, [selectedCategory, spendingData.categories])
+
+  const centerIndex = selectedIndex !== -1 ? selectedIndex : activeIndex
+
   return (
     <section className="finance-card finance-spending-card">
       <div className="finance-section-head">
@@ -236,11 +243,11 @@ function SpendingOverviewCard({
               pointerEvents: 'none'
             }}>
               <span style={{ display: 'block', fontSize: '14px', color: 'rgba(23, 28, 25, 0.46)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>
-                {activeIndex !== -1 ? spendingData.categories[activeIndex].label : 'Total'}
+                {centerIndex !== -1 ? spendingData.categories[centerIndex].label : 'Total'}
               </span>
               <b style={{ display: 'block', fontSize: '28px', color: '#101312', marginTop: '4px', fontWeight: 800 }}>
-                {activeIndex !== -1
-                  ? `₹${spendingData.categories[activeIndex].rawAmount.toLocaleString()}`
+                {centerIndex !== -1
+                  ? `₹${spendingData.categories[centerIndex].rawAmount.toLocaleString()}`
                   : `₹${spendingData.total.toLocaleString()}`
                 }
               </b>

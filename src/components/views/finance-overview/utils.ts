@@ -3,20 +3,24 @@ import {
   Fuel, Car, Train, Plane, Home, ReceiptText, ShieldCheck, 
   Film, MonitorPlay, Ticket, Stethoscope, Dumbbell, Pill, 
   Landmark, TrendingUp, HandCoins, Sparkles, WalletCards, 
-  CircleDollarSign, type LucideIcon 
+  CircleDollarSign, Bike, Map, MapPin, type LucideIcon 
 } from 'lucide-react'
 
 export const CATEGORY_COLORS: Record<string, string> = {
-  'To Home': '#4684ff', // Royal Blue
-  'Bills': '#ff6c61',   // Crimson
-  'Food': '#039855',    // Emerald Green
-  'Lending': '#7A5AF8', // Royal Purple
+  'Home': '#4684ff',      // Royal Blue
+  'To Home': '#4684ff',   // Legacy Royal Blue
+  'Bills': '#ff6c61',     // Crimson
+  'Food': '#039855',      // Emerald Green
+  'Dining': '#10b981',    // Teal Green
+  'Lending': '#7A5AF8',   // Royal Purple
   'Loan Recovery': '#0BA5EC', // Ocean Blue
-  'Shopping': '#DC6803', // Burnt Orange
+  'Shopping': '#DC6803',  // Burnt Orange
   'Transport': '#0BA5EC', // Light Blue
+  'Cycling': '#f97316',   // Bright Orange
   'Entertainment': '#DD2590', // Magenta
-  'Income': '#12B76A',   // Green for income
-  'Salary': '#32D583',   // Light Green for salary
+  'Outing': '#8b5cf6',    // Violet
+  'Income': '#12B76A',    // Green for income
+  'Salary': '#32D583',    // Light Green for salary
 }
 
 const FALLBACK_COLORS = ['#6172F3', '#12B76A', '#F79009', '#F04438', '#EE46BC', '#0E9384']
@@ -50,6 +54,7 @@ export function getIconForCategory(category: string): LucideIcon {
   if (cat.includes('salon') || cat.includes('hair') || cat.includes('care')) return Scissors
   
   // Transport
+  if (cat.includes('bike') || cat.includes('cycling')) return Bike
   if (cat.includes('gas') || cat.includes('fuel')) return Fuel
   if (cat.includes('car') || cat.includes('auto') || cat.includes('uber')) return Car
   if (cat.includes('train') || cat.includes('transit') || cat.includes('subway') || cat.includes('bus')) return Train
@@ -62,6 +67,7 @@ export function getIconForCategory(category: string): LucideIcon {
   if (cat.includes('insur')) return ShieldCheck
   
   // Entertainment & Subs
+  if (cat.includes('outing') || cat.includes('trip') || cat.includes('tour')) return Map
   if (cat.includes('movie') || cat.includes('cinema')) return Film
   if (cat.includes('sub') || cat.includes('streaming') || cat.includes('netflix')) return MonitorPlay
   if (cat.includes('entertain') || cat.includes('ticket') || cat.includes('event')) return Ticket
