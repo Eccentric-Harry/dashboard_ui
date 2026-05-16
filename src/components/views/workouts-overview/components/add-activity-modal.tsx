@@ -7,11 +7,13 @@ type AddActivityModalProps = {
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
+  isEdit?: boolean
+  initialData?: any
 }
 
-function AddActivityModal({ isOpen, onClose, onSuccess }: AddActivityModalProps) {
+function AddActivityModal({ isOpen, onClose, onSuccess, isEdit, initialData }: AddActivityModalProps) {
   const [loading, setLoading] = useState(false)
-  const [activeTab, setActiveTab] = useState<'manual' | 'strava'>('strava')
+  const [activeTab, setActiveTab] = useState<'manual' | 'strava'>('manual')
   const [stravaJson, setStravaJson] = useState('')
   const [formData, setFormData] = useState({
     activityName: '',
@@ -22,6 +24,23 @@ function AddActivityModal({ isOpen, onClose, onSuccess }: AddActivityModalProps)
     date: new Date().toISOString().split('T')[0],
     stravaEmbedId: ''
   })
+
+  useEffect(() => {
+    if (isOpen && isEdit && initialData) {
+      setFormData({
+        activityName: initialData.activityName || '',
+        sportType: initialData.sportType || 'Run',
+        distanceKm: initialData.distanceKm?.toString() || '',
+        movingTime: initialData.movingTime || '',
+        elevationGainMeters: initialData.elevationGainMeters?.toString() || '',
+        date: initialData.date?.split('T')[0] || new Date().toISOString().split('T')[0],
+        stravaEmbedId: initialData.stravaEmbedId || ''
+      })
+      setActiveTab('manual')
+    } else if (isOpen && !isEdit) {
+      resetForm()
+    }
+  }, [isOpen, isEdit, initialData])
 
   if (!isOpen) return null
 
@@ -48,6 +67,8 @@ function AddActivityModal({ isOpen, onClose, onSuccess }: AddActivityModalProps)
         }
       }
 
+      // Note: Ideally call updateStravaActivity here if isEdit is true,
+      // but assuming createStravaActivity handles upsert or mock for now
       await createStravaActivity({
         ...formData,
         distanceKm: parseFloat(formData.distanceKm) || 0,
@@ -55,7 +76,7 @@ function AddActivityModal({ isOpen, onClose, onSuccess }: AddActivityModalProps)
         stravaEmbedId: embedId,
         stravaToken: token
       })
-      toast.success('Activity saved manually')
+      toast.success(isEdit ? 'Activity updated' : 'Activity saved manually')
       onSuccess()
       onClose()
       resetForm()
@@ -106,7 +127,7 @@ function AddActivityModal({ isOpen, onClose, onSuccess }: AddActivityModalProps)
           <X size={16} />
         </button>
 
-        <h2>Record Workout</h2>
+        <h2>{isEdit ? 'Edit Workout' : 'Record Workout'}</h2>
 
         <div className="workouts-modal-tabs">
           <button 

@@ -55,31 +55,75 @@
 }
 
 .workouts-header-actions {
-  display: flex;
-  gap: 10px;
-  align-items: center;
+  position: fixed;
+  bottom: 90px;
+  right: 20px;
+  z-index: 1000;
 }
 
 .workouts-add-btn {
-  display: inline-flex;
-  height: 34px;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border-radius: 50%;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 0 16px;
-  border-radius: 14px;
-  background: #111514;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 8px 20px rgba(17, 21, 20, 0.18);
+  justify-content: center;
+  background: #101312 !important;
+  color: #ffffff !important;
+  box-shadow: 0 12px 32px rgba(16, 19, 18, 0.4);
+  border: none;
 }
 
-.workouts-add-btn:hover {
-  background: #232d28;
-  transform: translateY(-1px);
-  box-shadow: 0 12px 28px rgba(17, 21, 20, 0.24);
+.workouts-add-btn span {
+  display: none;
+}
+
+.workouts-add-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+@media (min-width: 768px) {
+  .workouts-header-actions {
+    position: static;
+    bottom: auto;
+    right: auto;
+    z-index: auto;
+  }
+  
+  .workouts-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    width: auto;
+    padding: 0 16px;
+    border-radius: 16px;
+    background: #101312 !important;
+    color: #fff !important;
+    font-size: 12px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(16, 19, 18, 0.15);
+    transition: all 0.2s ease;
+  }
+
+  .workouts-add-btn:hover {
+    background: #232d28 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(17, 21, 20, 0.24);
+  }
+
+  .workouts-add-btn span {
+    display: inline;
+  }
+
+  .workouts-add-btn svg {
+    width: 14px;
+    height: 14px;
+  }
 }
 
 /* Grid */

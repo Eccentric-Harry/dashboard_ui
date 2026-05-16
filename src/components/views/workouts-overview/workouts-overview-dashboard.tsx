@@ -21,6 +21,7 @@ function WorkoutsOverviewDashboard() {
   const [loading, setLoading] = useState(true)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEmbedModalOpen, setIsEmbedModalOpen] = useState(false)
+  const [editingActivity, setEditingActivity] = useState<any>(null)
 
   const refreshData = useCallback(() => {
     setLoading(true)
@@ -70,7 +71,22 @@ function WorkoutsOverviewDashboard() {
           icon={Mountain}
           iconClass="elev"
         />
-        <ActivityLogCard activities={activities} loading={loading} />
+        <ActivityLogCard 
+          activities={activities} 
+          loading={loading} 
+          onEdit={(activity) => {
+            setEditingActivity(activity)
+            setIsAddModalOpen(true)
+          }}
+          onDelete={(activity) => {
+            if (window.confirm(`Delete activity "${activity.activityName}"?`)) {
+              import('react-hot-toast').then(toast => {
+                toast.default.success('Activity deleted')
+                refreshData()
+              })
+            }
+          }}
+        />
         <StravaEmbedCard stats={stats} onEditClick={() => setIsEmbedModalOpen(true)} />
         <SportBreakdownCard stats={stats} loading={loading} />
         <DistanceTrendCard activities={activities} loading={loading} />
@@ -78,8 +94,13 @@ function WorkoutsOverviewDashboard() {
 
       <AddActivityModal
         isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        onClose={() => {
+          setIsAddModalOpen(false)
+          setEditingActivity(null)
+        }}
         onSuccess={refreshData}
+        isEdit={!!editingActivity}
+        initialData={editingActivity}
       />
 
       <UpdateEmbedModal

@@ -2392,3 +2392,75 @@
   }
 }
 
+
+.nutrition-header-actions {
+  position: fixed;
+  bottom: 90px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.nutrition-add-btn {
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #101312 !important;
+  color: #ffffff !important;
+  box-shadow: 0 12px 32px rgba(16, 19, 18, 0.4);
+  border: none;
+}
+
+.nutrition-add-btn span {
+  display: none;
+}
+
+.nutrition-add-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+@media (min-width: 768px) {
+  .nutrition-header-actions {
+    position: static;
+    bottom: auto;
+    right: auto;
+    z-index: auto;
+  }
+  
+  .nutrition-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    width: auto;
+    padding: 0 16px;
+    border-radius: 16px;
+    background: #101312 !important;
+    color: #fff !important;
+    font-size: 12px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(16, 19, 18, 0.15);
+    transition: all 0.2s ease;
+  }
+
+  .nutrition-add-btn:hover {
+    background: #232d28 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(17, 21, 20, 0.24);
+  }
+
+  .nutrition-add-btn span {
+    display: inline;
+  }
+
+  .nutrition-add-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+}
