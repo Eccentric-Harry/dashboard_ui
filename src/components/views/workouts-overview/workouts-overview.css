@@ -678,7 +678,7 @@
 .workouts-modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 999;
+  z-index: 1050;
   display: grid;
   place-items: center;
   padding: 24px;
@@ -690,7 +690,8 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  width: min(520px, calc(100vw - 42px));
+  width: 100%;
+  max-width: 520px;
   max-height: min(78vh, 680px);
   padding: 28px 24px 24px;
   border: 1px solid rgba(255, 255, 255, 0.58);

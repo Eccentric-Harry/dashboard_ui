@@ -1,10 +1,11 @@
 import { useMemo, useState, useRef, useCallback, useEffect } from 'react'
-import { Check, Trash2, Utensils, X, Pencil } from 'lucide-react'
+import { Check, Info, Pencil, Trash2, Utensils, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 import { RingProgress } from './ring-progress'
 import { useDashboard } from '../../../../contexts/DashboardContext'
-import { addFoodEntry, deleteFoodEntry, updateFoodEntry } from '../../../../lib/api'
+import { type CircularGoal, type FoodEntry, deleteFoodEntry } from '../../../../lib/api'
+import { ConfirmDialog } from '../../../ui/confirm-dialog'
 
 const PROTEIN_TARGET = 100
 const CALORIE_TARGET = 2000
@@ -44,6 +45,7 @@ function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
   const foodEntries = useMemo<FoodEntry[]>(() => data?.health?.foodEntries || [], [data?.health?.foodEntries])
   const [selectedMacroId, setSelectedMacroId] = useState('protein')
   const [isEditMode, setIsEditMode] = useState(false)
+  const [itemToDelete, setItemToDelete] = useState<FoodEntry | null>(null)
   const [isScrolling, setIsScrolling] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -97,16 +99,18 @@ function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
 
   // Inline add/edit form has been moved to AddFoodModal
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this food entry?')) return
+  const handleDeleteConfirm = async () => {
+    if (!itemToDelete?.id) return
 
     try {
-      await deleteFoodEntry(selectedDate, id)
+      await deleteFoodEntry(selectedDate, itemToDelete.id)
       toast.success('Food entry deleted')
       await refetch()
     } catch (error: any) {
       toast.error(error.message || 'Failed to delete food entry')
       console.error('Failed to delete', error)
+    } finally {
+      setItemToDelete(null)
     }
   }
 
@@ -196,7 +200,7 @@ function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
                     <button type="button" onClick={() => onEdit && onEdit(entry)} title="Edit entry" aria-label="Edit entry">
                       <Pencil size={14} />
                     </button>
-                    <button type="button" onClick={() => handleDelete(id)} title="Delete entry" aria-label="Delete entry">
+                    <button type="button" onClick={() => setItemToDelete(entry)} title="Delete entry" aria-label="Delete entry">
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -206,6 +210,15 @@ function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
           })}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!itemToDelete}
+        title="Delete Food Entry"
+        message={`Are you sure you want to delete "${itemToDelete?.description}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setItemToDelete(null)}
+      />
     </section>
   )
 }

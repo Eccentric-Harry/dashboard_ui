@@ -105,7 +105,7 @@
 .nutrition-calendar-overlay {
   position: fixed;
   inset: 0;
-  z-index: 99;
+  z-index: 1050;
   background-color: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(4px);
 }
@@ -124,7 +124,7 @@
   box-shadow: 0 26px 58px rgba(45, 60, 48, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.9);
   color: #101312;
   backdrop-filter: blur(12px);
-  z-index: 100;
+  z-index: 1051;
 }
 
 .nutrition-calendar-head {
@@ -239,7 +239,7 @@
 .nutrition-picked-date-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 999;
+  z-index: 1050;
   display: grid;
   place-items: center;
   padding: 24px;
@@ -250,7 +250,8 @@
 .nutrition-picked-date-popover {
   position: relative;
   display: grid;
-  width: min(620px, calc(100vw - 42px));
+  width: 100%;
+  max-width: 620px;
   max-height: min(78vh, 680px);
   grid-template-columns: 46px 1fr;
   gap: 13px;
@@ -2344,7 +2345,7 @@
   }
 
   .nutrition-picked-date-popover {
-    width: calc(100vw - 24px);
+    width: 100%;
     grid-template-columns: 1fr;
   }
 

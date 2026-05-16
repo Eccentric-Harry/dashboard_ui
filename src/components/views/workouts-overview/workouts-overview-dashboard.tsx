@@ -13,6 +13,7 @@ import { fetchStravaActivities, fetchStravaActivityStats } from '../../../lib/ap
 import type { StravaActivity, StravaActivityStats } from '../../../lib/api'
 import { Activity, Mountain, Timer, Flame } from 'lucide-react'
 
+import { ConfirmDialog } from '../../ui/confirm-dialog'
 import './workouts-overview.css'
 
 function WorkoutsOverviewDashboard() {
@@ -22,6 +23,7 @@ function WorkoutsOverviewDashboard() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEmbedModalOpen, setIsEmbedModalOpen] = useState(false)
   const [editingActivity, setEditingActivity] = useState<any>(null)
+  const [activityToDelete, setActivityToDelete] = useState<any>(null)
 
   const refreshData = useCallback(() => {
     setLoading(true)
@@ -79,12 +81,7 @@ function WorkoutsOverviewDashboard() {
             setIsAddModalOpen(true)
           }}
           onDelete={(activity) => {
-            if (window.confirm(`Delete activity "${activity.activityName}"?`)) {
-              import('react-hot-toast').then(toast => {
-                toast.default.success('Activity deleted')
-                refreshData()
-              })
-            }
+            setActivityToDelete(activity)
           }}
         />
         <StravaEmbedCard stats={stats} onEditClick={() => setIsEmbedModalOpen(true)} />
@@ -107,6 +104,22 @@ function WorkoutsOverviewDashboard() {
         isOpen={isEmbedModalOpen}
         onClose={() => setIsEmbedModalOpen(false)}
         onSuccess={refreshData}
+        currentEmbed={stats?.recentEmbeds?.[0]}
+      />
+
+      <ConfirmDialog
+        open={!!activityToDelete}
+        title="Delete Workout"
+        message={`Are you sure you want to delete "${activityToDelete?.activityName}"?`}
+        confirmLabel="Delete"
+        onConfirm={() => {
+          import('react-hot-toast').then(toast => {
+            toast.default.success('Activity deleted')
+            setActivityToDelete(null)
+            refreshData()
+          })
+        }}
+        onCancel={() => setActivityToDelete(null)}
       />
     </section>
   )

@@ -115,7 +115,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
             <label>Food Name</label>
             <input 
               type="text" 
-              placeholder="e.g. Chicken breast, Salad..."
+              placeholder="e.g. Paneer Sandwich, Salad..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               autoFocus
