@@ -50,10 +50,22 @@ const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload
     return (
-      <div className="finance-chart-tooltip">
-        <p className="label">{data.label}</p>
-        <p className="amount">₹{data.rawAmount.toLocaleString()}</p>
-        <p className="share">{data.share} of total</p>
+      <div 
+        className="finance-chart-tooltip" 
+        style={{ 
+          background: 'rgba(255, 255, 255, 0.95)', 
+          backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(0, 0, 0, 0.08)',
+          padding: '12px 16px', 
+          borderRadius: '16px', 
+          boxShadow: '0 12px 30px rgba(0, 0, 0, 0.15)',
+          zIndex: 9999,
+          position: 'relative'
+        }}
+      >
+        <p className="label" style={{ fontWeight: 700, margin: 0, color: '#101312', fontSize: '13px' }}>{data.label}</p>
+        <p className="amount" style={{ fontWeight: 800, margin: '4px 0 0', color: '#101312', fontSize: '16px' }}>₹{data.rawAmount.toLocaleString()}</p>
+        <p className="share" style={{ fontWeight: 600, margin: '4px 0 0', color: 'rgba(23, 28, 25, 0.5)', fontSize: '11px' }}>{data.share} of total</p>
       </div>
     )
   }
@@ -222,7 +234,11 @@ function SpendingOverviewCard({
                     />
                   ))}
                 </Pie>
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip 
+                  content={<CustomTooltip />} 
+                  wrapperStyle={{ zIndex: 100 }} 
+                  offset={25}
+                />
               </PieChart>
             </ResponsiveContainer>
           ) : (
