@@ -1310,6 +1310,10 @@ button {
     display: none;
   }
 
+  .mobile-hidden {
+    display: none !important;
+  }
+
   /* --- Top Chip: hidden on mobile --- */
   .top-chip {
     display: none;

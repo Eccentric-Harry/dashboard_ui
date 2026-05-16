@@ -27,6 +27,7 @@ export interface DashboardNavItem {
   active?: boolean
   muted?: boolean
   bubble?: string
+  mobileHidden?: boolean
 }
 
 export interface CostCardConfig {
@@ -45,10 +46,10 @@ export const dateTiles = [
 
 export const navItems: DashboardNavItem[] = [
   { label: 'Home', icon: Home, to: '/home' },
-  { label: 'Nutrition Overview', icon: Utensils, to: '/nutrition' },
   { label: 'Finance Overview', icon: CircleDollarSign, to: '/finance' },
-  { label: 'Learnings Map', icon: BrainCircuit, to: '/learnings' },
+  { label: 'Nutrition Overview', icon: Utensils, to: '/nutrition' },
   { label: 'Workouts', icon: Dumbbell, to: '/workouts' },
+  { label: 'Learnings Map', icon: BrainCircuit, to: '/learnings', mobileHidden: true },
   { label: 'Adjust', icon: SlidersHorizontal, muted: true },
   { label: 'Tasks', icon: CheckSquare, muted: true },
   { label: 'People', icon: Users, muted: true },

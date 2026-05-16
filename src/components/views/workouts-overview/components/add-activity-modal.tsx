@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, Loader2, ClipboardCheck, FileJson } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createStravaActivity, importStravaJson } from '../../../../lib/api'

@@ -10,8 +10,12 @@ import { DashboardProvider } from './contexts/DashboardContext'
 import { LearningsOverview } from './components/views/learnings-view'
 
 function normalizePathname(pathname: string): AppPath {
-  if (pathname === '/home' || pathname === '/') {
+  if (pathname === '/home') {
     return '/home'
+  }
+
+  if (pathname === '/') {
+    return '/nutrition'
   }
 
   if (pathname === '/nutrition') {
@@ -30,7 +34,7 @@ function normalizePathname(pathname: string): AppPath {
     return '/workouts'
   }
 
-  return '/home'
+  return '/nutrition'
 }
 
 function App() {

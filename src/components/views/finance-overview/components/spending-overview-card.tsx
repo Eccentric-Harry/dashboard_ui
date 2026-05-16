@@ -200,7 +200,7 @@ function SpendingOverviewCard({
       <div className="finance-spending-body">
         <div className="finance-donut-container">
           {spendingData.categories.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <PieChart>
                 <Pie
                   activeShape={renderActiveShape}
