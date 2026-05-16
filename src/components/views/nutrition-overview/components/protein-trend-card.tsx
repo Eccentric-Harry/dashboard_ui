@@ -131,7 +131,6 @@ function ProteinTrendCard() {
   }
 
   // Set minimum limit so the graph looks proportional
-  const maxValue = Math.max(...displayTrend.map((p) => p.grams), PROTEIN_TARGET + 40)
 
   return (
     <section className="nutrition-card nutrition-trend-card" style={{ display: 'flex', flexDirection: 'column' }}>

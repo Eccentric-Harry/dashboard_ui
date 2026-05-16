@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { X, Loader2, ClipboardCheck, FileJson } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { createStravaActivity, importStravaJson } from '../../../../lib/api'
 
 type AddActivityModalProps = {
@@ -10,7 +11,6 @@ type AddActivityModalProps = {
 
 function AddActivityModal({ isOpen, onClose, onSuccess }: AddActivityModalProps) {
   const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
   const [activeTab, setActiveTab] = useState<'manual' | 'strava'>('strava')
   const [stravaJson, setStravaJson] = useState('')
   const [formData, setFormData] = useState({
@@ -55,16 +55,13 @@ function AddActivityModal({ isOpen, onClose, onSuccess }: AddActivityModalProps)
         stravaEmbedId: embedId,
         stravaToken: token
       })
-      setSuccess(true)
+      toast.success('Activity saved manually')
       onSuccess()
-      setTimeout(() => {
-        onClose()
-        setSuccess(false)
-        resetForm()
-      }, 1200)
-    } catch (err) {
+      onClose()
+      resetForm()
+    } catch (err: any) {
       console.error('Error creating activity:', err)
-      alert('Failed to save activity. Please check your inputs.')
+      toast.error(err.message || 'Failed to save activity. Please check your inputs.')
     } finally {
       setLoading(false)
     }
@@ -77,16 +74,13 @@ function AddActivityModal({ isOpen, onClose, onSuccess }: AddActivityModalProps)
       const payload = JSON.parse(stravaJson)
       setLoading(true)
       await importStravaJson(payload)
-      setSuccess(true)
+      toast.success('Activity imported from Strava')
       onSuccess()
-      setTimeout(() => {
-        onClose()
-        setSuccess(false)
-        setStravaJson('')
-      }, 1200)
-    } catch (err) {
+      onClose()
+      setStravaJson('')
+    } catch (err: any) {
       console.error('Error importing Strava JSON:', err)
-      alert('Invalid JSON format or import failed. Please paste the raw response from Strava API.')
+      toast.error(err.message || 'Invalid JSON format or import failed.')
     } finally {
       setLoading(false)
     }

@@ -1,5 +1,6 @@
 import { useMemo, useState, useRef, useCallback, useEffect } from 'react'
 import { Check, Trash2, Utensils, X, Pencil } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 import { RingProgress } from './ring-progress'
 import { useDashboard } from '../../../../contexts/DashboardContext'
@@ -129,6 +130,7 @@ function MacroBalanceCard() {
           calories: parseInt(formData.calories, 10),
           date: selectedDate,
         })
+        toast.success(`Updated "${formData.description}"`)
       } else {
         await addFoodEntry({
           description: formData.description,
@@ -137,13 +139,14 @@ function MacroBalanceCard() {
           calories: parseInt(formData.calories, 10),
           date: selectedDate,
         })
+        toast.success(`Logged "${formData.description}"`)
       }
       await refetch()
       resetFoodForm()
       setIsAddingFood(false)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to add food entry', error)
-      alert('Failed to log food. Please check your inputs.')
+      toast.error(error.message || 'Failed to log food')
     } finally {
       setIsSubmittingFood(false)
     }
@@ -154,8 +157,10 @@ function MacroBalanceCard() {
 
     try {
       await deleteFoodEntry(selectedDate, id)
+      toast.success('Food entry deleted')
       await refetch()
-    } catch (error) {
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete food entry')
       console.error('Failed to delete', error)
     }
   }

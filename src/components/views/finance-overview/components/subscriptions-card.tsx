@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Video, Tv, Wifi, Check, Loader2 } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { subscriptions, subscriptionSummary } from '../data'
 import { addTransaction } from '../../../../lib/api'
 
@@ -58,8 +59,10 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
       })
       
       setOptimisticPaidIds(prev => new Set(prev).add(id))
+      toast.success(`Paid ${subscription.service} subscription`)
       if (onRefresh) onRefresh()
-    } catch (error) {
+    } catch (error: any) {
+      toast.error(error.message || `Failed to record payment for ${subscription.service}`)
       console.error('Failed to record subscription payment:', error)
     } finally {
       setProcessingId(null)

@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
+import toast from 'react-hot-toast'
 import { BalanceSummaryCard } from './components/balance-summary-card'
 import { FinanceHeader } from './components/finance-header'
 import { MetricCard } from './components/metric-card'
@@ -173,9 +174,11 @@ function FinanceOverviewDashboard() {
     if (!deleteTarget) return
     try {
       await deleteTransaction(deleteTarget.id)
+      toast.success(`Deleted "${deleteTarget.merchant}"`)
       setDeleteTarget(null)
       refreshData()
-    } catch (err) {
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete transaction')
       console.error('Failed to delete transaction:', err)
       setDeleteTarget(null)
     }

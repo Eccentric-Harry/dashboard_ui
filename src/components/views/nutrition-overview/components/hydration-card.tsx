@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { RefreshCw, Minus, GlassWater, Droplets, Milk, Check } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { fetchHydration, addWaterIntake } from '../../../../lib/api'
 import type { HydrationData } from '../../../../lib/api'
 import { RingProgress } from './ring-progress'
@@ -38,9 +39,11 @@ function HydrationCard() {
     try {
       setAdding(true)
       await addWaterIntake(amount, selectedDate)
+      toast.success(`Logged ${amount}ml of water`)
       const response = await fetchHydration(selectedDate)
       setData(response.data)
-    } catch (err) {
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to log water')
       setError('Failed to log water')
       console.error(err)
     } finally {
