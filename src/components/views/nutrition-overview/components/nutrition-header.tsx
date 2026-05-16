@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { CalendarCheck, ChevronDown, ChevronLeft, ChevronRight, LoaderCircle, Utensils, X } from 'lucide-react'
+import { CalendarCheck, ChevronDown, ChevronLeft, ChevronRight, LoaderCircle, Utensils, X, Plus } from 'lucide-react'
 import { useDashboard } from '../../../../contexts/DashboardContext'
 import { fetchFoodEntries } from '../../../../lib/api'
 
@@ -89,7 +89,11 @@ const extractEntries = (response: unknown): FoodEntry[] => {
   return []
 }
 
-function NutritionHeader() {
+interface NutritionHeaderProps {
+  onAddClick?: () => void
+}
+
+function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
   const { data } = useDashboard()
   const foodEntries = useMemo<FoodEntry[]>(() => data?.health?.foodEntries || [], [data?.health?.foodEntries])
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
@@ -375,6 +379,19 @@ function NutritionHeader() {
           </div>
         )}
       </div>
+
+      {onAddClick && (
+        <div className="nutrition-header-actions">
+          <button
+            type="button"
+            onClick={onAddClick}
+            className="nutrition-add-btn"
+          >
+            <Plus size={14} strokeWidth={3} />
+            <span>Add</span>
+          </button>
+        </div>
+      )}
     </header>
   )
 }

@@ -13,6 +13,7 @@ import { fetchStravaActivities, fetchStravaActivityStats } from '../../../lib/ap
 import type { StravaActivity, StravaActivityStats } from '../../../lib/api'
 import { Activity, Mountain, Timer, Flame } from 'lucide-react'
 
+import { ConfirmDialog } from '../../ui/confirm-dialog'
 import './workouts-overview.css'
 
 function WorkoutsOverviewDashboard() {
@@ -21,6 +22,8 @@ function WorkoutsOverviewDashboard() {
   const [loading, setLoading] = useState(true)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEmbedModalOpen, setIsEmbedModalOpen] = useState(false)
+  const [editingActivity, setEditingActivity] = useState<any>(null)
+  const [activityToDelete, setActivityToDelete] = useState<any>(null)
 
   const refreshData = useCallback(() => {
     setLoading(true)
@@ -70,7 +73,17 @@ function WorkoutsOverviewDashboard() {
           icon={Mountain}
           iconClass="elev"
         />
-        <ActivityLogCard activities={activities} loading={loading} />
+        <ActivityLogCard 
+          activities={activities} 
+          loading={loading} 
+          onEdit={(activity) => {
+            setEditingActivity(activity)
+            setIsAddModalOpen(true)
+          }}
+          onDelete={(activity) => {
+            setActivityToDelete(activity)
+          }}
+        />
         <StravaEmbedCard stats={stats} onEditClick={() => setIsEmbedModalOpen(true)} />
         <SportBreakdownCard stats={stats} loading={loading} />
         <DistanceTrendCard activities={activities} loading={loading} />
@@ -78,14 +91,35 @@ function WorkoutsOverviewDashboard() {
 
       <AddActivityModal
         isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        onClose={() => {
+          setIsAddModalOpen(false)
+          setEditingActivity(null)
+        }}
         onSuccess={refreshData}
+        isEdit={!!editingActivity}
+        initialData={editingActivity}
       />
 
       <UpdateEmbedModal
         isOpen={isEmbedModalOpen}
         onClose={() => setIsEmbedModalOpen(false)}
         onSuccess={refreshData}
+        currentEmbed={stats?.recentEmbeds?.[0]}
+      />
+
+      <ConfirmDialog
+        open={!!activityToDelete}
+        title="Delete Workout"
+        message={`Are you sure you want to delete "${activityToDelete?.activityName}"?`}
+        confirmLabel="Delete"
+        onConfirm={() => {
+          import('react-hot-toast').then(toast => {
+            toast.default.success('Activity deleted')
+            setActivityToDelete(null)
+            refreshData()
+          })
+        }}
+        onCancel={() => setActivityToDelete(null)}
       />
     </section>
   )

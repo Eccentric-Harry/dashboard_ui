@@ -1,10 +1,12 @@
 import { useEffect, useState, useMemo } from 'react'
-import { Footprints, Bike, PersonStanding, Zap, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Footprints, Bike, PersonStanding, Zap, ChevronLeft, ChevronRight, Edit2, Trash2 } from 'lucide-react'
 import type { StravaActivity } from '../../../../lib/api'
 
 type ActivityLogCardProps = {
   activities: StravaActivity[]
   loading: boolean
+  onEdit?: (activity: StravaActivity) => void
+  onDelete?: (activity: StravaActivity) => void
 }
 
 const sportIcons: Record<string, { icon: any; cls: string }> = {
@@ -21,9 +23,10 @@ const sportBadgeCls: Record<string, string> = {
   'E-Bike Ride': 'ebike',
 }
 
-function ActivityLogCard({ activities, loading }: ActivityLogCardProps) {
+function ActivityLogCard({ activities, loading, onEdit, onDelete }: ActivityLogCardProps) {
   const [filter, setFilter] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
+  const [isEditMode, setIsEditMode] = useState(false)
   const pageSize = 6
 
   const sportTypes = useMemo(() => {
@@ -60,11 +63,19 @@ function ActivityLogCard({ activities, loading }: ActivityLogCardProps) {
 
   return (
     <div className="workouts-card workouts-log-card">
-      <div className="workouts-section-head">
+      <div className="workouts-section-head" style={{ alignItems: 'center' }}>
         <div>
           <h2>Activity Log</h2>
           <p>{filtered.length} activities recorded</p>
         </div>
+        <button 
+          className={`workouts-transaction-action-btn ${isEditMode ? 'active' : ''}`}
+          onClick={() => setIsEditMode(!isEditMode)}
+          aria-label="Toggle edit mode"
+          style={{ background: isEditMode ? 'rgba(20, 24, 22, 0.06)' : 'transparent', padding: '6px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
+        >
+          <Edit2 size={14} />
+        </button>
       </div>
 
       <div className="workouts-log-filters">
@@ -121,9 +132,25 @@ function ActivityLogCard({ activities, loading }: ActivityLogCardProps) {
                   </div>
                   <span>{activity.distanceKm.toFixed(2)} km</span>
                   <span className="mobile-hide">{activity.movingTime}</span>
-                  <span className={`workouts-sport-badge ${badgeCls}`}>
-                    {formatPace(activity.paceMinPerKm)}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
+                    <span className={`workouts-sport-badge ${badgeCls}`}>
+                      {formatPace(activity.paceMinPerKm)}
+                    </span>
+                    {isEditMode && (
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        {onEdit && (
+                          <button type="button" onClick={() => onEdit(activity)} title="Edit" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px' }}>
+                            <Edit2 size={12} />
+                          </button>
+                        )}
+                        {onDelete && (
+                          <button type="button" onClick={() => onDelete(activity)} title="Delete" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px', color: '#d83542' }}>
+                            <Trash2 size={12} />
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )
             })

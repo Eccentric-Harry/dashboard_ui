@@ -7,6 +7,18 @@ type DistanceTrendCardProps = {
   loading: boolean
 }
 
+function CustomTooltip({ active, payload }: any) {
+  if (!active || !payload?.length) return null
+  const d = payload[0].payload as { date: string; distance: number; pace: number }
+  return (
+    <div className="workouts-chart-tooltip">
+      <p className="label">{d.date}</p>
+      <p className="value">{d.distance.toFixed(2)} km</p>
+      {d.pace > 0 && <p className="sub">{formatPace(d.pace)} /km</p>}
+    </div>
+  )
+}
+
 function DistanceTrendCard({ activities, loading }: DistanceTrendCardProps) {
   const chartData = useMemo(() => {
     if (!activities.length) return []
@@ -27,20 +39,8 @@ function DistanceTrendCard({ activities, loading }: DistanceTrendCardProps) {
     })
   }, [activities])
 
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (!active || !payload?.length) return null
-    const d = payload[0].payload
-    return (
-      <div className="workouts-chart-tooltip">
-        <p className="label">{d.date}</p>
-        <p className="value">{d.distance.toFixed(2)} km</p>
-        {d.pace > 0 && <p className="sub">{formatPace(d.pace)} /km</p>}
-      </div>
-    )
-  }
-
   return (
-    <div className="workouts-card workouts-trend-card">
+  <div className="workouts-card workouts-trend-card">
       <div className="workouts-section-head">
         <div>
           <h2>Distance Trend</h2>
@@ -51,7 +51,7 @@ function DistanceTrendCard({ activities, loading }: DistanceTrendCardProps) {
         {loading ? (
           <div className="workouts-loading"><span className="workouts-loading-dot">Loading chart…</span></div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
             <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="distGrad" x1="0" y1="0" x2="0" y2="1">

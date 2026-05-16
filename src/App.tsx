@@ -10,8 +10,12 @@ import { DashboardProvider } from './contexts/DashboardContext'
 import { LearningsOverview } from './components/views/learnings-view'
 
 function normalizePathname(pathname: string): AppPath {
-  if (pathname === '/home' || pathname === '/') {
+  if (pathname === '/home') {
     return '/home'
+  }
+
+  if (pathname === '/') {
+    return '/nutrition'
   }
 
   if (pathname === '/nutrition') {
@@ -30,7 +34,7 @@ function normalizePathname(pathname: string): AppPath {
     return '/workouts'
   }
 
-  return '/home'
+  return '/nutrition'
 }
 
 function App() {
@@ -78,19 +82,39 @@ function App() {
 
   return (
     <DashboardProvider date={currentDate}>
-      <Toaster position="bottom-right" toastOptions={{
-        style: {
-          background: 'rgba(255, 255, 255, 0.95)',
-          color: '#101312',
-          backdropFilter: 'blur(8px)',
-          borderRadius: '16px',
-          padding: '12px 16px',
-          fontSize: '13px',
-          fontWeight: 600,
-          border: '1px solid rgba(0, 0, 0, 0.05)',
-          boxShadow: '0 12px 40px rgba(0, 0, 0, 0.08)'
-        }
-      }} />
+      <Toaster 
+        position="top-center" 
+        containerStyle={{
+          top: 40,
+        }}
+        toastOptions={{
+          style: {
+            background: 'rgba(20, 24, 22, 0.85)',
+            color: '#ffffff',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            borderRadius: '100px',
+            padding: '12px 24px',
+            fontSize: '14px',
+            fontWeight: 600,
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.1)',
+            letterSpacing: '0.02em',
+          },
+          success: {
+            iconTheme: {
+              primary: '#35b64b',
+              secondary: '#ffffff',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#d83542',
+              secondary: '#ffffff',
+            },
+          },
+        }} 
+      />
       {content}
     </DashboardProvider>
   );

@@ -27,6 +27,7 @@ const PAGE_SIZE = 6
 
 function TransactionsCard({ transactions = [], loading = false, onEdit, onDelete }: TransactionsCardProps) {
   const [page, setPage] = useState(1)
+  const [isEditMode, setIsEditMode] = useState(false)
   const totalPages = Math.ceil(transactions.length / PAGE_SIZE)
   const start = (page - 1) * PAGE_SIZE
   const paginated = transactions.slice(start, start + PAGE_SIZE)
@@ -38,6 +39,14 @@ function TransactionsCard({ transactions = [], loading = false, onEdit, onDelete
           <h2>Recent Transactions</h2>
           <p>{transactions.length} transactions recorded</p>
         </div>
+        <button 
+          className={`finance-transaction-action-btn ${isEditMode ? 'active' : ''}`}
+          onClick={() => setIsEditMode(!isEditMode)}
+          aria-label="Toggle edit mode"
+          style={{ background: isEditMode ? 'rgba(20, 24, 22, 0.06)' : 'transparent', padding: '6px', borderRadius: '8px' }}
+        >
+          <Edit2 size={14} />
+        </button>
       </div>
       <div className="finance-transaction-table" role="table" aria-label="Recent transactions">
         <div className="finance-transaction-row header" role="row">
@@ -77,33 +86,35 @@ function TransactionsCard({ transactions = [], loading = false, onEdit, onDelete
                       {category}
                     </em>
                   </div>
-                  <div className="finance-transaction-amount-group" role="cell">
-                    <strong className={tone}>
-                      {amount}
-                    </strong>
-                    <div className="finance-transaction-actions">
-                      {onEdit && (
-                        <button 
-                          type="button" 
-                          className="finance-transaction-action-btn" 
-                          onClick={() => onEdit(tx)}
-                          aria-label="Edit transaction"
-                        >
-                          <Edit2 size={12} />
-                        </button>
-                      )}
-                      {onDelete && (
-                        <button 
-                          type="button" 
-                          className="finance-transaction-action-btn delete" 
-                          onClick={() => onDelete(tx)}
-                          aria-label="Delete transaction"
-                        >
-                          <Trash2 size={12} />
-                        </button>
+                    <div className="finance-transaction-amount-group" role="cell">
+                      <strong className={tone}>
+                        {amount}
+                      </strong>
+                      {isEditMode && (
+                        <div className="finance-transaction-actions">
+                          {onEdit && (
+                            <button 
+                              type="button" 
+                              className="finance-transaction-action-btn" 
+                              onClick={() => onEdit(tx)}
+                              aria-label="Edit transaction"
+                            >
+                              <Edit2 size={12} />
+                            </button>
+                          )}
+                          {onDelete && (
+                            <button 
+                              type="button" 
+                              className="finance-transaction-action-btn delete" 
+                              onClick={() => onDelete(tx)}
+                              aria-label="Delete transaction"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
-                  </div>
                 </div>
               );
             })

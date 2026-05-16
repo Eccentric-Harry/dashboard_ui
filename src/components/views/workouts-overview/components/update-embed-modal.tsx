@@ -7,6 +7,7 @@ interface UpdateEmbedModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess: (info: { id: string; token?: string }) => void
+  currentEmbed?: { id: string; token?: string }
 }
 
 export function UpdateEmbedModal({ isOpen, onClose, onSuccess }: UpdateEmbedModalProps) {
@@ -16,7 +17,7 @@ export function UpdateEmbedModal({ isOpen, onClose, onSuccess }: UpdateEmbedModa
   if (!isOpen) return null
 
   const extractEmbedInfo = (html: string): { id: string; token?: string } | null => {
-    let idMatch = html.match(/data-embed-id="(\d+)"/) || html.match(/activity\/(\d+)/) || html.match(/\b\d{10,12}\b/)
+    const idMatch = html.match(/data-embed-id="(\d+)"/) || html.match(/activity\/(\d+)/) || html.match(/\b\d{10,12}\b/)
     if (!idMatch) return null
     const id = idMatch[1] || idMatch[0]
     const tokenMatch = html.match(/data-token="([^"]+)"/) || html.match(/token=([^&" \s]+)/)
@@ -38,9 +39,9 @@ export function UpdateEmbedModal({ isOpen, onClose, onSuccess }: UpdateEmbedModa
       } else {
         toast.error('Could not find a valid Strava activity ID in the provided code.')
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating featured embed:', error)
-      toast.error(error.message || 'Failed to update featured activity.')
+      toast.error(error instanceof Error ? error.message : 'Failed to update featured activity.')
     } finally {
       setLoading(false)
     }

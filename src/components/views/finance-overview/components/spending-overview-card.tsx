@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback } from 'react'
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Sector } from 'recharts'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import type { DailyFinancialLog } from '../../../../lib/api'
 import { getIconForCategory, getConsistentColor } from '../utils'
 
@@ -21,34 +21,10 @@ const getMonthKey = (dateString: string) => {
   return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`
 }
 
-const renderActiveShape = (props: any) => {
-  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props
-
-  return (
-    <g>
-      <defs>
-        <filter id={`shadow-${fill.replace('#', '')}`} x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="8" stdDeviation="12" floodColor={fill} floodOpacity="0.4" />
-        </filter>
-      </defs>
-      <Sector
-        cx={cx}
-        cy={cy}
-        innerRadius={innerRadius}
-        outerRadius={outerRadius + 8}
-        startAngle={startAngle}
-        endAngle={endAngle}
-        fill={fill}
-        filter={`url(#shadow-${fill.replace('#', '')})`}
-        style={{ cursor: 'pointer', transition: 'all 0.3s ease' }}
-      />
-    </g>
-  )
-}
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
-    const data = payload[0].payload
+    const data = payload[0].payload as { label: string; rawAmount: number; share: string }
     return (
       <div 
         className="finance-chart-tooltip" 
@@ -103,7 +79,7 @@ function SpendingOverviewCard({
     logs.forEach(log => {
       if (getMonthKey(log.date) === selectedMonthKey) {
         Object.entries(log.transactions || {}).forEach(([category, txs]) => {
-          const transactions = txs as any[]
+          const transactions = txs as Array<{ amount: number }>
           // Ignore income categories
           if (category.toLowerCase().includes('income') || category.toLowerCase().includes('salary')) return
 
@@ -140,7 +116,7 @@ function SpendingOverviewCard({
 
   const [activeIndex, setActiveIndex] = useState<number>(-1)
 
-  const onPieEnter = useCallback((_: any, index: number) => {
+  const onPieEnter = useCallback((_: unknown, index: number) => {
     setActiveIndex(index)
   }, [])
 
@@ -148,7 +124,7 @@ function SpendingOverviewCard({
     setActiveIndex(-1)
   }, [])
 
-  const onPieClick = useCallback((data: any) => {
+  const onPieClick = useCallback((data: { label: string }) => {
     if (onCategorySelect) {
       if (selectedCategory === data.label) {
         onCategorySelect(null) // toggle off
@@ -200,10 +176,9 @@ function SpendingOverviewCard({
       <div className="finance-spending-body">
         <div className="finance-donut-container">
           {spendingData.categories.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
               <PieChart>
                 <Pie
-                  activeShape={renderActiveShape}
                   data={spendingData.categories}
                   cx="50%"
                   cy="50%"
@@ -221,7 +196,7 @@ function SpendingOverviewCard({
                     <Cell
                       key={`cell-${index}`}
                       fill={entry.tone}
-                      opacity={
+                      fillOpacity={
                         selectedCategory === entry.label
                           ? 1
                           : selectedCategory
@@ -230,7 +205,7 @@ function SpendingOverviewCard({
                               ? 1
                               : 0.5
                       }
-                      style={{ cursor: 'pointer', outline: 'none' }}
+                      style={{ cursor: 'pointer', outline: 'none', transition: 'fill-opacity 0.2s ease' }}
                     />
                   ))}
                 </Pie>

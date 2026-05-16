@@ -1,0 +1,98 @@
+.confirm-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background-color: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(4px);
+}
+
+.confirm-popover {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  padding: 28px 24px 22px;
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(239, 246, 237, 0.88)),
+    rgba(250, 252, 247, 0.92);
+  box-shadow: 0 24px 48px rgba(45, 60, 48, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(18px);
+}
+
+.confirm-popover h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #101312;
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
+}
+
+.confirm-message {
+  font-size: 14px;
+  color: #3a4a40;
+  margin: 0 0 22px;
+  line-height: 1.5;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.confirm-btn {
+  height: 38px;
+  padding: 0 20px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.confirm-btn.cancel {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(20, 24, 22, 0.1);
+  color: #101312;
+}
+
+.confirm-btn.cancel:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(20, 24, 22, 0.2);
+}
+
+.confirm-btn.confirm {
+  background: #d83542;
+  border: 1px solid #c02b37;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(216, 53, 66, 0.2);
+}
+
+.confirm-btn.confirm:hover {
+  background: #c02b37;
+  box-shadow: 0 6px 16px rgba(216, 53, 66, 0.3);
+}
+
+.confirm-modal-close {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(18, 29, 21, 0.06);
+  color: rgba(16, 19, 18, 0.62);
+  cursor: pointer;
+}
+
+.confirm-modal-close:hover {
+  background: rgba(18, 29, 21, 0.1);
+  color: #101312;
+}

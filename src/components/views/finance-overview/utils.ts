@@ -3,7 +3,7 @@ import {
   Fuel, Car, Train, Plane, Home, ReceiptText, ShieldCheck, 
   Film, MonitorPlay, Ticket, Stethoscope, Dumbbell, Pill, 
   Landmark, TrendingUp, HandCoins, Sparkles, WalletCards, 
-  CircleDollarSign, Bike, Map, MapPin, type LucideIcon 
+  CircleDollarSign, Bike, Map, type LucideIcon 
 } from 'lucide-react'
 
 export const CATEGORY_COLORS: Record<string, string> = {

@@ -11,20 +11,23 @@ function SideRail({ activePath, onNavigate }: DashboardStageProps) {
     <aside className="side-rail" aria-label="Dashboard navigation">
       <img className="rail-avatar" src={avatarImage} alt="" />
       <nav>
-        {navItems.map(({ label, icon: Icon, to, muted, bubble }) => (
+        {navItems.map((item) => {
+          const { label, icon: Icon, to, muted, bubble } = item
+          return (
           <button
             key={label}
             type="button"
             aria-label={label}
             title={label}
             aria-current={to && activePath === to ? 'page' : undefined}
-            className={to && activePath === to ? 'active' : muted ? 'muted' : undefined}
+            className={`${to && activePath === to ? 'active' : ''} ${muted ? 'muted' : ''} ${item.mobileHidden ? 'mobile-hidden' : ''}`.trim() || undefined}
             onClick={to ? () => onNavigate(to) : undefined}
           >
             <Icon size={16} strokeWidth={2} />
             <span className={bubble ? 'rail-bubble' : 'rail-tooltip'}>{bubble ?? label}</span>
           </button>
-        ))}
+          )
+        })}
       </nav>
       <div className="rail-bottom">
         {railBottomItems.map(({ label, icon: Icon, muted }) => (
