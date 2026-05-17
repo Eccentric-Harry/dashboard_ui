@@ -2,10 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CalendarDays, Flame, Utensils, Wheat } from 'lucide-react'
 import { useDashboard } from '../../../../contexts/DashboardContext'
 import { fetchDashboardData, fetchFoodEntries } from '../../../../lib/api'
+import { getFoodIconDetails } from './food-icon-helper'
 
 const mealDotColors: Record<string, string> = {
-  Breakfast: '#fbbf24',
-  Lunch: '#34d399',
+  Breakfast: '#f97316', // Premium Orange
+  Lunch: '#059669', // Premium Emerald Green
   Dinner: '#38bdf8',
   Snack: '#a78bfa',
   Midnight: '#6366f1',
@@ -263,16 +264,25 @@ function FoodLogCard() {
                 const proteinGrams = Number(entry.proteinGrams) || 0
                 const calories = Number(entry.calories) || 0
 
+                const iconDetails = getFoodIconDetails(description, mealType)
+                const FoodIcon = iconDetails.icon
+
                 return (
                   <div className="nutrition-daily-log-entry" key={id || `${dateValue}-${index}`}>
                     <div className="nutrition-food-item">
-                      <span style={{ background: '#f3f4f6' }}>
-                        <Utensils size={13} color="#6b7280" />
+                      <span style={{ background: iconDetails.bg }}>
+                        <FoodIcon size={13} color={iconDetails.color} />
                       </span>
                       <b title={description}>{description}</b>
                     </div>
-                    <span className="nutrition-meal-tag">
-                      <i style={{ backgroundColor: mealDotColors[mealType] || '#94a3b8' }} />
+                    <span 
+                      className="nutrition-meal-tag"
+                      style={{
+                        backgroundColor: `${mealDotColors[mealType] || '#94a3b8'}15`,
+                        color: mealDotColors[mealType] || '#94a3b8',
+                        border: `1px solid ${mealDotColors[mealType] || '#94a3b8'}30`
+                      }}
+                    >
                       {mealType}
                     </span>
                     <strong className="nutrition-food-protein">{proteinGrams}g</strong>

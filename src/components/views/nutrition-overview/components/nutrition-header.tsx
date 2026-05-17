@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { CalendarCheck, ChevronDown, ChevronLeft, ChevronRight, LoaderCircle, Utensils, X, Plus } from 'lucide-react'
 import { useDashboard } from '../../../../contexts/DashboardContext'
 import { fetchFoodEntries } from '../../../../lib/api'
+import { getFoodIconDetails } from './food-icon-helper'
 
 type FoodEntry = {
   id?: string
@@ -360,10 +361,13 @@ function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
                   ].filter(Boolean).join(' | ')
                   const notesLine = [entry.notes, entry.sourceNotes].filter(Boolean).join(' | ')
 
+                  const iconDetails = getFoodIconDetails(entry.description, entry.mealType)
+                  const FoodIcon = iconDetails.icon
+
                   return (
                     <article key={entry.id || `${entry.description}-${index}`}>
-                      <span aria-hidden="true" style={{ background: '#f3f4f6' }}>
-                        <Utensils size={13} color="#6b7280" />
+                      <span aria-hidden="true" style={{ background: iconDetails.bg }}>
+                        <FoodIcon size={13} color={iconDetails.color} />
                       </span>
                       <div>
                         <b>{entry.description || 'Food item'}</b>

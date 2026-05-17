@@ -1,6 +1,7 @@
 import { useMemo, useState, useRef, useCallback, useEffect } from 'react'
 import { Pencil, Trash2, Utensils } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { getFoodIconDetails } from './food-icon-helper'
 
 import { RingProgress } from './ring-progress'
 import { useDashboard } from '../../../../contexts/DashboardContext'
@@ -185,10 +186,13 @@ function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
             const mealType = entry.mealType || 'Snack'
             const calories = Number(entry.calories) || 0
 
+            const iconDetails = getFoodIconDetails(description, mealType)
+            const FoodIcon = iconDetails.icon
+
             return (
               <div className="nutrition-today-log-row" key={id || `${description}-${index}`}>
-                <span aria-hidden="true">
-                  <Utensils size={16} />
+                <span aria-hidden="true" style={{ background: iconDetails.bg }}>
+                  <FoodIcon size={16} color={iconDetails.color} />
                 </span>
                 <div>
                   <b title={description}>{description}</b>
