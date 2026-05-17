@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from 'react'
 import { fetchNutritionSummary } from '../../../../lib/api'
 import { useDashboard } from '../../../../contexts/DashboardContext'
 import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip, ReferenceLine, CartesianGrid } from 'recharts'
-import type { TooltipProps } from 'recharts'
 
 type TrendPoint = {
   day: string
@@ -108,7 +107,7 @@ function ProteinTrendCard() {
     const updated = [...trendData]
     const lastPointIndex = updated.length - 1
     const lastPoint = updated[lastPointIndex]
-    
+
     if (lastPoint.dateStr === selectedDate && lastPoint.grams !== todayProtein) {
       updated[lastPointIndex] = { ...lastPoint, grams: todayProtein }
     }
@@ -148,33 +147,33 @@ function ProteinTrendCard() {
           <AreaChart data={displayTrend} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="colorGramsArea" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#2dd4bf" stopOpacity={0.5} />
-                <stop offset="95%" stopColor="#2dd4bf" stopOpacity={0} />
+                <stop offset="5%" stopColor="#4ade80" stopOpacity={0.5} />
+                <stop offset="95%" stopColor="#059669" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="colorGramsStroke" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#22d3ee" />
-                <stop offset="100%" stopColor="#34d399" />
+                <stop offset="0%" stopColor="#4ade80" />
+                <stop offset="100%" stopColor="#10b981" />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-            <XAxis 
-              dataKey="day" 
-              axisLine={false} 
-              tickLine={false} 
+            <XAxis
+              dataKey="day"
+              axisLine={false}
+              tickLine={false}
               tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 600 }}
               padding={{ left: 10, right: 10 }}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1, strokeDasharray: '4 4' }} />
             <ReferenceLine y={PROTEIN_TARGET} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" label={{ position: 'insideTopRight', value: `TARGET ${PROTEIN_TARGET}G`, fill: 'rgba(255,255,255,0.5)', fontSize: 9, fontWeight: 800, letterSpacing: '0.05em' }} />
-            <Area 
-              type="monotone" 
-              dataKey="grams" 
-              stroke="url(#colorGramsStroke)" 
+            <Area
+              type="monotone"
+              dataKey="grams"
+              stroke="url(#colorGramsStroke)"
               strokeWidth={3.5}
-              fillOpacity={1} 
-              fill="url(#colorGramsArea)" 
-              activeDot={{ r: 6, fill: '#fff', stroke: '#2dd4bf', strokeWidth: 3 }}
-              dot={{ r: 4, fill: '#0d1110', stroke: '#34d399', strokeWidth: 2 }}
+              fillOpacity={1}
+              fill="url(#colorGramsArea)"
+              activeDot={{ r: 6, fill: '#fff', stroke: '#4ade80', strokeWidth: 3 }}
+              dot={{ r: 4, fill: '#0d1110', stroke: '#10b981', strokeWidth: 2 }}
             />
           </AreaChart>
         </ResponsiveContainer>
