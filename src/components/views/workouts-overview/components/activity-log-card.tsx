@@ -33,35 +33,35 @@ function ActivityLogCard({ activities, loading, onEdit, onDelete }: ActivityLogC
     switch (sportType) {
       case 'Run':
         return {
-          background: 'rgba(74, 222, 128, 0.12)',
+          background: '#eafaf1',
           color: '#16a34a',
-          border: '1px solid rgba(74, 222, 128, 0.25)',
+          border: 'none',
           borderRadius: '10px',
-          boxShadow: 'none'
+          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
         }
       case 'Ride':
         return {
-          background: 'rgba(59, 130, 246, 0.12)',
+          background: '#e6f0ff',
           color: '#2563eb',
-          border: '1px solid rgba(59, 130, 246, 0.25)',
+          border: 'none',
           borderRadius: '10px',
-          boxShadow: 'none'
+          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
         }
       case 'Walk':
         return {
-          background: 'rgba(245, 158, 11, 0.12)',
+          background: '#fff4e6',
           color: '#d97706',
-          border: '1px solid rgba(245, 158, 11, 0.25)',
+          border: 'none',
           borderRadius: '10px',
-          boxShadow: 'none'
+          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
         }
       case 'E-Bike Ride':
         return {
-          background: 'rgba(139, 92, 246, 0.12)',
+          background: '#f5f2ff',
           color: '#7c3aed',
-          border: '1px solid rgba(139, 92, 246, 0.25)',
+          border: 'none',
           borderRadius: '10px',
-          boxShadow: 'none'
+          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
         }
       default:
         return {
@@ -165,7 +165,7 @@ function ActivityLogCard({ activities, loading, onEdit, onDelete }: ActivityLogC
                 <div className="workouts-log-row" key={activity.id || i}>
                   <div className="workouts-activity-name">
                     <span className={sport.cls} style={getSportStyle(activity.sportType)}>
-                      <SportIcon size={13} strokeWidth={2.2} />
+                      <SportIcon size={14} strokeWidth={2.6} />
                     </span>
                     <p>
                       <b>{activity.activityName}</b>

@@ -364,7 +364,7 @@ function FoodLogCard() {
           </span>
           <div>
             <p>Food Log</p>
-            <h2>Daily Food Logs</h2>
+            <h2>Recent Food Logs</h2>
           </div>
         </div>
       </div>
@@ -393,19 +393,10 @@ function FoodLogCard() {
             <ChevronLeft size={16} />
           </button>
           
-          <div className="nutrition-pagination-dots">
-            {Array.from({ length: totalPages }).map((_, index) => {
-              const dotPage = index + 1
-              return (
-                <button
-                  key={dotPage}
-                  onClick={() => setPage(dotPage)}
-                  className={`nutrition-pagination-dot ${page === dotPage ? 'active' : ''}`}
-                  aria-label={`Go to page ${dotPage}`}
-                  aria-current={page === dotPage ? 'page' : undefined}
-                />
-              )
-            })}
+          <div className="nutrition-pagination-info">
+            <span className="nutrition-pagination-current">{page}</span>
+            <span className="nutrition-pagination-divider">/</span>
+            <span className="nutrition-pagination-total">{totalPages}</span>
           </div>
 
           <button

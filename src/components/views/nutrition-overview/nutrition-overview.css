@@ -2410,32 +2410,38 @@
   cursor: not-allowed;
 }
 
-.nutrition-pagination-dots {
-  display: flex;
+.nutrition-pagination-info {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-}
-
-.nutrition-pagination-dot {
-  width: 8px;
-  height: 8px;
+  padding: 6px 16px;
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 999px;
-  border: none;
-  background: rgba(20, 24, 22, 0.15);
-  cursor: pointer;
-  padding: 0;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 
+    0 4px 10px rgba(0, 0, 0, 0.02),
+    inset 0 1px 1px rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
-.nutrition-pagination-dot:hover:not(.active) {
-  background: rgba(53, 182, 75, 0.4);
-  transform: scale(1.2);
+.nutrition-pagination-current {
+  font-size: 12px;
+  font-weight: 700;
+  color: #171c19;
 }
 
-.nutrition-pagination-dot.active {
-  width: 24px;
-  background: #2f9d43;
-  box-shadow: 0 2px 8px rgba(53, 182, 75, 0.3);
+.nutrition-pagination-divider {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(23, 28, 25, 0.25);
+  transform: translateY(-0.5px);
+}
+
+.nutrition-pagination-total {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(23, 28, 25, 0.48);
 }
 
 /* Minimal Entry Pagination inside Daily Cards */

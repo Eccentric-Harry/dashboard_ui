@@ -36,54 +36,54 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
     const s = service.toLowerCase()
     if (s.includes('youtube')) {
       return {
-        background: 'rgba(239, 68, 68, 0.12)',
+        background: '#ffebee',
         color: '#ef4444',
-        border: '1px solid rgba(239, 68, 68, 0.25)',
+        border: 'none',
         borderRadius: '10px',
-        boxShadow: 'none'
+        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
       }
     }
     if (s.includes('netflix')) {
       return {
-        background: 'rgba(229, 9, 20, 0.12)',
+        background: '#fdf0f0',
         color: '#e50914',
-        border: '1px solid rgba(229, 9, 20, 0.25)',
+        border: 'none',
         borderRadius: '10px',
-        boxShadow: 'none'
+        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
       }
     }
     if (s.includes('jio')) {
       return {
-        background: 'rgba(15, 60, 201, 0.12)',
+        background: '#e6eeff',
         color: '#0f3cc9',
-        border: '1px solid rgba(15, 60, 201, 0.25)',
+        border: 'none',
         borderRadius: '10px',
-        boxShadow: 'none'
+        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
       }
     }
     if (s.includes('spotify')) {
       return {
-        background: 'rgba(30, 215, 96, 0.12)',
-        color: '#1ed760',
-        border: '1px solid rgba(30, 215, 96, 0.25)',
+        background: '#eafaf1',
+        color: '#1db954',
+        border: 'none',
         borderRadius: '10px',
-        boxShadow: 'none'
+        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
       }
     }
     return {
-      background: 'rgba(139, 92, 246, 0.12)',
+      background: '#f5f2ff',
       color: '#8b5cf6',
-      border: '1px solid rgba(139, 92, 246, 0.25)',
+      border: 'none',
       borderRadius: '10px',
-      boxShadow: 'none'
+      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
     }
   }
 
   const getIcon = (service: string) => {
     const s = service.toLowerCase()
-    if (s.includes('youtube')) return <Video size={13} />
-    if (s.includes('netflix')) return <Tv size={13} />
-    if (s.includes('jio')) return <Wifi size={13} />
+    if (s.includes('youtube')) return <Video size={13} strokeWidth={2.6} />
+    if (s.includes('netflix')) return <Tv size={13} strokeWidth={2.6} />
+    if (s.includes('jio')) return <Wifi size={13} strokeWidth={2.6} />
     return <span>{service.slice(0, 1)}</span>
   }
 
