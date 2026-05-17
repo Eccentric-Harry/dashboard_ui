@@ -199,12 +199,62 @@ function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
                   <small>{mealType} | {calories.toLocaleString()} kcal</small>
                 </div>
                 {id && isEditMode && (
-                  <div style={{ display: 'flex', gap: '4px' }}>
-                    <button type="button" onClick={() => onEdit && onEdit(entry)} title="Edit entry" aria-label="Edit entry">
-                      <Pencil size={14} />
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <button
+                      type="button"
+                      onClick={() => onEdit && onEdit(entry)}
+                      title="Edit entry"
+                      aria-label="Edit entry"
+                      style={{
+                        display: 'grid',
+                        width: '28px',
+                        height: '28px',
+                        placeItems: 'center',
+                        border: '0',
+                        borderRadius: '6px',
+                        background: 'rgba(23, 28, 25, 0.05)',
+                        color: 'rgba(23, 28, 25, 0.7)',
+                        cursor: 'pointer',
+                        transition: 'background 0.2s, color 0.2s',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(23, 28, 25, 0.1)'
+                        e.currentTarget.style.color = 'rgba(23, 28, 25, 0.9)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(23, 28, 25, 0.05)'
+                        e.currentTarget.style.color = 'rgba(23, 28, 25, 0.7)'
+                      }}
+                    >
+                      <Pencil size={12} />
                     </button>
-                    <button type="button" onClick={() => setItemToDelete(entry)} title="Delete entry" aria-label="Delete entry">
-                      <Trash2 size={14} />
+                    <button
+                      type="button"
+                      onClick={() => setItemToDelete(entry)}
+                      title="Delete entry"
+                      aria-label="Delete entry"
+                      style={{
+                        display: 'grid',
+                        width: '28px',
+                        height: '28px',
+                        placeItems: 'center',
+                        border: '0',
+                        borderRadius: '6px',
+                        background: 'rgba(239, 68, 68, 0.08)',
+                        color: '#dc2626',
+                        cursor: 'pointer',
+                        transition: 'background 0.2s, color 0.2s',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'
+                        e.currentTarget.style.color = '#b91c1c'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)'
+                        e.currentTarget.style.color = '#dc2626'
+                      }}
+                    >
+                      <Trash2 size={12} />
                     </button>
                   </div>
                 )}
