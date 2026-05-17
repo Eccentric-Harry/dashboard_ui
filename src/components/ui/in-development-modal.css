@@ -6,9 +6,9 @@
   display: grid;
   place-items: center;
   padding: 24px 24px 100px;
-  background-color: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background-color: rgba(6, 8, 7, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   transition: opacity 0.3s ease;
   opacity: 0;
 }
@@ -31,12 +31,12 @@
   padding: 36px 32px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 28px;
-  background: rgba(20, 24, 22, 0.72);
+  background: rgba(13, 16, 15, 0.96);
   box-shadow:
-    0 24px 64px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
+    0 24px 64px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
   transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
   transform: translateY(24px) scale(0.96);
   overflow: hidden;
@@ -87,18 +87,18 @@
   width: 52px;
   height: 52px;
   border-radius: 15px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(135deg, rgba(53, 182, 75, 0.15) 0%, rgba(53, 182, 75, 0.02) 100%);
+  border: 1px solid rgba(53, 182, 75, 0.25);
   align-items: center;
   justify-content: center;
   margin-bottom: 22px;
   box-shadow: 
     inset 0 1px 0 rgba(255, 255, 255, 0.05), 
-    0 4px 12px rgba(0, 0, 0, 0.15);
+    0 4px 20px rgba(53, 182, 75, 0.1);
 }
 
 .dev-modal-icon {
-  color: rgba(255, 255, 255, 0.95);
+  color: #35b64b;
 }
 
 .dev-modal-title {
@@ -111,7 +111,7 @@
 
 .dev-modal-description {
   font-size: 13.5px;
-  color: rgba(255, 255, 255, 0.48);
+  color: rgba(255, 255, 255, 0.55);
   line-height: 1.5;
   margin: 0 0 24px;
 }
@@ -147,8 +147,8 @@
   border-radius: 50%;
   margin-top: 6px;
   flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.35);
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.15);
+  background: #35b64b;
+  box-shadow: 0 0 8px rgba(53, 182, 75, 0.6);
 }
 
 .dev-feature-info {
