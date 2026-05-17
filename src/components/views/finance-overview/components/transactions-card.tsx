@@ -65,8 +65,14 @@ function TransactionsCard({ transactions = [], loading = false, onEdit, onDelete
               return (
                 <div className="finance-transaction-row" key={`${merchant}-${detail}-${index}`} role="row">
                   <div className="finance-transaction-merchant" role="cell">
-                    <span>
-                      <Icon size={16} />
+                    <span style={{ 
+                      background: `${getConsistentColor(category)}15`, 
+                      color: getConsistentColor(category),
+                      border: `1px solid ${getConsistentColor(category)}25`,
+                      borderRadius: '12px',
+                      boxShadow: 'none'
+                    }}>
+                      <Icon size={14} />
                     </span>
                     <p>
                       <b>{merchant}</b>

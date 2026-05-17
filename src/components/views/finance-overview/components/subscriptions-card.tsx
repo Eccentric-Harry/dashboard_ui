@@ -32,11 +32,58 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
     return ids
   }, [transactions, optimisticPaidIds])
 
+  const getSubColorStyles = (service: string) => {
+    const s = service.toLowerCase()
+    if (s.includes('youtube')) {
+      return {
+        background: 'rgba(239, 68, 68, 0.12)',
+        color: '#ef4444',
+        border: '1px solid rgba(239, 68, 68, 0.25)',
+        borderRadius: '10px',
+        boxShadow: 'none'
+      }
+    }
+    if (s.includes('netflix')) {
+      return {
+        background: 'rgba(229, 9, 20, 0.12)',
+        color: '#e50914',
+        border: '1px solid rgba(229, 9, 20, 0.25)',
+        borderRadius: '10px',
+        boxShadow: 'none'
+      }
+    }
+    if (s.includes('jio')) {
+      return {
+        background: 'rgba(15, 60, 201, 0.12)',
+        color: '#0f3cc9',
+        border: '1px solid rgba(15, 60, 201, 0.25)',
+        borderRadius: '10px',
+        boxShadow: 'none'
+      }
+    }
+    if (s.includes('spotify')) {
+      return {
+        background: 'rgba(30, 215, 96, 0.12)',
+        color: '#1ed760',
+        border: '1px solid rgba(30, 215, 96, 0.25)',
+        borderRadius: '10px',
+        boxShadow: 'none'
+      }
+    }
+    return {
+      background: 'rgba(139, 92, 246, 0.12)',
+      color: '#8b5cf6',
+      border: '1px solid rgba(139, 92, 246, 0.25)',
+      borderRadius: '10px',
+      boxShadow: 'none'
+    }
+  }
+
   const getIcon = (service: string) => {
     const s = service.toLowerCase()
-    if (s.includes('youtube')) return <Video size={16} />
-    if (s.includes('netflix')) return <Tv size={16} />
-    if (s.includes('jio')) return <Wifi size={16} />
+    if (s.includes('youtube')) return <Video size={13} />
+    if (s.includes('netflix')) return <Tv size={13} />
+    if (s.includes('jio')) return <Wifi size={13} />
     return <span>{service.slice(0, 1)}</span>
   }
 
@@ -85,7 +132,7 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
           
           return (
             <div key={subscription.service} className={isPaid ? 'paid' : ''}>
-              <span className="service-icon">{getIcon(subscription.service)}</span>
+              <span className="service-icon" style={getSubColorStyles(subscription.service)}>{getIcon(subscription.service)}</span>
               <p>
                 <b>{subscription.service}</b>
                 <small>{subscription.detail}</small>
