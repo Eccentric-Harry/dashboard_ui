@@ -59,7 +59,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
     }
 
     const numCalories = parseInt(calories, 10)
-    const numProtein = parseInt(proteinGrams, 10)
+    const numProtein = parseFloat(proteinGrams)
 
     if (isNaN(numCalories) || numCalories < 0 || isNaN(numProtein) || numProtein < 0) {
       setError('Macros must be 0 or greater')
@@ -152,7 +152,8 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
               <input 
                 type="number" 
                 min="0"
-                placeholder="0"
+                step="0.01"
+                placeholder="0.00"
                 value={proteinGrams}
                 onChange={(e) => setProteinGrams(e.target.value)}
               />

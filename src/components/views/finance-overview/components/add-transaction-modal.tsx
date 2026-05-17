@@ -85,10 +85,10 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, isEdit, initia
 
       if (isEdit && initialData?.id) {
         await updateTransaction(initialData.id, payload)
-        toast.success(`Updated "${description}"`)
+        toast.success(`Updated "${description}" (₹${numAmount.toLocaleString()})`)
       } else {
         await addTransaction(payload)
-        toast.success(`Saved "${description}"`)
+        toast.success(`Saved "${description}" (₹${numAmount.toLocaleString()})`)
       }
       
       onSuccess()
@@ -119,6 +119,7 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, isEdit, initia
         
         <form onSubmit={handleSubmit} className="add-tx-form">
           <div className="form-group type-toggle">
+            <div className={`type-toggle-slider ${type === 'Income' ? 'slide-right' : ''}`} />
             <button 
               type="button" 
               className={type === 'Expense' ? 'active expense' : ''} 
@@ -136,6 +137,17 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, isEdit, initia
           </div>
 
           <div className="form-group">
+            <label>Merchant / Description</label>
+            <input 
+              type="text" 
+              placeholder="e.g. Starbucks, Netflix..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              autoFocus
+            />
+          </div>
+
+          <div className="form-group">
             <label>Amount (₹)</label>
             <input 
               type="number" 
@@ -144,17 +156,6 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, isEdit, initia
               placeholder="0.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              autoFocus
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Merchant / Description</label>
-            <input 
-              type="text" 
-              placeholder="e.g. Starbucks, Netflix..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
             />
           </div>
 
