@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { CalendarCheck, ChevronDown, ChevronLeft, ChevronRight, LoaderCircle, Utensils, X, Plus } from 'lucide-react'
+import { CalendarCheck, ChevronDown, ChevronLeft, ChevronRight, LoaderCircle, X, Plus } from 'lucide-react'
 import { useDashboard } from '../../../../contexts/DashboardContext'
 import { fetchFoodEntries } from '../../../../lib/api'
 import { getFoodIconDetails } from './food-icon-helper'

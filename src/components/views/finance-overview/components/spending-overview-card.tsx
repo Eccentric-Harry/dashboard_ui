@@ -124,12 +124,13 @@ function SpendingOverviewCard({
     setActiveIndex(-1)
   }, [])
 
-  const onPieClick = useCallback((data: { label: string }) => {
+  const onPieClick = useCallback((data: unknown) => {
+    const item = data as { label: string }
     if (onCategorySelect) {
-      if (selectedCategory === data.label) {
+      if (selectedCategory === item.label) {
         onCategorySelect(null) // toggle off
       } else {
-        onCategorySelect(data.label)
+        onCategorySelect(item.label)
       }
     }
   }, [onCategorySelect, selectedCategory])

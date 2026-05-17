@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef, useCallback, useEffect } from 'react'
-import { Pencil, Trash2, Utensils } from 'lucide-react'
+import { Pencil, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getFoodIconDetails } from './food-icon-helper'
 
