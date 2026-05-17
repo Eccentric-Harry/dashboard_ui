@@ -15,7 +15,7 @@ export const CATEGORY_COLORS: Record<string, string> = {
   'Lending': '#7A5AF8',   // Royal Purple
   'Loan Recovery': '#0BA5EC', // Ocean Blue
   'Shopping': '#DC6803',  // Burnt Orange
-  'Transport': '#0BA5EC', // Light Blue
+  'Transport': '#0284c7', // Rich Sapphire Blue
   'Cycling': '#f97316',   // Bright Orange
   'Entertainment': '#DD2590', // Magenta
   'Outing': '#8b5cf6',    // Violet

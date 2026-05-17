@@ -32,11 +32,58 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
     return ids
   }, [transactions, optimisticPaidIds])
 
+  const getSubColorStyles = (service: string) => {
+    const s = service.toLowerCase()
+    if (s.includes('youtube')) {
+      return {
+        background: '#ffebee',
+        color: '#ef4444',
+        border: 'none',
+        borderRadius: '10px',
+        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
+      }
+    }
+    if (s.includes('netflix')) {
+      return {
+        background: '#fdf0f0',
+        color: '#e50914',
+        border: 'none',
+        borderRadius: '10px',
+        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
+      }
+    }
+    if (s.includes('jio')) {
+      return {
+        background: '#e6eeff',
+        color: '#0f3cc9',
+        border: 'none',
+        borderRadius: '10px',
+        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
+      }
+    }
+    if (s.includes('spotify')) {
+      return {
+        background: '#eafaf1',
+        color: '#1db954',
+        border: 'none',
+        borderRadius: '10px',
+        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
+      }
+    }
+    return {
+      background: '#f5f2ff',
+      color: '#8b5cf6',
+      border: 'none',
+      borderRadius: '10px',
+      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
+    }
+  }
+
   const getIcon = (service: string) => {
     const s = service.toLowerCase()
-    if (s.includes('youtube')) return <Video size={16} />
-    if (s.includes('netflix')) return <Tv size={16} />
-    if (s.includes('jio')) return <Wifi size={16} />
+    if (s.includes('youtube')) return <Video size={13} strokeWidth={2.6} />
+    if (s.includes('netflix')) return <Tv size={13} strokeWidth={2.6} />
+    if (s.includes('jio')) return <Wifi size={13} strokeWidth={2.6} />
     return <span>{service.slice(0, 1)}</span>
   }
 
@@ -85,7 +132,7 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
           
           return (
             <div key={subscription.service} className={isPaid ? 'paid' : ''}>
-              <span className="service-icon">{getIcon(subscription.service)}</span>
+              <span className="service-icon" style={getSubColorStyles(subscription.service)}>{getIcon(subscription.service)}</span>
               <p>
                 <b>{subscription.service}</b>
                 <small>{subscription.detail}</small>

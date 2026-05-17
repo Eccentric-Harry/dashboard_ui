@@ -29,6 +29,51 @@ function ActivityLogCard({ activities, loading, onEdit, onDelete }: ActivityLogC
   const [isEditMode, setIsEditMode] = useState(false)
   const pageSize = 6
 
+  const getSportStyle = (sportType: string) => {
+    switch (sportType) {
+      case 'Run':
+        return {
+          background: '#eafaf1',
+          color: '#16a34a',
+          border: 'none',
+          borderRadius: '10px',
+          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
+        }
+      case 'Ride':
+        return {
+          background: '#e6f0ff',
+          color: '#2563eb',
+          border: 'none',
+          borderRadius: '10px',
+          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
+        }
+      case 'Walk':
+        return {
+          background: '#fff4e6',
+          color: '#d97706',
+          border: 'none',
+          borderRadius: '10px',
+          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
+        }
+      case 'E-Bike Ride':
+        return {
+          background: '#f5f2ff',
+          color: '#7c3aed',
+          border: 'none',
+          borderRadius: '10px',
+          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
+        }
+      default:
+        return {
+          background: 'rgba(107, 114, 128, 0.12)',
+          color: '#4b5563',
+          border: '1px solid rgba(107, 114, 128, 0.25)',
+          borderRadius: '10px',
+          boxShadow: 'none'
+        }
+    }
+  }
+
   const sportTypes = useMemo(() => {
     const types = new Set(activities.map(a => a.sportType))
     return Array.from(types).sort()
@@ -119,8 +164,8 @@ function ActivityLogCard({ activities, loading, onEdit, onDelete }: ActivityLogC
               return (
                 <div className="workouts-log-row" key={activity.id || i}>
                   <div className="workouts-activity-name">
-                    <span className={sport.cls}>
-                      <SportIcon size={16} strokeWidth={2} />
+                    <span className={sport.cls} style={getSportStyle(activity.sportType)}>
+                      <SportIcon size={14} strokeWidth={2.6} />
                     </span>
                     <p>
                       <b>{activity.activityName}</b>

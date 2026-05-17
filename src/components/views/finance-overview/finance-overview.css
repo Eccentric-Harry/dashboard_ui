@@ -121,6 +121,27 @@
   font-size: 12px;
 }
 
+.finance-balance-hide-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  opacity: 0.86;
+  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.finance-balance-hide-btn:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.finance-balance-hide-btn:active {
+  transform: scale(0.92);
+}
+
 .finance-balance-value {
   display: flex;
   align-items: baseline;

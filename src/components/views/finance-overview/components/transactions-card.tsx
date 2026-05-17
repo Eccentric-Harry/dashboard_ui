@@ -23,7 +23,35 @@ interface TransactionsCardProps {
   onDelete?: (transaction: TransactionProp) => void
 }
 
-const PAGE_SIZE = 6
+const PAGE_SIZE = 4
+
+export const getPastelBG = (colorHex: string) => {
+  const hex = colorHex.toLowerCase()
+  if (hex === '#4684ff') return '#e6f0ff'
+  if (hex === '#ff6c61') return '#ffebee'
+  if (hex === '#039855') return '#e6fcf0'
+  if (hex === '#10b981') return '#e6faf4'
+  if (hex === '#7a5af8') return '#f3e8ff'
+  if (hex === '#0ba5ec') return '#ecf8ff'
+  if (hex === '#f97316') return '#fff4e6'
+  if (hex === '#dd2590') return '#fff0f6'
+  if (hex === '#8b5cf6') return '#f7f4ff'
+  if (hex === '#12b76a') return '#e6faf0'
+  if (hex === '#32d583') return '#f0fdf4'
+
+  try {
+    const c = hex.replace('#', '')
+    const r = parseInt(c.substring(0, 2), 16)
+    const g = parseInt(c.substring(2, 4), 16)
+    const b = parseInt(c.substring(4, 6), 16)
+    const pr = Math.round(r * 0.08 + 255 * 0.92)
+    const pg = Math.round(g * 0.08 + 255 * 0.92)
+    const pb = Math.round(b * 0.08 + 255 * 0.92)
+    return `rgb(${pr}, ${pg}, ${pb})`
+  } catch (e) {
+    return '#f3f4f6'
+  }
+}
 
 function TransactionsCard({ transactions = [], loading = false, onEdit, onDelete }: TransactionsCardProps) {
   const [page, setPage] = useState(1)
@@ -65,8 +93,14 @@ function TransactionsCard({ transactions = [], loading = false, onEdit, onDelete
               return (
                 <div className="finance-transaction-row" key={`${merchant}-${detail}-${index}`} role="row">
                   <div className="finance-transaction-merchant" role="cell">
-                    <span>
-                      <Icon size={16} />
+                    <span style={{ 
+                      background: getPastelBG(getConsistentColor(category)), 
+                      color: getConsistentColor(category),
+                      border: 'none',
+                      borderRadius: '12px',
+                      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
+                    }}>
+                      <Icon size={14} strokeWidth={2.6} />
                     </span>
                     <p>
                       <b>{merchant}</b>
