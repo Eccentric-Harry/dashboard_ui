@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
 import { useDashboardData } from '../hooks/useDashboardData';
+import { ServerColdStartConsole } from '../components/ui/ServerColdStartConsole';
 
 type DashboardContextType = {
   data: any;
@@ -17,6 +18,11 @@ export function DashboardProvider({ children, date }: { children: ReactNode; dat
   return (
     <DashboardContext.Provider value={dashboardState}>
       {children}
+      <ServerColdStartConsole 
+        isLoading={dashboardState.isLoading} 
+        error={dashboardState.error} 
+        refetch={dashboardState.refetch} 
+      />
     </DashboardContext.Provider>
   );
 }
