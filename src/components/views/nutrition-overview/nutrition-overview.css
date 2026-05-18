@@ -13,9 +13,10 @@
   z-index: 2;
   overflow-x: hidden;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 0 10px 72px 0;
   color: #101312;
-  overscroll-behavior: contain;
+  overscroll-behavior: auto;
   scrollbar-gutter: stable;
 }
 
@@ -275,7 +276,7 @@
   overflow: hidden;
 }
 
-.nutrition-picked-date-popover > span {
+.nutrition-picked-date-popover>span {
   display: grid;
   width: 46px;
   height: 46px;
@@ -395,6 +396,7 @@
   gap: 9px;
   max-height: min(42vh, 360px);
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
   padding-right: 2px;
 }
 
@@ -408,7 +410,7 @@
   box-shadow: inset 0 0 0 1px rgba(19, 31, 22, 0.05);
 }
 
-.nutrition-picked-date-entries article > span {
+.nutrition-picked-date-entries article>span {
   display: grid;
   width: 32px;
   height: 32px;
@@ -455,7 +457,7 @@
   font-weight: 800;
 }
 
-.nutrition-header > span {
+.nutrition-header>span {
   display: grid;
   height: 32px;
   place-items: center;
@@ -484,7 +486,7 @@
   border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.45);
-  box-shadow: 
+  box-shadow:
     0 10px 30px rgba(0, 0, 0, 0.05),
     0 24px 64px rgba(0, 0, 0, 0.04),
     inset 0 1px 1px rgba(255, 255, 255, 0.7);
@@ -813,7 +815,7 @@
   flex-shrink: 0;
 }
 
-.nutrition-today-log-actions > span {
+.nutrition-today-log-actions>span {
   display: grid;
   height: 28px;
   place-items: center;
@@ -885,7 +887,7 @@
   box-shadow: 0 0 0 3px rgba(53, 182, 75, 0.12);
 }
 
-.nutrition-today-log-form > span {
+.nutrition-today-log-form>span {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 34px;
   gap: 7px;
@@ -917,6 +919,7 @@
   min-height: 0;
   max-height: none;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 1px 2px 1px 0;
   scrollbar-gutter: stable;
 }
@@ -947,7 +950,7 @@
   background: rgba(18, 32, 23, 0.3);
 }
 
-.nutrition-today-log-list > p {
+.nutrition-today-log-list>p {
   margin: 0;
   padding: 14px;
   border-radius: 14px;
@@ -974,7 +977,7 @@
   box-shadow: 0 4px 12px rgba(19, 31, 22, 0.06), inset 0 0 0 1px rgba(19, 31, 22, 0.05);
 }
 
-.nutrition-today-log-row > span {
+.nutrition-today-log-row>span {
   display: grid;
   width: 48px;
   height: 48px;
@@ -986,7 +989,7 @@
   transition: box-shadow 0.2s ease;
 }
 
-.nutrition-today-log-row > span:hover {
+.nutrition-today-log-row>span:hover {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 8px 18px rgba(20, 32, 23, 0.2);
 }
 
@@ -1011,7 +1014,7 @@
   font-weight: 700;
 }
 
-.nutrition-today-log-row > button {
+.nutrition-today-log-row>button {
   display: grid;
   width: 32px;
   height: 32px;
@@ -1024,7 +1027,7 @@
   transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.nutrition-today-log-row > button:hover {
+.nutrition-today-log-row>button:hover {
   background: linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(239, 68, 68, 0.1));
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
 }
@@ -1081,7 +1084,7 @@
   background: rgba(255, 255, 255, 0.45);
   border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 22px;
-  box-shadow: 
+  box-shadow:
     0 10px 30px rgba(0, 0, 0, 0.05),
     0 24px 64px rgba(0, 0, 0, 0.04),
     inset 0 1px 1px rgba(255, 255, 255, 0.7);
@@ -1345,9 +1348,10 @@
   position: relative;
   width: 170px;
   height: 170px;
-  border-radius: 54px; /* More of a squircle */
+  border-radius: 54px;
+  /* More of a squircle */
   background: #fff;
-  box-shadow: 
+  box-shadow:
     inset 0 0 40px rgba(59, 130, 246, 0.03),
     0 20px 40px -10px rgba(59, 130, 246, 0.08);
   overflow: hidden;
@@ -1398,8 +1402,13 @@
 }
 
 @keyframes wave-slide {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 .hydration-vessel-stats {
@@ -1467,7 +1476,8 @@
 .hydration-action-tile {
   flex: 1;
   display: flex;
-  flex-direction: row; /* Horizontal layout for tiles */
+  flex-direction: row;
+  /* Horizontal layout for tiles */
   align-items: center;
   justify-content: center;
   gap: 8px;
@@ -1543,7 +1553,8 @@
 
 .hydration-error-toast {
   position: absolute;
-  top: 12px; /* Move to top for better visibility */
+  top: 12px;
+  /* Move to top for better visibility */
   left: 12px;
   right: 12px;
   background: #fff1f2;
@@ -1559,8 +1570,15 @@
 }
 
 @keyframes slide-down {
-  from { transform: translateY(-20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .hydration-error-toast span {
@@ -1586,8 +1604,13 @@
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ── Food Log Card ─────────────────────────────── */
@@ -1658,7 +1681,7 @@
 
 .nutrition-daily-log-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 16px;
   margin-top: 14px;
 }
@@ -1706,11 +1729,26 @@
   gap: 12px;
 }
 
+.nutrition-daily-log-date-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
 .nutrition-daily-log-card h3 {
   margin: 0;
   font-size: 16px;
   font-weight: 800;
-  line-height: 1;
+  line-height: 1.15;
+  color: #101312;
+}
+
+.nutrition-daily-log-day-sub {
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(23, 28, 25, 0.45);
+  text-transform: capitalize;
 }
 
 .nutrition-daily-log-title {
@@ -1720,7 +1758,7 @@
   gap: 9px;
 }
 
-.nutrition-daily-log-title > span {
+.nutrition-daily-log-title>span {
   display: grid;
   width: 34px;
   height: 34px;
@@ -1733,7 +1771,7 @@
   transition: box-shadow 0.2s ease;
 }
 
-.nutrition-daily-log-title > span:hover {
+.nutrition-daily-log-title>span:hover {
   box-shadow: inset 0 0 0 1px rgba(53, 182, 75, 0.15), 0 4px 12px rgba(53, 182, 75, 0.18);
 }
 
@@ -1785,12 +1823,34 @@
 }
 
 .nutrition-daily-log-columns,
-.nutrition-daily-log-entry,
+.nutrition-daily-log-entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+}
+
+.nutrition-column-stats-header,
+.nutrition-food-stats {
+  display: grid;
+  grid-template-columns: 80px 70px;
+  align-items: center;
+  justify-items: end;
+  gap: 12px;
+}
+
+.kcal-unit {
+  font-size: 9px;
+  font-weight: 500;
+  color: rgba(23, 28, 25, 0.4);
+  margin-left: 2px;
+}
+
 .nutrition-daily-log-form {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(76px, 0.9fr) minmax(58px, 0.58fr) minmax(72px, 0.65fr);
+  grid-template-columns: minmax(0, 1.8fr) minmax(0, 0.8fr) minmax(0, 0.7fr) minmax(0, 0.6fr);
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .nutrition-daily-log-columns {
@@ -1835,7 +1895,7 @@
   grid-template-columns: 32px 1fr;
 }
 
-.nutrition-daily-log-entry .nutrition-food-item > span {
+.nutrition-daily-log-entry .nutrition-food-item>span {
   width: 32px;
   height: 32px;
   border-radius: 10px;
@@ -1844,7 +1904,21 @@
 }
 
 .nutrition-daily-log-entry .nutrition-food-item b {
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #111514;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+
+.nutrition-food-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+  width: 100%;
 }
 
 .nutrition-meal-tag {
@@ -1903,7 +1977,7 @@
   box-shadow: 0 0 0 3px rgba(53, 182, 75, 0.12);
 }
 
-.nutrition-daily-log-form > span {
+.nutrition-daily-log-form>span {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 32px;
   gap: 6px;
@@ -1970,6 +2044,7 @@
   gap: 7px;
   overflow-x: hidden;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 0 4px 2px 0;
   scrollbar-gutter: stable;
 }
@@ -2021,7 +2096,7 @@
   gap: 8px;
 }
 
-.nutrition-food-item > span {
+.nutrition-food-item>span {
   display: grid;
   width: 32px;
   height: 32px;
@@ -2074,9 +2149,12 @@
 /* ── Ring Progress Pulse Animation ─────────────── */
 
 @keyframes ring-pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     filter: drop-shadow(0 6px 12px color-mix(in srgb, var(--ring-color, #35b64b) 25%, transparent));
   }
+
   50% {
     filter: drop-shadow(0 8px 16px color-mix(in srgb, var(--ring-color, #35b64b) 35%, transparent));
   }
@@ -2201,10 +2279,28 @@
   }
 
   /* Fix food entry table — prevent text truncation */
-  .nutrition-daily-log-columns,
-  .nutrition-daily-log-entry,
+  .nutrition-daily-log-columns {
+    display: none;
+  }
+
+  .nutrition-daily-log-entry {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+
+  .nutrition-food-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
+
+  .kcal-unit {
+    display: inline;
+  }
+
   .nutrition-daily-log-form {
-    grid-template-columns: minmax(0, 1fr) minmax(60px, auto) minmax(48px, auto) minmax(52px, auto);
+    grid-template-columns: minmax(0, 1.8fr) minmax(0, 0.8fr) minmax(0, 0.7fr) minmax(0, 0.6fr);
     gap: 6px;
   }
 
@@ -2219,7 +2315,7 @@
     gap: 6px;
   }
 
-  .nutrition-daily-log-entry .nutrition-food-item > span {
+  .nutrition-daily-log-entry .nutrition-food-item>span {
     width: 28px;
     height: 28px;
   }
@@ -2236,7 +2332,7 @@
     gap: 8px;
   }
 
-  .nutrition-today-log-form > span {
+  .nutrition-today-log-form>span {
     grid-column: 1 / -1;
   }
 
@@ -2418,7 +2514,7 @@
   background: rgba(255, 255, 255, 0.45);
   border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 999px;
-  box-shadow: 
+  box-shadow:
     0 4px 10px rgba(0, 0, 0, 0.02),
     inset 0 1px 1px rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(10px);
@@ -2495,7 +2591,7 @@
     right: auto;
     z-index: auto;
   }
-  
+
   .nutrition-add-btn {
     display: inline-flex;
     align-items: center;
@@ -2528,4 +2624,90 @@
     width: 14px;
     height: 14px;
   }
+}
+
+/* Nutrition Pagination */
+.nutrition-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(20, 24, 22, 0.05);
+}
+
+.nutrition-pagination .pagination-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid rgba(20, 24, 22, 0.08);
+  background: #fff;
+  color: #111514;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nutrition-pagination .pagination-btn:hover:not(:disabled) {
+  background: rgba(18, 29, 21, 0.05);
+  border-color: rgba(20, 24, 22, 0.15);
+  color: #2f9d43;
+}
+
+.nutrition-pagination .pagination-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.nutrition-pagination .pagination-info {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(23, 28, 25, 0.6);
+  font-family: monospace;
+}
+
+/* Individual card logs pagination */
+.nutrition-mini-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(20, 24, 22, 0.06);
+}
+
+.nutrition-mini-pagination .mini-pagination-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid rgba(20, 24, 22, 0.06);
+  background: rgba(255, 255, 255, 0.8);
+  color: #111514;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nutrition-mini-pagination .mini-pagination-btn:hover:not(:disabled) {
+  background: rgba(18, 29, 21, 0.05);
+  border-color: rgba(20, 24, 22, 0.12);
+  color: #2f9d43;
+}
+
+.nutrition-mini-pagination .mini-pagination-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.nutrition-mini-pagination .mini-pagination-info {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(23, 28, 25, 0.5);
+  font-family: monospace;
 }
