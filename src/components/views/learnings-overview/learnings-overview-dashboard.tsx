@@ -15,8 +15,12 @@ function LearningsOverviewDashboard({ searchParams }: { searchParams: URLSearchP
       }
       return selectedDateParam
     }
-    return new Date().toISOString().split('T')[0]
+    const pad = (n: number) => n.toString().padStart(2, '0')
+    const today = new Date()
+    return `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`
   })
+
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   useEffect(() => {
     if (selectedDateParam) {
@@ -33,8 +37,8 @@ function LearningsOverviewDashboard({ searchParams }: { searchParams: URLSearchP
     <section className="learnings-dashboard" aria-label="Learnings overview dashboard">
       <LearningsHeader />
       <div className="learnings-dashboard-grid">
-        <CalendarSelectorCard selectedDate={selectedDate} onSelectDate={setSelectedDate} />
-        <LearningDetailsCard selectedDate={selectedDate} />
+        <CalendarSelectorCard selectedDate={selectedDate} onSelectDate={setSelectedDate} refreshTrigger={refreshTrigger} />
+        <LearningDetailsCard selectedDate={selectedDate} onRefresh={() => setRefreshTrigger(prev => prev + 1)} />
       </div>
     </section>
   )

@@ -292,3 +292,66 @@ export async function updateFeaturedStravaEmbed(data: { id: string; token?: stri
   }
   return response.json();
 }
+
+// ─── Learnings API ───────────────────────────────────────────────────
+
+export interface LearningLog {
+  id?: string;
+  title: string;
+  description: string;
+  category: string;
+  date: string; // YYYY-MM-DD
+  createdAt?: string;
+}
+
+export async function fetchLearnings(date?: string) {
+  const query = date ? `?date=${date}` : '';
+  const response = await fetch(`${API_BASE_URL}/learnings${query}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch learnings');
+  }
+  return response.json();
+}
+
+export async function fetchLearningsForRange(startDate: string, endDate: string) {
+  const response = await fetch(`${API_BASE_URL}/learnings/range?startDate=${startDate}&endDate=${endDate}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch learnings in range');
+  }
+  return response.json();
+}
+
+export async function addLearning(data: Omit<LearningLog, 'id'>) {
+  const response = await fetch(`${API_BASE_URL}/learnings`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to add learning');
+  }
+  return response.json();
+}
+
+export async function updateLearning(id: string, data: Omit<LearningLog, 'id'>) {
+  const response = await fetch(`${API_BASE_URL}/learnings/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to update learning');
+  }
+  return response.json();
+}
+
+export async function deleteLearning(id: string) {
+  const response = await fetch(`${API_BASE_URL}/learnings/${id}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to delete learning');
+  }
+  return response.json();
+}
+
