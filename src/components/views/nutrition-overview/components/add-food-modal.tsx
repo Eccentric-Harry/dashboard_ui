@@ -100,7 +100,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
         role="dialog" 
         aria-modal="true" 
         onClick={(e) => e.stopPropagation()}
-        style={{ width: 'min(440px, calc(100vw - 42px))', padding: '28px' }}
+        style={{ width: 'min(440px, calc(100vw - 42px))' }}
       >
         <button type="button" className="finance-modal-close" onClick={onClose}>
           <X size={15} />
@@ -122,7 +122,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
             />
           </div>
 
-          <div className="form-row">
+          <div className="form-row-macros">
             <div className="form-group">
               <label>Meal</label>
               <select value={mealType} onChange={(e) => setMealType(e.target.value)}>
@@ -146,7 +146,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
             </div>
           </div>
 
-          <div className="form-row">
+          <div className="form-row-macros">
             <div className="form-group">
               <label>Protein (g)</label>
               <input 

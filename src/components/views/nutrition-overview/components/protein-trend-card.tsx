@@ -160,8 +160,9 @@ function ProteinTrendCard() {
               dataKey="day"
               axisLine={false}
               tickLine={false}
+              interval={0}
               tick={{ fill: 'rgba(23, 28, 25, 0.58)', fontSize: 11, fontWeight: 600 }}
-              padding={{ left: 10, right: 10 }}
+              padding={{ left: 15, right: 15 }}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(20, 24, 22, 0.08)', strokeWidth: 1, strokeDasharray: '4 4' }} />
             <ReferenceLine y={PROTEIN_TARGET} stroke="rgba(20, 24, 22, 0.12)" strokeDasharray="4 4" label={{ position: 'insideTopRight', value: `TARGET ${PROTEIN_TARGET}G`, fill: 'rgba(23, 28, 25, 0.48)', fontSize: 9, fontWeight: 800, letterSpacing: '0.05em' }} />

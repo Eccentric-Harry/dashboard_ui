@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { fetchLearningsForRange } from '../../../../lib/api'
 
-export function CalendarSelectorCard({ selectedDate, onSelectDate }: { selectedDate: string, onSelectDate: (date: string) => void }) {
+export function CalendarSelectorCard({ selectedDate, onSelectDate, refreshTrigger }: { selectedDate: string, onSelectDate: (date: string) => void, refreshTrigger?: number }) {
   // Parse initial date safely
   const initialDate = useMemo(() => {
     const d = new Date(selectedDate)
@@ -87,7 +87,7 @@ export function CalendarSelectorCard({ selectedDate, onSelectDate }: { selectedD
     }
     loadHighlights()
     return () => { active = false }
-  }, [rangeStart, rangeEnd])
+  }, [rangeStart, rangeEnd, refreshTrigger])
 
   const handlePrevMonth = () => {
     if (currentMonth === 0) {

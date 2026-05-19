@@ -1532,3 +1532,10 @@ button {
     right: 24px;
   }
 }
+
+/* Disable focus highlight outlines on all Recharts graphs across the application */
+.recharts-wrapper:focus,
+.recharts-surface:focus,
+.recharts-wrapper *:focus {
+  outline: none !important;
+}
