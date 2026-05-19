@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, Pencil, Trash2, Loader2, BookOpen } from 'lucide-react'
+import { Plus, Pencil, Trash2, Loader2, BookOpen, Edit2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { mockTasksData } from '../../../dashboard/quantified-self-dashboard/data'
 import { fetchLearnings, deleteLearning } from '../../../../lib/api'
@@ -44,6 +44,7 @@ export function LearningDetailsCard({ selectedDate, onRefresh }: LearningDetails
   const [learnings, setLearnings] = useState<LearningLog[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isEditMode, setIsEditMode] = useState(false)
 
   // Modal control
   const [modalOpen, setModalOpen] = useState(false)
@@ -77,6 +78,7 @@ export function LearningDetailsCard({ selectedDate, onRefresh }: LearningDetails
 
   useEffect(() => {
     loadLearnings()
+    setIsEditMode(false)
   }, [loadLearnings])
 
   const handleOpenAddModal = () => {
@@ -125,30 +127,74 @@ export function LearningDetailsCard({ selectedDate, onRefresh }: LearningDetails
           Activity for {formattedDate}
         </h2>
 
-        <button
-          type="button"
-          onClick={handleOpenAddModal}
-          style={{
-            background: '#1a7a4a',
-            color: 'white',
-            border: 'none',
-            borderRadius: '12px',
-            padding: '8px 16px',
-            fontSize: '13px',
-            fontWeight: 600,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            cursor: 'pointer',
-            boxShadow: '0 4px 12px rgba(26, 122, 74, 0.15)',
-            transition: 'all 0.2s ease'
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = '#15623b'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = '#1a7a4a'; e.currentTarget.style.transform = 'translateY(0)'; }}
-        >
-          <Plus size={14} />
-          Add Learning
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            type="button"
+            onClick={handleOpenAddModal}
+            style={{
+              background: '#1a7a4a',
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              padding: '8px 16px',
+              fontSize: '13px',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(26, 122, 74, 0.15)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#15623b'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = '#1a7a4a'; e.currentTarget.style.transform = 'translateY(0)'; }}
+          >
+            <Plus size={14} />
+            Add Learning
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsEditMode(!isEditMode)}
+            title="Toggle edit mode"
+            style={{
+              background: isEditMode ? 'rgba(26, 122, 74, 0.08)' : 'transparent',
+              border: isEditMode ? '1px solid rgba(26, 122, 74, 0.15)' : '1px solid rgba(0, 0, 0, 0.05)',
+              borderRadius: '12px',
+              width: '32px',
+              height: '32px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: isEditMode ? '#1a7a4a' : '#526057',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: isEditMode ? '0 2px 8px rgba(26, 122, 74, 0.08)' : 'none'
+            }}
+            onMouseEnter={e => {
+              if (isEditMode) {
+                e.currentTarget.style.background = 'rgba(26, 122, 74, 0.12)';
+              } else {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.8)';
+                e.currentTarget.style.color = '#1a7a4a';
+                e.currentTarget.style.border = '1px solid rgba(26, 122, 74, 0.15)';
+              }
+            }}
+            onMouseLeave={e => {
+              if (isEditMode) {
+                e.currentTarget.style.background = 'rgba(26, 122, 74, 0.08)';
+                e.currentTarget.style.color = '#1a7a4a';
+                e.currentTarget.style.border = '1px solid rgba(26, 122, 74, 0.15)';
+              } else {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = '#526057';
+                e.currentTarget.style.border = '1px solid rgba(0, 0, 0, 0.05)';
+              }
+            }}
+          >
+            <Edit2 size={14} />
+          </button>
+        </div>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
@@ -186,60 +232,62 @@ export function LearningDetailsCard({ selectedDate, onRefresh }: LearningDetails
                     }}
                   >
                     {/* Hover controls for editing/deleting */}
-                    <div className="learning-item-actions" style={{
-                      position: 'absolute',
-                      top: '16px',
-                      right: '16px',
-                      display: 'flex',
-                      gap: '8px'
-                    }}>
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEditModal(log)}
-                        title="Edit Learning"
-                        style={{
-                          background: 'rgba(255, 255, 255, 0.8)',
-                          border: '1px solid rgba(0, 0, 0, 0.05)',
-                          borderRadius: '8px',
-                          width: '28px',
-                          height: '28px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#526057',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease'
-                        }}
-                        onMouseEnter={e => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.color = '#1a7a4a'; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.8)'; e.currentTarget.style.color = '#526057'; }}
-                      >
-                        <Pencil size={12} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => log.id && handleDelete(log.id, log.title)}
-                        title="Delete Learning"
-                        style={{
-                          background: 'rgba(255, 255, 255, 0.8)',
-                          border: '1px solid rgba(0, 0, 0, 0.05)',
-                          borderRadius: '8px',
-                          width: '28px',
-                          height: '28px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#526057',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease'
-                        }}
-                        onMouseEnter={e => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.color = '#d83542'; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.8)'; e.currentTarget.style.color = '#526057'; }}
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    </div>
+                    {isEditMode && (
+                      <div className="learning-item-actions" style={{
+                        position: 'absolute',
+                        top: '16px',
+                        right: '16px',
+                        display: 'flex',
+                        gap: '8px'
+                      }}>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditModal(log)}
+                          title="Edit Learning"
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.8)',
+                            border: '1px solid rgba(0, 0, 0, 0.05)',
+                            borderRadius: '8px',
+                            width: '28px',
+                            height: '28px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#526057',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.color = '#1a7a4a'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.8)'; e.currentTarget.style.color = '#526057'; }}
+                        >
+                          <Pencil size={12} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => log.id && handleDelete(log.id, log.title)}
+                          title="Delete Learning"
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.8)',
+                            border: '1px solid rgba(0, 0, 0, 0.05)',
+                            borderRadius: '8px',
+                            width: '28px',
+                            height: '28px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#526057',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.color = '#d83542'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.8)'; e.currentTarget.style.color = '#526057'; }}
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    )}
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingRight: '64px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingRight: isEditMode ? '64px' : '0px' }}>
                       <span style={{
                         alignSelf: 'flex-start',
                         fontWeight: 700,

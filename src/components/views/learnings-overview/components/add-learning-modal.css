@@ -1,155 +1,171 @@
+/* Redesigned Learning Log Modal to match premium site-wide glassmorphism */
+
 .learning-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(10, 15, 12, 0.45);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  animation: modal-fade-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  z-index: 1050;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background-color: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: learning-modal-fade-in 0.2s ease-out forwards;
 }
 
 .learning-modal-popover {
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  border-radius: 28px;
-  box-shadow: 
-    0 24px 60px rgba(0, 0, 0, 0.08), 
-    0 8px 16px rgba(0, 0, 0, 0.02),
-    inset 0 1px 1px rgba(255, 255, 255, 0.5);
-  width: min(480px, calc(100vw - 32px));
-  padding: 32px;
   position: relative;
-  transform: scale(0.96) translateY(10px);
-  opacity: 0;
-  animation: modal-zoom-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 520px;
+  max-height: min(85vh, 720px);
+  padding: 32px 28px 28px;
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(239, 246, 237, 0.82)), rgba(250, 252, 247, 0.9);
+  box-shadow: 0 24px 48px rgba(45, 60, 48, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  overflow-y: auto;
+  box-sizing: border-box;
+  animation: learning-modal-zoom-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .learning-modal-close {
   position: absolute;
-  top: 24px;
-  right: 24px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  background: rgba(255, 255, 255, 0.6);
-  color: #333b37;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  right: 16px;
+  top: 16px;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(18, 29, 21, 0.06);
+  color: rgba(16, 19, 18, 0.62);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .learning-modal-close:hover {
-  background: #ffffff;
-  transform: scale(1.08) rotate(90deg);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  background: rgba(18, 29, 21, 0.1);
+  color: #101312;
+  transform: scale(1.05);
 }
 
 .learning-modal-title {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   color: #101312;
-  margin: 0 0 28px 0;
+  margin: 0 0 20px 0;
   letter-spacing: -0.02em;
 }
 
 .learning-modal-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 .learning-modal-form .form-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .learning-modal-form .form-group label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #4a5550;
-  padding-left: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(16, 19, 18, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
 }
 
 .learning-modal-form input[type="text"],
 .learning-modal-form input[type="date"],
 .learning-modal-form select,
 .learning-modal-form textarea {
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 14px;
-  padding: 12px 16px;
-  font-size: 14px;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid rgba(20, 24, 22, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.7);
   color: #101312;
+  font-size: 13px;
   outline: none;
-  font-family: inherit;
   transition: all 0.2s ease;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.01);
+  font-family: inherit;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .learning-modal-form textarea {
+  height: auto;
+  padding: 10px 12px;
   resize: vertical;
   line-height: 1.5;
+}
+
+.learning-modal-form select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23101312%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
+  padding-right: 36px;
 }
 
 .learning-modal-form input:focus,
 .learning-modal-form select:focus,
 .learning-modal-form textarea:focus {
-  background: #ffffff;
   border-color: #1a7a4a;
-  box-shadow: 
-    0 0 0 4px rgba(26, 122, 74, 0.12),
-    inset 0 1px 2px rgba(0, 0, 0, 0.01);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(26, 122, 74, 0.15);
 }
 
 .learning-modal-form .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 12px;
 }
 
 .learning-modal-error {
   color: #d83542;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
   margin: 0;
-  background: rgba(216, 53, 66, 0.08);
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid rgba(216, 53, 66, 0.15);
+  text-align: center;
+  background: rgba(216, 53, 66, 0.06);
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(216, 53, 66, 0.12);
 }
 
 .learning-modal-submit {
+  height: 40px;
+  border-radius: 12px;
   background: #1a7a4a;
-  color: #ffffff;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
   border: none;
-  border-radius: 16px;
-  padding: 14px;
-  font-size: 15px;
-  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 4px 16px rgba(26, 122, 74, 0.2);
-  transition: all 0.2s ease;
   margin-top: 8px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(26, 122, 74, 0.15);
 }
 
 .learning-modal-submit:hover:not(:disabled) {
   background: #15623b;
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(26, 122, 74, 0.3);
+  box-shadow: 0 6px 16px rgba(26, 122, 74, 0.25);
 }
 
 .learning-modal-submit:active:not(:disabled) {
@@ -157,28 +173,28 @@
 }
 
 .learning-modal-submit:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
+  opacity: 0.5;
+  cursor: default;
+  transform: none;
+  box-shadow: none;
 }
 
 .fade-in {
-  animation: fade-in-up 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: learning-modal-fade-in-up 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Animations */
-@keyframes modal-fade-in {
+@keyframes learning-modal-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-@keyframes modal-zoom-in {
-  to {
-    transform: scale(1) translateY(0);
-    opacity: 1;
-  }
+@keyframes learning-modal-zoom-in {
+  from { transform: scale(0.96); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
-@keyframes fade-in-up {
+@keyframes learning-modal-fade-in-up {
   from {
     opacity: 0;
     transform: translateY(6px);
@@ -192,17 +208,12 @@
 /* Responsive adjustments */
 @media (max-width: 480px) {
   .learning-modal-popover {
-    padding: 24px;
-    border-radius: 24px;
+    padding: 24px 20px 20px;
+    border-radius: 16px;
   }
   
   .learning-modal-form .form-row {
     grid-template-columns: 1fr;
-    gap: 20px;
-  }
-  
-  .learning-modal-close {
-    top: 20px;
-    right: 20px;
+    gap: 16px;
   }
 }
