@@ -107,7 +107,7 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, isEdit, initia
         role="dialog" 
         aria-modal="true" 
         onClick={(e) => e.stopPropagation()}
-        style={{ width: 'min(440px, calc(100vw - 42px))', padding: '28px' }}
+        style={{ width: 'min(440px, calc(100vw - 42px))' }}
       >
         <button type="button" className="finance-modal-close" onClick={onClose}>
           <X size={15} />

@@ -68,6 +68,7 @@
 @media (max-width: 768px) {
   .learnings-dashboard {
     position: static;
+    inset: auto;
     padding: 24px 16px 80px;
     overflow: visible;
     overscroll-behavior: auto;
@@ -94,5 +95,21 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Learning Details Card Styles */
+.learning-details-card {
+  background: transparent;
+  border: none;
+  padding: 0 24px;
+  margin-top: -4px;
+}
+
+@media (max-width: 768px) {
+  .learning-details-card {
+    padding: 0 !important;
+    margin-top: 16px !important;
+  }
+}
+
 
 

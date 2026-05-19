@@ -432,7 +432,7 @@
 
 .workouts-log-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.8fr) minmax(0, 0.8fr) minmax(0, 0.8fr) minmax(0, 0.8fr);
+  grid-template-columns: minmax(0, 1.8fr) minmax(0, 0.8fr) minmax(0, 0.8fr) minmax(80px, auto);
   align-items: center;
   gap: 12px;
   min-height: 50px;
@@ -956,7 +956,7 @@
   }
 
   .workouts-log-row {
-    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.7fr) minmax(80px, auto);
     gap: 12px;
     padding: 0 12px;
     min-height: 60px;

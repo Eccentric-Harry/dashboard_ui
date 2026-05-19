@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { Footprints, Bike, PersonStanding, Zap, ChevronLeft, ChevronRight, Edit2, Trash2 } from 'lucide-react'
+import { Footprints, Bike, PersonStanding, Zap, ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react'
 import type { StravaActivity } from '../../../../lib/api'
 
 type ActivityLogCardProps = {
@@ -117,9 +117,23 @@ function ActivityLogCard({ activities, loading, onEdit, onDelete }: ActivityLogC
           className={`workouts-transaction-action-btn ${isEditMode ? 'active' : ''}`}
           onClick={() => setIsEditMode(!isEditMode)}
           aria-label="Toggle edit mode"
-          style={{ background: isEditMode ? 'rgba(20, 24, 22, 0.06)' : 'transparent', padding: '6px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
+          style={{ 
+            background: isEditMode ? 'rgba(20, 24, 22, 0.06)' : 'transparent', 
+            padding: '0', 
+            borderRadius: '8px', 
+            border: 'none', 
+            cursor: 'pointer',
+            width: '32px',
+            height: '32px',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minWidth: '32px',
+            minHeight: '32px',
+            boxShadow: 'none',
+          }}
         >
-          <Edit2 size={14} />
+          <Pencil size={14} strokeWidth={2.5} />
         </button>
       </div>
 
@@ -147,8 +161,8 @@ function ActivityLogCard({ activities, loading, onEdit, onDelete }: ActivityLogC
         <div className="workouts-log-row header">
           <span>Activity</span>
           <span>Distance</span>
-          <span className="mobile-hide">Time</span>
-          <span>Pace</span>
+          <span className="mobile-hide">Pace</span>
+          <span>Duration</span>
         </div>
         <div className="workouts-log-list">
           {loading ? (
@@ -171,25 +185,108 @@ function ActivityLogCard({ activities, loading, onEdit, onDelete }: ActivityLogC
                       <b>{activity.activityName}</b>
                       <small>
                         {formatDate(activity.date)}
-                        <span className="mobile-only"> · {activity.movingTime}</span>
+                        <span className="mobile-only">
+                          {' · '}
+                          <span style={{ 
+                            color: '#ca8a04', 
+                            background: '#fef9c3', 
+                            padding: '1px 5px', 
+                            borderRadius: '4px', 
+                            fontWeight: 700,
+                            fontSize: '9px',
+                            display: 'inline-block',
+                          }}>
+                            {formatPace(activity.paceMinPerKm)}/km
+                          </span>
+                        </span>
                       </small>
                     </p>
                   </div>
                   <span>{activity.distanceKm.toFixed(2)} km</span>
-                  <span className="mobile-hide">{activity.movingTime}</span>
+                  <span className="mobile-hide">
+                    <span style={{ 
+                      color: '#ca8a04', 
+                      background: '#fef9c3', 
+                      padding: '4px 8px', 
+                      borderRadius: '6px', 
+                      fontWeight: 700,
+                      fontSize: '9px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.02em',
+                      display: 'inline-block',
+                    }}>
+                      {formatPace(activity.paceMinPerKm)}/km
+                    </span>
+                  </span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
                     <span className={`workouts-sport-badge ${badgeCls}`}>
-                      {formatPace(activity.paceMinPerKm)}
+                      {activity.movingTime}
                     </span>
                     {isEditMode && (
-                      <div style={{ display: 'flex', gap: '4px' }}>
+                      <div style={{ display: 'flex', gap: '6px' }}>
                         {onEdit && (
-                          <button type="button" onClick={() => onEdit(activity)} title="Edit" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px' }}>
-                            <Edit2 size={12} />
+                          <button 
+                            type="button" 
+                            onClick={() => onEdit(activity)}
+                            aria-label="Edit activity"
+                            style={{
+                              display: 'grid',
+                              width: '28px',
+                              height: '28px',
+                              placeItems: 'center',
+                              border: '0',
+                              borderRadius: '6px',
+                              background: 'rgba(23, 28, 25, 0.05)',
+                              color: 'rgba(23, 28, 25, 0.7)',
+                              cursor: 'pointer',
+                              transition: 'background 0.2s, color 0.2s',
+                              boxShadow: 'none',
+                              minWidth: '28px',
+                              minHeight: '28px',
+                              padding: '0',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = 'rgba(23, 28, 25, 0.1)'
+                              e.currentTarget.style.color = 'rgba(23, 28, 25, 0.9)'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'rgba(23, 28, 25, 0.05)'
+                              e.currentTarget.style.color = 'rgba(23, 28, 25, 0.7)'
+                            }}
+                          >
+                            <Pencil size={12} />
                           </button>
                         )}
                         {onDelete && (
-                          <button type="button" onClick={() => onDelete(activity)} title="Delete" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px', color: '#d83542' }}>
+                          <button 
+                            type="button" 
+                            onClick={() => onDelete(activity)}
+                            aria-label="Delete activity"
+                            style={{
+                              display: 'grid',
+                              width: '28px',
+                              height: '28px',
+                              placeItems: 'center',
+                              border: '0',
+                              borderRadius: '6px',
+                              background: 'rgba(239, 68, 68, 0.08)',
+                              color: '#dc2626',
+                              cursor: 'pointer',
+                              transition: 'background 0.2s, color 0.2s',
+                              boxShadow: 'none',
+                              minWidth: '28px',
+                              minHeight: '28px',
+                              padding: '0',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'
+                              e.currentTarget.style.color = '#b91c1c'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)'
+                              e.currentTarget.style.color = '#dc2626'
+                            }}
+                          >
                             <Trash2 size={12} />
                           </button>
                         )}

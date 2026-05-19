@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CalendarDays, Flame, Wheat, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useDashboard } from '../../../../contexts/DashboardContext'
 import { fetchFoodEntries } from '../../../../lib/api'
-import { getFoodIconDetails } from './food-icon-helper'
+import { getFoodIconDetails, sortFoodEntries } from './food-icon-helper'
 
 const mealDotColors: Record<string, string> = {
   Breakfast: '#f97316', // Premium Orange
@@ -328,7 +328,9 @@ function FoodLogCard() {
     const sortedDates = Array.from(uniqueDates).sort((a, b) => b.localeCompare(a))
 
     return sortedDates.map((dateValue) => {
-      const entries = historyEntries.filter((entry) => normalizeEntryDate(entry, logAnchorDate) === dateValue)
+      const entries = sortFoodEntries(
+        historyEntries.filter((entry) => normalizeEntryDate(entry, logAnchorDate) === dateValue)
+      )
       const totalProtein = entries.reduce((sum, entry) => sum + (Number(entry.proteinGrams) || 0), 0)
       const totalCalories = entries.reduce((sum, entry) => sum + (Number(entry.calories) || 0), 0)
 

@@ -189,6 +189,34 @@ export function ServerColdStartConsole({ isLoading, error, refetch }: ServerCold
   const startTimeRef = useRef<number>(Date.now())
   const loadingStartRef = useRef<number | null>(null)
 
+  // Refs to maintain state values inside the animation timeout without re-triggering the useEffect
+  const currentIndexRef = useRef(0)
+  const isVerboseRef = useRef(isVerbose)
+  const isFastForwardRef = useRef(isFastForward)
+  const isLoadingRef = useRef(isLoading)
+  const completedBuildRef = useRef(completedBuild)
+  const errorRef = useRef(error)
+
+  useEffect(() => {
+    isVerboseRef.current = isVerbose
+  }, [isVerbose])
+
+  useEffect(() => {
+    isFastForwardRef.current = isFastForward
+  }, [isFastForward])
+
+  useEffect(() => {
+    isLoadingRef.current = isLoading
+  }, [isLoading])
+
+  useEffect(() => {
+    completedBuildRef.current = completedBuild
+  }, [completedBuild])
+
+  useEffect(() => {
+    errorRef.current = error
+  }, [error])
+
   // 1. Detect if server requests take > 1500ms to show the terminal
   useEffect(() => {
     if (isLoading) {
@@ -227,21 +255,65 @@ export function ServerColdStartConsole({ isLoading, error, refetch }: ServerCold
     }
   }, [isRendered, completedBuild, error])
 
-  // Helper to format ISO dynamic timestamps matching the real logs style
+  // Helper to format ISO dynamic timestamps matching the real logs style in local device time
   const getDynamicTimestamp = () => {
     const now = new Date()
-    return now.toISOString()
+    const tzoffset = now.getTimezoneOffset() * 60000; // offset in milliseconds
+    const localISOTime = new Date(now.getTime() - tzoffset).toISOString()
+    return localISOTime
   }
 
-  // 3. Main logs animation loop
+  // 3. Main logs animation loop (robustly scheduled and timed)
   useEffect(() => {
-    if (!isRendered || error || completedBuild) return
+    if (!isRendered) {
+      // Reset state if closed
+      currentIndexRef.current = 0
+      isFastForwardRef.current = false
+      completedBuildRef.current = false
+      setCurrentIndex(0)
+      setLogs([])
+      setStage('cloning')
+      setCompletedBuild(false)
+      setIsFastForward(false)
+      setSecondsElapsed(0)
+      return
+    }
+
+    if (error || completedBuild) return
+
+    let successTimeoutRef: number | null = null
+
+    const playSuccessLogs = (successIdx = 0) => {
+      if (successIdx >= SUCCESS_LOGS.length) {
+        setCompletedBuild(true)
+        setStage('live')
+        return
+      }
+      
+      const line = SUCCESS_LOGS[successIdx]
+      setLogs(prev => [
+        ...prev,
+        {
+          text: line.text,
+          type: 'live',
+          timestamp: getDynamicTimestamp()
+        }
+      ])
+      
+      successTimeoutRef = window.setTimeout(() => playSuccessLogs(successIdx + 1), 150)
+    }
 
     const playNextLog = () => {
-      // If we are finished with standard logs, wait for isLoading to become false (will be handled by loading change hook)
-      if (currentIndex >= SIMULATED_LOGS.length) {
-        // Just print periodic heartbeat logs if the server is still sleeping
-        if (isLoading) {
+      if (errorRef.current || completedBuildRef.current) return
+
+      const idx = currentIndexRef.current
+
+      // If we are finished with standard logs
+      if (idx >= SIMULATED_LOGS.length) {
+        if (isFastForwardRef.current) {
+          playSuccessLogs()
+        } else if (isLoadingRef.current) {
+          // Just print periodic heartbeat logs if the server is still sleeping
           logTimeoutRef.current = window.setTimeout(() => {
             setLogs(prev => [
               ...prev, 
@@ -257,11 +329,13 @@ export function ServerColdStartConsole({ isLoading, error, refetch }: ServerCold
         return
       }
 
-      const nextLine = SIMULATED_LOGS[currentIndex]
+      const nextLine = SIMULATED_LOGS[idx]
 
       // Filter out verbose messages if standard logs selected
-      if (!isVerbose && nextLine.isVerbose) {
-        setCurrentIndex(prev => prev + 1)
+      if (!isVerboseRef.current && nextLine.isVerbose) {
+        currentIndexRef.current = idx + 1
+        setCurrentIndex(idx + 1)
+        playNextLog()
         return
       }
 
@@ -290,60 +364,46 @@ export function ServerColdStartConsole({ isLoading, error, refetch }: ServerCold
         }
       ])
 
-      // Calculate next delay: speed up to 40ms if fast forwarding
-      const activeDelay = isFastForward ? 35 : nextLine.delay
+      // Calculate next delay: speed up to 35ms if fast forwarding.
+      // We scale the normal delay by 3.0x to stretch the logs line-by-line flow to at least 2:15 minutes (~141.5 seconds).
+      const activeDelay = isFastForwardRef.current ? 35 : nextLine.delay * 3.0
 
-      setCurrentIndex(prev => prev + 1)
+      currentIndexRef.current = idx + 1
+      setCurrentIndex(idx + 1)
       logTimeoutRef.current = window.setTimeout(playNextLog, activeDelay)
     }
 
-    playNextLog()
+    // Start the loop!
+    if (currentIndexRef.current >= SIMULATED_LOGS.length && isFastForwardRef.current) {
+      playSuccessLogs()
+    } else {
+      playNextLog()
+    }
 
     return () => {
       if (logTimeoutRef.current) {
         window.clearTimeout(logTimeoutRef.current)
       }
-    }
-  }, [isRendered, currentIndex, isVerbose, isFastForward, error, completedBuild, isLoading])
-
-  // 4. Handle early API resolutions (Fast Forward & Complete loop)
-  useEffect(() => {
-    if (isFastForward && currentIndex >= SIMULATED_LOGS.length && !completedBuild) {
-      // All main logs printed. Now trigger success live logs sequence
-      let successIdx = 0
-      
-      const playSuccessLogs = () => {
-        if (successIdx >= SUCCESS_LOGS.length) {
-          setCompletedBuild(true)
-          setStage('live')
-          
-          // Auto close after 2.2 seconds of complete satisfaction
-          window.setTimeout(() => {
-            setShouldShow(false)
-            window.setTimeout(() => {
-              setIsRendered(false)
-            }, 500)
-          }, 2200)
-          return
-        }
-        
-        const line = SUCCESS_LOGS[successIdx]
-        setLogs(prev => [
-          ...prev,
-          {
-            text: line.text,
-            type: 'live',
-            timestamp: getDynamicTimestamp()
-          }
-        ])
-        
-        successIdx++
-        window.setTimeout(playSuccessLogs, 150)
+      if (successTimeoutRef) {
+        window.clearTimeout(successTimeoutRef)
       }
-      
-      playSuccessLogs()
     }
-  }, [isFastForward, currentIndex, completedBuild])
+  }, [isRendered, isFastForward, isVerbose, error, completedBuild])
+
+  // 4. Handle auto-closing transition when completedBuild becomes true
+  useEffect(() => {
+    if (completedBuild) {
+      const timer1 = window.setTimeout(() => {
+        setShouldShow(false)
+        const timer2 = window.setTimeout(() => {
+          setIsRendered(false)
+        }, 500)
+        return () => window.clearTimeout(timer2)
+      }, 2200)
+
+      return () => window.clearTimeout(timer1)
+    }
+  }, [completedBuild])
 
   // 5. Scroll terminal to bottom
   useEffect(() => {
