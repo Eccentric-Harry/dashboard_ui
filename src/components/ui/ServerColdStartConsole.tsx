@@ -287,14 +287,6 @@ export function ServerColdStartConsole({ isLoading, error, refetch }: ServerCold
       if (successIdx >= SUCCESS_LOGS.length) {
         setCompletedBuild(true)
         setStage('live')
-        
-        // Auto close after 2.2 seconds of complete satisfaction
-        successTimeoutRef = window.setTimeout(() => {
-          setShouldShow(false)
-          successTimeoutRef = window.setTimeout(() => {
-            setIsRendered(false)
-          }, 500)
-        }, 2200)
         return
       }
       
@@ -372,8 +364,9 @@ export function ServerColdStartConsole({ isLoading, error, refetch }: ServerCold
         }
       ])
 
-      // Calculate next delay: speed up to 35ms if fast forwarding
-      const activeDelay = isFastForwardRef.current ? 35 : nextLine.delay
+      // Calculate next delay: speed up to 35ms if fast forwarding.
+      // We scale the normal delay by 3.0x to stretch the logs line-by-line flow to at least 2:15 minutes (~141.5 seconds).
+      const activeDelay = isFastForwardRef.current ? 35 : nextLine.delay * 3.0
 
       currentIndexRef.current = idx + 1
       setCurrentIndex(idx + 1)
@@ -396,6 +389,21 @@ export function ServerColdStartConsole({ isLoading, error, refetch }: ServerCold
       }
     }
   }, [isRendered, isFastForward, isVerbose, error, completedBuild])
+
+  // 4. Handle auto-closing transition when completedBuild becomes true
+  useEffect(() => {
+    if (completedBuild) {
+      const timer1 = window.setTimeout(() => {
+        setShouldShow(false)
+        const timer2 = window.setTimeout(() => {
+          setIsRendered(false)
+        }, 500)
+        return () => window.clearTimeout(timer2)
+      }, 2200)
+
+      return () => window.clearTimeout(timer1)
+    }
+  }, [completedBuild])
 
   // 5. Scroll terminal to bottom
   useEffect(() => {
