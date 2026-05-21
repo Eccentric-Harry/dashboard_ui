@@ -5,7 +5,6 @@ import { fetchLearningsSummary } from '../../../lib/api'
 import { isoDate, parseIsoDate } from './learnings-utils'
 import { LearningsHeader } from './components/learnings-header'
 import { LearningsStatsRow } from './components/learnings-stats-row'
-import { DailyFocusCard } from './components/daily-focus-card'
 import { TasksScheduleCard } from './components/tasks-schedule-card'
 import { LearningsLogCard } from './components/learnings-log-card'
 import { CategoryBreakdownCard } from './components/category-breakdown-card'
@@ -13,6 +12,7 @@ import { CodingPulseCard } from './components/coding-pulse-card'
 import { ActivityHeatmapCard } from './components/activity-heatmap-card'
 import { AddLearningModal } from './components/add-learning-modal'
 import { AddTaskModal } from './components/add-task-modal'
+import { DevProfileCard } from './components/dev-profile-card'
 import './learnings-overview.css'
 
 function parseDateFromParams(searchParams: URLSearchParams): string {
@@ -90,13 +90,6 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
         <LearningsStatsRow summary={summary} loading={summaryLoading} />
 
         <div className="learnings-focus-stack">
-          <DailyFocusCard
-            selectedDate={selectedDate}
-            refreshKey={refreshKey}
-            initialFocus={summary?.today.dailyOneThing}
-            initialCompleted={summary?.today.dailyOneThingCompleted}
-            onRefresh={handleRefresh}
-          />
           <TasksScheduleCard
             selectedDate={selectedDate}
             refreshKey={refreshKey}
@@ -124,9 +117,12 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
           streakDays={summary?.stats.streakDays}
           githubCommits={summary?.stats.githubCommits}
           leetCodeSolved={summary?.stats.leetCodeSolved}
+          selectedDate={selectedDate}
         />
 
         <ActivityHeatmapCard timeline={summary?.sevenDayTimeline ?? []} />
+
+        <DevProfileCard />
       </div>
 
       <AddLearningModal

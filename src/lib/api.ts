@@ -367,8 +367,6 @@ export interface LearningsTodaySummary {
   tasksTotal: number;
   tasksCompleted: number;
   categories: LearningsCategoryCount[];
-  dailyOneThing?: string | null;
-  dailyOneThingCompleted?: boolean;
 }
 
 export interface LearningsTimelineDay {
@@ -480,37 +478,6 @@ export interface DailyLog {
   githubCommits?: number;
   leetCodeSolved?: number;
   newLearnings?: string[];
-  dailyOneThing?: string;
-  dailyOneThingCompleted?: boolean;
   moodRating?: string;
-}
-
-export async function fetchDailyLog(date: string) {
-  const response = await fetch(`${API_BASE_URL}/daily-log?date=${date}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch daily log');
-  }
-  return response.json();
-}
-
-export async function updateDailyLog(
-  date: string,
-  data: {
-    dailyOneThing?: string;
-    dailyOneThingCompleted?: boolean;
-    moodRating?: string;
-    githubCommits?: number;
-    leetCodeSolved?: number;
-  },
-) {
-  const response = await fetch(`${API_BASE_URL}/daily-log?date=${date}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to update daily log');
-  }
-  return response.json();
 }
 
