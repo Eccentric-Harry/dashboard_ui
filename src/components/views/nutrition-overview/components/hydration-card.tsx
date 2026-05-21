@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { RefreshCw, Minus, GlassWater, Droplets, Milk, Check } from 'lucide-react'
+import { RefreshCw, Minus, GlassWater, Droplet, Milk, Check } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { fetchHydration, addWaterIntake } from '../../../../lib/api'
 import type { HydrationData } from '../../../../lib/api'
@@ -80,7 +80,7 @@ function HydrationCard() {
           <h2 style={{ fontSize: '18px', paddingTop: '2px' }}>Water Intake</h2>
         </div>
         <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: isComplete ? '#10b981' : 'inherit' }}>
-          {isComplete ? <Check size={12} strokeWidth={3} /> : <Droplets size={12} strokeWidth={2.5} />}
+          {isComplete ? <Check size={12} strokeWidth={3} /> : <Droplet size={12} strokeWidth={2.5} />}
           {progressPercent}%
         </span>
       </div>

@@ -1,7 +1,7 @@
 import { useMemo, useState, useRef, useCallback, useEffect } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { getFoodIconDetails } from './food-icon-helper'
+import { getFoodIconDetails, sortFoodEntries } from './food-icon-helper'
 
 import { RingProgress } from './ring-progress'
 import { useDashboard } from '../../../../contexts/DashboardContext'
@@ -43,7 +43,7 @@ function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
   const selectedDate = data?.date || isoDate(new Date())
   const dailyFood = data?.health?.dailyFood || { calories: 0, calorieGoal: CALORIE_TARGET }
   const circularGoals = useMemo<CircularGoal[]>(() => data?.health?.circularGoals || [], [data?.health?.circularGoals])
-  const foodEntries = useMemo<FoodEntry[]>(() => data?.health?.foodEntries || [], [data?.health?.foodEntries])
+  const foodEntries = useMemo<FoodEntry[]>(() => sortFoodEntries(data?.health?.foodEntries || []), [data?.health?.foodEntries])
   const [selectedMacroId, setSelectedMacroId] = useState('protein')
   const [isEditMode, setIsEditMode] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<FoodEntry | null>(null)
@@ -121,7 +121,6 @@ function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
           <p>Daily Nutrition Summary</p>
           <h2>{proteinProgress}% of daily protein logged</h2>
         </div>
-        <span>{proteinTarget} g recovery target</span>
       </div>
 
       <div className="nutrition-rings nutrition-rings-two" aria-label="Daily nutrition progress rings">
@@ -143,7 +142,7 @@ function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
         <div className="nutrition-today-log-head">
           <div>
             <p>Daily Log</p>
-            <h3>Daily Food Log</h3>
+            <h3>Today's Food Log</h3>
           </div>
           <div className="nutrition-today-log-actions">
             <button
@@ -184,6 +183,7 @@ function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
             const id = entry.id
             const description = entry.description || 'Food item'
             const mealType = entry.mealType || 'Snack'
+            const proteinGrams = Number(entry.proteinGrams) || 0
             const calories = Number(entry.calories) || 0
 
             const iconDetails = getFoodIconDetails(description, mealType)
@@ -196,7 +196,7 @@ function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
                 </span>
                 <div>
                   <b title={description}>{description}</b>
-                  <small>{mealType} | {calories.toLocaleString()} kcal</small>
+                  <small>{mealType} | {proteinGrams}g protein | {calories.toLocaleString()} kcal</small>
                 </div>
                 {id && isEditMode && (
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>

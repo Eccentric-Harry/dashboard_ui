@@ -918,6 +918,8 @@
 
 .add-tx-form input,
 .add-tx-form select {
+  width: 100%;
+  box-sizing: border-box;
   height: 44px;
   padding: 0 16px;
   border-radius: 12px;
@@ -1012,6 +1014,12 @@
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-row-macros {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
   gap: 16px;
 }
 
@@ -1302,7 +1310,12 @@
   }
 
   .form-row {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .form-row-macros {
+    grid-template-columns: 0.85fr 1.15fr;
     gap: 12px;
   }
 

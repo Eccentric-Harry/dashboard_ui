@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronLeft, ChevronRight, Edit2, Trash2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { getConsistentColor, getIconForCategory } from '../utils'
 
@@ -71,9 +71,22 @@ function TransactionsCard({ transactions = [], loading = false, onEdit, onDelete
           className={`finance-transaction-action-btn ${isEditMode ? 'active' : ''}`}
           onClick={() => setIsEditMode(!isEditMode)}
           aria-label="Toggle edit mode"
-          style={{ background: isEditMode ? 'rgba(20, 24, 22, 0.06)' : 'transparent', padding: '6px', borderRadius: '8px' }}
+          style={{ 
+            background: isEditMode ? 'rgba(20, 24, 22, 0.06)' : 'transparent', 
+            padding: '0', 
+            borderRadius: '8px',
+            width: '32px',
+            height: '32px',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minWidth: '32px',
+            minHeight: '32px',
+            border: 'none',
+            boxShadow: 'none',
+          }}
         >
-          <Edit2 size={14} />
+          <Pencil size={14} strokeWidth={2.5} />
         </button>
       </div>
       <div className="finance-transaction-table" role="table" aria-label="Recent transactions">
@@ -125,23 +138,69 @@ function TransactionsCard({ transactions = [], loading = false, onEdit, onDelete
                         {amount}
                       </strong>
                       {isEditMode && (
-                        <div className="finance-transaction-actions">
+                        <div className="finance-transaction-actions" style={{ gap: '6px' }}>
                           {onEdit && (
                             <button 
                               type="button" 
-                              className="finance-transaction-action-btn" 
                               onClick={() => onEdit(tx)}
                               aria-label="Edit transaction"
+                              style={{
+                                display: 'grid',
+                                width: '28px',
+                                height: '28px',
+                                placeItems: 'center',
+                                border: '0',
+                                borderRadius: '6px',
+                                background: 'rgba(23, 28, 25, 0.05)',
+                                color: 'rgba(23, 28, 25, 0.7)',
+                                cursor: 'pointer',
+                                transition: 'background 0.2s, color 0.2s',
+                                boxShadow: 'none',
+                                minWidth: '28px',
+                                minHeight: '28px',
+                                padding: '0',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'rgba(23, 28, 25, 0.1)'
+                                e.currentTarget.style.color = 'rgba(23, 28, 25, 0.9)'
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'rgba(23, 28, 25, 0.05)'
+                                e.currentTarget.style.color = 'rgba(23, 28, 25, 0.7)'
+                              }}
                             >
-                              <Edit2 size={12} />
+                              <Pencil size={12} />
                             </button>
                           )}
                           {onDelete && (
                             <button 
                               type="button" 
-                              className="finance-transaction-action-btn delete" 
                               onClick={() => onDelete(tx)}
                               aria-label="Delete transaction"
+                              style={{
+                                display: 'grid',
+                                width: '28px',
+                                height: '28px',
+                                placeItems: 'center',
+                                border: '0',
+                                borderRadius: '6px',
+                                background: 'rgba(239, 68, 68, 0.08)',
+                                color: '#dc2626',
+                                cursor: 'pointer',
+                                transition: 'background 0.2s, color 0.2s',
+                                boxShadow: 'none',
+                                minWidth: '28px',
+                                minHeight: '28px',
+                                padding: '0',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'
+                                e.currentTarget.style.color = '#b91c1c'
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)'
+                                e.currentTarget.style.color = '#dc2626'
+                              }}
                             >
                               <Trash2 size={12} />
                             </button>
