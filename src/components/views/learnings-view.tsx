@@ -6,7 +6,7 @@ import { LearningsOverviewDashboard } from './learnings-overview/learnings-overv
 
 type LearningsOverviewProps = {
   activePath: AppPath
-  onNavigate: (pathname: AppPath) => void
+  onNavigate: (pathname: AppPath, search?: string) => void
   searchParams: URLSearchParams
 }
 
@@ -16,7 +16,7 @@ function LearningsOverview({ activePath, onNavigate, searchParams }: LearningsOv
       <div className="dashboard-stage" aria-label="Learnings overview">
         <SideRail activePath={activePath} onNavigate={onNavigate} />
         <TopChip />
-        <LearningsOverviewDashboard searchParams={searchParams} />
+        <LearningsOverviewDashboard searchParams={searchParams} onNavigate={onNavigate} />
       </div>
     </main>
   )

@@ -355,3 +355,162 @@ export async function deleteLearning(id: string) {
   return response.json();
 }
 
+// ─── Learnings Summary & Tasks ───────────────────────────────────────
+
+export interface LearningsCategoryCount {
+  name: string;
+  count: number;
+}
+
+export interface LearningsTodaySummary {
+  learningsCount: number;
+  tasksTotal: number;
+  tasksCompleted: number;
+  categories: LearningsCategoryCount[];
+  dailyOneThing?: string | null;
+  dailyOneThingCompleted?: boolean;
+}
+
+export interface LearningsTimelineDay {
+  date: string;
+  learningsCount: number;
+  tasksCompleted: number;
+  intensity: number;
+}
+
+export interface LearningsStatsSummary {
+  weeklyLearningCount: number;
+  streakDays: number;
+  githubCommits: number;
+  leetCodeSolved: number;
+}
+
+export interface LearningsSummary {
+  date: string;
+  today: LearningsTodaySummary;
+  sevenDayTimeline: LearningsTimelineDay[];
+  stats: LearningsStatsSummary;
+}
+
+export async function fetchLearningsSummary(date?: string) {
+  const query = date ? `?date=${date}` : '';
+  const response = await fetch(`${API_BASE_URL}/dashboard/learnings-summary${query}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch learnings summary');
+  }
+  return response.json();
+}
+
+export interface DailyTask {
+  id?: string;
+  title: string;
+  date: string;
+  scheduledTime?: string;
+  notes?: string;
+  completed?: boolean;
+  sortOrder?: number;
+  createdAt?: string;
+}
+
+export async function fetchTasks(date: string) {
+  const response = await fetch(`${API_BASE_URL}/learnings/tasks?date=${date}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch tasks');
+  }
+  return response.json();
+}
+
+export async function fetchTasksForRange(startDate: string, endDate: string) {
+  const response = await fetch(
+    `${API_BASE_URL}/learnings/tasks/range?startDate=${startDate}&endDate=${endDate}`,
+  );
+  if (!response.ok) {
+    throw new Error('Failed to fetch tasks in range');
+  }
+  return response.json();
+}
+
+export async function addTask(data: Omit<DailyTask, 'id'>) {
+  const response = await fetch(`${API_BASE_URL}/learnings/tasks`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to add task');
+  }
+  return response.json();
+}
+
+export async function updateTask(id: string, data: Omit<DailyTask, 'id'>) {
+  const response = await fetch(`${API_BASE_URL}/learnings/tasks/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to update task');
+  }
+  return response.json();
+}
+
+export async function toggleTask(id: string) {
+  const response = await fetch(`${API_BASE_URL}/learnings/tasks/${id}/toggle`, {
+    method: 'PATCH',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to toggle task');
+  }
+  return response.json();
+}
+
+export async function deleteTask(id: string) {
+  const response = await fetch(`${API_BASE_URL}/learnings/tasks/${id}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to delete task');
+  }
+  return response.json();
+}
+
+export interface DailyLog {
+  id?: string;
+  date?: string;
+  githubCommits?: number;
+  leetCodeSolved?: number;
+  newLearnings?: string[];
+  dailyOneThing?: string;
+  dailyOneThingCompleted?: boolean;
+  moodRating?: string;
+}
+
+export async function fetchDailyLog(date: string) {
+  const response = await fetch(`${API_BASE_URL}/daily-log?date=${date}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch daily log');
+  }
+  return response.json();
+}
+
+export async function updateDailyLog(
+  date: string,
+  data: {
+    dailyOneThing?: string;
+    dailyOneThingCompleted?: boolean;
+    moodRating?: string;
+    githubCommits?: number;
+    leetCodeSolved?: number;
+  },
+) {
+  const response = await fetch(`${API_BASE_URL}/daily-log?date=${date}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to update daily log');
+  }
+  return response.json();
+}
+

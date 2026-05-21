@@ -49,7 +49,7 @@ export const navItems: DashboardNavItem[] = [
   { label: 'Finance Overview', icon: CircleDollarSign, to: '/finance' },
   { label: 'Nutrition Overview', icon: Utensils, to: '/nutrition' },
   { label: 'Workouts', icon: Dumbbell, to: '/workouts' },
-  { label: 'Learnings Map', icon: BrainCircuit, to: '/learnings', mobileHidden: true },
+  { label: 'Learnings Map', icon: BrainCircuit, to: '/learnings' },
   { label: 'Adjust', icon: SlidersHorizontal, muted: true },
   { label: 'Tasks', icon: CheckSquare, muted: true },
   { label: 'People', icon: Users, muted: true },

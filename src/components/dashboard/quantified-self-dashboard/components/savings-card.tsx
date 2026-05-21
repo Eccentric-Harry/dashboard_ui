@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { ChevronsUpDown } from 'lucide-react'
 import {
   getIntensityForDay,
+  getIsoDateStringForDay,
   getDateStringForDay,
   learningLogs,
   LEARNING_CATEGORIES,
@@ -147,11 +148,12 @@ function SavingsCard({ onNavigate }: { onNavigate?: (path: AppPath, search?: str
         >
           {Array.from({ length: 91 }).map((_, i) => {
             const daysAgo = 90 - i;
+            const isoDate = getIsoDateStringForDay(daysAgo);
             const dateLabel = getDateStringForDay(daysAgo);
             
             let intensity = 0;
             if (heatmapData && heatmapData.length > 0) {
-              const apiEntry = heatmapData.find((entry: any) => entry.date === dateLabel);
+              const apiEntry = heatmapData.find((entry: any) => entry.date === isoDate);
               if (apiEntry) intensity = apiEntry.intensity;
             } else {
               intensity = getIntensityForDay(daysAgo, filter);
@@ -160,7 +162,7 @@ function SavingsCard({ onNavigate }: { onNavigate?: (path: AppPath, search?: str
             return (
               <div
                 key={i}
-                onClick={() => onNavigate?.('/learnings', `?date=${encodeURIComponent(dateLabel)}`)}
+                onClick={() => onNavigate?.('/learnings', `?date=${isoDate}`)}
                 title={`${dateLabel} · ${intensity > 0 ? `${intensity} session${intensity > 1 ? 's' : ''}` : 'No activity'}`}
                 style={{
                   aspectRatio: '1/1',

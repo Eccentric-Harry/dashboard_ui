@@ -57,6 +57,13 @@ export const getIntensityForDay = (daysAgo: number, categoryFilter: LearningCate
   return log ? log.intensity : 0;
 };
 
+export const getIsoDateStringForDay = (daysAgo: number): string => {
+  const today = new Date();
+  const date = new Date(today);
+  date.setDate(today.getDate() - daysAgo);
+  return date.toISOString().split('T')[0];
+};
+
 export const getDateStringForDay = (daysAgo: number): string => {
   const today = new Date();
   const date = new Date(today);
