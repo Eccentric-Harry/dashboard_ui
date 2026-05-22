@@ -60,14 +60,16 @@ export function LearningsHeader({
           onClick={() => setIsCalendarOpen((o) => !o)}
         >
           <span className="learnings-date-trigger-text">
-            <strong>{formatHeaderDate(selectedDateObject)}</strong>
+            <span className="learnings-date-title-wrap">
+              <strong>{formatHeaderDate(selectedDateObject)}</strong>
+              <ChevronDown size={20} className="learnings-date-chevron" />
+            </span>
             <small className="learnings-date-trigger-sub">
               {summary
-                ? `${summary.today.learningsCount} logged · ${summary.today.tasksCompleted}/${summary.today.tasksTotal} tasks done`
+                ? `${summary.today.learningsCount} logged | ${summary.today.tasksCompleted}/${summary.today.tasksTotal} tasks done`
                 : 'Pick a date to review your day'}
             </small>
           </span>
-          <ChevronDown size={22} strokeWidth={2.2} />
         </button>
 
         {isCalendarOpen && (

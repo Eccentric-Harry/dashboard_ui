@@ -15,28 +15,28 @@ export function LearningsStatsRow({ summary, loading }: LearningsStatsRowProps) 
     {
       label: 'Learnings',
       value: loading ? '—' : String(today?.learningsCount ?? 0),
-      hint: 'Logged today',
+      hint: 'logged today',
       icon: BookOpen,
       tone: 'learnings' as const,
     },
     {
       label: 'Tasks',
       value: loading ? '—' : `${today?.tasksCompleted ?? 0}/${today?.tasksTotal ?? 0}`,
-      hint: 'Completed today',
+      hint: 'done today',
       icon: CheckSquare,
       tone: 'tasks' as const,
     },
     {
       label: 'Streak',
-      value: loading ? '—' : `${stats?.streakDays ?? 0}d`,
-      hint: 'Active days',
+      value: loading ? '—' : `${stats?.streakDays ?? 0}`,
+      hint: 'days',
       icon: Flame,
       tone: 'streak' as const,
     },
     {
       label: 'This week',
       value: loading ? '—' : String(stats?.weeklyLearningCount ?? 0),
-      hint: 'Learning entries',
+      hint: 'entries',
       icon: Target,
       tone: 'week' as const,
     },
@@ -52,8 +52,10 @@ export function LearningsStatsRow({ summary, loading }: LearningsStatsRowProps) 
               <Icon size={15} strokeWidth={2.2} />
             </div>
             <p>{item.label}</p>
-            <strong>{item.value}</strong>
-            <small>{item.hint}</small>
+            <strong>
+              {item.value}
+              <small>{item.hint}</small>
+            </strong>
           </div>
         )
       })}

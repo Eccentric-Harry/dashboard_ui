@@ -251,10 +251,12 @@ function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
           onClick={() => setIsCalendarOpen((isOpen) => !isOpen)}
         >
           <span>
-            <strong>{formatHeaderDate(selectedDateObject)}</strong>
+            <span className="nutrition-date-title-wrap">
+              <strong>{formatHeaderDate(selectedDateObject)}</strong>
+              <ChevronDown size={22} className="nutrition-date-chevron" />
+            </span>
             <small>Nutrition Overview | {foodEntries.length} meals logged</small>
           </span>
-          <ChevronDown size={22} strokeWidth={2.2} />
         </button>
 
         {isCalendarOpen && (

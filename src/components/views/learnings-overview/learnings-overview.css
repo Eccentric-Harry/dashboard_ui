@@ -67,7 +67,7 @@
   gap: 12px;
   padding: 0 8px 0 2px;
   z-index: 8;
-  margin-bottom: 20px;
+  margin-bottom: 8px;
   min-height: 56px;
 }
 
@@ -91,12 +91,44 @@
   text-align: left;
 }
 
+.learnings-date-trigger:focus {
+  outline: none;
+}
+
+.learnings-date-trigger:focus-visible {
+  border-radius: 8px;
+  box-shadow: 0 0 0 3px rgba(26, 122, 74, 0.16);
+}
+
 .learnings-date-trigger-text {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.learnings-date-title-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+.learnings-date-chevron {
+  color: rgba(23, 28, 25, 0.42);
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.2s ease;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.learnings-date-trigger:hover .learnings-date-chevron {
+  color: #0d1110;
+  transform: translateY(1px);
 }
 
 .learnings-date-trigger strong {
-  display: block;
+  display: inline-block;
+  min-width: 0;
   font-size: 24px;
   font-weight: 500;
   letter-spacing: -0.04em;
@@ -200,17 +232,26 @@
 }
 
 .learnings-stat-card {
-  padding: 16px 18px;
+  padding: 18px 18px 16px;
+  min-height: 128px;
   border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.58);
-  backdrop-filter: blur(18px);
-  box-shadow: 0 12px 32px rgba(45, 60, 48, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.45);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.05),
+    0 24px 64px rgba(0, 0, 0, 0.04),
+    inset 0 1px 1px rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .learnings-stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 16px 40px rgba(45, 60, 48, 0.1);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.08),
+    0 32px 72px rgba(0, 0, 0, 0.05),
+    inset 0 1px 1px rgba(255, 255, 255, 0.8);
 }
 
 .learnings-stat-icon {
@@ -243,43 +284,28 @@
   border: 1px solid rgba(32, 35, 33, 0.08);
 }
 
-.learnings-stat-card--learnings {
-  background: linear-gradient(145deg, rgba(230, 248, 236, 0.95), rgba(250, 252, 247, 0.85));
-}
-
-.learnings-stat-card--tasks {
-  background: linear-gradient(145deg, rgba(237, 236, 254, 0.95), rgba(250, 252, 247, 0.85));
-}
-
-.learnings-stat-card--streak {
-  background: linear-gradient(145deg, rgba(255, 241, 230, 0.95), rgba(250, 252, 247, 0.85));
-}
-
-.learnings-stat-card--week {
-  background: linear-gradient(145deg, rgba(248, 255, 210, 0.9), rgba(250, 252, 247, 0.88));
-}
 
 .learnings-stat-card p {
-  color: rgba(23, 28, 25, 0.58);
-  font-size: 10px;
+  margin: 0 0 10px;
+  color: #202621;
+  font-size: 11px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin: 0 0 6px;
 }
 
 .learnings-stat-card strong {
+  display: block;
   font-size: 22px;
   font-weight: 600;
-  letter-spacing: -0.03em;
+  line-height: 1;
+  letter-spacing: -0.04em;
   color: #101312;
 }
 
 .learnings-stat-card small {
-  display: block;
-  margin-top: 4px;
-  color: #526057;
-  font-size: 11px;
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(23, 28, 25, 0.5);
+  margin-left: 4px;
 }
 
 .learnings-focus-stack {
@@ -680,15 +706,35 @@
     align-items: stretch;
     margin-bottom: 16px;
     gap: 14px;
+    padding: 0;
+  }
+
+  .learnings-date-trigger {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .learnings-date-trigger-text {
+    min-width: 0;
+  }
+
+  .learnings-date-title-wrap {
+    justify-content: center;
   }
 
   .learnings-date-trigger strong {
     font-size: 20px;
     letter-spacing: -0.03em;
+    white-space: normal;
   }
 
   .learnings-date-trigger-sub {
-    display: none;
+    display: block;
+    margin-top: 6px;
+    font-size: 10px;
+    line-height: 1.35;
+    letter-spacing: 0.1em;
   }
 
   .learnings-header-actions {
@@ -724,6 +770,15 @@
 
   .learnings-stat-card {
     padding: 14px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    min-height: 100px;
+  }
+
+  .learnings-stat-icon {
+    margin: 0 auto 12px;
   }
 
   .learnings-stat-card strong {
@@ -1640,4 +1695,3 @@
     display: flex;
   }
 }
-

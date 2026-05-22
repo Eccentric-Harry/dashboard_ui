@@ -47,6 +47,14 @@ export interface Subscription {
 
 export const financeMetrics: FinanceMetric[] = [
   {
+    label: 'Monthly Savings',
+    value: '₹7,21,480',
+    cents: '',
+    change: '+8.3%',
+    tone: 'positive',
+    icon: PiggyBank,
+  },
+  {
     label: 'Monthly Income',
     value: '₹5,53,600',
     cents: '',
@@ -62,15 +70,8 @@ export const financeMetrics: FinanceMetric[] = [
     tone: 'negative',
     icon: ArrowDownLeft,
   },
-  {
-    label: 'Monthly Savings',
-    value: '₹7,21,480',
-    cents: '',
-    change: '+8.3%',
-    tone: 'positive',
-    icon: PiggyBank,
-  },
 ]
+
 
 export const spendingCategories: SpendingCategory[] = [
   { label: 'Food & Dining', value: '₹6,500', share: '32%', tone: '#10201a', icon: Coffee },

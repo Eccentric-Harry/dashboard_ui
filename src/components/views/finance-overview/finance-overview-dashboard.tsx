@@ -81,6 +81,14 @@ function FinanceOverviewDashboard() {
 
     return [
       {
+        label: 'Monthly Savings',
+        value: `₹${monthlySavings.toLocaleString()}`,
+        cents: '',
+        change: '',
+        tone: 'positive' as const,
+        icon: PiggyBank,
+      },
+      {
         label: 'Monthly Income',
         value: `₹${totalIncome.toLocaleString()}`,
         cents: '',
@@ -95,14 +103,6 @@ function FinanceOverviewDashboard() {
         change: '',
         tone: 'negative' as const,
         icon: ArrowDownLeft,
-      },
-      {
-        label: 'Monthly Savings',
-        value: `₹${monthlySavings.toLocaleString()}`,
-        cents: '',
-        change: '',
-        tone: 'positive' as const,
-        icon: PiggyBank,
       },
     ]
   }, [logs, selectedMonthKey])
@@ -190,10 +190,12 @@ function FinanceOverviewDashboard() {
     <section className="finance-dashboard" aria-label="Finance overview dashboard">
       <FinanceHeader onAddClick={() => setIsAddModalOpen(true)} />
       <div className="finance-dashboard-grid">
-        <BalanceSummaryCard />
-        {metrics.map((metric) => (
-          <MetricCard key={metric.label} metric={metric} />
-        ))}
+        <div className="finance-stats-row">
+          <BalanceSummaryCard />
+          {metrics.map((metric) => (
+            <MetricCard key={metric.label} metric={metric} />
+          ))}
+        </div>
         <SpendingOverviewCard 
           logs={logs} 
           selectedCategory={selectedCategory} 

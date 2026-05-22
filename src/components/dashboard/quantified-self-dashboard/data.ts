@@ -15,7 +15,7 @@ import {
   TrendingDown,
   TrendingUp,
   Wallet,
-  BrainCircuit,
+  GraduationCap,
 } from 'lucide-react'
 
 export type AppPath = '/home' | '/finance' | '/nutrition' | '/learnings' | '/workouts'
@@ -49,7 +49,7 @@ export const navItems: DashboardNavItem[] = [
   { label: 'Finance Overview', icon: CircleDollarSign, to: '/finance' },
   { label: 'Nutrition Overview', icon: Utensils, to: '/nutrition' },
   { label: 'Workouts', icon: Dumbbell, to: '/workouts' },
-  { label: 'Learnings Map', icon: BrainCircuit, to: '/learnings' },
+  { label: 'Learnings Map', icon: GraduationCap, to: '/learnings' },
   { label: 'Adjust', icon: SlidersHorizontal, muted: true },
   { label: 'Tasks', icon: CheckSquare, muted: true },
   { label: 'People', icon: Users, muted: true },

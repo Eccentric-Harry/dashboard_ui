@@ -153,9 +153,15 @@
 }
 
 /* Stat Cards */
-.workouts-stat-card {
-  grid-column: span 3;
+.workouts-stats-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
   order: 1;
+}
+
+.workouts-stat-card {
   min-height: 128px;
   padding: 18px 18px 16px;
   position: relative;
@@ -933,13 +939,19 @@
     grid-template-columns: 1fr;
   }
 
-  .workouts-stat-card,
+  .workouts-stats-row,
   .workouts-trend-card,
   .workouts-breakdown-card,
   .workouts-log-card,
   .workouts-embed-card {
     grid-column: 1 / -1;
     order: 0;
+  }
+
+  .workouts-stats-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
   }
 
   .workouts-stat-card {

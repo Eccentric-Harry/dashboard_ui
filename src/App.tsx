@@ -56,7 +56,10 @@ function App() {
 
   // Trigger loading state on route change (pathname or search changes)
   useEffect(() => {
-    setIsTransitioning(true)
+    const handleTransition = () => {
+      setIsTransitioning(true)
+    }
+    handleTransition()
   }, [pathname, searchParams])
 
   // Manage overlay transition state
@@ -70,7 +73,10 @@ function App() {
         }, 300)
         return () => clearTimeout(timer)
       } else {
-        setShowOverlay(true)
+        const handleShowOverlay = () => {
+          setShowOverlay(true)
+        }
+        handleShowOverlay()
       }
     }
   }, [isTransitioning, activeRequests])

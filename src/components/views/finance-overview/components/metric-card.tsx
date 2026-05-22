@@ -10,17 +10,10 @@ function MetricCard({ metric }: MetricCardProps) {
   return (
     <section className="finance-card finance-metric-card">
       <div className={`finance-metric-icon ${metric.tone}`}>
-        <Icon size={14} />
+        <Icon size={15} strokeWidth={2.2} />
       </div>
       <p>{metric.label}</p>
-      <strong>
-        {metric.value}
-        <small>{metric.cents}</small>
-      </strong>
-      <div className="finance-metric-change">
-        <span className={metric.tone}>{metric.change}</span>
-        <em>vs last month</em>
-      </div>
+      <strong>{metric.value}</strong>
     </section>
   )
 }

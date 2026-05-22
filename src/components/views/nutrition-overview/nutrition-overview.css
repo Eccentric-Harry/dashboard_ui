@@ -38,11 +38,12 @@
 .nutrition-header {
   position: relative;
   display: flex;
-  height: 56px;
-  align-items: center;
+  min-height: 68px;
+  align-items: flex-start;
   justify-content: space-between;
   padding: 0 8px 0 2px;
   z-index: 8;
+  margin-bottom: 8px;
 }
 
 .nutrition-header p,
@@ -67,39 +68,72 @@
 
 .nutrition-date-picker {
   position: relative;
+  flex: 1;
+  min-width: 0;
 }
 
 .nutrition-date-trigger {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
-  max-width: min(640px, calc(100vw - 360px));
+  max-width: min(720px, calc(100vw - 340px));
   padding: 0;
   border: 0;
   background: transparent;
   color: #0d1110;
   text-align: left;
   cursor: pointer;
+  font-family: inherit;
 }
 
-.nutrition-date-trigger span,
-.nutrition-date-trigger strong,
+.nutrition-date-trigger:focus {
+  outline: none;
+}
+
+.nutrition-date-trigger:focus-visible {
+  border-radius: 8px;
+  box-shadow: 0 0 0 3px rgba(26, 122, 74, 0.16);
+}
+
+.nutrition-date-trigger > span,
 .nutrition-date-trigger small {
   display: block;
 }
 
+.nutrition-date-title-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+.nutrition-date-chevron {
+  color: rgba(23, 28, 25, 0.42);
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.2s ease;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.nutrition-date-trigger:hover .nutrition-date-chevron {
+  color: #0d1110;
+  transform: translateY(1px);
+}
+
 .nutrition-date-trigger strong {
-  overflow: hidden;
-  font-size: 34px;
+  display: inline-block;
+  min-width: 0;
+  overflow: visible;
+  font-size: 24px;
   font-weight: 500;
-  line-height: 1;
+  line-height: 1.15;
   letter-spacing: 0;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .nutrition-date-trigger small {
-  margin-top: 7px;
+  margin-top: 8px;
   color: rgba(23, 28, 25, 0.54);
   font-size: 10px;
   font-weight: 800;
@@ -107,34 +141,29 @@
   text-transform: uppercase;
 }
 
-.nutrition-date-trigger svg {
-  flex: 0 0 auto;
-  margin-top: 1px;
-}
 
 .nutrition-calendar-overlay {
   position: fixed;
   inset: 0;
-  z-index: 1050;
-  background-color: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(4px);
+  z-index: 19;
+  background: rgba(12, 16, 14, 0.12);
+  backdrop-filter: none;
 }
 
 .nutrition-calendar-popover {
   position: absolute;
-  left: 230px;
-  top: 52px;
-  width: 324px;
-  padding: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.64);
-  border-radius: 12px;
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(239, 246, 237, 0.9)),
-    rgba(250, 252, 247, 0.9);
-  box-shadow: 0 26px 58px rgba(45, 60, 48, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  left: 0;
+  top: calc(100% + 8px);
+  width: min(300px, calc(100vw - 48px));
+  min-width: min(300px, calc(100vw - 48px));
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.54);
+  border-radius: 22px;
+  background: rgba(250, 252, 247, 0.72);
+  box-shadow: 0 22px 52px rgba(45, 60, 48, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.78);
   color: #101312;
-  backdrop-filter: blur(12px);
-  z-index: 1051;
+  backdrop-filter: blur(18px);
+  z-index: 21;
 }
 
 .nutrition-calendar-head {
@@ -194,7 +223,7 @@
 
 .nutrition-calendar-weekdays {
   gap: 8px;
-  margin-top: 18px;
+  margin-top: 12px;
   color: rgba(23, 28, 25, 0.48);
   font-size: 11px;
   font-weight: 700;
@@ -212,13 +241,15 @@
 }
 
 .nutrition-calendar-grid button {
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  background: transparent;
-  color: rgba(23, 28, 25, 0.78);
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.4);
+  color: #4a5550;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 500;
+  font-family: inherit;
 }
 
 .nutrition-calendar-grid button:disabled {
@@ -227,7 +258,7 @@
 }
 
 .nutrition-calendar-grid button:not(:disabled):hover {
-  background: rgba(18, 29, 21, 0.08);
+  background: rgba(255, 255, 255, 0.72);
 }
 
 .nutrition-calendar-grid button.future {
@@ -241,9 +272,9 @@
 }
 
 .nutrition-calendar-grid button.selected {
-  background: #35b64b;
-  color: #f7fff4;
-  box-shadow: 0 9px 22px rgba(53, 182, 75, 0.3);
+  background: #1a7a4a;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(26, 122, 74, 0.3);
 }
 
 .nutrition-picked-date-backdrop {
@@ -2169,42 +2200,68 @@
 @media (max-width: 768px) {
   .nutrition-dashboard {
     position: static;
-    padding: 24px 16px 80px;
+    padding: 20px 16px 88px;
     overflow: visible;
   }
 
   .nutrition-header {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     height: auto;
-    gap: 12px;
-    margin-bottom: 8px;
+    min-height: 0;
+    gap: 14px;
+    margin-bottom: 16px;
+    padding: 0;
   }
 
+  .nutrition-date-picker,
   .nutrition-date-trigger {
+    width: 100%;
     max-width: 100%;
   }
 
+  .nutrition-date-trigger {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .nutrition-date-trigger > span {
+    min-width: 0;
+  }
+
+  .nutrition-date-title-wrap {
+    justify-content: center;
+  }
+
   .nutrition-date-trigger strong {
-    font-size: 24px;
+    font-size: 20px;
+    letter-spacing: -0.03em;
+    white-space: normal;
+  }
+
+  .nutrition-date-trigger small {
+    margin-top: 6px;
+    font-size: 10px;
+    line-height: 1.35;
+    letter-spacing: 0.1em;
   }
 
   .nutrition-calendar-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.4);
-    z-index: 199;
+    background: rgba(12, 16, 14, 0.12);
+    z-index: 19;
   }
 
   .nutrition-calendar-popover {
-    position: fixed;
-    left: 16px;
-    right: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    bottom: auto;
-    width: auto;
-    z-index: 200;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 8px);
+    transform: none;
+    width: 100%;
+    min-width: 0;
+    z-index: 21;
   }
 
   .nutrition-dashboard-grid {

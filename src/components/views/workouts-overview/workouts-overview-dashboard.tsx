@@ -45,34 +45,36 @@ function WorkoutsOverviewDashboard() {
     <section className="workouts-dashboard" aria-label="Workouts overview dashboard">
       <WorkoutsHeader onAddClick={() => setIsAddModalOpen(true)} />
       <div className="workouts-dashboard-grid">
-        <StatCard
-          label="Total Distance"
-          value={stats ? `${stats.totalDistanceKm.toFixed(1)}` : '—'}
-          unit="km"
-          icon={Activity}
-          iconClass="run"
-        />
-        <StatCard
-          label="Total Activities"
-          value={stats ? `${stats.totalActivities}` : '—'}
-          unit="sessions"
-          icon={Flame}
-          iconClass="streak"
-        />
-        <StatCard
-          label="Best 5K Pace"
-          value={stats?.best5kPaceFormatted || '—'}
-          unit="min/km"
-          icon={Timer}
-          iconClass="pace"
-        />
-        <StatCard
-          label="Total Elevation"
-          value={stats ? `${stats.totalElevationMeters.toLocaleString()}` : '—'}
-          unit="m"
-          icon={Mountain}
-          iconClass="elev"
-        />
+        <div className="workouts-stats-row">
+          <StatCard
+            label="Total Distance"
+            value={stats ? `${stats.totalDistanceKm.toFixed(1)}` : '—'}
+            unit="km"
+            icon={Activity}
+            iconClass="run"
+          />
+          <StatCard
+            label="Total Activities"
+            value={stats ? `${stats.totalActivities}` : '—'}
+            unit="sessions"
+            icon={Flame}
+            iconClass="streak"
+          />
+          <StatCard
+            label="Best 5K Pace"
+            value={stats?.best5kPaceFormatted || '—'}
+            unit="min/km"
+            icon={Timer}
+            iconClass="pace"
+          />
+          <StatCard
+            label="Total Elevation"
+            value={stats ? `${stats.totalElevationMeters.toLocaleString()}` : '—'}
+            unit="m"
+            icon={Mountain}
+            iconClass="elev"
+          />
+        </div>
         <ActivityLogCard 
           activities={activities} 
           loading={loading} 
