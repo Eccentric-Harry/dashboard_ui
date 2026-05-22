@@ -269,8 +269,8 @@
 }
 
 .learnings-stat-icon--tasks {
-  background: rgba(79, 70, 229, 0.12);
-  color: #4f46e5;
+  background: rgba(53, 182, 75, 0.14);
+  color: #1a7a4a;
 }
 
 .learnings-stat-icon--streak {
@@ -856,12 +856,16 @@
 }
 
 .learnings-tasks-card-premium {
-  background: linear-gradient(135deg, rgba(245, 245, 253, 0.75) 0%, rgba(251, 251, 253, 0.9) 100%) !important;
-  backdrop-filter: blur(16px) saturate(130%);
-  border: 1px solid rgba(79, 70, 229, 0.08) !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.84), rgba(239, 246, 237, 0.7)), rgba(250, 252, 247, 0.72) !important;
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.54) !important;
   border-radius: 20px !important;
   padding: 24px !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.015), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.05),
+    0 24px 64px rgba(0, 0, 0, 0.04),
+    inset 0 1px 1px rgba(255, 255, 255, 0.7) !important;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
@@ -869,7 +873,7 @@
   display: inline;
   margin-right: 8px;
   vertical-align: -3px;
-  color: #4f46e5;
+  color: #1a7a4a;
 }
 
 .learnings-card-subtitle {
@@ -901,7 +905,7 @@
 }
 
 .tasks-progress-ring-bg {
-  stroke: rgba(79, 70, 229, 0.08);
+  stroke: rgba(26, 122, 74, 0.1);
 }
 
 .tasks-progress-ring-fill {
@@ -922,54 +926,57 @@
 .tasks-progress-ring-text .percent {
   font-size: 14px;
   font-weight: 800;
-  color: #4f46e5;
+  color: #1a7a4a;
   letter-spacing: -0.02em;
   transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s ease;
 }
 
 .tasks-progress-ring-container:hover .tasks-progress-ring-text .percent {
   transform: scale(1.08);
-  color: #6366f1;
+  color: #106c3d;
 }
 
 .learnings-tasks-list-premium {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 
 .learnings-task-item-premium {
-  display: flex;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 14px;
-  padding: 12px 16px;
-  border-radius: 14px;
-  background: #ffffff !important;
-  border: 1px solid rgba(79, 70, 229, 0.06) !important;
+  gap: 16px;
+  min-height: 76px;
+  padding: 14px 18px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72) !important;
+  border: 1px solid rgba(255, 255, 255, 0.82) !important;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
-  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.02), 0 1px 2px rgba(0, 0, 0, 0.01) !important;
+  box-shadow:
+    0 10px 24px rgba(45, 60, 48, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
 }
 
 .learnings-task-item-premium:hover {
   transform: translateY(-2px);
   background: #ffffff !important;
-  border-color: rgba(79, 70, 229, 0.25) !important;
-  box-shadow: 0 10px 25px rgba(79, 70, 229, 0.08), 0 2px 4px rgba(79, 70, 229, 0.02) !important;
+  border-color: rgba(53, 182, 75, 0.24) !important;
+  box-shadow: 0 16px 32px rgba(45, 60, 48, 0.08), inset 0 1px 0 #fff !important;
 }
 
 .learnings-task-item-premium.is-completed {
-  background: rgba(255, 255, 255, 0.45) !important;
-  opacity: 0.75;
+  background: rgba(255, 255, 255, 0.56) !important;
+  opacity: 0.82;
   border-color: rgba(255, 255, 255, 0.5) !important;
-  box-shadow: none !important;
 }
 
 .learnings-task-check-premium {
-  width: 22px;
-  height: 22px;
-  border-radius: 7px;
-  border: 2px solid rgba(79, 70, 229, 0.25);
-  background: #ffffff;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  border: 1px solid rgba(26, 122, 74, 0.14);
+  background: rgba(231, 250, 238, 0.76);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -980,15 +987,15 @@
 }
 
 .learnings-task-check-premium:hover {
-  border-color: #4f46e5;
+  border-color: rgba(26, 122, 74, 0.34);
   transform: scale(1.05);
 }
 
 .learnings-task-check-premium.checked {
-  background: #4f46e5;
-  border-color: #4f46e5;
+  background: #1a7a4a;
+  border-color: #1a7a4a;
   color: #ffffff;
-  box-shadow: 0 3px 8px rgba(79, 70, 229, 0.25);
+  box-shadow: 0 8px 18px rgba(26, 122, 74, 0.2);
 }
 
 .learnings-task-content-premium {
@@ -1001,21 +1008,21 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  width: 58px;
-  height: 26px;
+  min-width: 96px;
+  height: 32px;
   flex-shrink: 0;
 }
 
 .learnings-task-time-premium {
   position: absolute;
   right: 0;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
-  color: #4f46e5;
-  background: rgba(79, 70, 229, 0.06);
-  padding: 3px 8px;
-  border-radius: 6px;
-  border: 1px solid rgba(79, 70, 229, 0.12);
+  color: #1a7a4a;
+  background: rgba(53, 182, 75, 0.12);
+  padding: 6px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(53, 182, 75, 0.16);
   text-transform: uppercase;
   letter-spacing: 0.02em;
   white-space: nowrap;
@@ -1026,16 +1033,19 @@
 }
 
 .learnings-task-title-premium {
-  font-size: 14px;
+  display: block;
+  font-size: 15px;
   font-weight: 700;
-  color: #1e293b;
+  color: #101312;
+  line-height: 1.35;
   letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
 }
 
 .is-completed .learnings-task-title-premium {
   text-decoration: line-through;
-  text-decoration-color: rgba(79, 70, 229, 0.2);
-  color: #94a3b8;
+  text-decoration-color: rgba(26, 122, 74, 0.32);
+  color: rgba(23, 28, 25, 0.44);
   font-weight: 500;
 }
 
@@ -1080,9 +1090,9 @@
 }
 
 .learnings-icon-btn-premium.edit:hover {
-  background: rgba(79, 70, 229, 0.08);
-  color: #4f46e5;
-  border-color: rgba(79, 70, 229, 0.15);
+  background: rgba(53, 182, 75, 0.1);
+  color: #1a7a4a;
+  border-color: rgba(53, 182, 75, 0.18);
   transform: translateY(-1px);
 }
 
@@ -1659,15 +1669,15 @@
 
 /* Option branding */
 .learnings-fab-option-btn.task .learnings-fab-option-icon {
-  color: #4f46e5;
-  border: 1px solid rgba(79, 70, 229, 0.08);
+  color: #1a7a4a;
+  border: 1px solid rgba(26, 122, 74, 0.08);
 }
 
 .learnings-fab-option-btn.task:hover .learnings-fab-option-icon {
-  background: #4f46e5;
+  background: #1a7a4a;
   color: #ffffff;
   transform: scale(1.08);
-  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.25);
+  box-shadow: 0 6px 16px rgba(26, 122, 74, 0.25);
 }
 
 .learnings-fab-option-btn.learning .learnings-fab-option-icon {

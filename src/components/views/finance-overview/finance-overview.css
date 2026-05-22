@@ -960,6 +960,15 @@
   gap: 16px;
 }
 
+.add-tx-category-date-row {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: end;
+}
+
+.add-tx-category-date-row .form-group {
+  min-width: 0;
+}
+
 .form-row-macros {
   display: grid;
   grid-template-columns: 0.85fr 1.15fr;
@@ -1277,6 +1286,18 @@
     gap: 16px;
   }
 
+  .add-tx-category-date-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .add-tx-category-date-row input,
+  .add-tx-category-date-row select {
+    padding-left: 12px;
+    padding-right: 34px;
+    font-size: 13px;
+  }
+
   .form-row-macros {
     grid-template-columns: 0.85fr 1.15fr;
     gap: 12px;
@@ -1323,4 +1344,3 @@
     height: auto;
   }
 }
-

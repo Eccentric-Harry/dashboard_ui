@@ -39,9 +39,9 @@ export function getCategoryStyle(category: string) {
   }
   if (cat === 'personal') {
     return {
-      bg: 'rgba(99, 102, 241, 0.08)',
-      color: '#4f46e5',
-      border: '1px solid rgba(99, 102, 241, 0.15)',
+      bg: 'rgba(14, 165, 233, 0.08)',
+      color: '#0369a1',
+      border: '1px solid rgba(14, 165, 233, 0.16)',
     }
   }
   return {

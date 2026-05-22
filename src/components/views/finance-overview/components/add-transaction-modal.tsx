@@ -159,16 +159,7 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, isEdit, initia
             />
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Category</label>
-              <select value={category} onChange={(e) => setCategory(e.target.value)}>
-                {CATEGORIES.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            </div>
-
+          <div className="form-row add-tx-category-date-row">
             <div className="form-group">
               <label>Date</label>
               <input 
@@ -176,6 +167,15 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, isEdit, initia
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
               />
+            </div>
+
+            <div className="form-group">
+              <label>Category</label>
+              <select value={category} onChange={(e) => setCategory(e.target.value)}>
+                {CATEGORIES.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
             </div>
           </div>
 

@@ -219,38 +219,38 @@
 }
 
 /* ==========================================================================
-   PURPLE THEME OVERRIDES FOR TASKS MODAL
+   TASKS MODAL THEME OVERRIDES
    ========================================================================== */
 
 .learning-modal-backdrop.is-tasks-theme .learning-modal-popover {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(245, 245, 253, 0.85)), rgba(250, 251, 253, 0.9) !important;
-  border: 1px solid rgba(79, 70, 229, 0.08) !important;
-  box-shadow: 0 24px 48px rgba(79, 70, 229, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.86) !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(239, 246, 237, 0.86)), rgba(250, 252, 247, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.58) !important;
+  box-shadow: 0 24px 48px rgba(45, 60, 48, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.86) !important;
 }
 
 .learning-modal-backdrop.is-tasks-theme .learning-modal-close {
-  background: rgba(79, 70, 229, 0.06) !important;
-  color: rgba(79, 70, 229, 0.7) !important;
+  background: rgba(18, 29, 21, 0.06) !important;
+  color: rgba(16, 19, 18, 0.62) !important;
 }
 
 .learning-modal-backdrop.is-tasks-theme .learning-modal-close:hover {
-  background: rgba(79, 70, 229, 0.12) !important;
-  color: #4f46e5 !important;
+  background: rgba(18, 29, 21, 0.1) !important;
+  color: #101312 !important;
 }
 
 .learning-modal-backdrop.is-tasks-theme .learning-modal-form input:focus,
 .learning-modal-backdrop.is-tasks-theme .learning-modal-form select:focus,
 .learning-modal-backdrop.is-tasks-theme .learning-modal-form textarea:focus {
-  border-color: #4f46e5 !important;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15) !important;
+  border-color: #35b64b !important;
+  box-shadow: 0 0 0 3px rgba(53, 182, 75, 0.15) !important;
 }
 
 .learning-modal-backdrop.is-tasks-theme .learning-modal-submit {
-  background: #4f46e5 !important;
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2) !important;
+  background: #101312 !important;
+  box-shadow: 0 4px 12px rgba(16, 19, 18, 0.18) !important;
 }
 
 .learning-modal-backdrop.is-tasks-theme .learning-modal-submit:hover:not(:disabled) {
-  background: #3730a3 !important;
-  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.3) !important;
+  background: #232d28 !important;
+  box-shadow: 0 6px 16px rgba(17, 21, 20, 0.24) !important;
 }

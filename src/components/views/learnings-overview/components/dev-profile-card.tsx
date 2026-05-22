@@ -224,7 +224,7 @@ export function DevProfileCard() {
                   <span>Repos</span>
                 </div>
                 <div className="dev-gh-stat">
-                  <Users size={14} className="dev-gh-stat-icon" style={{ color: '#4f46e5' }} />
+                  <Users size={14} className="dev-gh-stat-icon" style={{ color: '#0369a1' }} />
                   <strong>{github.followers}</strong>
                   <span>Followers</span>
                 </div>

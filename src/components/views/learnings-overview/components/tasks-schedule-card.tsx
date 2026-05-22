@@ -93,11 +93,11 @@ export function TasksScheduleCard({
             <svg className="tasks-progress-ring" width="68" height="68">
               <defs>
                 <linearGradient id="tasksProgressGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#818cf8" />
-                  <stop offset="100%" stopColor="#4f46e5" />
+                  <stop offset="0%" stopColor="#35b64b" />
+                  <stop offset="100%" stopColor="#1a7a4a" />
                 </linearGradient>
                 <filter id="tasksProgressGlow" x="-30%" y="-30%" width="160%" height="160%">
-                  <feDropShadow dx="0" dy="2" stdDeviation="4" floodColor="#4f46e5" floodOpacity="0.3" />
+                  <feDropShadow dx="0" dy="2" stdDeviation="4" floodColor="#1a7a4a" floodOpacity="0.24" />
                 </filter>
               </defs>
               <circle
