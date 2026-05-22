@@ -69,7 +69,7 @@ export function TasksScheduleCard({
   const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
 
   // SVG Progress Ring calculations
-  const radius = 20
+  const radius = 28
   const circumference = 2 * Math.PI * radius
   const strokeDashoffset = circumference - (progressPercent / 100) * circumference
 
@@ -90,22 +90,31 @@ export function TasksScheduleCard({
         </div>
         {totalCount > 0 && (
           <div className="tasks-progress-ring-container" title={`${progressPercent}% completed`}>
-            <svg className="tasks-progress-ring" width="48" height="48">
+            <svg className="tasks-progress-ring" width="68" height="68">
+              <defs>
+                <linearGradient id="tasksProgressGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#818cf8" />
+                  <stop offset="100%" stopColor="#4f46e5" />
+                </linearGradient>
+                <filter id="tasksProgressGlow" x="-30%" y="-30%" width="160%" height="160%">
+                  <feDropShadow dx="0" dy="2" stdDeviation="4" floodColor="#4f46e5" floodOpacity="0.3" />
+                </filter>
+              </defs>
               <circle
                 className="tasks-progress-ring-bg"
-                strokeWidth="4"
+                strokeWidth="5"
                 fill="transparent"
                 r={radius}
-                cx="24"
-                cy="24"
+                cx="34"
+                cy="34"
               />
               <circle
                 className="tasks-progress-ring-fill"
-                strokeWidth="4"
+                strokeWidth="5"
                 fill="transparent"
                 r={radius}
-                cx="24"
-                cy="24"
+                cx="34"
+                cy="34"
                 strokeDasharray={circumference}
                 strokeDashoffset={strokeDashoffset}
                 strokeLinecap="round"

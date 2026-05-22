@@ -85,6 +85,7 @@
 
 .learning-modal-form input[type="text"],
 .learning-modal-form input[type="date"],
+.learning-modal-form input[type="time"],
 .learning-modal-form select,
 .learning-modal-form textarea {
   height: 38px;
@@ -213,7 +214,43 @@
   }
   
   .learning-modal-form .form-row {
-    grid-template-columns: 1fr;
     gap: 16px;
   }
+}
+
+/* ==========================================================================
+   PURPLE THEME OVERRIDES FOR TASKS MODAL
+   ========================================================================== */
+
+.learning-modal-backdrop.is-tasks-theme .learning-modal-popover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(245, 245, 253, 0.85)), rgba(250, 251, 253, 0.9) !important;
+  border: 1px solid rgba(79, 70, 229, 0.08) !important;
+  box-shadow: 0 24px 48px rgba(79, 70, 229, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.86) !important;
+}
+
+.learning-modal-backdrop.is-tasks-theme .learning-modal-close {
+  background: rgba(79, 70, 229, 0.06) !important;
+  color: rgba(79, 70, 229, 0.7) !important;
+}
+
+.learning-modal-backdrop.is-tasks-theme .learning-modal-close:hover {
+  background: rgba(79, 70, 229, 0.12) !important;
+  color: #4f46e5 !important;
+}
+
+.learning-modal-backdrop.is-tasks-theme .learning-modal-form input:focus,
+.learning-modal-backdrop.is-tasks-theme .learning-modal-form select:focus,
+.learning-modal-backdrop.is-tasks-theme .learning-modal-form textarea:focus {
+  border-color: #4f46e5 !important;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15) !important;
+}
+
+.learning-modal-backdrop.is-tasks-theme .learning-modal-submit {
+  background: #4f46e5 !important;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2) !important;
+}
+
+.learning-modal-backdrop.is-tasks-theme .learning-modal-submit:hover:not(:disabled) {
+  background: #3730a3 !important;
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.3) !important;
 }

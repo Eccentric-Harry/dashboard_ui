@@ -5,20 +5,33 @@ import { addTask, updateTask } from '../../../../lib/api'
 import type { DailyTask } from '../../../../lib/api'
 import './add-learning-modal.css'
 
-const TIME_OPTIONS = [
-  '',
-  '08:00 AM',
-  '09:00 AM',
-  '10:00 AM',
-  '11:00 AM',
-  '12:00 PM',
-  '01:00 PM',
-  '02:00 PM',
-  '03:00 PM',
-  '04:00 PM',
-  '05:00 PM',
-  '06:00 PM',
-]
+function formatTimeTo12Hour(time24: string): string {
+  if (!time24) return ''
+  const [hourStr, minStr] = time24.split(':')
+  const hour = parseInt(hourStr, 10)
+  const min = parseInt(minStr, 10)
+  const period = hour >= 12 ? 'PM' : 'AM'
+  const displayHour = hour % 12 === 0 ? 12 : hour % 12
+  const formattedHour = displayHour.toString().padStart(2, '0')
+  const formattedMin = min.toString().padStart(2, '0')
+  return `${formattedHour}:${formattedMin} ${period}`
+}
+
+function formatTimeTo24Hour(time12: string): string {
+  if (!time12) return ''
+  if (/^\d{2}:\d{2}$/.test(time12)) return time12
+  
+  const match = time12.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i)
+  if (!match) return ''
+  let hour = parseInt(match[1], 10)
+  const min = match[2]
+  const period = match[3].toUpperCase()
+  
+  if (period === 'PM' && hour < 12) hour += 12
+  if (period === 'AM' && hour === 12) hour = 0
+  
+  return `${hour.toString().padStart(2, '0')}:${min}`
+}
 
 interface AddTaskModalProps {
   isOpen: boolean
@@ -49,7 +62,7 @@ export function AddTaskModal({
       setError('')
       if (isEdit && initialData) {
         setTitle(initialData.title)
-        setScheduledTime(initialData.scheduledTime || '')
+        setScheduledTime(initialData.scheduledTime ? formatTimeTo24Hour(initialData.scheduledTime) : '')
         setNotes(initialData.notes || '')
         setDate(initialData.date)
       } else {
@@ -75,7 +88,7 @@ export function AddTaskModal({
       const payload = {
         title: title.trim(),
         date,
-        scheduledTime: scheduledTime || undefined,
+        scheduledTime: scheduledTime ? formatTimeTo12Hour(scheduledTime) : undefined,
         notes: notes.trim() || undefined,
         completed: initialData?.completed ?? false,
       }
@@ -99,7 +112,7 @@ export function AddTaskModal({
   }
 
   return (
-    <div className="learning-modal-backdrop" role="presentation" onClick={onClose}>
+    <div className="learning-modal-backdrop is-tasks-theme" role="presentation" onClick={onClose}>
       <div
         className="learning-modal-popover"
         role="dialog"
@@ -128,18 +141,12 @@ export function AddTaskModal({
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="task-time">Time (optional)</label>
-              <select
+              <input
                 id="task-time"
+                type="time"
                 value={scheduledTime}
                 onChange={(e) => setScheduledTime(e.target.value)}
-              >
-                <option value="">No specific time</option>
-                {TIME_OPTIONS.filter(Boolean).map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             <div className="form-group">
