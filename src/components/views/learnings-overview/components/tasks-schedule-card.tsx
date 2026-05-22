@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Check, Loader2, Pencil, Trash2, Clock } from 'lucide-react'
+import { Check, Loader2, Pencil, Trash2, ListTodo } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { fetchTasks, toggleTask, deleteTask } from '../../../../lib/api'
 import type { DailyTask } from '../../../../lib/api'
@@ -21,6 +21,7 @@ export function TasksScheduleCard({
   const [tasks, setTasks] = useState<DailyTask[]>([])
   const [loading, setLoading] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<DailyTask | null>(null)
+  const [activeTaskId, setActiveTaskId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -36,6 +37,7 @@ export function TasksScheduleCard({
 
   useEffect(() => {
     load()
+    setActiveTaskId(null)
   }, [load, refreshKey])
 
   const handleToggle = async (task: DailyTask) => {
@@ -66,37 +68,55 @@ export function TasksScheduleCard({
   const totalCount = tasks.length
   const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
 
+  // SVG Progress Ring calculations
+  const radius = 20
+  const circumference = 2 * Math.PI * radius
+  const strokeDashoffset = circumference - (progressPercent / 100) * circumference
+
   return (
     <section className="learnings-card learnings-tasks-card-premium">
       <div className="learnings-card-header-flex">
         <div>
           <p className="learnings-card-eyebrow">Schedule</p>
           <h3 className="learnings-card-title">
-            <Clock size={16} className="title-icon" />
+            <ListTodo size={16} className="title-icon" />
             Tasks for the day
           </h3>
+          {totalCount > 0 && (
+            <p className="learnings-card-subtitle">
+              {completedCount} of {totalCount} completed
+            </p>
+          )}
         </div>
         {totalCount > 0 && (
-          <span className="premium-progress-badge">
-            {progressPercent}% Done
-          </span>
+          <div className="tasks-progress-ring-container" title={`${progressPercent}% completed`}>
+            <svg className="tasks-progress-ring" width="48" height="48">
+              <circle
+                className="tasks-progress-ring-bg"
+                strokeWidth="4"
+                fill="transparent"
+                r={radius}
+                cx="24"
+                cy="24"
+              />
+              <circle
+                className="tasks-progress-ring-fill"
+                strokeWidth="4"
+                fill="transparent"
+                r={radius}
+                cx="24"
+                cy="24"
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeDashoffset}
+                strokeLinecap="round"
+              />
+            </svg>
+            <div className="tasks-progress-ring-text">
+              <span className="percent">{progressPercent}%</span>
+            </div>
+          </div>
         )}
       </div>
-
-      {totalCount > 0 && (
-        <div className="learnings-progress-wrapper">
-          <div className="learnings-progress-text-flex">
-            <span className="learnings-progress-label">Completion progress</span>
-            <span className="learnings-progress-value">{completedCount} of {totalCount} tasks completed</span>
-          </div>
-          <div className="learnings-progress-track">
-            <div
-              className="learnings-progress-bar"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
-        </div>
-      )}
 
       {loading ? (
         <div className="learnings-loading" style={{ marginTop: 24 }}>
@@ -105,48 +125,67 @@ export function TasksScheduleCard({
         </div>
       ) : tasks.length === 0 ? (
         <p className="learnings-empty" style={{ marginTop: 18 }}>
-          No tasks scheduled. Add one from the header action.
+          No tasks scheduled. Add one to get started.
         </p>
       ) : (
         <div className="learnings-tasks-list-premium" style={{ marginTop: 18 }}>
           {tasks.map((task) => (
             <div
               key={task.id}
-              className={`learnings-task-item-premium ${task.completed ? 'is-completed' : ''}`}
+              className={`learnings-task-item-premium ${task.completed ? 'is-completed' : ''} ${
+                activeTaskId === task.id ? 'actions-visible' : ''
+              }`}
+              onClick={() => {
+                setActiveTaskId(activeTaskId === task.id ? null : (task.id ?? null))
+              }}
             >
               <button
                 type="button"
                 className={`learnings-task-check-premium ${task.completed ? 'checked' : ''}`}
-                onClick={() => handleToggle(task)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleToggle(task)
+                }}
                 aria-label={task.completed ? 'Mark incomplete' : 'Mark complete'}
               >
                 {task.completed && <Check size={12} strokeWidth={3} />}
               </button>
               
               <div className="learnings-task-content-premium">
-                {task.scheduledTime && (
-                  <span className="learnings-task-time-premium">{task.scheduledTime}</span>
-                )}
                 <span className="learnings-task-title-premium">{task.title}</span>
               </div>
+              
+              <div className="learnings-task-right-wrap" onClick={(e) => e.stopPropagation()}>
+                {task.scheduledTime && (
+                  <span className="learnings-task-time-premium">
+                    {task.scheduledTime}
+                  </span>
+                )}
 
-              <div className="learnings-task-actions-premium">
-                <button
-                  type="button"
-                  className="learnings-icon-btn-premium edit"
-                  onClick={() => onEditTask(task)}
-                  aria-label="Edit task"
-                >
-                  <Pencil size={11} />
-                </button>
-                <button
-                  type="button"
-                  className="learnings-icon-btn-premium delete"
-                  onClick={() => setDeleteTarget(task)}
-                  aria-label="Delete task"
-                >
-                  <Trash2 size={11} />
-                </button>
+                <div className="learnings-task-actions-premium">
+                  <button
+                    type="button"
+                    className="learnings-icon-btn-premium edit"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onEditTask(task)
+                    }}
+                    aria-label="Edit task"
+                  >
+                    <Pencil size={11} />
+                  </button>
+                  <button
+                    type="button"
+                    className="learnings-icon-btn-premium delete"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setDeleteTarget(task)
+                    }}
+                    aria-label="Delete task"
+                  >
+                    <Trash2 size={11} />
+                  </button>
+                </div>
               </div>
             </div>
           ))}

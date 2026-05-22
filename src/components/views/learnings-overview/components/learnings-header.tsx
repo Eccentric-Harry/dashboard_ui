@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ChevronDown, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, Plus, ListTodo, BookOpen } from 'lucide-react'
 import type { AppPath } from '../../../dashboard/quantified-self-dashboard/data'
 import type { LearningsSummary } from '../../../../lib/api'
 import { formatHeaderDate, isoDate, parseIsoDate } from '../learnings-utils'
@@ -23,6 +23,7 @@ export function LearningsHeader({
 }: LearningsHeaderProps) {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
   const [visibleMonth, setVisibleMonth] = useState(() => parseIsoDate(selectedDate))
+  const [isFabOpen, setIsFabOpen] = useState(false)
 
   useEffect(() => {
     setVisibleMonth(parseIsoDate(selectedDate))
@@ -136,6 +137,54 @@ export function LearningsHeader({
         <button type="button" className="learnings-add-btn primary" onClick={onAddLearning}>
           <Plus size={14} strokeWidth={3} />
           <span>Learning</span>
+        </button>
+      </div>
+
+      {/* Floating Action Button (FAB) for Mobile View */}
+      <div className={`learnings-fab-container ${isFabOpen ? 'is-open' : ''}`}>
+        {isFabOpen && (
+          <div
+            className="learnings-fab-backdrop"
+            role="presentation"
+            onClick={() => setIsFabOpen(false)}
+          />
+        )}
+        <div className="learnings-fab-options">
+          <button
+            type="button"
+            className="learnings-fab-option-btn task"
+            onClick={() => {
+              onAddTask()
+              setIsFabOpen(false)
+            }}
+          >
+            <span className="learnings-fab-option-label">Add Task</span>
+            <div className="learnings-fab-option-icon">
+              <ListTodo size={16} />
+            </div>
+          </button>
+          <button
+            type="button"
+            className="learnings-fab-option-btn learning"
+            onClick={() => {
+              onAddLearning()
+              setIsFabOpen(false)
+            }}
+          >
+            <span className="learnings-fab-option-label">Add Learning</span>
+            <div className="learnings-fab-option-icon">
+              <BookOpen size={16} />
+            </div>
+          </button>
+        </div>
+        <button
+          type="button"
+          className="learnings-fab-trigger"
+          onClick={() => setIsFabOpen((prev) => !prev)}
+          aria-expanded={isFabOpen}
+          aria-label="Add item"
+        >
+          <Plus size={24} className="fab-plus-icon" />
         </button>
       </div>
     </header>

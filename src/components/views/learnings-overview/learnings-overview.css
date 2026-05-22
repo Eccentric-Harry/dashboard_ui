@@ -499,16 +499,55 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  font-size: 10px;
-  font-weight: 600;
-  color: #526057;
-  transition: transform 0.15s ease;
+  gap: 3px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.03);
 }
 
-.learnings-heatmap-cell span:last-child {
+.learnings-heatmap-cell:hover {
+  transform: scale(1.08) translateY(-1px);
+  box-shadow: 0 4px 12px rgba(13, 107, 58, 0.18);
+  cursor: pointer;
+  z-index: 2;
+  border-color: rgba(13, 107, 58, 0.3);
+}
+
+.heatmap-cell-weekday {
   font-size: 9px;
-  opacity: 0.8;
+  font-weight: 700;
+  color: rgba(23, 28, 25, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.heatmap-cell-value {
+  font-size: 11px;
+  font-weight: 800;
+  color: #0d6b3a;
+}
+
+.learnings-heatmap-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 14px;
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(23, 28, 25, 0.54);
+}
+
+.learnings-heatmap-legend-colors {
+  display: flex;
+  gap: 3px;
+}
+
+.legend-color-box {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 .learnings-empty {
@@ -754,6 +793,13 @@
    ========================================================================== */
 
 /* Tasks Schedule Card Premium Styles */
+.learnings-card-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+}
+
 .learnings-tasks-card-premium {
   background: linear-gradient(135deg, rgba(245, 245, 253, 0.75) 0%, rgba(251, 251, 253, 0.9) 100%) !important;
   backdrop-filter: blur(16px) saturate(130%);
@@ -771,60 +817,48 @@
   color: #4f46e5;
 }
 
-.premium-progress-badge {
-  background: rgba(79, 70, 229, 0.08);
-  color: #4f46e5;
-  font-size: 11.5px;
-  font-weight: 900;
-  text-transform: uppercase;
-  padding: 4px 12px;
-  border-radius: 12px;
-  letter-spacing: 0.06em;
-  border: 1px solid rgba(79, 70, 229, 0.15);
+.learnings-card-subtitle {
+  font-size: 12px;
+  color: rgba(30, 41, 59, 0.6);
+  font-weight: 500;
+  margin-top: 2px !important;
 }
 
-.learnings-progress-wrapper {
-  margin-top: 18px;
-  margin-bottom: 6px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-}
-
-.learnings-progress-text-flex {
+.tasks-progress-ring-container {
+  position: relative;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
 }
 
-.learnings-progress-label {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: rgba(23, 28, 25, 0.54);
-  letter-spacing: 0.05em;
+.tasks-progress-ring {
+  transform: rotate(-90deg);
 }
 
-.learnings-progress-value {
+.tasks-progress-ring-bg {
+  stroke: rgba(79, 70, 229, 0.08);
+}
+
+.tasks-progress-ring-fill {
+  stroke: #4f46e5;
+  transition: stroke-dashoffset 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tasks-progress-ring-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tasks-progress-ring-text .percent {
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   color: #4f46e5;
-}
-
-.learnings-progress-track {
-  height: 5px;
-  border-radius: 99px;
-  background: rgba(0, 0, 0, 0.04);
-  overflow: hidden;
-}
-
-.learnings-progress-bar {
-  height: 100%;
-  border-radius: 99px;
-  background: linear-gradient(90deg, #6366f1 0%, #4f46e5 100%);
-  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .learnings-tasks-list-premium {
@@ -839,23 +873,23 @@
   gap: 14px;
   padding: 12px 16px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.6) !important;
-  border: 1px solid rgba(255, 255, 255, 0.7) !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(79, 70, 229, 0.06) !important;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.003) !important;
+  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.02), 0 1px 2px rgba(0, 0, 0, 0.01) !important;
 }
 
 .learnings-task-item-premium:hover {
-  transform: translateY(-1.5px);
+  transform: translateY(-2px);
   background: #ffffff !important;
-  border-color: rgba(79, 70, 229, 0.18) !important;
-  box-shadow: 0 8px 24px rgba(79, 70, 229, 0.04), 0 2px 6px rgba(0, 0, 0, 0.01) !important;
+  border-color: rgba(79, 70, 229, 0.25) !important;
+  box-shadow: 0 10px 25px rgba(79, 70, 229, 0.08), 0 2px 4px rgba(79, 70, 229, 0.02) !important;
 }
 
 .learnings-task-item-premium.is-completed {
-  background: rgba(255, 255, 255, 0.35) !important;
-  opacity: 0.8;
-  border-color: rgba(255, 255, 255, 0.4) !important;
+  background: rgba(255, 255, 255, 0.45) !important;
+  opacity: 0.75;
+  border-color: rgba(255, 255, 255, 0.5) !important;
   box-shadow: none !important;
 }
 
@@ -888,22 +922,36 @@
 
 .learnings-task-content-premium {
   flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 10px;
   min-width: 0;
 }
 
+.learnings-task-right-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 58px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
 .learnings-task-time-premium {
-  font-size: 10px;
-  font-weight: 800;
+  position: absolute;
+  right: 0;
+  font-size: 11px;
+  font-weight: 700;
   color: #4f46e5;
   background: rgba(79, 70, 229, 0.06);
   padding: 3px 8px;
-  border-radius: 8px;
-  border: 1px solid rgba(79, 70, 229, 0.08);
+  border-radius: 6px;
+  border: 1px solid rgba(79, 70, 229, 0.12);
   text-transform: uppercase;
   letter-spacing: 0.02em;
+  white-space: nowrap;
+  opacity: 1;
+  transform: translateX(0);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: auto;
 }
 
 .learnings-task-title-premium {
@@ -921,16 +969,28 @@
 }
 
 .learnings-task-actions-premium {
+  position: absolute;
+  right: 0;
   display: flex;
   gap: 6px;
   opacity: 0;
-  transform: translateX(6px);
-  transition: all 0.2s ease;
+  transform: translateX(8px);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
 }
 
-.learnings-task-item-premium:hover .learnings-task-actions-premium {
-  opacity: 0.85;
+.learnings-task-item-premium:hover .learnings-task-actions-premium,
+.learnings-task-item-premium.actions-visible .learnings-task-actions-premium {
+  opacity: 1;
   transform: translateX(0);
+  pointer-events: auto;
+}
+
+.learnings-task-item-premium:hover .learnings-task-time-premium,
+.learnings-task-item-premium.actions-visible .learnings-task-time-premium {
+  opacity: 0;
+  transform: translateX(-8px);
+  pointer-events: none;
 }
 
 .learnings-icon-btn-premium {
@@ -1412,6 +1472,156 @@
   }
   .dev-leet-heatmap {
     grid-template-columns: repeat(7, 1fr);
+  }
+}
+
+/* Floating Action Button (FAB) styles */
+.learnings-fab-container {
+  position: fixed;
+  bottom: 90px; /* Float above the mobile bottom nav bar, aligned with other routes */
+  right: 20px;
+  z-index: 1010; /* Sit on top of the bottom navigation bar (z-index 1000) */
+  display: none; /* Hidden on desktop */
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.learnings-fab-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.25);
+  backdrop-filter: blur(4px);
+  z-index: -1;
+  animation: learningsFabFadeIn 0.2s ease-out;
+}
+
+@keyframes learningsFabFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.learnings-fab-trigger {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #101312;
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 12px 32px rgba(16, 19, 18, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1000;
+}
+
+.learnings-fab-trigger:hover {
+  transform: scale(1.05);
+  background: #232d28;
+  box-shadow: 0 8px 20px rgba(17, 21, 20, 0.24);
+}
+
+.learnings-fab-trigger:active {
+  transform: scale(0.95);
+}
+
+.fab-plus-icon {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.learnings-fab-container.is-open .fab-plus-icon {
+  transform: rotate(135deg);
+}
+
+.learnings-fab-options {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(16px) scale(0.9);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.learnings-fab-container.is-open .learnings-fab-options {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.learnings-fab-option-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.learnings-fab-option-label {
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  white-space: nowrap;
+  transition: transform 0.2s ease;
+}
+
+.learnings-fab-option-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+}
+
+/* Option branding */
+.learnings-fab-option-btn.task .learnings-fab-option-icon {
+  color: #4f46e5;
+  border: 1px solid rgba(79, 70, 229, 0.08);
+}
+
+.learnings-fab-option-btn.task:hover .learnings-fab-option-icon {
+  background: #4f46e5;
+  color: #ffffff;
+  transform: scale(1.08);
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.25);
+}
+
+.learnings-fab-option-btn.learning .learnings-fab-option-icon {
+  color: #1a7a4a;
+  border: 1px solid rgba(26, 122, 74, 0.08);
+}
+
+.learnings-fab-option-btn.learning:hover .learnings-fab-option-icon {
+  background: #1a7a4a;
+  color: #ffffff;
+  transform: scale(1.08);
+  box-shadow: 0 6px 16px rgba(26, 122, 74, 0.25);
+}
+
+.learnings-fab-option-btn:hover .learnings-fab-option-label {
+  transform: translateX(-2px);
+}
+
+/* Responsive updates for FAB */
+@media (max-width: 768px) {
+  .learnings-header-actions {
+    display: none !important;
+  }
+  .learnings-fab-container {
+    display: flex;
   }
 }
 

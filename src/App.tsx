@@ -8,6 +8,8 @@ import { NutritionOverview } from './components/views/nutrition-view'
 import { WorkoutsOverview } from './components/views/workouts-view'
 import { DashboardProvider } from './contexts/DashboardContext'
 import { LearningsOverview } from './components/views/learnings-view'
+import { subscribeToActiveRequests } from './lib/api'
+import { OverlayLoader } from './components/ui/OverlayLoader'
 
 function normalizePathname(pathname: string): AppPath {
   if (pathname === '/home') {
@@ -40,6 +42,49 @@ function normalizePathname(pathname: string): AppPath {
 function App() {
   const [pathname, setPathname] = useState<AppPath>(() => normalizePathname(window.location.pathname))
   const [searchParams, setSearchParams] = useState(() => new URLSearchParams(window.location.search))
+
+  const [activeRequests, setActiveRequests] = useState(0)
+  const [isTransitioning, setIsTransitioning] = useState(true)
+  const [showOverlay, setShowOverlay] = useState(true)
+
+  // Track active API calls
+  useEffect(() => {
+    return subscribeToActiveRequests((count) => {
+      setActiveRequests(count)
+    })
+  }, [])
+
+  // Trigger loading state on route change (pathname or search changes)
+  useEffect(() => {
+    setIsTransitioning(true)
+  }, [pathname, searchParams])
+
+  // Manage overlay transition state
+  useEffect(() => {
+    if (isTransitioning) {
+      if (activeRequests === 0) {
+        // Debounce transition completion to prevent flickers
+        const timer = setTimeout(() => {
+          setIsTransitioning(false)
+          setShowOverlay(false)
+        }, 300)
+        return () => clearTimeout(timer)
+      } else {
+        setShowOverlay(true)
+      }
+    }
+  }, [isTransitioning, activeRequests])
+
+  // Failsafe timeout to prevent permanent lockouts (max 3 seconds)
+  useEffect(() => {
+    if (isTransitioning) {
+      const failsafe = setTimeout(() => {
+        setIsTransitioning(false)
+        setShowOverlay(false)
+      }, 3000)
+      return () => clearTimeout(failsafe)
+    }
+  }, [isTransitioning])
 
   useEffect(() => {
     const handlePopState = () => {
@@ -116,6 +161,7 @@ function App() {
         }} 
       />
       {content}
+      <OverlayLoader show={showOverlay} />
     </DashboardProvider>
   );
 }

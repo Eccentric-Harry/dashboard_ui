@@ -12,7 +12,7 @@ import { financeMetrics as fallbackMetrics } from './data'
 import { fetchDailyFinanceLogs, deleteTransaction } from '../../../lib/api'
 import type { DailyFinancialLog } from '../../../lib/api'
 import { 
-  ArrowUpRight, ArrowDownLeft, PiggyBank, Loader2
+  ArrowUpRight, ArrowDownLeft, PiggyBank
 } from 'lucide-react'
 import { getIconForCategory } from './utils'
 
@@ -184,42 +184,7 @@ function FinanceOverviewDashboard() {
     }
   }
 
-  if (loading && logs.length === 0) {
-    return (
-      <section className="finance-dashboard" aria-label="Finance overview dashboard" style={{ display: 'flex', flexDirection: 'column', minHeight: '60vh', justifyContent: 'center', alignItems: 'center' }}>
-        <div style={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
-          alignItems: 'center', 
-          gap: '20px', 
-          padding: '40px', 
-          borderRadius: '24px', 
-          background: 'rgba(255, 255, 255, 0.4)', 
-          border: '1px solid rgba(255, 255, 255, 0.6)', 
-          backdropFilter: 'blur(20px)', 
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.03)' 
-        }}>
-          <div style={{
-            position: 'relative',
-            width: '64px',
-            height: '64px',
-            borderRadius: '50%',
-            background: 'rgba(26, 122, 74, 0.06)',
-            border: '1px solid rgba(26, 122, 74, 0.1)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 20px rgba(26, 122, 74, 0.05)'
-          }}>
-            <Loader2 className="spinner animate-spin" size={28} style={{ color: '#1a7a4a' }} />
-          </div>
-          <span style={{ fontSize: '14.5px', fontWeight: 600, color: '#333b37', letterSpacing: '0.01em' }}>
-            Syncing Ledger Logs...
-          </span>
-        </div>
-      </section>
-    )
-  }
+
 
   return (
     <section className="finance-dashboard" aria-label="Finance overview dashboard">

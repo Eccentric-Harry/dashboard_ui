@@ -386,7 +386,7 @@ export interface LearningsStatsSummary {
 export interface LearningsSummary {
   date: string;
   today: LearningsTodaySummary;
-  sevenDayTimeline: LearningsTimelineDay[];
+  timeline: LearningsTimelineDay[];
   stats: LearningsStatsSummary;
 }
 
@@ -480,4 +480,42 @@ export interface DailyLog {
   newLearnings?: string[];
   moodRating?: string;
 }
+
+// Global active GET request tracking for route navigation loader
+let activeGetRequests = 0;
+const requestChangeListeners = new Set<(count: number) => void>();
+
+export function subscribeToActiveRequests(listener: (count: number) => void) {
+  requestChangeListeners.add(listener);
+  listener(activeGetRequests);
+  return () => {
+    requestChangeListeners.delete(listener);
+  };
+}
+
+if (typeof window !== 'undefined') {
+  const originalFetch = window.fetch;
+  window.fetch = async function (...args) {
+    const url = typeof args[0] === 'string' ? args[0] : args[0] instanceof URL ? args[0].href : '';
+    const options = args[1];
+    const isGet = !options || !options.method || options.method.toUpperCase() === 'GET';
+    const isLocalApi = url.includes('/api/v1/');
+
+    const shouldTrack = isGet && isLocalApi;
+    if (shouldTrack) {
+      activeGetRequests++;
+      requestChangeListeners.forEach(cb => cb(activeGetRequests));
+    }
+
+    try {
+      return await originalFetch(...args);
+    } finally {
+      if (shouldTrack) {
+        activeGetRequests--;
+        requestChangeListeners.forEach(cb => cb(activeGetRequests));
+      }
+    }
+  };
+}
+
 

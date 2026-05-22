@@ -120,7 +120,7 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
           selectedDate={selectedDate}
         />
 
-        <ActivityHeatmapCard timeline={summary?.sevenDayTimeline ?? []} />
+        <ActivityHeatmapCard timeline={summary?.timeline ?? []} />
 
         <DevProfileCard />
       </div>
