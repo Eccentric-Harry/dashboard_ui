@@ -322,7 +322,7 @@ function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
               <span>
                 <CalendarCheck size={18} />
               </span>
-              <div>
+              <div className="nutrition-picked-date-meta">
                 <p>Selected Date</p>
                 <h2>{formatHeaderDate(pickedDateObject)}</h2>
                 <small>

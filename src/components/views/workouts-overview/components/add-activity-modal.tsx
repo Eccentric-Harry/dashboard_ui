@@ -224,7 +224,7 @@ function AddActivityModal({ isOpen, onClose, onSuccess, isEdit, initialData }: A
                 <input
                   type="text"
                   required
-                  placeholder="HH:MM:SS or MM:SS"
+                  placeholder="HH:MM:SS"
                   value={formData.movingTime}
                   onChange={e => setFormData({ ...formData, movingTime: e.target.value })}
                 />

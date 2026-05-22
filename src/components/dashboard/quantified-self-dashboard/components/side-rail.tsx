@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import avatarImage from '../../../../assets/reference-crops/avatar.png'
 import { type AppPath, navItems, railBottomItems } from '../data'
 
@@ -7,10 +8,20 @@ type DashboardStageProps = {
 }
 
 function SideRail({ activePath, onNavigate }: DashboardStageProps) {
+  const mobileNavItems = navItems.filter((item) => item.to && !item.mobileHidden)
+  const activeMobileIndex = Math.max(
+    0,
+    mobileNavItems.findIndex((item) => item.to === activePath),
+  )
+  const navStyle = {
+    '--active-index': activeMobileIndex,
+    '--visible-count': mobileNavItems.length,
+  } as CSSProperties
+
   return (
     <aside className="side-rail" aria-label="Dashboard navigation">
       <img className="rail-avatar" src={avatarImage} alt="" />
-      <nav>
+      <nav style={navStyle}>
         {navItems.map((item) => {
           const { label, icon: Icon, to, muted, bubble } = item
           return (

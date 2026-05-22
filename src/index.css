@@ -1274,14 +1274,33 @@ button {
   }
 
   .side-rail nav {
-    flex-direction: row;
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(var(--visible-count), minmax(0, 1fr));
     gap: 0;
-    justify-content: space-around;
+    justify-content: stretch;
     width: 100%;
     margin-top: 0;
   }
 
+  .side-rail nav::before {
+    position: absolute;
+    top: 0;
+    left: calc((100% / var(--visible-count)) * var(--active-index) + ((100% / var(--visible-count)) - 48px) / 2);
+    width: 48px;
+    height: 48px;
+    content: '';
+    border: 0.5px solid rgba(255, 255, 255, 0.82);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.58);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    pointer-events: none;
+    transition: left 260ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
   .side-rail button {
+    z-index: 1;
+    justify-self: center;
     width: 48px;
     height: 48px;
     border-radius: 50%;
@@ -1292,10 +1311,10 @@ button {
 
   .side-rail button.active {
     color: #111514;
-    background: rgba(255, 255, 255, 0.5);
-    transform: scale(1.1) translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-    border: 0.5px solid rgba(255, 255, 255, 0.8);
+    background: transparent;
+    transform: translateY(-1px);
+    box-shadow: none;
+    border: 0;
   }
 
   .side-rail button.muted {

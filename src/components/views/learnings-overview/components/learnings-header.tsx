@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ChevronDown, ChevronLeft, ChevronRight, Plus, ListTodo, BookOpen } from 'lucide-react'
 import type { AppPath } from '../../../dashboard/quantified-self-dashboard/data'
 import type { LearningsSummary } from '../../../../lib/api'
@@ -25,11 +25,12 @@ export function LearningsHeader({
   const [visibleMonth, setVisibleMonth] = useState(() => parseIsoDate(selectedDate))
   const [isFabOpen, setIsFabOpen] = useState(false)
 
-  useEffect(() => {
-    setVisibleMonth(parseIsoDate(selectedDate))
-  }, [selectedDate])
-
   const selectedDateObject = useMemo(() => parseIsoDate(selectedDate), [selectedDate])
+
+  const openCalendar = () => {
+    setVisibleMonth(selectedDateObject)
+    setIsCalendarOpen(true)
+  }
 
   const calendarDays = useMemo(() => {
     const year = visibleMonth.getFullYear()
@@ -45,6 +46,7 @@ export function LearningsHeader({
   const handleDateSelect = (date: Date) => {
     const dateValue = isoDate(date)
     onDateChange(dateValue)
+    setVisibleMonth(date)
     setIsCalendarOpen(false)
     onNavigate?.('/learnings', `?date=${dateValue}`)
   }
@@ -57,7 +59,7 @@ export function LearningsHeader({
           className="learnings-date-trigger"
           aria-expanded={isCalendarOpen}
           aria-haspopup="dialog"
-          onClick={() => setIsCalendarOpen((o) => !o)}
+          onClick={() => (isCalendarOpen ? setIsCalendarOpen(false) : openCalendar())}
         >
           <span className="learnings-date-trigger-text">
             <span className="learnings-date-title-wrap">

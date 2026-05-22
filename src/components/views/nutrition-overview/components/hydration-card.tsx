@@ -79,7 +79,15 @@ function HydrationCard() {
           <p>Daily Hydration</p>
           <h2 style={{ fontSize: '18px', paddingTop: '2px' }}>Water Intake</h2>
         </div>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: isComplete ? '#10b981' : 'inherit' }}>
+        <span
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            background: isComplete ? '#101312' : undefined,
+            color: isComplete ? '#ffffff' : 'inherit',
+          }}
+        >
           {isComplete ? <Check size={12} strokeWidth={3} /> : <Droplet size={12} strokeWidth={2.5} />}
           {progressPercent}%
         </span>
