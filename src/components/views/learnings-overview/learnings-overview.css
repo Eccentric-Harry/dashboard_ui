@@ -956,7 +956,6 @@
   box-shadow:
     0 4px 12px rgba(45, 60, 48, 0.02),
     inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
-  border-left: 3px solid transparent !important;
 }
 
 .learnings-task-item-premium:hover {
@@ -970,13 +969,11 @@
   background: rgba(255, 255, 255, 0.45) !important;
   opacity: 0.7;
   border-color: rgba(255, 255, 255, 0.4) !important;
-  border-left-color: transparent !important;
 }
 
 .learnings-task-item-premium.is-overdue {
   background: linear-gradient(135deg, rgba(254, 242, 242, 0.72), rgba(255, 255, 255, 0.72)) !important;
   border-color: rgba(220, 38, 38, 0.12) !important;
-  border-left: 4px solid #dc2626 !important;
   box-shadow:
     0 4px 12px rgba(220, 38, 38, 0.01),
     inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
@@ -985,7 +982,6 @@
 .learnings-task-item-premium.is-overdue:hover {
   background: linear-gradient(135deg, rgba(254, 242, 242, 0.85), rgba(255, 255, 255, 0.85)) !important;
   border-color: rgba(220, 38, 38, 0.22) !important;
-  border-left: 4px solid #dc2626 !important;
   box-shadow: 0 8px 20px rgba(220, 38, 38, 0.04), inset 0 1px 0 #fff !important;
 }
 
