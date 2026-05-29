@@ -945,7 +945,7 @@
 .learnings-task-item-premium {
   display: grid;
   grid-template-columns: 24px minmax(0, 1fr) 90px;
-  align-items: center;
+  align-items: flex-start;
   gap: 14px;
   min-height: 64px;
   padding: 14px 18px;
@@ -976,7 +976,7 @@
 .learnings-task-item-premium.is-overdue {
   background: linear-gradient(135deg, rgba(254, 242, 242, 0.72), rgba(255, 255, 255, 0.72)) !important;
   border-color: rgba(220, 38, 38, 0.12) !important;
-  border-left-color: transparent !important;
+  border-left: 4px solid #dc2626 !important;
   box-shadow:
     0 4px 12px rgba(220, 38, 38, 0.01),
     inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
@@ -985,7 +985,7 @@
 .learnings-task-item-premium.is-overdue:hover {
   background: linear-gradient(135deg, rgba(254, 242, 242, 0.85), rgba(255, 255, 255, 0.85)) !important;
   border-color: rgba(220, 38, 38, 0.22) !important;
-  border-left-color: transparent !important;
+  border-left: 4px solid #dc2626 !important;
   box-shadow: 0 8px 20px rgba(220, 38, 38, 0.04), inset 0 1px 0 #fff !important;
 }
 
@@ -1002,6 +1002,7 @@
   flex-shrink: 0;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   color: transparent;
+  margin-top: 1px;
 }
 
 .learnings-task-check-premium:hover {
@@ -1066,6 +1067,12 @@
   border: 1px solid rgba(220, 38, 38, 0.15);
 }
 
+.learnings-task-badge-premium.completed {
+  color: #1a7a4a;
+  background: rgba(26, 122, 74, 0.08);
+  border: 1px solid rgba(26, 122, 74, 0.15);
+}
+
 .learnings-task-notes-premium {
   font-size: 12px;
   color: #64748b;
@@ -1085,9 +1092,15 @@
   align-items: center;
   justify-content: flex-end;
   width: 90px;
-  height: 100%;
   min-height: 28px;
   flex-shrink: 0;
+  margin-top: -3px;
+}
+
+.learnings-task-item-premium.is-overdue .learnings-task-time-premium {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.14);
 }
 
 .learnings-task-time-premium {

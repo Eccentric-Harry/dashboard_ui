@@ -97,7 +97,37 @@ export function TasksScheduleCard({
       ) : (
         <div className="learnings-tasks-list-premium" style={{ marginTop: 18 }}>
           {tasks.map((task) => {
-            const isOverdue = task.date && task.date < selectedDate && !task.completed
+            const isOverdue = !task.completed && (() => {
+              if (!task.scheduledTime) return false;
+              const dateParts = task.date.split('-');
+              if (dateParts.length !== 3) return false;
+              const year = parseInt(dateParts[0], 10);
+              const month = parseInt(dateParts[1], 10) - 1;
+              const day = parseInt(dateParts[2], 10);
+
+              let hours = 0;
+              let minutes = 0;
+              const ampmMatch = task.scheduledTime.match(/^(\d+):(\d+)\s*(AM|PM)$/i);
+              if (ampmMatch) {
+                hours = parseInt(ampmMatch[1], 10);
+                minutes = parseInt(ampmMatch[2], 10);
+                const ampm = ampmMatch[3].toUpperCase();
+                if (ampm === 'PM' && hours < 12) hours += 12;
+                if (ampm === 'AM' && hours === 12) hours = 0;
+              } else {
+                const standardMatch = task.scheduledTime.match(/^(\d+):(\d+)$/);
+                if (standardMatch) {
+                  hours = parseInt(standardMatch[1], 10);
+                  minutes = parseInt(standardMatch[2], 10);
+                } else {
+                  return false;
+                }
+              }
+
+              const deadline = new Date(year, month, day, hours, minutes, 0, 0);
+              return new Date() > deadline;
+            })()
+
             return (
               <div
                 key={task.id}
@@ -126,6 +156,11 @@ export function TasksScheduleCard({
                     {isOverdue && (
                       <span className="learnings-task-badge-premium overdue" title={`Originally scheduled for ${task.date}`}>
                         Overdue
+                      </span>
+                    )}
+                    {task.completed && (
+                      <span className="learnings-task-badge-premium completed">
+                        Completed
                       </span>
                     )}
                   </div>
