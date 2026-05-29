@@ -974,18 +974,19 @@
 }
 
 .learnings-task-item-premium.is-overdue {
-  background: linear-gradient(135deg, rgba(255, 247, 237, 0.85), rgba(255, 255, 255, 0.85)) !important;
-  border-color: rgba(249, 115, 22, 0.18) !important;
-  border-left: 4px solid #f97316 !important;
+  background: linear-gradient(135deg, rgba(254, 242, 242, 0.72), rgba(255, 255, 255, 0.72)) !important;
+  border-color: rgba(220, 38, 38, 0.12) !important;
+  border-left-color: transparent !important;
   box-shadow:
-    0 4px 12px rgba(249, 115, 22, 0.03),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+    0 4px 12px rgba(220, 38, 38, 0.01),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
 }
 
 .learnings-task-item-premium.is-overdue:hover {
-  background: linear-gradient(135deg, rgba(255, 247, 237, 0.95), rgba(255, 255, 255, 0.95)) !important;
-  border-color: rgba(249, 115, 22, 0.3) !important;
-  box-shadow: 0 8px 20px rgba(249, 115, 22, 0.08), inset 0 1px 0 #fff !important;
+  background: linear-gradient(135deg, rgba(254, 242, 242, 0.85), rgba(255, 255, 255, 0.85)) !important;
+  border-color: rgba(220, 38, 38, 0.22) !important;
+  border-left-color: transparent !important;
+  box-shadow: 0 8px 20px rgba(220, 38, 38, 0.04), inset 0 1px 0 #fff !important;
 }
 
 .learnings-task-check-premium {
@@ -1060,9 +1061,9 @@
 }
 
 .learnings-task-badge-premium.overdue {
-  color: #ea580c;
-  background: rgba(234, 88, 12, 0.08);
-  border: 1px solid rgba(234, 88, 12, 0.15);
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.15);
 }
 
 .learnings-task-notes-premium {
