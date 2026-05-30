@@ -423,6 +423,7 @@ export interface DailyTask {
   completed?: boolean;
   sortOrder?: number;
   createdAt?: string;
+  completedAt?: string;
 }
 
 export async function fetchTasks(date: string) {
