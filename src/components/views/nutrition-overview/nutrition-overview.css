@@ -914,8 +914,8 @@
 
 .nutrition-today-log-form input:focus,
 .nutrition-today-log-form select:focus {
-  border-color: rgba(53, 182, 75, 0.45);
-  box-shadow: 0 0 0 3px rgba(53, 182, 75, 0.12);
+  border-color: rgba(20, 24, 22, 0.3);
+  box-shadow: none;
 }
 
 .nutrition-today-log-form>span {
@@ -2004,8 +2004,8 @@
 
 .nutrition-daily-log-form input:focus,
 .nutrition-daily-log-form select:focus {
-  border-color: rgba(53, 182, 75, 0.45);
-  box-shadow: 0 0 0 3px rgba(53, 182, 75, 0.12);
+  border-color: rgba(20, 24, 22, 0.3);
+  box-shadow: none;
 }
 
 .nutrition-daily-log-form>span {
