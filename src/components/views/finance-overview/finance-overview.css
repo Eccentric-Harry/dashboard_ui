@@ -360,7 +360,7 @@
 
 .finance-subscription-list > div {
   display: grid;
-  grid-template-columns: 36px 1fr auto;
+  grid-template-columns: 36px 1fr 60px 60px;
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
@@ -404,21 +404,17 @@
   margin-top: 2px;
 }
 
-.subscription-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.subscription-actions strong {
+.finance-subscription-list strong.subscription-price {
   font-size: 13px;
   font-weight: 800;
   color: #1a2b21;
+  text-align: right;
+  padding-right: 4px;
 }
 
 .pay-button {
   height: 28px;
-  padding: 0 14px;
+  padding: 0;
   border-radius: 10px;
   background: #111514;
   color: #fff;
@@ -430,7 +426,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 56px;
   min-width: 56px;
+  justify-self: end;
+  box-sizing: border-box;
 }
 
 .pay-button:hover:not(:disabled) {
@@ -444,8 +443,11 @@
 }
 
 .pay-button.success {
-  background: #36bd49;
-  color: #fff;
+  background: rgba(53, 182, 75, 0.12) !important;
+  color: #1a7a4a !important;
+  border: 1px solid rgba(53, 182, 75, 0.2) !important;
+  box-shadow: none !important;
+  cursor: default;
 }
 
 .pay-button:disabled {

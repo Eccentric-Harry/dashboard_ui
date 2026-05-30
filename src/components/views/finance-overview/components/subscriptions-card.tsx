@@ -159,22 +159,20 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
                 <b>{subscription.service}</b>
                 <small>{subscription.detail}</small>
               </p>
-              <div className="subscription-actions">
-                <strong>{subscription.amount}</strong>
-                <button
-                  className={`pay-button ${isPaid ? 'success' : ''}`}
-                  onClick={() => !isPaid && !isProcessing && handlePay(subscription)}
-                  disabled={isProcessing || isPaid}
-                >
-                  {isProcessing ? (
-                    <Loader2 size={12} className="animate-spin" />
-                  ) : isPaid ? (
-                    <Check size={12} />
-                  ) : (
-                    'Pay'
-                  )}
-                </button>
-              </div>
+              <strong className="subscription-price">{subscription.amount}</strong>
+              <button
+                className={`pay-button ${isPaid ? 'success' : ''}`}
+                onClick={() => !isPaid && !isProcessing && handlePay(subscription)}
+                disabled={isProcessing || isPaid}
+              >
+                {isProcessing ? (
+                  <Loader2 size={12} className="animate-spin" />
+                ) : isPaid ? (
+                  <Check size={12} />
+                ) : (
+                  'Pay'
+                )}
+              </button>
             </div>
           )
         })}
