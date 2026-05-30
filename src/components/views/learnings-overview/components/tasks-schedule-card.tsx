@@ -123,48 +123,56 @@ export function TasksScheduleCard({
                 <div className="learnings-task-content-premium">
                   <div className="learnings-task-title-row-premium">
                     <span className="learnings-task-title-premium">{task.title}</span>
-                    {isOverdue && (
-                      <span className="learnings-task-badge-premium overdue" title={`Originally scheduled for ${task.date}`}>
-                        Overdue
-                      </span>
-                    )}
                   </div>
+
+                  {(task.scheduledTime || isOverdue || task.completed) && (
+                    <div className="learnings-task-meta-row-premium">
+                      {task.scheduledTime && (
+                        <span className="learnings-task-badge-premium time">
+                          {task.scheduledTime}
+                        </span>
+                      )}
+                      {isOverdue && (
+                        <span className="learnings-task-badge-premium overdue" title={`Originally scheduled for ${task.date}`}>
+                          Overdue
+                        </span>
+                      )}
+                      {task.completed && (
+                        <span className="learnings-task-badge-premium completed">
+                          Completed
+                        </span>
+                      )}
+                    </div>
+                  )}
+
                   {task.notes && (
                     <p className="learnings-task-notes-premium">{task.notes}</p>
                   )}
                 </div>
-                
-                <div className="learnings-task-right-wrap" onClick={(e) => e.stopPropagation()}>
-                  {task.scheduledTime && (
-                    <span className="learnings-task-time-premium">
-                      {task.scheduledTime}
-                    </span>
-                  )}
 
-                  <div className="learnings-task-actions-premium">
-                    <button
-                      type="button"
-                      className="learnings-icon-btn-premium edit"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onEditTask(task)
-                      }}
-                      aria-label="Edit task"
-                    >
-                      <Pencil size={11} />
-                    </button>
-                    <button
-                      type="button"
-                      className="learnings-icon-btn-premium delete"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setDeleteTarget(task)
-                      }}
-                      aria-label="Delete task"
-                    >
-                      <Trash2 size={11} />
-                    </button>
-                  </div>
+                <div className="learnings-task-actions-premium" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    className="learnings-icon-btn-premium edit"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onEditTask(task)
+                    }}
+                    aria-label="Edit task"
+                  >
+                    <Pencil size={11} />
+                  </button>
+                  <button
+                    type="button"
+                    className="learnings-icon-btn-premium delete"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setDeleteTarget(task)
+                    }}
+                    aria-label="Delete task"
+                  >
+                    <Trash2 size={11} />
+                  </button>
                 </div>
               </div>
             )
