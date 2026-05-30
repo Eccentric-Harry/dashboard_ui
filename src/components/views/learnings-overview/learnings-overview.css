@@ -940,6 +940,8 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  width: 100%;
+  align-items: stretch;
 }
 
 .learnings-task-item-premium {
@@ -958,6 +960,8 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
   border-left: 3px solid transparent !important;
   position: relative;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .learnings-task-item-premium:hover {
