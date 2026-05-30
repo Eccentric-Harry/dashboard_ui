@@ -155,16 +155,11 @@ export function TasksScheduleCard({
                     <span className="learnings-task-title-premium">{task.title}</span>
                   </div>
 
-                  {(task.scheduledTime || isOverdue || task.completed || (task.date && task.date !== selectedDate)) && (
+                  {(task.scheduledTime || isOverdue || task.completed) && (
                     <div className="learnings-task-meta-row-premium">
                       {task.scheduledTime && (
                         <span className="learnings-task-badge-premium time">
                           {task.scheduledTime}
-                        </span>
-                      )}
-                      {task.date && task.date !== selectedDate && (
-                        <span className="learnings-task-badge-premium date" title="Scheduled date">
-                          {task.date}
                         </span>
                       )}
                       {isOverdue && (
