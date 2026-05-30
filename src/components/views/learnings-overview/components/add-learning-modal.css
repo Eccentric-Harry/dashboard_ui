@@ -122,9 +122,9 @@
 .learning-modal-form input:focus,
 .learning-modal-form select:focus,
 .learning-modal-form textarea:focus {
-  border-color: #1a7a4a;
+  border-color: rgba(20, 24, 22, 0.3);
   background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(26, 122, 74, 0.15);
+  box-shadow: none;
 }
 
 .learning-modal-form .form-row {
@@ -241,8 +241,8 @@
 .learning-modal-backdrop.is-tasks-theme .learning-modal-form input:focus,
 .learning-modal-backdrop.is-tasks-theme .learning-modal-form select:focus,
 .learning-modal-backdrop.is-tasks-theme .learning-modal-form textarea:focus {
-  border-color: #35b64b !important;
-  box-shadow: 0 0 0 3px rgba(53, 182, 75, 0.15) !important;
+  border-color: rgba(20, 24, 22, 0.3) !important;
+  box-shadow: none !important;
 }
 
 .learning-modal-backdrop.is-tasks-theme .learning-modal-submit {

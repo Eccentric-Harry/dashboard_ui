@@ -940,15 +940,17 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  width: 100%;
+  align-items: stretch;
 }
 
 .learnings-task-item-premium {
   display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) 90px;
-  align-items: flex-start;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: center;
   gap: 14px;
   min-height: 64px;
-  padding: 14px 18px;
+  padding: 14px 72px 14px 18px !important;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.72) !important;
   border: 1px solid rgba(255, 255, 255, 0.82) !important;
@@ -956,6 +958,9 @@
   box-shadow:
     0 4px 12px rgba(45, 60, 48, 0.02),
     inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .learnings-task-item-premium:hover {
@@ -1030,7 +1035,7 @@
 }
 
 .learnings-task-title-premium {
-  font-size: 14.5px;
+  font-size: 14px;
   font-weight: 600;
   color: #1a201c;
   line-height: 1.35;
@@ -1064,9 +1069,21 @@
 }
 
 .learnings-task-badge-premium.completed {
+  color: #16a34a;
+  background: rgba(22, 163, 74, 0.08);
+  border: 1px solid rgba(22, 163, 74, 0.15);
+}
+
+.learnings-task-badge-premium.time {
   color: #1a7a4a;
   background: rgba(26, 122, 74, 0.08);
   border: 1px solid rgba(26, 122, 74, 0.15);
+}
+
+.learnings-task-badge-premium.date {
+  color: #475569;
+  background: rgba(71, 85, 105, 0.08);
+  border: 1px solid rgba(71, 85, 105, 0.15);
 }
 
 .learnings-task-notes-premium {
@@ -1082,64 +1099,32 @@
   color: rgba(100, 116, 139, 0.5);
 }
 
-.learnings-task-right-wrap {
-  position: relative;
+.learnings-task-meta-row-premium {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  width: 90px;
-  min-height: 28px;
-  flex-shrink: 0;
-  margin-top: -3px;
-}
-
-.learnings-task-item-premium.is-overdue .learnings-task-time-premium {
-  color: #dc2626;
-  background: rgba(220, 38, 38, 0.08);
-  border-color: rgba(220, 38, 38, 0.14);
-}
-
-.learnings-task-time-premium {
-  position: absolute;
-  right: 0;
-  font-size: 10.5px;
-  font-weight: 700;
-  color: #1a7a4a;
-  background: rgba(53, 182, 75, 0.1);
-  padding: 4px 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(53, 182, 75, 0.14);
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-  opacity: 1;
-  transform: translateX(0);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  gap: 6px;
+  margin-top: 5px;
+  flex-wrap: wrap;
 }
 
 .learnings-task-actions-premium {
   position: absolute;
-  right: 0;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%) translateX(8px);
   display: flex;
   gap: 6px;
   opacity: 0;
-  transform: translateX(8px);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: none;
+  z-index: 10;
 }
 
 .learnings-task-item-premium:hover .learnings-task-actions-premium,
 .learnings-task-item-premium.actions-visible .learnings-task-actions-premium {
   opacity: 1;
-  transform: translateX(0);
+  transform: translateY(-50%) translateX(0);
   pointer-events: auto;
-}
-
-.learnings-task-item-premium:hover .learnings-task-time-premium,
-.learnings-task-item-premium.actions-visible .learnings-task-time-premium {
-  opacity: 0;
-  transform: translateX(-8px);
-  pointer-events: none;
 }
 
 .learnings-icon-btn-premium {

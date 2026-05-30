@@ -169,7 +169,7 @@ export const subscriptionSummary = {
 }
 
 export const spendingOverview = {
-  total: '₹2,15,800',
+  total: '--',
   cents: '',
   topCategory: 'Food & Dining',
 }
@@ -178,3 +178,4 @@ export const spendingOverview = {
 export const financeTrendPoints = [34, 48, 42, 62, 58, 79, 67, 86, 72, 92]
 
 export const balanceSparkBars = [12, 18, 28, 20, 34, 46, 38, 56, 48, 68, 58, 78]
+
