@@ -360,7 +360,7 @@
 
 .finance-subscription-list > div {
   display: grid;
-  grid-template-columns: 36px 1fr 60px 60px;
+  grid-template-columns: 32px 1fr auto 56px;
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
@@ -381,8 +381,8 @@
 
 .finance-subscription-list .service-icon {
   display: grid;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   place-items: center;
   border-radius: 12px;
   background: #f0f4f1;
@@ -395,6 +395,7 @@
   font-size: 13px;
   font-weight: 700;
   color: #111514;
+  white-space: nowrap;
 }
 
 .finance-subscription-list small {
@@ -402,6 +403,7 @@
   color: rgba(23, 28, 25, 0.5);
   font-size: 10px;
   margin-top: 2px;
+  white-space: nowrap;
 }
 
 .finance-subscription-list strong.subscription-price {
@@ -410,6 +412,83 @@
   color: #1a2b21;
   text-align: right;
   padding-right: 4px;
+  white-space: nowrap;
+}
+
+.finance-repayment-card {
+  grid-column: 8 / span 5;
+  grid-row: 4;
+  height: 426px;
+  padding: 20px;
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.9), rgba(244, 248, 243, 0.75));
+  display: flex;
+  flex-direction: column;
+}
+
+.finance-repayment-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 4px;
+}
+
+.finance-repayment-list > div {
+  display: grid;
+  grid-template-columns: 32px 1fr auto 56px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8), 0 2px 4px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.finance-repayment-list > div:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.finance-repayment-list > div.paid {
+  opacity: 0.8;
+  background: rgba(235, 245, 237, 0.4);
+}
+
+.finance-repayment-list .repayment-icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 12px;
+  background: #fdf2f8;
+  color: #db2777;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.03), inset 1px 1px 0 #fff;
+}
+
+.finance-repayment-list b {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #111514;
+  white-space: nowrap;
+}
+
+.finance-repayment-list small {
+  display: block;
+  color: rgba(23, 28, 25, 0.5);
+  font-size: 10px;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+.finance-repayment-list strong.repayment-amount {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1a2b21;
+  text-align: right;
+  padding-right: 4px;
+  white-space: nowrap;
 }
 
 .pay-button {
@@ -469,8 +548,8 @@
 .finance-transactions-card {
   display: flex;
   grid-column: 1 / span 7;
-  grid-row: 3;
-  height: 426px;
+  grid-row: 3 / span 2;
+  height: 866px;
   min-height: 0;
   flex-direction: column;
   padding: 18px;
@@ -1251,6 +1330,14 @@
     width: 100%;
   }
 
+  .finance-repayment-card {
+    grid-column: unset;
+    grid-row: unset;
+    height: auto;
+    min-height: 200px;
+    width: 100%;
+  }
+
   .finance-section-head button,
   .finance-transactions-card button {
     min-height: 44px;
@@ -1341,6 +1428,12 @@
   }
 
   .finance-subscription-card {
+    grid-column: 1 / -1;
+    grid-row: auto;
+    height: auto;
+  }
+
+  .finance-repayment-card {
     grid-column: 1 / -1;
     grid-row: auto;
     height: auto;

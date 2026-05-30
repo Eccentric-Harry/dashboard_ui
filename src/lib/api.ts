@@ -191,6 +191,21 @@ export async function deleteTransaction(id: string) {
   // Delete typically returns 204 No Content, so we don't try to parse JSON.
 }
 
+export interface RepaymentInstallment {
+  id: string;
+  dueDate: string;
+  amount: string;
+  status: string;
+}
+
+export async function fetchSliceRepayments() {
+  const response = await fetch(`${API_BASE_URL}/finance/slice-repayments`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch Slice repayments');
+  }
+  return response.json();
+}
+
 // ─── Strava Activities ───────────────────────────────────────────────
 
 export interface StravaActivity {

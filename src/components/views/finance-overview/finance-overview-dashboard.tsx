@@ -5,6 +5,7 @@ import { FinanceHeader } from './components/finance-header'
 import { MetricCard } from './components/metric-card'
 import { SpendingOverviewCard } from './components/spending-overview-card'
 import { SubscriptionsCard } from './components/subscriptions-card'
+import { RepaymentScheduleCard } from './components/repayment-schedule-card'
 import { TransactionsCard } from './components/transactions-card'
 import { AddTransactionModal } from './components/add-transaction-modal'
 import { ConfirmDialog } from '../../ui/confirm-dialog'
@@ -210,6 +211,7 @@ function FinanceOverviewDashboard() {
           onDelete={handleDelete}
         />
         <SubscriptionsCard transactions={recentTransactions} onRefresh={refreshData} />
+        <RepaymentScheduleCard transactions={recentTransactions} onRefresh={refreshData} />
       </div>
       
       <ConfirmDialog
