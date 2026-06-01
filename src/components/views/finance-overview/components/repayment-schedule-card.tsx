@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Check, Loader2 } from 'lucide-react'
+import { Check, Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { addTransaction, fetchSliceRepayments, type RepaymentInstallment } from '../../../../lib/api'
 
@@ -13,6 +13,8 @@ export function RepaymentScheduleCard({ transactions, onRefresh }: RepaymentSche
   const [loading, setLoading] = useState(true)
   const [processingId, setProcessingId] = useState<string | null>(null)
   const [optimisticPaidIds, setOptimisticPaidIds] = useState<Set<string>>(new Set())
+  const [currentPage, setCurrentPage] = useState(1)
+  const ITEMS_PER_PAGE = 4
 
   useEffect(() => {
     fetchSliceRepayments()
@@ -89,6 +91,14 @@ export function RepaymentScheduleCard({ transactions, onRefresh }: RepaymentSche
     }
   }
 
+  const totalPages = Math.ceil(repayments.length / ITEMS_PER_PAGE)
+  const page = Math.max(1, Math.min(currentPage, totalPages || 1))
+
+  const paginatedRepayments = useMemo(() => {
+    const startIndex = (page - 1) * ITEMS_PER_PAGE
+    return repayments.slice(startIndex, startIndex + ITEMS_PER_PAGE)
+  }, [repayments, page])
+
   if (loading) {
     return (
       <section className="finance-card finance-repayment-card">
@@ -115,7 +125,7 @@ export function RepaymentScheduleCard({ transactions, onRefresh }: RepaymentSche
         <strong>{totalRemaining}</strong>
       </div>
       <div className="finance-repayment-list">
-        {repayments.map((item) => {
+        {paginatedRepayments.map((item) => {
           const isProcessing = processingId === item.id
           const isPaid = paidIds.has(item.id)
 
@@ -150,6 +160,29 @@ export function RepaymentScheduleCard({ transactions, onRefresh }: RepaymentSche
           )
         })}
       </div>
+      {!loading && totalPages > 1 && (
+        <div className="finance-pagination">
+          <button
+            disabled={page === 1}
+            onClick={() => setCurrentPage(p => p - 1)}
+            className="pagination-btn"
+            type="button"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <span className="pagination-info">
+            Page {page} of {totalPages}
+          </span>
+          <button
+            disabled={page === totalPages}
+            onClick={() => setCurrentPage(p => p + 1)}
+            className="pagination-btn"
+            type="button"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      )}
     </section>
   )
 }

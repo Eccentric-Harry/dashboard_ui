@@ -394,8 +394,6 @@ export interface LearningsTimelineDay {
 export interface LearningsStatsSummary {
   weeklyLearningCount: number;
   streakDays: number;
-  githubCommits: number;
-  leetCodeSolved: number;
 }
 
 export interface LearningsSummary {
@@ -491,8 +489,6 @@ export async function deleteTask(id: string) {
 export interface DailyLog {
   id?: string;
   date?: string;
-  githubCommits?: number;
-  leetCodeSolved?: number;
   newLearnings?: string[];
   moodRating?: string;
 }

@@ -22,7 +22,7 @@ export function LearningsStatsRow({ summary, loading }: LearningsStatsRowProps) 
     {
       label: 'Tasks',
       value: loading ? '—' : `${today?.tasksCompleted ?? 0}/${today?.tasksTotal ?? 0}`,
-      hint: 'done today',
+      hint: 'done',
       icon: CheckSquare,
       tone: 'tasks' as const,
     },

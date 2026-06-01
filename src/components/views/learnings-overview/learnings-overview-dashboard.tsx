@@ -8,7 +8,6 @@ import { LearningsStatsRow } from './components/learnings-stats-row'
 import { TasksScheduleCard } from './components/tasks-schedule-card'
 import { LearningsLogCard } from './components/learnings-log-card'
 import { CategoryBreakdownCard } from './components/category-breakdown-card'
-import { CodingPulseCard } from './components/coding-pulse-card'
 import { ActivityHeatmapCard } from './components/activity-heatmap-card'
 import { AddLearningModal } from './components/add-learning-modal'
 import { AddTaskModal } from './components/add-task-modal'
@@ -112,13 +111,6 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
         />
 
         <CategoryBreakdownCard categories={summary?.today.categories ?? []} />
-
-        <CodingPulseCard
-          streakDays={summary?.stats.streakDays}
-          githubCommits={summary?.stats.githubCommits}
-          leetCodeSolved={summary?.stats.leetCodeSolved}
-          selectedDate={selectedDate}
-        />
 
         <ActivityHeatmapCard timeline={summary?.timeline ?? []} />
 

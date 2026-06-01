@@ -324,12 +324,8 @@
   grid-column: 1 / span 6;
 }
 
-.learnings-coding-card {
-  grid-column: 7 / span 3;
-}
-
 .learnings-heatmap-card {
-  grid-column: 10 / span 3;
+  grid-column: 7 / span 6;
 }
 
 .learnings-focus-input {
@@ -667,31 +663,7 @@
   box-shadow: none;
 }
 
-.learnings-coding-metrics {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 14px;
-}
 
-.learnings-coding-metric {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.45);
-}
-
-.learnings-coding-metric b {
-  font-size: 15px;
-  color: #101312;
-}
-
-.learnings-coding-metric small {
-  color: #526057;
-  font-size: 11px;
-}
 
 @media (max-width: 768px) {
   .learnings-dashboard {
@@ -788,7 +760,6 @@
   .learnings-focus-stack,
   .learnings-log-card-wrap,
   .learnings-category-card,
-  .learnings-coding-card,
   .learnings-heatmap-card {
     grid-column: unset;
   }
@@ -834,12 +805,8 @@
     grid-column: 1 / span 3;
   }
 
-  .learnings-coding-card {
-    grid-column: 4 / span 3;
-  }
-
   .learnings-heatmap-card {
-    grid-column: 1 / -1;
+    grid-column: 4 / span 3;
   }
 }
 
@@ -1156,7 +1123,14 @@
   transform: translateY(-1px);
 }
 
-
+@media (max-width: 768px) {
+  .learnings-task-item-premium {
+    padding-right: 18px !important;
+  }
+  .learnings-task-item-premium.actions-visible {
+    padding-right: 72px !important;
+  }
+}
 
 /* ==========================================================================
    DEV PROFILE CARD — GitHub + LeetCode Live Stats

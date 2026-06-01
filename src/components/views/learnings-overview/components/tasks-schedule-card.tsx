@@ -131,9 +131,8 @@ export function TasksScheduleCard({
             return (
               <div
                 key={task.id}
-                className={`learnings-task-item-premium ${task.completed ? 'is-completed' : ''} ${
-                  isOverdue ? 'is-overdue' : ''
-                } ${activeTaskId === task.id ? 'actions-visible' : ''}`}
+                className={`learnings-task-item-premium ${task.completed ? 'is-completed' : ''} ${isOverdue ? 'is-overdue' : ''
+                  } ${activeTaskId === task.id ? 'actions-visible' : ''}`}
                 onClick={() => {
                   setActiveTaskId(activeTaskId === task.id ? null : (task.id ?? null))
                 }}
@@ -149,7 +148,7 @@ export function TasksScheduleCard({
                 >
                   {task.completed && <Check size={12} strokeWidth={3} />}
                 </button>
-                
+
                 <div className="learnings-task-content-premium">
                   <div className="learnings-task-title-row-premium">
                     <span className="learnings-task-title-premium">{task.title}</span>
@@ -157,7 +156,7 @@ export function TasksScheduleCard({
 
                   {(task.scheduledTime || isOverdue || task.completed) && (
                     <div className="learnings-task-meta-row-premium">
-                      {task.scheduledTime && (
+                      {task.scheduledTime && !task.completed && (
                         <span className="learnings-task-badge-premium time">
                           {task.scheduledTime}
                         </span>

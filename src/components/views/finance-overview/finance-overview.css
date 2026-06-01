@@ -451,8 +451,33 @@
 }
 
 .finance-repayment-list > div.paid {
-  opacity: 0.8;
-  background: rgba(235, 245, 237, 0.4);
+  opacity: 0.5;
+  background: rgba(240, 240, 240, 0.35) !important;
+  box-shadow: none !important;
+}
+
+.finance-repayment-list > div.paid img {
+  filter: grayscale(1) opacity(0.5);
+  transition: all 0.3s ease;
+}
+
+.finance-repayment-list > div.paid b {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.finance-repayment-list > div.paid strong.repayment-amount {
+  color: #64748b;
+  font-weight: 600;
+  text-decoration: line-through;
+  text-decoration-color: rgba(100, 116, 139, 0.4);
+}
+
+.finance-repayment-list > div.paid .pay-button.success {
+  background: transparent !important;
+  border: none !important;
+  color: #15803d !important;
+  opacity: 0.9;
 }
 
 .finance-repayment-list .repayment-icon {
@@ -1125,7 +1150,7 @@
   border-top: 1px solid rgba(20, 24, 22, 0.06);
 }
 
-.finance-transaction-table .pagination-btn {
+.finance-pagination .pagination-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1139,17 +1164,17 @@
   transition: all 0.2s;
 }
 
-.finance-transaction-table .pagination-btn:hover:not(:disabled) {
+.finance-pagination .pagination-btn:hover:not(:disabled) {
   background: rgba(18, 29, 21, 0.05);
   border-color: rgba(20, 24, 22, 0.15);
 }
 
-.finance-transaction-table .pagination-btn:disabled {
+.finance-pagination .pagination-btn:disabled {
   opacity: 0.3;
   cursor: not-allowed;
 }
 
-.finance-transaction-table .pagination-info {
+.finance-pagination .pagination-info {
   font-size: 11px;
   font-weight: 700;
   color: rgba(16, 19, 18, 0.6);
