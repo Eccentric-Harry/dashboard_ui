@@ -11,9 +11,11 @@ import { LearningsOverview } from './components/views/learnings-view'
 import { subscribeToActiveRequests } from './lib/api'
 import { OverlayLoader } from './components/ui/OverlayLoader'
 
+const ENABLE_HOME_ROUTE = import.meta.env.VITE_ENABLE_HOME_ROUTE === 'true'
+
 function normalizePathname(pathname: string): AppPath {
   if (pathname === '/home') {
-    return '/home'
+    return ENABLE_HOME_ROUTE ? '/home' : '/nutrition'
   }
 
   if (pathname === '/') {
@@ -105,14 +107,24 @@ function App() {
     }
   }, [])
 
+  // Sync URL with normalized route on mount/initial load
+  useEffect(() => {
+    const currentPath = window.location.pathname
+    const normalized = normalizePathname(currentPath)
+    if (currentPath !== normalized) {
+      window.history.replaceState({}, '', normalized + window.location.search)
+    }
+  }, [])
+
   const navigateTo = (nextPathname: AppPath, search?: string) => {
-    const newUrl = search ? `${nextPathname}${search}` : nextPathname
+    const normalized = normalizePathname(nextPathname)
+    const newUrl = search ? `${normalized}${search}` : normalized
     if (newUrl === window.location.pathname + window.location.search) {
       return
     }
 
     window.history.pushState({}, '', newUrl)
-    setPathname(normalizePathname(nextPathname))
+    setPathname(normalized)
     setSearchParams(new URLSearchParams(search || ''))
   }
 

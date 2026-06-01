@@ -44,8 +44,10 @@ export const dateTiles = [
   { value: '23', accent: true },
 ] as const
 
+const enableHomeRoute = import.meta.env.VITE_ENABLE_HOME_ROUTE === 'true'
+
 export const navItems: DashboardNavItem[] = [
-  { label: 'Home', icon: Home, to: '/home' },
+  ...(enableHomeRoute ? [{ label: 'Home', icon: Home, to: '/home' as const }] : []),
   { label: 'Finance Overview', icon: CircleDollarSign, to: '/finance' },
   { label: 'Nutrition Overview', icon: Utensils, to: '/nutrition' },
   { label: 'Workouts', icon: Dumbbell, to: '/workouts' },

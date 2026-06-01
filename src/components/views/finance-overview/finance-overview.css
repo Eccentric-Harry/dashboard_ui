@@ -451,33 +451,42 @@
 }
 
 .finance-repayment-list > div.paid {
-  opacity: 0.5;
-  background: rgba(240, 240, 240, 0.35) !important;
+  background: rgba(255, 255, 255, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
   box-shadow: none !important;
 }
 
 .finance-repayment-list > div.paid img {
-  filter: grayscale(1) opacity(0.5);
-  transition: all 0.3s ease;
+  opacity: 0.6;
 }
 
 .finance-repayment-list > div.paid b {
-  color: #64748b;
+  color: #4b5563;
+  font-weight: 600;
+}
+
+.finance-repayment-list > div.paid small {
+  color: #9ca3af !important;
   font-weight: 500;
 }
 
 .finance-repayment-list > div.paid strong.repayment-amount {
-  color: #64748b;
+  color: #9ca3af;
   font-weight: 600;
   text-decoration: line-through;
-  text-decoration-color: rgba(100, 116, 139, 0.4);
+  text-decoration-color: rgba(156, 163, 175, 0.4);
 }
 
 .finance-repayment-list > div.paid .pay-button.success {
   background: transparent !important;
   border: none !important;
-  color: #15803d !important;
-  opacity: 0.9;
+  color: #9ca3af !important;
+  width: auto !important;
+  min-width: auto !important;
+  justify-self: end;
+  padding-right: 12px;
+  box-shadow: none !important;
+  cursor: default;
 }
 
 .finance-repayment-list .repayment-icon {
