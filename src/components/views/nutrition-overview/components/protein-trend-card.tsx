@@ -44,6 +44,11 @@ const parseIsoDate = (dateValue?: string) => {
 }
 
 function ProteinTrendCard() {
+  const [isMounted, setIsMounted] = useState(false)
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
   const { data } = useDashboard()
   const selectedDate = data?.date || isoDate(new Date())
   const [trendData, setTrendData] = useState<TrendPoint[]>([])
@@ -143,41 +148,43 @@ function ProteinTrendCard() {
       </div>
 
       <div style={{ flex: 1, width: '100%', minHeight: 0, marginTop: '20px', marginLeft: '-15px', position: 'relative', zIndex: 1 }}>
-        <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
-          <AreaChart data={displayTrend} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
-            <defs>
-              <linearGradient id="colorGramsArea" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#4ade80" stopOpacity={0.4} />
-                <stop offset="95%" stopColor="#059669" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="colorGramsStroke" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#4ade80" />
-                <stop offset="100%" stopColor="#10b981" />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(20, 24, 22, 0.06)" />
-            <XAxis
-              dataKey="day"
-              axisLine={false}
-              tickLine={false}
-              interval={0}
-              tick={{ fill: 'rgba(23, 28, 25, 0.58)', fontSize: 11, fontWeight: 600 }}
-              padding={{ left: 15, right: 15 }}
-            />
-            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(20, 24, 22, 0.08)', strokeWidth: 1, strokeDasharray: '4 4' }} />
-            <ReferenceLine y={PROTEIN_TARGET} stroke="rgba(20, 24, 22, 0.12)" strokeDasharray="4 4" label={{ position: 'insideTopRight', value: `TARGET ${PROTEIN_TARGET}G`, fill: 'rgba(23, 28, 25, 0.48)', fontSize: 9, fontWeight: 800, letterSpacing: '0.05em' }} />
-            <Area
-              type="monotone"
-              dataKey="grams"
-              stroke="url(#colorGramsStroke)"
-              strokeWidth={3.5}
-              fillOpacity={1}
-              fill="url(#colorGramsArea)"
-              activeDot={{ r: 6, fill: '#fff', stroke: '#4ade80', strokeWidth: 3 }}
-              dot={{ r: 4, fill: '#fff', stroke: '#10b981', strokeWidth: 2 }}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+        {isMounted ? (
+          <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
+            <AreaChart data={displayTrend} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorGramsArea" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#4ade80" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="#059669" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="colorGramsStroke" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#4ade80" />
+                  <stop offset="100%" stopColor="#10b981" />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(20, 24, 22, 0.06)" />
+              <XAxis
+                dataKey="day"
+                axisLine={false}
+                tickLine={false}
+                interval={0}
+                tick={{ fill: 'rgba(23, 28, 25, 0.58)', fontSize: 11, fontWeight: 600 }}
+                padding={{ left: 15, right: 15 }}
+              />
+              <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(20, 24, 22, 0.08)', strokeWidth: 1, strokeDasharray: '4 4' }} />
+              <ReferenceLine y={PROTEIN_TARGET} stroke="rgba(20, 24, 22, 0.12)" strokeDasharray="4 4" label={{ position: 'insideTopRight', value: `TARGET ${PROTEIN_TARGET}G`, fill: 'rgba(23, 28, 25, 0.48)', fontSize: 9, fontWeight: 800, letterSpacing: '0.05em' }} />
+              <Area
+                type="monotone"
+                dataKey="grams"
+                stroke="url(#colorGramsStroke)"
+                strokeWidth={3.5}
+                fillOpacity={1}
+                fill="url(#colorGramsArea)"
+                activeDot={{ r: 6, fill: '#fff', stroke: '#4ade80', strokeWidth: 3 }}
+                dot={{ r: 4, fill: '#fff', stroke: '#10b981', strokeWidth: 2 }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        ) : null}
       </div>
     </section>
   )

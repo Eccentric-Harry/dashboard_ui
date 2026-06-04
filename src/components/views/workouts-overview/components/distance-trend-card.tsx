@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import type { StravaActivity } from '../../../../lib/api'
 
@@ -20,6 +20,11 @@ function CustomTooltip({ active, payload }: any) {
 }
 
 function DistanceTrendCard({ activities, loading }: DistanceTrendCardProps) {
+  const [isMounted, setIsMounted] = useState(false)
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
   const chartData = useMemo(() => {
     if (!activities.length) return []
 
@@ -50,7 +55,7 @@ function DistanceTrendCard({ activities, loading }: DistanceTrendCardProps) {
       <div className="workouts-trend-chart">
         {loading ? (
           <div className="workouts-loading"><span className="workouts-loading-dot">Loading chart…</span></div>
-        ) : (
+        ) : isMounted ? (
           <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
             <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
@@ -85,7 +90,7 @@ function DistanceTrendCard({ activities, loading }: DistanceTrendCardProps) {
               />
             </AreaChart>
           </ResponsiveContainer>
-        )}
+        ) : null}
       </div>
     </div>
   )

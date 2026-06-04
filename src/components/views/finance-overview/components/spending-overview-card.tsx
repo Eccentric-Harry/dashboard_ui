@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react'
+import { useMemo, useState, useCallback, useEffect } from 'react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import type { DailyFinancialLog } from '../../../../lib/api'
 import { getIconForCategory, getConsistentColor } from '../utils'
@@ -114,6 +114,11 @@ function SpendingOverviewCard({
     }
   }, [logs, selectedMonthKey])
 
+  const [isMounted, setIsMounted] = useState(false)
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
   const [activeIndex, setActiveIndex] = useState<number>(-1)
 
   const onPieEnter = useCallback((_: unknown, index: number) => {
@@ -177,46 +182,48 @@ function SpendingOverviewCard({
       <div className="finance-spending-body">
         <div className="finance-donut-container">
           {spendingData.categories.length > 0 ? (
-            <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
-              <PieChart>
-                <Pie
-                  data={spendingData.categories}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={"55%"}
-                  outerRadius={"75%"}
-                  dataKey="rawAmount"
-                  nameKey="label"
-                  onMouseEnter={onPieEnter}
-                  onMouseLeave={onPieLeave}
-                  onClick={onPieClick}
-                  stroke="none"
-                  isAnimationActive={false}
-                >
-                  {spendingData.categories.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={entry.tone}
-                      fillOpacity={
-                        selectedCategory === entry.label
-                          ? 1
-                          : selectedCategory
-                            ? 0.3
-                            : activeIndex === -1 || activeIndex === index
-                              ? 1
-                              : 0.5
-                      }
-                      style={{ cursor: 'pointer', outline: 'none', transition: 'fill-opacity 0.2s ease' }}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  content={<CustomTooltip />} 
-                  wrapperStyle={{ zIndex: 100 }} 
-                  offset={25}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            isMounted ? (
+              <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
+                <PieChart>
+                  <Pie
+                    data={spendingData.categories}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={"55%"}
+                    outerRadius={"75%"}
+                    dataKey="rawAmount"
+                    nameKey="label"
+                    onMouseEnter={onPieEnter}
+                    onMouseLeave={onPieLeave}
+                    onClick={onPieClick}
+                    stroke="none"
+                    isAnimationActive={false}
+                  >
+                    {spendingData.categories.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={entry.tone}
+                        fillOpacity={
+                          selectedCategory === entry.label
+                            ? 1
+                            : selectedCategory
+                              ? 0.3
+                              : activeIndex === -1 || activeIndex === index
+                                ? 1
+                                : 0.5
+                        }
+                        style={{ cursor: 'pointer', outline: 'none', transition: 'fill-opacity 0.2s ease' }}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    content={<CustomTooltip />} 
+                    wrapperStyle={{ zIndex: 100 }} 
+                    offset={25}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : null
           ) : (
             <div className="finance-donut-container">
               <div>
