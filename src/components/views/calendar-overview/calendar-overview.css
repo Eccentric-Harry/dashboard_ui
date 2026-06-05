@@ -954,10 +954,12 @@
   }
 
   .calendar-header-popover {
-    left: 0;
-    right: 0;
-    width: 100%;
-    min-width: 0;
+    position: fixed !important;
+    top: 110px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    right: auto !important;
+    width: 290px !important;
   }
 
   .calendar-main-panel {
