@@ -486,6 +486,101 @@ export async function deleteTask(id: string) {
   return response.json();
 }
 
+// ─── Calendar API ───────────────────────────────────────────────────
+
+export type CalendarItemType = 'TASK' | 'EVENT' | 'REMINDER' | 'MILESTONE';
+export type CalendarRecurrence = 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY';
+
+export interface CalendarItem {
+  id?: string;
+  occurrenceId?: string;
+  date: string;
+  originalDate?: string;
+  title: string;
+  startTime?: string;
+  endTime?: string;
+  allDay?: boolean;
+  itemType?: CalendarItemType;
+  category?: string;
+  color?: string;
+  notes?: string;
+  completed?: boolean;
+  sortOrder?: number;
+  recurrenceFrequency?: CalendarRecurrence;
+  recurrenceUntil?: string;
+  createdAt?: string;
+}
+
+export type CalendarItemPayload = {
+  title: string;
+  date: string;
+  startTime?: string;
+  endTime?: string;
+  allDay?: boolean;
+  itemType?: CalendarItemType;
+  category?: string;
+  color?: string;
+  notes?: string;
+  completed?: boolean;
+  sortOrder?: number;
+  recurrenceFrequency?: CalendarRecurrence;
+  recurrenceUntil?: string;
+};
+
+export async function fetchCalendarItemsForRange(startDate: string, endDate: string) {
+  const response = await fetch(
+    `${API_BASE_URL}/calendar/items/range?startDate=${startDate}&endDate=${endDate}`,
+  );
+  if (!response.ok) {
+    throw new Error('Failed to fetch calendar items');
+  }
+  return response.json();
+}
+
+export async function createCalendarItem(data: CalendarItemPayload) {
+  const response = await fetch(`${API_BASE_URL}/calendar/items`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to create calendar item');
+  }
+  return response.json();
+}
+
+export async function updateCalendarItem(id: string, data: CalendarItemPayload) {
+  const response = await fetch(`${API_BASE_URL}/calendar/items/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to update calendar item');
+  }
+  return response.json();
+}
+
+export async function toggleCalendarItem(id: string) {
+  const response = await fetch(`${API_BASE_URL}/calendar/items/${id}/toggle`, {
+    method: 'PATCH',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to toggle calendar item');
+  }
+  return response.json();
+}
+
+export async function deleteCalendarItem(id: string) {
+  const response = await fetch(`${API_BASE_URL}/calendar/items/${id}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to delete calendar item');
+  }
+  return response.json();
+}
+
 export interface DailyLog {
   id?: string;
   date?: string;
@@ -529,5 +624,4 @@ if (typeof window !== 'undefined') {
     }
   };
 }
-
 

@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
 import {
   Bell,
+  CalendarDays,
   CheckSquare,
   CircleDollarSign,
   Compass,
@@ -18,7 +19,7 @@ import {
   GraduationCap,
 } from 'lucide-react'
 
-export type AppPath = '/home' | '/finance' | '/nutrition' | '/learnings' | '/workouts'
+export type AppPath = '/home' | '/finance' | '/nutrition' | '/learnings' | '/workouts' | '/calendar'
 
 export interface DashboardNavItem {
   label: string
@@ -52,6 +53,7 @@ export const navItems: DashboardNavItem[] = [
   { label: 'Nutrition Overview', icon: Utensils, to: '/nutrition' },
   { label: 'Workouts', icon: Dumbbell, to: '/workouts' },
   { label: 'Learnings Map', icon: GraduationCap, to: '/learnings' },
+  { label: 'Calendar', icon: CalendarDays, to: '/calendar' },
   { label: 'Adjust', icon: SlidersHorizontal, muted: true },
   { label: 'Tasks', icon: CheckSquare, muted: true },
   { label: 'People', icon: Users, muted: true },

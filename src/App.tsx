@@ -8,6 +8,7 @@ import { NutritionOverview } from './components/views/nutrition-view'
 import { WorkoutsOverview } from './components/views/workouts-view'
 import { DashboardProvider } from './contexts/DashboardContext'
 import { LearningsOverview } from './components/views/learnings-view'
+import { CalendarOverview } from './components/views/calendar-view'
 import { subscribeToActiveRequests } from './lib/api'
 import { OverlayLoader } from './components/ui/OverlayLoader'
 
@@ -16,6 +17,10 @@ const ENABLE_HOME_ROUTE = import.meta.env.VITE_ENABLE_HOME_ROUTE === 'true'
 function normalizePathname(pathname: string): AppPath {
   if (pathname === '/home') {
     return ENABLE_HOME_ROUTE ? '/home' : '/nutrition'
+  }
+
+  if (pathname === '/calender') {
+    return '/calendar'
   }
 
   if (pathname === '/') {
@@ -36,6 +41,10 @@ function normalizePathname(pathname: string): AppPath {
 
   if (pathname === '/workouts') {
     return '/workouts'
+  }
+
+  if (pathname === '/calendar') {
+    return '/calendar'
   }
 
   return '/nutrition'
@@ -137,6 +146,8 @@ function App() {
     content = <LearningsOverview activePath={pathname} onNavigate={navigateTo} searchParams={searchParams} />
   } else if (pathname === '/workouts') {
     content = <WorkoutsOverview activePath={pathname} onNavigate={navigateTo} />
+  } else if (pathname === '/calendar') {
+    content = <CalendarOverview activePath={pathname} onNavigate={navigateTo} searchParams={searchParams} />
   } else {
     content = <QuantifiedSelfDashboard activePath={pathname} onNavigate={navigateTo} />
   }
