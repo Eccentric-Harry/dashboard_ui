@@ -397,7 +397,6 @@ function DayView({
           onEdit={onEdit}
           onDelete={onDelete}
           onToggle={onToggle}
-          onCreate={onCreate}
           compact
         />
       </div>
@@ -527,12 +526,38 @@ function AgendaList({
   onCreate?: () => void
   compact?: boolean
 }) {
+  const [isEditMode, setIsEditMode] = useState(false)
   const sorted = [...items].sort(compareItems)
   return (
     <section className={`calendar-agenda ${compact ? 'is-compact' : ''}`}>
       <div className="calendar-agenda-head">
         <h2>{title}</h2>
-        <span>{items.length}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span>{items.length}</span>
+          <button
+            type="button"
+            className={`calendar-agenda-edit-btn ${isEditMode ? 'is-active' : ''}`}
+            onClick={() => setIsEditMode(!isEditMode)}
+            title={isEditMode ? 'Finish Editing' : 'Edit Agenda'}
+            aria-label="Toggle edit mode"
+            style={{
+              width: '28px',
+              height: '28px',
+              padding: '0',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              borderRadius: '8px',
+              background: isEditMode ? 'rgba(16, 19, 18, 0.08)' : 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'inherit',
+              transition: 'background 0.2s',
+            }}
+          >
+            <Pencil size={13} strokeWidth={2.5} />
+          </button>
+        </div>
       </div>
       {sorted.length === 0 ? (
         <p className="calendar-empty">Nothing scheduled.</p>
@@ -541,7 +566,13 @@ function AgendaList({
           {sorted.map((item) => {
             const Icon = iconForType(item.itemType)
             return (
-              <article key={item.occurrenceId ?? item.id} className={item.completed ? 'is-completed' : undefined}>
+              <article
+                key={item.occurrenceId ?? item.id}
+                className={item.completed ? 'is-completed' : undefined}
+                style={{
+                  gridTemplateColumns: isEditMode ? '24px 4px minmax(0, 1fr) auto' : '24px 4px minmax(0, 1fr)',
+                }}
+              >
                 <button
                   type="button"
                   className="calendar-agenda-check"
@@ -559,14 +590,16 @@ function AgendaList({
                   <strong>{item.title}</strong>
                   {item.notes && <p>{item.notes}</p>}
                 </div>
-                <div className="calendar-agenda-actions">
-                  <button type="button" onClick={() => onEdit(item)} aria-label="Edit item">
-                    <Pencil size={13} />
-                  </button>
-                  <button type="button" onClick={() => onDelete(item)} aria-label="Delete item">
-                    <Trash2 size={13} />
-                  </button>
-                </div>
+                {isEditMode && (
+                  <div className="calendar-agenda-actions">
+                    <button type="button" onClick={() => onEdit(item)} aria-label="Edit item">
+                      <Pencil size={13} />
+                    </button>
+                    <button type="button" onClick={() => onDelete(item)} aria-label="Delete item">
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                )}
               </article>
             )
           })}
