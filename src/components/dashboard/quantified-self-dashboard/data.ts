@@ -49,11 +49,11 @@ const enableHomeRoute = import.meta.env.VITE_ENABLE_HOME_ROUTE === 'true'
 
 export const navItems: DashboardNavItem[] = [
   ...(enableHomeRoute ? [{ label: 'Home', icon: Home, to: '/home' as const }] : []),
-  { label: 'Finance Overview', icon: CircleDollarSign, to: '/finance' },
-  { label: 'Nutrition Overview', icon: Utensils, to: '/nutrition' },
-  { label: 'Workouts', icon: Dumbbell, to: '/workouts' },
   { label: 'Learnings Map', icon: GraduationCap, to: '/learnings' },
+  { label: 'Nutrition Overview', icon: Utensils, to: '/nutrition' },
   { label: 'Calendar', icon: CalendarDays, to: '/calendar' },
+  { label: 'Finance Overview', icon: CircleDollarSign, to: '/finance' },
+  { label: 'Workouts', icon: Dumbbell, to: '/workouts' },
   { label: 'Adjust', icon: SlidersHorizontal, muted: true },
   { label: 'Tasks', icon: CheckSquare, muted: true },
   { label: 'People', icon: Users, muted: true },
