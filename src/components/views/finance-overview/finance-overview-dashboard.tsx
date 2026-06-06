@@ -31,6 +31,31 @@ function FinanceOverviewDashboard() {
     const d = new Date()
     return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`
   })
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    const params = new URLSearchParams(window.location.search)
+    return params.get('date') || new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)
+  })
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search)
+      const nextDate = params.get('date') || new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)
+      setSelectedDate(nextDate)
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => {
+      window.removeEventListener('popstate', handlePopState)
+    }
+  }, [])
+
+  useEffect(() => {
+    const [year, month] = selectedDate.split('-')
+    if (year && month) {
+      setSelectedMonthKey(`${year}-${month}`)
+    }
+  }, [selectedDate])
+
 
   const refreshData = () => {
     setLoading(true)
@@ -45,9 +70,16 @@ function FinanceOverviewDashboard() {
           return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`
         }))).sort().reverse()
         
-        const currentMonthKey = `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}`
+        const params = new URLSearchParams(window.location.search)
+        const dateParam = params.get('date')
+        const currentMonthKey = dateParam 
+          ? dateParam.substring(0, 7)
+          : `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}`
+        
         if (!availableMonthKeys.includes(currentMonthKey)) {
           setSelectedMonthKey(availableMonthKeys[0] as string)
+        } else {
+          setSelectedMonthKey(currentMonthKey)
         }
       }
       
@@ -189,7 +221,12 @@ function FinanceOverviewDashboard() {
 
   return (
     <section className="finance-dashboard" aria-label="Finance overview dashboard">
-      <FinanceHeader onAddClick={() => setIsAddModalOpen(true)} />
+      <FinanceHeader 
+        onAddClick={() => setIsAddModalOpen(true)} 
+        logs={logs}
+        selectedDate={selectedDate}
+        onDateChange={setSelectedDate}
+      />
       <div className="finance-dashboard-grid">
         <div className="finance-stats-row">
           <BalanceSummaryCard />
