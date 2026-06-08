@@ -12,6 +12,8 @@ import { LearningsOverview } from './components/views/learnings-view'
 import { CalendarOverview } from './components/views/calendar-view'
 import { subscribeToActiveRequests } from './lib/api'
 import { OverlayLoader } from './components/ui/OverlayLoader'
+import { NotificationProvider } from './contexts/NotificationContext'
+import { NotificationCenter } from './components/dashboard/quantified-self-dashboard/components/notification-center'
 
 const ENABLE_HOME_ROUTE = import.meta.env.VITE_ENABLE_HOME_ROUTE === 'true'
 
@@ -157,82 +159,85 @@ function App() {
 
   return (
     <DashboardProvider date={currentDate}>
-      <Toaster 
-        position="top-center" 
-        containerStyle={{
-          top: 40,
-        }}
-      >
-        {(t) => {
-          const message = resolveValue(t.message, t);
-          
-          let type: 'info' | 'success' | 'warning' | 'error' = 'info';
-          let title = 'Information';
-          
-          if (t.type === 'success') {
-            type = 'success';
-            title = 'Success';
-          } else if (t.type === 'error') {
-            type = 'error';
-            title = 'Error';
-          } else if (t.type === 'loading') {
-            type = 'info';
-            title = 'Loading';
-          } else if (t.icon === '⚠️' || (typeof message === 'string' && message.toLowerCase().includes('warning'))) {
-            type = 'warning';
-            title = 'Warning';
-          }
-
-          const renderIcon = () => {
-            const size = 16;
-            if (t.type === 'loading') {
-              return <Loader2 size={size} className="toast-icon-loading animate-spin" />;
+      <NotificationProvider>
+        <Toaster 
+          position="top-center" 
+          containerStyle={{
+            top: 40,
+          }}
+        >
+          {(t) => {
+            const message = resolveValue(t.message, t);
+            
+            let type: 'info' | 'success' | 'warning' | 'error' = 'info';
+            let title = 'Information';
+            
+            if (t.type === 'success') {
+              type = 'success';
+              title = 'Success';
+            } else if (t.type === 'error') {
+              type = 'error';
+              title = 'Error';
+            } else if (t.type === 'loading') {
+              type = 'info';
+              title = 'Loading';
+            } else if (t.icon === '⚠️' || (typeof message === 'string' && message.toLowerCase().includes('warning'))) {
+              type = 'warning';
+              title = 'Warning';
             }
-            switch (type) {
-              case 'success':
-                return <Check size={size} className="toast-icon-check" />;
-              case 'error':
-                return <AlertCircle size={size} className="toast-icon-error" />;
-              case 'warning':
-                return <AlertTriangle size={size} className="toast-icon-warning" />;
-              case 'info':
-              default:
-                return <Info size={size} className="toast-icon-info" />;
-            }
-          };
 
-          return (
-            <div
-              className={`custom-toast custom-toast--${type} ${t.visible ? 'toast-enter' : 'toast-leave'}`}
-              style={{
-                ...t.style,
-                opacity: t.visible ? 1 : 0,
-              }}
-            >
-              <div className="toast-glow-bg" />
-              <div className="toast-icon-wrapper">
-                <div className="toast-icon-box">
-                  {renderIcon()}
-                </div>
-              </div>
-              <div className="toast-content">
-                <span className="toast-title">{title}</span>
-                <span className="toast-message">{message}</span>
-              </div>
-              <button 
-                type="button"
-                className="toast-close-btn" 
-                onClick={() => toast.dismiss(t.id)}
-                aria-label="Close notification"
+            const renderIcon = () => {
+              const size = 16;
+              if (t.type === 'loading') {
+                return <Loader2 size={size} className="toast-icon-loading animate-spin" />;
+              }
+              switch (type) {
+                case 'success':
+                  return <Check size={size} className="toast-icon-check" />;
+                case 'error':
+                  return <AlertCircle size={size} className="toast-icon-error" />;
+                case 'warning':
+                  return <AlertTriangle size={size} className="toast-icon-warning" />;
+                case 'info':
+                default:
+                  return <Info size={size} className="toast-icon-info" />;
+              }
+            };
+
+            return (
+              <div
+                className={`custom-toast custom-toast--${type} ${t.visible ? 'toast-enter' : 'toast-leave'}`}
+                style={{
+                  ...t.style,
+                  opacity: t.visible ? 1 : 0,
+                }}
               >
-                <X size={14} />
-              </button>
-            </div>
-          );
-        }}
-      </Toaster>
-      {content}
-      <OverlayLoader show={showOverlay} />
+                <div className="toast-glow-bg" />
+                <div className="toast-icon-wrapper">
+                  <div className="toast-icon-box">
+                    {renderIcon()}
+                  </div>
+                </div>
+                <div className="toast-content">
+                  <span className="toast-title">{title}</span>
+                  <span className="toast-message">{message}</span>
+                </div>
+                <button 
+                  type="button"
+                  className="toast-close-btn" 
+                  onClick={() => toast.dismiss(t.id)}
+                  aria-label="Close notification"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            );
+          }}
+        </Toaster>
+        {content}
+        <NotificationCenter />
+        <OverlayLoader show={showOverlay} />
+      </NotificationProvider>
     </DashboardProvider>
   );
 }

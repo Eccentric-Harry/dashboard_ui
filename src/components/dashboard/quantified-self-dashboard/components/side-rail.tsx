@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react'
 import avatarImage from '../../../../assets/reference-crops/avatar.png'
 import { type AppPath, navItems, railBottomItems } from '../data'
+import { useNotifications } from '../../../../contexts/NotificationContext'
 
 type DashboardStageProps = {
   activePath: AppPath
@@ -8,6 +9,8 @@ type DashboardStageProps = {
 }
 
 function SideRail({ activePath, onNavigate }: DashboardStageProps) {
+  const { unreadCount, isOpen, setIsOpen } = useNotifications()
+
   const mobileNavItems = navItems.filter((item) => item.to && !item.mobileHidden)
   const activeMobileIndex = Math.max(
     0,
@@ -41,20 +44,29 @@ function SideRail({ activePath, onNavigate }: DashboardStageProps) {
         })}
       </nav>
       <div className="rail-bottom">
-        {railBottomItems.map(({ label, icon: Icon, muted }) => (
-          <button
-            key={label}
-            type="button"
-            aria-label={label}
-            title={label}
-            className={muted ? 'muted' : undefined}
-          >
-            <Icon size={16} />
-          </button>
-        ))}
+        {railBottomItems.map(({ label, icon: Icon, muted }) => {
+          const isNotifications = label === 'Notifications'
+          
+          return (
+            <button
+              key={label}
+              type="button"
+              aria-label={label}
+              title={label}
+              className={`${muted && !isNotifications ? 'muted' : ''} ${isNotifications && isOpen ? 'active' : ''}`.trim() || undefined}
+              onClick={isNotifications ? () => setIsOpen(!isOpen) : undefined}
+            >
+              <Icon size={16} />
+              {isNotifications && unreadCount > 0 && (
+                <span className="rail-notification-badge">{unreadCount}</span>
+              )}
+            </button>
+          )
+        })}
       </div>
     </aside>
   )
 }
 
 export { SideRail }
+
