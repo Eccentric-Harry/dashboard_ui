@@ -583,9 +583,17 @@ function AgendaList({
                 </button>
                 <span className="calendar-agenda-color" style={{ background: item.color ?? '#9ee7e8' }} />
                 <div>
-                  <small>
+                  <small style={{ display: 'inline-flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
                     <Icon size={12} />
                     {item.itemType ?? 'TASK'} · {formatItemTime(item)}
+                    {item.recurrenceFrequency && item.recurrenceFrequency !== 'NONE' && (
+                      <>
+                        · <Repeat size={10} style={{ display: 'inline' }} />
+                        <span style={{ textTransform: 'capitalize' }}>
+                          {item.recurrenceFrequency.toLowerCase()}
+                        </span>
+                      </>
+                    )}
                   </small>
                   <strong>{item.title}</strong>
                   {item.notes && <p>{item.notes}</p>}
@@ -628,7 +636,7 @@ function CalendarItemModal({
 }) {
   const [saving, setSaving] = useState(false)
   const [title, setTitle] = useState(item?.title ?? '')
-  const [itemDate, setItemDate] = useState(item?.date ?? date)
+  const [itemDate, setItemDate] = useState(item?.originalDate ?? item?.date ?? date)
   const [itemType, setItemType] = useState<CalendarItemType>(item?.itemType ?? 'TASK')
   const [category, setCategory] = useState(item?.category ?? 'Personal')
   const [color, setColor] = useState(item?.color ?? colorForCategory(item?.category ?? 'Personal'))
@@ -637,8 +645,8 @@ function CalendarItemModal({
   const [endTime, setEndTime] = useState(item?.endTime ?? '10:00')
   const [notes, setNotes] = useState(item?.notes ?? '')
   const [completed, setCompleted] = useState(item?.completed ?? false)
-  const recurrenceFrequency: CalendarRecurrence = 'NONE'
-  const recurrenceUntil = ''
+  const [recurrenceFrequency, setRecurrenceFrequency] = useState<CalendarRecurrence>(item?.recurrenceFrequency ?? 'NONE')
+  const [recurrenceUntil, setRecurrenceUntil] = useState(item?.recurrenceUntil ?? '')
   const [error, setError] = useState('')
 
   const handleCategory = (nextCategory: string) => {
@@ -708,16 +716,16 @@ function CalendarItemModal({
               </select>
             </label>
             <label>
-              Date
-              <input type="date" value={itemDate} onChange={(event) => setItemDate(event.target.value)} />
-            </label>
-          </div>
-          <div className="calendar-form-row">
-            <label>
               Category
               <select value={category} onChange={(event) => handleCategory(event.target.value)}>
                 {CATEGORY_OPTIONS.map((option) => <option key={option.label}>{option.label}</option>)}
               </select>
+            </label>
+          </div>
+          <div className="calendar-form-row">
+            <label>
+              Date
+              <input type="date" value={itemDate} onChange={(event) => setItemDate(event.target.value)} />
             </label>
             <label>
               Color
@@ -734,9 +742,36 @@ function CalendarItemModal({
               <input type="time" value={endTime} onChange={(event) => setEndTime(event.target.value)} />
             </label>
           </div>
+          <div className="calendar-form-row">
+            <label>
+              Repeats
+              <select
+                value={recurrenceFrequency}
+                onChange={(event) => setRecurrenceFrequency(event.target.value as CalendarRecurrence)}
+              >
+                <option value="NONE">Does not repeat</option>
+                <option value="DAILY">Daily</option>
+                <option value="WEEKLY">Weekly</option>
+                <option value="MONTHLY">Monthly</option>
+              </select>
+            </label>
+            {recurrenceFrequency !== 'NONE' ? (
+              <label>
+                Repeat Until
+                <input
+                  type="date"
+                  value={recurrenceUntil}
+                  onChange={(event) => setRecurrenceUntil(event.target.value)}
+                  min={itemDate}
+                />
+              </label>
+            ) : (
+              <div />
+            )}
+          </div>
           <label>
             Notes
-            <textarea rows={3} value={notes} onChange={(event) => setNotes(event.target.value)} />
+            <textarea rows={2} value={notes} onChange={(event) => setNotes(event.target.value)} />
           </label>
           <label className="calendar-checkbox-row">
             <input type="checkbox" checked={completed} onChange={(event) => setCompleted(event.target.checked)} />
