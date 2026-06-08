@@ -1,7 +1,13 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import toast from 'react-hot-toast';
-import { fetchCalendarItemsForRange, toggleCalendarItem as toggleCalendarItemApi } from '../lib/api';
+import {
+  fetchCalendarItemsForRange,
+  toggleCalendarItem as toggleCalendarItemApi,
+  fetchVapidPublicKey,
+  subscribeDevice,
+  unsubscribeDevice,
+} from '../lib/api';
 import type { CalendarItem } from '../lib/api';
 
 export interface InAppNotification {
@@ -55,6 +61,21 @@ const getEmojiForItemType = (type?: string) => {
   }
 };
 
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding)
+    .replace(/\-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<InAppNotification[]>(() => {
     const saved = localStorage.getItem('dashboard_notifications');
@@ -75,6 +96,19 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  // Register service worker on mount
+  useEffect(() => {
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      navigator.serviceWorker.register('/sw.js')
+        .then((reg) => {
+          console.log('Notification Service Worker registered successfully:', reg.scope);
+        })
+        .catch((err) => {
+          console.error('Notification Service Worker registration failed:', err);
+        });
+    }
+  }, []);
 
   // Sync references for interval timer
   const itemsRef = useRef(items);
@@ -287,28 +321,64 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   };
 
   const toggleDesktopNotifications = async (): Promise<boolean> => {
-    if (!('Notification' in window)) {
-      toast.error('This browser does not support desktop notifications.');
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      toast.error('This browser does not support Web Push notifications.');
       return false;
     }
 
-    if (desktopEnabled) {
-      setDesktopEnabled(false);
-      localStorage.setItem('dashboard_desktop_notifications_enabled', 'false');
-      toast.success('Desktop notifications disabled.');
-      return false;
-    }
+    try {
+      if (desktopEnabled) {
+        // Unsubscribe from push
+        const reg = await navigator.serviceWorker.ready;
+        const subscription = await reg.pushManager.getSubscription();
+        if (subscription) {
+          await subscription.unsubscribe();
+          await unsubscribeDevice(subscription.endpoint);
+        }
+        
+        setDesktopEnabled(false);
+        localStorage.setItem('dashboard_desktop_notifications_enabled', 'false');
+        toast.success('Desktop alerts disabled.');
+        return false;
+      }
 
-    const permission = await Notification.requestPermission();
-    if (permission === 'granted') {
+      // Request permission
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        toast.error('Permission denied for system notifications.');
+        return false;
+      }
+
+      // Get ready registration
+      const reg = await navigator.serviceWorker.ready;
+      
+      // Fetch public key
+      const vapidPublicKey = await fetchVapidPublicKey();
+      
+      // Subscribe
+      const subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+      });
+
+      // Send to backend
+      const rawSub = JSON.parse(JSON.stringify(subscription));
+      const payload = {
+        endpoint: rawSub.endpoint,
+        p256dh: rawSub.keys.p256dh,
+        auth: rawSub.keys.auth,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+      };
+
+      await subscribeDevice(payload);
+
       setDesktopEnabled(true);
       localStorage.setItem('dashboard_desktop_notifications_enabled', 'true');
-      toast.success('Desktop notifications enabled!');
+      toast.success('Desktop push alerts activated!');
       return true;
-    } else {
-      setDesktopEnabled(false);
-      localStorage.setItem('dashboard_desktop_notifications_enabled', 'false');
-      toast.error('Desktop notification permission denied.');
+    } catch (err) {
+      console.error('Failed to register push alerts:', err);
+      toast.error('Web Push registration failed. Make sure the backend is running.');
       return false;
     }
   };

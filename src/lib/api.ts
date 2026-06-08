@@ -588,6 +588,49 @@ export interface DailyLog {
   moodRating?: string;
 }
 
+// ─── Web Push Notification API ────────────────────────────────────────
+
+export async function fetchVapidPublicKey(): Promise<string> {
+  const response = await fetch(`${API_BASE_URL}/push/public-key`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch VAPID public key');
+  }
+  const result = await response.json();
+  return result.data;
+}
+
+export interface PushSubscriptionPayload {
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  timezone: string;
+}
+
+export async function subscribeDevice(payload: PushSubscriptionPayload) {
+  const response = await fetch(`${API_BASE_URL}/push/subscribe`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to register device subscription');
+  }
+  return response.json();
+}
+
+export async function unsubscribeDevice(endpoint: string) {
+  const response = await fetch(
+    `${API_BASE_URL}/push/unsubscribe?endpoint=${encodeURIComponent(endpoint)}`,
+    {
+      method: 'POST',
+    },
+  );
+  if (!response.ok) {
+    throw new Error('Failed to unregister device subscription');
+  }
+}
+
+
 // Global active GET request tracking for route navigation loader
 let activeGetRequests = 0;
 const requestChangeListeners = new Set<(count: number) => void>();

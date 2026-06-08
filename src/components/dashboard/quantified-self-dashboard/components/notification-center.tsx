@@ -65,12 +65,20 @@ function NotificationCenter() {
     }
   };
 
+  const isPushSupported = 'serviceWorker' in navigator && 'PushManager' in window;
+
   return (
-    <div className="notification-center-overlay" onClick={() => setIsOpen(false)}>
+    <div 
+      className="notification-center-overlay" 
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          setIsOpen(false);
+        }
+      }}
+    >
       <div
         ref={drawerRef}
         className="notification-drawer"
-        onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-label="Notification Center"
@@ -98,20 +106,28 @@ function NotificationCenter() {
           <div className="desktop-alert-info">
             <h4>System Desktop Alerts</h4>
             <p>
-              {desktopEnabled
+              {!isPushSupported
+                ? 'Not supported in browser tab. Add to Home Screen to enable.'
+                : desktopEnabled
                 ? 'Desktop notifications are active.'
                 : 'Get alerts when the dashboard is open in the background.'}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={toggleDesktopNotifications}
-            className={`desktop-toggle-btn ${desktopEnabled ? 'active' : ''}`}
-            aria-label={desktopEnabled ? 'Disable system alerts' : 'Enable system alerts'}
-          >
-            {desktopEnabled ? <BellOff size={16} /> : <Bell size={16} />}
-            <span>{desktopEnabled ? 'Disable' : 'Enable'}</span>
-          </button>
+          {isPushSupported ? (
+            <button
+              type="button"
+              onClick={toggleDesktopNotifications}
+              className={`desktop-toggle-btn ${desktopEnabled ? 'active' : ''}`}
+              aria-label={desktopEnabled ? 'Disable system alerts' : 'Enable system alerts'}
+            >
+              {desktopEnabled ? <BellOff size={16} /> : <Bell size={16} />}
+              <span>{desktopEnabled ? 'Disable' : 'Enable'}</span>
+            </button>
+          ) : (
+            <span className="text-xs font-semibold px-3 py-1.5 bg-gray-100 text-gray-500 rounded-lg select-none">
+              Unavailable
+            </span>
+          )}
         </div>
 
         {/* Global Action Bar */}
