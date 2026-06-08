@@ -1,0 +1,17 @@
+{
+  "name": "Personal Dashboard",
+  "short_name": "Dashboard",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#dfe4df",
+  "theme_color": "#dfe4df",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
