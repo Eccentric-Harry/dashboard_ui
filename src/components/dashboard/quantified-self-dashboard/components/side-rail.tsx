@@ -53,7 +53,7 @@ function SideRail({ activePath, onNavigate }: DashboardStageProps) {
               type="button"
               aria-label={label}
               title={label}
-              className={`${muted && !isNotifications ? 'muted' : ''} ${isNotifications && isOpen ? 'active' : ''}`.trim() || undefined}
+              className={`${muted && !isNotifications ? 'muted' : ''} ${isNotifications && isOpen ? 'active' : ''} ${isNotifications ? 'rail-notifications-btn' : ''}`.trim() || undefined}
               onClick={isNotifications ? () => setIsOpen(!isOpen) : undefined}
             >
               <Icon size={16} />

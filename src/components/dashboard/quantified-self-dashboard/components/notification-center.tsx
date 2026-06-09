@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Check, Trash2, Bell, BellOff, Calendar, CheckSquare, Trophy, AlertCircle, Eye, Volume2, Settings, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, Check, Trash2, Bell, BellOff, Calendar, CheckSquare, Trophy, Eye, Volume2, Settings, ChevronDown, ChevronUp, Clock } from 'lucide-react';
 import { useNotifications } from '../../../../contexts/NotificationContext';
 
 function NotificationCenter() {
@@ -52,21 +52,7 @@ function NotificationCenter() {
     }
   };
 
-  const getNotificationIcon = (type: string) => {
-    const size = 16;
-    switch (type) {
-      case 'TASK':
-        return <CheckSquare size={size} className="text-emerald-600" />;
-      case 'EVENT':
-        return <Calendar size={size} className="text-blue-600" />;
-      case 'REMINDER':
-        return <Bell size={size} className="text-amber-500 animate-bounce" />;
-      case 'MILESTONE':
-        return <Trophy size={size} className="text-purple-500" />;
-      default:
-        return <AlertCircle size={size} className="text-gray-500" />;
-    }
-  };
+
 
   const isPushSupported = 'serviceWorker' in navigator && 'PushManager' in window;
 
@@ -214,54 +200,65 @@ function NotificationCenter() {
                     style={{ cursor: notif.isRead ? 'default' : 'pointer' }}
                   >
                     <div className="notif-layout-row">
-                      {/* Left Column: Checkbox for Tasks/Reminders, or simple Type Icon */}
+                      {/* Left Column: Double-ring Icon Container */}
                       <div className="notif-left-column">
-                        {isTaskOrReminder ? (
-                          <button
-                            type="button"
-                            className={`notif-check-circle ${isCompleted ? 'completed' : ''}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              completeTaskDirectly(notif.itemId);
-                            }}
-                            disabled={isCompleted}
-                            title={isCompleted ? "Completed" : "Mark complete"}
-                          >
-                            <Check size={10} className="check-icon" style={{ opacity: isCompleted ? 1 : undefined }} />
-                          </button>
-                        ) : (
-                          <div className="notif-type-icon">
-                            {getNotificationIcon(notif.itemType)}
+                        <div className="notif-icon-outer-ring">
+                          <div className="notif-icon-inner-circle">
+                            {isTaskOrReminder && !isCompleted ? (
+                              <button
+                                type="button"
+                                className="notif-interactive-icon-btn"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  completeTaskDirectly(notif.itemId);
+                                }}
+                                title="Mark complete"
+                              >
+                                <span className="default-icon-wrapper">
+                                  {notif.itemType === 'TASK' ? <CheckSquare size={16} /> : <Clock size={16} />}
+                                </span>
+                                <span className="hover-check-icon-wrapper">
+                                  <Check size={16} />
+                                </span>
+                              </button>
+                            ) : (
+                              <span className="notif-static-icon">
+                                {notif.itemType === 'TASK' && <CheckSquare size={16} />}
+                                {notif.itemType === 'EVENT' && <Calendar size={16} />}
+                                {notif.itemType === 'REMINDER' && <Clock size={16} />}
+                                {notif.itemType === 'MILESTONE' && <Trophy size={16} />}
+                                {notif.itemType !== 'TASK' && notif.itemType !== 'EVENT' && notif.itemType !== 'REMINDER' && notif.itemType !== 'MILESTONE' && <Bell size={16} />}
+                              </span>
+                            )}
                           </div>
-                        )}
+                        </div>
                       </div>
 
-                      {/* Right Column: Title, description, tags, relative time, and delete actions */}
+                      {/* Right Column: Title and Message */}
                       <div className="notif-right-column">
                         <div className="notif-header">
                           <span className={`notif-badge-tag tag-${notif.itemType.toLowerCase()}`}>
                             {notif.itemType}
                           </span>
-                          <div className="notif-meta-actions">
-                            <span className="notif-time">{formatTime(notif.timestamp)}</span>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                clearNotification(notif.id);
-                              }}
-                              className="notif-delete-btn-top"
-                              title="Delete notification"
-                              aria-label="Delete notification"
-                            >
-                              <Trash2 size={11} />
-                            </button>
-                          </div>
+                          <span className="notif-time">{formatTime(notif.timestamp)}</span>
                         </div>
-
                         <h3 className="notif-title">{notif.title}</h3>
                         <p className="notif-message">{notif.message}</p>
                       </div>
+
+                      {/* Clean Hover-visible Close Button */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          clearNotification(notif.id);
+                        }}
+                        className="notif-delete-btn"
+                        title="Delete notification"
+                        aria-label="Delete notification"
+                      >
+                        <X size={14} />
+                      </button>
                     </div>
                   </div>
                 );
