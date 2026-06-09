@@ -1234,6 +1234,9 @@ button {
 /* ===== MOBILE RESPONSIVE ===== */
 
 @media (max-width: 768px) {
+  html {
+    zoom: 1;
+  }
 
   /* --- Body: ensure native page scroll --- */
   body, #root {
