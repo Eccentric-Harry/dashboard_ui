@@ -1,16 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Bell,
   CalendarDays,
   Check,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Circle,
   Clock,
   Loader2,
   Milestone,
-  Pencil,
   Plus,
   Repeat,
   Trash2,
@@ -31,9 +28,6 @@ import { ConfirmDialog } from '../../ui/confirm-dialog'
 
 import './calendar-overview.css'
 
-type CalendarMode = 'month' | 'week' | 'day'
-
-const HOURS = Array.from({ length: 24 }, (_, hour) => hour)
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const TYPE_OPTIONS: CalendarItemType[] = ['TASK', 'EVENT', 'REMINDER', 'MILESTONE']
 const CATEGORY_OPTIONS = [
@@ -55,22 +49,28 @@ type ModalState =
   | { open: true; item?: CalendarItem; date: string }
 
 function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOverviewDashboardProps) {
-  const [mode] = useState<CalendarMode>('day')
   const [selectedDate, setSelectedDate] = useState(() => searchParams.get('date') || toISODate(new Date()))
+  const [currentMonth, setCurrentMonth] = useState(() =>
+    parseISODate(searchParams.get('date') || toISODate(new Date())),
+  )
   const [items, setItems] = useState<CalendarItem[]>([])
   const [loading, setLoading] = useState(false)
   const [modal, setModal] = useState<ModalState>({ open: false })
   const [deleteTarget, setDeleteTarget] = useState<CalendarItem | null>(null)
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false)
 
   useEffect(() => {
     const nextDate = searchParams.get('date')
     if (nextDate && nextDate !== selectedDate) {
       setSelectedDate(nextDate)
+      setCurrentMonth(parseISODate(nextDate))
     }
   }, [searchParams, selectedDate])
 
-  const visibleRange = useMemo(() => getVisibleRange(selectedDate, mode), [selectedDate, mode])
+  // Fetch the full month grid range so month-dot indicators work
+  const visibleRange = useMemo(() => {
+    const grid = monthGrid(currentMonth)
+    return { start: toISODate(grid[0]), end: toISODate(grid[grid.length - 1]) }
+  }, [currentMonth])
 
   const loadItems = useCallback(async () => {
     setLoading(true)
@@ -87,39 +87,44 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
 
   useEffect(() => {
     loadItems()
-    const handleCalendarUpdate = () => {
-      loadItems()
-    }
-    window.addEventListener('calendar-updated', handleCalendarUpdate)
-    return () => {
-      window.removeEventListener('calendar-updated', handleCalendarUpdate)
-    }
+    window.addEventListener('calendar-updated', loadItems)
+    return () => window.removeEventListener('calendar-updated', loadItems)
   }, [loadItems])
 
   const updateSelectedDate = (date: string) => {
     setSelectedDate(date)
+    // If the new date is outside the displayed month, sync the month view
+    const parsed = parseISODate(date)
+    if (
+      parsed.getMonth() !== currentMonth.getMonth() ||
+      parsed.getFullYear() !== currentMonth.getFullYear()
+    ) {
+      setCurrentMonth(parsed)
+    }
     onNavigate('/calendar', `?date=${date}`)
   }
 
+  const handleMonthStep = (direction: -1 | 1) => {
+    const next = new Date(currentMonth)
+    next.setMonth(currentMonth.getMonth() + direction)
+    setCurrentMonth(next)
+  }
+
   const selectedItems = useMemo(() => byDate(items, selectedDate), [items, selectedDate])
-  const stats = useMemo(() => {
-    const completed = items.filter((item) => item.completed).length
-    const timed = items.filter((item) => !item.allDay && item.startTime).length
-    const recurring = items.filter((item) => item.recurrenceFrequency && item.recurrenceFrequency !== 'NONE').length
-    return { completed, timed, recurring, total: items.length }
-  }, [items])
 
   const subtitle = useMemo(() => {
-    if (selectedItems.length === 0) return 'No items scheduled'
-    const completed = selectedItems.filter((item) => item.completed).length
-    return `${completed}/${selectedItems.length} items completed`
+    const total = selectedItems.length
+    if (total === 0) return 'Nothing scheduled for today'
+    const completed = selectedItems.filter((i) => i.completed).length
+    return `${total} item${total > 1 ? 's' : ''} today · ${completed} done`
   }, [selectedItems])
 
-  const handleStep = (direction: -1 | 1) => {
-    const date = parseISODate(selectedDate)
-    date.setDate(date.getDate() + direction)
-    updateSelectedDate(toISODate(date))
-  }
+  const greeting = useMemo(() => {
+    const h = new Date().getHours()
+    if (h < 12) return 'Good morning'
+    if (h < 17) return 'Good afternoon'
+    return 'Good evening'
+  }, [])
 
   const handleToggle = async (item: CalendarItem) => {
     if (!item.id) return
@@ -147,94 +152,58 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   }
 
   return (
-    <section className="calendar-dashboard" aria-label="Calendar schedule dashboard">
-      <header className="calendar-header">
-        <div className="calendar-date-picker-wrap">
-          <button
-            type="button"
-            className="calendar-date-trigger"
-            onClick={() => setIsCalendarOpen(!isCalendarOpen)}
-            aria-expanded={isCalendarOpen}
-          >
-            <div className="calendar-date-trigger-text">
-              <h1 className="calendar-date-title-wrap">
-                {formatLongDate(selectedDate)}
-                <ChevronDown size={20} className="calendar-date-chevron" />
-              </h1>
-              <span className="calendar-date-trigger-sub">{subtitle}</span>
-            </div>
-          </button>
-
-          {isCalendarOpen && (
-            <>
-              <div
-                className="calendar-calendar-backdrop"
-                role="presentation"
-                onClick={() => setIsCalendarOpen(false)}
-              />
-              <div className="calendar-header-popover calendar-surface" role="dialog" aria-label="Choose date">
-                <MiniMonth
-                  selectedDate={selectedDate}
-                  items={items}
-                  onSelect={(date) => {
-                    updateSelectedDate(date)
-                    setIsCalendarOpen(false)
-                  }}
-                />
-              </div>
-            </>
-          )}
+    <section className="cal-shell" aria-label="Calendar schedule">
+      {/* Greeting header */}
+      <header className="cal-greeting">
+        <div>
+          <h1 className="cal-greeting-title">
+            {greeting}, <em>Harry</em>
+          </h1>
+          <p className="cal-greeting-sub">{subtitle}</p>
         </div>
-
-        <div className="calendar-header-actions">
-          <div className="calendar-nav-group">
-            <button type="button" onClick={() => handleStep(-1)} aria-label="Previous">
-              <ChevronLeft size={16} />
-            </button>
-            <button type="button" onClick={() => updateSelectedDate(toISODate(new Date()))}>
-              Today
-            </button>
-            <button type="button" onClick={() => handleStep(1)} aria-label="Next">
-              <ChevronRight size={16} />
-            </button>
-          </div>
-          <button
-            type="button"
-            className="calendar-add-button"
-            onClick={() => setModal({ open: true, date: selectedDate })}
-            aria-label="Add calendar item"
-          >
-            <Plus size={17} />
-          </button>
-        </div>
+        <button
+          id="cal-header-add-btn"
+          type="button"
+          className="cal-header-add"
+          onClick={() => setModal({ open: true, date: selectedDate })}
+          aria-label="Add event"
+        >
+          <Plus size={16} />
+        </button>
       </header>
 
-      <div className="calendar-stat-row">
-        <MetricCard value={String(selectedItems.length)} label="Today" hint="scheduled" icon={CalendarDays} tone="today" />
-        <MetricCard value={String(stats.timed)} label="Timed" hint="timed" icon={Clock} tone="timed" />
-        <MetricCard value={String(stats.completed)} label="Done" hint="completed" icon={Check} tone="done" />
-        <MetricCard value={String(stats.recurring)} label="Repeats" hint="repeats" icon={Repeat} tone="repeats" />
+      {/* Month grid */}
+      <div className="cal-card cal-month-card">
+        <MonthGridInline
+          selectedDate={selectedDate}
+          currentMonth={currentMonth}
+          items={items}
+          onSelect={updateSelectedDate}
+          onMonthStep={handleMonthStep}
+          onAdd={() => setModal({ open: true, date: selectedDate })}
+        />
       </div>
 
-      <div className="calendar-dashboard-grid">
-        {loading && (
-          <div className="calendar-surface" style={{ minHeight: '300px', display: 'grid', placeItems: 'center' }}>
-            <div className="calendar-loading">
-              <Loader2 className="animate-spin" size={16} />
-              Loading schedule...
+      {/* Agenda card: week strip + day timeline */}
+      <div className="cal-card cal-agenda-card">
+        <WeekDayStrip selectedDate={selectedDate} items={items} onSelect={updateSelectedDate} />
+        <div className="cal-agenda-body">
+          {loading ? (
+            <div className="cal-loading">
+              <Loader2 className="animate-spin" size={15} />
+              <span>Loading schedule…</span>
             </div>
-          </div>
-        )}
-        {!loading && (
-          <DayView
-            date={selectedDate}
-            items={selectedItems}
-            onEdit={(item) => setModal({ open: true, item, date: item.date })}
-            onDelete={setDeleteTarget}
-            onToggle={handleToggle}
-            onCreate={() => setModal({ open: true, date: selectedDate })}
-          />
-        )}
+          ) : (
+            <DayAgendaList
+              date={selectedDate}
+              items={selectedItems}
+              onEdit={(item) => setModal({ open: true, item, date: item.date })}
+              onDelete={setDeleteTarget}
+              onToggle={handleToggle}
+              onCreate={() => setModal({ open: true, date: selectedDate })}
+            />
+          )}
+        </div>
       </div>
 
       {modal.open && (
@@ -259,45 +228,103 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
       />
 
       <button
+        id="cal-fab-btn"
         type="button"
-        className="calendar-fab-trigger"
+        className="cal-fab"
         onClick={() => setModal({ open: true, date: selectedDate })}
         aria-label="Add calendar item"
       >
-        <Plus size={24} />
+        <Plus size={22} />
       </button>
     </section>
   )
 }
 
-function MetricCard({
-  value,
-  label,
-  hint,
-  icon: Icon,
-  tone,
+// ─── Month Grid ──────────────────────────────────────────────────────────────
+
+function MonthGridInline({
+  selectedDate,
+  currentMonth,
+  items,
+  onSelect,
+  onMonthStep,
+  onAdd,
 }: {
-  value: string
-  label: string
-  hint: string
-  icon: React.ComponentType<{ size?: number; strokeWidth?: number }>
-  tone: 'today' | 'timed' | 'done' | 'repeats'
+  selectedDate: string
+  currentMonth: Date
+  items: CalendarItem[]
+  onSelect: (date: string) => void
+  onMonthStep: (direction: -1 | 1) => void
+  onAdd: () => void
 }) {
+  const days = monthGrid(currentMonth)
+  const activeMonth = currentMonth.getMonth()
+  const today = toISODate(new Date())
+
   return (
-    <div className={`calendar-stat-card calendar-stat-card--${tone}`}>
-      <div className={`calendar-stat-icon calendar-stat-icon--${tone}`}>
-        <Icon size={15} strokeWidth={2.2} />
+    <div className="cal-month">
+      <div className="cal-month-header">
+        <div className="cal-month-nav">
+          <button type="button" onClick={() => onMonthStep(-1)} aria-label="Previous month">
+            <ChevronLeft size={15} />
+          </button>
+          <h2>
+            {new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(currentMonth)}
+          </h2>
+          <button type="button" onClick={() => onMonthStep(1)} aria-label="Next month">
+            <ChevronRight size={15} />
+          </button>
+        </div>
+        <button type="button" className="cal-add-circle" onClick={onAdd} aria-label="Add event">
+          <Plus size={14} />
+        </button>
       </div>
-      <p>{label}</p>
-      <strong>
-        {value}
-        <small>{hint}</small>
-      </strong>
+
+      <div className="cal-month-weekdays">
+        {WEEKDAY_LABELS.map((day) => (
+          <span key={day}>{day[0]}</span>
+        ))}
+      </div>
+
+      <div className="cal-month-grid">
+        {days.map((date) => {
+          const iso = toISODate(date)
+          const dayItems = byDate(items, iso)
+          const isSelected = iso === selectedDate
+          const isToday = iso === today
+          const isMuted = date.getMonth() !== activeMonth
+
+          return (
+            <button
+              key={iso}
+              type="button"
+              className={[
+                'cal-day-cell',
+                isSelected ? 'is-selected' : '',
+                isToday && !isSelected ? 'is-today' : '',
+                isMuted ? 'is-muted' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              onClick={() => onSelect(iso)}
+              aria-label={iso}
+              aria-pressed={isSelected}
+            >
+              <span>{date.getDate()}</span>
+              {dayItems.length > 0 && (
+                <i className="cal-day-dot" style={{ background: dayItems[0].color ?? '#9ee7e8' }} />
+              )}
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }
 
-function MiniMonth({
+// ─── Week Day Strip ───────────────────────────────────────────────────────────
+
+function WeekDayStrip({
   selectedDate,
   items,
   onSelect,
@@ -306,63 +333,53 @@ function MiniMonth({
   items: CalendarItem[]
   onSelect: (date: string) => void
 }) {
-  const [currentMonth, setCurrentMonth] = useState(() => parseISODate(selectedDate))
+  const today = toISODate(new Date())
 
-  useEffect(() => {
-    setCurrentMonth(parseISODate(selectedDate))
+  const weekDays = useMemo(() => {
+    const parsed = parseISODate(selectedDate)
+    const start = startOfWeek(parsed)
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(start)
+      d.setDate(start.getDate() + i)
+      return d
+    })
   }, [selectedDate])
 
-  const days = monthGrid(currentMonth)
-  const activeMonth = currentMonth.getMonth()
-
-  const handleMonthStep = (direction: -1 | 1) => {
-    const next = new Date(currentMonth)
-    next.setMonth(currentMonth.getMonth() + direction)
-    setCurrentMonth(next)
-  }
-
   return (
-    <section className="mini-month" aria-label="Month selector">
-      <div className="mini-month-head">
-        <div className="mini-month-title">
-          <CalendarDays size={15} />
-          <b>{new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(currentMonth)}</b>
-        </div>
-        <div className="mini-month-nav">
-          <button type="button" onClick={() => handleMonthStep(-1)} aria-label="Previous Month">
-            <ChevronLeft size={14} />
+    <div className="cal-week-strip" role="group" aria-label="Week day selector">
+      {weekDays.map((date) => {
+        const iso = toISODate(date)
+        const isSelected = iso === selectedDate
+        const isToday = iso === today
+        const hasItems = byDate(items, iso).length > 0
+
+        return (
+          <button
+            key={iso}
+            type="button"
+            className={[
+              'cal-week-pill',
+              isSelected ? 'is-selected' : '',
+              isToday && !isSelected ? 'is-today' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+            onClick={() => onSelect(iso)}
+            aria-pressed={isSelected}
+          >
+            <span className="cal-wp-label">{WEEKDAY_LABELS[date.getDay()][0]}</span>
+            <span className="cal-wp-num">{date.getDate()}</span>
+            {hasItems && <i className="cal-wp-dot" />}
           </button>
-          <button type="button" onClick={() => handleMonthStep(1)} aria-label="Next Month">
-            <ChevronRight size={14} />
-          </button>
-        </div>
-      </div>
-      <div className="mini-month-weekdays">
-        {WEEKDAY_LABELS.map((day) => <span key={day}>{day[0]}</span>)}
-      </div>
-      <div className="mini-month-grid">
-        {days.map((date) => {
-          const iso = toISODate(date)
-          const dayItems = byDate(items, iso)
-          return (
-            <button
-              key={iso}
-              type="button"
-              className={`${iso === selectedDate ? 'is-selected' : ''} ${date.getMonth() !== activeMonth ? 'is-muted' : ''}`}
-              onClick={() => onSelect(iso)}
-            >
-              {date.getDate()}
-              {dayItems.length > 0 && <i />}
-            </button>
-          )
-        })}
-      </div>
-    </section>
+        )
+      })}
+    </div>
   )
 }
 
+// ─── Day Agenda List ──────────────────────────────────────────────────────────
 
-function DayView({
+function DayAgendaList({
   date,
   items,
   onEdit,
@@ -377,101 +394,71 @@ function DayView({
   onToggle: (item: CalendarItem) => void
   onCreate: () => void
 }) {
-  const timed = items.filter((item) => !item.allDay && item.startTime)
-  const hasItems = items.length > 0
-  const isToday = date === toISODate(new Date())
+  const allDay = items.filter((i) => i.allDay || !i.startTime)
+  const timed = [...items.filter((i) => !i.allDay && i.startTime)].sort(compareItems)
 
-  if (!hasItems) {
+  const dayLabel = useMemo(() => {
+    return parseISODate(date)
+      .toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+      .toUpperCase()
+  }, [date])
+
+  if (items.length === 0) {
     return (
-      <div className="calendar-surface">
-        <div className="calendar-empty-state">
-          <div className="calendar-empty-icon-wrap">
-            <CalendarDays size={44} className="calendar-empty-icon" />
-          </div>
-          <h3>No Activities Scheduled</h3>
-          <p>Your schedule is clear for this day. Click below to add tasks, events, or reminders.</p>
-          <button type="button" className="calendar-empty-add-btn" onClick={onCreate}>
-            <Plus size={15} />
-            Create Event
-          </button>
+      <div className="cal-empty-state">
+        <div className="cal-empty-icon">
+          <CalendarDays size={32} strokeWidth={1.4} />
         </div>
+        <h3>No Events Today</h3>
+        <p>Your schedule is clear. Add a task, event, or reminder.</p>
+        <button type="button" className="cal-empty-cta" onClick={onCreate}>
+          <Plus size={14} />
+          Create Event
+        </button>
       </div>
     )
   }
 
   return (
-    <>
-      <div className="calendar-surface calendar-agenda-card">
-        <AgendaList
-          title="Day Agenda"
-          items={items}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          onToggle={onToggle}
-          compact
-        />
+    <div className="cal-day-agenda">
+      <div className="cal-day-header-row">
+        <span className="cal-day-label">{dayLabel}</span>
+        <button
+          type="button"
+          className="cal-day-add-btn"
+          onClick={onCreate}
+          aria-label="Add event for this day"
+        >
+          <Plus size={12} />
+        </button>
       </div>
 
-      {timed.length > 0 && (
-        <div className="calendar-surface calendar-timeline-card">
-          <div className="calendar-timeline-header">
-            <h2>Timeline</h2>
-          </div>
-          <DayTimeline
-            date={date}
-            timed={timed}
-            isToday={isToday}
-            onEdit={onEdit}
-          />
+      {allDay.length > 0 && (
+        <div className="cal-allday-chips">
+          {allDay.map((item) => (
+            <button
+              key={item.occurrenceId ?? item.id}
+              type="button"
+              className={`cal-allday-chip${item.completed ? ' is-done' : ''}`}
+              onClick={() => onEdit(item)}
+            >
+              <i style={{ background: item.color ?? '#9ee7e8' }} />
+              <span>{item.title}</span>
+              {item.completed && <Check size={9} strokeWidth={3} />}
+            </button>
+          ))}
         </div>
       )}
-    </>
-  )
-}
 
-function DayTimeline({
-  date,
-  timed,
-  isToday,
-  onEdit,
-}: {
-  date: string
-  timed: CalendarItem[]
-  isToday: boolean
-  onEdit: (item: CalendarItem) => void
-}) {
-  const timelineRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (timelineRef.current) {
-      let targetHour = 8 // Default to 8 AM
-      if (timed.length > 0) {
-        const getHour = (timeStr: string) => parseInt(timeStr.split(':')[0], 10)
-        const eventHours = timed.map((item) => getHour(item.startTime!))
-        targetHour = Math.min(...eventHours)
-      } else if (isToday) {
-        targetHour = new Date().getHours()
-      }
-      const scrollPosition = Math.max(0, (targetHour - 1) * 60)
-      timelineRef.current.scrollTop = scrollPosition
-    }
-  }, [date, timed.length, isToday])
-
-  return (
-    <div className="calendar-day-timeline" ref={timelineRef}>
-      <div className="calendar-time-rail">
-        {HOURS.map((hour) => <span key={hour}>{formatHour(hour)}</span>)}
-      </div>
-      <div className="calendar-day-column is-single">
-        {HOURS.map((hour) => <span key={hour} className="calendar-hour-line" />)}
-        {isToday && <CurrentTimeLine />}
-        {timed.map((item, index) => (
-          <TimeBlock
+      <div className="cal-tl-list">
+        {timed.map((item, idx) => (
+          <AgendaRow
             key={item.occurrenceId ?? item.id}
             item={item}
-            index={index}
-            onClick={() => onEdit(item)}
-            wide
+            isLast={idx === timed.length - 1}
+            onEdit={() => onEdit(item)}
+            onDelete={() => onDelete(item)}
+            onToggle={() => onToggle(item)}
           />
         ))}
       </div>
@@ -479,160 +466,77 @@ function DayTimeline({
   )
 }
 
-function CurrentTimeLine() {
-  const now = new Date()
-  const top = ((now.getHours() * 60 + now.getMinutes()) / 1440) * 100
-  return <span className="calendar-now-line" style={{ top: `${top}%` }} />
-}
+// ─── Single agenda row (time + spine dot + content card) ─────────────────────
 
-function TimeBlock({
+function AgendaRow({
   item,
-  index,
-  onClick,
-  wide,
-}: {
-  item: CalendarItem
-  index: number
-  onClick: () => void
-  wide?: boolean
-}) {
-  const startMinutes = timeToMinutes(item.startTime)
-  const endMinutes = item.endTime ? timeToMinutes(item.endTime) : startMinutes + 45
-  const top = (startMinutes / 1440) * 100
-  const height = Math.max(((endMinutes - startMinutes) / 1440) * 100, wide ? 2.8 : 4)
-  return (
-    <button
-      type="button"
-      className={`calendar-time-block ${item.completed ? 'is-completed' : ''}`}
-      style={{
-        top: `${top}%`,
-        height: `${height}%`,
-        background: item.color ?? '#9ee7e8',
-        left: wide ? '12px' : `${8 + (index % 2) * 8}px`,
-        right: wide ? '18px' : `${8 + (index % 2) * 4}px`,
-      }}
-      onClick={onClick}
-      title={item.title}
-    >
-      <strong>{item.title}</strong>
-      <span>{formatItemTime(item)}</span>
-    </button>
-  )
-}
-
-function AgendaList({
-  title,
-  items,
+  isLast,
   onEdit,
   onDelete,
   onToggle,
-  onCreate,
-  compact,
 }: {
-  title: string
-  items: CalendarItem[]
-  onEdit: (item: CalendarItem) => void
-  onDelete: (item: CalendarItem) => void
-  onToggle: (item: CalendarItem) => void
-  onCreate?: () => void
-  compact?: boolean
+  item: CalendarItem
+  isLast: boolean
+  onEdit: () => void
+  onDelete: () => void
+  onToggle: () => void
 }) {
-  const [isEditMode, setIsEditMode] = useState(false)
-  const sorted = [...items].sort(compareItems)
+  const Icon = iconForType(item.itemType)
+
   return (
-    <section className={`calendar-agenda ${compact ? 'is-compact' : ''}`}>
-      <div className="calendar-agenda-head">
-        <h2>{title}</h2>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span>{items.length}</span>
-          <button
-            type="button"
-            className={`calendar-agenda-edit-btn ${isEditMode ? 'is-active' : ''}`}
-            onClick={() => setIsEditMode(!isEditMode)}
-            title={isEditMode ? 'Finish Editing' : 'Edit Agenda'}
-            aria-label="Toggle edit mode"
-            style={{
-              width: '28px',
-              height: '28px',
-              padding: '0',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              borderRadius: '8px',
-              background: isEditMode ? 'rgba(16, 19, 18, 0.08)' : 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'inherit',
-              transition: 'background 0.2s',
-            }}
-          >
-            <Pencil size={13} strokeWidth={2.5} />
-          </button>
-        </div>
+    <div className={`cal-tl-row${item.completed ? ' is-done' : ''}`}>
+      {/* Left: time labels */}
+      <div className="cal-tl-time-col">
+        <span className="cal-tl-start">{item.startTime}</span>
+        {item.endTime && <span className="cal-tl-end">{item.endTime}</span>}
       </div>
-      {sorted.length === 0 ? (
-        <p className="calendar-empty">Nothing scheduled.</p>
-      ) : (
-        <div className="calendar-agenda-list">
-          {sorted.map((item) => {
-            const Icon = iconForType(item.itemType)
-            return (
-              <article
-                key={item.occurrenceId ?? item.id}
-                className={item.completed ? 'is-completed' : undefined}
-                style={{
-                  gridTemplateColumns: isEditMode ? '24px 4px minmax(0, 1fr) auto' : '24px 4px minmax(0, 1fr)',
-                }}
-              >
-                <button
-                  type="button"
-                  className="calendar-agenda-check"
-                  onClick={() => onToggle(item)}
-                  aria-label={item.completed ? 'Mark incomplete' : 'Mark complete'}
-                >
-                  {item.completed ? <Check size={12} /> : <Circle size={12} />}
-                </button>
-                <span className="calendar-agenda-color" style={{ background: item.color ?? '#9ee7e8' }} />
-                <div>
-                  <small style={{ display: 'inline-flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
-                    <Icon size={12} />
-                    {item.itemType ?? 'TASK'} · {formatItemTime(item)}
-                    {item.recurrenceFrequency && item.recurrenceFrequency !== 'NONE' && (
-                      <>
-                        · <Repeat size={10} style={{ display: 'inline' }} />
-                        <span style={{ textTransform: 'capitalize' }}>
-                          {item.recurrenceFrequency.toLowerCase()}
-                        </span>
-                      </>
-                    )}
-                  </small>
-                  <strong>{item.title}</strong>
-                  {item.notes && <p>{item.notes}</p>}
-                </div>
-                {isEditMode && (
-                  <div className="calendar-agenda-actions">
-                    <button type="button" onClick={() => onEdit(item)} aria-label="Edit item">
-                      <Pencil size={13} />
-                    </button>
-                    <button type="button" onClick={() => onDelete(item)} aria-label="Delete item">
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                )}
-              </article>
-            )
-          })}
-        </div>
-      )}
-      {onCreate && (
-        <button type="button" className="calendar-agenda-add-btn" onClick={onCreate}>
-          <Plus size={14} />
-          Add item
+
+      {/* Centre: dot + vertical line */}
+      <div className="cal-tl-spine">
+        <button
+          type="button"
+          className="cal-tl-dot"
+          style={{ background: item.color ?? '#9ee7e8' }}
+          onClick={onToggle}
+          aria-label={item.completed ? 'Mark incomplete' : 'Mark complete'}
+        >
+          {item.completed && <Check size={7} strokeWidth={3.5} color="#fff" />}
         </button>
-      )}
-    </section>
+        {!isLast && <span className="cal-tl-line" />}
+      </div>
+
+      {/* Right: content + delete */}
+      <div className="cal-tl-content-col">
+        <button type="button" className="cal-tl-card" onClick={onEdit}>
+          <div className="cal-tl-card-top">
+            <span className="cal-tl-type-tag">
+              <Icon size={10} strokeWidth={2.5} />
+              {item.itemType ?? 'TASK'}
+            </span>
+            {item.recurrenceFrequency && item.recurrenceFrequency !== 'NONE' && (
+              <span className="cal-tl-recur">
+                <Repeat size={9} />
+                {item.recurrenceFrequency.toLowerCase()}
+              </span>
+            )}
+          </div>
+          <strong className="cal-tl-title">{item.title}</strong>
+          {item.notes && <p className="cal-tl-notes">{item.notes}</p>}
+        </button>
+        <button
+          type="button"
+          className="cal-tl-del"
+          onClick={onDelete}
+          aria-label="Delete event"
+        >
+          <Trash2 size={12} />
+        </button>
+      </div>
+    </div>
   )
 }
+
+// ─── Calendar Item Modal ──────────────────────────────────────────────────────
 
 function CalendarItemModal({
   date,
@@ -656,7 +560,9 @@ function CalendarItemModal({
   const [endTime, setEndTime] = useState(item?.endTime ?? '10:00')
   const [notes, setNotes] = useState(item?.notes ?? '')
   const [completed, setCompleted] = useState(item?.completed ?? false)
-  const [recurrenceFrequency, setRecurrenceFrequency] = useState<CalendarRecurrence>(item?.recurrenceFrequency ?? 'NONE')
+  const [recurrenceFrequency, setRecurrenceFrequency] = useState<CalendarRecurrence>(
+    item?.recurrenceFrequency ?? 'NONE',
+  )
   const [recurrenceUntil, setRecurrenceUntil] = useState(item?.recurrenceUntil ?? '')
   const [error, setError] = useState('')
 
@@ -709,7 +615,12 @@ function CalendarItemModal({
 
   return (
     <div className="calendar-modal-backdrop" role="presentation" onClick={onClose}>
-      <div className="calendar-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
+      <div
+        className="calendar-modal"
+        role="dialog"
+        aria-modal="true"
+        onClick={(event) => event.stopPropagation()}
+      >
         <button type="button" className="calendar-modal-close" onClick={onClose} aria-label="Close">
           <X size={16} />
         </button>
@@ -723,13 +634,17 @@ function CalendarItemModal({
             <label>
               Type
               <select value={itemType} onChange={(event) => setItemType(event.target.value as CalendarItemType)}>
-                {TYPE_OPTIONS.map((option) => <option key={option}>{option}</option>)}
+                {TYPE_OPTIONS.map((option) => (
+                  <option key={option}>{option}</option>
+                ))}
               </select>
             </label>
             <label>
               Category
               <select value={category} onChange={(event) => handleCategory(event.target.value)}>
-                {CATEGORY_OPTIONS.map((option) => <option key={option.label}>{option.label}</option>)}
+                {CATEGORY_OPTIONS.map((option) => (
+                  <option key={option.label}>{option.label}</option>
+                ))}
               </select>
             </label>
           </div>
@@ -785,7 +700,11 @@ function CalendarItemModal({
             <textarea rows={2} value={notes} onChange={(event) => setNotes(event.target.value)} />
           </label>
           <label className="calendar-checkbox-row">
-            <input type="checkbox" checked={completed} onChange={(event) => setCompleted(event.target.checked)} />
+            <input
+              type="checkbox"
+              checked={completed}
+              onChange={(event) => setCompleted(event.target.checked)}
+            />
             Completed
           </label>
           {error && <p className="calendar-form-error">{error}</p>}
@@ -798,6 +717,8 @@ function CalendarItemModal({
   )
 }
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
 function iconForType(type?: CalendarItemType) {
   if (type === 'EVENT') return CalendarDays
   if (type === 'REMINDER') return Bell
@@ -805,36 +726,13 @@ function iconForType(type?: CalendarItemType) {
   return Clock
 }
 
-function getVisibleRange(date: string, mode: CalendarMode) {
-  const parsed = parseISODate(date)
-  if (mode === 'month') {
-    const grid = monthGrid(parsed)
-    return {
-      start: toISODate(grid[0]),
-      end: toISODate(grid[grid.length - 1]),
-      label: formatMonthYear(date),
-    }
-  }
-  if (mode === 'day') {
-    return { start: date, end: date, label: 'Day focus' }
-  }
-  const start = startOfWeek(parsed)
-  const end = new Date(start)
-  end.setDate(start.getDate() + 6)
-  return { start: toISODate(start), end: toISODate(end), label: `${formatShortDate(start)} - ${formatShortDate(end)}` }
-}
-
 function monthGrid(date: Date) {
   const first = new Date(date.getFullYear(), date.getMonth(), 1)
   const gridStart = startOfWeek(first)
-  return daysBetween(gridStart, 42)
-}
-
-function daysBetween(start: Date, count: number) {
-  return Array.from({ length: count }, (_, index) => {
-    const date = new Date(start)
-    date.setDate(start.getDate() + index)
-    return date
+  return Array.from({ length: 42 }, (_, i) => {
+    const d = new Date(gridStart)
+    d.setDate(gridStart.getDate() + i)
+    return d
   })
 }
 
@@ -863,40 +761,6 @@ function toISODate(date: Date) {
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
-}
-
-function timeToMinutes(time?: string) {
-  if (!time) return 0
-  const [hour, minute] = time.split(':').map(Number)
-  return hour * 60 + minute
-}
-
-function formatHour(hour: number) {
-  if (hour === 0) return '12 AM'
-  if (hour === 12) return '12 PM'
-  return hour > 12 ? `${hour - 12} PM` : `${hour} AM`
-}
-
-function formatItemTime(item: CalendarItem) {
-  if (item.allDay || !item.startTime) return 'All day'
-  return item.endTime ? `${item.startTime} - ${item.endTime}` : item.startTime
-}
-
-function formatLongDate(date: string) {
-  return parseISODate(date).toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  })
-}
-
-function formatMonthYear(date: string) {
-  return new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(parseISODate(date))
-}
-
-function formatShortDate(date: Date) {
-  return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(date)
 }
 
 function colorForCategory(category: string) {
