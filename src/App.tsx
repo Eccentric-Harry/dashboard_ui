@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import toast, { Toaster, resolveValue } from 'react-hot-toast'
-import { Info, Check, AlertTriangle, AlertCircle, Loader2, X } from 'lucide-react'
+import { Info, Check, AlertTriangle, AlertCircle, Loader2, X, Bell } from 'lucide-react'
 
 import { QuantifiedSelfDashboard } from './components/dashboard/quantified-self-dashboard'
 import type { AppPath } from './components/dashboard/quantified-self-dashboard/data'
@@ -12,7 +12,7 @@ import { LearningsOverview } from './components/views/learnings-view'
 import { CalendarOverview } from './components/views/calendar-view'
 import { subscribeToActiveRequests } from './lib/api'
 import { OverlayLoader } from './components/ui/OverlayLoader'
-import { NotificationProvider } from './contexts/NotificationContext'
+import { NotificationProvider, useNotifications } from './contexts/NotificationContext'
 import { NotificationCenter } from './components/dashboard/quantified-self-dashboard/components/notification-center'
 
 const ENABLE_HOME_ROUTE = import.meta.env.VITE_ENABLE_HOME_ROUTE === 'true'
@@ -51,6 +51,24 @@ function normalizePathname(pathname: string): AppPath {
   }
 
   return '/nutrition'
+}
+
+function MobileNotificationTrigger() {
+  const { unreadCount, setIsOpen, isOpen } = useNotifications();
+
+  return (
+    <button
+      type="button"
+      className="mobile-notification-trigger"
+      onClick={() => setIsOpen(!isOpen)}
+      aria-label="Open notifications"
+    >
+      <Bell size={20} />
+      {unreadCount > 0 && (
+        <span className="mobile-notification-badge">{unreadCount}</span>
+      )}
+    </button>
+  );
 }
 
 function App() {
@@ -160,18 +178,19 @@ function App() {
   return (
     <DashboardProvider date={currentDate}>
       <NotificationProvider>
-        <Toaster 
-          position="top-center" 
+        <Toaster
+          position="top-center"
           containerStyle={{
             top: 40,
+            zIndex: 100000,
           }}
         >
           {(t) => {
             const message = resolveValue(t.message, t);
-            
+
             let type: 'info' | 'success' | 'warning' | 'error' = 'info';
             let title = 'Information';
-            
+
             if (t.type === 'success') {
               type = 'success';
               title = 'Success';
@@ -222,9 +241,9 @@ function App() {
                   <span className="toast-title">{title}</span>
                   <span className="toast-message">{message}</span>
                 </div>
-                <button 
+                <button
                   type="button"
-                  className="toast-close-btn" 
+                  className="toast-close-btn"
                   onClick={() => toast.dismiss(t.id)}
                   aria-label="Close notification"
                 >
@@ -235,6 +254,7 @@ function App() {
           }}
         </Toaster>
         {content}
+        <MobileNotificationTrigger />
         <NotificationCenter />
         <OverlayLoader show={showOverlay} />
       </NotificationProvider>

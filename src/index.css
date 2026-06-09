@@ -1915,9 +1915,7 @@ button {
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: rgba(16, 19, 18, 0.25);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.2);
   animation: fade-in-overlay 0.22s ease-out;
 }
 
@@ -1936,11 +1934,9 @@ button {
   right: 0;
   width: min(400px, 100vw);
   height: 100%;
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(36px) saturate(180%);
-  -webkit-backdrop-filter: blur(36px) saturate(180%);
-  border-left: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: -20px 0 60px rgba(16, 20, 18, 0.08);
+  background: #ffffff;
+  border-left: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
   animation: slide-in-drawer 0.28s cubic-bezier(0.16, 1, 0.3, 1);
@@ -2007,15 +2003,15 @@ button {
 
 .desktop-alert-control {
   margin: 18px 24px 8px;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.75);
-  border-radius: 18px;
+  padding: 14px 16px;
+  background: #f5f5f7;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.01);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
 }
 
 .desktop-alert-info h4 {
@@ -2145,56 +2141,58 @@ button {
 .notification-feed {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .notification-item {
-  padding: 16px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.01);
 }
 
 .notification-item:hover {
-  background: rgba(255, 255, 255, 0.75);
-  border-color: rgba(255, 255, 255, 0.9);
-  transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(16, 20, 18, 0.03);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
 }
 
 .notification-item.unread {
   background: #ffffff;
-  border-color: rgba(32, 35, 33, 0.12);
-  box-shadow: 0 6px 18px rgba(32, 35, 33, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
 }
 
+/* Subtle iOS style unread indicator dot inside the card on the left */
 .notification-item.unread::before {
   content: '';
   position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 4px;
-  background: #202321;
+  top: 18px;
+  left: 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #007aff;
 }
 
-/* Custom left indicators per type */
-.notification-item.item-task.unread::before { background: #10b981; }
-.notification-item.item-event.unread::before { background: #3b82f6; }
-.notification-item.item-reminder.unread::before { background: #f59e0b; }
-.notification-item.item-milestone.unread::before { background: #8b5cf6; }
+/* Clear custom left indicators per type since we use the blue dot */
+.notification-item.item-task.unread::before,
+.notification-item.item-event.unread::before,
+.notification-item.item-reminder.unread::before,
+.notification-item.item-milestone.unread::before {
+  background: #007aff;
+}
 
 .notif-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
+  padding-left: 4px;
 }
 
 .notif-type-tag {
@@ -2204,31 +2202,33 @@ button {
 }
 
 .type-label {
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: #526057;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-transform: capitalize;
+  color: #8e8e93;
 }
 
 .notif-time {
   font-size: 10px;
-  color: #8c9690;
+  color: #8e8e93;
 }
 
 .notif-title {
-  margin: 0 0 6px;
+  margin: 0 0 4px;
   font-size: 13.5px;
   font-weight: 600;
-  color: #101312;
+  color: #1c1c1e;
   line-height: 1.3;
+  padding-left: 4px;
 }
 
 .notif-message {
   margin: 0 0 12px;
   font-size: 12px;
-  color: #526057;
+  color: #3a3a3c;
   line-height: 1.45;
+  padding-left: 4px;
 }
 
 .notif-actions {
@@ -2236,47 +2236,44 @@ button {
   justify-content: space-between;
   align-items: center;
   margin-top: auto;
+  padding-left: 4px;
 }
 
 .notif-action-btn {
   display: flex;
   align-items: center;
-  padding: 5px 10px;
-  border-radius: 8px;
+  padding: 4px 10px;
+  border-radius: 12px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
-  border: 1.5px solid transparent;
+  border: none;
 }
 
 .read-btn {
-  background: rgba(20, 24, 22, 0.05);
-  color: #38413d;
+  background: rgba(0, 0, 0, 0.04);
+  color: #007aff;
 }
 
 .read-btn:hover {
-  background: rgba(20, 24, 22, 0.09);
-  color: #101312;
+  background: rgba(0, 122, 255, 0.08);
 }
 
 .complete-btn {
-  background: rgba(16, 185, 129, 0.08);
-  color: #065f46;
-  border-color: rgba(16, 185, 129, 0.15);
+  background: rgba(52, 199, 89, 0.1);
+  color: #248a3d;
 }
 
 .complete-btn:hover {
-  background: rgba(16, 185, 129, 0.15);
-  color: #047857;
-  transform: scale(1.02);
+  background: rgba(52, 199, 89, 0.18);
 }
 
 .notif-delete-btn {
   background: transparent;
-  color: #8c9690;
-  padding: 6px;
-  border-radius: 8px;
+  color: #8e8e93;
+  padding: 4px;
+  border-radius: 50%;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -2285,7 +2282,108 @@ button {
 }
 
 .notif-delete-btn:hover {
-  background: rgba(239, 68, 68, 0.08);
-  color: #ef4444;
+  background: rgba(255, 59, 48, 0.08);
+  color: #ff3b30;
+}
+
+/* Drag handle for mobile bottom sheet */
+.drawer-handle {
+  display: none;
+}
+
+/* Mobile view notification bell floating action */
+.mobile-notification-trigger {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .drawer-handle {
+    display: block;
+    width: 36px;
+    height: 5px;
+    background: rgba(0, 0, 0, 0.12);
+    border-radius: 2.5px;
+    margin: 8px auto 0;
+    flex-shrink: 0;
+  }
+
+  .notification-drawer {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    width: 100%;
+    height: 70svh;
+    max-height: 70svh;
+    border-radius: 24px 24px 0 0;
+    border-left: none;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.08);
+    animation: slide-up-drawer 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes slide-up-drawer {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  /* Compact spacing to fit mobile viewports */
+  .notification-drawer-header {
+    padding: 14px 20px 10px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  }
+
+  .desktop-alert-control {
+    margin: 10px 20px 4px;
+    padding: 10px 14px;
+    border-radius: 12px;
+  }
+
+  .notification-action-bar {
+    margin: 6px 20px 2px;
+  }
+
+  .notification-list-container {
+    padding: 8px 20px 20px;
+  }
+
+  .mobile-notification-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 28px;
+    right: 20px;
+    z-index: 990;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    color: #526057;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+  }
+
+  .mobile-notification-trigger:active {
+    opacity: 0.6;
+  }
+
+  .mobile-notification-badge {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: #ff3b30;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    border: 1px solid #dfe4df;
+    box-shadow: none;
+  }
 }
 

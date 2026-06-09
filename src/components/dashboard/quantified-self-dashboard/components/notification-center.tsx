@@ -83,6 +83,7 @@ function NotificationCenter() {
         aria-modal="true"
         aria-label="Notification Center"
       >
+        <div className="drawer-handle" />
         {/* Header */}
         <div className="notification-drawer-header">
           <div className="header-title-area">

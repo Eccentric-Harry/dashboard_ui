@@ -118,6 +118,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     if (!item.id) return
     try {
       await toggleCalendarItem(item.id)
+      toast.success(item.completed ? `Marked "${item.title}" as incomplete` : `Completed "${item.title}"!`)
       await loadItems()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to update item')
