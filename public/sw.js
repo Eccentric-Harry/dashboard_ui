@@ -53,6 +53,7 @@ self.addEventListener('push', (event) => {
     tag: data.tag || 'dashboard-notification',
     data: data.url || '/',
     vibrate: [100, 50, 100],
+    sound: '/iphone-notification.mp3',
     requireInteraction: true
   };
 

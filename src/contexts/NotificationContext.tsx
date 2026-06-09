@@ -157,8 +157,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     await fetchUpcomingItems();
   };
 
-  // Notification sound generator using Web Audio API (iOS Tri-Tone / marimba chime)
-  const playSound = () => {
+  // Synthesized notification sound fallback using Web Audio API (iOS Tri-Tone / marimba chime)
+  const playSynthesizedSound = () => {
     try {
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioContextClass) return;
@@ -219,7 +219,21 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       playNote(1174.66, now + 0.22, 0.7);
       
     } catch (e) {
-      console.warn('Audio play failed:', e);
+      console.warn('Audio synthesis failed:', e);
+    }
+  };
+
+  // Notification sound player trying local audio file first, with Web Audio API synthesis fallback
+  const playSound = () => {
+    try {
+      const audio = new Audio('/iphone-notification.mp3');
+      audio.play().catch((err) => {
+        console.warn('Audio play failed, falling back to synthesis:', err);
+        playSynthesizedSound();
+      });
+    } catch (e) {
+      console.warn('Audio play failed, falling back to synthesis:', e);
+      playSynthesizedSound();
     }
   };
 
