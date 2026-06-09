@@ -35,6 +35,7 @@ type NotificationContextType = {
   toggleDesktopNotifications: () => Promise<boolean>;
   completeTaskDirectly: (itemId: string) => Promise<void>;
   refetchItems: () => Promise<void>;
+  playSound: () => void;
 };
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -156,28 +157,67 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     await fetchUpcomingItems();
   };
 
-  // Notification sound generator using Web Audio API
+  // Notification sound generator using Web Audio API (iOS Tri-Tone / marimba chime)
   const playSound = () => {
     try {
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioContextClass) return;
       
       const audioCtx = new AudioContextClass();
-      const oscillator = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      // Helper function to synthesize a single rich, woody marimba chime note
+      const playNote = (frequency: number, startTime: number, duration: number) => {
+        // Fundamental tone (warm and pure)
+        const oscFundamental = audioCtx.createOscillator();
+        const gainFundamental = audioCtx.createGain();
+        
+        // Strike harmonic overtone (provides the characteristic woodblock/marimba strike impact)
+        const oscStrike = audioCtx.createOscillator();
+        const gainStrike = audioCtx.createGain();
+        
+        oscFundamental.type = 'sine';
+        oscFundamental.frequency.setValueAtTime(frequency, startTime);
+        
+        // Connect fundamental
+        oscFundamental.connect(gainFundamental);
+        gainFundamental.connect(audioCtx.destination);
+        
+        // Set up the mallet strike overtone (a marimba's first prominent harmonic is 3x or 4x the fundamental)
+        oscStrike.type = 'sine';
+        oscStrike.frequency.setValueAtTime(frequency * 3, startTime);
+        
+        // Connect strike
+        oscStrike.connect(gainStrike);
+        gainStrike.connect(audioCtx.destination);
+        
+        // Volume envelope for the fundamental (quick attack, natural decay resonance)
+        gainFundamental.gain.setValueAtTime(0, startTime);
+        gainFundamental.gain.linearRampToValueAtTime(0.12, startTime + 0.008);
+        gainFundamental.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+        
+        // Volume envelope for the strike overtone (sharp attack, extremely fast decay)
+        gainStrike.gain.setValueAtTime(0, startTime);
+        gainStrike.gain.linearRampToValueAtTime(0.05, startTime + 0.004);
+        gainStrike.gain.exponentialRampToValueAtTime(0.001, startTime + 0.07);
+        
+        oscFundamental.start(startTime);
+        oscFundamental.stop(startTime + duration);
+        
+        oscStrike.start(startTime);
+        oscStrike.stop(startTime + 0.07);
+      };
       
-      oscillator.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
+      const now = audioCtx.currentTime;
+      // D5 (~587.33 Hz) starting immediately
+      playNote(587.33, now, 0.4);
+      // A5 (~880.00 Hz) starting at 110ms
+      playNote(880.00, now + 0.11, 0.4);
+      // D6 (~1174.66 Hz) starting at 220ms (rings longer for clean tail resonance)
+      playNote(1174.66, now + 0.22, 0.7);
       
-      oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
-      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime + 0.15); // A5
-      
-      gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.45);
-      
-      oscillator.start(audioCtx.currentTime);
-      oscillator.stop(audioCtx.currentTime + 0.45);
     } catch (e) {
       console.warn('Audio play failed:', e);
     }
@@ -411,6 +451,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         toggleDesktopNotifications,
         completeTaskDirectly,
         refetchItems,
+        playSound,
       }}
     >
       {children}

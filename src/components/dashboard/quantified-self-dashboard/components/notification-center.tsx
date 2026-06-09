@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { X, Check, Trash2, Bell, BellOff, Calendar, CheckSquare, Trophy, AlertCircle, Eye } from 'lucide-react';
+import { X, Check, Trash2, Bell, BellOff, Calendar, CheckSquare, Trophy, AlertCircle, Eye, Volume2 } from 'lucide-react';
 import { useNotifications } from '../../../../contexts/NotificationContext';
 
 function NotificationCenter() {
@@ -15,6 +15,7 @@ function NotificationCenter() {
     clearAllNotifications,
     toggleDesktopNotifications,
     completeTaskDirectly,
+    playSound,
   } = useNotifications();
 
   const drawerRef = useRef<HTMLDivElement>(null);
@@ -129,6 +130,23 @@ function NotificationCenter() {
               Unavailable
             </span>
           )}
+        </div>
+
+        {/* Notification Sound Test Card */}
+        <div className="desktop-alert-control" style={{ marginTop: '8px' }}>
+          <div className="desktop-alert-info">
+            <h4>Notification Sound</h4>
+            <p>Test the new iOS Tri-Tone marimba reminder sound.</p>
+          </div>
+          <button
+            type="button"
+            onClick={playSound}
+            className="desktop-toggle-btn active"
+            aria-label="Test notification sound"
+          >
+            <Volume2 size={16} />
+            <span>Test Sound</span>
+          </button>
         </div>
 
         {/* Global Action Bar */}
