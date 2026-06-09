@@ -2292,29 +2292,29 @@ button {
   transition: all 0.25s ease;
 }
 
-/* Theme Gradients & Border colors */
+/* Theme Gradients & Border colors - Vibrant Premium Palette */
 .item-task .notif-icon-inner-circle {
-  background: linear-gradient(135deg, rgba(52, 211, 153, 0.15) 0%, rgba(16, 185, 129, 0.25) 100%);
-  color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.1);
+  background: #d1fae5;
+  color: #059669;
+  border: 1px solid rgba(5, 150, 105, 0.15);
 }
 
 .item-event .notif-icon-inner-circle {
-  background: linear-gradient(135deg, rgba(147, 197, 253, 0.15) 0%, rgba(59, 130, 246, 0.25) 100%);
-  color: #3b82f6;
-  border: 1px solid rgba(59, 130, 246, 0.1);
+  background: #e0f2fe;
+  color: #0284c7;
+  border: 1px solid rgba(2, 132, 199, 0.15);
 }
 
 .item-reminder .notif-icon-inner-circle {
-  background: linear-gradient(135deg, rgba(253, 230, 138, 0.15) 0%, rgba(245, 158, 11, 0.25) 100%);
-  color: #f59e0b;
-  border: 1px solid rgba(245, 158, 11, 0.1);
+  background: #ffedd5;
+  color: #ea580c;
+  border: 1px solid rgba(234, 88, 12, 0.15);
 }
 
 .item-milestone .notif-icon-inner-circle {
-  background: linear-gradient(135deg, rgba(216, 180, 254, 0.15) 0%, rgba(139, 92, 246, 0.25) 100%);
-  color: #8b5cf6;
-  border: 1px solid rgba(139, 92, 246, 0.1);
+  background: #f3e8ff;
+  color: #7c3aed;
+  border: 1px solid rgba(124, 58, 237, 0.15);
 }
 
 /* Morph Interactive Icon Button */
@@ -2490,6 +2490,57 @@ button {
 /* Completed Items — no strikethrough, panel is informational only */
 .notification-item.completed-item {
   opacity: 0.72;
+}
+
+/* Sticky Footer at the bottom of the drawer */
+.notification-drawer-footer {
+  padding: 14px 24px;
+  background: rgba(230, 238, 233, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(82, 96, 87, 0.08);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+}
+
+.footer-desktop-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(82, 96, 87, 0.12);
+  background: rgba(255, 255, 255, 0.85);
+  color: #526057;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(54, 69, 53, 0.02);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.footer-desktop-toggle:hover {
+  background: rgba(82, 96, 87, 0.05);
+  border-color: rgba(82, 96, 87, 0.18);
+  transform: translateY(-0.5px);
+}
+
+.footer-desktop-toggle:active {
+  transform: translateY(0.5px);
+}
+
+.footer-desktop-toggle.active {
+  background: rgba(16, 185, 129, 0.08);
+  color: #059669;
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.footer-desktop-toggle.active:hover {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.28);
 }
 
 

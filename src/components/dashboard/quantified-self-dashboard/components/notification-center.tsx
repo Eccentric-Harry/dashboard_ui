@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Trash2, Bell, BellOff, Calendar, CheckSquare, Trophy, Eye, Volume2, Settings, ChevronDown, ChevronUp, Clock } from 'lucide-react';
+import { X, Trash2, Bell, BellOff, Calendar, CheckSquare, Trophy, Eye, Clock } from 'lucide-react';
 import { useNotifications } from '../../../../contexts/NotificationContext';
 
 function NotificationCenter() {
@@ -16,11 +16,9 @@ function NotificationCenter() {
     clearNotification,
     clearAllNotifications,
     toggleDesktopNotifications,
-    playSound,
   } = useNotifications();
 
   const drawerRef = useRef<HTMLDivElement>(null);
-  const [settingsExpanded, setSettingsExpanded] = useState(false);
 
   // Close drawer on pressing Escape key
   useEffect(() => {
@@ -91,70 +89,7 @@ function NotificationCenter() {
           </button>
         </div>
 
-        {/* Settings Accordion Trigger */}
-        <button
-          type="button"
-          onClick={() => setSettingsExpanded(!settingsExpanded)}
-          className="settings-accordion-trigger"
-          aria-expanded={settingsExpanded}
-        >
-          <div className="trigger-left">
-            <Settings size={14} className="text-gray-500" />
-            <span>Alert Settings</span>
-          </div>
-          {settingsExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-        </button>
 
-        {/* Collapsible Content wrapper */}
-        <div className={`settings-accordion-content ${settingsExpanded ? 'expanded' : 'collapsed'}`}>
-          <div className="accordion-content-inner">
-            {/* Desktop Permission Control Card */}
-            <div className="desktop-alert-control">
-              <div className="desktop-alert-info">
-                <h4>System Desktop Alerts</h4>
-                <p>
-                  {!isPushSupported
-                    ? 'Not supported in browser tab. Add to Home Screen to enable.'
-                    : desktopEnabled
-                    ? 'Desktop notifications are active.'
-                    : 'Get alerts when the dashboard is open in the background.'}
-                </p>
-              </div>
-              {isPushSupported ? (
-                <button
-                  type="button"
-                  onClick={toggleDesktopNotifications}
-                  className={`desktop-toggle-btn ${desktopEnabled ? 'active' : ''}`}
-                  aria-label={desktopEnabled ? 'Disable system alerts' : 'Enable system alerts'}
-                >
-                  {desktopEnabled ? <BellOff size={16} /> : <Bell size={16} />}
-                  <span>{desktopEnabled ? 'Disable' : 'Enable'}</span>
-                </button>
-              ) : (
-                <span className="text-xs font-semibold px-3 py-1.5 bg-gray-100 text-gray-500 rounded-lg select-none">
-                  Unavailable
-                </span>
-              )}
-            </div>
-
-            {/* Notification Sound Test Card */}
-            <div className="desktop-alert-control" style={{ marginTop: '8px' }}>
-              <div className="desktop-alert-info">
-                <h4>Notification Sound</h4>
-                <p>Test the new iOS Tri-Tone marimba reminder sound.</p>
-              </div>
-              <button
-                type="button"
-                onClick={playSound}
-                className="desktop-toggle-btn active"
-                aria-label="Test notification sound"
-              >
-                <Volume2 size={16} />
-                <span>Test Sound</span>
-              </button>
-            </div>
-          </div>
-        </div>
 
         {/* Global Action Bar */}
         {notifications.length > 0 && (
@@ -246,6 +181,21 @@ function NotificationCenter() {
             </div>
           )}
         </div>
+        {/* Footer */}
+        {isPushSupported && (
+          <div className="notification-drawer-footer">
+            <button
+              type="button"
+              onClick={toggleDesktopNotifications}
+              className={`footer-desktop-toggle ${desktopEnabled ? 'active' : ''}`}
+              title={desktopEnabled ? 'Disable System Desktop Alerts' : 'Enable System Desktop Alerts'}
+              aria-label={desktopEnabled ? 'Disable System Desktop Alerts' : 'Enable System Desktop Alerts'}
+            >
+              {desktopEnabled ? <Bell size={13} /> : <BellOff size={13} />}
+              <span>{desktopEnabled ? 'Desktop Alerts On' : 'Desktop Alerts Off'}</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>,
     document.body

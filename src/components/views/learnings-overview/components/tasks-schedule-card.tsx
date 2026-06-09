@@ -43,7 +43,8 @@ export function TasksScheduleCard({
   const handleToggle = async (task: DailyTask) => {
     if (!task.id) return
     try {
-      await toggleTask(task.id)
+      const isRecurring = task.recurrenceFrequency && task.recurrenceFrequency !== 'NONE'
+      await toggleTask(task.id, isRecurring ? selectedDate : undefined)
       load()
       onRefresh()
     } catch (err: unknown) {

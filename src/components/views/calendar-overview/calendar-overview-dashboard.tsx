@@ -147,6 +147,24 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     }
   }
 
+  const handleDeleteRecurring = async (mode: 'ONLY_THIS' | 'ALL') => {
+    if (!deleteTarget?.id) return
+    try {
+      if (mode === 'ONLY_THIS') {
+        await deleteCalendarItem(deleteTarget.id, deleteTarget.date)
+        toast.success(`Deleted this occurrence of "${deleteTarget.title}"`)
+      } else {
+        await deleteCalendarItem(deleteTarget.id)
+        toast.success(`Deleted entire series of "${deleteTarget.title}"`)
+      }
+      setDeleteTarget(null)
+      await loadItems()
+      window.dispatchEvent(new CustomEvent('calendar-updated'))
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete item')
+    }
+  }
+
   return (
     <section className="calendar-dashboard" aria-label="Calendar schedule dashboard">
       <header className="calendar-header">
@@ -251,13 +269,100 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
         />
       )}
 
-      <ConfirmDialog
-        open={!!deleteTarget}
-        title="Delete calendar item?"
-        message={`Remove "${deleteTarget?.title}" from your schedule?`}
-        onConfirm={handleDelete}
-        onCancel={() => setDeleteTarget(null)}
-      />
+      {deleteTarget && (
+        deleteTarget.recurrenceFrequency && deleteTarget.recurrenceFrequency !== 'NONE' ? (
+          <div className="confirm-modal-backdrop" onClick={() => setDeleteTarget(null)}>
+            <div className="confirm-popover" onClick={e => e.stopPropagation()}>
+              <button type="button" className="confirm-modal-close" onClick={() => setDeleteTarget(null)}>
+                <X size={16} />
+              </button>
+              <h2>Delete recurring item?</h2>
+              <p className="confirm-message">
+                "{deleteTarget.title}" is a recurring event. Do you want to delete only this occurrence or the entire series?
+              </p>
+              <div className="confirm-actions-vertical" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
+                <button
+                  type="button"
+                  className="confirm-btn"
+                  onClick={() => handleDeleteRecurring('ONLY_THIS')}
+                  style={{
+                    background: 'rgba(53, 182, 75, 0.08)',
+                    border: '1px solid rgba(53, 182, 75, 0.2)',
+                    color: '#2f9d43',
+                    width: '100%',
+                    display: 'block',
+                    textAlign: 'center',
+                    height: '38px',
+                    lineHeight: '38px',
+                    padding: '0',
+                    borderRadius: '12px',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(53, 182, 75, 0.15)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(53, 182, 75, 0.08)'
+                  }}
+                >
+                  Delete this occurrence
+                </button>
+                <button
+                  type="button"
+                  className="confirm-btn confirm"
+                  onClick={() => handleDeleteRecurring('ALL')}
+                  style={{
+                    width: '100%',
+                    display: 'block',
+                    textAlign: 'center',
+                    height: '38px',
+                    lineHeight: '38px',
+                    padding: '0',
+                    borderRadius: '12px',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  Delete entire series
+                </button>
+                <button
+                  type="button"
+                  className="confirm-btn cancel"
+                  onClick={() => setDeleteTarget(null)}
+                  style={{
+                    width: '100%',
+                    display: 'block',
+                    textAlign: 'center',
+                    height: '38px',
+                    lineHeight: '38px',
+                    padding: '0',
+                    borderRadius: '12px',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <ConfirmDialog
+            open={!!deleteTarget}
+            title="Delete calendar item?"
+            message={`Remove "${deleteTarget.title}" from your schedule?`}
+            onConfirm={handleDelete}
+            onCancel={() => setDeleteTarget(null)}
+          />
+        )
+      )}
 
       <button
         type="button"

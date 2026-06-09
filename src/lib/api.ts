@@ -422,6 +422,7 @@ export interface DailyTask {
   sortOrder?: number;
   createdAt?: string;
   completedAt?: string;
+  recurrenceFrequency?: CalendarRecurrence;
 }
 
 export async function fetchTasks(date: string) {
@@ -466,8 +467,9 @@ export async function updateTask(id: string, data: Omit<DailyTask, 'id'>) {
   return response.json();
 }
 
-export async function toggleTask(id: string) {
-  const response = await fetch(`${API_BASE_URL}/learnings/tasks/${id}/toggle`, {
+export async function toggleTask(id: string, date?: string) {
+  const query = date ? `?date=${date}` : '';
+  const response = await fetch(`${API_BASE_URL}/learnings/tasks/${id}/toggle${query}`, {
     method: 'PATCH',
   });
   if (!response.ok) {
@@ -572,8 +574,9 @@ export async function toggleCalendarItem(id: string, date?: string) {
   return response.json();
 }
 
-export async function deleteCalendarItem(id: string) {
-  const response = await fetch(`${API_BASE_URL}/calendar/items/${id}`, {
+export async function deleteCalendarItem(id: string, date?: string) {
+  const query = date ? `?date=${date}` : '';
+  const response = await fetch(`${API_BASE_URL}/calendar/items/${id}${query}`, {
     method: 'DELETE',
   });
   if (!response.ok) {
