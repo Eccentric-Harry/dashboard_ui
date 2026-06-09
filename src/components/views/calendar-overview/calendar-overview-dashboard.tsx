@@ -544,7 +544,7 @@ function AgendaList({
     <section className={`calendar-agenda ${compact ? 'is-compact' : ''}`}>
       <div className="calendar-agenda-head">
         <h2>{title}</h2>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="calendar-agenda-head-controls">
           <span>{items.length}</span>
           <button
             type="button"
@@ -552,20 +552,6 @@ function AgendaList({
             onClick={() => setIsEditMode(!isEditMode)}
             title={isEditMode ? 'Finish Editing' : 'Edit Agenda'}
             aria-label="Toggle edit mode"
-            style={{
-              width: '28px',
-              height: '28px',
-              padding: '0',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              borderRadius: '8px',
-              background: isEditMode ? 'rgba(16, 19, 18, 0.08)' : 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'inherit',
-              transition: 'background 0.2s',
-            }}
           >
             <Pencil size={13} strokeWidth={2.5} />
           </button>
@@ -577,49 +563,63 @@ function AgendaList({
         <div className="calendar-agenda-list">
           {sorted.map((item) => {
             const Icon = iconForType(item.itemType)
+            const itemColor = item.color ?? '#9ee7e8'
+            const categoryClass = `cat-${(item.category || 'Personal').toLowerCase()}`
             return (
               <article
                 key={item.occurrenceId ?? item.id}
-                className={item.completed ? 'is-completed' : undefined}
-                style={{
-                  gridTemplateColumns: isEditMode ? '24px 4px minmax(0, 1fr) auto' : '24px 4px minmax(0, 1fr)',
-                }}
+                className={`calendar-agenda-card-item ${categoryClass} ${item.completed ? 'is-completed' : ''}`}
               >
-                <button
-                  type="button"
-                  className="calendar-agenda-check"
-                  onClick={() => onToggle(item)}
-                  aria-label={item.completed ? 'Mark incomplete' : 'Mark complete'}
-                >
-                  {item.completed ? <Check size={12} /> : <Circle size={12} />}
-                </button>
-                <span className="calendar-agenda-color" style={{ background: item.color ?? '#9ee7e8' }} />
-                <div>
-                  <small style={{ display: 'inline-flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
-                    <Icon size={12} />
-                    {item.itemType ?? 'TASK'} · {formatItemTime(item)}
-                    {item.recurrenceFrequency && item.recurrenceFrequency !== 'NONE' && (
-                      <>
-                        · <Repeat size={10} style={{ display: 'inline' }} />
-                        <span style={{ textTransform: 'capitalize' }}>
-                          {item.recurrenceFrequency.toLowerCase()}
-                        </span>
-                      </>
-                    )}
-                  </small>
+                {/* Top: title area */}
+                <div className="agenda-card-body">
+                  <div className="agenda-card-type-row">
+                    <span className="agenda-card-icon" style={{ background: `${itemColor}22`, color: itemColor }}>
+                      <Icon size={12} />
+                    </span>
+                    <span className="agenda-card-tag">{item.itemType ?? 'TASK'}</span>
+                  </div>
                   <strong>{item.title}</strong>
                   {item.notes && <p>{item.notes}</p>}
                 </div>
-                {isEditMode && (
-                  <div className="calendar-agenda-actions">
-                    <button type="button" onClick={() => onEdit(item)} aria-label="Edit item">
-                      <Pencil size={13} />
-                    </button>
-                    <button type="button" onClick={() => onDelete(item)} aria-label="Delete item">
-                      <Trash2 size={13} />
-                    </button>
+
+                {/* Bottom: time + edit actions */}
+                <div className="agenda-card-footer">
+                  <div className="agenda-card-time-group">
+                    <span className="agenda-card-time">
+                      <Clock size={11} />
+                      {formatItemTime(item)}
+                    </span>
+                    {item.recurrenceFrequency && item.recurrenceFrequency !== 'NONE' && (
+                      <span className="agenda-card-recurrence">
+                        <Repeat size={10} />
+                        {item.recurrenceFrequency.toLowerCase()}
+                      </span>
+                    )}
                   </div>
-                )}
+                  <div className="agenda-card-actions-row">
+                    <button
+                      type="button"
+                      className="calendar-agenda-check"
+                      onClick={() => onToggle(item)}
+                      aria-label={item.completed ? 'Mark incomplete' : 'Mark complete'}
+                    >
+                      {item.completed ? <Check size={11} /> : <Circle size={11} />}
+                    </button>
+                    {isEditMode && (
+                      <>
+                        <button type="button" onClick={() => onEdit(item)} aria-label="Edit item" className="agenda-card-edit-btn">
+                          <Pencil size={11} />
+                        </button>
+                        <button type="button" onClick={() => onDelete(item)} aria-label="Delete item" className="agenda-card-edit-btn">
+                          <Trash2 size={11} />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Decorative wave overlay */}
+                <div className="agenda-card-wave" />
               </article>
             )
           })}

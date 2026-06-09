@@ -3,7 +3,6 @@ import type { ReactNode } from 'react';
 import toast from 'react-hot-toast';
 import {
   fetchCalendarItemsForRange,
-  toggleCalendarItem as toggleCalendarItemApi,
   fetchVapidPublicKey,
   subscribeDevice,
   unsubscribeDevice,
@@ -33,7 +32,6 @@ type NotificationContextType = {
   clearNotification: (id: string) => void;
   clearAllNotifications: () => void;
   toggleDesktopNotifications: () => Promise<boolean>;
-  completeTaskDirectly: (itemId: string) => Promise<void>;
   refetchItems: () => Promise<void>;
   playSound: () => void;
 };
@@ -131,7 +129,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     return () => {
       // Clean up on unmount
       if (audioCtxRef.current) {
-        audioCtxRef.current.close().catch(() => {});
+        audioCtxRef.current.close().catch(() => { });
       }
     };
   }, []);
@@ -156,7 +154,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             audioRef.current!.pause();
             audioRef.current!.currentTime = 0;
             audioRef.current!.volume = prevVolume > 0 ? prevVolume : 1.0;
-            console.log('HTML5 Audio successfully unlocked for iOS.');
           })
           .catch((err) => {
             console.warn('HTML5 Audio unlock failed:', err);
@@ -168,7 +165,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
         audioCtxRef.current.resume()
           .then(() => {
-            console.log('Web Audio Context successfully unlocked for iOS.');
             // Play a completely silent single-sample buffer to warm up hardware path
             if (audioCtxRef.current) {
               const buffer = audioCtxRef.current.createBuffer(1, 1, 22050);
@@ -263,7 +259,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       if (!audioCtx) return;
 
       if (audioCtx.state === 'suspended') {
-        audioCtx.resume().catch(() => {});
+        audioCtx.resume().catch(() => { });
       }
 
       const playNote = (frequency: number, startTime: number, duration: number) => {
@@ -545,22 +541,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const completeTaskDirectly = async (itemId: string) => {
-    try {
-      if (itemId.includes(':')) {
-        const [id, date] = itemId.split(':');
-        await toggleCalendarItemApi(id, date);
-      } else {
-        await toggleCalendarItemApi(itemId);
-      }
-      toast.success('Task marked as completed!');
-      await fetchUpcomingItems();
-      window.dispatchEvent(new CustomEvent('calendar-updated'));
-    } catch (err) {
-      console.error('Failed to complete task:', err);
-      toast.error('Could not update task completion.');
-    }
-  };
+
 
   return (
     <NotificationContext.Provider
@@ -577,7 +558,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         clearNotification,
         clearAllNotifications,
         toggleDesktopNotifications,
-        completeTaskDirectly,
         refetchItems,
         playSound,
       }}

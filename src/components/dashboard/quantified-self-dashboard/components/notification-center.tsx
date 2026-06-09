@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Check, Trash2, Bell, BellOff, Calendar, CheckSquare, Trophy, Eye, Volume2, Settings, ChevronDown, ChevronUp, Clock } from 'lucide-react';
+import { X, Trash2, Bell, BellOff, Calendar, CheckSquare, Trophy, Eye, Volume2, Settings, ChevronDown, ChevronUp, Clock } from 'lucide-react';
 import { useNotifications } from '../../../../contexts/NotificationContext';
 
 function NotificationCenter() {
@@ -15,7 +15,6 @@ function NotificationCenter() {
     clearNotification,
     clearAllNotifications,
     toggleDesktopNotifications,
-    completeTaskDirectly,
     playSound,
   } = useNotifications();
 
@@ -189,7 +188,6 @@ function NotificationCenter() {
           ) : (
             <div className="notification-feed">
               {notifications.map((notif) => {
-                const isTaskOrReminder = notif.itemType === 'TASK' || notif.itemType === 'REMINDER';
                 const calendarItem = items.find((item) => item.id === notif.itemId);
                 const isCompleted = calendarItem ? calendarItem.completed : false;
                 return (
@@ -204,32 +202,13 @@ function NotificationCenter() {
                       <div className="notif-left-column">
                         <div className="notif-icon-outer-ring">
                           <div className="notif-icon-inner-circle">
-                            {isTaskOrReminder && !isCompleted ? (
-                              <button
-                                type="button"
-                                className="notif-interactive-icon-btn"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  completeTaskDirectly(notif.itemId);
-                                }}
-                                title="Mark complete"
-                              >
-                                <span className="default-icon-wrapper">
-                                  {notif.itemType === 'TASK' ? <CheckSquare size={16} /> : <Clock size={16} />}
-                                </span>
-                                <span className="hover-check-icon-wrapper">
-                                  <Check size={16} />
-                                </span>
-                              </button>
-                            ) : (
-                              <span className="notif-static-icon">
-                                {notif.itemType === 'TASK' && <CheckSquare size={16} />}
-                                {notif.itemType === 'EVENT' && <Calendar size={16} />}
-                                {notif.itemType === 'REMINDER' && <Clock size={16} />}
-                                {notif.itemType === 'MILESTONE' && <Trophy size={16} />}
-                                {notif.itemType !== 'TASK' && notif.itemType !== 'EVENT' && notif.itemType !== 'REMINDER' && notif.itemType !== 'MILESTONE' && <Bell size={16} />}
-                              </span>
-                            )}
+                            <span className="notif-static-icon">
+                              {notif.itemType === 'TASK' && <CheckSquare size={16} />}
+                              {notif.itemType === 'EVENT' && <Calendar size={16} />}
+                              {notif.itemType === 'REMINDER' && <Clock size={16} />}
+                              {notif.itemType === 'MILESTONE' && <Trophy size={16} />}
+                              {notif.itemType !== 'TASK' && notif.itemType !== 'EVENT' && notif.itemType !== 'REMINDER' && notif.itemType !== 'MILESTONE' && <Bell size={16} />}
+                            </span>
                           </div>
                         </div>
                       </div>
