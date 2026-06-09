@@ -201,59 +201,67 @@ function NotificationCenter() {
             </div>
           ) : (
             <div className="notification-feed">
-              {notifications.map((notif) => (
-                <div
-                  key={notif.id}
-                  className={`notification-item ${notif.isRead ? 'read' : 'unread'} item-${notif.itemType.toLowerCase()}`}
-                >
-                  <div className="notif-header">
-                    <div className="notif-type-tag">
-                      {getNotificationIcon(notif.itemType)}
-                      <span className="type-label">{notif.itemType}</span>
-                    </div>
-                    <span className="notif-time">{formatTime(notif.timestamp)}</span>
-                  </div>
+              {notifications.map((notif) => {
+                const isTaskOrReminder = notif.itemType === 'TASK' || notif.itemType === 'REMINDER';
+                return (
+                  <div
+                    key={notif.id}
+                    className={`notification-item ${notif.isRead ? 'read' : 'unread'} item-${notif.itemType.toLowerCase()}`}
+                    onClick={() => !notif.isRead && markAsRead(notif.id)}
+                    style={{ cursor: notif.isRead ? 'default' : 'pointer' }}
+                  >
+                    <div className="notif-layout-row">
+                      {/* Left Column: Checkbox for Tasks/Reminders, or simple Type Icon */}
+                      <div className="notif-left-column">
+                        {isTaskOrReminder ? (
+                          <button
+                            type="button"
+                            className="notif-check-circle"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              completeTaskDirectly(notif.itemId);
+                            }}
+                            title="Mark complete"
+                          >
+                            <Check size={10} className="check-icon" />
+                          </button>
+                        ) : (
+                          <div className="notif-type-icon">
+                            {getNotificationIcon(notif.itemType)}
+                          </div>
+                        )}
+                      </div>
 
-                  <h3 className="notif-title">{notif.title}</h3>
-                  <p className="notif-message">{notif.message}</p>
+                      {/* Right Column: Title, description, tags, relative time, and delete actions */}
+                      <div className="notif-right-column">
+                        <div className="notif-header">
+                          <span className={`notif-badge-tag tag-${notif.itemType.toLowerCase()}`}>
+                            {notif.itemType}
+                          </span>
+                          <div className="notif-meta-actions">
+                            <span className="notif-time">{formatTime(notif.timestamp)}</span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                clearNotification(notif.id);
+                              }}
+                              className="notif-delete-btn-top"
+                              title="Delete notification"
+                              aria-label="Delete notification"
+                            >
+                              <Trash2 size={11} />
+                            </button>
+                          </div>
+                        </div>
 
-                  <div className="notif-actions">
-                    <div className="flex gap-2">
-                      {!notif.isRead && (
-                        <button
-                          type="button"
-                          onClick={() => markAsRead(notif.id)}
-                          className="notif-action-btn read-btn"
-                          title="Mark as read"
-                        >
-                          <Eye size={12} className="mr-1" />
-                          Read
-                        </button>
-                      )}
-                      {(notif.itemType === 'TASK' || notif.itemType === 'REMINDER') && (
-                        <button
-                          type="button"
-                          onClick={() => completeTaskDirectly(notif.itemId)}
-                          className="notif-action-btn complete-btn"
-                          title="Mark calendar item complete"
-                        >
-                          <Check size={12} className="mr-1" />
-                          Done
-                        </button>
-                      )}
+                        <h3 className="notif-title">{notif.title}</h3>
+                        <p className="notif-message">{notif.message}</p>
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => clearNotification(notif.id)}
-                      className="notif-delete-btn"
-                      title="Delete notification"
-                      aria-label="Delete notification"
-                    >
-                      <Trash2 size={12} />
-                    </button>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

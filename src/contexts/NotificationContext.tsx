@@ -111,6 +111,57 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // iOS Autoplay Audio Unlocker
+  useEffect(() => {
+    const unlockAudio = () => {
+      // 1. Warm up HTML5 Audio
+      try {
+        const audio = new Audio('/iphone-notification.mp3');
+        audio.volume = 0; // completely silent
+        audio.play().then(() => {
+          console.log('HTML5 Audio successfully unlocked for iOS.');
+        }).catch((err) => {
+          console.warn('HTML5 Audio unlock failed:', err);
+        });
+      } catch (e) {
+        console.warn('HTML5 Audio unlock failed:', e);
+      }
+
+      // 2. Warm up Web Audio API Context
+      try {
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioContextClass) {
+          const audioCtx = new AudioContextClass();
+          if (audioCtx.state === 'suspended') {
+            audioCtx.resume().then(() => {
+              console.log('Web Audio Context successfully unlocked for iOS.');
+              // Play a quick, silent buffer to warm up hardware audio path
+              const buffer = audioCtx.createBuffer(1, 1, 22050);
+              const source = audioCtx.createBufferSource();
+              source.buffer = buffer;
+              source.connect(audioCtx.destination);
+              source.start(0);
+            });
+          }
+        }
+      } catch (e) {
+        console.warn('Web Audio Context unlock failed:', e);
+      }
+
+      // Remove the listeners after the first interaction
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+    };
+
+    document.addEventListener('click', unlockAudio);
+    document.addEventListener('touchstart', unlockAudio);
+
+    return () => {
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+    };
+  }, []);
+
   // Sync references for interval timer
   const itemsRef = useRef(items);
   const notifiedKeysRef = useRef(notifiedKeys);
@@ -281,7 +332,16 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     fetchUpcomingItems();
     const pollInterval = setInterval(fetchUpcomingItems, 60000); // refresh list every 1 minute
-    return () => clearInterval(pollInterval);
+    
+    const handleCalendarUpdate = () => {
+      fetchUpcomingItems();
+    };
+    window.addEventListener('calendar-updated', handleCalendarUpdate);
+    
+    return () => {
+      clearInterval(pollInterval);
+      window.removeEventListener('calendar-updated', handleCalendarUpdate);
+    };
   }, [fetchUpcomingItems]);
 
   useEffect(() => {
@@ -442,6 +502,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       await toggleCalendarItemApi(itemId);
       toast.success('Task marked as completed!');
       await fetchUpcomingItems();
+      window.dispatchEvent(new CustomEvent('calendar-updated'));
     } catch (err) {
       console.error('Failed to complete task:', err);
       toast.error('Could not update task completion.');

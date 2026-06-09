@@ -87,6 +87,13 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
 
   useEffect(() => {
     loadItems()
+    const handleCalendarUpdate = () => {
+      loadItems()
+    }
+    window.addEventListener('calendar-updated', handleCalendarUpdate)
+    return () => {
+      window.removeEventListener('calendar-updated', handleCalendarUpdate)
+    }
   }, [loadItems])
 
   const updateSelectedDate = (date: string) => {
@@ -120,6 +127,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
       await toggleCalendarItem(item.id)
       toast.success(item.completed ? `Marked "${item.title}" as incomplete` : `Completed "${item.title}"!`)
       await loadItems()
+      window.dispatchEvent(new CustomEvent('calendar-updated'))
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to update item')
     }
@@ -132,6 +140,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
       toast.success(`Deleted "${deleteTarget.title}"`)
       setDeleteTarget(null)
       await loadItems()
+      window.dispatchEvent(new CustomEvent('calendar-updated'))
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to delete item')
     }
@@ -236,6 +245,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
           onSaved={async () => {
             setModal({ open: false })
             await loadItems()
+            window.dispatchEvent(new CustomEvent('calendar-updated'))
           }}
         />
       )}
