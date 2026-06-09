@@ -10,6 +10,7 @@ import { WorkoutsOverview } from './components/views/workouts-view'
 import { DashboardProvider } from './contexts/DashboardContext'
 import { LearningsOverview } from './components/views/learnings-view'
 import { CalendarOverview } from './components/views/calendar-view'
+import { isStandalone } from './lib/utils'
 import { subscribeToActiveRequests } from './lib/api'
 import { OverlayLoader } from './components/ui/OverlayLoader'
 import { NotificationProvider, useNotifications } from './contexts/NotificationContext'
@@ -72,8 +73,24 @@ function MobileNotificationTrigger() {
 }
 
 function App() {
-  const [pathname, setPathname] = useState<AppPath>(() => normalizePathname(window.location.pathname))
-  const [searchParams, setSearchParams] = useState(() => new URLSearchParams(window.location.search))
+  const [pathname, setPathname] = useState<AppPath>(() => {
+    if (isStandalone()) {
+      const savedPath = localStorage.getItem('pwa_last_path') as AppPath | null
+      if (savedPath) {
+        return normalizePathname(savedPath)
+      }
+    }
+    return normalizePathname(window.location.pathname)
+  })
+  const [searchParams, setSearchParams] = useState(() => {
+    if (isStandalone()) {
+      const savedSearch = localStorage.getItem('pwa_last_search')
+      if (savedSearch !== null) {
+        return new URLSearchParams(savedSearch)
+      }
+    }
+    return new URLSearchParams(window.location.search)
+  })
 
   const [activeRequests, setActiveRequests] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(true)
@@ -126,6 +143,15 @@ function App() {
 
   useEffect(() => {
     const handlePopState = () => {
+      if (isStandalone()) {
+        const savedPath = localStorage.getItem('pwa_last_path') as AppPath | null
+        if (savedPath) {
+          setPathname(normalizePathname(savedPath))
+        }
+        setSearchParams(new URLSearchParams(window.location.search))
+        return
+      }
+
       setPathname(normalizePathname(window.location.pathname))
       setSearchParams(new URLSearchParams(window.location.search))
     }
@@ -139,6 +165,10 @@ function App() {
 
   // Sync URL with normalized route on mount/initial load
   useEffect(() => {
+    if (isStandalone()) {
+      return
+    }
+
     const currentPath = window.location.pathname
     const normalized = normalizePathname(currentPath)
     if (currentPath !== normalized) {
@@ -148,6 +178,21 @@ function App() {
 
   const navigateTo = (nextPathname: AppPath, search?: string) => {
     const normalized = normalizePathname(nextPathname)
+
+    if (isStandalone()) {
+      // Keep the browser URL path constant to prevent iOS standalone PWA from opening
+      // Safari browser navigation elements, but allow query/search parameters to update.
+      const newUrl = search ? `${window.location.pathname}${search}` : window.location.pathname
+      window.history.replaceState({}, '', newUrl)
+      
+      localStorage.setItem('pwa_last_path', normalized)
+      localStorage.setItem('pwa_last_search', search || '')
+      
+      setPathname(normalized)
+      setSearchParams(new URLSearchParams(search || ''))
+      return
+    }
+
     const newUrl = search ? `${normalized}${search}` : normalized
     if (newUrl === window.location.pathname + window.location.search) {
       return

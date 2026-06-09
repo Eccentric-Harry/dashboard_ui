@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { CalendarCheck, ChevronDown, ChevronLeft, ChevronRight, LoaderCircle, X, Plus } from 'lucide-react'
 import { useDashboard } from '../../../../contexts/DashboardContext'
 import { fetchFoodEntries } from '../../../../lib/api'
+import { isStandalone } from '../../../../lib/utils'
 import { getFoodIconDetails } from './food-icon-helper'
 
 type FoodEntry = {
@@ -180,9 +181,17 @@ function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
     setSelectedDate(dateValue)
     setIsCalendarOpen(false)
 
-    const nextUrl = `/nutrition?date=${dateValue}`
+    const nextUrl = isStandalone()
+      ? `${window.location.pathname}?date=${dateValue}`
+      : `/nutrition?date=${dateValue}`
+
     if (window.location.pathname + window.location.search !== nextUrl) {
-      window.history.pushState({}, '', nextUrl)
+      if (isStandalone()) {
+        window.history.replaceState({}, '', nextUrl)
+        localStorage.setItem('pwa_last_search', `?date=${dateValue}`)
+      } else {
+        window.history.pushState({}, '', nextUrl)
+      }
       window.dispatchEvent(new PopStateEvent('popstate'))
     }
   }

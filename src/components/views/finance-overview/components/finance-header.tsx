@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { CalendarCheck, ChevronDown, ChevronLeft, ChevronRight, X, Plus, ArrowUpRight, ArrowDownLeft } from 'lucide-react'
 import type { DailyFinancialLog } from '../../../../lib/api'
 import { getConsistentColor, getIconForCategory } from '../utils'
+import { isStandalone } from '../../../../lib/utils'
 
 interface FinanceHeaderProps {
   onAddClick?: () => void
@@ -151,9 +152,17 @@ function FinanceHeader({ onAddClick, logs, selectedDate, onDateChange }: Finance
     onDateChange(dateValue)
     setIsCalendarOpen(false)
 
-    const nextUrl = `/finance?date=${dateValue}`
+    const nextUrl = isStandalone()
+      ? `${window.location.pathname}?date=${dateValue}`
+      : `/finance?date=${dateValue}`
+
     if (window.location.pathname + window.location.search !== nextUrl) {
-      window.history.pushState({}, '', nextUrl)
+      if (isStandalone()) {
+        window.history.replaceState({}, '', nextUrl)
+        localStorage.setItem('pwa_last_search', `?date=${dateValue}`)
+      } else {
+        window.history.pushState({}, '', nextUrl)
+      }
       window.dispatchEvent(new PopStateEvent('popstate'))
     }
   }
