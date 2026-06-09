@@ -99,7 +99,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   // Register service worker on mount
   useEffect(() => {
-    if ('serviceWorker' in navigator && 'PushManager' in window) {
+    if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js')
         .then((reg) => {
           console.log('Notification Service Worker registered successfully:', reg.scope);
