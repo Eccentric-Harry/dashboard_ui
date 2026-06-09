@@ -2291,6 +2291,65 @@ button {
   display: none;
 }
 
+/* Settings Accordion */
+.settings-accordion-trigger {
+  margin: 12px 24px 4px;
+  padding: 10px 14px;
+  background: rgba(20, 24, 22, 0.03);
+  border: 1px solid rgba(20, 24, 22, 0.05);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  width: calc(100% - 48px);
+  font-family: inherit;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.settings-accordion-trigger:hover {
+  background: rgba(20, 24, 22, 0.06);
+  border-color: rgba(20, 24, 22, 0.08);
+}
+
+.settings-accordion-trigger .trigger-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-accordion-trigger .trigger-left span {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #101312;
+}
+
+.settings-accordion-trigger svg {
+  color: #526057;
+  transition: transform 0.2s ease;
+}
+
+.settings-accordion-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.settings-accordion-content.expanded {
+  grid-template-rows: 1fr;
+}
+
+.accordion-content-inner {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.accordion-content-inner .desktop-alert-control {
+  margin: 6px 24px;
+}
+
 /* Mobile view notification bell floating action */
 .mobile-notification-trigger {
   display: none;
@@ -2376,14 +2435,31 @@ button {
 
   .mobile-notification-badge {
     position: absolute;
-    top: 5px;
-    right: 5px;
+    top: 1px;
+    right: 1px;
     background: #ff3b30;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    border: 1px solid #dfe4df;
-    box-shadow: none;
+    color: #ffffff;
+    font-size: 8px;
+    font-weight: 700;
+    min-width: 13px;
+    height: 13px;
+    border-radius: 7px;
+    border: 1.5px solid #dfe4df;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 2px;
+    line-height: 1;
+    box-shadow: 0 1px 3px rgba(255, 59, 48, 0.25);
+  }
+
+  .settings-accordion-trigger {
+    margin: 8px 20px 2px;
+    width: calc(100% - 40px);
+  }
+
+  .accordion-content-inner .desktop-alert-control {
+    margin: 4px 20px;
   }
 }
 
