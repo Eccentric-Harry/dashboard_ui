@@ -573,8 +573,8 @@ function AgendaList({
                 {/* Top: title area */}
                 <div className="agenda-card-body">
                   <div className="agenda-card-type-row">
-                    <span className="agenda-card-icon" style={{ background: `${itemColor}22`, color: itemColor }}>
-                      <Icon size={12} />
+                    <span className="agenda-card-icon" style={{ background: `${itemColor}48`, color: itemColor }}>
+                      <Icon size={15} strokeWidth={2.2} />
                     </span>
                     <span className="agenda-card-tag">{item.itemType ?? 'TASK'}</span>
                   </div>

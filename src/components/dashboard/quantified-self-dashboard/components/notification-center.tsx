@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Trash2, Bell, BellOff, Calendar, CheckSquare, Trophy, Eye, Volume2, Settings, ChevronDown, ChevronUp, Clock } from 'lucide-react';
 import { useNotifications } from '../../../../contexts/NotificationContext';
 
@@ -55,7 +56,7 @@ function NotificationCenter() {
 
   const isPushSupported = 'serviceWorker' in navigator && 'PushManager' in window;
 
-  return (
+  return createPortal(
     <div 
       className="notification-center-overlay" 
       onClick={(e) => {
@@ -246,7 +247,8 @@ function NotificationCenter() {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
