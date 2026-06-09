@@ -17,6 +17,7 @@
 }
 
 html {
+  zoom: 0.9;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
 }
