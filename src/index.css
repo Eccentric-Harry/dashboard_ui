@@ -2511,20 +2511,21 @@ button {
   gap: 6px;
   padding: 7px 14px;
   border-radius: 20px;
-  border: 1px solid rgba(82, 96, 87, 0.12);
-  background: rgba(255, 255, 255, 0.85);
-  color: #526057;
+  background: #202321;
+  color: rgba(255, 255, 255, 0.85);
   font-family: inherit;
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(54, 69, 53, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .footer-desktop-toggle:hover {
-  background: rgba(82, 96, 87, 0.05);
-  border-color: rgba(82, 96, 87, 0.18);
+  background: #38413d;
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.15);
   transform: translateY(-0.5px);
 }
 
@@ -2533,14 +2534,16 @@ button {
 }
 
 .footer-desktop-toggle.active {
-  background: rgba(16, 185, 129, 0.08);
-  color: #059669;
-  border-color: rgba(16, 185, 129, 0.2);
+  background: #101211;
+  color: #ffffff;
+  border-color: rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
 }
 
 .footer-desktop-toggle.active:hover {
-  background: rgba(16, 185, 129, 0.12);
-  border-color: rgba(16, 185, 129, 0.28);
+  background: #1c201e;
+  border-color: rgba(16, 185, 129, 0.6);
+  color: #ffffff;
 }
 
 
