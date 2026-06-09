@@ -1914,9 +1914,11 @@ button {
   bottom: 0;
   right: 0;
   width: min(420px, 100%);
-  background: #f4f4f6;
-  border-left: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: -15px 0 45px rgba(0, 0, 0, 0.08);
+  background: linear-gradient(180deg, rgba(230, 238, 233, 0.88) 0%, rgba(243, 247, 244, 0.94) 60%, rgba(254, 255, 254, 0.98) 100%);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border-left: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: -12px 0 40px rgba(36, 48, 39, 0.06), inset 1px 0 0 rgba(255, 255, 255, 0.6);
   display: flex;
   flex-direction: column;
   animation: slide-in-drawer 0.28s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1964,7 +1966,7 @@ button {
 }
 
 .close-drawer-btn {
-  background: rgba(0, 0, 0, 0.04);
+  background: rgba(82, 96, 87, 0.06);
   border-radius: 50%;
   width: 30px;
   height: 30px;
@@ -1978,8 +1980,8 @@ button {
 }
 
 .close-drawer-btn:hover {
-  background: rgba(0, 0, 0, 0.08);
-  color: #101312;
+  background: rgba(82, 96, 87, 0.14);
+  color: #1c241f;
   transform: scale(1.05);
 }
 
@@ -1987,8 +1989,8 @@ button {
 .settings-accordion-trigger {
   margin: 4px 24px 8px;
   padding: 10px 14px;
-  background: rgba(0, 0, 0, 0.02);
-  border: 1px solid rgba(0, 0, 0, 0.03);
+  background: rgba(82, 96, 87, 0.04);
+  border: 1px solid rgba(82, 96, 87, 0.08);
   border-radius: 14px;
   display: flex;
   align-items: center;
@@ -2000,7 +2002,8 @@ button {
 }
 
 .settings-accordion-trigger:hover {
-  background: rgba(0, 0, 0, 0.04);
+  background: rgba(82, 96, 87, 0.08);
+  border-color: rgba(82, 96, 87, 0.16);
 }
 
 .settings-accordion-trigger .trigger-left {
@@ -2041,14 +2044,14 @@ button {
 .desktop-alert-control {
   margin: 0 24px;
   padding: 12px 14px;
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.03);
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(82, 96, 87, 0.08);
   border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 4px 10px rgba(54, 69, 53, 0.02);
 }
 
 .desktop-alert-info h4 {
@@ -2071,7 +2074,7 @@ button {
   gap: 6px;
   padding: 7px 11px;
   border-radius: 10px;
-  background: #1c1c1e;
+  background: #202321;
   color: #ffffff;
   font-size: 11px;
   font-weight: 600;
@@ -2081,17 +2084,17 @@ button {
 }
 
 .desktop-toggle-btn:hover {
-  background: #2c2c2e;
+  background: #38413d;
   transform: translateY(-0.5px);
 }
 
 .desktop-toggle-btn.active {
-  background: rgba(0, 0, 0, 0.05);
-  color: #1c1c1e;
+  background: rgba(82, 96, 87, 0.08);
+  color: #1a7a4a;
 }
 
 .desktop-toggle-btn.active:hover {
-  background: rgba(0, 0, 0, 0.08);
+  background: rgba(82, 96, 87, 0.15);
 }
 
 .notification-action-bar {
@@ -2103,7 +2106,7 @@ button {
 
 .action-link {
   background: transparent;
-  color: #8e8e93;
+  color: #6a786d;
   cursor: pointer;
   font-size: 11px;
   font-weight: 600;
@@ -2115,11 +2118,11 @@ button {
 }
 
 .action-link:hover {
-  color: #1c1c1e;
+  color: #1a7a4a;
 }
 
 .action-link.delete-all:hover {
-  color: #ff3b30;
+  color: #e03126;
 }
 
 .notification-list-container {
@@ -2142,12 +2145,12 @@ button {
   width: 68px;
   height: 68px;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.03);
+  background: rgba(82, 96, 87, 0.04);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 16px;
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(82, 96, 87, 0.08);
   box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.01);
   position: relative;
 }
@@ -2157,7 +2160,7 @@ button {
   position: absolute;
   inset: -5px;
   border-radius: 50%;
-  border: 1px dashed rgba(0, 0, 0, 0.08);
+  border: 1px dashed rgba(82, 96, 87, 0.15);
   animation: spin 35s linear infinite;
 }
 
@@ -2192,13 +2195,13 @@ button {
 .notification-item {
   padding: 10px 14px 10px 10px;
   border-radius: 32px;
-  background: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   box-shadow: 
-    0 10px 25px -5px rgba(0, 0, 0, 0.04), 
-    0 8px 16px -6px rgba(0, 0, 0, 0.02),
-    inset 0 -1.5px 3px rgba(0, 0, 0, 0.015),
-    inset 0 1px 1px rgba(255, 255, 255, 0.8);
+    0 8px 20px -4px rgba(36, 48, 39, 0.03), 
+    0 6px 12px -5px rgba(36, 48, 39, 0.015),
+    inset 0 -1.5px 3px rgba(0, 0, 0, 0.01),
+    inset 0 1px 1px rgba(255, 255, 255, 0.85);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   flex-direction: column;
@@ -2208,18 +2211,25 @@ button {
 
 .notification-item:hover {
   transform: translateY(-2px) scale(1.01);
+  background: #ffffff;
+  border-color: rgba(255, 255, 255, 0.9);
   box-shadow: 
-    0 14px 30px -8px rgba(0, 0, 0, 0.06), 
-    0 10px 20px -8px rgba(0, 0, 0, 0.03);
+    0 12px 28px -6px rgba(36, 48, 39, 0.06), 
+    0 8px 16px -6px rgba(36, 48, 39, 0.03);
 }
 
 .notification-item.unread {
-  background: #ffffff;
-  border-color: rgba(0, 122, 255, 0.12);
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(16, 185, 129, 0.18);
   box-shadow: 
-    0 10px 25px -5px rgba(0, 122, 255, 0.03), 
-    0 8px 16px -6px rgba(0, 0, 0, 0.02),
-    inset 0 -1.5px 3px rgba(0, 0, 0, 0.015);
+    0 8px 20px -4px rgba(16, 185, 129, 0.04), 
+    0 6px 12px -5px rgba(0, 0, 0, 0.015),
+    inset 0 -1.5px 3px rgba(0, 0, 0, 0.01);
+}
+
+.notification-item.unread:hover {
+  background: #ffffff;
+  border-color: rgba(16, 185, 129, 0.26);
 }
 
 .notification-item.unread::before {
@@ -2231,8 +2241,8 @@ button {
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: #007aff;
-  box-shadow: 0 0 6px #007aff;
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981;
   transition: all 0.2s ease;
   z-index: 2;
 }
@@ -2261,13 +2271,13 @@ button {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(82, 96, 87, 0.06);
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: 
-    0 3px 8px rgba(0, 0, 0, 0.02),
+    0 3px 8px rgba(54, 69, 53, 0.02),
     inset 0 1px 1px #ffffff;
   transition: all 0.25s ease;
 }
@@ -2575,12 +2585,12 @@ button {
     background:
       linear-gradient(
         180deg,
-        rgba(248, 249, 252, 0.98) 0%,
-        rgba(244, 245, 250, 1.0) 60%,
-        #f0f1f6 100%
+        rgba(235, 242, 237, 0.98) 0%,
+        rgba(246, 250, 247, 1.0) 60%,
+        #edf3ee 100%
       ) !important;
-    backdrop-filter: blur(32px) saturate(200%) !important;
-    -webkit-backdrop-filter: blur(32px) saturate(200%) !important;
+    backdrop-filter: blur(32px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(32px) saturate(180%) !important;
     box-shadow: none !important;
     animation: slide-up-drawer 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
     /* Respect device notch at top and home bar at bottom */
@@ -2598,11 +2608,11 @@ button {
   .notification-drawer-header {
     padding: 22px 22px 12px;
     position: relative;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid rgba(82, 96, 87, 0.08);
     background: linear-gradient(
       90deg,
       rgba(255, 255, 255, 0) 0%,
-      rgba(120, 160, 255, 0.04) 100%
+      rgba(16, 185, 129, 0.04) 100%
     );
   }
 
@@ -2615,9 +2625,9 @@ button {
   .settings-accordion-trigger {
     margin: 10px 20px 4px;
     width: calc(100% - 40px);
-    background: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    background: rgba(255, 255, 255, 0.65);
+    border: 1px solid rgba(82, 96, 87, 0.1);
+    box-shadow: 0 2px 8px rgba(54, 69, 53, 0.02);
   }
 
   /* ── Accordion content ── */
@@ -2632,9 +2642,9 @@ button {
     margin: 0;
     padding: 12px 14px;
     border-radius: 14px;
-    background: rgba(255, 255, 255, 0.82);
-    border: 1px solid rgba(0, 0, 0, 0.04);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+    background: rgba(255, 255, 255, 0.65) !important;
+    border: 1px solid rgba(82, 96, 87, 0.1) !important;
+    box-shadow: 0 2px 10px rgba(54, 69, 53, 0.03) !important;
   }
 
   /* ── Action bar ── */
