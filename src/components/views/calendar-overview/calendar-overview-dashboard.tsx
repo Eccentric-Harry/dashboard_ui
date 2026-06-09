@@ -124,7 +124,8 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   const handleToggle = async (item: CalendarItem) => {
     if (!item.id) return
     try {
-      await toggleCalendarItem(item.id)
+      const isRecurring = item.recurrenceFrequency && item.recurrenceFrequency !== 'NONE'
+      await toggleCalendarItem(item.id, isRecurring ? item.date : undefined)
       toast.success(item.completed ? `Marked "${item.title}" as incomplete` : `Completed "${item.title}"!`)
       await loadItems()
       window.dispatchEvent(new CustomEvent('calendar-updated'))

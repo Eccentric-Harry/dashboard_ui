@@ -561,8 +561,9 @@ export async function updateCalendarItem(id: string, data: CalendarItemPayload) 
   return response.json();
 }
 
-export async function toggleCalendarItem(id: string) {
-  const response = await fetch(`${API_BASE_URL}/calendar/items/${id}/toggle`, {
+export async function toggleCalendarItem(id: string, date?: string) {
+  const query = date ? `?date=${date}` : '';
+  const response = await fetch(`${API_BASE_URL}/calendar/items/${id}/toggle${query}`, {
     method: 'PATCH',
   });
   if (!response.ok) {

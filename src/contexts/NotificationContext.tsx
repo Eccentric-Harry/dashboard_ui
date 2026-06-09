@@ -362,7 +362,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     // 4. Save to feed
     const newNotif: InAppNotification = {
       id: `${item.id || 'notif'}-${Date.now()}`,
-      itemId: item.id || '',
+      itemId: item.occurrenceId || item.id || '',
       title: item.title,
       message,
       timestamp: new Date().toISOString(),
@@ -547,7 +547,12 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const completeTaskDirectly = async (itemId: string) => {
     try {
-      await toggleCalendarItemApi(itemId);
+      if (itemId.includes(':')) {
+        const [id, date] = itemId.split(':');
+        await toggleCalendarItemApi(id, date);
+      } else {
+        await toggleCalendarItemApi(itemId);
+      }
       toast.success('Task marked as completed!');
       await fetchUpcomingItems();
       window.dispatchEvent(new CustomEvent('calendar-updated'));
