@@ -8,6 +8,7 @@ function NotificationCenter() {
     unreadCount,
     isOpen,
     desktopEnabled,
+    items,
     setIsOpen,
     markAsRead,
     markAllAsRead,
@@ -203,10 +204,12 @@ function NotificationCenter() {
             <div className="notification-feed">
               {notifications.map((notif) => {
                 const isTaskOrReminder = notif.itemType === 'TASK' || notif.itemType === 'REMINDER';
+                const calendarItem = items.find((item) => item.id === notif.itemId);
+                const isCompleted = calendarItem ? calendarItem.completed : false;
                 return (
                   <div
                     key={notif.id}
-                    className={`notification-item ${notif.isRead ? 'read' : 'unread'} item-${notif.itemType.toLowerCase()}`}
+                    className={`notification-item ${notif.isRead ? 'read' : 'unread'} item-${notif.itemType.toLowerCase()} ${isCompleted ? 'completed-item' : ''}`}
                     onClick={() => !notif.isRead && markAsRead(notif.id)}
                     style={{ cursor: notif.isRead ? 'default' : 'pointer' }}
                   >
@@ -216,14 +219,15 @@ function NotificationCenter() {
                         {isTaskOrReminder ? (
                           <button
                             type="button"
-                            className="notif-check-circle"
+                            className={`notif-check-circle ${isCompleted ? 'completed' : ''}`}
                             onClick={(e) => {
                               e.stopPropagation();
                               completeTaskDirectly(notif.itemId);
                             }}
-                            title="Mark complete"
+                            disabled={isCompleted}
+                            title={isCompleted ? "Completed" : "Mark complete"}
                           >
-                            <Check size={10} className="check-icon" />
+                            <Check size={10} className="check-icon" style={{ opacity: isCompleted ? 1 : undefined }} />
                           </button>
                         ) : (
                           <div className="notif-type-icon">

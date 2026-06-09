@@ -359,8 +359,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       currentItems.forEach((item) => {
         if (!item.id) return;
         
-        // Prevent notifying multiple times for the exact same event on the same date
-        const key = `${item.id}:${item.date}`;
+        // Prevent notifying multiple times for the exact same event on the same date/time
+        const key = `${item.id}:${item.date}:${item.startTime || 'allday'}`;
         if (currentNotified.includes(key)) return;
 
         // Skip completed tasks/reminders

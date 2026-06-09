@@ -2229,6 +2229,13 @@ button {
   color: #16a34a;
 }
 
+.notif-check-circle.completed {
+  border-color: #16a34a;
+  background: rgba(22, 163, 74, 0.12);
+  color: #16a34a;
+  cursor: default;
+}
+
 .notif-check-circle .check-icon {
   transition: opacity 0.15s ease;
 }
@@ -2333,6 +2340,21 @@ button {
 
 .notification-item.read:hover {
   opacity: 1;
+}
+
+/* Completed item styling */
+.notification-item.completed-item {
+  opacity: 0.45;
+}
+
+.notification-item.completed-item .notif-title {
+  text-decoration: line-through;
+  color: #8e8e93;
+}
+
+.notification-item.completed-item .notif-message {
+  text-decoration: line-through;
+  color: #8e8e93;
 }
 
 /* Drag handle for mobile bottom sheet */
