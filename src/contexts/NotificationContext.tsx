@@ -98,6 +98,103 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
+  // ---------------------------------------------------------------------------
+  // Persistent singleton Audio element + AudioContext
+  // These are created once on mount and "warmed up" on the very first user
+  // interaction (click / touchstart). Because iOS tracks unlock state per
+  // element / context instance, reusing the same objects lets timer-triggered
+  // playback succeed after the initial warm-up tap.
+  // ---------------------------------------------------------------------------
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const audioUnlockedRef = useRef(false);
+
+  // Create the singleton Audio element once on mount
+  useEffect(() => {
+    try {
+      const audio = new Audio('/iphone-notification.mp3');
+      audio.preload = 'auto';
+      audioRef.current = audio;
+    } catch (e) {
+      console.warn('Failed to create persistent Audio element:', e);
+    }
+
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioContextClass) {
+        audioCtxRef.current = new AudioContextClass();
+      }
+    } catch (e) {
+      console.warn('Failed to create persistent AudioContext:', e);
+    }
+
+    return () => {
+      // Clean up on unmount
+      if (audioCtxRef.current) {
+        audioCtxRef.current.close().catch(() => {});
+      }
+    };
+  }, []);
+
+  // ---------------------------------------------------------------------------
+  // iOS Autoplay Audio Unlocker
+  // On the very first user interaction we play a silent (volume=0) buffer and
+  // resume the AudioContext so that subsequent programmatic calls are allowed.
+  // We remove the listeners after the first unlock so they don't fire again.
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    const unlockAudio = () => {
+      if (audioUnlockedRef.current) return;
+      audioUnlockedRef.current = true;
+
+      // 1. Warm up the persistent HTML5 Audio element (silent play/pause)
+      if (audioRef.current) {
+        const prevVolume = audioRef.current.volume;
+        audioRef.current.volume = 0;
+        audioRef.current.play()
+          .then(() => {
+            audioRef.current!.pause();
+            audioRef.current!.currentTime = 0;
+            audioRef.current!.volume = prevVolume > 0 ? prevVolume : 1.0;
+            console.log('HTML5 Audio successfully unlocked for iOS.');
+          })
+          .catch((err) => {
+            console.warn('HTML5 Audio unlock failed:', err);
+            audioRef.current!.volume = prevVolume > 0 ? prevVolume : 1.0;
+          });
+      }
+
+      // 2. Resume the persistent AudioContext
+      if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+        audioCtxRef.current.resume()
+          .then(() => {
+            console.log('Web Audio Context successfully unlocked for iOS.');
+            // Play a completely silent single-sample buffer to warm up hardware path
+            if (audioCtxRef.current) {
+              const buffer = audioCtxRef.current.createBuffer(1, 1, 22050);
+              const source = audioCtxRef.current.createBufferSource();
+              source.buffer = buffer;
+              source.connect(audioCtxRef.current.destination);
+              source.start(0);
+            }
+          })
+          .catch((err) => console.warn('AudioContext resume failed:', err));
+      }
+
+      // Remove listeners — we only need to unlock once per session
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+    };
+
+    document.addEventListener('click', unlockAudio);
+    document.addEventListener('touchstart', unlockAudio, { passive: true });
+
+    return () => {
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+    };
+  }, []);
+
   // Register service worker on mount
   useEffect(() => {
     if ('serviceWorker' in navigator) {
@@ -109,57 +206,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           console.error('Notification Service Worker registration failed:', err);
         });
     }
-  }, []);
-
-  // iOS Autoplay Audio Unlocker
-  useEffect(() => {
-    const unlockAudio = () => {
-      // 1. Warm up HTML5 Audio
-      try {
-        const audio = new Audio('/iphone-notification.mp3');
-        audio.volume = 0; // completely silent
-        audio.play().then(() => {
-          console.log('HTML5 Audio successfully unlocked for iOS.');
-        }).catch((err) => {
-          console.warn('HTML5 Audio unlock failed:', err);
-        });
-      } catch (e) {
-        console.warn('HTML5 Audio unlock failed:', e);
-      }
-
-      // 2. Warm up Web Audio API Context
-      try {
-        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-        if (AudioContextClass) {
-          const audioCtx = new AudioContextClass();
-          if (audioCtx.state === 'suspended') {
-            audioCtx.resume().then(() => {
-              console.log('Web Audio Context successfully unlocked for iOS.');
-              // Play a quick, silent buffer to warm up hardware audio path
-              const buffer = audioCtx.createBuffer(1, 1, 22050);
-              const source = audioCtx.createBufferSource();
-              source.buffer = buffer;
-              source.connect(audioCtx.destination);
-              source.start(0);
-            });
-          }
-        }
-      } catch (e) {
-        console.warn('Web Audio Context unlock failed:', e);
-      }
-
-      // Remove the listeners after the first interaction
-      document.removeEventListener('click', unlockAudio);
-      document.removeEventListener('touchstart', unlockAudio);
-    };
-
-    document.addEventListener('click', unlockAudio);
-    document.addEventListener('touchstart', unlockAudio);
-
-    return () => {
-      document.removeEventListener('click', unlockAudio);
-      document.removeEventListener('touchstart', unlockAudio);
-    };
   }, []);
 
   // Sync references for interval timer
@@ -208,85 +254,88 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     await fetchUpcomingItems();
   };
 
-  // Synthesized notification sound fallback using Web Audio API (iOS Tri-Tone / marimba chime)
-  const playSynthesizedSound = () => {
+  // ---------------------------------------------------------------------------
+  // Synthesized notification sound fallback using the persistent AudioContext
+  // ---------------------------------------------------------------------------
+  const playSynthesizedSound = useCallback(() => {
     try {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioContextClass) return;
-      
-      const audioCtx = new AudioContextClass();
+      const audioCtx = audioCtxRef.current;
+      if (!audioCtx) return;
+
       if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
+        audioCtx.resume().catch(() => {});
       }
 
-      // Helper function to synthesize a single rich, woody marimba chime note
       const playNote = (frequency: number, startTime: number, duration: number) => {
-        // Fundamental tone (warm and pure)
         const oscFundamental = audioCtx.createOscillator();
         const gainFundamental = audioCtx.createGain();
-        
-        // Strike harmonic overtone (provides the characteristic woodblock/marimba strike impact)
         const oscStrike = audioCtx.createOscillator();
         const gainStrike = audioCtx.createGain();
-        
+
         oscFundamental.type = 'sine';
         oscFundamental.frequency.setValueAtTime(frequency, startTime);
-        
-        // Connect fundamental
         oscFundamental.connect(gainFundamental);
         gainFundamental.connect(audioCtx.destination);
-        
-        // Set up the mallet strike overtone (a marimba's first prominent harmonic is 3x or 4x the fundamental)
+
         oscStrike.type = 'sine';
         oscStrike.frequency.setValueAtTime(frequency * 3, startTime);
-        
-        // Connect strike
         oscStrike.connect(gainStrike);
         gainStrike.connect(audioCtx.destination);
-        
-        // Volume envelope for the fundamental (quick attack, natural decay resonance)
+
         gainFundamental.gain.setValueAtTime(0, startTime);
         gainFundamental.gain.linearRampToValueAtTime(0.12, startTime + 0.008);
         gainFundamental.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-        
-        // Volume envelope for the strike overtone (sharp attack, extremely fast decay)
+
         gainStrike.gain.setValueAtTime(0, startTime);
         gainStrike.gain.linearRampToValueAtTime(0.05, startTime + 0.004);
         gainStrike.gain.exponentialRampToValueAtTime(0.001, startTime + 0.07);
-        
+
         oscFundamental.start(startTime);
         oscFundamental.stop(startTime + duration);
-        
         oscStrike.start(startTime);
         oscStrike.stop(startTime + 0.07);
       };
-      
+
       const now = audioCtx.currentTime;
-      // D5 (~587.33 Hz) starting immediately
-      playNote(587.33, now, 0.4);
-      // A5 (~880.00 Hz) starting at 110ms
-      playNote(880.00, now + 0.11, 0.4);
-      // D6 (~1174.66 Hz) starting at 220ms (rings longer for clean tail resonance)
-      playNote(1174.66, now + 0.22, 0.7);
-      
+      playNote(587.33, now, 0.4);       // D5
+      playNote(880.00, now + 0.11, 0.4); // A5
+      playNote(1174.66, now + 0.22, 0.7); // D6
     } catch (e) {
       console.warn('Audio synthesis failed:', e);
     }
-  };
+  }, []);
 
-  // Notification sound player trying local audio file first, with Web Audio API synthesis fallback
-  const playSound = () => {
+  // ---------------------------------------------------------------------------
+  // Primary sound player — reuses the persistent Audio element so iOS allows it
+  // ---------------------------------------------------------------------------
+  const playSound = useCallback(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      // Reset to start in case a previous play is mid-way through
+      try {
+        audio.currentTime = 0;
+        audio.volume = 1.0;
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((err) => {
+            console.warn('Persistent Audio play failed, falling back to synthesis:', err);
+            playSynthesizedSound();
+          });
+        }
+        return;
+      } catch (e) {
+        console.warn('Persistent Audio play threw, falling back to synthesis:', e);
+      }
+    }
+    // No persistent element — try a fresh Audio instance as a last resort
     try {
-      const audio = new Audio('/iphone-notification.mp3');
-      audio.play().catch((err) => {
-        console.warn('Audio play failed, falling back to synthesis:', err);
-        playSynthesizedSound();
-      });
+      const fallbackAudio = new Audio('/iphone-notification.mp3');
+      fallbackAudio.volume = 1.0;
+      fallbackAudio.play().catch(() => playSynthesizedSound());
     } catch (e) {
-      console.warn('Audio play failed, falling back to synthesis:', e);
       playSynthesizedSound();
     }
-  };
+  }, [playSynthesizedSound]);
 
   const triggerAlert = useCallback((item: CalendarItem, message: string) => {
     // 1. In-App Toast
@@ -326,18 +375,18 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('dashboard_notifications', JSON.stringify(updated));
       return updated;
     });
-  }, []);
+  }, [playSound]);
 
   // Alert schedule checker effect
   useEffect(() => {
     fetchUpcomingItems();
     const pollInterval = setInterval(fetchUpcomingItems, 60000); // refresh list every 1 minute
-    
+
     const handleCalendarUpdate = () => {
       fetchUpcomingItems();
     };
     window.addEventListener('calendar-updated', handleCalendarUpdate);
-    
+
     return () => {
       clearInterval(pollInterval);
       window.removeEventListener('calendar-updated', handleCalendarUpdate);
@@ -358,7 +407,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
       currentItems.forEach((item) => {
         if (!item.id) return;
-        
+
         // Prevent notifying multiple times for the exact same event on the same date/time
         const key = `${item.id}:${item.date}:${item.startTime || 'allday'}`;
         if (currentNotified.includes(key)) return;
@@ -374,7 +423,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         if (item.allDay) {
           // Trigger all-day items at 9:00 AM local time
           const isPast9AM = now.getHours() >= 9;
-          // Ensure it's for today (we also fetch tomorrow's items, which shouldn't alert today)
           if (item.date === todayStr && isPast9AM) {
             shouldTrigger = true;
             alertMessage = `Today: ${item.title} (All day)`;
@@ -449,7 +497,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           await subscription.unsubscribe();
           await unsubscribeDevice(subscription.endpoint);
         }
-        
+
         setDesktopEnabled(false);
         localStorage.setItem('dashboard_desktop_notifications_enabled', 'false');
         toast.success('Desktop alerts disabled.');
@@ -465,10 +513,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
       // Get ready registration
       const reg = await navigator.serviceWorker.ready;
-      
+
       // Fetch public key
       const vapidPublicKey = await fetchVapidPublicKey();
-      
+
       // Subscribe
       const subscription = await reg.pushManager.subscribe({
         userVisibleOnly: true,
