@@ -194,7 +194,7 @@ export function CategoryBreakdownCard({ refreshKey }: CategoryBreakdownCardProps
 
           {/* Column 2: Legends list (Interactive Grid) */}
           <div className="lg:col-span-4 flex flex-col justify-center">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="flex flex-col gap-2.5">
               {categories.map((cat) => {
                 const color = getConsistentColor(cat.name)
                 const Icon = getIconForCategory(cat.name)
