@@ -83,7 +83,7 @@ export function LearningsHeader({
             </span>
             <small className="learnings-date-trigger-sub">
               {summary
-                ? `${summary.today.learningsCount} logged | ${summary.today.tasksCompleted}/${summary.today.tasksTotal} tasks done`
+                ? `${summary.today.learningsCount} logged | ${summary.today.tasksCompleted}/${summary.today.tasksTotal} today's tasks done`
                 : 'Pick a date to review your day'}
             </small>
           </span>

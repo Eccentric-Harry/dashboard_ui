@@ -2605,7 +2605,7 @@ button {
 .rail-notification-badge {
   position: absolute;
   top: -3px;
-  right: -3px;
+  right: -1px;
   min-width: 14px;
   height: 14px;
   padding: 0 3px;

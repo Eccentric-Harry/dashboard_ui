@@ -383,13 +383,13 @@
   flex-direction: column;
 }
 
-.learnings-tasks-card-wrap > *,
-.learnings-study-queue-card-wrap > *,
-.learnings-distribution-card-wrap > *,
-.learnings-focus-widget-card-wrap > *,
-.learnings-journal-card-wrap > *,
-.learnings-github-card-wrap > *,
-.learnings-leetcode-card-wrap > * {
+.learnings-tasks-card-wrap>*,
+.learnings-study-queue-card-wrap>*,
+.learnings-distribution-card-wrap>*,
+.learnings-focus-widget-card-wrap>*,
+.learnings-journal-card-wrap>*,
+.learnings-github-card-wrap>*,
+.learnings-leetcode-card-wrap>* {
   height: 100%;
 }
 
@@ -1047,7 +1047,7 @@
 
 .learnings-task-item-premium.is-completed {
   background: rgba(255, 255, 255, 0.45) !important;
-  opacity: 0.75;
+  opacity: 0.7 !important;
   border-color: rgba(255, 255, 255, 0.4) !important;
 }
 
@@ -1235,6 +1235,7 @@
   .learnings-task-item-premium {
     padding-right: 18px !important;
   }
+
   .learnings-task-item-premium.actions-visible {
     padding-right: 72px !important;
   }
@@ -1470,7 +1471,8 @@
   background: rgba(255, 255, 255, 0.6);
   border: 1px solid rgba(0, 0, 0, 0.08);
   transition: all 0.2s ease;
-  margin-top: auto; /* Push to bottom for layout consistency */
+  margin-top: auto;
+  /* Push to bottom for layout consistency */
 }
 
 .dev-cta-link:hover {
@@ -1905,9 +1907,11 @@
   0% {
     box-shadow: 0 0 0 0px rgba(26, 122, 74, 0.4), 0 22px 52px rgba(45, 60, 48, 0.08);
   }
+
   70% {
     box-shadow: 0 0 0 8px rgba(26, 122, 74, 0), 0 22px 52px rgba(45, 60, 48, 0.08);
   }
+
   100% {
     box-shadow: 0 0 0 0px rgba(26, 122, 74, 0), 0 22px 52px rgba(45, 60, 48, 0.08);
   }
