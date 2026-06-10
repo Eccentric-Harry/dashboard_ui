@@ -316,6 +316,7 @@ export interface LearningLog {
   description: string;
   category: string;
   date: string; // YYYY-MM-DD
+  notionUrl?: string;
   createdAt?: string;
 }
 
@@ -633,6 +634,97 @@ export async function unsubscribeDevice(endpoint: string) {
   if (!response.ok) {
     throw new Error('Failed to unregister device subscription');
   }
+}
+
+
+// ─── Learning Pursuits API ──────────────────────────────────────────
+
+export interface PursuitStep {
+  id: string;
+  text: string;
+  isCompleted: boolean;
+}
+
+export interface LearningPursuit {
+  id: string;
+  title: string;
+  category: string;
+  notionUrl: string;
+  status: 'ACTIVE' | 'COMPLETED';
+  steps: PursuitStep[];
+}
+
+export async function fetchPursuits(): Promise<{ data: LearningPursuit[] }> {
+  const response = await fetch(`${API_BASE_URL}/pursuits`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch learning pursuits');
+  }
+  return response.json();
+}
+
+export async function createPursuit(data: { title: string; category: string; steps: string[] }): Promise<{ data: LearningPursuit }> {
+  const response = await fetch(`${API_BASE_URL}/pursuits`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to create learning pursuit');
+  }
+  return response.json();
+}
+
+export async function togglePursuitStep(id: string, stepId: string): Promise<{ data: LearningPursuit }> {
+  const response = await fetch(`${API_BASE_URL}/pursuits/${id}/steps/${stepId}`, {
+    method: 'PATCH',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to toggle step completion');
+  }
+  return response.json();
+}
+
+export async function deletePursuit(id: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/pursuits/${id}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to delete learning pursuit');
+  }
+}
+
+export async function updatePursuit(id: string, data: { title: string; category: string }): Promise<{ data: LearningPursuit }> {
+  const response = await fetch(`${API_BASE_URL}/pursuits/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to update learning pursuit');
+  }
+  return response.json();
+}
+
+export async function deletePursuitStep(id: string, stepId: string): Promise<{ data: LearningPursuit }> {
+  const response = await fetch(`${API_BASE_URL}/pursuits/${id}/steps/${stepId}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to delete subtask step');
+  }
+  return response.json();
+}
+
+export async function updatePursuitStep(id: string, stepId: string, text: string): Promise<{ data: LearningPursuit }> {
+  const response = await fetch(`${API_BASE_URL}/pursuits/${id}/steps/${stepId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text }),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to update subtask step');
+  }
+  return response.json();
 }
 
 

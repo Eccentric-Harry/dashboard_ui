@@ -1,3 +1,8 @@
+import { 
+  BookOpen, Code, Cpu, Layout, Server, GraduationCap, Compass, Settings,
+  Database, Cloud, Shield, Smartphone, BarChart2, CheckSquare, Languages, Coins, Heart, PenTool 
+} from 'lucide-react'
+
 export function isoDate(d = new Date()) {
   const pad = (n: number) => n.toString().padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
@@ -28,25 +33,87 @@ export function extractNotionUrl(text: string): string | null {
   return match ? match[0] : null
 }
 
+export function getIconForCategory(category: string) {
+  const cat = category.toLowerCase().trim()
+  if (cat.includes('computer science') || cat.includes('cs') || cat.includes('algorithm')) {
+    return GraduationCap
+  }
+  if (cat.includes('development') || cat.includes('programming') || cat.includes('coding') || cat.includes('code')) {
+    return Code
+  }
+  if (cat.includes('architecture') || cat.includes('system') || cat.includes('design') || cat.includes('structure')) {
+    return Compass
+  }
+  if (cat.includes('frontend') || cat.includes('ui') || cat.includes('react') || cat.includes('css') || cat.includes('html')) {
+    return Layout
+  }
+  if (cat.includes('backend') || cat.includes('server') || cat.includes('spring') || cat.includes('api')) {
+    return Server
+  }
+  if (cat.includes('git') || cat.includes('github') || cat.includes('devops') || cat.includes('ci/cd') || cat.includes('settings')) {
+    return Settings
+  }
+  if (cat.includes('ai') || cat.includes('ml') || cat.includes('model') || cat.includes('artificial') || cat.includes('nlp')) {
+    return Cpu
+  }
+  if (cat.includes('db') || cat.includes('database') || cat.includes('sql') || cat.includes('mongo') || cat.includes('redis') || cat.includes('postgres')) {
+    return Database
+  }
+  if (cat.includes('cloud') || cat.includes('aws') || cat.includes('gcp') || cat.includes('azure') || cat.includes('docker') || cat.includes('kubernetes')) {
+    return Cloud
+  }
+  if (cat.includes('security') || cat.includes('cryptography') || cat.includes('crypto') || cat.includes('auth') || cat.includes('jwt')) {
+    return Shield
+  }
+  if (cat.includes('mobile') || cat.includes('ios') || cat.includes('android') || cat.includes('app') || cat.includes('react native') || cat.includes('flutter')) {
+    return Smartphone
+  }
+  if (cat.includes('data') || cat.includes('analytics') || cat.includes('stats') || cat.includes('excel') || cat.includes('analysis')) {
+    return BarChart2
+  }
+  if (cat.includes('test') || cat.includes('qa') || cat.includes('cypress') || cat.includes('jest') || cat.includes('verification')) {
+    return CheckSquare
+  }
+  if (cat.includes('lang') || cat.includes('english') || cat.includes('spanish') || cat.includes('read') || cat.includes('write')) {
+    return Languages
+  }
+  if (cat.includes('finance') || cat.includes('money') || cat.includes('coin') || cat.includes('invest') || cat.includes('budget')) {
+    return Coins
+  }
+  if (cat.includes('health') || cat.includes('fitness') || cat.includes('gym') || cat.includes('nutrition') || cat.includes('personal') || cat.includes('self') || cat.includes('heart')) {
+    return Heart
+  }
+  if (cat.includes('figma') || cat.includes('ux') || cat.includes('design') || cat.includes('sketch') || cat.includes('art')) {
+    return PenTool
+  }
+  return BookOpen // Fallback for custom categories
+}
+
+export function getConsistentColor(category: string) {
+  const cat = category.toLowerCase().trim()
+  if (cat.includes('computer science') || cat.includes('cs')) return '#0d9488'
+  if (cat.includes('development') || cat.includes('coding')) return '#1a7a4a'
+  if (cat.includes('architecture') || cat.includes('system')) return '#8b5cf6'
+  if (cat.includes('frontend') || cat.includes('ui')) return '#0284c7'
+  if (cat.includes('backend') || cat.includes('server')) return '#ea580c'
+  if (cat.includes('git') || cat.includes('github')) return '#4b5563'
+  if (cat.includes('ai') || cat.includes('ml')) return '#312e81'
+  if (cat.includes('personal')) return '#ec4899'
+  
+  // Custom hash color for unknown custom categories!
+  let hash = 0
+  for (let i = 0; i < category.length; i++) {
+    hash = category.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const colors = ['#22c55e', '#3b82f6', '#ef4444', '#eab308', '#ec4899', '#a855f7', '#14b8a6', '#f97316']
+  return colors[Math.abs(hash) % colors.length]
+}
+
 export function getCategoryStyle(category: string) {
-  const cat = category.toLowerCase()
-  if (['github', 'development', 'ai', 'devops', 'tech'].includes(cat)) {
-    return {
-      bg: 'rgba(26, 122, 74, 0.08)',
-      color: '#1a7a4a',
-      border: '1px solid rgba(26, 122, 74, 0.15)',
-    }
-  }
-  if (cat === 'personal') {
-    return {
-      bg: 'rgba(14, 165, 233, 0.08)',
-      color: '#0369a1',
-      border: '1px solid rgba(14, 165, 233, 0.16)',
-    }
-  }
+  const tone = getConsistentColor(category)
   return {
-    bg: 'rgba(13, 148, 136, 0.08)',
-    color: '#0d9488',
-    border: '1px solid rgba(13, 148, 136, 0.15)',
+    bg: `${tone}10`, // 10% opacity
+    color: tone,
+    border: `1px solid ${tone}24`, // 15% opacity
   }
 }
