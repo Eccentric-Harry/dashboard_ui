@@ -12,11 +12,8 @@ interface FocusBlockWidgetProps {
   onSessionComplete: (durationMinutes: number, activityType: string) => void
 }
 
-const ACTIVITIES = [
-  { label: 'Coding 💻', value: 'Coding' },
-  { label: 'DSA/LeetCode 🤓', value: 'DSA/LeetCode' },
-  { label: 'Reading Notes 📚', value: 'Reading Notes' },
-]
+// Initial pursuits list (without emojis)
+const INITIAL_ACTIVITIES = ['Coding', 'DSA/LeetCode', 'Reading Notes']
 
 const DURATIONS = [
   { label: '25m', value: 25 },
@@ -26,12 +23,15 @@ const DURATIONS = [
 ]
 
 export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
+  const [activities, setActivities] = useState(INITIAL_ACTIVITIES)
   const [selectedActivity, setSelectedActivity] = useState('Coding')
   const [selectedDuration, setSelectedDuration] = useState(25) // in minutes
   const [timeLeft, setTimeLeft] = useState(25 * 60) // in seconds
   const [elapsedTime, setElapsedTime] = useState(0) // in seconds
   const [isCounting, setIsCounting] = useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [customInput, setCustomInput] = useState('')
+  const [isAddingCustom, setIsAddingCustom] = useState(false)
 
   // Update timer when duration changes
   useEffect(() => {
@@ -111,7 +111,7 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   };
 
-  const activeActivityLabel = ACTIVITIES.find(a => a.value === selectedActivity)?.label || selectedActivity
+  const activeActivityLabel = selectedActivity
 
   return (
     <div className={`learnings-card bg-white rounded-3xl p-5 border border-white/50 shadow-[0_22px_52px_rgba(45,60,48,0.06),inset_0_1px_0_rgba(255,255,255,0.7)] backdrop-blur-md transition-all duration-300 ${isCounting ? 'focus-active-pulse' : ''}`}>
@@ -138,19 +138,67 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
         </button>
 
         {isDropdownOpen && !isCounting && (
-          <div className="absolute top-[100%] left-0 right-0 mt-1.5 bg-white border border-gray-100 rounded-xl shadow-lg z-20 overflow-hidden">
-            {ACTIVITIES.map((activity) => (
+          <div className="absolute top-[100%] left-0 right-0 mt-1.5 bg-white border border-gray-100 rounded-xl shadow-lg z-20 overflow-hidden p-1 flex flex-col gap-1">
+            {activities.map((activity) => (
               <button
-                key={activity.value}
+                key={activity}
                 onClick={() => {
-                  setSelectedActivity(activity.value)
+                  setSelectedActivity(activity)
                   setIsDropdownOpen(false)
+                  setIsAddingCustom(false)
                 }}
-                className="w-full px-4 py-2.5 text-xs text-left text-gray-700 hover:bg-emerald-50 hover:text-[#1a7a4a] font-medium transition-colors border-b border-gray-50 last:border-b-0"
+                className={`w-full px-3 py-2.5 text-xs text-left rounded-lg font-medium transition-colors ${selectedActivity === activity ? 'bg-emerald-50 text-[#1a7a4a]' : 'text-gray-700 hover:bg-gray-50'}`}
               >
-                {activity.label}
+                {activity}
               </button>
             ))}
+            
+            <div className="border-t border-gray-100 my-1"></div>
+            
+            {isAddingCustom ? (
+              <form 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const trimmed = customInput.trim();
+                  if (trimmed) {
+                    if (!activities.includes(trimmed)) {
+                      setActivities([...activities, trimmed]);
+                    }
+                    setSelectedActivity(trimmed);
+                    setCustomInput('');
+                    setIsAddingCustom(false);
+                    setIsDropdownOpen(false);
+                  }
+                }}
+                className="flex items-center gap-1.5 p-1"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <input
+                  type="text"
+                  placeholder="Enter pursuit name..."
+                  value={customInput}
+                  onChange={(e) => setCustomInput(e.target.value)}
+                  className="flex-1 px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:border-[#1a7a4a] text-gray-800"
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  className="px-3 py-1.5 text-[11px] font-bold bg-[#1a7a4a] text-white rounded-lg hover:bg-[#106c3d] transition-colors"
+                >
+                  Add
+                </button>
+              </form>
+            ) : (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsAddingCustom(true);
+                }}
+                className="w-full px-3 py-2 text-xs text-left text-[#1a7a4a] hover:bg-emerald-50/50 rounded-lg font-bold transition-colors"
+              >
+                + Add custom pursuit...
+              </button>
+            )}
           </div>
         )}
       </div>

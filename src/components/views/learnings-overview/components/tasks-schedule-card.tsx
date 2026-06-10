@@ -1,9 +1,148 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Check, Loader2, Pencil, Trash2, ListTodo, ChevronLeft, ChevronRight } from 'lucide-react'
+import {
+  Check,
+  Loader2,
+  Pencil,
+  Trash2,
+  ListTodo,
+  ChevronLeft,
+  ChevronRight,
+  Briefcase,
+  BookOpen,
+  Dumbbell,
+  ShoppingCart,
+  Sparkles,
+  DollarSign,
+  CheckSquare
+} from 'lucide-react'
 import toast from 'react-hot-toast'
 import { fetchTasks, toggleTask, deleteTask } from '../../../../lib/api'
 import type { DailyTask } from '../../../../lib/api'
 import { ConfirmDialog } from '../../../ui/confirm-dialog'
+
+// Dynamic task categories and themes
+type TaskCategory = 'Work' | 'Learning' | 'Fitness' | 'Shopping' | 'Chores' | 'Finance' | 'General';
+
+interface TaskTheme {
+  name: TaskCategory;
+  color: string;
+  bgLight: string;
+  borderLight: string;
+  badgeBg: string;
+  badgeText: string;
+  shadowColor: string;
+  icon: React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>;
+}
+
+const CATEGORY_THEMES: Record<TaskCategory, TaskTheme> = {
+  Work: {
+    name: 'Work',
+    color: '#0ea5e9',
+    bgLight: 'rgba(14, 165, 233, 0.04)',
+    borderLight: 'rgba(14, 165, 233, 0.15)',
+    badgeBg: 'rgba(14, 165, 233, 0.08)',
+    badgeText: '#0369a1',
+    shadowColor: 'rgba(14, 165, 233, 0.12)',
+    icon: Briefcase
+  },
+  Learning: {
+    name: 'Learning',
+    color: '#6366f1',
+    bgLight: 'rgba(99, 102, 241, 0.04)',
+    borderLight: 'rgba(99, 102, 241, 0.15)',
+    badgeBg: 'rgba(99, 102, 241, 0.08)',
+    badgeText: '#4338ca',
+    shadowColor: 'rgba(99, 102, 241, 0.12)',
+    icon: BookOpen
+  },
+  Fitness: {
+    name: 'Fitness',
+    color: '#f97316',
+    bgLight: 'rgba(249, 115, 22, 0.04)',
+    borderLight: 'rgba(249, 115, 22, 0.15)',
+    badgeBg: 'rgba(249, 115, 22, 0.08)',
+    badgeText: '#c2410c',
+    shadowColor: 'rgba(249, 115, 22, 0.12)',
+    icon: Dumbbell
+  },
+  Shopping: {
+    name: 'Shopping',
+    color: '#d97706',
+    bgLight: 'rgba(217, 119, 6, 0.04)',
+    borderLight: 'rgba(217, 119, 6, 0.15)',
+    badgeBg: 'rgba(217, 119, 6, 0.08)',
+    badgeText: '#b45309',
+    shadowColor: 'rgba(217, 119, 6, 0.12)',
+    icon: ShoppingCart
+  },
+  Chores: {
+    name: 'Chores',
+    color: '#a855f7',
+    bgLight: 'rgba(168, 85, 247, 0.04)',
+    borderLight: 'rgba(168, 85, 247, 0.15)',
+    badgeBg: 'rgba(168, 85, 247, 0.08)',
+    badgeText: '#7e22ce',
+    shadowColor: 'rgba(168, 85, 247, 0.12)',
+    icon: Sparkles
+  },
+  Finance: {
+    name: 'Finance',
+    color: '#10b981',
+    bgLight: 'rgba(16, 185, 129, 0.04)',
+    borderLight: 'rgba(16, 185, 129, 0.15)',
+    badgeBg: 'rgba(16, 185, 129, 0.08)',
+    badgeText: '#047857',
+    shadowColor: 'rgba(16, 185, 129, 0.12)',
+    icon: DollarSign
+  },
+  General: {
+    name: 'General',
+    color: '#14b8a6',
+    bgLight: 'rgba(20, 184, 166, 0.04)',
+    borderLight: 'rgba(20, 184, 166, 0.15)',
+    badgeBg: 'rgba(20, 184, 166, 0.08)',
+    badgeText: '#0f766e',
+    shadowColor: 'rgba(20, 184, 166, 0.12)',
+    icon: CheckSquare
+  }
+};
+
+function detectCategory(title: string): TaskCategory {
+  const t = title.toLowerCase();
+  
+  // 1. Work / Professional / Dev / Academic Admin
+  if (/\b(work|meeting|email|office|call|project|code|dev|pr\b|review|commit|deploy|jira|slack|standup|scrum|interview|resume|portfolio|zustand|redux|store\s+management|state\s+store|github|gitlab|bitbucket|repo\b|backend|frontend|database|sql|api\b|apis\b|swagger|ui\b|ux\b|json|test\b|testing|debugging|debug|bug\b|log\b|logs\b|pipeline|ci\/cd|jenkins|docker|container|kubernetes|aws|cloud|server|port|localhost|host|sonarqube|stage|confluence|mcp\b|setup|release|build|load|data|registration|internship|cdc\b|thesis|assignment|vtop\b|viva|exam|seminar|presentation|ppt|tech\b|talk\b)\b/.test(t)) {
+    return 'Work';
+  }
+
+  // 2. Finance
+  if (/\b(finance|bill|pay|bank|credit|tax|rent|repayment|slice|money|salary|budget|spending|expense|income|fee|fees|alumni)\b/.test(t)) {
+    return 'Finance';
+  }
+
+  // 3. Shopping / Groceries
+  if (/\b(buy|order|shop|groceries|cleanser|snacks|purchase|gift|grocer|market|supermarket)\b/.test(t)) {
+    return 'Shopping';
+  }
+
+  // 4. Chores / Housekeeping
+  if (/\b(laundry|clean|wash|tidy|fix|vacuum|dishes|cook|meal|prep|trash|dust|fold|clothes|sweep|mop)\b/.test(t)) {
+    return 'Chores';
+  }
+
+  // 5. Fitness / Health
+  if (/\b(gym|run|workout|exercise|walk|stretch|swim|cardio|weights|health|yoga|meditate|sleep|hydration|water|calories|protein)\b/.test(t)) {
+    return 'Fitness';
+  }
+
+  // 6. Learning / Self-Improvement (with travel exclusion for "book")
+  const hasBook = /\bbook\b/.test(t) && !/\b(flight|ticket|cab|hotel|seat|room|table|ride|train|bus|stay|trip|pass)\b/.test(t);
+  if (hasBook || /\b(learn|study|notion|leetcode|course|video|read|write|article|tutorial|lecture|homework|revision|practice|textbook|reading)\b/.test(t)) {
+    return 'Learning';
+  }
+  
+  return 'General';
+}
 
 interface TasksScheduleCardProps {
   refreshKey: number
@@ -117,6 +256,44 @@ export function TasksScheduleCard({
             </p>
           )}
         </div>
+        {totalCount > 0 && (
+          <div className="tasks-progress-ring-container">
+            <svg className="tasks-progress-ring" width="68" height="68">
+              <defs>
+                <linearGradient id="tasksProgressGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#10b981" />
+                  <stop offset="100%" stopColor="#1a7a4a" />
+                </linearGradient>
+                <filter id="tasksProgressGlow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="2" result="blur" />
+                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+              </defs>
+              <circle
+                className="tasks-progress-ring-bg"
+                strokeWidth="4"
+                fill="transparent"
+                r="26"
+                cx="34"
+                cy="34"
+              />
+              <circle
+                className="tasks-progress-ring-fill"
+                strokeWidth="4"
+                fill="transparent"
+                r="26"
+                cx="34"
+                cy="34"
+                strokeDasharray={`${2 * Math.PI * 26}`}
+                strokeDashoffset={`${2 * Math.PI * 26 * (1 - completedCount / totalCount)}`}
+                strokeLinecap="round"
+              />
+            </svg>
+            <div className="tasks-progress-ring-text">
+              <span className="percent">{Math.round((completedCount / totalCount) * 100)}%</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {loading ? (
@@ -162,11 +339,21 @@ export function TasksScheduleCard({
               return new Date() > deadline;
             })()
 
+            const category = detectCategory(task.title)
+            const theme = CATEGORY_THEMES[category]
+            const CategoryIcon = theme.icon
+
             return (
               <div
                 key={task.id}
                 className={`learnings-task-item-premium ${task.completed ? 'is-completed' : ''} ${isOverdue ? 'is-overdue' : ''
                   } ${activeTaskId === task.id ? 'actions-visible' : ''}`}
+                style={{
+                  '--theme-color': theme.color,
+                  '--theme-bg-light': theme.bgLight,
+                  '--theme-border-light': theme.borderLight,
+                  '--theme-shadow-color': theme.shadowColor,
+                } as React.CSSProperties}
                 onClick={() => {
                   setActiveTaskId(activeTaskId === task.id ? null : (task.id ?? null))
                 }}
@@ -190,6 +377,18 @@ export function TasksScheduleCard({
 
                   {(task.scheduledTime || isOverdue || task.completed || task.date) && (
                     <div className="learnings-task-meta-row-premium">
+                      <span
+                        className="learnings-task-badge-premium category"
+                        style={{
+                          background: theme.badgeBg,
+                          color: theme.badgeText,
+                          border: `1px solid ${theme.borderLight}`,
+                          gap: '4px',
+                        }}
+                      >
+                        <CategoryIcon size={10} />
+                        {theme.name}
+                      </span>
                       {task.date && (
                         <span className="learnings-task-badge-premium date" style={{ background: 'rgba(23, 28, 25, 0.05)', color: 'rgba(23, 28, 25, 0.6)', fontWeight: 600 }}>
                           {formatFriendlyDate(task.date)}
