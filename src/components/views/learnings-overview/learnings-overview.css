@@ -486,21 +486,27 @@
 }
 
 .learnings-log-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
-  max-height: 420px;
-  overflow-y: auto;
+  max-height: none;
+  overflow-y: visible;
 }
 
 .learnings-log-item {
-  padding: 16px 18px 14px;
+  padding: 14px;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.82);
   position: relative;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  aspect-ratio: 1.25 / 1;
+  min-height: 140px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .learnings-log-description {
@@ -879,7 +885,14 @@
   }
 
   .learnings-log-list {
+    grid-template-columns: 1fr;
+    gap: 10px;
     max-height: none;
+  }
+
+  .learnings-log-item {
+    aspect-ratio: auto;
+    min-height: 120px;
   }
 
   .learnings-task-item {

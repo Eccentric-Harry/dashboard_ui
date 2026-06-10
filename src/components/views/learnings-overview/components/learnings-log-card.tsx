@@ -119,11 +119,6 @@ export function LearningsLogCard({
           className="learnings-log-list"
           style={{
             marginTop: 14,
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: '12px',
-            maxHeight: 'none',
-            overflowY: 'visible',
           }}
         >
           {paginated.map((log) => {
@@ -135,21 +130,6 @@ export function LearningsLogCard({
               <article
                 key={log.id}
                 className="learnings-log-item"
-                style={{
-                  padding: '14px',
-                  borderRadius: 16,
-                  background: 'rgba(255, 255, 255, 0.65)',
-                  border: '1px solid rgba(255, 255, 255, 0.82)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  gap: '8px',
-                  aspectRatio: '1.25 / 1',
-                  minHeight: '140px',
-                  position: 'relative',
-                  boxSizing: 'border-box',
-                  overflow: 'hidden'
-                }}
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
