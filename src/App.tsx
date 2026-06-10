@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import toast, { Toaster, resolveValue } from 'react-hot-toast'
-import { Info, Check, AlertTriangle, AlertCircle, Loader2, X, Bell } from 'lucide-react'
+import { Info, Check, AlertTriangle, AlertCircle, Loader2, X } from 'lucide-react'
 
 import { QuantifiedSelfDashboard } from './components/dashboard/quantified-self-dashboard'
 import type { AppPath } from './components/dashboard/quantified-self-dashboard/data'
@@ -15,6 +15,7 @@ import { subscribeToActiveRequests } from './lib/api'
 import { OverlayLoader } from './components/ui/OverlayLoader'
 import { NotificationProvider, useNotifications } from './contexts/NotificationContext'
 import { NotificationCenter } from './components/dashboard/quantified-self-dashboard/components/notification-center'
+import avatarImage from './assets/reference-crops/avatar.png'
 
 const ENABLE_HOME_ROUTE = import.meta.env.VITE_ENABLE_HOME_ROUTE === 'true'
 
@@ -64,7 +65,7 @@ function MobileNotificationTrigger() {
       onClick={() => setIsOpen(!isOpen)}
       aria-label="Open notifications"
     >
-      <Bell size={20} />
+      <img src={avatarImage} alt="Profile" className="mobile-profile-avatar" />
       {unreadCount > 0 && (
         <span className="mobile-notification-badge">{unreadCount}</span>
       )}

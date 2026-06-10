@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { CalendarCheck, ChevronDown, ChevronLeft, ChevronRight, LoaderCircle, X, Plus } from 'lucide-react'
+import { CalendarCheck, ChevronDown, LoaderCircle, X, Plus } from 'lucide-react'
 import { useDashboard } from '../../../../contexts/DashboardContext'
 import { fetchFoodEntries } from '../../../../lib/api'
 import { isStandalone } from '../../../../lib/utils'
+import { MiniMonth } from '../../../ui/mini-month'
 import { getFoodIconDetails } from './food-icon-helper'
 
 type FoodEntry = {
@@ -56,13 +57,6 @@ const formatHeaderDate = (date: Date) =>
     day: 'numeric',
     year: 'numeric',
   })
-
-const formatMonth = (date: Date) =>
-  date.toLocaleDateString('en-US', {
-    month: 'long',
-    year: 'numeric',
-  })
-
 const isFutureDate = (date: Date) => isoDate(date) > isoDate(new Date())
 
 const extractEntries = (response: unknown): FoodEntry[] => {
@@ -107,15 +101,38 @@ function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
     const params = new URLSearchParams(window.location.search)
     return params.get('date') || isoDate(new Date())
   })
-  const [visibleMonth, setVisibleMonth] = useState(() => parseIsoDate(selectedDate))
   const calendarRef = useRef<HTMLDivElement>(null)
+
+  const [activeNutritionDates, setActiveNutritionDates] = useState<Set<string>>(new Set())
+  const [calendarRange, setCalendarRange] = useState<{ start: string; end: string } | null>(null)
+
+  useEffect(() => {
+    if (!calendarRange) return
+    let active = true
+    fetchFoodEntries(undefined, calendarRange.start, calendarRange.end)
+      .then((res) => {
+        if (!active) return
+        const entries = extractEntries(res)
+        const dates = new Set(
+          entries
+            .map((entry) => entry.date?.split('T')[0])
+            .filter(Boolean) as string[],
+        )
+        setActiveNutritionDates(dates)
+      })
+      .catch((err) => {
+        console.error('Failed to fetch food entries for range', err)
+      })
+    return () => {
+      active = false
+    }
+  }, [calendarRange])
 
   useEffect(() => {
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search)
       const nextDate = params.get('date') || isoDate(new Date())
       setSelectedDate(nextDate)
-      setVisibleMonth(parseIsoDate(nextDate))
     }
 
     window.addEventListener('popstate', handlePopState)
@@ -149,27 +166,7 @@ function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
   }, [])
 
   const selectedDateObject = useMemo(() => parseIsoDate(selectedDate), [selectedDate])
-  const calendarDays = useMemo(() => {
-    const year = visibleMonth.getFullYear()
-    const month = visibleMonth.getMonth()
-    const firstDay = new Date(year, month, 1).getDay()
-    const daysInMonth = new Date(year, month + 1, 0).getDate()
-    const days = []
 
-    for (let index = 0; index < firstDay; index += 1) {
-      days.push(null)
-    }
-
-    for (let day = 1; day <= daysInMonth; day += 1) {
-      days.push(new Date(year, month, day))
-    }
-
-    return days
-  }, [visibleMonth])
-
-  const handleMonthChange = (offset: number) => {
-    setVisibleMonth((currentMonth) => new Date(currentMonth.getFullYear(), currentMonth.getMonth() + offset, 1))
-  }
 
   const handleDateSelect = (date: Date) => {
     if (isFutureDate(date)) {
@@ -206,7 +203,7 @@ function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
       { calories: 0, protein: 0 },
     )
   }, [pickedDateEntries])
-  const isNextMonthFuture = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1) > new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+
 
   useEffect(() => {
     if (!pickedDate) {
@@ -262,7 +259,7 @@ function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
           <span>
             <span className="nutrition-date-title-wrap">
               <strong>{formatHeaderDate(selectedDateObject)}</strong>
-              <ChevronDown size={22} className="nutrition-date-chevron" />
+              <ChevronDown size={20} className="nutrition-date-chevron" />
             </span>
             <small>Nutrition Overview | {foodEntries.length} meals logged</small>
           </span>
@@ -275,50 +272,18 @@ function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
               onClick={() => setIsCalendarOpen(false)}
             />
             <div className="nutrition-calendar-popover" role="dialog" aria-label="Choose nutrition date">
-              <div className="nutrition-calendar-head">
-                <b>{formatMonth(visibleMonth)}</b>
-                <span>
-                <button type="button" aria-label="Previous month" onClick={() => handleMonthChange(-1)}>
-                  <ChevronLeft size={16} />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Next month"
-                  disabled={isNextMonthFuture}
-                  onClick={() => handleMonthChange(1)}
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </span>
+              <MiniMonth
+                selectedDate={selectedDate}
+                activeDates={activeNutritionDates}
+                maxDate={isoDate(new Date())}
+                disableFutureMonths
+                onMonthChange={(start, end) => setCalendarRange({ start, end })}
+                onSelect={(dateStr) => {
+                  handleDateSelect(parseIsoDate(dateStr))
+                  setIsCalendarOpen(false)
+                }}
+              />
             </div>
-
-            <div className="nutrition-calendar-weekdays" aria-hidden="true">
-              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
-                <span key={`${day}-${index}`}>{day}</span>
-              ))}
-            </div>
-
-            <div className="nutrition-calendar-grid">
-              {calendarDays.map((date, index) => {
-                const dateValue = date ? isoDate(date) : `empty-${index}`
-                const isSelected = dateValue === selectedDate
-                const isToday = dateValue === isoDate(new Date())
-                const isFuture = date ? isFutureDate(date) : false
-
-                return (
-                  <button
-                    key={dateValue}
-                    type="button"
-                    className={`${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''} ${isFuture ? 'future' : ''}`}
-                    disabled={!date || isFuture}
-                    onClick={() => date && handleDateSelect(date)}
-                  >
-                    {date?.getDate() ?? ''}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
           </>
         )}
 

@@ -1,8 +1,10 @@
-import { useMemo, useState } from 'react'
-import { ChevronDown, ChevronLeft, ChevronRight, Plus, ListTodo, BookOpen } from 'lucide-react'
+import { useMemo, useState, useEffect } from 'react'
+import { ChevronDown, Plus, ListTodo, BookOpen } from 'lucide-react'
 import type { AppPath } from '../../../dashboard/quantified-self-dashboard/data'
 import type { LearningsSummary } from '../../../../lib/api'
-import { formatHeaderDate, isoDate, parseIsoDate } from '../learnings-utils'
+import { fetchLearningsForRange, fetchTasksForRange } from '../../../../lib/api'
+import { formatHeaderDate, parseIsoDate } from '../learnings-utils'
+import { MiniMonth } from '../../../ui/mini-month'
 
 interface LearningsHeaderProps {
   selectedDate: string
@@ -22,33 +24,46 @@ export function LearningsHeader({
   summary,
 }: LearningsHeaderProps) {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
-  const [visibleMonth, setVisibleMonth] = useState(() => parseIsoDate(selectedDate))
   const [isFabOpen, setIsFabOpen] = useState(false)
+  const [activeLearningsDates, setActiveLearningsDates] = useState<Set<string>>(new Set())
+  const [calendarRange, setCalendarRange] = useState<{ start: string; end: string } | null>(null)
 
   const selectedDateObject = useMemo(() => parseIsoDate(selectedDate), [selectedDate])
 
+  useEffect(() => {
+    if (!calendarRange) return
+    let active = true
+    Promise.all([
+      fetchLearningsForRange(calendarRange.start, calendarRange.end),
+      fetchTasksForRange(calendarRange.start, calendarRange.end),
+    ])
+      .then(([learningsRes, tasksRes]) => {
+        if (!active) return
+        const datesSet = new Set<string>()
+        const addDate = (raw: string) => {
+          const key = typeof raw === 'string' ? raw.split('T')[0] : raw
+          if (key) datesSet.add(key)
+        }
+        learningsRes?.data?.forEach((item: { date: string }) => addDate(item.date))
+        tasksRes?.data?.forEach((item: { date: string }) => addDate(item.date))
+        setActiveLearningsDates(datesSet)
+      })
+      .catch((err) => {
+        console.error('Failed to load learnings range entries', err)
+      })
+    return () => {
+      active = false
+    }
+  }, [calendarRange])
+
   const openCalendar = () => {
-    setVisibleMonth(selectedDateObject)
     setIsCalendarOpen(true)
   }
 
-  const calendarDays = useMemo(() => {
-    const year = visibleMonth.getFullYear()
-    const month = visibleMonth.getMonth()
-    const firstDay = new Date(year, month, 1).getDay()
-    const daysInMonth = new Date(year, month + 1, 0).getDate()
-    const days: (Date | null)[] = []
-    for (let i = 0; i < firstDay; i++) days.push(null)
-    for (let d = 1; d <= daysInMonth; d++) days.push(new Date(year, month, d))
-    return days
-  }, [visibleMonth])
-
-  const handleDateSelect = (date: Date) => {
-    const dateValue = isoDate(date)
-    onDateChange(dateValue)
-    setVisibleMonth(date)
+  const handleDateSelect = (dateStr: string) => {
+    onDateChange(dateStr)
     setIsCalendarOpen(false)
-    onNavigate?.('/learnings', `?date=${dateValue}`)
+    onNavigate?.('/learnings', `?date=${dateStr}`)
   }
 
   return (
@@ -82,53 +97,16 @@ export function LearningsHeader({
               onClick={() => setIsCalendarOpen(false)}
             />
             <div className="learnings-header-calendar learnings-card" role="dialog" aria-label="Choose date">
-            <div className="learnings-header-calendar-head">
-              <b>
-                {visibleMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-              </b>
-              <span className="learnings-header-calendar-nav">
-                <button
-                  type="button"
-                  className="learnings-icon-btn"
-                  onClick={() =>
-                    setVisibleMonth(
-                      new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1),
-                    )
-                  }
-                >
-                  <ChevronLeft size={14} />
-                </button>
-                <button
-                  type="button"
-                  className="learnings-icon-btn"
-                  onClick={() =>
-                    setVisibleMonth(
-                      new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1),
-                    )
-                  }
-                >
-                  <ChevronRight size={14} />
-                </button>
-              </span>
+              <MiniMonth
+                selectedDate={selectedDate}
+                activeDates={activeLearningsDates}
+                allowFuture={true}
+                onMonthChange={(start, end) => setCalendarRange({ start, end })}
+                onSelect={(dateStr) => {
+                  handleDateSelect(dateStr)
+                }}
+              />
             </div>
-            <div className="learnings-calendar-grid">
-              {calendarDays.map((date, i) => {
-                if (!date) return <span key={`empty-${i}`} />
-                const dateValue = isoDate(date)
-                const isSelected = dateValue === selectedDate
-                return (
-                  <button
-                    key={dateValue}
-                    type="button"
-                    className={`learnings-calendar-day ${isSelected ? 'selected' : ''}`}
-                    onClick={() => handleDateSelect(date)}
-                  >
-                    {date.getDate()}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
           </>
         )}
       </div>

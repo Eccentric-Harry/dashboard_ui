@@ -28,13 +28,13 @@ import {
 } from '../../../lib/api'
 import type { CalendarItem, CalendarItemPayload, CalendarItemType, CalendarRecurrence } from '../../../lib/api'
 import { ConfirmDialog } from '../../ui/confirm-dialog'
+import { MiniMonth } from '../../ui/mini-month'
 
 import './calendar-overview.css'
 
 type CalendarMode = 'month' | 'week' | 'day'
 
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour)
-const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const TYPE_OPTIONS: CalendarItemType[] = ['TASK', 'EVENT', 'REMINDER', 'MILESTONE']
 const CATEGORY_OPTIONS = [
   { label: 'Personal', color: '#c8f3a3' },
@@ -194,7 +194,8 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
               <div className="calendar-header-popover calendar-surface" role="dialog" aria-label="Choose date">
                 <MiniMonth
                   selectedDate={selectedDate}
-                  items={items}
+                  activeDates={new Set(items.map((item) => item.date))}
+                  allowFuture={true}
                   onSelect={(date) => {
                     updateSelectedDate(date)
                     setIsCalendarOpen(false)
@@ -402,71 +403,6 @@ function MetricCard({
     </div>
   )
 }
-
-function MiniMonth({
-  selectedDate,
-  items,
-  onSelect,
-}: {
-  selectedDate: string
-  items: CalendarItem[]
-  onSelect: (date: string) => void
-}) {
-  const [currentMonth, setCurrentMonth] = useState(() => parseISODate(selectedDate))
-
-  useEffect(() => {
-    setCurrentMonth(parseISODate(selectedDate))
-  }, [selectedDate])
-
-  const days = monthGrid(currentMonth)
-  const activeMonth = currentMonth.getMonth()
-
-  const handleMonthStep = (direction: -1 | 1) => {
-    const next = new Date(currentMonth)
-    next.setMonth(currentMonth.getMonth() + direction)
-    setCurrentMonth(next)
-  }
-
-  return (
-    <section className="mini-month" aria-label="Month selector">
-      <div className="mini-month-head">
-        <div className="mini-month-title">
-          <CalendarDays size={15} />
-          <b>{new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(currentMonth)}</b>
-        </div>
-        <div className="mini-month-nav">
-          <button type="button" onClick={() => handleMonthStep(-1)} aria-label="Previous Month">
-            <ChevronLeft size={14} />
-          </button>
-          <button type="button" onClick={() => handleMonthStep(1)} aria-label="Next Month">
-            <ChevronRight size={14} />
-          </button>
-        </div>
-      </div>
-      <div className="mini-month-weekdays">
-        {WEEKDAY_LABELS.map((day) => <span key={day}>{day[0]}</span>)}
-      </div>
-      <div className="mini-month-grid">
-        {days.map((date) => {
-          const iso = toISODate(date)
-          const dayItems = byDate(items, iso)
-          return (
-            <button
-              key={iso}
-              type="button"
-              className={`${iso === selectedDate ? 'is-selected' : ''} ${date.getMonth() !== activeMonth ? 'is-muted' : ''}`}
-              onClick={() => onSelect(iso)}
-            >
-              {date.getDate()}
-              {dayItems.length > 0 && <i />}
-            </button>
-          )
-        })}
-      </div>
-    </section>
-  )
-}
-
 
 function DayView({
   date,

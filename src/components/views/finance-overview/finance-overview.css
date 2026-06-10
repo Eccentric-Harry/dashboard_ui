@@ -1196,7 +1196,7 @@
 @media (max-width: 768px) {
   .finance-dashboard {
     position: static;
-    padding: 24px 16px 80px;
+    padding: 20px 16px 88px;
     overflow: visible;
     overscroll-behavior: auto;
   }
@@ -1856,7 +1856,7 @@
 @media (max-width: 768px) {
   .finance-dashboard {
     position: static;
-    padding: 24px 16px 80px;
+    padding: 20px 16px 88px;
     overflow: visible;
     overscroll-behavior: auto;
   }
@@ -1973,7 +1973,12 @@
   .finance-stats-row {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 14px;
+    gap: 10px;
+  }
+
+  .finance-balance-card strong,
+  .finance-metric-card strong {
+    font-size: 20px;
   }
 
   .finance-spending-body {

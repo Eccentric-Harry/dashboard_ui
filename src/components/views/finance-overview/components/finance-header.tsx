@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { CalendarCheck, ChevronDown, ChevronLeft, ChevronRight, X, Plus, ArrowUpRight, ArrowDownLeft } from 'lucide-react'
+import { CalendarCheck, ChevronDown, X, Plus, ArrowUpRight, ArrowDownLeft } from 'lucide-react'
 import type { DailyFinancialLog } from '../../../../lib/api'
 import { getConsistentColor, getIconForCategory } from '../utils'
 import { isStandalone } from '../../../../lib/utils'
+import { MiniMonth } from '../../../ui/mini-month'
 
 interface FinanceHeaderProps {
   onAddClick?: () => void
@@ -39,13 +40,6 @@ const formatHeaderDate = (date: Date) =>
     day: 'numeric',
     year: 'numeric',
   })
-
-const formatMonth = (date: Date) =>
-  date.toLocaleDateString('en-US', {
-    month: 'long',
-    year: 'numeric',
-  })
-
 const isFutureDate = (date: Date) => isoDate(date) > isoDate(new Date())
 
 const getPastelBG = (colorHex: string) => {
@@ -79,21 +73,22 @@ const getPastelBG = (colorHex: string) => {
 function FinanceHeader({ onAddClick, logs, selectedDate, onDateChange }: FinanceHeaderProps) {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
   const [pickedDate, setPickedDate] = useState<string | null>(null)
-  const [visibleMonth, setVisibleMonth] = useState(() => parseIsoDate(selectedDate))
   const calendarRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    const handlePopState = () => {
-      const params = new URLSearchParams(window.location.search)
-      const nextDate = params.get('date') || isoDate(new Date())
-      setVisibleMonth(parseIsoDate(nextDate))
-    }
+  const activeFinanceDates = useMemo(() => {
+    const dates = new Set<string>()
+    logs.forEach((log) => {
+      const hasTransactions = Object.values(log.transactions || {}).some(
+        (txs) => (txs as any[]).length > 0,
+      )
+      if (hasTransactions) {
+        dates.add(log.date.split('T')[0])
+      }
+    })
+    return dates
+  }, [logs])
 
-    window.addEventListener('popstate', handlePopState)
-    return () => {
-      window.removeEventListener('popstate', handlePopState)
-    }
-  }, [])
+
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
@@ -119,28 +114,7 @@ function FinanceHeader({ onAddClick, logs, selectedDate, onDateChange }: Finance
   }, [])
 
   const selectedDateObject = useMemo(() => parseIsoDate(selectedDate), [selectedDate])
-  
-  const calendarDays = useMemo(() => {
-    const year = visibleMonth.getFullYear()
-    const month = visibleMonth.getMonth()
-    const firstDay = new Date(year, month, 1).getDay()
-    const daysInMonth = new Date(year, month + 1, 0).getDate()
-    const days = []
 
-    for (let index = 0; index < firstDay; index += 1) {
-      days.push(null)
-    }
-
-    for (let day = 1; day <= daysInMonth; day += 1) {
-      days.push(new Date(year, month, day))
-    }
-
-    return days
-  }, [visibleMonth])
-
-  const handleMonthChange = (offset: number) => {
-    setVisibleMonth((currentMonth) => new Date(currentMonth.getFullYear(), currentMonth.getMonth() + offset, 1))
-  }
 
   const handleDateSelect = (date: Date) => {
     if (isFutureDate(date)) {
@@ -218,8 +192,6 @@ function FinanceHeader({ onAddClick, logs, selectedDate, onDateChange }: Finance
     }
   }, [logs, pickedDate])
 
-  const isNextMonthFuture = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1) > new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-
   return (
     <header className="finance-header">
       <div className="finance-date-picker" ref={calendarRef}>
@@ -233,7 +205,7 @@ function FinanceHeader({ onAddClick, logs, selectedDate, onDateChange }: Finance
           <span>
             <span className="finance-date-title-wrap">
               <strong>{formatHeaderDate(selectedDateObject)}</strong>
-              <ChevronDown size={22} className="finance-date-chevron" />
+              <ChevronDown size={20} className="finance-date-chevron" />
             </span>
             <small>Finance Overview | {selectedDateTransactionsCount} transactions logged</small>
           </span>
@@ -246,65 +218,16 @@ function FinanceHeader({ onAddClick, logs, selectedDate, onDateChange }: Finance
               onClick={() => setIsCalendarOpen(false)}
             />
             <div className="finance-calendar-popover" role="dialog" aria-label="Choose finance date">
-              <div className="finance-calendar-head">
-                <b>{formatMonth(visibleMonth)}</b>
-                <span>
-                  <button type="button" aria-label="Previous month" onClick={() => handleMonthChange(-1)}>
-                    <ChevronLeft size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="Next month"
-                    disabled={isNextMonthFuture}
-                    onClick={() => handleMonthChange(1)}
-                  >
-                    <ChevronRight size={16} />
-                  </button>
-                </span>
-              </div>
-
-              <div className="finance-calendar-weekdays" aria-hidden="true">
-                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
-                  <span key={`${day}-${index}`}>{day}</span>
-                ))}
-              </div>
-
-              <div className="finance-calendar-grid">
-                {calendarDays.map((date, index) => {
-                  const dateValue = date ? isoDate(date) : `empty-${index}`
-                  const isSelected = dateValue === selectedDate
-                  const isToday = dateValue === isoDate(new Date())
-                  const isFuture = date ? isFutureDate(date) : false
-
-                  const dayLog = date ? logs.find((l) => l.date === dateValue) : null
-                  const hasTransactions = dayLog && Object.values(dayLog.transactions || {}).some(txs => (txs as any[]).length > 0)
-
-                  return (
-                    <button
-                      key={dateValue}
-                      type="button"
-                      className={`${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''} ${isFuture ? 'future' : ''}`}
-                      disabled={!date || isFuture}
-                      onClick={() => date && handleDateSelect(date)}
-                      style={{ position: 'relative' }}
-                    >
-                      {date?.getDate() ?? ''}
-                      {hasTransactions && !isSelected && (
-                        <span style={{
-                          position: 'absolute',
-                          bottom: '4px',
-                          left: '50%',
-                          transform: 'translateX(-50%)',
-                          width: '4px',
-                          height: '4px',
-                          borderRadius: '50%',
-                          background: '#12b76a'
-                        }} />
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
+              <MiniMonth
+                selectedDate={selectedDate}
+                activeDates={activeFinanceDates}
+                maxDate={isoDate(new Date())}
+                disableFutureMonths
+                onSelect={(dateStr) => {
+                  handleDateSelect(parseIsoDate(dateStr))
+                  setIsCalendarOpen(false)
+                }}
+              />
             </div>
           </>
         )}

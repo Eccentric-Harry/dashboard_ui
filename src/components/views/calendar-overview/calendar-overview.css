@@ -1126,10 +1126,10 @@
   opacity: 0.62;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 768px) {
   .calendar-dashboard {
     position: static;
-    padding: 20px 0 88px;
+    padding: 20px 16px 88px;
     overflow: visible;
   }
 
@@ -1162,6 +1162,22 @@
     margin-bottom: 16px;
     gap: 14px;
     padding: 0;
+  }
+
+  .calendar-header h1 {
+    font-size: 20px;
+    letter-spacing: -0.03em;
+    white-space: normal;
+  }
+
+  .calendar-header span.calendar-date-trigger-sub {
+    display: block;
+    margin-top: 6px;
+    font-size: 10px;
+    line-height: 1.35;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    text-transform: uppercase;
   }
 
   .calendar-date-trigger {
@@ -1329,11 +1345,10 @@
   margin-bottom: 18px;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 768px) {
   .calendar-stat-row {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
-    padding: 0 12px;
   }
 
   .calendar-stat-card {
@@ -1506,7 +1521,7 @@
   transform: scale(0.95);
 }
 
-@media (max-width: 760px) {
+@media (max-width: 768px) {
   .calendar-fab-trigger {
     display: flex;
     /* Shown on mobile */
