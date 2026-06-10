@@ -299,6 +299,48 @@
   margin-left: 4px;
 }
 
+.learnings-weekly-dots {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.25);
+  padding: 4px 6px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.weekly-dot-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+}
+
+.weekly-dot-label {
+  font-size: 8px;
+  font-weight: 800;
+  color: rgba(23, 28, 25, 0.45);
+  text-transform: uppercase;
+}
+
+.weekly-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(23, 28, 25, 0.08);
+  border: 1px solid rgba(23, 28, 25, 0.12);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.weekly-dot.is-active {
+  background: #1a7a4a;
+  border-color: #1a7a4a;
+  box-shadow: 0 0 6px rgba(26, 122, 74, 0.6);
+}
+
 .learnings-tasks-card-wrap {
   grid-column: 1 / span 6;
   display: flex;

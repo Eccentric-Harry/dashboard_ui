@@ -395,6 +395,10 @@ export interface LearningsTimelineDay {
 export interface LearningsStatsSummary {
   weeklyLearningCount: number;
   streakDays: number;
+  totalTasksCompleted?: number;
+  totalTasksCount?: number;
+  totalLearningsCount?: number;
+  totalPursuitsCount?: number;
 }
 
 export interface LearningsSummary {

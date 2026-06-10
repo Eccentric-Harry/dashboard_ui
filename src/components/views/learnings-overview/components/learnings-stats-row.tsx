@@ -1,4 +1,4 @@
-import { BookOpen, CheckSquare, Flame, Target } from 'lucide-react'
+import { BookOpen, CheckSquare, GraduationCap, Target } from 'lucide-react'
 import type { LearningsSummary } from '../../../../lib/api'
 
 interface LearningsStatsRowProps {
@@ -8,29 +8,30 @@ interface LearningsStatsRowProps {
 }
 
 export function LearningsStatsRow({ summary, loading }: LearningsStatsRowProps) {
-  const today = summary?.today
   const stats = summary?.stats
+  const timeline = summary?.timeline || []
+  const last7Days = timeline.slice(-7)
 
   const items = [
     {
       label: 'Learnings',
-      value: loading ? '—' : String(today?.learningsCount ?? 0),
-      hint: 'logged today',
+      value: loading ? '—' : String(stats?.totalLearningsCount ?? 0),
+      hint: 'total logged',
       icon: BookOpen,
       tone: 'learnings' as const,
     },
     {
       label: 'Tasks',
-      value: loading ? '—' : `${today?.tasksCompleted ?? 0}/${today?.tasksTotal ?? 0}`,
+      value: loading ? '—' : `${stats?.totalTasksCompleted ?? 0}/${stats?.totalTasksCount ?? 0}`,
       hint: 'done',
       icon: CheckSquare,
       tone: 'tasks' as const,
     },
     {
-      label: 'Streak',
-      value: loading ? '—' : `${stats?.streakDays ?? 0}`,
-      hint: 'days',
-      icon: Flame,
+      label: 'Pursuits',
+      value: loading ? '—' : String(stats?.totalPursuitsCount ?? 0),
+      hint: 'active',
+      icon: GraduationCap,
       tone: 'streak' as const,
     },
     {
@@ -56,6 +57,23 @@ export function LearningsStatsRow({ summary, loading }: LearningsStatsRowProps) 
               {item.value}
               <small>{item.hint}</small>
             </strong>
+            {item.tone === 'week' && !loading && last7Days.length > 0 && (
+              <div className="learnings-weekly-dots">
+                {last7Days.map((day, idx) => {
+                  const parts = day.date.split('-')
+                  const dateObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
+                  const weekday = dateObj.toLocaleDateString('en-US', { weekday: 'narrow' })
+                  const isActive = (day.learningsCount ?? 0) > 0 || (day.tasksCompleted ?? 0) > 0
+                  const tooltipText = `${day.date}: ${day.learningsCount ?? 0} learnings, ${day.tasksCompleted ?? 0} tasks done`
+                  return (
+                    <div key={idx} className="weekly-dot-col" title={tooltipText}>
+                      <span className="weekly-dot-label">{weekday}</span>
+                      <span className={`weekly-dot ${isActive ? 'is-active' : ''}`} />
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )
       })}
