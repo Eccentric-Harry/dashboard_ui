@@ -299,34 +299,56 @@
   margin-left: 4px;
 }
 
-.learnings-focus-stack {
+.learnings-tasks-card-wrap {
   grid-column: 1 / span 6;
   display: flex;
   flex-direction: column;
-  gap: 18px;
 }
 
-.learnings-focus-widget-card {
-  grid-column: 1 / span 6;
-}
-
-.learnings-study-queue-card {
-  grid-column: 7 / span 6;
-}
-
-.learnings-history-stack {
+.learnings-study-queue-card-wrap {
   grid-column: 7 / span 6;
   display: flex;
   flex-direction: column;
-  gap: 18px;
 }
 
-.learnings-github-card {
+.learnings-distribution-card-wrap {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+}
+
+.learnings-focus-widget-card-wrap {
   grid-column: 1 / span 6;
+  display: flex;
+  flex-direction: column;
 }
 
-.learnings-leetcode-card {
+.learnings-journal-card-wrap {
   grid-column: 7 / span 6;
+  display: flex;
+  flex-direction: column;
+}
+
+.learnings-github-card-wrap {
+  grid-column: 1 / span 6;
+  display: flex;
+  flex-direction: column;
+}
+
+.learnings-leetcode-card-wrap {
+  grid-column: 7 / span 6;
+  display: flex;
+  flex-direction: column;
+}
+
+.learnings-tasks-card-wrap > *,
+.learnings-study-queue-card-wrap > *,
+.learnings-distribution-card-wrap > *,
+.learnings-focus-widget-card-wrap > *,
+.learnings-journal-card-wrap > *,
+.learnings-github-card-wrap > *,
+.learnings-leetcode-card-wrap > * {
+  height: 100%;
 }
 
 .learnings-log-card-wrap {

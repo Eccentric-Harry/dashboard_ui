@@ -118,7 +118,7 @@ export function LearningsLogCard({
         <div className="learnings-log-list" style={{ marginTop: 14 }}>
           {paginated.map((log) => {
             const badge = getCategoryStyle(log.category)
-            const notionUrl = extractNotionUrl(log.description)
+            const notionUrl = log.notionUrl || extractNotionUrl(log.description)
             const isOnlyNotion = notionUrl && log.description.trim() === notionUrl
 
             return (

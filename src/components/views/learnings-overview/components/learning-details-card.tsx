@@ -308,7 +308,7 @@ export function LearningDetailsCard({ selectedDate, onRefresh }: LearningDetails
                       </h4>
 
                       {(() => {
-                        const notionUrl = extractNotionUrl(log.description)
+                        const notionUrl = log.notionUrl || extractNotionUrl(log.description)
                         const isOnlyNotionUrl = notionUrl && log.description.trim() === notionUrl
 
                         return (

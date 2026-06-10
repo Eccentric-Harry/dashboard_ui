@@ -115,7 +115,8 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
       <div className="learnings-dashboard-grid">
         <LearningsStatsRow summary={summary} loading={summaryLoading} />
 
-        <div className="learnings-focus-stack">
+        {/* Row 2: Tasks & Current Pursuits side-by-side */}
+        <div className="learnings-tasks-card-wrap">
           <TasksScheduleCard
             refreshKey={refreshKey}
             onRefresh={handleRefresh}
@@ -126,7 +127,21 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
           />
         </div>
 
-        <div className="learnings-history-stack">
+        <div className="learnings-study-queue-card-wrap">
+          <ActiveStudyQueue onRefresh={handleRefresh} />
+        </div>
+
+        {/* Row 3: Distribution (Category Breakdown) occupies full width */}
+        <div className="learnings-distribution-card-wrap">
+          <CategoryBreakdownCard refreshKey={refreshKey} />
+        </div>
+
+        {/* Row 4: Focus Block & Journal side-by-side */}
+        <div className="learnings-focus-widget-card-wrap">
+          <FocusBlockWidget onSessionComplete={handleSessionComplete} />
+        </div>
+
+        <div className="learnings-journal-card-wrap">
           <LearningsLogCard
             refreshKey={refreshKey}
             onRefresh={handleRefresh}
@@ -135,21 +150,16 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
               setLearningModalOpen(true)
             }}
           />
-
-          <CategoryBreakdownCard refreshKey={refreshKey} />
         </div>
 
-        <div className="learnings-focus-widget-card">
-          <FocusBlockWidget onSessionComplete={handleSessionComplete} />
+        {/* Row 5: GitHub & LeetCode Profiles side-by-side */}
+        <div className="learnings-github-card-wrap">
+          <GitHubProfileCard />
         </div>
 
-        <div className="learnings-study-queue-card">
-          <ActiveStudyQueue />
+        <div className="learnings-leetcode-card-wrap">
+          <LeetCodeProfileCard />
         </div>
-
-        <GitHubProfileCard />
-
-        <LeetCodeProfileCard />
       </div>
 
       <AddLearningModal
