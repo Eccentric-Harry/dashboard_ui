@@ -315,17 +315,15 @@
   gap: 18px;
 }
 
-.learnings-log-card-wrap {
+.learnings-history-stack {
   grid-column: 6 / span 7;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.learnings-log-card-wrap {
   min-height: 320px;
-}
-
-.learnings-category-card {
-  grid-column: 1 / span 6;
-}
-
-.learnings-heatmap-card {
-  grid-column: 7 / span 6;
 }
 
 .learnings-focus-input {
@@ -801,9 +799,7 @@
   }
 
   .learnings-focus-stack,
-  .learnings-log-card-wrap,
-  .learnings-category-card,
-  .learnings-heatmap-card {
+  .learnings-history-stack {
     grid-column: unset;
   }
 
@@ -840,15 +836,7 @@
     grid-column: 1 / span 3;
   }
 
-  .learnings-log-card-wrap {
-    grid-column: 4 / span 3;
-  }
-
-  .learnings-category-card {
-    grid-column: 1 / span 3;
-  }
-
-  .learnings-heatmap-card {
+  .learnings-history-stack {
     grid-column: 4 / span 3;
   }
 }
@@ -1789,4 +1777,22 @@
   .learnings-fab-container {
     display: flex;
   }
+}
+
+/* Custom glow animation for Focus Session Widget */
+@keyframes focus-glow {
+  0% {
+    box-shadow: 0 0 0 0px rgba(26, 122, 74, 0.4), 0 22px 52px rgba(45, 60, 48, 0.08);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(26, 122, 74, 0), 0 22px 52px rgba(45, 60, 48, 0.08);
+  }
+  100% {
+    box-shadow: 0 0 0 0px rgba(26, 122, 74, 0), 0 22px 52px rgba(45, 60, 48, 0.08);
+  }
+}
+
+.focus-active-pulse {
+  animation: focus-glow 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+  border-color: rgba(26, 122, 74, 0.6) !important;
 }

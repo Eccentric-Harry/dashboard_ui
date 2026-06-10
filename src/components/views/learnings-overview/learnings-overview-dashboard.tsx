@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { AppPath } from '../../dashboard/quantified-self-dashboard/data'
 import type { DailyTask, LearningLog, LearningsSummary } from '../../../lib/api'
-import { fetchLearningsSummary } from '../../../lib/api'
+import { fetchLearningsSummary, createCalendarItem } from '../../../lib/api'
 import { isoDate, parseIsoDate } from './learnings-utils'
 import { LearningsHeader } from './components/learnings-header'
 import { LearningsStatsRow } from './components/learnings-stats-row'
@@ -12,6 +12,8 @@ import { ActivityHeatmapCard } from './components/activity-heatmap-card'
 import { AddLearningModal } from './components/add-learning-modal'
 import { AddTaskModal } from './components/add-task-modal'
 import { DevProfileCard } from './components/dev-profile-card'
+import { FocusBlockWidget } from './components/focus-block-widget'
+import { ActiveStudyQueue } from './components/active-study-queue'
 import './learnings-overview.css'
 
 function parseDateFromParams(searchParams: URLSearchParams): string {
@@ -68,6 +70,32 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
     onNavigate?.('/learnings', `?date=${date}`)
   }
 
+  const handleSessionComplete = useCallback(async (durationMinutes: number, activityType: string) => {
+    try {
+      const now = new Date()
+      const startTimeStr = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
+      const endTime = new Date(now.getTime() + durationMinutes * 60 * 1000)
+      const endTimeStr = endTime.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
+
+      const payload = {
+        title: `Focus: ${activityType}`,
+        date: selectedDate,
+        startTime: startTimeStr,
+        endTime: endTimeStr,
+        itemType: 'EVENT' as const,
+        category: 'Productivity',
+        notes: `Completed a focus session of ${durationMinutes} minutes on ${activityType}.`,
+        color: '#1a7a4a',
+        completed: true,
+      }
+
+      await createCalendarItem(payload)
+      handleRefresh()
+    } catch (err) {
+      console.error('Failed to log focus session to calendar', err)
+    }
+  }, [selectedDate, handleRefresh])
+
   return (
     <section className="learnings-dashboard" aria-label="Learnings overview dashboard">
       <LearningsHeader
@@ -89,6 +117,10 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
         <LearningsStatsRow summary={summary} loading={summaryLoading} />
 
         <div className="learnings-focus-stack">
+          <FocusBlockWidget onSessionComplete={handleSessionComplete} />
+          
+          <ActiveStudyQueue />
+
           <TasksScheduleCard
             refreshKey={refreshKey}
             onRefresh={handleRefresh}
@@ -99,18 +131,20 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
           />
         </div>
 
-        <LearningsLogCard
-          refreshKey={refreshKey}
-          onRefresh={handleRefresh}
-          onEditLearning={(learning) => {
-            setEditingLearning(learning)
-            setLearningModalOpen(true)
-          }}
-        />
+        <div className="learnings-history-stack">
+          <LearningsLogCard
+            refreshKey={refreshKey}
+            onRefresh={handleRefresh}
+            onEditLearning={(learning) => {
+              setEditingLearning(learning)
+              setLearningModalOpen(true)
+            }}
+          />
 
-        <CategoryBreakdownCard categories={summary?.today.categories ?? []} />
+          <CategoryBreakdownCard refreshKey={refreshKey} />
 
-        <ActivityHeatmapCard timeline={summary?.timeline ?? []} />
+          <ActivityHeatmapCard timeline={summary?.timeline ?? []} />
+        </div>
 
         <DevProfileCard />
       </div>
