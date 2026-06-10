@@ -49,13 +49,7 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
       timerId = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
-            setIsCounting(false)
-            if (timerId) clearInterval(timerId)
-            // Save complete session
-            const totalSessionMins = selectedDuration
-            onSessionComplete(totalSessionMins, selectedActivity)
-            toast.success(`Congratulations! You completed your ${totalSessionMins}m focus session!`)
-            return selectedDuration * 60
+            return 0
           }
           return prev - 1
         })
@@ -66,7 +60,18 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
     return () => {
       if (timerId) clearInterval(timerId)
     }
-  }, [isCounting, selectedDuration, selectedActivity, onSessionComplete])
+  }, [isCounting])
+
+  // Timer completion side-effects reaction
+  useEffect(() => {
+    if (timeLeft === 0 && isCounting) {
+      setIsCounting(false)
+      const totalSessionMins = selectedDuration
+      onSessionComplete(totalSessionMins, selectedActivity)
+      toast.success(`Congratulations! You completed your ${totalSessionMins}m focus session!`)
+      setTimeLeft(selectedDuration * 60)
+    }
+  }, [timeLeft, isCounting, selectedDuration, selectedActivity, onSessionComplete])
 
   const toggleTimer = () => {
     setIsCounting(!isCounting)
