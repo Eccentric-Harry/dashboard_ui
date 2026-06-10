@@ -18,7 +18,6 @@ interface ActiveStudyQueueProps {
 export function ActiveStudyQueue({ refreshKey, onRefresh }: ActiveStudyQueueProps = {}) {
   const [tracks, setTracks] = useState<LearningPursuit[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [expandedTrackId, setExpandedTrackId] = useState<string | null>(null)
   
   // Add Form State
   const [isAdding, setIsAdding] = useState(false)
@@ -41,7 +40,7 @@ export function ActiveStudyQueue({ refreshKey, onRefresh }: ActiveStudyQueueProp
 
   // Pagination State
   const [page, setPage] = useState(1)
-  const TRACKS_PAGE_SIZE = 6 // Match parent schedule length
+  const TRACKS_PAGE_SIZE = 2 // Match expanded display height
 
   const loadPursuits = async () => {
     try {
@@ -428,15 +427,12 @@ export function ActiveStudyQueue({ refreshKey, onRefresh }: ActiveStudyQueueProp
               const totalSteps = track.steps?.length || 0
               const completedSteps = track.steps?.filter((s) => s.isCompleted).length || 0
               const percentage = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0
-              const isExpanded = expandedTrackId === track.id
+              const isExpanded = true
 
               return (
                 <div
                   key={track.id}
-                  onClick={() => setExpandedTrackId(isExpanded ? null : track.id)}
-                  className={`group relative bg-white border border-gray-100/80 rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.04)] transition-all duration-200 cursor-pointer ${
-                    isExpanded ? 'ring-1 ring-[#1a7a4a]/20 border-[#1a7a4a]/30' : ''
-                  }`}
+                  className="group relative bg-white border border-gray-100/80 rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.04)] transition-all duration-200"
                 >
                   {/* Category Badge & Notion Icon & Actions */}
                   <div className="flex justify-between items-center mb-1.5" onClick={(e) => e.stopPropagation()}>

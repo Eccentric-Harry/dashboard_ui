@@ -19,7 +19,6 @@ const DURATIONS = [
   { label: '25m', value: 25 },
   { label: '45m', value: 45 },
   { label: '60m', value: 60 },
-  { label: '1m (Test)', value: 1 }, // Easy to demo/test
 ]
 
 export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
@@ -32,6 +31,8 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [customInput, setCustomInput] = useState('')
   const [isAddingCustom, setIsAddingCustom] = useState(false)
+  const [isEditingCustomDuration, setIsEditingCustomDuration] = useState(false)
+  const [customDurVal, setCustomDurVal] = useState('')
 
   // Update timer when duration changes
   useEffect(() => {
@@ -208,7 +209,7 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
         <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
           Session Length
         </label>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1.5 items-center">
           {DURATIONS.map((dur) => (
             <button
               key={dur.value}
@@ -219,6 +220,58 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
               {dur.label}
             </button>
           ))}
+
+          {![25, 45, 60].includes(selectedDuration) && (
+            <button
+              disabled={isCounting}
+              onClick={() => setSelectedDuration(selectedDuration)}
+              className={`text-[10px] font-bold px-3 py-1 rounded-full border transition-all ${isCounting ? 'opacity-50 cursor-not-allowed' : ''} bg-[#1a7a4a] border-[#1a7a4a] text-white shadow-sm`}
+            >
+              {selectedDuration}m
+            </button>
+          )}
+
+          {isEditingCustomDuration ? (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const val = parseInt(customDurVal, 10);
+                if (val > 0) {
+                  setSelectedDuration(val);
+                  setIsEditingCustomDuration(false);
+                  setCustomDurVal('');
+                }
+              }}
+              className="flex items-center gap-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <input
+                type="number"
+                min="1"
+                max="360"
+                placeholder="Mins"
+                value={customDurVal}
+                onChange={(e) => setCustomDurVal(e.target.value)}
+                className="w-14 px-2.5 py-1 text-[10px] border border-gray-200 rounded-full focus:outline-none focus:border-[#1a7a4a] text-gray-800"
+                autoFocus
+              />
+              <button
+                type="submit"
+                className="px-2.5 py-1 text-[9px] font-bold bg-[#1a7a4a] text-white rounded-full hover:bg-[#106c3d] transition-colors"
+              >
+                Set
+              </button>
+            </form>
+          ) : (
+            <button
+              type="button"
+              disabled={isCounting}
+              onClick={() => !isCounting && setIsEditingCustomDuration(true)}
+              className={`text-[10px] font-bold px-3 py-1 rounded-full border transition-all ${isCounting ? 'opacity-50 cursor-not-allowed' : 'bg-gray-50 border-gray-100 text-gray-500 hover:bg-gray-100/60'}`}
+            >
+              + Custom
+            </button>
+          )}
         </div>
       </div>
 
