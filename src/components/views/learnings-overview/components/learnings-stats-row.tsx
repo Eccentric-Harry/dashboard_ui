@@ -11,6 +11,7 @@ export function LearningsStatsRow({ summary, loading }: LearningsStatsRowProps) 
   const stats = summary?.stats
   const timeline = summary?.timeline || []
   const last7Days = timeline.slice(-7)
+  const weeklyEntries = last7Days.reduce((acc, day) => acc + (day.learningsCount ?? 0) + (day.tasksCompleted ?? 0), 0)
 
   const items = [
     {
@@ -36,7 +37,7 @@ export function LearningsStatsRow({ summary, loading }: LearningsStatsRowProps) 
     },
     {
       label: 'This week',
-      value: loading ? '—' : String(stats?.weeklyLearningCount ?? 0),
+      value: loading ? '—' : String(weeklyEntries),
       hint: 'entries',
       icon: Target,
       tone: 'week' as const,
