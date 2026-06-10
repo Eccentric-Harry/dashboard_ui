@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { GraduationCap, Plus, Check } from 'lucide-react'
+import React, { useState } from 'react'
+import { GraduationCap, Plus, Check, ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface StudyTrack {
   id: string
@@ -55,6 +55,12 @@ export function ActiveStudyQueue() {
   const [tracks, setTracks] = useState<StudyTrack[]>(DEFAULT_TRACKS)
   const [newTrackTitle, setNewTrackTitle] = useState('')
   const [isAdding, setIsAdding] = useState(false)
+  const [page, setPage] = useState(1)
+
+  const TRACKS_PAGE_SIZE = 2
+  const totalPages = Math.ceil(tracks.length / TRACKS_PAGE_SIZE)
+  const start = (page - 1) * TRACKS_PAGE_SIZE
+  const paginatedTracks = tracks.slice(start, start + TRACKS_PAGE_SIZE)
 
   const handleIncrement = (id: string) => {
     setTracks((prev) =>
@@ -133,7 +139,7 @@ export function ActiveStudyQueue() {
       )}
 
       <div className="flex flex-col gap-3">
-        {tracks.map((track) => {
+        {paginatedTracks.map((track) => {
           const percentage = Math.round((track.completedSections / track.totalSections) * 100)
           return (
             <div
@@ -196,6 +202,32 @@ export function ActiveStudyQueue() {
           )
         })}
       </div>
+
+      {totalPages > 1 && (
+        <div className="learnings-pagination" style={{ marginTop: 14, paddingTop: 10, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px' }}>
+          <button
+            disabled={page === 1}
+            onClick={() => setPage((p) => p - 1)}
+            className="pagination-btn"
+            type="button"
+            style={{ width: 24, height: 24, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <ChevronLeft size={12} />
+          </button>
+          <span className="pagination-info" style={{ fontSize: 10, minWidth: 60, textAlign: 'center' }}>
+            Page {page} of {totalPages}
+          </span>
+          <button
+            disabled={page === totalPages}
+            onClick={() => setPage((p) => p + 1)}
+            className="pagination-btn"
+            type="button"
+            style={{ width: 24, height: 24, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <ChevronRight size={12} />
+          </button>
+        </div>
+      )}
     </div>
   )
 }

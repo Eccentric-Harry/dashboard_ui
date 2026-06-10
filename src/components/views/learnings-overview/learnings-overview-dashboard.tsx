@@ -8,10 +8,9 @@ import { LearningsStatsRow } from './components/learnings-stats-row'
 import { TasksScheduleCard } from './components/tasks-schedule-card'
 import { LearningsLogCard } from './components/learnings-log-card'
 import { CategoryBreakdownCard } from './components/category-breakdown-card'
-import { ActivityHeatmapCard } from './components/activity-heatmap-card'
 import { AddLearningModal } from './components/add-learning-modal'
 import { AddTaskModal } from './components/add-task-modal'
-import { DevProfileCard } from './components/dev-profile-card'
+import { GitHubProfileCard, LeetCodeProfileCard } from './components/dev-profile-card'
 import { FocusBlockWidget } from './components/focus-block-widget'
 import { ActiveStudyQueue } from './components/active-study-queue'
 import './learnings-overview.css'
@@ -117,10 +116,6 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
         <LearningsStatsRow summary={summary} loading={summaryLoading} />
 
         <div className="learnings-focus-stack">
-          <FocusBlockWidget onSessionComplete={handleSessionComplete} />
-          
-          <ActiveStudyQueue />
-
           <TasksScheduleCard
             refreshKey={refreshKey}
             onRefresh={handleRefresh}
@@ -142,11 +137,19 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
           />
 
           <CategoryBreakdownCard refreshKey={refreshKey} />
-
-          <ActivityHeatmapCard timeline={summary?.timeline ?? []} />
         </div>
 
-        <DevProfileCard />
+        <div className="learnings-focus-widget-card">
+          <FocusBlockWidget onSessionComplete={handleSessionComplete} />
+        </div>
+
+        <div className="learnings-study-queue-card">
+          <ActiveStudyQueue />
+        </div>
+
+        <GitHubProfileCard />
+
+        <LeetCodeProfileCard />
       </div>
 
       <AddLearningModal

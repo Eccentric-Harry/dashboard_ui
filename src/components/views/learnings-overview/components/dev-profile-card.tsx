@@ -65,7 +65,6 @@ function dotColor(count: number): string {
   return '#e07000'
 }
 
-/* ─── Sub-components ────────────────────────────────────────────────── */
 function DifficultyBar({
   label,
   solved,
@@ -89,28 +88,160 @@ function DifficultyBar({
   )
 }
 
-/* ─── Main Component ─────────────────────────────────────────────────── */
-export function DevProfileCard() {
+/* ─── GitHub Profile Card Component ─────────────────────────────────── */
+export function GitHubProfileCard() {
   const [github, setGithub] = useState<GitHubProfile | null>(null)
-  const [leetStats, setLeetStats] = useState<LeetCodeStats | null>(null)
-  const [leetProfile, setLeetProfile] = useState<LeetCodeProfile | null>(null)
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'github' | 'leetcode'>('github')
 
   useEffect(() => {
     let cancelled = false
     async function load() {
       try {
-        const [ghRes, lcStatsRes, lcProfRes] = await Promise.allSettled([
-          fetch(`https://api.github.com/users/${GITHUB_USERNAME}`).then((r) => r.json()),
-          fetch(`https://leetcode-api-faisalshohag.vercel.app/${LEETCODE_USERNAME}`).then((r) =>
-            r.json()
-          ),
+        const ghRes = await fetch(`https://api.github.com/users/${GITHUB_USERNAME}`).then((r) => r.json())
+        if (!cancelled) {
+          setGithub(ghRes)
+          setLoading(false)
+        }
+      } catch {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    void load()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  return (
+    <section className="learnings-card dev-profile-card learnings-github-card">
+      <div className="dev-profile-header">
+        <div>
+          <p className="learnings-card-eyebrow">GITHUB PROFILE</p>
+          <h3 className="learnings-card-title text-sm font-bold text-gray-900 flex items-center gap-1.5 mt-0.5">
+            <GitBranch size={15} className="text-[#1a7a4a]" />
+            Contributions & Repos
+          </h3>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="dev-skeleton-wrap mt-4">
+          <div className="dev-skeleton dev-skeleton--avatar" />
+          <div style={{ flex: 1 }}>
+            <div className="dev-skeleton dev-skeleton--line" style={{ width: '60%' }} />
+            <div className="dev-skeleton dev-skeleton--line" style={{ width: '40%', marginTop: 6 }} />
+          </div>
+        </div>
+      ) : github ? (
+        <div className="dev-tab-content" style={{ marginTop: 14 }}>
+          {/* Profile identity */}
+          <div className="dev-identity">
+            <img
+              src={github.avatar_url}
+              alt={github.name || github.login}
+              className="dev-avatar"
+            />
+            <div className="dev-identity-info">
+              <strong className="dev-name">{github.name || github.login}</strong>
+              <a
+                href={github.html_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="dev-handle"
+              >
+                @{github.login}
+              </a>
+              {github.bio && <p className="dev-bio">{github.bio}</p>}
+            </div>
+          </div>
+
+          {/* Meta pills */}
+          <div className="dev-meta-pills" style={{ marginTop: 12 }}>
+            {github.location && (
+              <span className="dev-meta-pill">
+                <Globe size={10} style={{ display: 'inline', marginRight: 3 }} />
+                {github.location}
+              </span>
+            )}
+            {github.company && (
+              <span className="dev-meta-pill">🏢 {github.company}</span>
+            )}
+            {github.blog && (
+              <a
+                href={github.blog.startsWith('http') ? github.blog : `https://${github.blog}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="dev-meta-pill dev-meta-pill--link"
+              >
+                🔗 Blog
+              </a>
+            )}
+          </div>
+
+          {/* Stats grid */}
+          <div className="dev-gh-stats" style={{ marginTop: 14 }}>
+            <div className="dev-gh-stat">
+              <BookOpen size={14} className="dev-gh-stat-icon" style={{ color: '#1a7a4a' }} />
+              <strong>{github.public_repos}</strong>
+              <span>Repos</span>
+            </div>
+            <div className="dev-gh-stat">
+              <Users size={14} className="dev-gh-stat-icon" style={{ color: '#0369a1' }} />
+              <strong>{github.followers}</strong>
+              <span>Followers</span>
+            </div>
+            <div className="dev-gh-stat">
+              <Star size={14} className="dev-gh-stat-icon" style={{ color: '#d97706' }} />
+              <strong>{github.following}</strong>
+              <span>Following</span>
+            </div>
+          </div>
+
+          {/* Contribution heatmap preview */}
+          <div className="dev-gh-contrib-label" style={{ marginTop: 16 }}>
+            <Zap size={11} style={{ display: 'inline', marginRight: 4, color: '#1a7a4a' }} />
+            Live contribution graph
+          </div>
+          <img
+            src={`https://ghchart.rshah.org/1a7a4a/${GITHUB_USERNAME}`}
+            alt="GitHub contributions"
+            className="dev-gh-chart"
+            style={{ marginTop: 8 }}
+            loading="lazy"
+          />
+
+          <a
+            href={github.html_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="dev-cta-link text-xs font-semibold mt-4"
+            id="dev-gh-profile-link"
+          >
+            View full profile ↗
+          </a>
+        </div>
+      ) : (
+        <p className="learnings-empty mt-4">Failed to load GitHub info.</p>
+      )}
+    </section>
+  )
+}
+
+/* ─── LeetCode Profile Card Component ───────────────────────────────── */
+export function LeetCodeProfileCard() {
+  const [leetStats, setLeetStats] = useState<LeetCodeStats | null>(null)
+  const [leetProfile, setLeetProfile] = useState<LeetCodeProfile | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      try {
+        const [lcStatsRes, lcProfRes] = await Promise.allSettled([
+          fetch(`https://leetcode-api-faisalshohag.vercel.app/${LEETCODE_USERNAME}`).then((r) => r.json()),
           fetch(`https://alfa-leetcode-api.onrender.com/${LEETCODE_USERNAME}`).then((r) => r.json()),
         ])
-
         if (!cancelled) {
-          if (ghRes.status === 'fulfilled') setGithub(ghRes.value)
           if (lcStatsRes.status === 'fulfilled') setLeetStats(lcStatsRes.value)
           if (lcProfRes.status === 'fulfilled') setLeetProfile(lcProfRes.value)
           setLoading(false)
@@ -135,133 +266,27 @@ export function DevProfileCard() {
   const LEET_HARD_TOTAL = 934
 
   return (
-    <section className="learnings-card dev-profile-card">
-      {/* Header */}
+    <section className="learnings-card dev-profile-card learnings-leetcode-card">
       <div className="dev-profile-header">
-        <p className="learnings-card-eyebrow">Developer Profile</p>
-        <div className="dev-profile-tabs">
-          <button
-            id="dev-tab-github"
-            className={`dev-tab-btn${activeTab === 'github' ? ' active' : ''}`}
-            onClick={() => setActiveTab('github')}
-          >
-            <GitBranch size={11} style={{ display: 'inline', marginRight: 4, verticalAlign: '-1px' }} />
-            GitHub
-          </button>
-          <button
-            id="dev-tab-leetcode"
-            className={`dev-tab-btn${activeTab === 'leetcode' ? ' active' : ''}`}
-            onClick={() => setActiveTab('leetcode')}
-          >
-            <Code2 size={11} style={{ display: 'inline', marginRight: 4, verticalAlign: '-1px' }} />
-            LeetCode
-          </button>
+        <div>
+          <p className="learnings-card-eyebrow">LEETCODE PROFILE</p>
+          <h3 className="learnings-card-title text-sm font-bold text-gray-900 flex items-center gap-1.5 mt-0.5">
+            <Code2 size={15} className="text-[#f59e0b]" />
+            DSA Stats & Submissions
+          </h3>
         </div>
       </div>
 
       {loading ? (
-        <div className="dev-skeleton-wrap">
+        <div className="dev-skeleton-wrap mt-4">
           <div className="dev-skeleton dev-skeleton--avatar" />
           <div style={{ flex: 1 }}>
             <div className="dev-skeleton dev-skeleton--line" style={{ width: '60%' }} />
             <div className="dev-skeleton dev-skeleton--line" style={{ width: '40%', marginTop: 6 }} />
           </div>
         </div>
-      ) : activeTab === 'github' ? (
-        /* ── GitHub tab ─────────────────────────────────────── */
-        <div className="dev-tab-content">
-          {github && (
-            <>
-              {/* Profile identity */}
-              <div className="dev-identity">
-                <img
-                  src={github.avatar_url}
-                  alt={github.name || github.login}
-                  className="dev-avatar"
-                />
-                <div className="dev-identity-info">
-                  <strong className="dev-name">{github.name || github.login}</strong>
-                  <a
-                    href={github.html_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="dev-handle"
-                  >
-                    @{github.login}
-                  </a>
-                  {github.bio && <p className="dev-bio">{github.bio}</p>}
-                </div>
-              </div>
-
-              {/* Meta pills */}
-              <div className="dev-meta-pills">
-                {github.location && (
-                  <span className="dev-meta-pill">
-                    <Globe size={10} style={{ display: 'inline', marginRight: 3 }} />
-                    {github.location}
-                  </span>
-                )}
-                {github.company && (
-                  <span className="dev-meta-pill">🏢 {github.company}</span>
-                )}
-                {github.blog && (
-                  <a
-                    href={github.blog.startsWith('http') ? github.blog : `https://${github.blog}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="dev-meta-pill dev-meta-pill--link"
-                  >
-                    🔗 Blog
-                  </a>
-                )}
-              </div>
-
-              {/* Stats grid */}
-              <div className="dev-gh-stats">
-                <div className="dev-gh-stat">
-                  <BookOpen size={14} className="dev-gh-stat-icon" style={{ color: '#1a7a4a' }} />
-                  <strong>{github.public_repos}</strong>
-                  <span>Repos</span>
-                </div>
-                <div className="dev-gh-stat">
-                  <Users size={14} className="dev-gh-stat-icon" style={{ color: '#0369a1' }} />
-                  <strong>{github.followers}</strong>
-                  <span>Followers</span>
-                </div>
-                <div className="dev-gh-stat">
-                  <Star size={14} className="dev-gh-stat-icon" style={{ color: '#d97706' }} />
-                  <strong>{github.following}</strong>
-                  <span>Following</span>
-                </div>
-              </div>
-
-              {/* Contribution heatmap preview */}
-              <div className="dev-gh-contrib-label">
-                <Zap size={11} style={{ display: 'inline', marginRight: 4, color: '#1a7a4a' }} />
-                Live contribution graph
-              </div>
-              <img
-                src={`https://ghchart.rshah.org/1a7a4a/${GITHUB_USERNAME}`}
-                alt="GitHub contributions"
-                className="dev-gh-chart"
-                loading="lazy"
-              />
-
-              <a
-                href={github.html_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="dev-cta-link"
-                id="dev-gh-profile-link"
-              >
-                View full profile ↗
-              </a>
-            </>
-          )}
-        </div>
-      ) : (
-        /* ── LeetCode tab ───────────────────────────────────── */
-        <div className="dev-tab-content">
+      ) : leetStats ? (
+        <div className="dev-tab-content" style={{ marginTop: 14 }}>
           {/* Identity */}
           <div className="dev-identity">
             {leetProfile?.avatar && (
@@ -286,7 +311,7 @@ export function DevProfileCard() {
           </div>
 
           {/* Meta pills */}
-          <div className="dev-meta-pills">
+          <div className="dev-meta-pills" style={{ marginTop: 12 }}>
             {leetProfile?.country && (
               <span className="dev-meta-pill">🌏 {leetProfile.country}</span>
             )}
@@ -301,62 +326,59 @@ export function DevProfileCard() {
             )}
           </div>
 
-          {/* Total solved ring */}
-          {leetStats && (
-            <div className="dev-leet-overview">
-              <div className="dev-leet-ring-wrap">
-                <svg viewBox="0 0 42 42" className="dev-leet-ring">
-                  <circle cx="21" cy="21" r="15.915" fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="4" />
-                  <circle
-                    cx="21"
-                    cy="21"
-                    r="15.915"
-                    fill="none"
-                    stroke="#f59e0b"
-                    strokeWidth="4"
-                    strokeDasharray={`${(leetStats.totalSolved / leetStats.totalQuestions) * 100} ${100 - (leetStats.totalSolved / leetStats.totalQuestions) * 100}`}
-                    strokeDashoffset="25"
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <div className="dev-leet-ring-center">
-                  <strong>{leetStats.totalSolved}</strong>
-                  <span>solved</span>
-                </div>
-              </div>
-
-              {/* Difficulty breakdown */}
-              <div className="dev-diff-bars">
-                <DifficultyBar
-                  label="Easy"
-                  solved={leetStats.easySolved}
-                  total={LEET_EASY_TOTAL}
-                  color="#22c55e"
+          {/* Total solved ring & Difficulty breakdown */}
+          <div className="dev-leet-overview" style={{ marginTop: 14 }}>
+            <div className="dev-leet-ring-wrap">
+              <svg viewBox="0 0 42 42" className="dev-leet-ring">
+                <circle cx="21" cy="21" r="15.915" fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="4" />
+                <circle
+                  cx="21"
+                  cy="21"
+                  r="15.915"
+                  fill="none"
+                  stroke="#f59e0b"
+                  strokeWidth="4"
+                  strokeDasharray={`${(leetStats.totalSolved / leetStats.totalQuestions) * 100} ${100 - (leetStats.totalSolved / leetStats.totalQuestions) * 100}`}
+                  strokeDashoffset="25"
+                  strokeLinecap="round"
                 />
-                <DifficultyBar
-                  label="Med"
-                  solved={leetStats.mediumSolved}
-                  total={LEET_MED_TOTAL}
-                  color="#f59e0b"
-                />
-                <DifficultyBar
-                  label="Hard"
-                  solved={leetStats.hardSolved}
-                  total={LEET_HARD_TOTAL}
-                  color="#ef4444"
-                />
+              </svg>
+              <div className="dev-leet-ring-center">
+                <strong>{leetStats.totalSolved}</strong>
+                <span>solved</span>
               </div>
             </div>
-          )}
+
+            <div className="dev-diff-bars">
+              <DifficultyBar
+                label="Easy"
+                solved={leetStats.easySolved}
+                total={LEET_EASY_TOTAL}
+                color="#22c55e"
+              />
+              <DifficultyBar
+                label="Med"
+                solved={leetStats.mediumSolved}
+                total={LEET_MED_TOTAL}
+                color="#f59e0b"
+              />
+              <DifficultyBar
+                label="Hard"
+                solved={leetStats.hardSolved}
+                total={LEET_HARD_TOTAL}
+                color="#ef4444"
+              />
+            </div>
+          </div>
 
           {/* Submission heatmap (28d) */}
           {activityDots.length > 0 && (
-            <div className="dev-leet-heatmap-wrap">
+            <div className="dev-leet-heatmap-wrap" style={{ marginTop: 16 }}>
               <p className="dev-leet-heatmap-label">
                 <Zap size={11} style={{ display: 'inline', marginRight: 4, color: '#f59e0b' }} />
                 Last 28 days activity
               </p>
-              <div className="dev-leet-heatmap">
+              <div className="dev-leet-heatmap" style={{ marginTop: 8 }}>
                 {activityDots.map((d) => (
                   <div
                     key={d.ts}
@@ -369,10 +391,10 @@ export function DevProfileCard() {
             </div>
           )}
 
-          {/* Recent accepted */}
+          {/* Recent accepted solved list */}
           {recentAccepted.length > 0 && (
-            <div className="dev-leet-recent">
-              <p className="dev-leet-recent-label">Recent solved</p>
+            <div className="dev-leet-recent" style={{ marginTop: 16 }}>
+              <p className="dev-leet-recent-label text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Recent solved</p>
               {recentAccepted.map((s, i) => (
                 <a
                   key={`${s.titleSlug}-${i}`}
@@ -382,8 +404,8 @@ export function DevProfileCard() {
                   className="dev-leet-recent-item"
                 >
                   <span className="dev-leet-recent-badge">✓</span>
-                  <span className="dev-leet-recent-title">{s.title}</span>
-                  <span className="dev-leet-recent-lang">{s.lang}</span>
+                  <span className="dev-leet-recent-title truncate">{s.title}</span>
+                  <span className="dev-leet-recent-lang font-mono">{s.lang}</span>
                 </a>
               ))}
             </div>
@@ -393,12 +415,14 @@ export function DevProfileCard() {
             href={`https://leetcode.com/u/${LEETCODE_USERNAME}/`}
             target="_blank"
             rel="noopener noreferrer"
-            className="dev-cta-link dev-cta-link--leet"
+            className="dev-cta-link dev-cta-link--leet text-xs font-semibold mt-4"
             id="dev-leet-profile-link"
           >
             View LeetCode profile ↗
           </a>
         </div>
+      ) : (
+        <p className="learnings-empty mt-4">Failed to load LeetCode info.</p>
       )}
     </section>
   )

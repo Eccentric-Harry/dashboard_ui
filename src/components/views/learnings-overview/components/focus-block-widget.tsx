@@ -155,7 +155,7 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
         <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
           Session Length
         </label>
-        <div className="flex gap-1.5">
+        <div className="flex flex-wrap gap-1.5">
           {DURATIONS.map((dur) => (
             <button
               key={dur.value}

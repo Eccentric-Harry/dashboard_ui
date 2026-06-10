@@ -309,17 +309,33 @@
 }
 
 .learnings-focus-stack {
-  grid-column: 1 / span 5;
+  grid-column: 1 / span 6;
   display: flex;
   flex-direction: column;
   gap: 18px;
 }
 
+.learnings-focus-widget-card {
+  grid-column: 1 / span 6;
+}
+
+.learnings-study-queue-card {
+  grid-column: 7 / span 6;
+}
+
 .learnings-history-stack {
-  grid-column: 6 / span 7;
+  grid-column: 7 / span 6;
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+
+.learnings-github-card {
+  grid-column: 1 / span 6;
+}
+
+.learnings-leetcode-card {
+  grid-column: 7 / span 6;
 }
 
 .learnings-log-card-wrap {
@@ -799,7 +815,11 @@
   }
 
   .learnings-focus-stack,
-  .learnings-history-stack {
+  .learnings-history-stack,
+  .learnings-github-card,
+  .learnings-leetcode-card,
+  .learnings-focus-widget-card,
+  .learnings-study-queue-card {
     grid-column: unset;
   }
 
@@ -837,6 +857,14 @@
   }
 
   .learnings-history-stack {
+    grid-column: 4 / span 3;
+  }
+
+  .learnings-github-card {
+    grid-column: 1 / span 3;
+  }
+
+  .learnings-leetcode-card {
     grid-column: 4 / span 3;
   }
 }
@@ -1168,7 +1196,6 @@
    ========================================================================== */
 
 .dev-profile-card {
-  grid-column: 1 / -1;
   padding: 22px 24px 24px;
 }
 
