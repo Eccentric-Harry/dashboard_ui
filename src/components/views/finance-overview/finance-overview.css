@@ -1677,7 +1677,7 @@
 
 .finance-calendar-grid button:disabled {
   cursor: not-allowed;
-  opacity: 0.28;
+  opacity: 0.45;
 }
 
 .finance-calendar-grid button:not(:disabled):hover {
@@ -1685,9 +1685,7 @@
 }
 
 .finance-calendar-grid button.future {
-  color: rgba(23, 28, 25, 0.3);
-  text-decoration: line-through;
-  text-decoration-thickness: 1px;
+  color: rgba(23, 28, 25, 0.32);
 }
 
 .finance-calendar-grid button.today {
