@@ -22,6 +22,12 @@ html {
   -webkit-overflow-scrolling: touch;
 }
 
+@media (min-width: 1025px) {
+  html {
+    zoom: 0.95;
+  }
+}
+
 body {
   min-width: 320px;
   min-height: 100svh;
@@ -842,7 +848,8 @@ button {
   display: flex;
   flex-direction: column;
   border-radius: 28px;
-  background: rgba(236, 245, 238, 0.85); /* More evident background that follows the light green color scheme */
+  background: rgba(236, 245, 238, 0.85);
+  /* More evident background that follows the light green color scheme */
   box-shadow: 0 22px 52px rgba(54, 69, 53, 0.08), inset 0 2px 0 rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(14px);
   border: 1px solid rgba(255, 255, 255, 0.5);
@@ -994,7 +1001,7 @@ button {
   text-align: center;
 }
 
-.earning-metrics div + div {
+.earning-metrics div+div {
   border-left: 1px solid rgba(20, 24, 22, 0.09);
 }
 
@@ -1145,7 +1152,8 @@ button {
   font-size: 10px;
 }
 
-.business, .food {
+.business,
+.food {
   left: 0;
   top: 0;
   width: 111px;
@@ -1199,7 +1207,7 @@ button {
   color: rgba(42, 49, 45, 0.58);
 }
 
-.month-switch > small {
+.month-switch>small {
   margin-left: 18px;
   font-size: 8px;
 }
@@ -1239,7 +1247,8 @@ button {
   }
 
   /* --- Body: ensure native page scroll --- */
-  body, #root {
+  body,
+  #root {
     overflow-x: hidden;
     overflow-y: visible;
     height: auto;
@@ -1264,8 +1273,8 @@ button {
     border-radius: 40px;
     padding: 0 8px;
     background: rgba(255, 255, 255, 0.4);
-    box-shadow: 
-      0 12px 40px rgba(0, 0, 0, 0.12), 
+    box-shadow:
+      0 12px 40px rgba(0, 0, 0, 0.12),
       inset 0 0 0 1px rgba(255, 255, 255, 0.3),
       inset 0 1px 2px rgba(255, 255, 255, 0.6);
     backdrop-filter: blur(30px) saturate(190%);
@@ -1530,6 +1539,7 @@ button {
 
 /* Tablet Home dashboard: scale-down approach for the absolute-positioned artistic layout */
 @media (min-width: 769px) and (max-width: 1024px) {
+
   /* Only scale the home dashboard — sub-route stages override this */
   .dashboard-shell:has(.runner-card) .dashboard-stage {
     width: 1000px;
@@ -1546,6 +1556,7 @@ button {
     height: calc(900px * (100vw / 1000));
     min-height: auto;
   }
+
   .side-rail {
     width: 50px;
     left: 24px;
@@ -1618,7 +1629,7 @@ button {
 }
 
 .hourglass-sand-stream {
-  animation: 
+  animation:
     sand-stream-flow 0.4s linear infinite,
     sand-stream-fade 3s ease-in-out infinite;
 }
@@ -1637,6 +1648,7 @@ button {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -1647,6 +1659,7 @@ button {
     opacity: 0;
     transform: scale(0.92) translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -1654,10 +1667,14 @@ button {
 }
 
 @keyframes hourglass-flip {
-  0%, 85% {
+
+  0%,
+  85% {
     transform: rotate(0deg);
   }
-  95%, 100% {
+
+  95%,
+  100% {
     transform: rotate(180deg);
   }
 }
@@ -1666,16 +1683,22 @@ button {
   0% {
     transform: scale(1);
   }
-  75%, 100% {
+
+  75%,
+  100% {
     transform: scale(0);
   }
 }
 
 @keyframes sand-fill {
-  0%, 5% {
+
+  0%,
+  5% {
     transform: scaleY(0);
   }
-  75%, 100% {
+
+  75%,
+  100% {
     transform: scaleY(1);
   }
 }
@@ -1684,27 +1707,37 @@ button {
   0% {
     stroke-dashoffset: 0;
   }
+
   100% {
     stroke-dashoffset: -8;
   }
 }
 
 @keyframes sand-stream-fade {
-  0%, 5% {
+
+  0%,
+  5% {
     opacity: 0;
   }
-  10%, 75% {
+
+  10%,
+  75% {
     opacity: 1;
   }
-  80%, 100% {
+
+  80%,
+  100% {
     opacity: 0;
   }
 }
 
 @keyframes loader-text-pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.6;
   }
+
   50% {
     opacity: 1;
   }
@@ -1721,8 +1754,8 @@ button {
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 18px;
-  box-shadow: 
-    0 12px 32px rgba(20, 24, 22, 0.08), 
+  box-shadow:
+    0 12px 32px rgba(20, 24, 22, 0.08),
     0 2px 8px rgba(20, 24, 22, 0.04),
     inset 0 1px 1px rgba(255, 255, 255, 0.8);
   padding: 14px 18px 14px 16px;
@@ -1777,7 +1810,7 @@ button {
   background: #ffffff;
   border: 1px solid rgba(20, 24, 22, 0.05);
   border-radius: 10px;
-  box-shadow: 
+  box-shadow:
     0 4px 12px rgba(20, 24, 22, 0.04),
     0 1px 2px rgba(20, 24, 22, 0.02);
 }
@@ -1856,6 +1889,7 @@ button {
     transform: translateY(-24px) scale(0.96);
     opacity: 0;
   }
+
   to {
     transform: translateY(0) scale(1);
     opacity: 1;
@@ -1867,6 +1901,7 @@ button {
     transform: translateY(0) scale(1);
     opacity: 1;
   }
+
   to {
     transform: translateY(-16px) scale(0.96);
     opacity: 0;
@@ -1901,6 +1936,7 @@ button {
     backdrop-filter: blur(0);
     -webkit-backdrop-filter: blur(0);
   }
+
   to {
     opacity: 1;
     backdrop-filter: blur(8px);
@@ -1929,6 +1965,7 @@ button {
   from {
     transform: translateX(100%);
   }
+
   to {
     transform: translateX(0);
   }
@@ -2197,8 +2234,8 @@ button {
   border-radius: 32px;
   background: rgba(255, 255, 255, 0.65);
   border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 
-    0 8px 20px -4px rgba(36, 48, 39, 0.03), 
+  box-shadow:
+    0 8px 20px -4px rgba(36, 48, 39, 0.03),
     0 6px 12px -5px rgba(36, 48, 39, 0.015),
     inset 0 -1.5px 3px rgba(0, 0, 0, 0.01),
     inset 0 1px 1px rgba(255, 255, 255, 0.85);
@@ -2213,16 +2250,16 @@ button {
   transform: translateY(-2px) scale(1.01);
   background: #ffffff;
   border-color: rgba(255, 255, 255, 0.9);
-  box-shadow: 
-    0 12px 28px -6px rgba(36, 48, 39, 0.06), 
+  box-shadow:
+    0 12px 28px -6px rgba(36, 48, 39, 0.06),
     0 8px 16px -6px rgba(36, 48, 39, 0.03);
 }
 
 .notification-item.unread {
   background: rgba(255, 255, 255, 0.82);
   border-color: rgba(16, 185, 129, 0.18);
-  box-shadow: 
-    0 8px 20px -4px rgba(16, 185, 129, 0.04), 
+  box-shadow:
+    0 8px 20px -4px rgba(16, 185, 129, 0.04),
     0 6px 12px -5px rgba(0, 0, 0, 0.015),
     inset 0 -1.5px 3px rgba(0, 0, 0, 0.01);
 }
@@ -2276,7 +2313,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 
+  box-shadow:
     0 3px 8px rgba(54, 69, 53, 0.02),
     inset 0 1px 1px #ffffff;
   transition: all 0.25s ease;
@@ -2589,9 +2626,11 @@ button {
   0% {
     box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.6);
   }
+
   70% {
     box-shadow: 0 0 0 5px rgba(255, 59, 48, 0);
   }
+
   100% {
     box-shadow: 0 0 0 0 rgba(255, 59, 48, 0);
   }
@@ -2603,6 +2642,7 @@ button {
 
 /* Mobile responsive views */
 @media (max-width: 768px) {
+
   /* ── Hide handle on full-screen — nothing to drag ── */
   .drawer-handle {
     display: none;
@@ -2637,12 +2677,10 @@ button {
     border: none !important;
     /* Rich layered background */
     background:
-      linear-gradient(
-        180deg,
+      linear-gradient(180deg,
         rgba(235, 242, 237, 0.98) 0%,
         rgba(246, 250, 247, 1.0) 60%,
-        #edf3ee 100%
-      ) !important;
+        #edf3ee 100%) !important;
     backdrop-filter: blur(32px) saturate(180%) !important;
     -webkit-backdrop-filter: blur(32px) saturate(180%) !important;
     box-shadow: none !important;
@@ -2654,8 +2692,13 @@ button {
   }
 
   @keyframes slide-up-drawer {
-    from { transform: translateY(100%); }
-    to   { transform: translateY(0); }
+    from {
+      transform: translateY(100%);
+    }
+
+    to {
+      transform: translateY(0);
+    }
   }
 
   /* ── Header ── */
@@ -2663,11 +2706,9 @@ button {
     padding: 22px 22px 12px;
     position: relative;
     border-bottom: 1px solid rgba(82, 96, 87, 0.08);
-    background: linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0) 0%,
-      rgba(16, 185, 129, 0.04) 100%
-    );
+    background: linear-gradient(90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(16, 185, 129, 0.04) 100%);
   }
 
   .header-title-area h2 {
