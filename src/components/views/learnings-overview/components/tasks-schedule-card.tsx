@@ -1,19 +1,19 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Check, Loader2, Pencil, Trash2, ListTodo } from 'lucide-react'
+import { Check, Loader2, Pencil, Trash2, ListTodo, ChevronLeft, ChevronRight } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { fetchTasks, toggleTask, deleteTask } from '../../../../lib/api'
 import type { DailyTask } from '../../../../lib/api'
 import { ConfirmDialog } from '../../../ui/confirm-dialog'
 
 interface TasksScheduleCardProps {
-  selectedDate: string
   refreshKey: number
   onRefresh: () => void
   onEditTask: (task: DailyTask) => void
 }
 
+const PAGE_SIZE = 5
+
 export function TasksScheduleCard({
-  selectedDate,
   refreshKey,
   onRefresh,
   onEditTask,
@@ -22,29 +22,40 @@ export function TasksScheduleCard({
   const [loading, setLoading] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<DailyTask | null>(null)
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetchTasks(selectedDate)
-      setTasks(res?.data ?? [])
+      const res = await fetchTasks()
+      const sorted = (res?.data ?? []).sort((a: DailyTask, b: DailyTask) => {
+        const dateCompare = (b.date || '').localeCompare(a.date || '')
+        if (dateCompare !== 0) return dateCompare
+        if (a.sortOrder !== undefined && b.sortOrder !== undefined) {
+          return a.sortOrder - b.sortOrder
+        }
+        if (b.id && a.id) return b.id.localeCompare(a.id)
+        return 0
+      })
+      setTasks(sorted)
     } catch {
       setTasks([])
     } finally {
       setLoading(false)
     }
-  }, [selectedDate])
+  }, [])
 
   useEffect(() => {
     load()
     setActiveTaskId(null)
+    setPage(1)
   }, [load, refreshKey])
 
   const handleToggle = async (task: DailyTask) => {
     if (!task.id) return
     try {
       const isRecurring = task.recurrenceFrequency && task.recurrenceFrequency !== 'NONE'
-      await toggleTask(task.id, isRecurring ? selectedDate : undefined)
+      await toggleTask(task.id, isRecurring ? task.date : undefined)
       load()
       onRefresh()
     } catch (err: unknown) {
@@ -65,9 +76,31 @@ export function TasksScheduleCard({
     }
   }
 
+  const formatFriendlyDate = (dateStr: string) => {
+    if (!dateStr) return ''
+    try {
+      const parts = dateStr.split('-').map(Number)
+      if (parts.length === 3) {
+        const dateObj = new Date(parts[0], parts[1] - 1, parts[2])
+        return dateObj.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        })
+      }
+      return dateStr
+    } catch {
+      return dateStr
+    }
+  }
+
   // Progress counts
   const completedCount = tasks.filter((t) => t.completed).length
   const totalCount = tasks.length
+
+  const totalPages = Math.ceil(tasks.length / PAGE_SIZE)
+  const start = (page - 1) * PAGE_SIZE
+  const paginated = tasks.slice(start, start + PAGE_SIZE)
 
   return (
     <section className="learnings-card learnings-tasks-card-premium">
@@ -97,7 +130,7 @@ export function TasksScheduleCard({
         </p>
       ) : (
         <div className="learnings-tasks-list-premium" style={{ marginTop: 18 }}>
-          {tasks.map((task) => {
+          {paginated.map((task) => {
             const isOverdue = !task.completed && (() => {
               if (!task.scheduledTime) return false;
               const dateParts = task.date.split('-');
@@ -142,8 +175,8 @@ export function TasksScheduleCard({
                   type="button"
                   className={`learnings-task-check-premium ${task.completed ? 'checked' : ''}`}
                   onClick={(e) => {
-                    e.stopPropagation()
-                    handleToggle(task)
+                     e.stopPropagation()
+                     handleToggle(task)
                   }}
                   aria-label={task.completed ? 'Mark incomplete' : 'Mark complete'}
                 >
@@ -155,8 +188,13 @@ export function TasksScheduleCard({
                     <span className="learnings-task-title-premium">{task.title}</span>
                   </div>
 
-                  {(task.scheduledTime || isOverdue || task.completed) && (
+                  {(task.scheduledTime || isOverdue || task.completed || task.date) && (
                     <div className="learnings-task-meta-row-premium">
+                      {task.date && (
+                        <span className="learnings-task-badge-premium date" style={{ background: 'rgba(23, 28, 25, 0.05)', color: 'rgba(23, 28, 25, 0.6)', fontWeight: 600 }}>
+                          {formatFriendlyDate(task.date)}
+                        </span>
+                      )}
                       {task.scheduledTime && !task.completed && (
                         <span className="learnings-task-badge-premium time">
                           {task.scheduledTime}
@@ -207,6 +245,30 @@ export function TasksScheduleCard({
               </div>
             )
           })}
+        </div>
+      )}
+
+      {!loading && totalPages > 1 && (
+        <div className="learnings-pagination">
+          <button
+            disabled={page === 1}
+            onClick={() => setPage((p) => p - 1)}
+            className="pagination-btn"
+            type="button"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <span className="pagination-info">
+            Page {page} of {totalPages}
+          </span>
+          <button
+            disabled={page === totalPages}
+            onClick={() => setPage((p) => p + 1)}
+            className="pagination-btn"
+            type="button"
+          >
+            <ChevronRight size={16} />
+          </button>
         </div>
       )}
 

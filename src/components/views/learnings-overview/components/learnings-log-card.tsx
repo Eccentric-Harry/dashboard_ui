@@ -1,20 +1,20 @@
 import { useState, useEffect, useCallback } from 'react'
-import { BookOpen, Edit2, Loader2, Pencil, Trash2 } from 'lucide-react'
+import { BookOpen, ChevronLeft, ChevronRight, Edit2, Loader2, Pencil, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { fetchLearnings, deleteLearning } from '../../../../lib/api'
 import type { LearningLog } from '../../../../lib/api'
 import { ConfirmDialog } from '../../../ui/confirm-dialog'
-import { extractNotionUrl, getCategoryStyle } from '../learnings-utils'
+import { extractNotionUrl, getCategoryStyle, parseIsoDate } from '../learnings-utils'
 
 interface LearningsLogCardProps {
-  selectedDate: string
   refreshKey: number
   onRefresh: () => void
   onEditLearning: (learning: LearningLog) => void
 }
 
+const PAGE_SIZE = 5
+
 export function LearningsLogCard({
-  selectedDate,
   refreshKey,
   onRefresh,
   onEditLearning,
@@ -23,22 +23,30 @@ export function LearningsLogCard({
   const [loading, setLoading] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<LearningLog | null>(null)
+  const [page, setPage] = useState(1)
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetchLearnings(selectedDate)
-      setLearnings(res?.data ?? [])
+      const res = await fetchLearnings()
+      const sorted = (res?.data ?? []).sort((a: LearningLog, b: LearningLog) => {
+        const dateCompare = (b.date || '').localeCompare(a.date || '')
+        if (dateCompare !== 0) return dateCompare
+        if (b.id && a.id) return b.id.localeCompare(a.id)
+        return 0
+      })
+      setLearnings(sorted)
     } catch {
       setLearnings([])
     } finally {
       setLoading(false)
     }
-  }, [selectedDate])
+  }, [])
 
   useEffect(() => {
     load()
     setIsEditMode(false)
+    setPage(1)
   }, [load, refreshKey])
 
   const handleDelete = async () => {
@@ -54,6 +62,24 @@ export function LearningsLogCard({
     }
   }
 
+  const formatFriendlyDate = (dateStr: string) => {
+    if (!dateStr) return ''
+    try {
+      const d = parseIsoDate(dateStr)
+      return d.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    } catch {
+      return dateStr
+    }
+  }
+
+  const totalPages = Math.ceil(learnings.length / PAGE_SIZE)
+  const start = (page - 1) * PAGE_SIZE
+  const paginated = learnings.slice(start, start + PAGE_SIZE)
+
   return (
     <section className="learnings-card learnings-log-card-wrap">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -61,7 +87,7 @@ export function LearningsLogCard({
           <p className="learnings-card-eyebrow">Journal</p>
           <h3 className="learnings-card-title">
             <BookOpen size={16} style={{ display: 'inline', marginRight: 6, verticalAlign: -2 }} />
-            Today&apos;s learnings
+            All learnings
           </h3>
         </div>
         <button
@@ -86,11 +112,11 @@ export function LearningsLogCard({
         </p>
       ) : learnings.length === 0 ? (
         <p className="learnings-empty" style={{ marginTop: 16 }}>
-          No learning logged for this date.
+          No learnings logged yet.
         </p>
       ) : (
         <div className="learnings-log-list" style={{ marginTop: 14 }}>
-          {learnings.map((log) => {
+          {paginated.map((log) => {
             const badge = getCategoryStyle(log.category)
             const notionUrl = extractNotionUrl(log.description)
             const isOnlyNotion = notionUrl && log.description.trim() === notionUrl
@@ -117,23 +143,33 @@ export function LearningsLogCard({
                     </button>
                   </div>
                 )}
-                <span
-                  style={{
-                    display: 'inline-block',
-                    fontSize: 10,
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    padding: '3px 8px',
-                    borderRadius: 6,
-                    backgroundColor: badge.bg,
-                    color: badge.color,
-                    border: badge.border,
-                    marginBottom: 8,
-                  }}
-                >
-                  {log.category}
-                </span>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: 8 }}>
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      fontSize: 10,
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      padding: '3px 8px',
+                      borderRadius: 6,
+                      backgroundColor: badge.bg,
+                      color: badge.color,
+                      border: badge.border,
+                    }}
+                  >
+                    {log.category}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: 'rgba(23, 28, 25, 0.45)',
+                    }}
+                  >
+                    {formatFriendlyDate(log.date)}
+                  </span>
+                </div>
                 <h4 style={{ fontSize: 15, fontWeight: 650, margin: '0 0 6px' }}>{log.title}</h4>
                 {!isOnlyNotion && (
                   <p className="learnings-log-description">{log.description}</p>
@@ -157,6 +193,30 @@ export function LearningsLogCard({
               </article>
             )
           })}
+        </div>
+      )}
+
+      {!loading && totalPages > 1 && (
+        <div className="learnings-pagination">
+          <button
+            disabled={page === 1}
+            onClick={() => setPage((p) => p - 1)}
+            className="pagination-btn"
+            type="button"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <span className="pagination-info">
+            Page {page} of {totalPages}
+          </span>
+          <button
+            disabled={page === totalPages}
+            onClick={() => setPage((p) => p + 1)}
+            className="pagination-btn"
+            type="button"
+          >
+            <ChevronRight size={16} />
+          </button>
         </div>
       )}
 

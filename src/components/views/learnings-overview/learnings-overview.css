@@ -618,6 +618,49 @@
   background: #fff;
 }
 
+/* Learnings Pagination */
+.learnings-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(20, 24, 22, 0.06);
+}
+
+.learnings-pagination .pagination-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid rgba(20, 24, 22, 0.08);
+  background: #fff;
+  color: #111514;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.learnings-pagination .pagination-btn:hover:not(:disabled) {
+  background: rgba(18, 29, 21, 0.05);
+  border-color: rgba(20, 24, 22, 0.15);
+}
+
+.learnings-pagination .pagination-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.learnings-pagination .pagination-info {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(16, 19, 18, 0.6);
+  min-width: 80px;
+  text-align: center;
+}
+
 .learnings-calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);

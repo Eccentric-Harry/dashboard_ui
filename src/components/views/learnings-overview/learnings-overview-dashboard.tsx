@@ -90,7 +90,6 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
 
         <div className="learnings-focus-stack">
           <TasksScheduleCard
-            selectedDate={selectedDate}
             refreshKey={refreshKey}
             onRefresh={handleRefresh}
             onEditTask={(task) => {
@@ -101,7 +100,6 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
         </div>
 
         <LearningsLogCard
-          selectedDate={selectedDate}
           refreshKey={refreshKey}
           onRefresh={handleRefresh}
           onEditLearning={(learning) => {

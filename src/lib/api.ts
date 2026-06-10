@@ -425,8 +425,9 @@ export interface DailyTask {
   recurrenceFrequency?: CalendarRecurrence;
 }
 
-export async function fetchTasks(date: string) {
-  const response = await fetch(`${API_BASE_URL}/learnings/tasks?date=${date}`);
+export async function fetchTasks(date?: string) {
+  const query = date ? `?date=${date}` : '';
+  const response = await fetch(`${API_BASE_URL}/learnings/tasks${query}`);
   if (!response.ok) {
     throw new Error('Failed to fetch tasks');
   }
