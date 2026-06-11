@@ -1057,6 +1057,13 @@
   }
 }
 
+/* iPad 11" portrait: pre-scroll routine list so mid-day items are visible */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .routine-list-scroll {
+    scroll-padding-top: 200px;
+  }
+}
+
 @media (max-width: 820px) {
   .calendar-dashboard {
     position: static;

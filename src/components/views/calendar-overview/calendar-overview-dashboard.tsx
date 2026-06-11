@@ -62,6 +62,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   const [deleteTarget, setDeleteTarget] = useState<CalendarItem | null>(null)
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
   const calendarRef = useRef<HTMLDivElement>(null)
+  const routineListRef = useRef<HTMLDivElement>(null)
 
   const week = useMemo(() => getWeek(selectedDate), [selectedDate])
   const visibleRange = useMemo(
@@ -91,6 +92,18 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
       window.removeEventListener('calendar-updated', handleCalendarUpdate)
     }
   }, [loadItems])
+
+  useEffect(() => {
+    if (loading || !selectedItems.length) return
+    const isIpad = window.matchMedia('(min-width: 768px) and (max-width: 1024px)').matches
+    if (!isIpad) return
+    const timer = setTimeout(() => {
+      if (routineListRef.current) {
+        routineListRef.current.scrollTop = 200
+      }
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [loading, selectedItems.length])
 
   const selectedItems = useMemo(() => byDate(items, selectedDate), [items, selectedDate])
   const currentItem = useMemo(() => findCurrentItem(selectedItems, selectedDate), [selectedDate, selectedItems])
@@ -250,7 +263,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
             </button>
           </div>
 
-          <div className="routine-list-scroll">
+          <div className="routine-list-scroll" ref={routineListRef}>
             {loading ? (
               <div className="calendar-loading">
                 <Loader2 className="animate-spin" size={18} />
