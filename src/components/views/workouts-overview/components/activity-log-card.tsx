@@ -99,11 +99,20 @@ function ActivityLogCard({ activities, loading, onEdit, onDelete }: ActivityLogC
     return `${d.getDate()} ${d.toLocaleString('en', { month: 'short' })} ${d.getFullYear()}`
   }
 
-  const formatPace = (pace?: number) => {
-    if (!pace) return '—'
-    const m = Math.floor(pace)
-    const s = Math.round((pace - m) * 60)
-    return `${m}:${s.toString().padStart(2, '0')}`
+  const formatActivityMetric = (activity: StravaActivity) => {
+    const { sportType, paceMinPerKm, distanceKm, movingTimeMinutes } = activity
+    if (sportType === 'Run' || sportType === 'Walk') {
+      if (!paceMinPerKm) return '—'
+      const m = Math.floor(paceMinPerKm)
+      const s = Math.round((paceMinPerKm - m) * 60)
+      return `${m}:${s.toString().padStart(2, '0')}/km`
+    }
+    if (sportType === 'Ride' || sportType === 'E-Bike Ride') {
+      if (!distanceKm || !movingTimeMinutes || movingTimeMinutes === 0) return '—'
+      const speedKmh = distanceKm / (movingTimeMinutes / 60)
+      return `${speedKmh.toFixed(1)} KM/H`
+    }
+    return '—'
   }
 
   return (
@@ -161,7 +170,7 @@ function ActivityLogCard({ activities, loading, onEdit, onDelete }: ActivityLogC
         <div className="workouts-log-row header">
           <span>Activity</span>
           <span>Distance</span>
-          <span className="mobile-hide">Pace</span>
+          <span className="mobile-hide">Pace/Speed</span>
           <span>Duration</span>
         </div>
         <div className="workouts-log-list">
@@ -196,7 +205,7 @@ function ActivityLogCard({ activities, loading, onEdit, onDelete }: ActivityLogC
                             fontSize: '9px',
                             display: 'inline-block',
                           }}>
-                            {formatPace(activity.paceMinPerKm)}/km
+                            {formatActivityMetric(activity)}
                           </span>
                         </span>
                       </small>
@@ -215,7 +224,7 @@ function ActivityLogCard({ activities, loading, onEdit, onDelete }: ActivityLogC
                       letterSpacing: '0.02em',
                       display: 'inline-block',
                     }}>
-                      {formatPace(activity.paceMinPerKm)}/km
+                      {formatActivityMetric(activity)}
                     </span>
                   </span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>

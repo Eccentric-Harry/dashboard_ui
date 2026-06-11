@@ -3,6 +3,16 @@ import { Pencil, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getFoodIconDetails, sortFoodEntries } from './food-icon-helper'
 
+const mealDotColors: Record<string, string> = {
+  Breakfast: '#f97316',
+  Lunch: '#059669',
+  Dinner: '#38bdf8',
+  Snack: '#a78bfa',
+  Midnight: '#6366f1',
+  'Post Workout': '#f87171',
+  'Mid-Morning': '#fb923c',
+}
+
 import { RingProgress } from './ring-progress'
 import { useDashboard } from '../../../../contexts/DashboardContext'
 import { deleteFoodEntry } from '../../../../lib/api'
@@ -189,16 +199,37 @@ function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
             const iconDetails = getFoodIconDetails(description, mealType)
             const FoodIcon = iconDetails.icon
 
-            return (
-              <div className="nutrition-today-log-row" key={id || `${description}-${index}`}>
+return (
+              <div className="nutrition-today-log-row" key={id || `${description}-${index}`} style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto auto', alignItems: 'center', gap: '12px', padding: `8px ${id && isEditMode ? '18px' : '14px'} 8px 14px` }}>
                 <span aria-hidden="true" style={{ background: iconDetails.bg }}>
                   <FoodIcon size={16} color={iconDetails.color} />
                 </span>
-                <div>
-                  <b title={description}>{description}</b>
-                  <small>{mealType} | {proteinGrams}g protein | {calories.toLocaleString()} kcal</small>
+                <div style={{ minWidth: 0 }}>
+                  <b title={description} style={{ display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{description}</b>
+                  <span
+                    className="nutrition-meal-tag"
+                    style={{
+                      backgroundColor: `${mealDotColors[mealType] || '#94a3b8'}15`,
+                      color: mealDotColors[mealType] || '#94a3b8',
+                      border: `1px solid ${mealDotColors[mealType] || '#94a3b8'}30`,
+                      fontSize: '10px',
+                      padding: '2px 8px',
+                      borderRadius: '9999px',
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.02em',
+                      display: 'inline-block',
+                      marginTop: '4px',
+                    }}
+                  >
+                    {mealType}
+                  </span>
                 </div>
-                {id && isEditMode && (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px', textAlign: 'right' }}>
+                  <strong style={{ fontSize: '13px', color: 'rgba(23, 28, 25, 0.9)' }}>{proteinGrams}g</strong>
+                  <small style={{ color: 'rgba(23, 28, 25, 0.5)', fontSize: '11px' }}>{calories.toLocaleString()} kcal</small>
+                </div>
+                {id && isEditMode ? (
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                     <button
                       type="button"
@@ -257,7 +288,7 @@ function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
                       <Trash2 size={12} />
                     </button>
                   </div>
-                )}
+                ) : null}
               </div>
             )
           })}

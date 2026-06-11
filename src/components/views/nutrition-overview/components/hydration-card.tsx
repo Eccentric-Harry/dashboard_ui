@@ -102,7 +102,7 @@ function HydrationCard() {
             color="#3b82f6"
             unit="ml"
             active={false}
-            centerTextOverride={`${(logged / 1000).toFixed(1)}L`}
+            centerTextOverride={`${(logged / 1000).toFixed(2)}L`}
             hideLabel={true}
           />
         </div>

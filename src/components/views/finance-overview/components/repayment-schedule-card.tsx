@@ -51,6 +51,16 @@ export function RepaymentScheduleCard({ transactions, onRefresh }: RepaymentSche
     return ids
   }, [transactions, repayments, optimisticPaidIds])
 
+  // Sort: pending items first (by closest due date), paid items at the bottom
+  const sortedRepayments = useMemo(() => {
+    return [...repayments].sort((a, b) => {
+      const aPaid = paidIds.has(a.id)
+      const bPaid = paidIds.has(b.id)
+      if (aPaid !== bPaid) return aPaid ? 1 : -1
+      return a.dueDate.localeCompare(b.dueDate)
+    })
+  }, [repayments, paidIds])
+
   const pendingInstallments = useMemo(() => {
     return repayments.filter(item => !paidIds.has(item.id))
   }, [repayments, paidIds])
@@ -91,13 +101,13 @@ export function RepaymentScheduleCard({ transactions, onRefresh }: RepaymentSche
     }
   }
 
-  const totalPages = Math.ceil(repayments.length / ITEMS_PER_PAGE)
+  const totalPages = Math.ceil(sortedRepayments.length / ITEMS_PER_PAGE)
   const page = Math.max(1, Math.min(currentPage, totalPages || 1))
 
   const paginatedRepayments = useMemo(() => {
     const startIndex = (page - 1) * ITEMS_PER_PAGE
-    return repayments.slice(startIndex, startIndex + ITEMS_PER_PAGE)
-  }, [repayments, page])
+    return sortedRepayments.slice(startIndex, startIndex + ITEMS_PER_PAGE)
+  }, [sortedRepayments, page])
 
   if (loading) {
     return (

@@ -150,7 +150,7 @@ function ProteinTrendCard() {
       <div style={{ flex: 1, width: '100%', minHeight: 0, marginTop: '20px', marginLeft: '-15px', position: 'relative', zIndex: 1 }}>
         {isMounted ? (
           <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
-            <AreaChart data={displayTrend} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
+            <AreaChart data={displayTrend} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
               <defs>
                 <linearGradient id="colorGramsArea" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#4ade80" stopOpacity={0.4} />
