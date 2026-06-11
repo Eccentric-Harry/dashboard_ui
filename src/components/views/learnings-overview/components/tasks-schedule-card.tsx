@@ -95,6 +95,16 @@ const CATEGORY_THEMES: Record<TaskCategory, TaskTheme> = {
     shadowColor: 'rgba(16, 185, 129, 0.12)',
     icon: DollarSign
   },
+  Personal: {
+    name: 'Personal',
+    color: '#8b5cf6',
+    bgLight: 'rgba(139, 92, 246, 0.04)',
+    borderLight: 'rgba(139, 92, 246, 0.15)',
+    badgeBg: 'rgba(139, 92, 246, 0.08)',
+    badgeText: '#6d28d9',
+    shadowColor: 'rgba(139, 92, 246, 0.12)',
+    icon: Sparkles
+  },
   General: {
     name: 'General',
     color: '#14b8a6',
@@ -339,7 +349,9 @@ export function TasksScheduleCard({
               return new Date() > deadline;
             })()
 
-            const category = detectCategory(task.title)
+            const storedCategory = task.category as TaskCategory | undefined
+            const detectedCategory = detectCategory(task.title)
+            const category = (storedCategory && storedCategory in CATEGORY_THEMES) ? storedCategory : detectedCategory
             const theme = CATEGORY_THEMES[category]
             const CategoryIcon = theme.icon
 

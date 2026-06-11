@@ -428,6 +428,7 @@ export interface DailyTask {
   createdAt?: string;
   completedAt?: string;
   recurrenceFrequency?: CalendarRecurrence;
+  category?: string;
 }
 
 export async function fetchTasks(date?: string) {
@@ -731,6 +732,71 @@ export async function updatePursuitStep(id: string, stepId: string, text: string
   return response.json();
 }
 
+
+// ─── Focus Session API ─────────────────────────────────────────────────
+
+export interface FocusSession {
+  id: string;
+  userId?: string;
+  activePursuit: string;
+  durationMinutes: number;
+  status: 'IDLE' | 'RUNNING' | 'PAUSED' | 'COMPLETED';
+  startTime?: string;
+  endTime?: string;
+  remainingSecondsOnPause?: number;
+}
+
+export async function fetchCurrentSession(): Promise<{ data: FocusSession | null }> {
+  const response = await fetch(`${API_BASE_URL}/focus/current`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch current focus session');
+  }
+  return response.json();
+}
+
+export async function startFocusSession(activePursuit: string, durationMinutes: number): Promise<{ data: FocusSession }> {
+  const response = await fetch(`${API_BASE_URL}/focus/start`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ activePursuit, durationMinutes }),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to start focus session');
+  }
+  return response.json();
+}
+
+export async function pauseFocusSession(): Promise<{ data: FocusSession }> {
+  const response = await fetch(`${API_BASE_URL}/focus/pause`, { method: 'POST' });
+  if (!response.ok) {
+    throw new Error('Failed to pause focus session');
+  }
+  return response.json();
+}
+
+export async function resumeFocusSession(): Promise<{ data: FocusSession }> {
+  const response = await fetch(`${API_BASE_URL}/focus/resume`, { method: 'POST' });
+  if (!response.ok) {
+    throw new Error('Failed to resume focus session');
+  }
+  return response.json();
+}
+
+export async function cancelFocusSession(): Promise<{ data: FocusSession }> {
+  const response = await fetch(`${API_BASE_URL}/focus/cancel`, { method: 'POST' });
+  if (!response.ok) {
+    throw new Error('Failed to cancel focus session');
+  }
+  return response.json();
+}
+
+export async function completeFocusSession(): Promise<{ data: FocusSession }> {
+  const response = await fetch(`${API_BASE_URL}/focus/complete`, { method: 'POST' });
+  if (!response.ok) {
+    throw new Error('Failed to complete focus session');
+  }
+  return response.json();
+}
 
 // Global active GET request tracking for route navigation loader
 let activeGetRequests = 0;

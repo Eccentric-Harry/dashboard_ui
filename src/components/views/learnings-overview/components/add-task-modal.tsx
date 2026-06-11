@@ -42,6 +42,8 @@ interface AddTaskModalProps {
   defaultDate: string
 }
 
+const TASK_CATEGORIES = ['Personal', 'Work', 'Learning', 'Fitness', 'Shopping', 'Chores', 'Finance', 'General']
+
 export function AddTaskModal({
   isOpen,
   onClose,
@@ -56,6 +58,7 @@ export function AddTaskModal({
   const [scheduledTime, setScheduledTime] = useState('')
   const [notes, setNotes] = useState('')
   const [date, setDate] = useState(defaultDate)
+  const [category, setCategory] = useState(TASK_CATEGORIES[0])
 
   useEffect(() => {
     if (isOpen) {
@@ -65,11 +68,13 @@ export function AddTaskModal({
         setScheduledTime(initialData.scheduledTime ? formatTimeTo24Hour(initialData.scheduledTime) : '')
         setNotes(initialData.notes || '')
         setDate(initialData.date)
+        setCategory(initialData.category || TASK_CATEGORIES[0])
       } else {
         setTitle('')
         setScheduledTime('')
         setNotes('')
         setDate(defaultDate)
+        setCategory(TASK_CATEGORIES[0])
       }
     }
   }, [isOpen, isEdit, initialData, defaultDate])
@@ -91,6 +96,7 @@ export function AddTaskModal({
         scheduledTime: scheduledTime ? formatTimeTo12Hour(scheduledTime) : undefined,
         notes: notes.trim() || undefined,
         completed: initialData?.completed ?? false,
+        category: category || undefined,
       }
 
       if (isEdit && initialData?.id) {
@@ -158,6 +164,19 @@ export function AddTaskModal({
                 onChange={(e) => setDate(e.target.value)}
               />
             </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="task-category">Category</label>
+            <select
+              id="task-category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+            >
+              {TASK_CATEGORIES.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
           </div>
 
           <div className="form-group">
