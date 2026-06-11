@@ -1,4 +1,3 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   AlarmClock,
@@ -719,11 +718,13 @@ function formatClockTime(time: string) {
   })
 }
 
-function formatDateHeading(date: string) {
-  const parsed = parseISODate(date)
-  const today = toISODate(new Date())
-  const prefix = date === today ? 'Today, ' : ''
-  return `${prefix}${parsed.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}`
+function formatHeaderDate(date: Date) {
+  return date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  })
 }
 
 function formatShortDate(date: string) {

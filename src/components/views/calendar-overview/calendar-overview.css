@@ -41,6 +41,101 @@
   text-transform: uppercase;
 }
 
+.calendar-date-picker {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.calendar-date-trigger {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: min(720px, calc(100vw - 340px));
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #0d1110;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.calendar-date-trigger:focus {
+  outline: none;
+}
+
+.calendar-date-trigger:focus-visible {
+  border-radius: 8px;
+  box-shadow: 0 0 0 3px rgba(79, 147, 237, 0.16);
+}
+
+.calendar-date-trigger > span,
+.calendar-date-trigger small {
+  display: block;
+}
+
+.calendar-date-title-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+.calendar-date-chevron {
+  color: rgba(21, 26, 24, 0.42);
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.2s ease;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.calendar-date-trigger:hover .calendar-date-chevron {
+  color: #0d1110;
+  transform: translateY(1px);
+}
+
+.calendar-date-trigger strong {
+  display: inline-block;
+  min-width: 0;
+  overflow: visible;
+  font-size: clamp(25px, 2.2vw, 34px);
+  font-weight: 650;
+  line-height: 1.15;
+  letter-spacing: -0.045em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-date-trigger small {
+  margin-top: 9px;
+  color: rgba(21, 26, 24, 0.5);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.calendar-calendar-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 19;
+}
+
+.calendar-calendar-popover {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 8px);
+  width: min(300px, calc(100vw - 48px));
+  min-width: min(300px, calc(100vw - 48px));
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.54);
+  border-radius: 22px;
+  background: rgba(250, 252, 247, 0.72);
+  box-shadow: 0 22px 52px rgba(45, 60, 48, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  color: #101312;
+  backdrop-filter: blur(18px);
+  z-index: 21;
+}
+
 .calendar-header h1 {
   font-size: clamp(25px, 2.2vw, 34px);
   font-weight: 650;
