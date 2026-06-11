@@ -1,6 +1,6 @@
-import { 
+import {
   BookOpen, Code, Cpu, Layout, Server, GraduationCap, Compass, Settings,
-  Database, Cloud, Shield, Smartphone, BarChart2, CheckSquare, Languages, Coins, Heart, PenTool 
+  Database, Cloud, Shield, Smartphone, BarChart2, CheckSquare, Languages, Coins, Heart, PenTool
 } from 'lucide-react'
 
 export function isoDate(d = new Date()) {
@@ -99,7 +99,7 @@ export function getConsistentColor(category: string) {
   if (cat.includes('git') || cat.includes('github')) return '#4b5563'
   if (cat.includes('ai') || cat.includes('ml')) return '#312e81'
   if (cat.includes('personal')) return '#ec4899'
-  
+
   // Custom hash color for unknown custom categories!
   let hash = 0
   for (let i = 0; i < category.length; i++) {

@@ -8,6 +8,8 @@ import {
   ChevronRight,
   Circle,
   Clock,
+  Code2,
+  GitCommit,
   Loader2,
   Milestone,
   Pencil,
@@ -15,6 +17,7 @@ import {
   Repeat,
   Trash2,
   X,
+  Zap,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -34,7 +37,6 @@ import './calendar-overview.css'
 
 type CalendarMode = 'month' | 'week' | 'day'
 
-const HOURS = Array.from({ length: 24 }, (_, hour) => hour)
 const TYPE_OPTIONS: CalendarItemType[] = ['TASK', 'EVENT', 'REMINDER', 'MILESTONE']
 const CATEGORY_OPTIONS = [
   { label: 'Personal', color: '#c8f3a3' },
@@ -44,6 +46,14 @@ const CATEGORY_OPTIONS = [
   { label: 'Finance', color: '#ffd37d' },
   { label: 'Social', color: '#ffb4d2' },
 ]
+
+// Placeholder dev activity slots — wire to real API (GitHub, LeetCode, etc.) when ready.
+// Each entry maps an hour (0–23) to a marker rendered in Track 2 of the timeline.
+const MOCK_DEV_ACTIVITIES: Array<{ hour: number; type: 'commit' | 'code' | 'zap'; label: string }> = []
+
+type HourSegment =
+  | { type: 'hour'; hour: number; events: CalendarItem[] }
+  | { type: 'gap'; hours: number[]; key: string }
 
 type CalendarOverviewDashboardProps = {
   searchParams: URLSearchParams
@@ -102,12 +112,13 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   }
 
   const selectedItems = useMemo(() => byDate(items, selectedDate), [items, selectedDate])
+  // Stats scoped to the selected day only (items now covers the full month)
   const stats = useMemo(() => {
-    const completed = items.filter((item) => item.completed).length
-    const timed = items.filter((item) => !item.allDay && item.startTime).length
-    const recurring = items.filter((item) => item.recurrenceFrequency && item.recurrenceFrequency !== 'NONE').length
-    return { completed, timed, recurring, total: items.length }
-  }, [items])
+    const completed = selectedItems.filter((item) => item.completed).length
+    const timed = selectedItems.filter((item) => !item.allDay && item.startTime).length
+    const recurring = selectedItems.filter((item) => item.recurrenceFrequency && item.recurrenceFrequency !== 'NONE').length
+    return { completed, timed, recurring, total: selectedItems.length }
+  }, [selectedItems])
 
   const subtitle = useMemo(() => {
     if (selectedItems.length === 0) return 'No items scheduled'
@@ -249,10 +260,12 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
           <DayView
             date={selectedDate}
             items={selectedItems}
+            monthItems={items}
             onEdit={(item) => setModal({ open: true, item, date: item.date })}
             onDelete={setDeleteTarget}
             onToggle={handleToggle}
             onCreate={() => setModal({ open: true, date: selectedDate })}
+            onDateSelect={updateSelectedDate}
           />
         )}
       </div>
@@ -407,42 +420,32 @@ function MetricCard({
 function DayView({
   date,
   items,
+  monthItems,
   onEdit,
   onDelete,
   onToggle,
   onCreate,
+  onDateSelect,
 }: {
   date: string
   items: CalendarItem[]
+  monthItems: CalendarItem[]
   onEdit: (item: CalendarItem) => void
   onDelete: (item: CalendarItem) => void
   onToggle: (item: CalendarItem) => void
   onCreate: () => void
+  onDateSelect: (date: string) => void
 }) {
   const timed = items.filter((item) => !item.allDay && item.startTime)
-  const hasItems = items.length > 0
   const isToday = date === toISODate(new Date())
+  const completedCount = items.filter((i) => i.completed).length
+  const timedCompleted = timed.filter((i) => i.completed).length
 
-  if (!hasItems) {
-    return (
-      <div className="calendar-surface">
-        <div className="calendar-empty-state">
-          <div className="calendar-empty-icon-wrap">
-            <CalendarDays size={44} className="calendar-empty-icon" />
-          </div>
-          <h3>No Activities Scheduled</h3>
-          <p>Your schedule is clear for this day. Click below to add tasks, events, or reminders.</p>
-          <button type="button" className="calendar-empty-add-btn" onClick={onCreate}>
-            <Plus size={15} />
-            Create Event
-          </button>
-        </div>
-      </div>
-    )
-  }
+
 
   return (
     <>
+      {/* Day Agenda — horizontal slider, preserved */}
       <div className="calendar-surface calendar-agenda-card">
         <AgendaList
           title="Day Agenda"
@@ -450,28 +453,77 @@ function DayView({
           onEdit={onEdit}
           onDelete={onDelete}
           onToggle={onToggle}
+          onCreate={onCreate}
           compact
         />
       </div>
 
-      {timed.length > 0 && (
-        <div className="calendar-surface calendar-timeline-card">
+      {/* Bento Grid: 65% Smart Timeline + 35% Context Sidebar */}
+      <div className="calendar-bento-grid">
+        {/* Left column — Smart Timeline */}
+        <div className="calendar-surface bento-left-panel">
           <div className="calendar-timeline-header">
-            <h2>Timeline</h2>
+            <h2>Smart Timeline</h2>
+            {isToday && <span className="timeline-live-badge">&#9679; Live</span>}
           </div>
-          <DayTimeline
-            date={date}
-            timed={timed}
-            isToday={isToday}
-            onEdit={onEdit}
-          />
+          {timed.length > 0 ? (
+            <SmartTimeline date={date} timed={timed} isToday={isToday} onEdit={onEdit} />
+          ) : (
+            <div className="smart-timeline-no-timed">
+              <Clock size={28} className="no-timed-icon" />
+              <p>No timed events today</p>
+              <small>Add a start time to see events on the timeline</small>
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Right column — Context & Metrics Sidebar */}
+        <div className="context-sidebar">
+          <ActivityRings
+            total={items.length}
+            completed={completedCount}
+            timed={timed.length}
+            timedCompleted={timedCompleted}
+          />
+          <MiniMonthMatrix selectedDate={date} monthItems={monthItems} onSelect={onDateSelect} />
+          <UnscheduledSandbox items={monthItems} onEdit={onEdit} onToggle={onToggle} />
+        </div>
+      </div>
     </>
   )
 }
 
-function DayTimeline({
+// ─────────────────────────────────────────────────────────
+// Smart Timeline
+// ─────────────────────────────────────────────────────────
+
+function buildHourSegments(timed: CalendarItem[]): HourSegment[] {
+  const eventsByHour = new Map<number, CalendarItem[]>()
+  for (const item of timed) {
+    const hour = parseInt(item.startTime!.split(':')[0], 10)
+    if (!eventsByHour.has(hour)) eventsByHour.set(hour, [])
+    eventsByHour.get(hour)!.push(item)
+  }
+  const segments: HourSegment[] = []
+  let emptyRun: number[] = []
+  const flushRun = () => {
+    if (emptyRun.length >= 3) {
+      segments.push({ type: 'gap', hours: emptyRun, key: `gap-${emptyRun[0]}` })
+    } else {
+      for (const h of emptyRun) segments.push({ type: 'hour', hour: h, events: [] })
+    }
+    emptyRun = []
+  }
+  for (let h = 0; h < 24; h++) {
+    const events = eventsByHour.get(h) ?? []
+    if (events.length > 0) { flushRun(); segments.push({ type: 'hour', hour: h, events }) }
+    else emptyRun.push(h)
+  }
+  flushRun()
+  return segments
+}
+
+function SmartTimeline({
   date,
   timed,
   isToday,
@@ -482,83 +534,352 @@ function DayTimeline({
   isToday: boolean
   onEdit: (item: CalendarItem) => void
 }) {
-  const timelineRef = useRef<HTMLDivElement>(null)
+  const [expandedGaps, setExpandedGaps] = useState<Set<string>>(new Set())
+  const containerRef = useRef<HTMLDivElement>(null)
+  const segments = useMemo(() => buildHourSegments(timed), [timed])
+  const currentHour = isToday ? new Date().getHours() : -1
 
   useEffect(() => {
-    if (timelineRef.current) {
-      let targetHour = 8 // Default to 8 AM
-      if (timed.length > 0) {
-        const getHour = (timeStr: string) => parseInt(timeStr.split(':')[0], 10)
-        const eventHours = timed.map((item) => getHour(item.startTime!))
-        targetHour = Math.min(...eventHours)
-      } else if (isToday) {
-        targetHour = new Date().getHours()
+    if (containerRef.current) {
+      const firstEl = containerRef.current.querySelector('[data-first-event]') as HTMLElement | null
+      if (firstEl) {
+        containerRef.current.scrollTo({ top: Math.max(0, firstEl.offsetTop - 48), behavior: 'smooth' })
       }
-      const scrollPosition = Math.max(0, (targetHour - 1) * 60)
-      timelineRef.current.scrollTop = scrollPosition
     }
-  }, [date, timed.length, isToday])
+  }, [date, timed.length])
+
+  const toggleGap = (key: string) =>
+    setExpandedGaps((prev) => {
+      const next = new Set(prev)
+      next.has(key) ? next.delete(key) : next.add(key)
+      return next
+    })
+
+  let firstActiveMarked = false
 
   return (
-    <div className="calendar-day-timeline" ref={timelineRef}>
-      <div className="calendar-time-rail">
-        {HOURS.map((hour) => <span key={hour}>{formatHour(hour)}</span>)}
-      </div>
-      <div className="calendar-day-column is-single">
-        {HOURS.map((hour) => <span key={hour} className="calendar-hour-line" />)}
-        {isToday && <CurrentTimeLine />}
-        {timed.map((item, index) => (
-          <TimeBlock
-            key={item.occurrenceId ?? item.id}
-            item={item}
-            index={index}
-            onClick={() => onEdit(item)}
-            wide
+    <div className="smart-timeline-body" ref={containerRef}>
+      {segments.map((seg) => {
+        if (seg.type === 'gap') {
+          const isExpanded = expandedGaps.has(seg.key)
+          return (
+            <div key={seg.key} className="smart-timeline-gap-wrapper">
+              <button
+                type="button"
+                className={`smart-timeline-gap ${isExpanded ? 'is-expanded' : ''}`}
+                onClick={() => toggleGap(seg.key)}
+                aria-expanded={isExpanded}
+              >
+                <ChevronRight size={10} className="gap-chevron" />
+                <span className="gap-label">{seg.hours.length} Empty Hours</span>
+                <span className="gap-range">
+                  {formatHour(seg.hours[0])} – {formatHour(seg.hours[seg.hours.length - 1] + 1)}
+                </span>
+              </button>
+              {isExpanded && (
+                <div className="smart-timeline-expanded-hours">
+                  {seg.hours.map((h) => (
+                    <HourRow key={h} hour={h} events={[]} isCurrentHour={h === currentHour} onEdit={onEdit} isFirst={false} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        }
+
+        const isFirst = seg.events.length > 0 && !firstActiveMarked
+        if (seg.events.length > 0 && !firstActiveMarked) firstActiveMarked = true
+
+        return (
+          <HourRow
+            key={seg.hour}
+            hour={seg.hour}
+            events={seg.events}
+            isCurrentHour={seg.hour === currentHour}
+            onEdit={onEdit}
+            isFirst={isFirst}
           />
+        )
+      })}
+    </div>
+  )
+}
+
+function HourRow({
+  hour,
+  events,
+  isCurrentHour,
+  onEdit,
+  isFirst,
+}: {
+  hour: number
+  events: CalendarItem[]
+  isCurrentHour: boolean
+  onEdit: (item: CalendarItem) => void
+  isFirst: boolean
+}) {
+  const hasEvents = events.length > 0
+  const devActivity = MOCK_DEV_ACTIVITIES.filter((a) => a.hour === hour)
+
+  return (
+    <div
+      data-first-event={isFirst ? 'true' : undefined}
+      className={`smart-timeline-hour-row ${hasEvents ? 'has-events' : 'is-empty'} ${isCurrentHour ? 'is-current-hour' : ''}`}
+    >
+      <span className="hour-time-label">{formatHour(hour)}</span>
+      <div className="hour-track-1">
+        {events.map((item) => (
+          <EventPill key={item.occurrenceId ?? item.id} item={item} onClick={() => onEdit(item)} />
         ))}
+      </div>
+      <div className="hour-track-2" aria-label="Developer activity track">
+        {devActivity.map((act, i) => {
+          const Icon = act.type === 'commit' ? GitCommit : act.type === 'code' ? Code2 : Zap
+          return (
+            <span key={i} className={`dev-activity-dot dev-dot--${act.type}`} title={act.label}>
+              <Icon size={9} />
+            </span>
+          )
+        })}
+        {devActivity.length === 0 && hasEvents && (
+          <span className="dev-slot-empty" title="Dev activity slot — wire up API to populate" />
+        )}
       </div>
     </div>
   )
 }
 
-function CurrentTimeLine() {
-  const now = new Date()
-  const top = ((now.getHours() * 60 + now.getMinutes()) / 1440) * 100
-  return <span className="calendar-now-line" style={{ top: `${top}%` }} />
-}
-
-function TimeBlock({
-  item,
-  index,
-  onClick,
-  wide,
-}: {
-  item: CalendarItem
-  index: number
-  onClick: () => void
-  wide?: boolean
-}) {
-  const startMinutes = timeToMinutes(item.startTime)
-  const endMinutes = item.endTime ? timeToMinutes(item.endTime) : startMinutes + 45
-  const top = (startMinutes / 1440) * 100
-  const height = Math.max(((endMinutes - startMinutes) / 1440) * 100, wide ? 2.8 : 4)
+function EventPill({ item, onClick }: { item: CalendarItem; onClick: () => void }) {
+  const color = item.color ?? '#9ee7e8'
   return (
     <button
       type="button"
-      className={`calendar-time-block ${item.completed ? 'is-completed' : ''}`}
+      className={`event-pill ${item.completed ? 'is-completed' : ''}`}
       style={{
-        top: `${top}%`,
-        height: `${height}%`,
-        background: item.color ?? '#9ee7e8',
-        left: wide ? '12px' : `${8 + (index % 2) * 8}px`,
-        right: wide ? '18px' : `${8 + (index % 2) * 4}px`,
-      }}
+        '--pill-bg': `${color}28`,
+        '--pill-border': `${color}55`,
+        '--pill-accent': color,
+      } as React.CSSProperties}
       onClick={onClick}
       title={item.title}
     >
-      <strong>{item.title}</strong>
-      <span>{formatItemTime(item)}</span>
+      <span className="event-pill-dot" style={{ background: color }} />
+      <strong className="event-pill-title">{item.title}</strong>
+      <time className="event-pill-time">{formatItemTime(item)}</time>
     </button>
+  )
+}
+
+// ─────────────────────────────────────────────────────────
+// Context & Metrics Sidebar Widgets
+// ─────────────────────────────────────────────────────────
+
+function ActivityRings({
+  total,
+  completed,
+  timed,
+  timedCompleted,
+}: {
+  total: number
+  completed: number
+  timed: number
+  timedCompleted: number
+}) {
+  const SIZE = 110
+  const CX = SIZE / 2
+  const CY = SIZE / 2
+  const STROKE = 9
+  const r1 = 44
+  const r2 = 30
+  const circ1 = 2 * Math.PI * r1
+  const circ2 = 2 * Math.PI * r2
+  const ratio1 = total > 0 ? Math.min(completed / total, 1) : 0
+  const ratio2 = timed > 0 ? Math.min(timedCompleted / timed, 1) : 0
+
+  return (
+    <div className="activity-rings-widget">
+      <div className="widget-header">
+        <h3>Activity Rings</h3>
+        <span className="widget-subtext">Today</span>
+      </div>
+      <div className="rings-container">
+        <div className="rings-svg-wrap">
+          <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} aria-hidden="true">
+            <circle cx={CX} cy={CY} r={r1} fill="none" stroke="rgba(79,209,197,0.12)" strokeWidth={STROKE} />
+            <circle cx={CX} cy={CY} r={r2} fill="none" stroke="rgba(155,143,247,0.12)" strokeWidth={STROKE} />
+            <circle
+              cx={CX} cy={CY} r={r1} fill="none" stroke="#4fd1c5" strokeWidth={STROKE}
+              strokeDasharray={circ1} strokeDashoffset={circ1 * (1 - ratio1)}
+              strokeLinecap="round" transform={`rotate(-90 ${CX} ${CY})`}
+              style={{ transition: 'stroke-dashoffset 0.8s cubic-bezier(0.16,1,0.3,1)' }}
+            />
+            <circle
+              cx={CX} cy={CY} r={r2} fill="none" stroke="#9b8ff7" strokeWidth={STROKE}
+              strokeDasharray={circ2} strokeDashoffset={circ2 * (1 - ratio2)}
+              strokeLinecap="round" transform={`rotate(-90 ${CX} ${CY})`}
+              style={{ transition: 'stroke-dashoffset 0.8s cubic-bezier(0.16,1,0.3,1)' }}
+            />
+            <text x={CX} y={CY - 4} textAnchor="middle" fontSize="15" fontWeight="700" fill="#101312" fontFamily="inherit">
+              {Math.round(ratio1 * 100)}%
+            </text>
+            <text x={CX} y={CY + 11} textAnchor="middle" fontSize="8.5" fontWeight="600" fill="rgba(16,19,18,0.45)" fontFamily="inherit">
+              velocity
+            </text>
+          </svg>
+        </div>
+        <div className="rings-legend">
+          <div className="legend-row">
+            <span className="legend-swatch" style={{ background: '#4fd1c5' }} />
+            <div className="legend-text">
+              <span className="legend-label">Task Velocity</span>
+              <strong className="legend-value">{completed}<small>/{total}</small></strong>
+            </div>
+          </div>
+          <div className="legend-row">
+            <span className="legend-swatch" style={{ background: '#9b8ff7' }} />
+            <div className="legend-text">
+              <span className="legend-label">Focus Time</span>
+              <strong className="legend-value">{timedCompleted}<small>/{timed}</small></strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function MiniMonthMatrix({
+  selectedDate,
+  monthItems,
+  onSelect,
+}: {
+  selectedDate: string
+  monthItems: CalendarItem[]
+  onSelect: (date: string) => void
+}) {
+  const parsed = parseISODate(selectedDate)
+  const today = toISODate(new Date())
+  const activeMonth = parsed.getMonth()
+  const firstDay = new Date(parsed.getFullYear(), parsed.getMonth(), 1)
+  const gridStart = startOfWeek(firstDay)
+  const days = Array.from({ length: 35 }, (_, i) => {
+    const d = new Date(gridStart)
+    d.setDate(gridStart.getDate() + i)
+    return d
+  })
+
+  const statsByDate = useMemo(() => {
+    const map = new Map<string, { total: number; completed: number }>()
+    for (const item of monthItems) {
+      const s = map.get(item.date) ?? { total: 0, completed: 0 }
+      map.set(item.date, { total: s.total + 1, completed: s.completed + (item.completed ? 1 : 0) })
+    }
+    return map
+  }, [monthItems])
+
+  const ABBR = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+
+  return (
+    <div className="mini-month-matrix-widget">
+      <div className="widget-header">
+        <h3>Month View</h3>
+        <span className="widget-subtext">
+          {new Intl.DateTimeFormat(undefined, { month: 'short', year: 'numeric' }).format(parsed)}
+        </span>
+      </div>
+      <div className="mmm-weekdays">
+        {ABBR.map((d, i) => <span key={i}>{d}</span>)}
+      </div>
+      <div className="mmm-grid" role="grid" aria-label="Month view">
+        {days.map((date) => {
+          const iso = toISODate(date)
+          const isMuted = date.getMonth() !== activeMonth
+          const isSelected = iso === selectedDate
+          const isToday = iso === today
+          const s = statsByDate.get(iso)
+          const ratio = s ? s.completed / Math.max(s.total, 1) : 0
+          const hasItems = !!s
+          const tintA = hasItems ? 0.1 + ratio * 0.55 : 0
+          const borderA = hasItems ? 0.12 + ratio * 0.45 : 0
+
+          return (
+            <button
+              key={iso}
+              type="button"
+              role="gridcell"
+              className={`mmm-day ${isMuted ? 'is-muted' : ''} ${isSelected ? 'is-selected' : ''} ${isToday && !isSelected ? 'is-today' : ''}`}
+              onClick={() => onSelect(iso)}
+              title={s ? `${iso} – ${s.completed}/${s.total} done` : iso}
+              style={hasItems && !isSelected ? { background: `rgba(79,209,197,${tintA})`, borderColor: `rgba(79,209,197,${borderA})` } : undefined}
+            >
+              {date.getDate()}
+              {hasItems && <i className="mmm-activity-dot" />}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function UnscheduledSandbox({
+  items,
+  onEdit,
+  onToggle,
+}: {
+  items: CalendarItem[]
+  onEdit: (item: CalendarItem) => void
+  onToggle: (item: CalendarItem) => void
+}) {
+  const unscheduled = useMemo(() => items.filter((item) => item.allDay || !item.startTime), [items])
+
+  return (
+    <div className="unscheduled-sandbox-widget">
+      <div className="widget-header">
+        <h3>Backlog</h3>
+        {unscheduled.length > 0 && <span className="widget-badge">{unscheduled.length}</span>}
+      </div>
+      {unscheduled.length === 0 ? (
+        <p className="sandbox-empty">All tasks have time blocks ✓</p>
+      ) : (
+        <ul className="sandbox-list" aria-label="Unscheduled tasks">
+          {unscheduled.map((item) => {
+            const Icon = iconForType(item.itemType)
+            const color = item.color ?? '#9ee7e8'
+            return (
+              <li
+                key={item.occurrenceId ?? item.id}
+                className={`sandbox-item ${item.completed ? 'is-completed' : ''}`}
+                data-drag-ready="true"
+              >
+                <span className="sandbox-item-icon" style={{ background: `${color}30`, color }}>
+                  <Icon size={11} strokeWidth={2.2} />
+                </span>
+                <span className="sandbox-item-title">{item.title}</span>
+                <div className="sandbox-item-actions">
+                  <button
+                    type="button"
+                    className="sandbox-action-btn"
+                    onClick={() => onToggle(item)}
+                    aria-label={item.completed ? 'Mark incomplete' : 'Mark complete'}
+                  >
+                    {item.completed ? <Check size={10} /> : <Circle size={10} />}
+                  </button>
+                  <button
+                    type="button"
+                    className="sandbox-action-btn"
+                    onClick={() => onEdit(item)}
+                    aria-label="Edit item"
+                  >
+                    <Pencil size={10} />
+                  </button>
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
   )
 }
 
@@ -858,7 +1179,10 @@ function getVisibleRange(date: string, mode: CalendarMode) {
     }
   }
   if (mode === 'day') {
-    return { start: date, end: date, label: 'Day focus' }
+    // Fetch the full month so MiniMonthMatrix can show contribution data
+    const firstDay = new Date(parsed.getFullYear(), parsed.getMonth(), 1)
+    const lastDay = new Date(parsed.getFullYear(), parsed.getMonth() + 1, 0)
+    return { start: toISODate(firstDay), end: toISODate(lastDay), label: 'Day focus' }
   }
   const start = startOfWeek(parsed)
   const end = new Date(start)
@@ -905,12 +1229,6 @@ function toISODate(date: Date) {
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
-}
-
-function timeToMinutes(time?: string) {
-  if (!time) return 0
-  const [hour, minute] = time.split(':').map(Number)
-  return hour * 60 + minute
 }
 
 function formatHour(hour: number) {

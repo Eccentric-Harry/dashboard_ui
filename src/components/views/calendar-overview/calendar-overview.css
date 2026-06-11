@@ -1130,7 +1130,8 @@
   .calendar-dashboard {
     position: static;
     padding: 20px 16px 88px;
-    overflow: visible;
+    overflow-x: hidden;
+    max-width: 100%;
   }
 
   .calendar-main-panel {
@@ -1149,6 +1150,21 @@
     display: flex;
     flex-direction: column;
     padding: 12px;
+  }
+
+  .calendar-bento-grid {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .bento-left-panel {
+    padding: 16px;
+  }
+
+  .mmm-day {
+    padding: 0;
+    margin: 0;
+    min-width: 0;
   }
 
   .calendar-day-timeline {
@@ -1530,5 +1546,693 @@
   .calendar-header-actions {
     display: none !important;
     /* Hide navigation buttons and add button on mobile */
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BENTO GRID LAYOUT
+   ═══════════════════════════════════════════════════════════ */
+
+.calendar-bento-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 67fr) minmax(0, 33fr);
+  gap: 18px;
+  margin-top: 18px;
+  align-items: stretch; /* equal-height columns */
+}
+
+/* ── Left panel wrapper — flex column so timeline body can grow ── */
+.bento-left-panel {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Right column — fills its grid cell height and stacks widgets ── */
+.context-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  height: 100%;
+  min-width: 0; /* allow column to shrink below intrinsic min-content size */
+  overflow: hidden;
+}
+
+/* ── Live badge on timeline header ── */
+.timeline-live-badge {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #b4232e;
+  animation: livePulse 2s ease-in-out infinite;
+}
+
+@keyframes livePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SMART TIMELINE
+   ═══════════════════════════════════════════════════════════ */
+
+.smart-timeline-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;           /* grows to fill .bento-left-panel height */
+  min-height: 0;     /* necessary for flex overflow to work */
+  overflow-y: auto;
+  margin-top: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(16, 19, 18, 0.1) transparent;
+}
+
+.smart-timeline-body::-webkit-scrollbar { width: 4px; }
+.smart-timeline-body::-webkit-scrollbar-track { background: transparent; }
+.smart-timeline-body::-webkit-scrollbar-thumb {
+  background: rgba(16, 19, 18, 0.12);
+  border-radius: 4px;
+}
+
+/* ── Empty state when no timed events ── */
+.smart-timeline-no-timed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 48px 24px;
+  text-align: center;
+  color: rgba(16, 19, 18, 0.45);
+}
+
+.no-timed-icon { opacity: 0.3; }
+
+.smart-timeline-no-timed p {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(16, 19, 18, 0.5);
+}
+
+.smart-timeline-no-timed small {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(16, 19, 18, 0.35);
+}
+
+/* ── Hour row ── */
+.smart-timeline-hour-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  min-height: 44px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(16, 19, 18, 0.04);
+  transition: background 0.15s ease;
+}
+
+.smart-timeline-hour-row.has-events {
+  min-height: 58px;
+  background: rgba(255, 255, 255, 0.32);
+  border-radius: 10px;
+  padding: 6px 8px;
+  border-bottom-color: transparent;
+  margin-bottom: 3px;
+}
+
+.smart-timeline-hour-row.is-current-hour {
+  background: rgba(79, 209, 197, 0.07) !important;
+  border-radius: 10px;
+  border: 1px solid rgba(79, 209, 197, 0.22);
+  padding: 6px 8px;
+  border-bottom-color: rgba(79, 209, 197, 0.22);
+}
+
+/* ── Hour label (left gutter) ── */
+.hour-time-label {
+  flex-shrink: 0;
+  width: 46px;
+  font-size: 9.5px;
+  font-weight: 800;
+  color: rgba(16, 19, 18, 0.38);
+  padding-top: 4px;
+  text-align: right;
+  padding-right: 10px;
+  letter-spacing: 0.02em;
+}
+
+.smart-timeline-hour-row.is-current-hour .hour-time-label {
+  color: rgba(79, 209, 197, 0.9);
+}
+
+/* ── Track 1: events ── */
+.hour-track-1 {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* ── Track 2: dev activity ── */
+.hour-track-2 {
+  flex-shrink: 0;
+  width: 52px;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 3px;
+  padding-top: 3px;
+  padding-left: 7px;
+  border-left: 1px solid rgba(16, 19, 18, 0.05);
+}
+
+/* ── Dev activity dots ── */
+.dev-activity-dot {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  cursor: default;
+  transition: transform 0.15s ease;
+}
+
+.dev-activity-dot:hover { transform: scale(1.1); }
+
+.dev-dot--commit {
+  background: rgba(36, 41, 47, 0.09);
+  color: rgba(36, 41, 47, 0.7);
+}
+
+.dev-dot--code {
+  background: rgba(99, 102, 241, 0.1);
+  color: rgba(99, 102, 241, 0.8);
+}
+
+.dev-dot--zap {
+  background: rgba(234, 179, 8, 0.1);
+  color: rgba(161, 120, 2, 0.8);
+}
+
+/* Empty slot placeholder (shown when event exists but no dev data yet) */
+.dev-slot-empty {
+  display: block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(16, 19, 18, 0.08);
+  margin-top: 5px;
+}
+
+/* ── Accordion gap row ── */
+.smart-timeline-gap-wrapper {
+  margin: 3px 0;
+}
+
+.smart-timeline-gap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 7px 10px 7px 6px;
+  border: 1px dashed rgba(16, 19, 18, 0.11);
+  border-radius: 9px;
+  background: rgba(16, 19, 18, 0.018);
+  color: rgba(16, 19, 18, 0.4);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.18s ease-in-out;
+  font-family: inherit;
+}
+
+.smart-timeline-gap:hover {
+  background: rgba(16, 19, 18, 0.04);
+  border-color: rgba(16, 19, 18, 0.18);
+  color: rgba(16, 19, 18, 0.65);
+}
+
+.gap-chevron {
+  flex-shrink: 0;
+  transition: transform 0.2s ease-in-out;
+  color: rgba(16, 19, 18, 0.35);
+}
+
+.smart-timeline-gap.is-expanded .gap-chevron {
+  transform: rotate(90deg);
+}
+
+.gap-label {
+  flex: 1;
+}
+
+.gap-range {
+  font-size: 9.5px;
+  font-weight: 600;
+  opacity: 0.65;
+  letter-spacing: 0.01em;
+}
+
+.smart-timeline-expanded-hours {
+  animation: slideDownHours 0.2s ease-in-out;
+  overflow: hidden;
+  padding-left: 0;
+}
+
+@keyframes slideDownHours {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Event pill (Track 1 items) ── */
+.event-pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 9px 5px 7px;
+  border-radius: 8px;
+  background: var(--pill-bg, rgba(158, 231, 232, 0.2));
+  border: 1px solid var(--pill-border, rgba(158, 231, 232, 0.4));
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font-family: inherit;
+  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+  min-width: 0; /* prevent title overflow from stretching parent */
+}
+
+.event-pill:hover {
+  transform: translateX(2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+}
+
+.event-pill.is-completed {
+  opacity: 0.48;
+  filter: grayscale(55%);
+}
+
+.event-pill-dot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.event-pill-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 700;
+  color: #101312;
+  letter-spacing: -0.01em;
+}
+
+.event-pill-time {
+  flex-shrink: 0;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: rgba(16, 19, 18, 0.46);
+  letter-spacing: 0.02em;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SHARED WIDGET TOKENS
+   ═══════════════════════════════════════════════════════════ */
+
+/* Shared glass surface — uniform border-radius & shadows */
+.activity-rings-widget,
+.mini-month-matrix-widget,
+.unscheduled-sandbox-widget {
+  border: 1px solid rgba(255, 255, 255, 0.54);
+  border-radius: 20px;
+  background: rgba(250, 252, 247, 0.72);
+  box-shadow:
+    0 16px 40px rgba(45, 60, 48, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  padding: 14px 16px;  /* tighter: was 16px */
+  min-width: 0;        /* prevent widget from expanding beyond grid cell */
+}
+
+/* Activity rings: slim, high-density — no extra padding */
+.activity-rings-widget {
+  padding: 12px 14px;
+}
+
+.widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px; /* was 13px */
+}
+
+.widget-header h3 {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0;
+  color: #101312;
+}
+
+.widget-subtext {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: rgba(16, 19, 18, 0.46);
+  background: rgba(16, 19, 18, 0.06);
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.03em;
+}
+
+.widget-badge {
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 7px;
+  background: #101312;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY RINGS WIDGET
+   ═══════════════════════════════════════════════════════════ */
+
+.rings-container {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.rings-svg-wrap {
+  flex-shrink: 0;
+  filter: drop-shadow(0 4px 10px rgba(79, 209, 197, 0.14));
+}
+
+.rings-legend {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-swatch {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.legend-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.legend-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(16, 19, 18, 0.52);
+  white-space: nowrap;
+}
+
+.legend-value {
+  font-size: 14px;
+  font-weight: 800;
+  color: #101312;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.legend-value small {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(16, 19, 18, 0.45);
+  letter-spacing: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MINI MONTH MATRIX WIDGET
+   ═══════════════════════════════════════════════════════════ */
+
+.mmm-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 4px;
+  text-align: center;
+  font-size: 8.5px;
+  font-weight: 800;
+  color: rgba(16, 19, 18, 0.38);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.mmm-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+/* ── Month day cells — circle/dot style instead of rigid squares ── */
+.mmm-day {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border: none;                     /* remove box borders */
+  border-radius: 50%;               /* full circles */
+  background: transparent;          /* transparent by default */
+  color: #101312;
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  overflow: hidden;
+}
+
+.mmm-day:hover {
+  background: rgba(16, 19, 18, 0.07);
+  transform: scale(1.1);
+  z-index: 1;
+}
+
+.mmm-day.is-muted {
+  opacity: 0.28;
+  pointer-events: none;
+}
+
+.mmm-day.is-selected {
+  background: #101312 !important;
+  color: #fff !important;
+  box-shadow: 0 3px 12px rgba(16, 19, 18, 0.26);
+  border-radius: 50%;
+}
+
+.mmm-day.is-today {
+  /* Soft dual-ring instead of box border */
+  box-shadow:
+    0 0 0 1.5px rgba(79, 209, 197, 0.8),
+    0 0 0 3.5px rgba(79, 209, 197, 0.18);
+}
+
+.mmm-activity-dot {
+  position: absolute;
+  bottom: 1.5px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: block;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(79, 209, 197, 0.7);
+}
+
+.mmm-day.is-selected .mmm-activity-dot {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   UNSCHEDULED SANDBOX WIDGET
+   ═══════════════════════════════════════════════════════════ */
+
+/* Sandbox widget grows to fill remaining sidebar height */
+.unscheduled-sandbox-widget {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sandbox-empty {
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: rgba(16, 19, 18, 0.38);
+  text-align: center;
+  padding: 12px 0 4px;
+}
+
+.sandbox-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;              /* grows to fill widget */
+  min-height: 0;        /* allows shrink */
+  max-height: 260px;    /* cap so it doesn't blow past the page */
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(16, 19, 18, 0.1) transparent;
+}
+
+.sandbox-list::-webkit-scrollbar { width: 3px; }
+.sandbox-list::-webkit-scrollbar-track { background: transparent; }
+.sandbox-list::-webkit-scrollbar-thumb {
+  background: rgba(16, 19, 18, 0.1);
+  border-radius: 3px;
+}
+
+.sandbox-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  border: 1px dashed rgba(16, 19, 18, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.44);
+  transition: all 0.18s ease;
+  cursor: grab;
+  min-width: 0; /* prevent title from expanding item past sidebar boundary */
+}
+
+.sandbox-item:hover {
+  border-color: rgba(79, 209, 197, 0.38);
+  background: rgba(79, 209, 197, 0.06);
+  transform: translateX(2px);
+}
+
+.sandbox-item.is-completed {
+  opacity: 0.46;
+  filter: grayscale(55%);
+}
+
+.sandbox-item-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+}
+
+.sandbox-item-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #101312;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sandbox-item-actions {
+  display: flex;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.sandbox-action-btn {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: none;
+  background: rgba(16, 19, 18, 0.05);
+  color: rgba(16, 19, 18, 0.46);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sandbox-action-btn:hover {
+  background: #101312;
+  color: #fff;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE — collapse bento to single column ≤900px
+   ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 900px) {
+  .calendar-bento-grid {
+    grid-template-columns: 1fr;
+    align-items: start; /* back to start when stacked */
+  }
+
+  .bento-left-panel {
+    min-height: 320px;
+  }
+
+  .smart-timeline-body {
+    max-height: 380px;
+    flex: none; /* revert grow behaviour when stacked */
+  }
+
+  .context-sidebar {
+    height: auto; /* revert full-height when stacked */
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .unscheduled-sandbox-widget {
+    flex: none;
+  }
+
+  .mini-month-matrix-widget {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 600px) {
+  .context-sidebar {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .hour-track-2 {
+    display: none;
+  }
+  .smart-timeline-gap {
+    padding: 7px 8px;
+    font-size: 10.5px;
+  }
+  .gap-chevron {
+    width: 8px;
+    height: 8px;
   }
 }
