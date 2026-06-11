@@ -173,3 +173,9 @@ export const mockTasksData: Record<number, { time: string; title: string }[]> = 
     { time: '03:00 PM', title: 'Project Kickoff' }
   ],
 }
+
+function dummyTest(){
+  console.log("Just testing build...")
+}
+
+dummyTest();
