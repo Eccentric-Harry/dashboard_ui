@@ -10,7 +10,7 @@ const mealDotColors: Record<string, string> = {
   Snack: '#a78bfa',
   Midnight: '#6366f1',
   'Post Workout': '#f87171',
-  'Mid-Morning': '#fb923c',
+  'Mid-Morning': '#c2410c',
 }
 
 import { RingProgress } from './ring-progress'
@@ -226,7 +226,7 @@ return (
                   </span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px', textAlign: 'right' }}>
-                  <strong style={{ fontSize: '13px', color: 'rgba(23, 28, 25, 0.9)' }}>{proteinGrams}g</strong>
+                  <strong style={{ fontSize: '13px', color: '#26953a' }}>{proteinGrams}g</strong>
                   <small style={{ color: 'rgba(23, 28, 25, 0.5)', fontSize: '11px' }}>{calories.toLocaleString()} kcal</small>
                 </div>
                 {id && isEditMode ? (

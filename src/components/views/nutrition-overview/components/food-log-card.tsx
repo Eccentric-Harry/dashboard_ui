@@ -5,13 +5,13 @@ import { fetchFoodEntries } from '../../../../lib/api'
 import { getFoodIconDetails, sortFoodEntries } from './food-icon-helper'
 
 const mealDotColors: Record<string, string> = {
-  Breakfast: '#f97316', // Premium Orange
-  Lunch: '#059669', // Premium Emerald Green
+  Breakfast: '#f97316',
+  Lunch: '#059669',
   Dinner: '#38bdf8',
   Snack: '#a78bfa',
   Midnight: '#6366f1',
   'Post Workout': '#f87171',
-  'Mid-Morning': '#fb923c',
+  'Mid-Morning': '#c2410c',
 }
 
 type FoodEntry = {

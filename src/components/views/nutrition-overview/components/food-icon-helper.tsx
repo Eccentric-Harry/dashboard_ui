@@ -565,7 +565,7 @@ export const mealDotColors: Record<string, string> = {
   Snack: '#a78bfa', // Lavender
   Midnight: '#6366f1', // Indigo
   'Post Workout': '#f87171', // Coral Red
-  'Mid-Morning': '#fb923c', // Warm Peach
+  'Mid-Morning': '#c2410c', // Deep Burnt Orange
 }
 
 export const getFoodIconDetails = (description: string = '', mealType: string = '') => {

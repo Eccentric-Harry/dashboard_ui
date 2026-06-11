@@ -2857,3 +2857,138 @@ button {
     z-index: 1000;
   }
 }
+
+/* ── Focus Mode Overlay ── */
+
+.focus-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #101312;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.focus-overlay-exit {
+  position: absolute;
+  top: 32px;
+  left: 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.focus-overlay-exit:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+.focus-overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.focus-overlay-pursuit {
+  font-size: 16px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.focus-overlay-timer {
+  font-size: 120px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.06em;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 768px) {
+  .focus-overlay-timer {
+    font-size: 72px;
+  }
+}
+
+.focus-overlay-status {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.focus-overlay-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.focus-overlay-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 200px;
+  padding: 16px 32px;
+  border-radius: 100px;
+  background: #ffffff;
+  color: #101312;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.focus-overlay-action-btn:hover {
+  opacity: 0.92;
+}
+
+.focus-overlay-action-btn:active {
+  transform: scale(0.97);
+}
+
+.focus-overlay-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.focus-overlay-cancel-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.focus-overlay-cancel-btn:hover {
+  background: rgba(255, 59, 48, 0.15);
+  color: #ff453a;
+}
+
+.focus-overlay-cancel-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

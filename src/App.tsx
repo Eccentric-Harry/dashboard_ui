@@ -10,6 +10,7 @@ import { WorkoutsOverview } from './components/views/workouts-view'
 import { DashboardProvider } from './contexts/DashboardContext'
 import { LearningsOverview } from './components/views/learnings-view'
 import { CalendarOverview } from './components/views/calendar-view'
+import { FocusProvider } from './contexts/FocusContext'
 import { isStandalone } from './lib/utils'
 import { subscribeToActiveRequests } from './lib/api'
 import { OverlayLoader } from './components/ui/OverlayLoader'
@@ -223,6 +224,7 @@ function App() {
 
   return (
     <DashboardProvider date={currentDate}>
+      <FocusProvider>
       <NotificationProvider>
         <Toaster
           position="top-center"
@@ -304,6 +306,7 @@ function App() {
         <NotificationCenter />
         <OverlayLoader show={showOverlay} />
       </NotificationProvider>
+      </FocusProvider>
     </DashboardProvider>
   );
 }

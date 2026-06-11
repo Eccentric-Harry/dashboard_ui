@@ -3,6 +3,7 @@ import { TopChip } from '../dashboard/quantified-self-dashboard/components/top-c
 import type { AppPath } from '../dashboard/quantified-self-dashboard/data'
 
 import { LearningsOverviewDashboard } from './learnings-overview/learnings-overview-dashboard'
+import { useFocus } from '../../contexts/FocusContext'
 
 type LearningsOverviewProps = {
   activePath: AppPath
@@ -11,10 +12,12 @@ type LearningsOverviewProps = {
 }
 
 function LearningsOverview({ activePath, onNavigate, searchParams }: LearningsOverviewProps) {
+  const { isFocusMode } = useFocus()
+
   return (
     <main className="dashboard-shell">
       <div className="dashboard-stage" aria-label="Learnings overview">
-        <SideRail activePath={activePath} onNavigate={onNavigate} />
+        {!isFocusMode && <SideRail activePath={activePath} onNavigate={onNavigate} />}
         <TopChip />
         <LearningsOverviewDashboard searchParams={searchParams} onNavigate={onNavigate} />
       </div>
