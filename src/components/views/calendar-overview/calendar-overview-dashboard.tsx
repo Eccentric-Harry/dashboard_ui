@@ -61,6 +61,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   const [modal, setModal] = useState<ModalState>({ open: false })
   const [deleteTarget, setDeleteTarget] = useState<CalendarItem | null>(null)
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
+  const [dropdownOpenFor, setDropdownOpenFor] = useState<string | null>(null)
   const calendarRef = useRef<HTMLDivElement>(null)
   const routineListRef = useRef<HTMLDivElement>(null)
 
@@ -93,6 +94,13 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     }
   }, [loadItems])
 
+  useEffect(() => {
+    if (!dropdownOpenFor) return
+    const handler = () => setDropdownOpenFor(null)
+    window.addEventListener('click', handler)
+    return () => window.removeEventListener('click', handler)
+  }, [dropdownOpenFor])
+
   const selectedItems = useMemo(() => byDate(items, selectedDate), [items, selectedDate])
 
   useEffect(() => {
@@ -107,10 +115,12 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     return () => clearTimeout(timer)
   }, [loading, selectedItems.length])
   const currentItem = useMemo(() => findCurrentItem(selectedItems, selectedDate), [selectedDate, selectedItems])
-  const selectedItem = useMemo(
-    () => selectedItems.find((item) => itemKey(item) === selectedItemKey) ?? currentItem ?? selectedItems[0] ?? null,
-    [currentItem, selectedItemKey, selectedItems],
-  )
+  const selectedItem = useMemo(() => {
+    const explicit = selectedItems.find((item) => itemKey(item) === selectedItemKey)
+    if (explicit) return explicit
+    if (currentItem && !currentItem.completed) return currentItem
+    return selectedItems.find((item) => !item.completed) ?? selectedItems[0] ?? null
+  }, [currentItem, selectedItemKey, selectedItems])
 
   const updateSelectedDate = (date: string) => {
     setSelectedDate(date)
@@ -153,6 +163,34 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
       window.dispatchEvent(new CustomEvent('calendar-updated'))
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to delete item')
+    }
+  }
+
+  const handleMoveToTomorrow = async (item: CalendarItem) => {
+    if (!item.id) return
+    const parsed = parseISODate(item.date)
+    parsed.setDate(parsed.getDate() + 1)
+    try {
+      await updateCalendarItem(item.id, {
+        title: item.title,
+        date: toISODate(parsed),
+        startTime: item.startTime,
+        endTime: item.endTime,
+        allDay: item.allDay,
+        itemType: item.itemType,
+        category: item.category,
+        color: item.color,
+        notes: item.notes,
+        completed: item.completed,
+        sortOrder: item.sortOrder,
+        recurrenceFrequency: item.recurrenceFrequency,
+        recurrenceUntil: item.recurrenceUntil,
+      })
+      toast.success(`Moved "${item.title}" to tomorrow`)
+      await loadItems()
+      window.dispatchEvent(new CustomEvent('calendar-updated'))
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to move item')
     }
   }
 
@@ -279,24 +317,50 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                       <span className={`routine-node ${isActive ? 'is-active' : ''}`}>
                         {item.completed ? <Check size={11} /> : null}
                       </span>
-                      <button
-                        type="button"
-                        className={`routine-card ${isActive ? 'is-active' : ''}`}
-                        onClick={() => setSelectedItemKey(itemKey(item))}
-                      >
-                        <span className="routine-card-icon" style={{ '--card-color': getRoutineIconDetails(item).color, '--card-bg': getRoutineIconDetails(item).bg } as React.CSSProperties}>
-                          {(() => {
-                            const CardIcon = getRoutineIconDetails(item).icon
-                            return <CardIcon size={16} />
-                          })()}
-                        </span>
-                        <div className="routine-card-copy">
-                          <span>{formatItemTime(item)}</span>
-                          <strong>{item.title}</strong>
-                          <p>{item.notes || getFallbackDescription(item)}</p>
-                        </div>
-                        <MoreHorizontal size={18} />
-                      </button>
+                      <div className="routine-card-wrapper">
+                        <button
+                          type="button"
+                          className={`routine-card ${isActive ? 'is-active' : ''}`}
+                          onClick={() => setSelectedItemKey(itemKey(item))}
+                        >
+                          <span className="routine-card-icon" style={{ '--card-color': getRoutineIconDetails(item).color, '--card-bg': getRoutineIconDetails(item).bg } as React.CSSProperties}>
+                            {(() => {
+                              const CardIcon = getRoutineIconDetails(item).icon
+                              return <CardIcon size={16} />
+                            })()}
+                          </span>
+                          <div className="routine-card-copy">
+                            <span>{formatItemTime(item)}</span>
+                            <strong>{item.title}</strong>
+                            <p>{item.notes || getFallbackDescription(item)}</p>
+                          </div>
+                          <span
+                            className="routine-card-more-trigger"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setDropdownOpenFor(dropdownOpenFor === itemKey(item) ? null : itemKey(item))
+                            }}
+                          >
+                            <MoreHorizontal size={18} />
+                          </span>
+                        </button>
+                        {dropdownOpenFor === itemKey(item) && (
+                          <div className="routine-card-dropdown" onClick={(e) => e.stopPropagation()}>
+                            <button onClick={() => { setModal({ open: true, item, date: item.date }); setDropdownOpenFor(null) }}>
+                              <Pencil size={14} /> Edit
+                            </button>
+                            <button onClick={() => { setDropdownOpenFor(null); handleMoveToTomorrow(item) }}>
+                              <CalendarDays size={14} /> Move to tomorrow
+                            </button>
+                            <button onClick={() => { setDropdownOpenFor(null); handleToggle(item) }}>
+                              <Check size={14} /> {item.completed ? 'Reopen' : 'Mark cancelled'}
+                            </button>
+                            <button className="danger" onClick={() => { setDropdownOpenFor(null); setDeleteTarget(item) }}>
+                              <Trash2 size={14} /> Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )
                 })}
@@ -321,8 +385,6 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
               item={selectedItem}
               isCurrent={currentItem ? itemKey(currentItem) === itemKey(selectedItem) : false}
               onToggle={() => handleToggle(selectedItem)}
-              onEdit={() => setModal({ open: true, item: selectedItem, date: selectedItem.date })}
-              onDelete={() => setDeleteTarget(selectedItem)}
             />
           ) : (
             <div className="focus-empty">
@@ -386,14 +448,10 @@ function FocusDetail({
   item,
   isCurrent,
   onToggle,
-  onEdit,
-  onDelete,
 }: {
   item: CalendarItem
   isCurrent: boolean
   onToggle: () => void
-  onEdit: () => void
-  onDelete: () => void
 }) {
   const checklist = parseChecklist(item.notes)
   const routineIcon = getRoutineIconDetails(item)
@@ -405,12 +463,8 @@ function FocusDetail({
         <div className="focus-status">
           <span className={isCurrent ? 'is-live' : ''}>{isCurrent ? 'Current focus' : 'Routine detail'}</span>
           {isCurrent && <i>Live now</i>}
-          <span className="focus-date-tag"><CalendarDays size={11} /> {formatShortDate(item.date)}</span>
         </div>
-        <div className="focus-actions">
-          <button type="button" onClick={onEdit} aria-label="Edit routine"><Pencil size={16} /></button>
-          <button type="button" onClick={onDelete} aria-label="Delete routine"><Trash2 size={16} /></button>
-        </div>
+        <span className="focus-date-tag"><CalendarDays size={11} /> {formatShortDate(item.date)}</span>
       </div>
 
       <div className="focus-hero">
@@ -429,7 +483,7 @@ function FocusDetail({
         </span>
         <div>
           <span>Time block</span>
-          <strong>{formatItemTime(item)}</strong>
+          <strong>{item.recurrenceFrequency && item.recurrenceFrequency !== 'NONE' && <Repeat2 size={14} />} {formatItemTime(item)}</strong>
         </div>
         <small>{formatDuration(item)}</small>
       </div>
@@ -458,11 +512,6 @@ function FocusDetail({
       </div>
 
       <div className="focus-footer">
-        <div>
-          {item.recurrenceFrequency && item.recurrenceFrequency !== 'NONE' && (
-            <span><Repeat2 size={14} /> {titleCase(item.recurrenceFrequency)}</span>
-          )}
-        </div>
         <button type="button" className={item.completed ? 'is-complete' : ''} onClick={onToggle}>
           {item.completed ? <CircleCheck size={18} /> : <Check size={18} />}
           {item.completed ? 'Completed' : 'Mark complete'}
@@ -653,7 +702,7 @@ function byDate(items: CalendarItem[], date: string) {
 }
 
 function compareItems(a: CalendarItem, b: CalendarItem) {
-  if (Boolean(a.allDay) !== Boolean(b.allDay)) return a.allDay ? -1 : 1
+  if (Boolean(a.allDay) !== Boolean(b.allDay)) return a.allDay ? 1 : -1
   return (a.startTime ?? '99:99').localeCompare(b.startTime ?? '99:99')
 }
 
@@ -760,9 +809,4 @@ function toISODate(date: Date) {
 function colorForCategory(category: string) {
   return CATEGORY_OPTIONS.find((option) => option.label === category)?.color ?? '#2563eb'
 }
-
-function titleCase(value: string) {
-  return value.charAt(0) + value.slice(1).toLowerCase()
-}
-
 export { CalendarOverviewDashboard }
