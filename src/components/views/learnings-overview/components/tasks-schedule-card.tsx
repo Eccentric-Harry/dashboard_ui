@@ -21,7 +21,7 @@ import type { DailyTask } from '../../../../lib/api'
 import { ConfirmDialog } from '../../../ui/confirm-dialog'
 
 // Dynamic task categories and themes
-type TaskCategory = 'Work' | 'Learning' | 'Fitness' | 'Shopping' | 'Chores' | 'Finance' | 'General';
+type TaskCategory = 'Work' | 'Learning' | 'Fitness' | 'Shopping' | 'Chores' | 'Finance' | 'Personal' | 'General';
 
 interface TaskTheme {
   name: TaskCategory;

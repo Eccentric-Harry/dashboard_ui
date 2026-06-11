@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { Play, Pause, Expand, Minimize2, RotateCcw, Square } from 'lucide-react'
+import { Play, Pause, Minimize2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useFocus } from '../../../../contexts/FocusContext'
 
@@ -64,7 +64,7 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
     if (session?.status === 'COMPLETED' && prevStatusRef.current === 'RUNNING') {
       onSessionComplete(session.durationMinutes, session.activePursuit)
     }
-    prevStatusRef.current = session?.status ?? null
+    prevStatusRef.current = session?.status ?? undefined
   }, [session?.status])
 
   const isRunning = session?.status === 'RUNNING'

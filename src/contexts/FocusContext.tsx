@@ -40,7 +40,7 @@ export function FocusProvider({ children }: { children: ReactNode }) {
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [isFetching, setIsFetching] = useState(true);
   const [isFocusMode, setFocusMode] = useState(false);
-  const tickRef = useRef<ReturnType<typeof setInterval>>();
+  const tickRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
   const refresh = useCallback(async () => {
     try {
