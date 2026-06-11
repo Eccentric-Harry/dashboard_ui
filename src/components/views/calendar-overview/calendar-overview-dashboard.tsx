@@ -93,6 +93,8 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     }
   }, [loadItems])
 
+  const selectedItems = useMemo(() => byDate(items, selectedDate), [items, selectedDate])
+
   useEffect(() => {
     if (loading || !selectedItems.length) return
     const isIpad = window.matchMedia('(min-width: 768px) and (max-width: 1024px)').matches
@@ -104,8 +106,6 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     }, 100)
     return () => clearTimeout(timer)
   }, [loading, selectedItems.length])
-
-  const selectedItems = useMemo(() => byDate(items, selectedDate), [items, selectedDate])
   const currentItem = useMemo(() => findCurrentItem(selectedItems, selectedDate), [selectedDate, selectedItems])
   const selectedItem = useMemo(
     () => selectedItems.find((item) => itemKey(item) === selectedItemKey) ?? currentItem ?? selectedItems[0] ?? null,
