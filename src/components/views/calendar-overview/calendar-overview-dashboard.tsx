@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   AlarmClock,
   CalendarDays,
   Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   CircleCheck,
@@ -28,6 +30,7 @@ import {
 } from '../../../lib/api'
 import type { CalendarItem, CalendarItemPayload, CalendarItemType, CalendarRecurrence } from '../../../lib/api'
 import { ConfirmDialog } from '../../ui/confirm-dialog'
+import { MiniMonth } from '../../ui/mini-month'
 import { getRoutineIconDetails } from './routine-icon-helper'
 
 import './calendar-overview.css'
@@ -58,6 +61,8 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   const [loading, setLoading] = useState(false)
   const [modal, setModal] = useState<ModalState>({ open: false })
   const [deleteTarget, setDeleteTarget] = useState<CalendarItem | null>(null)
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false)
+  const calendarRef = useRef<HTMLDivElement>(null)
 
   const week = useMemo(() => getWeek(selectedDate), [selectedDate])
   const visibleRange = useMemo(
@@ -107,6 +112,11 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     updateSelectedDate(toISODate(date))
   }
 
+  const handleDateSelect = (dateStr: string) => {
+    updateSelectedDate(dateStr)
+    setIsCalendarOpen(false)
+  }
+
   const handleToggle = async (item: CalendarItem) => {
     if (!item.id) return
     try {
@@ -151,14 +161,39 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   return (
     <section className="calendar-dashboard" aria-label="Daily routine">
       <header className="calendar-header">
-        <div>
+        <div className="calendar-date-picker" ref={calendarRef}>
           <span className="calendar-eyebrow">Daily rhythm</span>
-          <h1>{formatDateHeading(selectedDate)}</h1>
-          <p>
-            {selectedItems.length
-              ? `${selectedItems.filter((item) => item.completed).length} of ${selectedItems.length} complete`
-              : 'A quiet day with room to focus'}
-          </p>
+          <button
+            type="button"
+            className="calendar-date-trigger"
+            aria-expanded={isCalendarOpen}
+            aria-haspopup="dialog"
+            onClick={() => setIsCalendarOpen((open) => !open)}
+          >
+            <span>
+              <span className="calendar-date-title-wrap">
+                <strong>{formatHeaderDate(parseISODate(selectedDate))}</strong>
+                <ChevronDown size={20} className="calendar-date-chevron" />
+              </span>
+              <small>
+                {selectedItems.length
+                  ? `${selectedItems.filter((item) => item.completed).length} of ${selectedItems.length} complete`
+                  : 'A quiet day with room to focus'}
+              </small>
+            </span>
+          </button>
+
+          {isCalendarOpen && (
+            <>
+              <div className="calendar-calendar-overlay" onClick={() => setIsCalendarOpen(false)} />
+              <div className="calendar-calendar-popover" role="dialog" aria-label="Choose date">
+                <MiniMonth
+                  selectedDate={selectedDate}
+                  onSelect={handleDateSelect}
+                />
+              </div>
+            </>
+          )}
         </div>
 
         <div className="calendar-header-actions">
@@ -357,6 +392,7 @@ function FocusDetail({
         <div className="focus-status">
           <span className={isCurrent ? 'is-live' : ''}>{isCurrent ? 'Current focus' : 'Routine detail'}</span>
           {isCurrent && <i>Live now</i>}
+          <span className="focus-date-tag"><CalendarDays size={11} /> {formatShortDate(item.date)}</span>
         </div>
         <div className="focus-actions">
           <button type="button" onClick={onEdit} aria-label="Edit routine"><Pencil size={16} /></button>
@@ -413,7 +449,6 @@ function FocusDetail({
           {item.recurrenceFrequency && item.recurrenceFrequency !== 'NONE' && (
             <span><Repeat2 size={14} /> {titleCase(item.recurrenceFrequency)}</span>
           )}
-          <span><CalendarDays size={14} /> {formatShortDate(item.date)}</span>
         </div>
         <button type="button" className={item.completed ? 'is-complete' : ''} onClick={onToggle}>
           {item.completed ? <CircleCheck size={18} /> : <Check size={18} />}

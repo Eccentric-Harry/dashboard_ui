@@ -471,7 +471,7 @@
   gap: 10px;
 }
 
-.focus-status > span,
+.focus-status > span:not(.focus-date-tag):not(.is-live),
 .focus-section-label {
   color: rgba(21, 26, 24, 0.43);
   font-size: 10px;
@@ -492,6 +492,22 @@
   font-size: 9px;
   font-style: normal;
   font-weight: 850;
+}
+
+.focus-date-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 4px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: rgba(21, 26, 24, 0.05);
+  color: rgba(21, 26, 24, 0.55);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
 }
 
 .focus-actions {
