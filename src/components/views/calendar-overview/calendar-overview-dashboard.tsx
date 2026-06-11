@@ -39,12 +39,12 @@ type CalendarMode = 'month' | 'week' | 'day'
 
 const TYPE_OPTIONS: CalendarItemType[] = ['TASK', 'EVENT', 'REMINDER', 'MILESTONE']
 const CATEGORY_OPTIONS = [
-  { label: 'Personal', color: '#c8f3a3' },
-  { label: 'Work', color: '#9bd7ff' },
-  { label: 'Health', color: '#9ee7e8' },
-  { label: 'Learning', color: '#c9bff6' },
-  { label: 'Finance', color: '#ffd37d' },
-  { label: 'Social', color: '#ffb4d2' },
+  { label: 'Personal', color: '#7c3aed' },
+  { label: 'Work', color: '#2563eb' },
+  { label: 'Health', color: '#059669' },
+  { label: 'Learning', color: '#0891b2' },
+  { label: 'Finance', color: '#d97706' },
+  { label: 'Social', color: '#db2777' },
 ]
 
 // Placeholder dev activity slots — wire to real API (GitHub, LeetCode, etc.) when ready.
@@ -629,7 +629,12 @@ function HourRow({
       <span className="hour-time-label">{formatHour(hour)}</span>
       <div className="hour-track-1">
         {events.map((item) => (
-          <EventPill key={item.occurrenceId ?? item.id} item={item} onClick={() => onEdit(item)} />
+          <EventBlock
+            key={item.occurrenceId ?? item.id}
+            item={item}
+            onClick={() => onEdit(item)}
+            hour={hour}
+          />
         ))}
       </div>
       <div className="hour-track-2" aria-label="Developer activity track">
@@ -649,23 +654,35 @@ function HourRow({
   )
 }
 
-function EventPill({ item, onClick }: { item: CalendarItem; onClick: () => void }) {
-  const color = item.color ?? '#9ee7e8'
+function EventBlock({ item, onClick, hour }: { item: CalendarItem; onClick: () => void; hour: number }) {
+  const color = item.color ?? CATEGORY_OPTIONS[0].color
+  const isMicro = isMicroTask(item)
+  const height = getEventHeight(item)
+  const startMinutes = item.startTime ? item.startTime.split(':').map(Number) : [hour, 0]
+  const startOffset = startMinutes[1]
+
   return (
     <button
       type="button"
-      className={`event-pill ${item.completed ? 'is-completed' : ''}`}
+      className={`event-block ${item.completed ? 'is-completed' : ''} ${isMicro ? 'is-micro' : ''}`}
       style={{
-        '--pill-bg': `${color}28`,
-        '--pill-border': `${color}55`,
-        '--pill-accent': color,
+        '--block-bg': `${color}2E`,
+        '--block-border': `${color}4D`,
+        '--block-accent': color,
+        '--block-height': `${height}px`,
+        '--start-offset': `${startOffset}px`,
       } as React.CSSProperties}
       onClick={onClick}
       title={item.title}
     >
-      <span className="event-pill-dot" style={{ background: color }} />
-      <strong className="event-pill-title">{item.title}</strong>
-      <time className="event-pill-time">{formatItemTime(item)}</time>
+      <div className="event-block-inner">
+        <span className="event-block-dot" style={{ background: color }} />
+        <div className="event-block-content">
+          <strong className="event-block-title">{item.title}</strong>
+          <time className="event-block-time">{formatItemTime(item)}</time>
+        </div>
+        <div className="event-block-accent" style={{ background: color }} />
+      </div>
     </button>
   )
 }
@@ -696,6 +713,11 @@ function ActivityRings({
   const ratio1 = total > 0 ? Math.min(completed / total, 1) : 0
   const ratio2 = timed > 0 ? Math.min(timedCompleted / timed, 1) : 0
 
+  const ring1Color = '#101312'
+  const ring1Bg = 'rgba(16,19,18,0.08)'
+  const ring2Color = '#3b82f6'
+  const ring2Bg = 'rgba(59,130,246,0.12)'
+
   return (
     <div className="activity-rings-widget">
       <div className="widget-header">
@@ -705,16 +727,16 @@ function ActivityRings({
       <div className="rings-container">
         <div className="rings-svg-wrap">
           <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} aria-hidden="true">
-            <circle cx={CX} cy={CY} r={r1} fill="none" stroke="rgba(79,209,197,0.12)" strokeWidth={STROKE} />
-            <circle cx={CX} cy={CY} r={r2} fill="none" stroke="rgba(155,143,247,0.12)" strokeWidth={STROKE} />
+            <circle cx={CX} cy={CY} r={r1} fill="none" stroke={ring1Bg} strokeWidth={STROKE} />
+            <circle cx={CX} cy={CY} r={r2} fill="none" stroke={ring2Bg} strokeWidth={STROKE} />
             <circle
-              cx={CX} cy={CY} r={r1} fill="none" stroke="#4fd1c5" strokeWidth={STROKE}
+              cx={CX} cy={CY} r={r1} fill="none" stroke={ring1Color} strokeWidth={STROKE}
               strokeDasharray={circ1} strokeDashoffset={circ1 * (1 - ratio1)}
               strokeLinecap="round" transform={`rotate(-90 ${CX} ${CY})`}
               style={{ transition: 'stroke-dashoffset 0.8s cubic-bezier(0.16,1,0.3,1)' }}
             />
             <circle
-              cx={CX} cy={CY} r={r2} fill="none" stroke="#9b8ff7" strokeWidth={STROKE}
+              cx={CX} cy={CY} r={r2} fill="none" stroke={ring2Color} strokeWidth={STROKE}
               strokeDasharray={circ2} strokeDashoffset={circ2 * (1 - ratio2)}
               strokeLinecap="round" transform={`rotate(-90 ${CX} ${CY})`}
               style={{ transition: 'stroke-dashoffset 0.8s cubic-bezier(0.16,1,0.3,1)' }}
@@ -729,14 +751,14 @@ function ActivityRings({
         </div>
         <div className="rings-legend">
           <div className="legend-row">
-            <span className="legend-swatch" style={{ background: '#4fd1c5' }} />
+            <span className="legend-swatch" style={{ background: ring1Color }} />
             <div className="legend-text">
               <span className="legend-label">Task Velocity</span>
               <strong className="legend-value">{completed}<small>/{total}</small></strong>
             </div>
           </div>
           <div className="legend-row">
-            <span className="legend-swatch" style={{ background: '#9b8ff7' }} />
+            <span className="legend-swatch" style={{ background: ring2Color }} />
             <div className="legend-text">
               <span className="legend-label">Focus Time</span>
               <strong className="legend-value">{timedCompleted}<small>/{timed}</small></strong>
@@ -799,8 +821,7 @@ function MiniMonthMatrix({
           const s = statsByDate.get(iso)
           const ratio = s ? s.completed / Math.max(s.total, 1) : 0
           const hasItems = !!s
-          const tintA = hasItems ? 0.1 + ratio * 0.55 : 0
-          const borderA = hasItems ? 0.12 + ratio * 0.45 : 0
+          const tintA = hasItems ? 0.04 + ratio * 0.06 : 0
 
           return (
             <button
@@ -810,10 +831,10 @@ function MiniMonthMatrix({
               className={`mmm-day ${isMuted ? 'is-muted' : ''} ${isSelected ? 'is-selected' : ''} ${isToday && !isSelected ? 'is-today' : ''}`}
               onClick={() => onSelect(iso)}
               title={s ? `${iso} – ${s.completed}/${s.total} done` : iso}
-              style={hasItems && !isSelected ? { background: `rgba(79,209,197,${tintA})`, borderColor: `rgba(79,209,197,${borderA})` } : undefined}
+              style={hasItems && !isSelected ? { background: `rgba(16,19,18,${tintA})` } : undefined}
             >
               {date.getDate()}
-              {hasItems && <i className="mmm-activity-dot" />}
+              {hasItems && !isSelected && <i className="mmm-activity-dot" />}
             </button>
           )
         })}
@@ -1240,6 +1261,24 @@ function formatHour(hour: number) {
 function formatItemTime(item: CalendarItem) {
   if (item.allDay || !item.startTime) return 'All day'
   return item.endTime ? `${item.startTime} - ${item.endTime}` : item.startTime
+}
+
+function getEventDurationMinutes(item: CalendarItem): number {
+  if (!item.startTime || !item.endTime) return 60
+  const [startH, startM] = item.startTime.split(':').map(Number)
+  const [endH, endM] = item.endTime.split(':').map(Number)
+  return (endH * 60 + endM) - (startH * 60 + startM)
+}
+
+function getEventHeight(item: CalendarItem): number {
+  const durationMinutes = getEventDurationMinutes(item)
+  const BASE_PX_PER_HOUR = 80
+  const height = Math.max(44, Math.round((durationMinutes / 60) * BASE_PX_PER_HOUR))
+  return height
+}
+
+function isMicroTask(item: CalendarItem): boolean {
+  return getEventDurationMinutes(item) <= 15
 }
 
 function formatLongDate(date: string) {
