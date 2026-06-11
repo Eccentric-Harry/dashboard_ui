@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Trash2, Bell, BellOff, Calendar, CheckSquare, Trophy, Eye, Clock } from 'lucide-react';
+import { X, Trash2, Bell, BellOff, Calendar, CheckSquare, Trophy, Eye, Clock, RefreshCw } from 'lucide-react';
 import { useNotifications } from '../../../../contexts/NotificationContext';
 
 function NotificationCenter() {
@@ -16,6 +16,7 @@ function NotificationCenter() {
     clearNotification,
     clearAllNotifications,
     toggleDesktopNotifications,
+    refetchItems,
   } = useNotifications();
 
   const drawerRef = useRef<HTMLDivElement>(null);
@@ -182,8 +183,18 @@ function NotificationCenter() {
           )}
         </div>
         {/* Footer */}
-        {isPushSupported && (
-          <div className="notification-drawer-footer">
+        <div className="notification-drawer-footer">
+          <button
+            type="button"
+            onClick={refetchItems}
+            className="footer-refresh-btn"
+            title="Force refresh calendar data"
+            aria-label="Force refresh calendar data"
+          >
+            <RefreshCw size={13} />
+            <span>Refresh</span>
+          </button>
+          {isPushSupported && (
             <button
               type="button"
               onClick={toggleDesktopNotifications}
@@ -194,8 +205,8 @@ function NotificationCenter() {
               {desktopEnabled ? <Bell size={13} /> : <BellOff size={13} />}
               <span>{desktopEnabled ? 'Desktop Alerts On' : 'Desktop Alerts Off'}</span>
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>,
     document.body

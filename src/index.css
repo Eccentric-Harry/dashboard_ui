@@ -2537,17 +2537,18 @@ button {
   -webkit-backdrop-filter: blur(8px);
   border-top: 1px solid rgba(82, 96, 87, 0.08);
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   gap: 12px;
 }
 
+.footer-refresh-btn,
 .footer-desktop-toggle {
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 7px 14px;
-  border-radius: 20px;
+  border-radius: 12px;
   background: #202321;
   color: rgba(255, 255, 255, 0.85);
   font-family: inherit;
@@ -2559,6 +2560,7 @@ button {
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.footer-refresh-btn:hover,
 .footer-desktop-toggle:hover {
   background: #38413d;
   color: #ffffff;
@@ -2566,8 +2568,17 @@ button {
   transform: translateY(-0.5px);
 }
 
+.footer-refresh-btn:active,
 .footer-desktop-toggle:active {
   transform: translateY(0.5px);
+}
+
+.footer-refresh-btn svg {
+  transition: transform 0.3s ease;
+}
+
+.footer-refresh-btn:active svg {
+  transform: rotate(180deg);
 }
 
 .footer-desktop-toggle.active {
