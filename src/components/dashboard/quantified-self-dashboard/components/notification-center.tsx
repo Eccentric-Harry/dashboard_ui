@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Trash2, Bell, BellOff, Calendar, CheckSquare, Trophy, Eye, Clock, RefreshCw } from 'lucide-react';
+import { X, Trash2, Bell, BellOff, Calendar, CheckSquare, Trophy, Eye, Clock, Loader2, RefreshCw } from 'lucide-react';
 import { useNotifications } from '../../../../contexts/NotificationContext';
 
 function NotificationCenter() {
@@ -16,10 +16,10 @@ function NotificationCenter() {
     clearNotification,
     clearAllNotifications,
     toggleDesktopNotifications,
-    refetchItems,
   } = useNotifications();
 
   const drawerRef = useRef<HTMLDivElement>(null);
+  const [busy, setBusy] = useState<'refresh' | 'toggle' | null>(null);
 
   // Close drawer on pressing Escape key
   useEffect(() => {
@@ -186,10 +186,13 @@ function NotificationCenter() {
         <div className="notification-drawer-footer">
           <button
             type="button"
-            onClick={refetchItems}
-            className="footer-refresh-btn"
-            title="Force refresh calendar data"
-            aria-label="Force refresh calendar data"
+            onClick={() => {
+              setBusy('refresh');
+              location.reload();
+            }}
+            className={`footer-refresh-btn ${busy === 'refresh' ? 'is-busy' : ''}`}
+            title="Reload page (⌘R)"
+            aria-label="Reload page"
           >
             <RefreshCw size={13} />
             <span>Refresh</span>
@@ -197,13 +200,17 @@ function NotificationCenter() {
           {isPushSupported && (
             <button
               type="button"
-              onClick={toggleDesktopNotifications}
-              className={`footer-desktop-toggle ${desktopEnabled ? 'active' : ''}`}
-              title={desktopEnabled ? 'Disable System Desktop Alerts' : 'Enable System Desktop Alerts'}
-              aria-label={desktopEnabled ? 'Disable System Desktop Alerts' : 'Enable System Desktop Alerts'}
+              onClick={async () => {
+                setBusy('toggle');
+                await toggleDesktopNotifications();
+                setBusy(null);
+              }}
+              className={`footer-desktop-toggle ${desktopEnabled ? 'active' : ''} ${busy === 'toggle' ? 'is-busy' : ''}`}
+              title={desktopEnabled ? 'Disable push alerts' : 'Enable push alerts'}
+              aria-label={desktopEnabled ? 'Disable push alerts' : 'Enable push alerts'}
             >
-              {desktopEnabled ? <Bell size={13} /> : <BellOff size={13} />}
-              <span>{desktopEnabled ? 'Desktop Alerts On' : 'Desktop Alerts Off'}</span>
+              {busy === 'toggle' ? <Loader2 size={13} className="animate-spin" /> : desktopEnabled ? <Bell size={13} /> : <BellOff size={13} />}
+              <span>{desktopEnabled ? 'Alerts On' : 'Alerts Off'}</span>
             </button>
           )}
         </div>

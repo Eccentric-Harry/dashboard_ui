@@ -2546,7 +2546,9 @@ button {
 .footer-desktop-toggle {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  min-width: 105px;
   padding: 7px 14px;
   border-radius: 12px;
   background: #202321;
@@ -2573,12 +2575,26 @@ button {
   transform: translateY(0.5px);
 }
 
+.footer-refresh-btn.is-busy,
+.footer-desktop-toggle.is-busy {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
 .footer-refresh-btn svg {
   transition: transform 0.3s ease;
 }
 
-.footer-refresh-btn:active svg {
-  transform: rotate(180deg);
+.footer-refresh-btn.is-busy svg {
+  animation: footer-spin 0.8s linear infinite;
+}
+
+@keyframes footer-spin {
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: footer-spin 0.8s linear infinite;
 }
 
 .footer-desktop-toggle.active {
