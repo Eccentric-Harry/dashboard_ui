@@ -12,6 +12,7 @@ import {
   Plus,
   Repeat2,
   Sparkles,
+  Timer,
   Trash2,
   X,
 } from 'lucide-react'
@@ -374,8 +375,8 @@ function FocusDetail({
       </div>
 
       <div className="focus-time-block">
-        <span className="time-block-icon" style={{ color: routineIcon.color, background: routineIcon.bg }}>
-          <RoutineIcon size={18} />
+        <span className="time-block-icon" style={{ color: '#4387e2', background: 'rgba(67, 135, 226, 0.12)' }}>
+          <Timer size={18} />
         </span>
         <div>
           <span>Time block</span>
