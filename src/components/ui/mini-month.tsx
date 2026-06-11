@@ -19,7 +19,11 @@ function toISODate(date: Date) {
 function monthGrid(date: Date) {
   const first = new Date(date.getFullYear(), date.getMonth(), 1)
   const gridStart = startOfWeek(first)
-  return daysBetween(gridStart, 42)
+  const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0)
+  const gridEnd = startOfWeek(lastDay)
+  gridEnd.setDate(gridEnd.getDate() + 6)
+  const totalDays = Math.round((gridEnd.getTime() - gridStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
+  return daysBetween(gridStart, totalDays)
 }
 
 function daysBetween(start: Date, count: number) {
