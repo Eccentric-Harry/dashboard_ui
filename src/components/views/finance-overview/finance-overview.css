@@ -115,6 +115,7 @@
   overflow: hidden;
   color: #101312;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  text-align: center;
 }
 
 .finance-balance-card:hover {
@@ -151,7 +152,7 @@
   height: 28px;
   place-items: center;
   border-radius: 10px;
-  margin-bottom: 12px;
+  margin: 0 auto 12px;
   background: rgba(16, 185, 129, 0.14);
   color: #059669;
 }
@@ -170,6 +171,7 @@
   position: relative;
   overflow: hidden;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  text-align: center;
 }
 
 .finance-metric-card:hover {
@@ -182,7 +184,7 @@
   height: 28px;
   place-items: center;
   border-radius: 10px;
-  margin-bottom: 12px;
+  margin: 0 auto 12px;
 }
 
 .finance-metric-icon.positive {
