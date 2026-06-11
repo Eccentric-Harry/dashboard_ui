@@ -233,7 +233,7 @@ return (
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                     <button
                       type="button"
-                      onClick={() => onEdit && onEdit(entry)}
+                      onClick={() => { setIsEditMode(false); onEdit?.(entry); }}
                       title="Edit entry"
                       aria-label="Edit entry"
                       style={{
