@@ -189,6 +189,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                 <MiniMonth
                   selectedDate={selectedDate}
                   onSelect={handleDateSelect}
+                  allowFuture
                 />
               </div>
             </>
