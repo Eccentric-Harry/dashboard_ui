@@ -8,9 +8,10 @@ import { SubscriptionsCard } from './components/subscriptions-card'
 import { RepaymentScheduleCard } from './components/repayment-schedule-card'
 import { TransactionsCard } from './components/transactions-card'
 import { AddTransactionModal } from './components/add-transaction-modal'
+import { LendingCard } from './components/lending-card'
 import { ConfirmDialog } from '../../ui/confirm-dialog'
 import { financeMetrics as fallbackMetrics } from './data'
-import { fetchDailyFinanceLogs, deleteTransaction } from '../../../lib/api'
+import { fetchDailyFinanceLogs, deleteTransaction, deleteLendingRecord, type LendingRecord } from '../../../lib/api'
 import type { DailyFinancialLog } from '../../../lib/api'
 import { 
   ArrowUpRight, ArrowDownLeft, PiggyBank
@@ -27,6 +28,10 @@ function FinanceOverviewDashboard() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<any>(null)
   const [deleteTarget, setDeleteTarget] = useState<any>(null)
+  const [isLendingModalOpen, setIsLendingModalOpen] = useState(false)
+  const [editingLending, setEditingLending] = useState<LendingRecord | null>(null)
+  const [deleteLendingTarget, setDeleteLendingTarget] = useState<LendingRecord | null>(null)
+  const [lendingRefreshKey, setLendingRefreshKey] = useState(0)
   const [selectedMonthKey, setSelectedMonthKey] = useState<string>(() => {
     const d = new Date()
     return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`
@@ -217,6 +222,21 @@ function FinanceOverviewDashboard() {
     }
   }
 
+  const confirmDeleteLending = async () => {
+    if (!deleteLendingTarget) return
+    try {
+      await deleteLendingRecord(deleteLendingTarget.id)
+      toast.success(`Deleted lending record for ${deleteLendingTarget.borrower}`)
+      setDeleteLendingTarget(null)
+      setLendingRefreshKey(prev => prev + 1)
+      refreshData()
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete lending record')
+      console.error('Failed to delete lending record:', err)
+      setDeleteLendingTarget(null)
+    }
+  }
+
 
 
   return (
@@ -249,6 +269,17 @@ function FinanceOverviewDashboard() {
         />
         <SubscriptionsCard transactions={recentTransactions} onRefresh={refreshData} />
         <RepaymentScheduleCard transactions={recentTransactions} onRefresh={refreshData} />
+        <LendingCard
+          refreshKey={lendingRefreshKey}
+          onEditClick={(record) => {
+            setEditingLending(record)
+            setIsLendingModalOpen(true)
+          }}
+          onDeleteClick={(record) => {
+            setDeleteLendingTarget(record)
+          }}
+          onRefreshTransactions={refreshData}
+        />
       </div>
       
       <ConfirmDialog
@@ -258,15 +289,31 @@ function FinanceOverviewDashboard() {
         onConfirm={confirmDelete}
         onCancel={() => setDeleteTarget(null)}
       />
+
+      <ConfirmDialog
+        open={!!deleteLendingTarget}
+        title="Delete lending record"
+        message={deleteLendingTarget ? `Are you sure you want to delete the lending record for "${deleteLendingTarget.borrower}" (₹${deleteLendingTarget.amount})?` : ''}
+        onConfirm={confirmDeleteLending}
+        onCancel={() => setDeleteLendingTarget(null)}
+      />
+
       <AddTransactionModal 
-        isOpen={isAddModalOpen || !!editingTransaction} 
-        isEdit={!!editingTransaction}
-        initialData={editingTransaction}
+        isOpen={isAddModalOpen || isLendingModalOpen || !!editingTransaction || !!editingLending} 
+        initialTab={isLendingModalOpen || !!editingLending ? 'Lending' : 'Transaction'}
+        isEdit={!!editingTransaction || !!editingLending}
+        initialTransactionData={editingTransaction}
+        initialLendingData={editingLending}
         onClose={() => {
           setIsAddModalOpen(false)
+          setIsLendingModalOpen(false)
           setEditingTransaction(null)
+          setEditingLending(null)
         }} 
-        onSuccess={refreshData} 
+        onSuccess={() => {
+          setLendingRefreshKey(prev => prev + 1)
+          refreshData()
+        }} 
       />
     </section>
   )

@@ -797,6 +797,68 @@ export async function completeFocusSession(): Promise<{ data: FocusSession }> {
   }
   return response.json();
 }
+// ─── Lending Records API ─────────────────────────────────────────────
+
+export interface LendingRecord {
+  id: string;
+  borrower: string;
+  amount: number;
+  date: string;
+  dueDate?: string;
+  status: 'Pending' | 'Repaid';
+  notes?: string;
+}
+
+export async function fetchLendingRecords(): Promise<{ data: LendingRecord[] }> {
+  const response = await fetch(`${API_BASE_URL}/finance/lending`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch lending records');
+  }
+  return response.json();
+}
+
+export async function addLendingRecord(data: Omit<LendingRecord, 'id'>): Promise<{ data: LendingRecord }> {
+  const response = await fetch(`${API_BASE_URL}/finance/lending`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to add lending record');
+  }
+  return response.json();
+}
+
+export async function updateLendingRecord(id: string, data: Omit<LendingRecord, 'id'>): Promise<{ data: LendingRecord }> {
+  const response = await fetch(`${API_BASE_URL}/finance/lending/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to update lending record');
+  }
+  return response.json();
+}
+
+export async function toggleLendingRecordStatus(id: string): Promise<{ data: LendingRecord }> {
+  const response = await fetch(`${API_BASE_URL}/finance/lending/${id}/toggle`, {
+    method: 'PATCH',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to toggle lending record status');
+  }
+  return response.json();
+}
+
+export async function deleteLendingRecord(id: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/finance/lending/${id}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to delete lending record');
+  }
+}
 
 // Global active GET request tracking for route navigation loader
 let activeGetRequests = 0;

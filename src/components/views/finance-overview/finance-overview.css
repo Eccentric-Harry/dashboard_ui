@@ -427,6 +427,16 @@
   flex-direction: column;
 }
 
+.lending-tracker-card {
+  grid-column: 1 / span 7;
+  grid-row: 4;
+  height: 426px;
+  padding: 20px;
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.9), rgba(244, 248, 243, 0.75));
+  display: flex;
+  flex-direction: column;
+}
+
 .finance-repayment-list {
   display: grid;
   gap: 12px;
@@ -527,9 +537,169 @@
   white-space: nowrap;
 }
 
+.finance-lending-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 4px;
+}
+
+.finance-lending-list > div {
+  display: grid;
+  grid-template-columns: 32px 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8), 0 2px 4px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.finance-lending-list > div:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.finance-lending-list > div.paid {
+  background: rgba(255, 255, 255, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: none !important;
+  opacity: 0.75;
+}
+
+.finance-lending-list > div.paid b {
+  color: #4b5563;
+  font-weight: 600;
+}
+
+.finance-lending-list > div.paid small {
+  color: #9ca3af !important;
+  font-weight: 500;
+}
+
+.finance-lending-list > div.paid strong.repayment-amount {
+  color: #9ca3af;
+  font-weight: 600;
+  text-decoration: line-through;
+  text-decoration-color: rgba(156, 163, 175, 0.4);
+}
+
+.finance-lending-list .repayment-icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 12px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.03), inset 1px 1px 0 #fff;
+}
+
+.finance-lending-list b {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #111514;
+  white-space: nowrap;
+}
+
+.finance-lending-list small {
+  display: block;
+  color: rgba(23, 28, 25, 0.5);
+  font-size: 10px;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+.finance-lending-list strong.repayment-amount {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1a2b21;
+  text-align: right;
+  padding-right: 4px;
+  white-space: nowrap;
+}
+
+.finance-lending-list .lending-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-self: end;
+}
+
+/* Lending row action buttons */
+.lending-row-action-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(25, 30, 27, 0.05);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(23, 28, 25, 0.5);
+  min-width: 28px;
+  min-height: 28px;
+  transition: all 0.2s;
+}
+
+.lending-row-action-btn:hover {
+  background: rgba(25, 30, 27, 0.1);
+  color: rgba(23, 28, 25, 0.8);
+}
+
+.lending-row-action-btn.delete {
+  background: rgba(239, 68, 68, 0.08);
+  color: #dc2626;
+}
+
+.lending-row-action-btn.delete:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #b91c1c;
+}
+
+/* Hover reveal effect for desktop, always visible on mobile */
+@media (min-width: 581px) {
+}
+
+/* Modal Tabs Styling */
+.finance-modal-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background: rgba(20, 24, 22, 0.04);
+  padding: 4px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.tab-btn {
+  height: 36px;
+  border-radius: 8px;
+  border: none;
+  font-size: 13px;
+  font-weight: 700;
+  background: transparent !important;
+  color: rgba(23, 28, 25, 0.5);
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: none !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab-btn.active {
+  background: #ffffff !important;
+  color: #101312;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+}
+
 .pay-button {
   height: 28px;
-  padding: 0;
+  padding: 0 10px;
   border-radius: 10px;
   background: #111514;
   color: #fff;
@@ -541,8 +711,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 56px;
-  min-width: 56px;
+  min-width: 64px;
   justify-self: end;
   box-sizing: border-box;
 }
@@ -584,8 +753,8 @@
 .finance-transactions-card {
   display: flex;
   grid-column: 1 / span 7;
-  grid-row: 3 / span 2;
-  height: 866px;
+  grid-row: 3;
+  height: 486px;
   min-height: 0;
   flex-direction: column;
   padding: 18px;
@@ -962,6 +1131,24 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: 10px;
+  padding-bottom: 24px;
+}
+
+.add-tx-form::-webkit-scrollbar {
+  width: 6px;
+}
+
+.add-tx-form::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: rgba(18, 32, 23, 0.03);
+}
+
+.add-tx-form::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(18, 32, 23, 0.15);
 }
 
 .add-tx-form .form-group {
@@ -1097,20 +1284,27 @@
   align-items: center;
   justify-content: center;
   height: 48px;
-  border-radius: 12px;
+  border-radius: 10px !important;
   border: none;
-  background: #121c17;
+  background: #121c17 !important;
   color: #ffffff;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
-  margin-top: 8px;
-  transition: all 0.2s;
+  margin-top: 12px;
+  box-shadow: 0 4px 12px rgba(17, 21, 20, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .add-tx-submit:hover:not(:disabled) {
-  background: #1a2922;
+  background: #1a2922 !important;
   transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(17, 21, 20, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.add-tx-submit:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 2px 6px rgba(17, 21, 20, 0.1);
 }
 
 .add-tx-submit:disabled {
@@ -1419,7 +1613,8 @@
     width: 100%;
   }
 
-  .finance-repayment-card {
+  .finance-repayment-card,
+  .lending-tracker-card {
     grid-column: unset;
     grid-row: unset;
     height: auto;
@@ -1991,7 +2186,8 @@
 
   .finance-transactions-card,
   .finance-subscription-card,
-  .finance-repayment-card {
+  .finance-repayment-card,
+  .lending-tracker-card {
     height: auto;
     max-height: 520px;
   }
@@ -2041,7 +2237,8 @@
     height: auto;
   }
 
-  .finance-repayment-card {
+  .finance-repayment-card,
+  .lending-tracker-card {
     grid-column: 1 / -1;
     grid-row: auto;
     height: auto;
