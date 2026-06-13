@@ -10,6 +10,7 @@ import { WorkoutsOverview } from './components/views/workouts-view'
 import { DashboardProvider } from './contexts/DashboardContext'
 import { LearningsOverview } from './components/views/learnings-view'
 import { CalendarOverview } from './components/views/calendar-view'
+import { PromptsOverview } from './components/views/prompts-view'
 import { FocusProvider } from './contexts/FocusContext'
 import { isStandalone } from './lib/utils'
 import { subscribeToActiveRequests } from './lib/api'
@@ -51,6 +52,10 @@ function normalizePathname(pathname: string): AppPath {
 
   if (pathname === '/calendar') {
     return '/calendar'
+  }
+
+  if (pathname === '/prompts') {
+    return '/prompts'
   }
 
   return '/nutrition'
@@ -216,6 +221,8 @@ function App() {
     content = <WorkoutsOverview activePath={pathname} onNavigate={navigateTo} />
   } else if (pathname === '/calendar') {
     content = <CalendarOverview activePath={pathname} onNavigate={navigateTo} searchParams={searchParams} />
+  } else if (pathname === '/prompts') {
+    content = <PromptsOverview activePath={pathname} onNavigate={navigateTo} />
   } else {
     content = <QuantifiedSelfDashboard activePath={pathname} onNavigate={navigateTo} />
   }
@@ -303,7 +310,7 @@ function App() {
         </Toaster>
         {content}
         <MobileNotificationTrigger />
-        <NotificationCenter />
+        <NotificationCenter onNavigate={navigateTo} />
         <OverlayLoader show={showOverlay} />
       </NotificationProvider>
       </FocusProvider>

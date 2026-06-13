@@ -1,9 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Trash2, Bell, BellOff, Calendar, CheckSquare, Trophy, Eye, Clock, Loader2, RefreshCw } from 'lucide-react';
+import { X, Trash2, Bell, BellOff, Calendar, CheckSquare, Trophy, Eye, Clock, Loader2, RefreshCw, Terminal } from 'lucide-react';
 import { useNotifications } from '../../../../contexts/NotificationContext';
+import type { AppPath } from '../data';
 
-function NotificationCenter() {
+type NotificationCenterProps = {
+  onNavigate?: (path: AppPath) => void;
+};
+
+function NotificationCenter({ onNavigate }: NotificationCenterProps) {
   const {
     notifications,
     unreadCount,
@@ -90,7 +95,23 @@ function NotificationCenter() {
           </button>
         </div>
 
-
+        {/* Quick Access Section */}
+        <div style={{ padding: '0 20px 16px', borderBottom: '1px solid rgba(16, 19, 18, 0.06)', marginBottom: '8px' }}>
+          <h3 style={{ fontSize: '11px', textTransform: 'uppercase', color: 'rgba(16,19,18,0.5)', letterSpacing: '0.05em', marginBottom: '12px', fontWeight: 700 }}>Quick Access</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
+            <button 
+              onClick={() => { setIsOpen(false); if (onNavigate) onNavigate('/prompts'); }}
+              style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'rgba(16,19,18,0.03)', border: '1px solid rgba(16,19,18,0.05)', borderRadius: '8px', color: '#101312', fontWeight: 600, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s ease', width: '100%', textAlign: 'left' }}
+              onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(16,19,18,0.06)'; e.currentTarget.style.borderColor = 'rgba(16,19,18,0.1)' }}
+              onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(16,19,18,0.03)'; e.currentTarget.style.borderColor = 'rgba(16,19,18,0.05)' }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', background: '#101312', color: '#fff', borderRadius: '6px' }}>
+                <Terminal size={14} />
+              </span>
+              Prompts Library
+            </button>
+          </div>
+        </div>
 
         {/* Global Action Bar */}
         {notifications.length > 0 && (

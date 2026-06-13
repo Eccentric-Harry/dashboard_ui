@@ -861,6 +861,59 @@ export async function deleteLendingRecord(id: string): Promise<void> {
   }
 }
 
+// ─── Prompts API ─────────────────────────────────────────────────────
+
+export interface Prompt {
+  id: string;
+  title: string;
+  content: string;
+  category?: string;
+  tags?: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function fetchPrompts(): Promise<{ data: Prompt[] }> {
+  const response = await fetch(`${API_BASE_URL}/prompts`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch prompts');
+  }
+  return response.json();
+}
+
+export async function createPrompt(data: { title: string; content: string; category?: string; tags?: string[] }): Promise<{ data: Prompt }> {
+  const response = await fetch(`${API_BASE_URL}/prompts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to create prompt');
+  }
+  return response.json();
+}
+
+export async function updatePrompt(id: string, data: { title: string; content: string; category?: string; tags?: string[] }): Promise<{ data: Prompt }> {
+  const response = await fetch(`${API_BASE_URL}/prompts/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to update prompt');
+  }
+  return response.json();
+}
+
+export async function deletePrompt(id: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/prompts/${id}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to delete prompt');
+  }
+}
+
 // Global active GET request tracking for route navigation loader
 let activeGetRequests = 0;
 const requestChangeListeners = new Set<(count: number) => void>();

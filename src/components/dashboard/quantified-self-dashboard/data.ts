@@ -4,7 +4,6 @@ import {
   CalendarDays,
   CheckSquare,
   CircleDollarSign,
-  Compass,
   Dumbbell,
   Home,
   Utensils,
@@ -19,7 +18,7 @@ import {
   GraduationCap,
 } from 'lucide-react'
 
-export type AppPath = '/home' | '/finance' | '/nutrition' | '/learnings' | '/workouts' | '/calendar'
+export type AppPath = '/home' | '/finance' | '/nutrition' | '/learnings' | '/workouts' | '/calendar' | '/prompts'
 
 export interface DashboardNavItem {
   label: string
@@ -59,7 +58,6 @@ export const navItems: DashboardNavItem[] = [
   { label: 'Tasks', icon: CheckSquare, muted: true },
   { label: 'People', icon: Users, muted: true },
   { label: 'Shield', icon: ShieldCheck, muted: true },
-  { label: 'Compass', icon: Compass, muted: true },
 ]
 
 export const railBottomItems: DashboardNavItem[] = [
