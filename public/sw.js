@@ -48,8 +48,8 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'Personal Dashboard Alert';
   const options = {
     body: data.body || 'You have an upcoming event.',
-    icon: '/favicon.ico',
-    badge: '/favicon.ico',
+    icon: '/logo.png',
+    badge: '/logo.png',
     tag: data.tag || 'dashboard-notification',
     data: data.url || '/',
     vibrate: [100, 50, 100],

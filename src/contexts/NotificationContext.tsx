@@ -348,7 +348,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       try {
         new Notification(item.title, {
           body: message,
-          icon: '/favicon.ico',
+          icon: '/logo.png',
         });
       } catch (e) {
         console.error('Desktop notification trigger failed:', e);
