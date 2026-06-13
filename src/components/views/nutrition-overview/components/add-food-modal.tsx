@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Loader2 } from 'lucide-react'
+import { X, Loader2, ClipboardCheck, FileJson } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { addFoodEntry, updateFoodEntry } from '../../../../lib/api'
 
@@ -24,6 +24,10 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
   const [error, setError] = useState('')
 
   // Form State
+  const [activeTab, setActiveTab] = useState<'manual' | 'json'>('manual')
+  const [jsonInput, setJsonInput] = useState('')
+  const [richPayload, setRichPayload] = useState<any>(null)
+  
   const [mealType, setMealType] = useState('Snack')
   const [description, setDescription] = useState('')
   const [proteinGrams, setProteinGrams] = useState('')
@@ -37,6 +41,8 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       setProteinGrams(initialData.proteinGrams.toString())
       setCalories(initialData.calories.toString())
       setDate(initialData.date)
+      setRichPayload(null)
+      setActiveTab('manual')
     } else if (isOpen && !isEdit) {
       // Reset to defaults for new entry
       setMealType('Snack')
@@ -44,6 +50,9 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       setProteinGrams('')
       setCalories('')
       setDate(selectedDate)
+      setJsonInput('')
+      setRichPayload(null)
+      setActiveTab('manual')
     }
   }, [isOpen, isEdit, initialData, selectedDate])
 
@@ -58,8 +67,8 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       return
     }
 
-    const numCalories = parseInt(calories, 10)
-    const numProtein = parseFloat(proteinGrams)
+    const numCalories = Math.round(parseFloat(calories))
+    const numProtein = Math.round(parseFloat(proteinGrams))
 
     if (isNaN(numCalories) || numCalories < 0 || isNaN(numProtein) || numProtein < 0) {
       setError('Macros must be 0 or greater')
@@ -68,12 +77,20 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
 
     setLoading(true)
     try {
-      const payload = {
+      const payload: any = {
         description,
         calories: numCalories,
         proteinGrams: numProtein,
         mealType,
         date
+      }
+
+      if (richPayload) {
+        payload.analysis_metadata = richPayload.analysis_metadata
+        payload.meal_items = richPayload.meal_items
+        payload.total_summary = richPayload.total_summary
+        payload.gaps_and_warnings = richPayload.gaps_and_warnings
+        payload.technical_diagnostic = richPayload.technical_diagnostic
       }
 
       if (isEdit && initialData?.id) {
@@ -93,6 +110,34 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
     }
   }
 
+  const handleProcessJson = () => {
+    try {
+      const data = JSON.parse(jsonInput)
+      setRichPayload(data)
+      
+      // Auto-fill form from rich payload
+      if (data.total_summary) {
+        setCalories(Math.round(data.total_summary.calories_kcal || 0).toString())
+        setProteinGrams(Math.round(data.total_summary.protein_g || 0).toString())
+      }
+      if (data.analysis_metadata && data.analysis_metadata.meal_type_detected) {
+        let rawType = String(data.analysis_metadata.meal_type_detected).trim().toLowerCase()
+        const validTypes = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Midnight', 'Post Workout', 'Mid-Morning']
+        let matchedType = validTypes.find(t => t.toLowerCase() === rawType) || 'Snack'
+        setMealType(matchedType)
+      }
+      
+      if (!description) {
+        setDescription('Rich Nutritional Entry')
+      }
+      
+      setActiveTab('manual')
+      toast.success('JSON parsed! Please review macros and save.')
+    } catch (err) {
+      toast.error('Invalid JSON format')
+    }
+  }
+
   return (
     <div className="finance-modal-backdrop" role="presentation" onClick={onClose}>
       <div 
@@ -106,11 +151,31 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
           <X size={15} />
         </button>
         
-        <h2 style={{ fontSize: '22px', marginBottom: '24px' }}>
+        <h2 style={{ fontSize: '22px', marginBottom: '16px' }}>
           {isEdit ? 'Edit Food Entry' : 'Add Food Entry'}
         </h2>
         
-        <form onSubmit={handleSubmit} className="add-tx-form">
+        {!isEdit && (
+          <div className="workouts-modal-tabs" style={{ marginBottom: '20px' }}>
+            <button
+              className={`tab-btn ${activeTab === 'manual' ? 'active' : ''}`}
+              onClick={() => setActiveTab('manual')}
+            >
+              <ClipboardCheck size={14} />
+              Manual Entry
+            </button>
+            <button
+              className={`tab-btn ${activeTab === 'json' ? 'active' : ''}`}
+              onClick={() => setActiveTab('json')}
+            >
+              <FileJson size={14} />
+              JSON Payload
+            </button>
+          </div>
+        )}
+        
+        {activeTab === 'manual' ? (
+          <form onSubmit={handleSubmit} className="add-tx-form">
           <div className="form-group">
             <label>Food Name</label>
             <input 
@@ -177,6 +242,26 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
             {loading ? <Loader2 className="spinner" size={18} /> : 'Save Food'}
           </button>
         </form>
+        ) : (
+          <div className="strava-import-container">
+            <p className="import-hint">Paste detailed JSON analysis payload from your AI pipeline.</p>
+            <div className="form-group">
+              <textarea
+                className="json-textarea"
+                placeholder='{ "analysis_metadata": { ... }, "meal_items": [ ... ], "total_summary": { ... } }'
+                value={jsonInput}
+                onChange={e => setJsonInput(e.target.value)}
+              />
+            </div>
+            <button
+              className="add-tx-submit"
+              onClick={handleProcessJson}
+              disabled={!jsonInput.trim()}
+            >
+              Process Payload
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

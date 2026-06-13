@@ -40,7 +40,8 @@ export async function addFoodEntry(data: { description: string; calories: number
     body: JSON.stringify(data),
   });
   if (!response.ok) {
-    throw new Error('Failed to add food entry');
+    const errorText = await response.text();
+    throw new Error(`Failed to add food entry: ${errorText}`);
   }
   return response.json();
 }

@@ -778,13 +778,13 @@ export const sortFoodEntries = <T extends { mealType?: string }>(entries: T[]): 
   return [...entries].sort((a, b) => {
     const mealA = (a.mealType || 'Snack').toLowerCase()
     const mealB = (b.mealType || 'Snack').toLowerCase()
-    
+
     let indexA = mealOrder.indexOf(mealA)
     let indexB = mealOrder.indexOf(mealB)
-    
+
     if (indexA === -1) indexA = 99
     if (indexB === -1) indexB = 99
-    
+
     return indexA - indexB
   })
 }

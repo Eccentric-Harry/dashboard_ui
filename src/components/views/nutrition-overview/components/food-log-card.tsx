@@ -3,6 +3,7 @@ import { CalendarDays, Flame, Wheat, ChevronLeft, ChevronRight } from 'lucide-re
 import { useDashboard } from '../../../../contexts/DashboardContext'
 import { fetchFoodEntries } from '../../../../lib/api'
 import { getFoodIconDetails, sortFoodEntries } from './food-icon-helper'
+import { MealDetailsModal } from './meal-details-modal'
 
 const mealDotColors: Record<string, string> = {
   Breakfast: '#f97316',
@@ -23,6 +24,13 @@ type FoodEntry = {
   date?: string
   loggedDate?: string
   createdAt?: string
+  
+  // Detailed nutrition payload
+  analysis_metadata?: Record<string, any>
+  meal_items?: Array<Record<string, any>>
+  total_summary?: Record<string, any>
+  gaps_and_warnings?: string[]
+  technical_diagnostic?: Record<string, any>
 }
 
 type FoodEntriesResponse = {
@@ -161,10 +169,11 @@ interface DailyLogCardInstanceProps {
   entries: FoodEntry[]
   totalProtein: number
   totalCalories: number
+  onSelectEntry: (entry: FoodEntry) => void
 }
 
 // Sub-component to manage its own page state for entries (displaying 4 entries max per page)
-function DailyLogCardInstance({ dateValue, entries, totalProtein, totalCalories }: DailyLogCardInstanceProps) {
+function DailyLogCardInstance({ dateValue, entries, totalProtein, totalCalories, onSelectEntry }: DailyLogCardInstanceProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const entriesPerPage = 4
   const totalPages = Math.ceil(entries.length / entriesPerPage)
@@ -221,7 +230,15 @@ function DailyLogCardInstance({ dateValue, entries, totalProtein, totalCalories 
           const FoodIcon = iconDetails.icon
 
           return (
-            <div className="nutrition-daily-log-entry" key={id || `${dateValue}-${index}`}>
+            <div 
+              className="nutrition-daily-log-entry" 
+              key={id || `${dateValue}-${index}`}
+              onClick={() => onSelectEntry(entry)}
+              role="button"
+              tabIndex={0}
+              style={{ cursor: 'pointer', transition: 'background-color 0.2s' }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelectEntry(entry) }}
+            >
               <div className="nutrition-food-item">
                 <span style={{ background: iconDetails.bg }}>
                   <FoodIcon size={13} color={iconDetails.color} />
@@ -286,6 +303,9 @@ function FoodLogCard() {
   const foodEntries = useMemo<FoodEntry[]>(() => data?.health?.foodEntries || [], [data?.health?.foodEntries])
   const logAnchorDate = data?.date || isoDate(new Date())
   const [historyEntries, setHistoryEntries] = useState<FoodEntry[]>([])
+  
+  // Selected entry for modal
+  const [selectedEntry, setSelectedEntry] = useState<FoodEntry | null>(null)
   
   // Pagination state for historical logs list
   const [currentHistoryPage, setCurrentHistoryPage] = useState(1)
@@ -384,6 +404,7 @@ function FoodLogCard() {
             entries={entries}
             totalProtein={totalProtein}
             totalCalories={totalCalories}
+            onSelectEntry={setSelectedEntry}
           />
         ))}
       </div>
@@ -414,6 +435,13 @@ function FoodLogCard() {
           </button>
         </div>
       )}
+
+      {/* Meal Details Modal */}
+      <MealDetailsModal
+        open={!!selectedEntry}
+        onClose={() => setSelectedEntry(null)}
+        entry={selectedEntry}
+      />
     </section>
   )
 }
