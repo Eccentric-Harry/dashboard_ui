@@ -2774,3 +2774,30 @@
   color: rgba(23, 28, 25, 0.5);
   font-family: monospace;
 }
+
+/* JSON Textarea Styles */
+.json-textarea {
+  width: 100%;
+  height: 220px !important;
+  font-family: 'SF Mono', 'Fira Code', monospace !important;
+  font-size: 11px !important;
+  line-height: 1.6 !important;
+  padding: 16px !important;
+  background: rgba(18, 32, 23, 0.03) !important;
+  border: 1px dashed rgba(20, 24, 22, 0.15) !important;
+  transition: all 0.2s !important;
+}
+
+.json-textarea:focus {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border: 1px solid rgba(61, 193, 82, 0.4) !important;
+  box-shadow: 0 0 0 4px rgba(61, 193, 82, 0.05);
+}
+
+.import-hint {
+  margin: 0;
+  font-size: 11px;
+  color: rgba(16, 19, 18, 0.5);
+  line-height: 1.5;
+}
+

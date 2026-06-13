@@ -2,6 +2,7 @@ import { useMemo, useState, useRef, useCallback, useEffect } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getFoodIconDetails, sortFoodEntries } from './food-icon-helper'
+import { MealDetailsModal } from './meal-details-modal'
 
 const mealDotColors: Record<string, string> = {
   Breakfast: '#f97316',
@@ -57,6 +58,7 @@ function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
   const [selectedMacroId, setSelectedMacroId] = useState('protein')
   const [isEditMode, setIsEditMode] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<FoodEntry | null>(null)
+  const [selectedEntry, setSelectedEntry] = useState<FoodEntry | null>(null)
   const [isScrolling, setIsScrolling] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -200,7 +202,27 @@ function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
             const FoodIcon = iconDetails.icon
 
 return (
-              <div className="nutrition-today-log-row" key={id || `${description}-${index}`} style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto auto', alignItems: 'center', gap: '12px', padding: `8px ${id && isEditMode ? '18px' : '14px'} 8px 14px` }}>
+              <div 
+                className="nutrition-today-log-row" 
+                key={id || `${description}-${index}`} 
+                onClick={() => !isEditMode && id && setSelectedEntry(entry)}
+                style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'auto 1fr auto auto', 
+                  alignItems: 'center', 
+                  gap: '12px', 
+                  padding: `8px ${id && isEditMode ? '18px' : '14px'} 8px 14px`,
+                  cursor: !isEditMode && id ? 'pointer' : 'default',
+                  transition: 'background-color 0.2s',
+                  borderRadius: '12px'
+                }}
+                onMouseEnter={(e) => {
+                  if (!isEditMode && id) e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.4)'
+                }}
+                onMouseLeave={(e) => {
+                  if (!isEditMode && id) e.currentTarget.style.backgroundColor = 'transparent'
+                }}
+              >
                 <span aria-hidden="true" style={{ background: iconDetails.bg }}>
                   <FoodIcon size={16} color={iconDetails.color} />
                 </span>
@@ -302,6 +324,12 @@ return (
         confirmLabel="Delete"
         onConfirm={handleDeleteConfirm}
         onCancel={() => setItemToDelete(null)}
+      />
+
+      <MealDetailsModal
+        open={!!selectedEntry}
+        onClose={() => setSelectedEntry(null)}
+        entry={selectedEntry}
       />
     </section>
   )
