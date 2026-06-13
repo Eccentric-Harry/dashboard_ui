@@ -394,6 +394,7 @@
 
 .routine-card {
   display: flex;
+  width: 100%;
   min-width: 0;
   min-height: 91px;
   align-items: flex-start;
@@ -419,6 +420,7 @@
 }
 
 .routine-card-copy {
+  flex: 1;
   min-width: 0;
   overflow: hidden;
 }
