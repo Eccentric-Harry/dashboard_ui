@@ -124,7 +124,7 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
   }
 
   const timerClass = isExpanded
-    ? 'text-[12rem] font-light font-mono text-gray-900 tracking-tight select-none tabular-nums leading-none'
+    ? 'text-[5.5rem] sm:text-[8rem] md:text-[10rem] lg:text-[12rem] font-light font-mono text-gray-900 tracking-tight select-none tabular-nums leading-none'
     : 'text-5xl font-light font-mono text-gray-900 tracking-tight select-none tabular-nums'
 
   const renderTimer = (fs: boolean) => (
@@ -135,7 +135,7 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
           {isRunning ? 'focusing' : 'paused'}
         </p>
       )}
-      <div className="flex flex-col gap-3 max-w-80 w-full mx-auto mt-8">
+      <div className="flex flex-col gap-3 max-w-80 w-full mx-auto mt-8 px-4 sm:px-0">
         {isIdle && (
           <button onClick={handleStart} disabled={actionLoading}
             className="w-full flex items-center justify-center gap-2.5 rounded-full py-3 text-sm font-semibold transition-all bg-neutral-900 hover:bg-neutral-800 text-white shadow-sm disabled:opacity-50">
