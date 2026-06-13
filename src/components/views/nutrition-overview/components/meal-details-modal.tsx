@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { X, Utensils, Info, AlertTriangle, Activity, Database } from 'lucide-react'
+import { X, Info, AlertTriangle, Activity, Database } from 'lucide-react'
 import './meal-details-modal.css'
 import { getFoodIconDetails } from './food-icon-helper'
 
