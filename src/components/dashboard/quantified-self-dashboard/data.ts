@@ -16,6 +16,7 @@ import {
   TrendingUp,
   Wallet,
   GraduationCap,
+  Terminal,
 } from 'lucide-react'
 
 export type AppPath = '/home' | '/finance' | '/nutrition' | '/learnings' | '/workouts' | '/calendar' | '/prompts'
@@ -53,6 +54,7 @@ export const navItems: DashboardNavItem[] = [
   { label: 'Calendar', icon: CalendarDays, to: '/calendar' },
   { label: 'Finance Overview', icon: CircleDollarSign, to: '/finance' },
   { label: 'Workouts', icon: Dumbbell, to: '/workouts' },
+  { label: 'Prompts', icon: Terminal, to: '/prompts', mobileHidden: true },
 
   { label: 'Adjust', icon: SlidersHorizontal, muted: true },
   { label: 'Tasks', icon: CheckSquare, muted: true },
