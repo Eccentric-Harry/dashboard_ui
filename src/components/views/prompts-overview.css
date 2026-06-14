@@ -48,20 +48,22 @@
   height: 32px;
   padding: 0 16px;
   border-radius: 16px;
-  background: #101312;
-  color: #fff;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.2)) !important;
+  color: #101312 !important;
   font-size: 12px;
   font-weight: 700;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.6);
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(16, 19, 18, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
   transition: all 0.2s ease;
 }
 
 .prompts-add-btn:hover {
-  background: #232d28;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.5)) !important;
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(17, 21, 20, 0.24);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.9);
 }
 
 .prompts-dashboard-grid {
@@ -385,10 +387,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #101312 !important;
-    color: #ffffff !important;
-    box-shadow: 0 12px 32px rgba(16, 19, 18, 0.4);
-    border: none;
+    background: rgba(255, 255, 255, 0.45) !important;
+    color: #101312 !important;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .prompts-add-btn span {

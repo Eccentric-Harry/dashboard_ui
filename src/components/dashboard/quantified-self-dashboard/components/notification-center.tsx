@@ -98,18 +98,22 @@ function NotificationCenter({ onNavigate }: NotificationCenterProps) {
         {/* Quick Access Section */}
         <div style={{ padding: '0 20px 16px', borderBottom: '1px solid rgba(16, 19, 18, 0.06)', marginBottom: '8px' }}>
           <h3 style={{ fontSize: '11px', textTransform: 'uppercase', color: 'rgba(16,19,18,0.5)', letterSpacing: '0.05em', marginBottom: '12px', fontWeight: 700 }}>Quick Access</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
             <button 
               onClick={() => { setIsOpen(false); if (onNavigate) onNavigate('/prompts'); }}
-              style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'rgba(16,19,18,0.03)', border: '1px solid rgba(16,19,18,0.05)', borderRadius: '8px', color: '#101312', fontWeight: 600, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s ease', width: '100%', textAlign: 'left' }}
-              onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(16,19,18,0.06)'; e.currentTarget.style.borderColor = 'rgba(16,19,18,0.1)' }}
-              onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(16,19,18,0.03)'; e.currentTarget.style.borderColor = 'rgba(16,19,18,0.05)' }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '52px', background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(16,19,18,0.04)', borderRadius: '12px', color: '#101312', cursor: 'pointer', transition: 'all 0.2s ease', width: '100%', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}
+              onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.9)'; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)'; }}
+              onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.6)'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.02)'; }}
             >
-              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', background: '#101312', color: '#fff', borderRadius: '6px' }}>
-                <Terminal size={14} />
-              </span>
-              Prompts Library
+              <Terminal size={20} />
             </button>
+            {/* Empty placeholders */}
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div 
+                key={i} 
+                style={{ height: '52px', background: 'rgba(16,19,18,0.03)', borderRadius: '12px' }} 
+              />
+            ))}
           </div>
         </div>
 

@@ -148,11 +148,11 @@
 .learning-modal-submit {
   height: 40px;
   border-radius: 12px;
-  background: #101312;
-  color: #fff;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.2)) !important;
+  color: #101312 !important;
   font-size: 13px;
   font-weight: 700;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -160,13 +160,15 @@
   gap: 8px;
   margin-top: 8px;
   transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(16, 19, 18, 0.18);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
 }
 
 .learning-modal-submit:hover:not(:disabled) {
-  background: #232d28;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.5)) !important;
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(17, 21, 20, 0.24);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
 }
 
 .learning-modal-submit:active:not(:disabled) {

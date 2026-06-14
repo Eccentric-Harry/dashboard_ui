@@ -124,8 +124,8 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
   }
 
   const timerClass = isExpanded
-    ? 'text-[5.5rem] sm:text-[8rem] md:text-[10rem] lg:text-[12rem] font-light font-mono text-gray-900 tracking-tight select-none tabular-nums leading-none'
-    : 'text-5xl font-light font-mono text-gray-900 tracking-tight select-none tabular-nums'
+    ? 'text-[5.5rem] sm:text-[8rem] md:text-[10rem] lg:text-[12rem] font-bold font-mono text-gray-900 tracking-tight select-none tabular-nums leading-none'
+    : 'text-5xl font-light font-mono text-gray-800 tracking-tight select-none tabular-nums'
 
   const renderTimer = (fs: boolean) => (
     <div className={`text-center${fs ? '' : ''}`} style={fs ? { marginBottom: 56 } : {}}>
@@ -138,19 +138,19 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
       <div className="flex flex-col gap-3 max-w-80 w-full mx-auto mt-8 px-4 sm:px-0">
         {isIdle && (
           <button onClick={handleStart} disabled={actionLoading}
-            className="w-full flex items-center justify-center gap-2.5 rounded-full py-3 text-sm font-semibold transition-all bg-neutral-900 hover:bg-neutral-800 text-white shadow-sm disabled:opacity-50">
+            className="w-full flex items-center justify-center gap-2.5 rounded-full py-3 text-sm font-semibold transition-all focus-liquid-btn shadow-sm disabled:opacity-50">
             <Play size={15} fill="currentColor" />{actionLoading ? 'Starting...' : 'Start'}
           </button>
         )}
         {isRunning && (
           <button onClick={handlePause} disabled={actionLoading}
-            className="w-full flex items-center justify-center gap-2.5 rounded-full py-3 text-sm font-semibold transition-all bg-amber-500 hover:bg-amber-600 text-white shadow-md disabled:opacity-50">
+            className="w-full flex items-center justify-center gap-2.5 rounded-full py-3 text-sm font-semibold transition-all focus-liquid-btn shadow-md disabled:opacity-50">
             <Pause size={15} fill="currentColor" />{actionLoading ? '...' : 'Pause'}
           </button>
         )}
         {isPaused && (
           <button onClick={handleResume} disabled={actionLoading}
-            className="w-full flex items-center justify-center gap-2.5 rounded-full py-3 text-sm font-semibold transition-all bg-neutral-900 hover:bg-neutral-800 text-white shadow-sm disabled:opacity-50">
+            className="w-full flex items-center justify-center gap-2.5 rounded-full py-3 text-sm font-semibold transition-all focus-liquid-btn shadow-sm disabled:opacity-50">
             <Play size={15} fill="currentColor" />{actionLoading ? '...' : 'Resume'}
           </button>
         )}
@@ -242,7 +242,7 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
                   onClick={() => { setDuration(d); setEditCustom(false) }}
                   className={`px-5 py-1.5 rounded-full text-sm font-medium transition-all ${
                     duration === d && !editCustom
-                      ? 'bg-[#2D6A4F] text-white shadow-sm'
+                      ? 'focus-liquid-btn'
                       : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200/60'
                   }`}
                 >
@@ -278,7 +278,7 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
 
         {/* Row 4: Main Timer Display */}
         <div className="my-6 text-center">
-          <span className="text-7xl font-bold font-mono text-gray-900 tracking-tight tabular-nums slashed-zero leading-none">
+          <span className="text-7xl font-light font-mono text-gray-800 tracking-tight tabular-nums slashed-zero leading-none">
             {timerDisplay}
           </span>
         </div>
@@ -289,7 +289,7 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
             <button
               onClick={handleStart}
               disabled={actionLoading}
-              className="w-full flex items-center justify-center gap-2.5 rounded-full py-3 text-sm font-semibold bg-black text-white hover:bg-gray-800 transition-all disabled:opacity-50 active:scale-[0.98]"
+              className="w-full flex items-center justify-center gap-2.5 rounded-full py-3 text-sm font-semibold focus-liquid-btn transition-all disabled:opacity-50 active:scale-[0.98]"
             >
               <Play size={16} fill="currentColor" /> {actionLoading ? 'Starting...' : 'Start Session'}
             </button>
@@ -298,7 +298,7 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
             <button
               onClick={handlePause}
               disabled={actionLoading}
-              className="w-full flex items-center justify-center gap-2.5 rounded-full py-3 text-sm font-semibold bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition-all disabled:opacity-50 active:scale-[0.98]"
+              className="w-full flex items-center justify-center gap-2.5 rounded-full py-3 text-sm font-semibold focus-liquid-btn shadow-sm transition-all disabled:opacity-50 active:scale-[0.98]"
             >
               <Pause size={16} fill="currentColor" /> {actionLoading ? 'Pausing...' : 'Pause Session'}
             </button>
@@ -307,7 +307,7 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
             <button
               onClick={handleResume}
               disabled={actionLoading}
-              className="w-full flex items-center justify-center gap-2.5 rounded-full py-3 text-sm font-semibold bg-black hover:bg-gray-800 text-white transition-all disabled:opacity-50 active:scale-[0.98]"
+              className="w-full flex items-center justify-center gap-2.5 rounded-full py-3 text-sm font-semibold focus-liquid-btn transition-all disabled:opacity-50 active:scale-[0.98]"
             >
               <Play size={16} fill="currentColor" /> {actionLoading ? 'Resuming...' : 'Resume Session'}
             </button>
@@ -358,7 +358,7 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
                   <button
                     key={d}
                     onClick={() => { setDuration(d); setEditCustom(false) }}
-                    className={`text-sm font-semibold px-4 py-1.5 rounded-full border transition-all ${duration === d && !editCustom ? 'bg-neutral-900 border-neutral-900 text-white' : 'bg-white/60 border-neutral-200 text-neutral-500 hover:bg-neutral-100'}`}
+                    className={`text-sm font-semibold px-4 py-1.5 rounded-full border transition-all ${duration === d && !editCustom ? 'focus-liquid-btn' : 'bg-white/60 border-neutral-200 text-neutral-500 hover:bg-neutral-100'}`}
                   >
                     {d}m
                   </button>
