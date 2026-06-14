@@ -1244,6 +1244,10 @@
   cursor: pointer;
   transition: color 0.2s;
   box-shadow: none !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .type-toggle button.active {
@@ -1286,7 +1290,7 @@
   height: 48px;
   border-radius: 10px !important;
   border: none;
-  background: #121c17 !important;
+  background: #101312 !important;
   color: #ffffff;
   font-size: 15px;
   font-weight: 700;

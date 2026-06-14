@@ -156,16 +156,19 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
         </h2>
         
         {!isEdit && (
-          <div className="workouts-modal-tabs" style={{ marginBottom: '20px' }}>
+          <div className="type-toggle" style={{ marginBottom: '24px' }}>
+            <div className={`type-toggle-slider ${activeTab === 'json' ? 'slide-right' : ''}`} />
             <button
-              className={`tab-btn ${activeTab === 'manual' ? 'active' : ''}`}
+              type="button"
+              className={activeTab === 'manual' ? 'active' : ''}
               onClick={() => setActiveTab('manual')}
             >
               <ClipboardCheck size={14} />
               Manual Entry
             </button>
             <button
-              className={`tab-btn ${activeTab === 'json' ? 'active' : ''}`}
+              type="button"
+              className={activeTab === 'json' ? 'active' : ''}
               onClick={() => setActiveTab('json')}
             >
               <FileJson size={14} />
