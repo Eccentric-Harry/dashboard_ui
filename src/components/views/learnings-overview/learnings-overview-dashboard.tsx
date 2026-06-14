@@ -10,6 +10,7 @@ import { LearningsLogCard } from './components/learnings-log-card'
 import { CategoryBreakdownCard } from './components/category-breakdown-card'
 import { AddEntryModal } from './components/add-entry-modal'
 import { GitHubProfileCard, LeetCodeProfileCard } from './components/dev-profile-card'
+import type { GithubProfile, GithubRepo, LeetcodeStats, LeetcodeProfile } from './components/dev-profile-card'
 import { FocusBlockWidget } from './components/focus-block-widget'
 import { ActiveStudyQueue } from './components/active-study-queue'
 import './learnings-overview.css'
@@ -37,6 +38,44 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
   const [editingLearning, setEditingLearning] = useState<LearningLog | undefined>()
   const [editingTask, setEditingTask] = useState<DailyTask | undefined>()
   const [initialTab, setInitialTab] = useState<'Task' | 'Learning'>('Task')
+
+  const isGuest = localStorage.getItem('isGuest') === 'true'
+  const [githubProfile, setGithubProfile] = useState<GithubProfile | null>(null)
+  const [githubRepos, setGithubRepos] = useState<GithubRepo[] | null>(null)
+  const [leetcodeStats, setLeetcodeStats] = useState<LeetcodeStats | null>(null)
+  const [leetcodeProfile, setLeetcodeProfile] = useState<LeetcodeProfile | null>(null)
+
+  useEffect(() => {
+    if (isGuest) return
+
+    fetch('https://api.github.com/users/Eccentric-Harry')
+      .then(r => r.json())
+      .then(setGithubProfile)
+      .catch(() => {})
+
+    fetch('https://api.github.com/users/Eccentric-Harry/repos')
+      .then(r => r.json())
+      .then(setGithubRepos)
+      .catch(() => {})
+
+    fetch('https://leetcode-api-faisalshohag.vercel.app/Eccentric-Harry')
+      .then(r => r.json())
+      .then(data => {
+        if (data && typeof data.totalSolved === 'number') {
+          setLeetcodeStats(data)
+        }
+      })
+      .catch(() => {})
+
+    fetch('https://alfa-leetcode-api.onrender.com/Eccentric-Harry/profile')
+      .then(r => r.json())
+      .then(data => {
+        if (data && typeof data.username === 'string') {
+          setLeetcodeProfile(data)
+        }
+      })
+      .catch(() => {})
+  }, [isGuest])
 
   useEffect(() => {
     setSelectedDate(parseDateFromParams(searchParams))
@@ -155,11 +194,17 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
 
         {/* Row 5: GitHub & LeetCode Profiles side-by-side */}
         <div className="learnings-github-card-wrap">
-          <GitHubProfileCard />
+          <GitHubProfileCard
+            profile={githubProfile ?? undefined}
+            repos={githubRepos ?? undefined}
+          />
         </div>
 
         <div className="learnings-leetcode-card-wrap">
-          <LeetCodeProfileCard />
+          <LeetCodeProfileCard
+            stats={leetcodeStats ?? undefined}
+            profile={leetcodeProfile ?? undefined}
+          />
         </div>
       </div>
 

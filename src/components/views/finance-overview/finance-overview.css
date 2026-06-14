@@ -766,6 +766,15 @@
     rgba(250, 252, 247, 0.72);
 }
 
+.finance-dashboard-guest .finance-transactions-card {
+  grid-column: 1 / -1;
+}
+
+.finance-dashboard-guest .finance-subscription-card {
+  grid-column: 1 / -1;
+  grid-row: 4;
+}
+
 .finance-transaction-table {
   display: grid;
   flex: 1;
