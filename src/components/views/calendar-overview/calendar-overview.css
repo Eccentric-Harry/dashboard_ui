@@ -204,11 +204,21 @@
   gap: 8px;
   padding: 0 16px;
   border-radius: 15px;
-  background: #151a18;
-  color: #fff;
-  box-shadow: 0 14px 28px rgba(21, 26, 24, 0.16);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.2));
+  color: #101312;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   font-size: 11px;
   font-weight: 800;
+  transition: all 0.2s ease;
+}
+
+.calendar-add-button:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.5));
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.9);
 }
 
 .calendar-focus-split {
@@ -1028,13 +1038,23 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border: 0;
   border-radius: 15px;
-  background: #101312;
-  color: #fff;
   cursor: pointer;
   font-size: 11px;
   font-weight: 850;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.2)) !important;
+  color: #101312 !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  transition: all 0.2s ease;
+}
+
+.calendar-modal-submit:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.5)) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
 }
 
 .calendar-modal-submit:disabled {

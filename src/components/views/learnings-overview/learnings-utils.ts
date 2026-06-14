@@ -91,21 +91,21 @@ export function getIconForCategory(category: string) {
 
 export function getConsistentColor(category: string) {
   const cat = category.toLowerCase().trim()
-  if (cat.includes('computer science') || cat.includes('cs')) return '#0d9488'
-  if (cat.includes('development') || cat.includes('coding')) return '#1a7a4a'
+  if (cat.includes('computer science') || cat.includes('cs')) return '#6366f1'
+  if (cat.includes('development') || cat.includes('coding')) return '#2563eb'
   if (cat.includes('architecture') || cat.includes('system')) return '#8b5cf6'
-  if (cat.includes('frontend') || cat.includes('ui')) return '#0284c7'
-  if (cat.includes('backend') || cat.includes('server')) return '#ea580c'
-  if (cat.includes('git') || cat.includes('github')) return '#4b5563'
-  if (cat.includes('ai') || cat.includes('ml')) return '#312e81'
-  if (cat.includes('personal')) return '#ec4899'
+  if (cat.includes('frontend') || cat.includes('ui')) return '#0ea5e9'
+  if (cat.includes('backend') || cat.includes('server')) return '#f97316'
+  if (cat.includes('git') || cat.includes('github')) return '#64748b'
+  if (cat.includes('ai') || cat.includes('ml')) return '#4f46e5'
+  if (cat.includes('personal')) return '#f43f5e'
 
   // Custom hash color for unknown custom categories!
   let hash = 0
   for (let i = 0; i < category.length; i++) {
     hash = category.charCodeAt(i) + ((hash << 5) - hash)
   }
-  const colors = ['#22c55e', '#3b82f6', '#ef4444', '#eab308', '#ec4899', '#a855f7', '#14b8a6', '#f97316']
+  const colors = ['#0ea5e9', '#3b82f6', '#ef4444', '#f43f5e', '#ec4899', '#a855f7', '#d946ef', '#f97316']
   return colors[Math.abs(hash) % colors.length]
 }
 
