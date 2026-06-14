@@ -233,17 +233,18 @@ export function AddTransactionModal({
         </h2>
 
         {!isEdit && (
-          <div className="finance-modal-tabs">
+          <div className="type-toggle" style={{ marginBottom: '24px' }}>
+            <div className={`type-toggle-slider ${activeTab === 'Lending' ? 'slide-right' : ''}`} />
             <button
               type="button"
-              className={`tab-btn ${activeTab === 'Transaction' ? 'active' : ''}`}
+              className={activeTab === 'Transaction' ? 'active' : ''}
               onClick={() => setActiveTab('Transaction')}
             >
               Transaction
             </button>
             <button
               type="button"
-              className={`tab-btn ${activeTab === 'Lending' ? 'active' : ''}`}
+              className={activeTab === 'Lending' ? 'active' : ''}
               onClick={() => setActiveTab('Lending')}
             >
               Lending

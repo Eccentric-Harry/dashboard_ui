@@ -152,16 +152,19 @@ function AddActivityModal({ isOpen, onClose, onSuccess, isEdit, initialData }: A
 
         <h2>{isEdit ? 'Edit Workout' : 'Record Workout'}</h2>
 
-        <div className="workouts-modal-tabs">
+        <div className="type-toggle" style={{ marginBottom: '24px' }}>
+          <div className={`type-toggle-slider ${activeTab === 'strava' ? 'slide-right' : ''}`} />
           <button
-            className={`tab-btn ${activeTab === 'manual' ? 'active' : ''}`}
+            type="button"
+            className={activeTab === 'manual' ? 'active' : ''}
             onClick={() => setActiveTab('manual')}
           >
             <ClipboardCheck size={14} />
             Manual Entry
           </button>
           <button
-            className={`tab-btn ${activeTab === 'strava' ? 'active' : ''}`}
+            type="button"
+            className={activeTab === 'strava' ? 'active' : ''}
             onClick={() => setActiveTab('strava')}
           >
             <FileJson size={14} />

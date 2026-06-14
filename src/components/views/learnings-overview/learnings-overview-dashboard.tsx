@@ -8,8 +8,7 @@ import { LearningsStatsRow } from './components/learnings-stats-row'
 import { TasksScheduleCard } from './components/tasks-schedule-card'
 import { LearningsLogCard } from './components/learnings-log-card'
 import { CategoryBreakdownCard } from './components/category-breakdown-card'
-import { AddLearningModal } from './components/add-learning-modal'
-import { AddTaskModal } from './components/add-task-modal'
+import { AddEntryModal } from './components/add-entry-modal'
 import { GitHubProfileCard, LeetCodeProfileCard } from './components/dev-profile-card'
 import { FocusBlockWidget } from './components/focus-block-widget'
 import { ActiveStudyQueue } from './components/active-study-queue'
@@ -34,10 +33,10 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
   const [summary, setSummary] = useState<LearningsSummary | null>(null)
   const [summaryLoading, setSummaryLoading] = useState(true)
 
-  const [learningModalOpen, setLearningModalOpen] = useState(false)
-  const [taskModalOpen, setTaskModalOpen] = useState(false)
+  const [entryModalOpen, setEntryModalOpen] = useState(false)
   const [editingLearning, setEditingLearning] = useState<LearningLog | undefined>()
   const [editingTask, setEditingTask] = useState<DailyTask | undefined>()
+  const [initialTab, setInitialTab] = useState<'Task' | 'Learning'>('Task')
 
   useEffect(() => {
     setSelectedDate(parseDateFromParams(searchParams))
@@ -101,13 +100,11 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
         selectedDate={selectedDate}
         onDateChange={handleDateChange}
         onNavigate={onNavigate}
-        onAddLearning={() => {
+        onAddEntry={() => {
           setEditingLearning(undefined)
-          setLearningModalOpen(true)
-        }}
-        onAddTask={() => {
           setEditingTask(undefined)
-          setTaskModalOpen(true)
+          setInitialTab('Task')
+          setEntryModalOpen(true)
         }}
         summary={summary}
       />
@@ -122,7 +119,9 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
             onRefresh={handleRefresh}
             onEditTask={(task) => {
               setEditingTask(task)
-              setTaskModalOpen(true)
+              setEditingLearning(undefined)
+              setInitialTab('Task')
+              setEntryModalOpen(true)
             }}
           />
         </div>
@@ -147,7 +146,9 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
             onRefresh={handleRefresh}
             onEditLearning={(learning) => {
               setEditingLearning(learning)
-              setLearningModalOpen(true)
+              setEditingTask(undefined)
+              setInitialTab('Learning')
+              setEntryModalOpen(true)
             }}
           />
         </div>
@@ -162,27 +163,18 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
         </div>
       </div>
 
-      <AddLearningModal
-        isOpen={learningModalOpen}
+      <AddEntryModal
+        isOpen={entryModalOpen}
         onClose={() => {
-          setLearningModalOpen(false)
+          setEntryModalOpen(false)
           setEditingLearning(undefined)
-        }}
-        onSuccess={handleRefresh}
-        isEdit={!!editingLearning}
-        initialData={editingLearning}
-        defaultDate={selectedDate}
-      />
-
-      <AddTaskModal
-        isOpen={taskModalOpen}
-        onClose={() => {
-          setTaskModalOpen(false)
           setEditingTask(undefined)
         }}
         onSuccess={handleRefresh}
-        isEdit={!!editingTask}
-        initialData={editingTask}
+        isEdit={!!editingLearning || !!editingTask}
+        initialTab={initialTab}
+        initialLearningData={editingLearning}
+        initialTaskData={editingTask}
         defaultDate={selectedDate}
       />
     </section>

@@ -2028,3 +2028,55 @@
   animation: focus-glow 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
   border-color: rgba(26, 122, 74, 0.6) !important;
 }
+
+/* Type Toggle Tabs for Modals */
+.type-toggle {
+  position: relative;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px !important;
+  flex-direction: row !important;
+  background: rgba(20, 24, 22, 0.04);
+  padding: 4px;
+  border-radius: 14px;
+}
+
+.type-toggle-slider {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+.type-toggle-slider.slide-right {
+  transform: translateX(calc(100% + 8px));
+}
+
+.type-toggle button {
+  position: relative;
+  z-index: 2;
+  height: 38px;
+  border-radius: 10px;
+  border: none;
+  font-size: 13px;
+  font-weight: 700;
+  background: transparent !important;
+  color: rgba(23, 28, 25, 0.5);
+  cursor: pointer;
+  transition: color 0.2s;
+  box-shadow: none !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.type-toggle button.active {
+  color: #101312;
+}

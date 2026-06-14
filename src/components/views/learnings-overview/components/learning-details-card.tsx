@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import { mockTasksData } from '../../../dashboard/quantified-self-dashboard/data'
 import { fetchLearnings, deleteLearning } from '../../../../lib/api'
 import type { LearningLog } from '../../../../lib/api'
-import { AddLearningModal } from './add-learning-modal'
+import { AddEntryModal } from './add-entry-modal'
 
 function extractNotionUrl(text: string): string | null {
   if (!text) return null
@@ -428,12 +428,13 @@ export function LearningDetailsCard({ selectedDate, onRefresh }: LearningDetails
       </div>
 
       {/* Add / Edit Modal */}
-      <AddLearningModal
+      <AddEntryModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onSuccess={handleSuccess}
         isEdit={isEdit}
-        initialData={selectedLearning}
+        initialTab="Learning"
+        initialLearningData={selectedLearning}
         defaultDate={selectedDate}
       />
     </div>

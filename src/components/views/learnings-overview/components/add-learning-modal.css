@@ -148,7 +148,7 @@
 .learning-modal-submit {
   height: 40px;
   border-radius: 12px;
-  background: #1a7a4a;
+  background: #101312;
   color: #fff;
   font-size: 13px;
   font-weight: 700;
@@ -160,13 +160,13 @@
   gap: 8px;
   margin-top: 8px;
   transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(26, 122, 74, 0.15);
+  box-shadow: 0 4px 12px rgba(16, 19, 18, 0.18);
 }
 
 .learning-modal-submit:hover:not(:disabled) {
-  background: #15623b;
+  background: #232d28;
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(26, 122, 74, 0.25);
+  box-shadow: 0 6px 16px rgba(17, 21, 20, 0.24);
 }
 
 .learning-modal-submit:active:not(:disabled) {
@@ -245,12 +245,3 @@
   box-shadow: none !important;
 }
 
-.learning-modal-backdrop.is-tasks-theme .learning-modal-submit {
-  background: #101312 !important;
-  box-shadow: 0 4px 12px rgba(16, 19, 18, 0.18) !important;
-}
-
-.learning-modal-backdrop.is-tasks-theme .learning-modal-submit:hover:not(:disabled) {
-  background: #232d28 !important;
-  box-shadow: 0 6px 16px rgba(17, 21, 20, 0.24) !important;
-}
