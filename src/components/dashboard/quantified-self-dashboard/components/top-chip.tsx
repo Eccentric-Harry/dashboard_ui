@@ -1,4 +1,4 @@
-import avatarImage from '../../../../assets/reference-crops/avatar.png'
+import avatarImage from '../../../../assets/reference-crops/avatar_luffy.png'
 
 function TopChip() {
   return (

@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import avatarImage from '../../../../assets/reference-crops/avatar.png'
+import avatarImage from '../../../../assets/reference-crops/avatar_luffy.png'
 import { type AppPath, navItems, railBottomItems } from '../data'
 import { useNotifications } from '../../../../contexts/NotificationContext'
 

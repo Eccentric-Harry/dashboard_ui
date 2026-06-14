@@ -2,7 +2,7 @@ import type { LucideIcon } from 'lucide-react'
 import { CircleDollarSign, Home } from 'lucide-react'
 import type { MouseEvent } from 'react'
 
-import avatarImage from '../../assets/reference-crops/avatar.png'
+import avatarImage from '../../assets/reference-crops/avatar_luffy.png'
 
 type SidebarItem = {
   to: '/finance' | '/nutrition'

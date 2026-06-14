@@ -17,7 +17,7 @@ import { subscribeToActiveRequests } from './lib/api'
 import { OverlayLoader } from './components/ui/OverlayLoader'
 import { NotificationProvider, useNotifications } from './contexts/NotificationContext'
 import { NotificationCenter } from './components/dashboard/quantified-self-dashboard/components/notification-center'
-import avatarImage from './assets/reference-crops/avatar.png'
+import avatarImage from './assets/reference-crops/avatar_luffy.png'
 
 const ENABLE_HOME_ROUTE = import.meta.env.VITE_ENABLE_HOME_ROUTE === 'true'
 
