@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react'
-import { ChevronDown, Plus, ListTodo, BookOpen } from 'lucide-react'
+import { ChevronDown, Plus } from 'lucide-react'
 import type { AppPath } from '../../../dashboard/quantified-self-dashboard/data'
 import type { LearningsSummary } from '../../../../lib/api'
 import { fetchLearningsForRange, fetchTasksForRange } from '../../../../lib/api'
@@ -22,7 +22,6 @@ export function LearningsHeader({
   summary,
 }: LearningsHeaderProps) {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
-  const [isFabOpen, setIsFabOpen] = useState(false)
   const [activeLearningsDates, setActiveLearningsDates] = useState<Set<string>>(new Set())
   const [calendarRange, setCalendarRange] = useState<{ start: string; end: string } | null>(null)
 
