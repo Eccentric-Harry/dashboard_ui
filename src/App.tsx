@@ -18,8 +18,34 @@ import { OverlayLoader } from './components/ui/OverlayLoader'
 import { NotificationProvider, useNotifications } from './contexts/NotificationContext'
 import { NotificationCenter } from './components/dashboard/quantified-self-dashboard/components/notification-center'
 import avatarImage from './assets/reference-crops/avatar_luffy.png'
+import { VisitorAuthPopup } from './components/auth/VisitorAuthPopup'
+import { enableGuestInterceptor } from './lib/guest-interceptor'
 
 const ENABLE_HOME_ROUTE = import.meta.env.VITE_ENABLE_HOME_ROUTE === 'true'
+
+const isGuest = localStorage.getItem('isGuest') === 'true';
+const authToken = localStorage.getItem('authToken');
+
+if (isGuest) {
+  enableGuestInterceptor();
+}
+
+if (authToken && !isGuest) {
+  const origFetch = window.fetch.bind(window);
+  window.fetch = (input, init) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (url && url.includes('/api/v1/')) {
+      return origFetch(input, {
+        ...init,
+        headers: {
+          ...init?.headers,
+          'Authorization': `Bearer ${authToken}`,
+        },
+      });
+    }
+    return origFetch(input, init);
+  };
+}
 
 function normalizePathname(pathname: string): AppPath {
   if (pathname === '/home') {
@@ -230,7 +256,9 @@ function App() {
   const currentDate = searchParams.get('date') || undefined;
 
   return (
-    <DashboardProvider date={currentDate}>
+    <>
+      {!isGuest && !authToken && <VisitorAuthPopup />}
+      <DashboardProvider date={currentDate}>
       <FocusProvider>
       <NotificationProvider>
         <Toaster
@@ -315,6 +343,7 @@ function App() {
       </NotificationProvider>
       </FocusProvider>
     </DashboardProvider>
+    </>
   );
 }
 

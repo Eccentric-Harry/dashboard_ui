@@ -22,6 +22,7 @@ import './finance-overview.css'
 
 
 function FinanceOverviewDashboard() {
+  const isGuest = localStorage.getItem('isGuest') === 'true'
   const [logs, setLogs] = useState<DailyFinancialLog[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
@@ -247,7 +248,7 @@ function FinanceOverviewDashboard() {
         selectedDate={selectedDate}
         onDateChange={setSelectedDate}
       />
-      <div className="finance-dashboard-grid">
+      <div className={`finance-dashboard-grid${isGuest ? ' finance-dashboard-guest' : ''}`}>
         <div className="finance-stats-row">
           <BalanceSummaryCard />
           {metrics.map((metric) => (
@@ -268,8 +269,8 @@ function FinanceOverviewDashboard() {
           onDelete={handleDelete}
         />
         <SubscriptionsCard transactions={recentTransactions} onRefresh={refreshData} />
-        <RepaymentScheduleCard transactions={recentTransactions} onRefresh={refreshData} />
-        <LendingCard
+        {!isGuest && <RepaymentScheduleCard transactions={recentTransactions} onRefresh={refreshData} />}
+        {!isGuest && <LendingCard
           refreshKey={lendingRefreshKey}
           onEditClick={(record) => {
             setEditingLending(record)
@@ -279,7 +280,7 @@ function FinanceOverviewDashboard() {
             setDeleteLendingTarget(record)
           }}
           onRefreshTransactions={refreshData}
-        />
+        />}
       </div>
       
       <ConfirmDialog
