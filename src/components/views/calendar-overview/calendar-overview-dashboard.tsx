@@ -54,7 +54,13 @@ type ModalState =
   | { open: true; item?: CalendarItem; date: string }
 
 function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOverviewDashboardProps) {
-  const [selectedDate, setSelectedDate] = useState(() => searchParams.get('date') || toISODate(new Date()))
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const fromParams = searchParams.get('date')
+    if (fromParams) return fromParams
+    const isGuest = localStorage.getItem('isGuest') === 'true'
+    if (isGuest) return '2026-06-09'
+    return toISODate(new Date())
+  })
   const [items, setItems] = useState<CalendarItem[]>([])
   const [selectedItemKey, setSelectedItemKey] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)

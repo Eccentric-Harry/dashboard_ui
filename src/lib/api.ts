@@ -951,3 +951,12 @@ if (typeof window !== 'undefined') {
   };
 }
 
+export async function verifyPasscode(passcode: string) {
+  const response = await fetch(`${API_BASE_URL}/auth/verify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ passcode }),
+  });
+  return response.json();
+}
+
