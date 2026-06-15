@@ -55,9 +55,9 @@ export const navItems: DashboardNavItem[] = [
   { label: 'Finance Overview', icon: CircleDollarSign, to: '/finance' },
   { label: 'Workouts', icon: Dumbbell, to: '/workouts' },
   { label: 'Prompts', icon: Terminal, to: '/prompts', mobileHidden: true },
+  { label: 'Tasks', icon: CheckSquare, to: '/tasks' },
 
   { label: 'Adjust', icon: SlidersHorizontal, muted: true },
-  { label: 'Tasks', icon: CheckSquare, to: '/tasks' },
   { label: 'People', icon: Users, muted: true },
   { label: 'Shield', icon: ShieldCheck, muted: true },
 ]
