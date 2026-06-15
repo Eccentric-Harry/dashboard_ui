@@ -90,10 +90,10 @@ export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: Tasks
   return (
     <div className="tasks-list-view">
       {tasks.map((task) => {
-        const storedCategory = task.category as TaskCategory | undefined
+        const storedCategory = task.category as string | undefined
         const detected = detectCategory(task.title)
-        const category = (storedCategory && storedCategory in CATEGORY_THEMES) ? storedCategory : detected
-        const theme = CATEGORY_THEMES[category]
+        const category = storedCategory || detected
+        const theme = CATEGORY_THEMES[category as TaskCategory] || CATEGORY_THEMES.General
         const CatIcon = theme.icon
         const isOverdueTask = isOverdue(task)
         const isSelected = selectedTask?.id === task.id

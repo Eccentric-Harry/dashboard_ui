@@ -86,10 +86,10 @@ export function TasksKanbanView({ tasks, onSelect }: TasksKanbanViewProps) {
               </div>
             ) : (
               grouped[col.key].map((task) => {
-                const storedCat = task.category as TaskCategory | undefined
+                const storedCat = task.category as string | undefined
                 const detected = detectCategory(task.title)
-                const category = (storedCat && storedCat in CATEGORY_COLORS) ? storedCat : detected
-                const color = CATEGORY_COLORS[category]
+                const category = storedCat || detected
+                const color = CATEGORY_COLORS[category as TaskCategory] || CATEGORY_COLORS.General
 
                 return (
                   <div

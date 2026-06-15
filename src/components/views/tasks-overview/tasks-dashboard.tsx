@@ -40,7 +40,8 @@ export function TasksDashboard({ }: TasksDashboardProps) {
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [newTaskDate, setNewTaskDate] = useState(() => new Date().toISOString().split('T')[0])
   const [newTaskTime, setNewTaskTime] = useState('')
-  const [newTaskCategory, setNewTaskCategory] = useState<TaskCategory>('Personal')
+  const [newTaskCategory, setNewTaskCategory] = useState<string>('Personal')
+  const [customCategory, setCustomCategory] = useState('')
   const [newTaskNotes, setNewTaskNotes] = useState('')
 
   
@@ -126,17 +127,20 @@ export function TasksDashboard({ }: TasksDashboardProps) {
     if (!newTaskTitle.trim()) return
 
     try {
+      const finalCategory = newTaskCategory === 'Custom' && customCategory.trim() ? customCategory.trim() : newTaskCategory
       const res = await addTask({
         title: newTaskTitle.trim(),
         date: newTaskDate,
         scheduledTime: newTaskTime || undefined,
-        category: newTaskCategory,
+        category: finalCategory,
         notes: newTaskNotes.trim() || undefined,
       })
       toast.success('Task created')
       setNewTaskTitle('')
       setNewTaskNotes('')
       setNewTaskTime('')
+      setCustomCategory('')
+      setNewTaskCategory('Personal')
       setShowAddModal(false)
       load()
       if (res?.data) {
@@ -418,13 +422,25 @@ export function TasksDashboard({ }: TasksDashboardProps) {
                 <label>CATEGORY</label>
                 <select 
                   value={newTaskCategory}
-                  onChange={(e) => setNewTaskCategory(e.target.value as TaskCategory)}
+                  onChange={(e) => setNewTaskCategory(e.target.value)}
                   className="form-input"
                 >
                   {CATEGORIES.map(c => (
                     <option key={c.key} value={c.key}>{c.label}</option>
                   ))}
+                  <option value="Custom">Custom...</option>
                 </select>
+                {newTaskCategory === 'Custom' && (
+                  <input
+                    type="text"
+                    placeholder="Enter custom category..."
+                    value={customCategory}
+                    onChange={(e) => setCustomCategory(e.target.value)}
+                    className="form-input"
+                    style={{ marginTop: '8px' }}
+                    autoFocus
+                  />
+                )}
               </div>
 
               <div className="form-group">

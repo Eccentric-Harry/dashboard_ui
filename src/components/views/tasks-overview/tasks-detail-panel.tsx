@@ -93,8 +93,8 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate }
     )
   }
 
-  const category = (task.category || 'General') as TaskCategory
-  const color = CATEGORY_COLORS[category] || CATEGORY_COLORS.General
+  const category = task.category || 'General'
+  const color = CATEGORY_COLORS[category as TaskCategory] || CATEGORY_COLORS.General
 
   const handleStartEdit = () => {
     setEditTitle(task.title)

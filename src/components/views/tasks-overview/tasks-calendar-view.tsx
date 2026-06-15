@@ -193,10 +193,10 @@ export function TasksCalendarView({ tasks, onSelect }: TasksCalendarViewProps) {
                 {isCurrentMonth && (
                   <div className="calendar-day-tasks">
                     {visibleTasks.map((t) => {
-                      const storedCat = t.category as TaskCategory | undefined
+                      const storedCat = t.category as string | undefined
                       const detected = detectCategory(t.title)
-                      const category = (storedCat && storedCat in CATEGORY_COLORS) ? storedCat : detected
-                      const blockColor = CATEGORY_COLORS[category] || CATEGORY_COLORS.General
+                      const category = storedCat || detected
+                      const blockColor = CATEGORY_COLORS[category as TaskCategory] || CATEGORY_COLORS.General
 
                       return (
                         <div
