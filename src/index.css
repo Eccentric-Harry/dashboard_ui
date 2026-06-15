@@ -2699,20 +2699,20 @@ button {
     backdrop-filter: blur(32px) saturate(180%) !important;
     -webkit-backdrop-filter: blur(32px) saturate(180%) !important;
     box-shadow: none !important;
-    animation: slide-up-drawer 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    animation: slide-left-drawer 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
     /* Respect device notch at top and home bar at bottom */
     padding-top: env(safe-area-inset-top, 0px) !important;
     padding-bottom: env(safe-area-inset-bottom, 16px) !important;
     z-index: 10000 !important;
   }
 
-  @keyframes slide-up-drawer {
+  @keyframes slide-left-drawer {
     from {
-      transform: translateY(100%);
+      transform: translateX(100%);
     }
 
     to {
-      transform: translateY(0);
+      transform: translateX(0);
     }
   }
 

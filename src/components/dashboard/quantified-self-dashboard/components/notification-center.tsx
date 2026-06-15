@@ -101,14 +101,48 @@ function NotificationCenter({ onNavigate }: NotificationCenterProps) {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
             <button 
               onClick={() => { setIsOpen(false); if (onNavigate) onNavigate('/prompts'); }}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '52px', background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(16,19,18,0.04)', borderRadius: '12px', color: '#101312', cursor: 'pointer', transition: 'all 0.2s ease', width: '100%', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center', justifyContent: 'center', height: '52px', background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(16,19,18,0.04)', borderRadius: '12px', color: '#101312', cursor: 'pointer', transition: 'all 0.2s ease', width: '100%', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}
               onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.9)'; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)'; }}
               onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.6)'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.02)'; }}
             >
-              <Terminal size={20} />
+              <Terminal size={16} />
+              <span style={{ fontSize: '9px', fontWeight: 600, opacity: 0.6 }}>Prompts</span>
             </button>
+            <button 
+              onClick={() => {
+                setBusy('refresh');
+                location.reload();
+              }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center', justifyContent: 'center', height: '52px', background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(16,19,18,0.04)', borderRadius: '12px', color: '#101312', cursor: 'pointer', transition: 'all 0.2s ease', width: '100%', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}
+              onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.9)'; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)'; }}
+              onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.6)'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.02)'; }}
+              title="Reload page (⌘R)"
+              aria-label="Reload page"
+            >
+              <RefreshCw size={16} className={busy === 'refresh' ? 'animate-spin' : ''} />
+              <span style={{ fontSize: '9px', fontWeight: 600, opacity: 0.6 }}>Refresh</span>
+            </button>
+
+            {isPushSupported && (
+              <button 
+                onClick={async () => {
+                  setBusy('toggle');
+                  await toggleDesktopNotifications();
+                  setBusy(null);
+                }}
+                style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center', justifyContent: 'center', height: '52px', background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(16,19,18,0.04)', borderRadius: '12px', color: desktopEnabled ? '#10b981' : '#101312', cursor: 'pointer', transition: 'all 0.2s ease', width: '100%', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}
+                onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.9)'; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)'; }}
+                onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.6)'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.02)'; }}
+                title={desktopEnabled ? 'Disable push alerts' : 'Enable push alerts'}
+                aria-label={desktopEnabled ? 'Disable push alerts' : 'Enable push alerts'}
+              >
+                {busy === 'toggle' ? <Loader2 size={16} className="animate-spin" /> : desktopEnabled ? <Bell size={16} /> : <BellOff size={16} />}
+                <span style={{ fontSize: '9px', fontWeight: 600, opacity: 0.6 }}>{desktopEnabled ? 'Alerts On' : 'Alerts Off'}</span>
+              </button>
+            )}
+
             {/* Empty placeholders */}
-            {[1, 2, 3, 4, 5].map((i) => (
+            {Array.from({ length: isPushSupported ? 3 : 4 }).map((_, i) => (
               <div 
                 key={i} 
                 style={{ height: '52px', background: 'rgba(16,19,18,0.03)', borderRadius: '12px' }} 
@@ -207,38 +241,7 @@ function NotificationCenter({ onNavigate }: NotificationCenterProps) {
             </div>
           )}
         </div>
-        {/* Footer */}
-        <div className="notification-drawer-footer">
-          <button
-            type="button"
-            onClick={() => {
-              setBusy('refresh');
-              location.reload();
-            }}
-            className={`footer-refresh-btn ${busy === 'refresh' ? 'is-busy' : ''}`}
-            title="Reload page (⌘R)"
-            aria-label="Reload page"
-          >
-            <RefreshCw size={13} />
-            <span>Refresh</span>
-          </button>
-          {isPushSupported && (
-            <button
-              type="button"
-              onClick={async () => {
-                setBusy('toggle');
-                await toggleDesktopNotifications();
-                setBusy(null);
-              }}
-              className={`footer-desktop-toggle ${desktopEnabled ? 'active' : ''} ${busy === 'toggle' ? 'is-busy' : ''}`}
-              title={desktopEnabled ? 'Disable push alerts' : 'Enable push alerts'}
-              aria-label={desktopEnabled ? 'Disable push alerts' : 'Enable push alerts'}
-            >
-              {busy === 'toggle' ? <Loader2 size={13} className="animate-spin" /> : desktopEnabled ? <Bell size={13} /> : <BellOff size={13} />}
-              <span>{desktopEnabled ? 'Alerts On' : 'Alerts Off'}</span>
-            </button>
-          )}
-        </div>
+
       </div>
     </div>,
     document.body
