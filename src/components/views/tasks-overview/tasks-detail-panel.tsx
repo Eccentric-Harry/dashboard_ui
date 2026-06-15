@@ -3,9 +3,9 @@ import { X, Check, Plus, Trash2, Clock, CalendarDays, Circle } from 'lucide-reac
 import type { DailyTask } from '../../../lib/api'
 
 interface SubTask {
-  id: string
+  id?: string
   text: string
-  completed: boolean
+  completed?: boolean
 }
 
 interface AuditEvent {

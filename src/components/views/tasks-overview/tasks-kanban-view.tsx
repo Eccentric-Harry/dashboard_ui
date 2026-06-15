@@ -52,10 +52,10 @@ type ColumnKey = 'todo' | 'in_progress' | 'done'
 interface TasksKanbanViewProps {
   tasks: DailyTask[]
   onSelect: (task: DailyTask) => void
-  onToggle: (task: DailyTask) => void
+
 }
 
-export function TasksKanbanView({ tasks, onSelect, onToggle }: TasksKanbanViewProps) {
+export function TasksKanbanView({ tasks, onSelect }: TasksKanbanViewProps) {
   const grouped: Record<ColumnKey, DailyTask[]> = { todo: [], in_progress: [], done: [] }
 
   tasks.forEach((task) => {

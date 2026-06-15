@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Plus, Search, List, Columns3, CalendarDays, X, Check, Clock } from 'lucide-react'
+import { Plus, Search, List, Columns3, CalendarDays, X, Clock } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { fetchTasks, toggleTask, deleteTask, updateTask, addTask } from '../../../lib/api'
 import type { DailyTask } from '../../../lib/api'
@@ -24,7 +24,7 @@ const CATEGORIES: { key: TaskCategory; label: string; color: string }[] = [
 
 interface TasksDashboardProps {
   searchParams: URLSearchParams
-  onNavigate: (pathname: string, search?: string) => void
+  onNavigate: (pathname: any, search?: string) => void
 }
 
 export function TasksDashboard({ }: TasksDashboardProps) {
@@ -42,7 +42,7 @@ export function TasksDashboard({ }: TasksDashboardProps) {
   const [newTaskTime, setNewTaskTime] = useState('')
   const [newTaskCategory, setNewTaskCategory] = useState<TaskCategory>('Personal')
   const [newTaskNotes, setNewTaskNotes] = useState('')
-  const [addEntryType, setAddEntryType] = useState<'Task' | 'Learning'>('Task')
+
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1)
@@ -318,7 +318,6 @@ export function TasksDashboard({ }: TasksDashboardProps) {
                 <TasksKanbanView
                   tasks={paginatedTasks}
                   onSelect={setSelectedTask}
-                  onToggle={handleToggle}
                 />
               )}
               
