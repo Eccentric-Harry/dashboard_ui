@@ -1946,9 +1946,9 @@ button {
   bottom: 0;
   right: 0;
   width: min(420px, 100%);
-  background: linear-gradient(180deg, rgba(230, 238, 233, 0.88) 0%, rgba(243, 247, 244, 0.94) 60%, rgba(254, 255, 254, 0.98) 100%);
-  backdrop-filter: blur(24px) saturate(150%);
-  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  background: linear-gradient(180deg, rgba(235, 242, 237, 0.88) 0%, rgba(246, 250, 247, 0.92) 60%, rgba(254, 255, 254, 0.96) 100%);
+  backdrop-filter: blur(48px) saturate(200%);
+  -webkit-backdrop-filter: blur(48px) saturate(200%);
   border-left: 1px solid rgba(255, 255, 255, 0.45);
   box-shadow: -12px 0 40px rgba(36, 48, 39, 0.06), inset 1px 0 0 rgba(255, 255, 255, 0.6);
   display: flex;
@@ -2693,11 +2693,11 @@ button {
     /* Rich layered background */
     background:
       linear-gradient(180deg,
-        rgba(235, 242, 237, 0.98) 0%,
-        rgba(246, 250, 247, 1.0) 60%,
-        #edf3ee 100%) !important;
-    backdrop-filter: blur(32px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(32px) saturate(180%) !important;
+        rgba(235, 242, 237, 0.88) 0%,
+        rgba(246, 250, 247, 0.92) 60%,
+        rgba(254, 255, 254, 0.96) 100%) !important;
+    backdrop-filter: blur(48px) saturate(200%) !important;
+    -webkit-backdrop-filter: blur(48px) saturate(200%) !important;
     box-shadow: none !important;
     animation: slide-left-drawer 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
     /* Respect device notch at top and home bar at bottom */

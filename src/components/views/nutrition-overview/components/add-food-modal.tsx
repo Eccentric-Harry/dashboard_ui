@@ -28,7 +28,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
   const [jsonInput, setJsonInput] = useState('')
   const [richPayload, setRichPayload] = useState<any>(null)
   
-  const [mealType, setMealType] = useState('Snack')
+  const [mealType, setMealType] = useState('')
   const [description, setDescription] = useState('')
   const [proteinGrams, setProteinGrams] = useState('')
   const [calories, setCalories] = useState('')
@@ -45,7 +45,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       setActiveTab('manual')
     } else if (isOpen && !isEdit) {
       // Reset to defaults for new entry
-      setMealType('Snack')
+      setMealType('')
       setDescription('')
       setProteinGrams('')
       setCalories('')
@@ -62,8 +62,8 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
     e.preventDefault()
     setError('')
     
-    if (!description || !calories || !proteinGrams || !date) {
-      setError('Please fill in all fields')
+    if (!description || !calories || !proteinGrams || !date || !mealType) {
+      setError('Please fill in all fields including Meal Type')
       return
     }
 
@@ -123,12 +123,18 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       if (data.analysis_metadata && data.analysis_metadata.meal_type_detected) {
         let rawType = String(data.analysis_metadata.meal_type_detected).trim().toLowerCase()
         const validTypes = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Midnight', 'Post Workout', 'Mid-Morning']
-        let matchedType = validTypes.find(t => t.toLowerCase() === rawType) || 'Snack'
-        setMealType(matchedType)
+        let matchedType = validTypes.find(t => t.toLowerCase() === rawType) || ''
+        if (matchedType) setMealType(matchedType)
       }
       
       if (!description) {
-        setDescription('Rich Nutritional Entry')
+        let newName = 'Nutrition Entry'
+        if (data.meal_items && Array.isArray(data.meal_items) && data.meal_items.length > 0) {
+          const cleanName = (name: string) => (name || '').split('(')[0].trim()
+          const items = data.meal_items.slice(0, 2).map((item: any) => cleanName(item.name))
+          newName = items.join(' + ') + (data.meal_items.length > 2 ? ' ...' : '')
+        }
+        setDescription(newName)
       }
       
       setActiveTab('manual')
@@ -194,6 +200,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
             <div className="form-group">
               <label>Meal</label>
               <select value={mealType} onChange={(e) => setMealType(e.target.value)}>
+                <option value="" disabled>Select Meal Type...</option>
                 <option value="Breakfast">Breakfast</option>
                 <option value="Lunch">Lunch</option>
                 <option value="Dinner">Dinner</option>
