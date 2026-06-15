@@ -19,7 +19,7 @@ import {
   Terminal,
 } from 'lucide-react'
 
-export type AppPath = '/home' | '/finance' | '/nutrition' | '/learnings' | '/workouts' | '/calendar' | '/prompts'
+export type AppPath = '/home' | '/finance' | '/nutrition' | '/learnings' | '/workouts' | '/calendar' | '/prompts' | '/tasks'
 
 export interface DashboardNavItem {
   label: string
@@ -57,7 +57,7 @@ export const navItems: DashboardNavItem[] = [
   { label: 'Prompts', icon: Terminal, to: '/prompts', mobileHidden: true },
 
   { label: 'Adjust', icon: SlidersHorizontal, muted: true },
-  { label: 'Tasks', icon: CheckSquare, muted: true },
+  { label: 'Tasks', icon: CheckSquare, to: '/tasks' },
   { label: 'People', icon: Users, muted: true },
   { label: 'Shield', icon: ShieldCheck, muted: true },
 ]

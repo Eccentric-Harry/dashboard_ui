@@ -418,6 +418,12 @@ export async function fetchLearningsSummary(date?: string) {
   return response.json();
 }
 
+export interface SubTask {
+  id?: string;
+  text: string;
+  completed?: boolean;
+}
+
 export interface DailyTask {
   id?: string;
   title: string;
@@ -430,6 +436,8 @@ export interface DailyTask {
   completedAt?: string;
   recurrenceFrequency?: CalendarRecurrence;
   category?: string;
+  subtasks?: SubTask[];
+  tags?: string[];
 }
 
 export async function fetchTasks(date?: string) {
