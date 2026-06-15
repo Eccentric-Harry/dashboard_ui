@@ -156,10 +156,12 @@
 }
 
 .tasks-filter-pill.is-active {
-  background: #101312;
-  border-color: #101312;
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(16, 19, 18, 0.15);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-color: rgba(255, 255, 255, 0.6);
+  color: #101312;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .tasks-filter-pill .pill-dot {
@@ -196,23 +198,23 @@
   height: 34px;
   padding: 0 16px;
   border-radius: 17px;
-  background: rgba(16, 19, 18, 0.85);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
-  color: #ffffff;
+  color: #101312;
   font-size: 13px;
   font-weight: 600;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(16, 19, 18, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   flex-shrink: 0;
 }
 
 .tasks-add-btn-primary:hover {
   transform: translateY(-1px);
-  background: #2a2d2c;
-  box-shadow: 0 6px 16px rgba(16, 19, 18, 0.2);
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
 .tasks-add-btn-primary:active {
@@ -1410,6 +1412,28 @@ textarea.form-input {
     position: static;
     padding: 20px 16px 88px;
     overflow: visible;
+  }
+
+  .tasks-add-btn-primary {
+    position: fixed;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 104px);
+    right: 20px;
+    z-index: 100;
+    width: 56px;
+    height: 56px;
+    border-radius: 28px;
+    padding: 0;
+    justify-content: center;
+    box-shadow: 0 8px 32px rgba(16, 19, 18, 0.3);
+  }
+
+  .tasks-add-btn-primary span {
+    display: none;
+  }
+
+  .tasks-add-btn-primary svg {
+    width: 24px;
+    height: 24px;
   }
 
   .tasks-avatar-container {
