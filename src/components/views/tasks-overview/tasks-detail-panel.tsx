@@ -67,6 +67,7 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate }
   const [editTitle, setEditTitle] = useState('')
   const [editNotes, setEditNotes] = useState('')
   const [editCategory, setEditCategory] = useState('')
+  const [editStatus, setEditStatus] = useState('')
   const [subtasks, setSubtasks] = useState<SubTask[]>(task?.subtasks || [])
   
   const [isAddingSubtask, setIsAddingSubtask] = useState(false)
@@ -84,6 +85,7 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate }
       setEditTitle(task.title)
       setEditNotes(task.notes || '')
       setEditCategory(task.category || 'General')
+      setEditStatus(task.status || (task.completed ? 'DONE' : 'TODO'))
       setIsEditing(false)
       setIsAddingSubtask(false)
       setIsAddingTag(false)
@@ -110,12 +112,19 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate }
     setEditTitle(task.title)
     setEditNotes(task.notes || '')
     setEditCategory(task.category || 'General')
+    setEditStatus(task.status || (task.completed ? 'DONE' : 'TODO'))
     setIsEditing(true)
   }
 
   const handleSaveEdit = () => {
     if (!task.id) return
-    onUpdate(task.id, { title: editTitle, notes: editNotes, category: editCategory })
+    onUpdate(task.id, { 
+      title: editTitle, 
+      notes: editNotes, 
+      category: editCategory,
+      status: editStatus,
+      completed: editStatus === 'DONE'
+    })
     setIsEditing(false)
   }
 
@@ -157,6 +166,18 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate }
                   <option value="Chores" />
                   <option value="Finance" />
                 </datalist>
+              </span>
+              <span className="tasks-detail-badge" style={{ background: 'rgba(16, 19, 18, 0.04)', color: 'rgba(16, 19, 18, 0.5)', padding: '2px 8px' }}>
+                <Circle size={10} />
+                <select
+                  value={editStatus}
+                  onChange={(e) => setEditStatus(e.target.value)}
+                  style={{ background: 'transparent', border: 'none', color: 'inherit', outline: 'none', padding: 0 }}
+                >
+                  <option value="TODO">To Do</option>
+                  <option value="IN_PROGRESS">In Progress</option>
+                  <option value="DONE">Done</option>
+                </select>
               </span>
               {task.date && (
                 <span className="tasks-detail-badge" style={{ background: 'rgba(16, 19, 18, 0.04)', color: 'rgba(16, 19, 18, 0.5)' }}>
@@ -208,6 +229,10 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate }
               <span className="tasks-detail-badge" style={{ background: color.bg, color: color.text }}>
                 <Check size={10} />
                 {category}
+              </span>
+              <span className="tasks-detail-badge" style={{ background: 'rgba(16, 19, 18, 0.04)', color: 'rgba(16, 19, 18, 0.5)' }}>
+                <Circle size={10} />
+                {task.status === 'TODO' ? 'To Do' : task.status === 'IN_PROGRESS' ? 'In Progress' : task.status === 'DONE' ? 'Done' : (task.completed ? 'Done' : 'To Do')}
               </span>
               {task.date && (
                 <span className="tasks-detail-badge" style={{ background: 'rgba(16, 19, 18, 0.04)', color: 'rgba(16, 19, 18, 0.5)' }}>

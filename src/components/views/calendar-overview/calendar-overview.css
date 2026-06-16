@@ -1138,6 +1138,10 @@
   }
 }
 
+.calendar-mobile-fab {
+  display: none;
+}
+
 @media (max-width: 820px) {
   .calendar-dashboard {
     position: static;
@@ -1154,13 +1158,33 @@
   }
 
   .calendar-add-button {
-    width: 42px;
-    padding: 0;
-    justify-content: center;
+    display: none;
   }
 
-  .calendar-add-button:not(svg) {
-    font-size: 0;
+  .routine-list-header button {
+    display: none;
+  }
+
+  .calendar-mobile-fab {
+    display: flex;
+    position: fixed;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 90px);
+    right: 20px;
+    z-index: 1000;
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.45) !important;
+    color: #101312 !important;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
   }
 
   .calendar-focus-split {

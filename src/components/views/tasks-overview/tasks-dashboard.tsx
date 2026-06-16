@@ -22,13 +22,7 @@ const CATEGORIES: { key: TaskCategory; label: string; color: string }[] = [
   { key: 'Personal', label: 'Personal', color: '#8b5cf6' },
   { key: 'General', label: 'General', color: '#14b8a6' },
 ]
-
-interface TasksDashboardProps {
-  searchParams: URLSearchParams
-  onNavigate: (pathname: any, search?: string) => void
-}
-
-export function TasksDashboard({ }: TasksDashboardProps) {
+export function TasksDashboard() {
   const [tasks, setTasks] = useState<DailyTask[]>([])
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<ViewMode>('list')
@@ -53,6 +47,7 @@ export function TasksDashboard({ }: TasksDashboardProps) {
 
   // Clear selected task when view changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedTask(null)
   }, [viewMode])
 
@@ -78,11 +73,13 @@ export function TasksDashboard({ }: TasksDashboardProps) {
   }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load()
   }, [load])
 
   // Reset page when filters change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentPage(1)
   }, [searchQuery, statusFilter, categoryFilters, tagFilters, viewMode])
 
@@ -121,7 +118,7 @@ export function TasksDashboard({ }: TasksDashboardProps) {
       if (selectedTask?.id === task.id && res?.data) {
         setSelectedTask(res.data)
       }
-      load(false)
+      await load(false)
     } catch (err: unknown) {
       // Rollback on error
       setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, completed: !t.completed } : t)))
@@ -146,10 +143,10 @@ export function TasksDashboard({ }: TasksDashboardProps) {
         setSelectedTask(null)
       }
       setDeleteTarget(null)
-      load(false)
+      await load(false)
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to delete task')
-      load(false) // Reload to restore
+      await load(false) // Reload to restore
     }
   }
 
@@ -170,10 +167,10 @@ export function TasksDashboard({ }: TasksDashboardProps) {
       if (selectedTask?.id === id && res?.data) {
         setSelectedTask(res.data)
       }
-      load(false)
+      await load(false)
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to update task')
-      load(false) // Rollback
+      await load(false) // Rollback
     }
   }
 
@@ -204,12 +201,6 @@ export function TasksDashboard({ }: TasksDashboardProps) {
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to create task')
     }
-  }
-
-  const toggleCategoryFilter = (cat: TaskCategory) => {
-    setCategoryFilters((prev) =>
-      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
-    )
   }
 
   const filteredTasks = useMemo(() => {
@@ -253,7 +244,7 @@ export function TasksDashboard({ }: TasksDashboardProps) {
     })
 
     return result
-  }, [tasks, searchQuery, statusFilter, categoryFilters])
+  }, [tasks, searchQuery, statusFilter, categoryFilters, tagFilters, uniqueTags])
 
   // Sliced tasks for pagination (List and Kanban views)
   const paginatedTasks = useMemo(() => {

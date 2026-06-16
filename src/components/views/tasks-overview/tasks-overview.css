@@ -1378,6 +1378,15 @@ textarea.form-input {
     grid-template-columns: 1fr;
   }
 
+  .tasks-detail-wrapper {
+    width: 0;
+    margin-right: 0;
+  }
+
+  .tasks-content-grid.has-selection .tasks-detail-wrapper {
+    margin-right: 0;
+  }
+
   .tasks-content-grid .tasks-detail-panel {
     position: fixed;
     top: 50%;
@@ -1394,6 +1403,11 @@ textarea.form-input {
     opacity: 0;
     pointer-events: none;
     transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+    background: #f7f9f7;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(16, 19, 18, 0.05);
   }
 
   .tasks-content-grid.has-selection .tasks-detail-panel {
@@ -1404,6 +1418,12 @@ textarea.form-input {
 
   .tasks-content-grid.has-selection .tasks-detail-overlay {
     display: block;
+  }
+
+  .tasks-detail-overlay {
+    position: fixed;
+    inset: 0;
+    border-radius: 0;
   }
 }
 
@@ -1416,15 +1436,23 @@ textarea.form-input {
 
   .tasks-add-btn-primary {
     position: fixed;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 104px);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 90px);
     right: 20px;
-    z-index: 100;
+    z-index: 1000;
     width: 56px;
     height: 56px;
-    border-radius: 28px;
     padding: 0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
     justify-content: center;
-    box-shadow: 0 8px 32px rgba(16, 19, 18, 0.3);
+    background: rgba(255, 255, 255, 0.45) !important;
+    color: #101312 !important;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .tasks-add-btn-primary span {

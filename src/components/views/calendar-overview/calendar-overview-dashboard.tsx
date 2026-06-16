@@ -446,6 +446,16 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
           />
         )
       )}
+
+      {/* Mobile FAB */}
+      <button 
+        type="button" 
+        className="calendar-mobile-fab" 
+        onClick={() => setModal({ open: true, date: selectedDate })}
+        aria-label="Add routine"
+      >
+        <Plus size={24} strokeWidth={2.5} />
+      </button>
     </section>
   )
 }
