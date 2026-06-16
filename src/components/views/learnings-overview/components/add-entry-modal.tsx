@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X, Loader2, ListTodo, BookOpen } from 'lucide-react'
+import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
 import { addLearning, updateLearning, addTask, updateTask } from '../../../../lib/api'
 import type { LearningLog, DailyTask } from '../../../../lib/api'
@@ -220,7 +221,7 @@ export function AddEntryModal({
     return 'Add Entry'
   }
 
-  return (
+  return createPortal(
     <div className={`learning-modal-backdrop ${activeTab === 'Task' ? 'is-tasks-theme' : ''}`} role="presentation" onClick={onClose}>
       <div 
         className="learning-modal-popover" 
@@ -396,6 +397,7 @@ export function AddEntryModal({
           </form>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
