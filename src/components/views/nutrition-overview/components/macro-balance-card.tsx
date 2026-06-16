@@ -227,7 +227,7 @@ return (
                   <FoodIcon size={16} color={iconDetails.color} />
                 </span>
                 <div style={{ minWidth: 0 }}>
-                  <b title={description} style={{ display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{description}</b>
+                  <span title={description} style={{ display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 500, color: '#171c19' }}>{description}</span>
                   <span
                     className="nutrition-meal-tag"
                     style={{
