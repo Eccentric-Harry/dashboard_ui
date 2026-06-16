@@ -1539,8 +1539,8 @@ button {
 /* Tablet Home dashboard: scale-down approach for the absolute-positioned artistic layout */
 @media (min-width: 769px) and (max-width: 1024px) {
 
-  /* Only scale the home dashboard — sub-route stages override this */
-  .dashboard-shell:has(.runner-card) .dashboard-stage {
+  /* Scale all dashboard stages on tablet */
+  .dashboard-shell .dashboard-stage {
     width: 1000px;
     min-width: 1000px;
     height: 900px;
@@ -1549,7 +1549,7 @@ button {
     transform-origin: top left;
   }
 
-  .dashboard-shell:has(.runner-card) {
+  .dashboard-shell {
     display: block;
     overflow: hidden;
     height: calc(900px * (100vw / 1000));

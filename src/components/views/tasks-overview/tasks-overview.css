@@ -1398,7 +1398,7 @@ textarea.form-input {
     height: auto;
     max-height: 85vh;
     border-radius: 24px;
-    z-index: 100;
+    z-index: 10000;
     transform: translate(-50%, -45%) scale(0.95);
     opacity: 0;
     pointer-events: none;
@@ -1424,6 +1424,7 @@ textarea.form-input {
     position: fixed;
     inset: 0;
     border-radius: 0;
+    z-index: 9999;
   }
 }
 
