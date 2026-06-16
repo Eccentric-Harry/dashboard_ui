@@ -431,6 +431,7 @@ export interface DailyTask {
   scheduledTime?: string;
   notes?: string;
   completed?: boolean;
+  status?: string;
   sortOrder?: number;
   createdAt?: string;
   updatedAt?: string;

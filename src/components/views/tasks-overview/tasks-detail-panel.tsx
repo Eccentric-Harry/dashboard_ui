@@ -66,6 +66,7 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate }
   const [isEditing, setIsEditing] = useState(false)
   const [editTitle, setEditTitle] = useState('')
   const [editNotes, setEditNotes] = useState('')
+  const [editCategory, setEditCategory] = useState('')
   const [subtasks, setSubtasks] = useState<SubTask[]>(task?.subtasks || [])
   
   const [isAddingSubtask, setIsAddingSubtask] = useState(false)
@@ -82,6 +83,7 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate }
       setTags(task.tags || [])
       setEditTitle(task.title)
       setEditNotes(task.notes || '')
+      setEditCategory(task.category || 'General')
       setIsEditing(false)
       setIsAddingSubtask(false)
       setIsAddingTag(false)
@@ -107,12 +109,13 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate }
   const handleStartEdit = () => {
     setEditTitle(task.title)
     setEditNotes(task.notes || '')
+    setEditCategory(task.category || 'General')
     setIsEditing(true)
   }
 
   const handleSaveEdit = () => {
     if (!task.id) return
-    onUpdate(task.id, { title: editTitle, notes: editNotes })
+    onUpdate(task.id, { title: editTitle, notes: editNotes, category: editCategory })
     setIsEditing(false)
   }
 
@@ -135,9 +138,25 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate }
               placeholder="Task title"
             />
             <div className="tasks-detail-meta" style={{ marginTop: 10 }}>
-              <span className="tasks-detail-badge" style={{ background: color.bg, color: color.text }}>
+              <span className="tasks-detail-badge" style={{ background: color.bg, color: color.text, padding: '2px 8px' }}>
                 <Check size={10} />
-                {category}
+                <input
+                  list="category-options"
+                  value={editCategory}
+                  onChange={(e) => setEditCategory(e.target.value)}
+                  style={{ background: 'transparent', border: 'none', color: 'inherit', outline: 'none', width: '70px', padding: 0 }}
+                  placeholder="Category"
+                />
+                <datalist id="category-options">
+                  <option value="Work" />
+                  <option value="Learning" />
+                  <option value="Fitness" />
+                  <option value="Personal" />
+                  <option value="General" />
+                  <option value="Shopping" />
+                  <option value="Chores" />
+                  <option value="Finance" />
+                </datalist>
               </span>
               {task.date && (
                 <span className="tasks-detail-badge" style={{ background: 'rgba(16, 19, 18, 0.04)', color: 'rgba(16, 19, 18, 0.5)' }}>

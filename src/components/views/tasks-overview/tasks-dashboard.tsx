@@ -34,7 +34,7 @@ export function TasksDashboard({ }: TasksDashboardProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all')
-  const [categoryFilters, setCategoryFilters] = useState<TaskCategory[]>([])
+  const [categoryFilters, setCategoryFilters] = useState<string[]>([])
   const [tagFilters, setTagFilters] = useState<string[]>([])
   const [selectedTask, setSelectedTask] = useState<DailyTask | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<DailyTask | null>(null)
@@ -85,6 +85,16 @@ export function TasksDashboard({ }: TasksDashboardProps) {
   useEffect(() => {
     setCurrentPage(1)
   }, [searchQuery, statusFilter, categoryFilters, tagFilters, viewMode])
+
+  const uniqueCategories = useMemo(() => {
+    const catSet = new Set<string>(CATEGORIES.map(c => c.key))
+    tasks.forEach(t => {
+      if (t.category) {
+        catSet.add(t.category)
+      }
+    })
+    return Array.from(catSet).sort()
+  }, [tasks])
 
   const uniqueTags = useMemo(() => {
     const tagSet = new Set<string>()
@@ -141,6 +151,11 @@ export function TasksDashboard({ }: TasksDashboardProps) {
       toast.error(err instanceof Error ? err.message : 'Failed to delete task')
       load(false) // Reload to restore
     }
+  }
+
+  const handleStatusChange = async (taskId: string, newStatus: string) => {
+    const isCompleted = newStatus === 'DONE'
+    handleUpdate(taskId, { status: newStatus, completed: isCompleted })
   }
 
   const handleUpdate = async (id: string, data: Partial<DailyTask>) => {
@@ -215,9 +230,9 @@ export function TasksDashboard({ }: TasksDashboardProps) {
 
     if (categoryFilters.length > 0 || activeTagFilters.length > 0) {
       result = result.filter((t) => {
-        const storedCat = t.category as TaskCategory | undefined
+        const storedCat = t.category as string | undefined
         const detected = detectCategory(t.title)
-        const cat = (storedCat && CATEGORIES.some((c) => c.key === storedCat) ? storedCat : detected) as TaskCategory
+        const cat = storedCat || detected
         
         const hasCategory = categoryFilters.includes(cat)
         const hasTag = t.tags && t.tags.some(tag => activeTagFilters.includes(tag))
@@ -298,18 +313,27 @@ export function TasksDashboard({ }: TasksDashboardProps) {
 
           <div className="tasks-filters-divider" />
 
+          {/* Categories */}
           <div className="tasks-filter-group">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat.key}
-                type="button"
-                className={`tasks-filter-pill ${categoryFilters.includes(cat.key) ? 'is-active' : ''}`}
-                onClick={() => toggleCategoryFilter(cat.key)}
-              >
-                <span className="pill-dot" style={{ background: cat.color }} />
-                {cat.label}
-              </button>
-            ))}
+            {uniqueCategories.map((cat) => {
+              const isStandard = CATEGORIES.some(c => c.key === cat)
+              const dotColor = isStandard ? CATEGORIES.find(c => c.key === cat)!.color : getTagColor(cat).dot
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  className={`tasks-filter-pill ${categoryFilters.includes(cat) ? 'is-active' : ''}`}
+                  onClick={() =>
+                    setCategoryFilters((prev) =>
+                      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
+                    )
+                  }
+                >
+                  <span className="pill-dot" style={{ background: dotColor }} />
+                  {cat}
+                </button>
+              )
+            })}
             {uniqueTags.length > 0 && <div className="tasks-filters-divider" style={{ margin: '0 8px' }} />}
             {uniqueTags.map((tag) => {
               const colors = getTagColor(tag)
@@ -383,6 +407,7 @@ export function TasksDashboard({ }: TasksDashboardProps) {
                 <TasksKanbanView
                   tasks={paginatedTasks}
                   onSelect={setSelectedTask}
+                  onStatusChange={handleStatusChange}
                 />
               )}
               

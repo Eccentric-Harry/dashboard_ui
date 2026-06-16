@@ -1476,3 +1476,11 @@ textarea.form-input {
     scroll-snap-align: center;
   }
 }
+
+.tasks-kanban-body.is-drag-over {
+  background: rgba(16, 19, 18, 0.04);
+  border-radius: 12px;
+}
+.tasks-kanban-card.is-dragging {
+  opacity: 0.5;
+}

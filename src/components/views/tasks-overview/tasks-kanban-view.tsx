@@ -42,31 +42,67 @@ function formatFriendlyDate(dateStr: string) {
 }
 
 const COLUMNS = [
-  { key: 'todo', label: 'To Do', dot: 'rgba(16,19,18,0.2)' },
-  { key: 'in_progress', label: 'In Progress', dot: '#0ea5e9' },
-  { key: 'done', label: 'Done', dot: '#10b981' },
+  { key: 'TODO', label: 'To Do', dot: 'rgba(16,19,18,0.2)' },
+  { key: 'IN_PROGRESS', label: 'In Progress', dot: '#0ea5e9' },
+  { key: 'DONE', label: 'Done', dot: '#10b981' },
 ] as const
 
-type ColumnKey = 'todo' | 'in_progress' | 'done'
+type ColumnKey = 'TODO' | 'IN_PROGRESS' | 'DONE'
 
 interface TasksKanbanViewProps {
   tasks: DailyTask[]
   onSelect: (task: DailyTask) => void
-
+  onStatusChange: (taskId: string, newStatus: string) => void
 }
 
-export function TasksKanbanView({ tasks, onSelect }: TasksKanbanViewProps) {
-  const grouped: Record<ColumnKey, DailyTask[]> = { todo: [], in_progress: [], done: [] }
+export function TasksKanbanView({ tasks, onSelect, onStatusChange }: TasksKanbanViewProps) {
+  const grouped: Record<ColumnKey, DailyTask[]> = { TODO: [], IN_PROGRESS: [], DONE: [] }
 
   tasks.forEach((task) => {
-    if (task.completed) {
-      grouped.done.push(task)
-    } else if (Math.random() > 0.7) {
-      grouped.in_progress.push(task)
-    } else {
-      grouped.todo.push(task)
+    let s = task.status || (task.completed ? 'DONE' : 'TODO')
+    if (s !== 'TODO' && s !== 'IN_PROGRESS' && s !== 'DONE') {
+      s = task.completed ? 'DONE' : 'TODO'
     }
+    grouped[s as ColumnKey].push(task)
   })
+
+  const handleDragStart = (e: React.DragEvent, taskId: string) => {
+    e.dataTransfer.setData('text/plain', taskId)
+    e.dataTransfer.effectAllowed = 'move'
+    
+    // Add subtle styling class to dragged element if needed later
+    const target = e.target as HTMLElement
+    setTimeout(() => target.classList.add('is-dragging'), 0)
+  }
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    const target = e.target as HTMLElement
+    target.classList.remove('is-dragging')
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    
+    const target = e.currentTarget as HTMLElement
+    target.classList.add('is-drag-over')
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    const target = e.currentTarget as HTMLElement
+    target.classList.remove('is-drag-over')
+  }
+
+  const handleDrop = (e: React.DragEvent, colKey: string) => {
+    e.preventDefault()
+    const target = e.currentTarget as HTMLElement
+    target.classList.remove('is-drag-over')
+    
+    const taskId = e.dataTransfer.getData('text/plain')
+    if (taskId) {
+      onStatusChange(taskId, colKey)
+    }
+  }
 
   return (
     <div className="tasks-kanban-view">
@@ -79,7 +115,12 @@ export function TasksKanbanView({ tasks, onSelect }: TasksKanbanViewProps) {
             </div>
             <span className="kanban-count">{grouped[col.key].length}</span>
           </div>
-          <div className="tasks-kanban-body">
+          <div 
+            className="tasks-kanban-body"
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, col.key)}
+          >
             {grouped[col.key].length === 0 ? (
               <div style={{ padding: '20px 10px', textAlign: 'center', fontSize: 12, color: 'rgba(16,19,18,0.25)', fontWeight: 500 }}>
                 No tasks
@@ -94,8 +135,12 @@ export function TasksKanbanView({ tasks, onSelect }: TasksKanbanViewProps) {
                 return (
                   <div
                     key={task.id}
+                    draggable={!!task.id}
+                    onDragStart={(e) => task.id && handleDragStart(e, task.id)}
+                    onDragEnd={handleDragEnd}
                     className={`tasks-kanban-card ${task.completed ? 'is-completed' : ''}`}
                     onClick={() => onSelect(task)}
+                    style={{ cursor: task.id ? 'grab' : 'pointer' }}
                   >
                     <div className="kanban-title">{task.title}</div>
                     <div className="kanban-footer">
