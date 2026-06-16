@@ -88,7 +88,10 @@ export function TasksDashboard({ }: TasksDashboardProps) {
     if (!task.id) return
     try {
       const isRecurring = task.recurrenceFrequency && task.recurrenceFrequency !== 'NONE'
-      await toggleTask(task.id, isRecurring ? task.date : undefined)
+      const res = await toggleTask(task.id, isRecurring ? task.date : undefined)
+      if (selectedTask?.id === task.id && res?.data) {
+        setSelectedTask(res.data)
+      }
       load()
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to update task')
@@ -114,8 +117,11 @@ export function TasksDashboard({ }: TasksDashboardProps) {
     try {
       const existing = tasks.find((t) => t.id === id)
       if (!existing) return
-      await updateTask(id, { ...existing, ...data } as DailyTask)
+      const res = await updateTask(id, { ...existing, ...data } as DailyTask)
       toast.success('Task updated')
+      if (selectedTask?.id === id && res?.data) {
+        setSelectedTask(res.data)
+      }
       load()
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to update task')

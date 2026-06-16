@@ -433,6 +433,7 @@ export interface DailyTask {
   completed?: boolean;
   sortOrder?: number;
   createdAt?: string;
+  updatedAt?: string;
   completedAt?: string;
   recurrenceFrequency?: CalendarRecurrence;
   category?: string;

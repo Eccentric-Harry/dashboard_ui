@@ -8,11 +8,6 @@ interface SubTask {
   completed?: boolean
 }
 
-interface AuditEvent {
-  timestamp: string
-  action: string
-}
-
 type TaskCategory = 'Work' | 'Learning' | 'Fitness' | 'Shopping' | 'Chores' | 'Finance' | 'Personal' | 'General'
 
 const CATEGORY_COLORS: Record<TaskCategory, { bg: string; text: string }> = {
@@ -26,11 +21,23 @@ const CATEGORY_COLORS: Record<TaskCategory, { bg: string; text: string }> = {
   General: { bg: 'rgba(20, 184, 166, 0.12)', text: '#0f766e' },
 }
 
-const mockTimeline: AuditEvent[] = [
-  { timestamp: '2026-06-14 09:32', action: 'Task created' },
-  { timestamp: '2026-06-14 14:15', action: 'Category set to Work' },
-  { timestamp: '2026-06-15 10:00', action: 'Marked as In Progress' },
-]
+function formatTimelineDate(dateStr: string) {
+  if (!dateStr) return ''
+  try {
+    const d = new Date(dateStr)
+    if (isNaN(d.getTime())) return dateStr
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+    const month = months[d.getMonth()]
+    const day = d.getDate()
+    const year = d.getFullYear()
+    const hh = String(d.getHours()).padStart(2, '0')
+    const mm = String(d.getMinutes()).padStart(2, '0')
+    return `${month} ${day}, ${year} ${hh}:${mm}`
+  } catch {
+    return dateStr
+  }
+}
+
 
 function formatFriendlyDate(dateStr: string) {
   if (!dateStr) return ''
@@ -316,22 +323,30 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate }
               <div className="tasks-detail-timeline">
                 {task.createdAt && (
                   <div className="tasks-timeline-item">
-                    <span className="timestamp">{new Date(task.createdAt).toLocaleDateString()}</span>
+                    <span className="timestamp">{formatTimelineDate(task.createdAt)}</span>
                     Task created
+                  </div>
+                )}
+                {/* Future Event-Sourcing mapping will go here:
+                    task.events?.map(event => (
+                      <div key={event.id} className="tasks-timeline-item">
+                        <span className="timestamp">{formatTimelineDate(event.timestamp)}</span>
+                        {event.action}
+                      </div>
+                    ))
+                */}
+                {task.updatedAt && task.createdAt && new Date(task.updatedAt).getTime() > new Date(task.createdAt).getTime() && (
+                  <div className="tasks-timeline-item">
+                    <span className="timestamp">{formatTimelineDate(task.updatedAt)}</span>
+                    Task last updated
                   </div>
                 )}
                 {task.completedAt && (
                   <div className="tasks-timeline-item">
-                    <span className="timestamp">{new Date(task.completedAt).toLocaleDateString()}</span>
+                    <span className="timestamp">{formatTimelineDate(task.completedAt)}</span>
                     Task completed
                   </div>
                 )}
-                {mockTimeline.map((event, i) => (
-                  <div key={i} className="tasks-timeline-item">
-                    <span className="timestamp">{event.timestamp}</span>
-                    {event.action}
-                  </div>
-                ))}
               </div>
             </div>
 
