@@ -173,8 +173,8 @@ export function TasksScheduleCard({
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null)
   const [page, setPage] = useState(1)
 
-  const load = useCallback(async () => {
-    setLoading(true)
+  const load = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true)
     try {
       const res = await fetchTasks()
       const sorted = (res?.data ?? []).sort((a: DailyTask, b: DailyTask) => {
@@ -188,9 +188,9 @@ export function TasksScheduleCard({
       })
       setTasks(sorted)
     } catch {
-      setTasks([])
+      if (showLoading) setTasks([])
     } finally {
-      setLoading(false)
+      if (showLoading) setLoading(false)
     }
   }, [])
 
@@ -202,26 +202,38 @@ export function TasksScheduleCard({
 
   const handleToggle = async (task: DailyTask) => {
     if (!task.id) return
+
+    // Optimistic UI update
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, completed: !t.completed } : t)))
+
     try {
       const isRecurring = task.recurrenceFrequency && task.recurrenceFrequency !== 'NONE'
       await toggleTask(task.id, isRecurring ? task.date : undefined)
-      load()
+      load(false)
       onRefresh()
     } catch (err: unknown) {
+      // Rollback on error
+      setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, completed: !t.completed } : t)))
       toast.error(err instanceof Error ? err.message : 'Failed to update task')
     }
   }
 
   const handleDelete = async () => {
     if (!deleteTarget?.id) return
+    const id = deleteTarget.id
+
+    // Optimistic UI update
+    setTasks((prev) => prev.filter((t) => t.id !== id))
+
     try {
-      await deleteTask(deleteTarget.id)
+      await deleteTask(id)
       toast.success(`Deleted "${deleteTarget.title}"`)
       setDeleteTarget(null)
-      load()
+      load(false)
       onRefresh()
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to delete task')
+      load(false) // Reload to restore
     }
   }
 

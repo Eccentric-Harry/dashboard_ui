@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Check, Plus, Trash2, Clock, CalendarDays, Circle } from 'lucide-react'
 import type { DailyTask } from '../../../lib/api'
+import { getTagColor } from '../../../lib/tag-colors'
 
 interface SubTask {
   id?: string
@@ -150,6 +151,14 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate }
                   {task.scheduledTime}
                 </span>
               )}
+              {tags.map((t) => {
+                const colors = getTagColor(t)
+                return (
+                  <span key={t} className="tasks-detail-badge" style={{ background: colors.bg, color: colors.text }}>
+                    {t}
+                  </span>
+                )
+              })}
             </div>
 
             <div className="tasks-detail-section">
@@ -199,6 +208,14 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate }
                   Completed
                 </span>
               )}
+              {tags.map((t) => {
+                const colors = getTagColor(t)
+                return (
+                  <span key={t} className="tasks-detail-badge" style={{ background: colors.bg, color: colors.text }}>
+                    {t}
+                  </span>
+                )
+              })}
             </div>
 
             <div className="tasks-detail-section">
@@ -274,18 +291,21 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate }
                     </button>
                   </span>
                 )}
-                {tags.map((t) => (
-                  <span key={t} className="tasks-tag" style={{ background: 'rgba(16,19,18,0.05)', color: '#101312' }}>
-                    {t}
-                    <button type="button" className="tasks-tag-remove" aria-label="Remove tag" onClick={() => {
-                      const newArr = tags.filter(x => x !== t)
-                      setTags(newArr)
-                      if (task.id) onUpdate(task.id, { tags: newArr })
-                    }}>
-                      <X size={8} />
-                    </button>
-                  </span>
-                ))}
+                {tags.map((t) => {
+                  const colors = getTagColor(t)
+                  return (
+                    <span key={t} className="tasks-tag" style={{ background: colors.bg, color: colors.text }}>
+                      {t}
+                      <button type="button" className="tasks-tag-remove" aria-label="Remove tag" onClick={() => {
+                        const newArr = tags.filter(x => x !== t)
+                        setTags(newArr)
+                        if (task.id) onUpdate(task.id, { tags: newArr })
+                      }}>
+                        <X size={8} />
+                      </button>
+                    </span>
+                  )
+                })}
                 {isAddingTag ? (
                   <input
                     autoFocus

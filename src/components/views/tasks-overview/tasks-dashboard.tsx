@@ -9,6 +9,7 @@ import { TasksKanbanView } from './tasks-kanban-view'
 import { TasksCalendarView } from './tasks-calendar-view'
 import { TasksDetailPanel } from './tasks-detail-panel'
 import avatarImage from '../../../assets/reference-crops/avatar_luffy.png'
+import { getTagColor } from '../../../lib/tag-colors'
 
 type ViewMode = 'list' | 'kanban' | 'calendar'
 type FilterStatus = 'all' | 'pending' | 'completed'
@@ -34,6 +35,7 @@ export function TasksDashboard({ }: TasksDashboardProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all')
   const [categoryFilters, setCategoryFilters] = useState<TaskCategory[]>([])
+  const [tagFilters, setTagFilters] = useState<string[]>([])
   const [selectedTask, setSelectedTask] = useState<DailyTask | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<DailyTask | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
@@ -54,8 +56,8 @@ export function TasksDashboard({ }: TasksDashboardProps) {
     setSelectedTask(null)
   }, [viewMode])
 
-  const load = useCallback(async () => {
-    setLoading(true)
+  const load = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true)
     try {
       const res = await fetchTasks()
       const sorted = (res?.data ?? []).sort((a: DailyTask, b: DailyTask) => {
@@ -69,9 +71,9 @@ export function TasksDashboard({ }: TasksDashboardProps) {
       })
       setTasks(sorted)
     } catch {
-      setTasks([])
+      if (showLoading) setTasks([])
     } finally {
-      setLoading(false)
+      if (showLoading) setLoading(false)
     }
   }, [])
 
@@ -82,38 +84,69 @@ export function TasksDashboard({ }: TasksDashboardProps) {
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchQuery, statusFilter, categoryFilters, viewMode])
+  }, [searchQuery, statusFilter, categoryFilters, tagFilters, viewMode])
+
+  const uniqueTags = useMemo(() => {
+    const tagSet = new Set<string>()
+    tasks.forEach(t => {
+      if (t.tags) {
+        t.tags.forEach(tag => tagSet.add(tag))
+      }
+    })
+    return Array.from(tagSet).sort()
+  }, [tasks])
 
   const handleToggle = async (task: DailyTask) => {
     if (!task.id) return
+
+    // Optimistic UI update
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, completed: !t.completed } : t)))
+    if (selectedTask?.id === task.id) {
+      setSelectedTask((prev) => prev ? { ...prev, completed: !prev.completed } : prev)
+    }
+
     try {
       const isRecurring = task.recurrenceFrequency && task.recurrenceFrequency !== 'NONE'
       const res = await toggleTask(task.id, isRecurring ? task.date : undefined)
       if (selectedTask?.id === task.id && res?.data) {
         setSelectedTask(res.data)
       }
-      load()
+      load(false)
     } catch (err: unknown) {
+      // Rollback on error
+      setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, completed: !t.completed } : t)))
+      if (selectedTask?.id === task.id) {
+        setSelectedTask((prev) => prev ? { ...prev, completed: !prev.completed } : prev)
+      }
       toast.error(err instanceof Error ? err.message : 'Failed to update task')
     }
   }
 
   const handleDelete = async () => {
     if (!deleteTarget?.id) return
+    const id = deleteTarget.id
+
+    // Optimistic UI update
+    setTasks((prev) => prev.filter((t) => t.id !== id))
+
     try {
-      await deleteTask(deleteTarget.id)
+      await deleteTask(id)
       toast.success(`Deleted "${deleteTarget.title}"`)
-      if (selectedTask?.id === deleteTarget.id) {
+      if (selectedTask?.id === id) {
         setSelectedTask(null)
       }
       setDeleteTarget(null)
-      load()
+      load(false)
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to delete task')
+      load(false) // Reload to restore
     }
   }
 
   const handleUpdate = async (id: string, data: Partial<DailyTask>) => {
+    // Optimistic UI update
+    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...data } : t)))
+
     try {
       const existing = tasks.find((t) => t.id === id)
       if (!existing) return
@@ -122,9 +155,10 @@ export function TasksDashboard({ }: TasksDashboardProps) {
       if (selectedTask?.id === id && res?.data) {
         setSelectedTask(res.data)
       }
-      load()
+      load(false)
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to update task')
+      load(false) // Rollback
     }
   }
 
@@ -148,7 +182,7 @@ export function TasksDashboard({ }: TasksDashboardProps) {
       setCustomCategory('')
       setNewTaskCategory('Personal')
       setShowAddModal(false)
-      load()
+      load(false)
       if (res?.data) {
         setSelectedTask(res.data)
       }
@@ -177,12 +211,18 @@ export function TasksDashboard({ }: TasksDashboardProps) {
       result = result.filter((t) => t.completed)
     }
 
-    if (categoryFilters.length > 0) {
+    const activeTagFilters = tagFilters.filter(t => uniqueTags.includes(t))
+
+    if (categoryFilters.length > 0 || activeTagFilters.length > 0) {
       result = result.filter((t) => {
         const storedCat = t.category as TaskCategory | undefined
         const detected = detectCategory(t.title)
         const cat = (storedCat && CATEGORIES.some((c) => c.key === storedCat) ? storedCat : detected) as TaskCategory
-        return categoryFilters.includes(cat)
+        
+        const hasCategory = categoryFilters.includes(cat)
+        const hasTag = t.tags && t.tags.some(tag => activeTagFilters.includes(tag))
+        
+        return hasCategory || hasTag
       })
     }
 
@@ -270,6 +310,21 @@ export function TasksDashboard({ }: TasksDashboardProps) {
                 {cat.label}
               </button>
             ))}
+            {uniqueTags.length > 0 && <div className="tasks-filters-divider" style={{ margin: '0 8px' }} />}
+            {uniqueTags.map((tag) => {
+              const colors = getTagColor(tag)
+              return (
+                <button
+                  key={tag}
+                  type="button"
+                  className={`tasks-filter-pill ${tagFilters.includes(tag) ? 'is-active' : ''}`}
+                  onClick={() => setTagFilters(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])}
+                >
+                  <span className="pill-dot" style={{ background: colors.dot }} />
+                  {tag}
+                </button>
+              )
+            })}
           </div>
         </div>
 
