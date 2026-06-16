@@ -152,7 +152,7 @@ export function TasksDashboard() {
 
   const handleStatusChange = async (taskId: string, newStatus: string) => {
     const isCompleted = newStatus === 'DONE'
-    handleUpdate(taskId, { status: newStatus, completed: isCompleted })
+    handleUpdate(taskId, { status: newStatus, completed: isCompleted } as Partial<DailyTask>)
   }
 
   const handleUpdate = async (id: string, data: Partial<DailyTask>) => {
