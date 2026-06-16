@@ -70,12 +70,24 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   const [dropdownOpenFor, setDropdownOpenFor] = useState<string | null>(null)
   const calendarRef = useRef<HTMLDivElement>(null)
   const routineListRef = useRef<HTMLDivElement>(null)
+  const ribbonRef = useRef<HTMLDivElement>(null)
 
-  const week = useMemo(() => getWeek(selectedDate), [selectedDate])
+  const scrollableDays = useMemo(() => getScrollableDays(selectedDate), [selectedDate])
   const visibleRange = useMemo(
-    () => ({ start: toISODate(week[0]), end: toISODate(week[week.length - 1]) }),
-    [week],
+    () => ({ start: toISODate(scrollableDays[0]), end: toISODate(scrollableDays[scrollableDays.length - 1]) }),
+    [scrollableDays],
   )
+
+  useEffect(() => {
+    if (!ribbonRef.current) return
+    const timer = setTimeout(() => {
+      const selectedBtn = ribbonRef.current?.querySelector('.is-selected') as HTMLElement
+      if (selectedBtn) {
+        selectedBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+      }
+    }, 50)
+    return () => clearTimeout(timer)
+  }, [selectedDate, scrollableDays])
 
   const loadItems = useCallback(async () => {
     setLoading(true)
@@ -276,8 +288,8 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
 
       <div className="calendar-focus-split">
         <aside className="routine-navigator">
-          <div className="week-ribbon" aria-label="Current week">
-            {week.map((date) => {
+          <div className="week-ribbon" aria-label="Scrollable dates" ref={ribbonRef}>
+            {scrollableDays.map((date) => {
               const isoDate = toISODate(date)
               const isSelected = isoDate === selectedDate
               const isToday = isoDate === toISODate(new Date())
@@ -700,15 +712,13 @@ function CalendarItemModal({
   )
 }
 
-function getWeek(date: string) {
+function getScrollableDays(date: string) {
   const selected = parseISODate(date)
-  const day = selected.getDay()
-  const mondayOffset = day === 0 ? -6 : 1 - day
-  const monday = new Date(selected)
-  monday.setDate(selected.getDate() + mondayOffset)
-  return Array.from({ length: 7 }, (_, index) => {
-    const next = new Date(monday)
-    next.setDate(monday.getDate() + index)
+  const start = new Date(selected)
+  start.setDate(selected.getDate() - 14)
+  return Array.from({ length: 45 }, (_, index) => {
+    const next = new Date(start)
+    next.setDate(start.getDate() + index)
     return next
   })
 }
