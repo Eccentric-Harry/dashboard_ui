@@ -22,7 +22,14 @@ const CATEGORIES: { key: TaskCategory; label: string; color: string }[] = [
   { key: 'Personal', label: 'Personal', color: '#8b5cf6' },
   { key: 'General', label: 'General', color: '#14b8a6' },
 ]
-export function TasksDashboard() {
+import type { AppPath } from '../../dashboard/quantified-self-dashboard/data'
+
+type TasksDashboardProps = {
+  searchParams?: URLSearchParams
+  onNavigate?: (pathname: AppPath, search?: string) => void
+}
+
+export function TasksDashboard(_props: TasksDashboardProps) {
   const [tasks, setTasks] = useState<DailyTask[]>([])
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<ViewMode>('list')
