@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X, Loader2, ClipboardCheck, FileJson } from 'lucide-react'
+import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
 import { addFoodEntry, updateFoodEntry } from '../../../../lib/api'
 
@@ -144,14 +145,14 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
     }
   }
 
-  return (
+  return createPortal(
     <div className="finance-modal-backdrop" role="presentation" onClick={onClose}>
       <div 
         className="finance-modal-popover add-tx-modal" 
         role="dialog" 
         aria-modal="true" 
         onClick={(e) => e.stopPropagation()}
-        style={{ width: 'min(440px, calc(100vw - 42px))' }}
+        style={{ width: 'min(540px, calc(100vw - 42px))' }}
       >
         <button type="button" className="finance-modal-close" onClick={onClose}>
           <X size={15} />
@@ -273,6 +274,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

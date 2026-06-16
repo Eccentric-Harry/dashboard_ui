@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { X, Loader2, ClipboardCheck, FileJson } from 'lucide-react'
+import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
 import { createStravaActivity, importStravaJson } from '../../../../lib/api'
 
@@ -143,9 +144,13 @@ function AddActivityModal({ isOpen, onClose, onSuccess, isEdit, initialData }: A
     }
   }
 
-  return (
+  return createPortal(
     <div className="workouts-modal-backdrop" onClick={onClose}>
-      <div className="workouts-modal-popover" onClick={e => e.stopPropagation()}>
+      <div 
+        className="workouts-modal-popover" 
+        onClick={e => e.stopPropagation()}
+        style={{ width: 'min(540px, calc(100vw - 42px))', maxWidth: 'none' }}
+      >
         <button className="workouts-modal-close" onClick={onClose} type="button">
           <X size={16} />
         </button>
@@ -279,7 +284,8 @@ function AddActivityModal({ isOpen, onClose, onSuccess, isEdit, initialData }: A
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 

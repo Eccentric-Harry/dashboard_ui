@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   AlarmClock,
   CalendarDays,
@@ -419,7 +420,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
         </main>
       </div>
 
-      {modal.open && (
+      {modal.open && createPortal(
         <CalendarItemModal
           date={modal.date}
           item={modal.item}
@@ -429,10 +430,11 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
             await loadItems()
             window.dispatchEvent(new CustomEvent('calendar-updated'))
           }}
-        />
+        />,
+        document.body
       )}
 
-      {deleteTarget && (
+      {deleteTarget && createPortal(
         deleteTarget.recurrenceFrequency && deleteTarget.recurrenceFrequency !== 'NONE' ? (
           <div className="calendar-modal-backdrop" onClick={() => setDeleteTarget(null)}>
             <div className="calendar-delete-dialog" onClick={(event) => event.stopPropagation()}>
@@ -456,7 +458,8 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
             onConfirm={handleDelete}
             onCancel={() => setDeleteTarget(null)}
           />
-        )
+        ),
+        document.body
       )}
 
       {/* Mobile FAB */}

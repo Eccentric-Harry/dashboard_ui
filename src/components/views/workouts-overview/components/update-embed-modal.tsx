@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
+import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
 import { updateFeaturedStravaEmbed } from '../../../../lib/api'
 
@@ -47,7 +48,7 @@ export function UpdateEmbedModal({ isOpen, onClose, onSuccess }: UpdateEmbedModa
     }
   }
 
-  return (
+  return createPortal(
     <div className="workouts-modal-backdrop">
       <div className="workouts-modal-popover" style={{ maxWidth: '480px' }}>
         <button className="workouts-modal-close" onClick={onClose}><X size={20} /></button>
@@ -77,6 +78,7 @@ export function UpdateEmbedModal({ isOpen, onClose, onSuccess }: UpdateEmbedModa
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
