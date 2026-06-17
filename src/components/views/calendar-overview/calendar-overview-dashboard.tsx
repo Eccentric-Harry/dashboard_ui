@@ -17,6 +17,7 @@ import {
   Timer,
   Trash2,
   X,
+  XCircle,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -26,6 +27,7 @@ import {
   deleteCalendarItem,
   fetchCalendarItemsForRange,
   toggleCalendarItem,
+  toggleCancelCalendarItem,
   updateCalendarItem,
 } from '../../../lib/api'
 import type { CalendarItem, CalendarItemPayload, CalendarItemType, CalendarRecurrence } from '../../../lib/api'
@@ -69,6 +71,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   const [deleteTarget, setDeleteTarget] = useState<CalendarItem | null>(null)
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
   const [dropdownOpenFor, setDropdownOpenFor] = useState<string | null>(null)
+  const [dropdownCoords, setDropdownCoords] = useState<{ top: number; right: number } | null>(null)
   const calendarRef = useRef<HTMLDivElement>(null)
   const routineListRef = useRef<HTMLDivElement>(null)
   const ribbonRef = useRef<HTMLDivElement>(null)
@@ -115,9 +118,18 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
 
   useEffect(() => {
     if (!dropdownOpenFor) return
-    const handler = () => setDropdownOpenFor(null)
+    const handler = () => {
+      setDropdownOpenFor(null)
+      setDropdownCoords(null)
+    }
     window.addEventListener('click', handler)
-    return () => window.removeEventListener('click', handler)
+    window.addEventListener('scroll', handler, true)
+    window.addEventListener('resize', handler)
+    return () => {
+      window.removeEventListener('click', handler)
+      window.removeEventListener('scroll', handler, true)
+      window.removeEventListener('resize', handler)
+    }
   }, [dropdownOpenFor])
 
   const selectedItems = useMemo(() => byDate(items, selectedDate), [items, selectedDate])
@@ -164,6 +176,19 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
       const isRecurring = item.recurrenceFrequency && item.recurrenceFrequency !== 'NONE'
       await toggleCalendarItem(item.id, isRecurring ? item.date : undefined)
       toast.success(item.completed ? `Reopened "${item.title}"` : `Completed "${item.title}"`)
+      await loadItems()
+      window.dispatchEvent(new CustomEvent('calendar-updated'))
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to update item')
+    }
+  }
+
+  const handleToggleCancel = async (item: CalendarItem) => {
+    if (!item.id) return
+    try {
+      const isRecurring = item.recurrenceFrequency && item.recurrenceFrequency !== 'NONE'
+      await toggleCancelCalendarItem(item.id, isRecurring ? item.date : undefined)
+      toast.success(item.cancelled ? `Restored "${item.title}"` : `Cancelled "${item.title}"`)
       await loadItems()
       window.dispatchEvent(new CustomEvent('calendar-updated'))
     } catch (error) {
@@ -334,7 +359,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                   return (
                     <div className={`routine-row status-${status}`} key={itemKey(item)}>
                       <span className={`routine-node ${isActive ? 'is-active' : ''}`}>
-                        {item.completed ? <Check size={11} /> : null}
+                        {item.completed ? <Check size={11} /> : item.cancelled ? <X size={11} /> : null}
                       </span>
                       <div className="routine-card-wrapper">
                         <button
@@ -357,14 +382,21 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                             className="routine-card-more-trigger"
                             onClick={(e) => {
                               e.stopPropagation()
-                              setDropdownOpenFor(dropdownOpenFor === itemKey(item) ? null : itemKey(item))
+                              if (dropdownOpenFor === itemKey(item)) {
+                                setDropdownOpenFor(null)
+                                setDropdownCoords(null)
+                              } else {
+                                const rect = e.currentTarget.getBoundingClientRect()
+                                setDropdownOpenFor(itemKey(item))
+                                setDropdownCoords({ top: rect.bottom, right: window.innerWidth - rect.right })
+                              }
                             }}
                           >
                             <MoreHorizontal size={18} />
                           </span>
                         </button>
-                        {dropdownOpenFor === itemKey(item) && (
-                          <div className="routine-card-dropdown" onClick={(e) => e.stopPropagation()}>
+                        {dropdownOpenFor === itemKey(item) && dropdownCoords && createPortal(
+                          <div className="routine-card-dropdown" style={{ position: 'fixed', top: dropdownCoords.top + 4, right: dropdownCoords.right }} onClick={(e) => e.stopPropagation()}>
                             <button onClick={() => { setModal({ open: true, item, date: item.date }); setDropdownOpenFor(null) }}>
                               <Pencil size={14} /> Edit
                             </button>
@@ -372,12 +404,16 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                               <CalendarDays size={14} /> Move to tomorrow
                             </button>
                             <button onClick={() => { setDropdownOpenFor(null); handleToggle(item) }}>
-                              <Check size={14} /> {item.completed ? 'Reopen' : 'Mark cancelled'}
+                              <Check size={14} /> {item.completed ? 'Mark incomplete' : 'Mark complete'}
+                            </button>
+                            <button onClick={() => { setDropdownOpenFor(null); handleToggleCancel(item) }}>
+                              <XCircle size={14} /> {item.cancelled ? 'Restore' : 'Mark cancelled'}
                             </button>
                             <button className="danger" onClick={() => { setDropdownOpenFor(null); setDeleteTarget(item) }}>
                               <Trash2 size={14} /> Delete
                             </button>
-                          </div>
+                          </div>,
+                          document.body
                         )}
                       </div>
                     </div>
@@ -543,10 +579,16 @@ function FocusDetail({
       </div>
 
       <div className="focus-footer">
-        <button type="button" className={item.completed ? 'is-complete' : ''} onClick={onToggle}>
-          {item.completed ? <CircleCheck size={18} /> : <Check size={18} />}
-          {item.completed ? 'Completed' : 'Mark complete'}
-        </button>
+        {item.cancelled ? (
+          <button type="button" className="is-cancelled" disabled style={{ opacity: 0.7, cursor: 'not-allowed' }}>
+            <XCircle size={18} /> Cancelled
+          </button>
+        ) : (
+          <button type="button" className={item.completed ? 'is-complete' : ''} onClick={onToggle}>
+            {item.completed ? <CircleCheck size={18} /> : <Check size={18} />}
+            {item.completed ? 'Completed' : 'Mark complete'}
+          </button>
+        )}
       </div>
     </div>
   )
@@ -747,6 +789,7 @@ function findCurrentItem(items: CalendarItem[], selectedDate: string) {
 }
 
 function getItemStatus(item: CalendarItem, selectedDate: string) {
+  if (item.cancelled) return 'cancelled'
   if (item.completed) return 'past'
   if (selectedDate !== toISODate(new Date()) || !item.startTime) return 'future'
   const now = new Date().getHours() * 60 + new Date().getMinutes()

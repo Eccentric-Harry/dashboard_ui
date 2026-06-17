@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Trash2, Bell, BellOff, Calendar, CheckSquare, Trophy, Eye, Clock, Loader2, RefreshCw, Terminal } from 'lucide-react';
+import { X, Trash2, Bell, BellOff, Calendar, CheckSquare, Trophy, Eye, EyeOff, Clock, Loader2, RefreshCw, Terminal } from 'lucide-react';
 import { useNotifications } from '../../../../contexts/NotificationContext';
 import type { AppPath } from '../data';
 
@@ -25,6 +25,18 @@ function NotificationCenter({ onNavigate }: NotificationCenterProps) {
 
   const drawerRef = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState<'refresh' | 'toggle' | null>(null);
+
+  const [showFinanceGrids, setShowFinanceGrids] = useState(() => {
+    const stored = localStorage.getItem('showFinanceGrids');
+    return stored ? stored === 'true' : false;
+  });
+
+  const toggleFinanceGrids = () => {
+    const newValue = !showFinanceGrids;
+    setShowFinanceGrids(newValue);
+    localStorage.setItem('showFinanceGrids', newValue.toString());
+    window.dispatchEvent(new CustomEvent('financeGridsVisibilityChanged', { detail: newValue }));
+  };
 
   // Close drawer on pressing Escape key
   useEffect(() => {
@@ -142,8 +154,19 @@ function NotificationCenter({ onNavigate }: NotificationCenterProps) {
               </button>
             )}
 
+            <button 
+              onClick={toggleFinanceGrids}
+              style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center', justifyContent: 'center', height: '52px', background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(16,19,18,0.04)', borderRadius: '12px', color: '#101312', cursor: 'pointer', transition: 'all 0.2s ease', width: '100%', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}
+              onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.9)'; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)'; }}
+              onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.6)'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.02)'; }}
+              title={showFinanceGrids ? 'Hide Repayment Grids' : 'Show Repayment Grids'}
+            >
+              {showFinanceGrids ? <Eye size={16} /> : <EyeOff size={16} />}
+              <span style={{ fontSize: '9px', fontWeight: 600, opacity: 0.6 }}>{showFinanceGrids ? 'Grids Vis' : 'Grids Hid'}</span>
+            </button>
+
             {/* Empty placeholders */}
-            {Array.from({ length: isPushSupported ? 3 : 4 }).map((_, i) => (
+            {Array.from({ length: isPushSupported ? 2 : 3 }).map((_, i) => (
               <div 
                 key={i} 
                 style={{ height: '52px', background: 'rgba(16,19,18,0.03)', borderRadius: '12px' }} 

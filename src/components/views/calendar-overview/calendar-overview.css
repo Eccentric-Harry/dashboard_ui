@@ -395,10 +395,20 @@
   transition: 180ms ease;
 }
 
-.routine-row.status-past .routine-node {
+.routine-row.status-past .routine-node,
+.routine-row.status-cancelled .routine-node {
   border-color: rgba(21, 26, 24, 0.25);
   background: rgba(21, 26, 24, 0.3);
 }
+
+.routine-row.status-cancelled .routine-card {
+  opacity: 0.6;
+}
+
+.routine-row.status-cancelled .routine-card-copy strong {
+  text-decoration: line-through;
+}
+
 
 .routine-row.status-current .routine-node,
 .routine-node.is-active {

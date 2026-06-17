@@ -525,6 +525,7 @@ export interface CalendarItem {
   color?: string;
   notes?: string;
   completed?: boolean;
+  cancelled?: boolean;
   sortOrder?: number;
   recurrenceFrequency?: CalendarRecurrence;
   recurrenceUntil?: string;
@@ -542,6 +543,7 @@ export type CalendarItemPayload = {
   color?: string;
   notes?: string;
   completed?: boolean;
+  cancelled?: boolean;
   sortOrder?: number;
   recurrenceFrequency?: CalendarRecurrence;
   recurrenceUntil?: string;
@@ -588,6 +590,17 @@ export async function toggleCalendarItem(id: string, date?: string) {
   });
   if (!response.ok) {
     throw new Error('Failed to toggle calendar item');
+  }
+  return response.json();
+}
+
+export async function toggleCancelCalendarItem(id: string, date?: string) {
+  const query = date ? `?date=${date}` : '';
+  const response = await fetch(`${API_BASE_URL}/calendar/items/${id}/toggle-cancel${query}`, {
+    method: 'PATCH',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to toggle calendar item cancellation');
   }
   return response.json();
 }

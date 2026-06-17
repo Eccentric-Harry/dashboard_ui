@@ -44,6 +44,31 @@ function FinanceOverviewDashboard() {
     return params.get('date') || new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)
   })
 
+  const [showFinanceGrids, setShowFinanceGrids] = useState(() => {
+    const stored = localStorage.getItem('showFinanceGrids');
+    return stored ? stored === 'true' : false;
+  });
+
+  useEffect(() => {
+    const handleVisibilityChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      setShowFinanceGrids(customEvent.detail);
+    };
+    window.addEventListener('financeGridsVisibilityChanged', handleVisibilityChange);
+    
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'showFinanceGrids') {
+        setShowFinanceGrids(e.newValue === 'true');
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('financeGridsVisibilityChanged', handleVisibilityChange);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
   useEffect(() => {
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search)
@@ -278,8 +303,8 @@ function FinanceOverviewDashboard() {
           onDelete={handleDelete}
         />
         <SubscriptionsCard transactions={recentTransactions} onRefresh={refreshData} />
-        {!isGuest && <RepaymentScheduleCard transactions={recentTransactions} onRefresh={refreshData} />}
-        {!isGuest && <LendingCard
+        {!isGuest && showFinanceGrids && <RepaymentScheduleCard transactions={recentTransactions} onRefresh={refreshData} />}
+        {!isGuest && showFinanceGrids && <LendingCard
           refreshKey={lendingRefreshKey}
           onEditClick={(record) => {
             setEditingLending(record)
