@@ -17,11 +17,15 @@ export function ConfirmDialog({ open, title, message, confirmLabel = 'Delete', c
   return (
     <div className="confirm-modal-backdrop" onClick={onCancel}>
       <div className="confirm-popover" onClick={e => e.stopPropagation()}>
-        <button type="button" className="confirm-modal-close" onClick={onCancel}>
-          <X size={16} />
-        </button>
-        <h2>{title}</h2>
-        <p className="confirm-message">{message}</p>
+        <div className="confirm-header">
+          <h2>{title}</h2>
+          <button type="button" className="confirm-modal-close" onClick={onCancel}>
+            <X size={16} />
+          </button>
+        </div>
+        <div className="confirm-inner-card">
+          <p className="confirm-message">{message}</p>
+        </div>
         <div className="confirm-actions">
           <button type="button" className="confirm-btn cancel" onClick={onCancel}>
             {cancelLabel}

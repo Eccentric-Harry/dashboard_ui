@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Plus, Search, List, Columns3, CalendarDays, X, Clock } from 'lucide-react'
+import { Plus, Search, List, Columns3, CalendarDays, X, Clock, Briefcase, BookOpen, Dumbbell, ShoppingCart, Home, DollarSign, User, Hash, LayoutDashboard, Tag } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { fetchTasks, toggleTask, deleteTask, updateTask, addTask } from '../../../lib/api'
 import type { DailyTask } from '../../../lib/api'
@@ -22,6 +22,33 @@ const CATEGORIES: { key: TaskCategory; label: string; color: string }[] = [
   { key: 'Personal', label: 'Personal', color: '#8b5cf6' },
   { key: 'General', label: 'General', color: '#14b8a6' },
 ]
+
+const CATEGORY_COLORS: Record<TaskCategory, string> = {
+  Work: '#0ea5e9',
+  Learning: '#6366f1',
+  Fitness: '#f97316',
+  Shopping: '#d97706',
+  Chores: '#a855f7',
+  Finance: '#10b981',
+  Personal: '#8b5cf6',
+  General: '#14b8a6',
+}
+
+const getCategoryIcon = (cat: string, color: string, size = 12) => {
+  const props = { size, color }
+  switch (cat) {
+    case 'Work': return <Briefcase {...props} />
+    case 'Learning': return <BookOpen {...props} />
+    case 'Fitness': return <Dumbbell {...props} />
+    case 'Shopping': return <ShoppingCart {...props} />
+    case 'Chores': return <Home {...props} />
+    case 'Finance': return <DollarSign {...props} />
+    case 'Personal': return <User {...props} />
+    case 'General': return <Hash {...props} />
+    case 'Dashboard': return <LayoutDashboard {...props} />
+    default: return <Hash {...props} />
+  }
+}
 import type { AppPath } from '../../dashboard/quantified-self-dashboard/data'
 
 type TasksDashboardProps = {
@@ -40,24 +67,24 @@ export function TasksDashboard(_props: TasksDashboardProps) {
   const [tagFilters, setTagFilters] = useState<string[]>([])
   const [selectedTask, setSelectedTask] = useState<DailyTask | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<DailyTask | null>(null)
-  const [showAddModal, setShowAddModal] = useState(false)
-  const [newTaskTitle, setNewTaskTitle] = useState('')
-  const [newTaskDate, setNewTaskDate] = useState(() => new Date().toISOString().split('T')[0])
-  const [newTaskTime, setNewTaskTime] = useState('')
-  const [newTaskCategory, setNewTaskCategory] = useState<string>('Personal')
+  const [modalMode, setModalMode] = useState<'add' | 'edit' | null>(null)
+  const [modalFormTitle, setModalFormTitle] = useState('')
+  const [modalFormDate, setModalFormDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [modalFormTime, setModalFormTime] = useState('')
+  const [modalFormCategory, setModalFormCategory] = useState<string>('Personal')
   const [customCategory, setCustomCategory] = useState('')
-  const [newTaskNotes, setNewTaskNotes] = useState('')
+  const [modalFormNotes, setModalFormNotes] = useState('')
 
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 15
 
-  // Clear selected task when view changes
+  // Clear selected task when view or filters change
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedTask(null)
-  }, [viewMode])
+  }, [viewMode, statusFilter, categoryFilters, tagFilters, searchQuery])
 
   const load = useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true)
@@ -182,32 +209,57 @@ export function TasksDashboard(_props: TasksDashboardProps) {
     }
   }
 
-  const handleAddTask = async (e: React.FormEvent) => {
+  useEffect(() => {
+    if (modalMode === 'edit' && selectedTask) {
+      setModalFormTitle(selectedTask.title)
+      setModalFormDate(selectedTask.date || '')
+      setModalFormTime(selectedTask.scheduledTime || '')
+      setModalFormCategory(selectedTask.category || 'General')
+      setCustomCategory('')
+      setModalFormNotes(selectedTask.notes || '')
+    } else if (modalMode === 'add') {
+      setModalFormTitle('')
+      setModalFormDate(new Date().toISOString().split('T')[0])
+      setModalFormTime('')
+      setModalFormCategory('Personal')
+      setCustomCategory('')
+      setModalFormNotes('')
+    }
+  }, [modalMode, selectedTask])
+
+  const handleModalSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newTaskTitle.trim()) return
+    if (!modalFormTitle.trim()) return
 
     try {
-      const finalCategory = newTaskCategory === 'Custom' && customCategory.trim() ? customCategory.trim() : newTaskCategory
-      const res = await addTask({
-        title: newTaskTitle.trim(),
-        date: newTaskDate,
-        scheduledTime: newTaskTime || undefined,
-        category: finalCategory,
-        notes: newTaskNotes.trim() || undefined,
-      })
-      toast.success('Task created')
-      setNewTaskTitle('')
-      setNewTaskNotes('')
-      setNewTaskTime('')
-      setCustomCategory('')
-      setNewTaskCategory('Personal')
-      setShowAddModal(false)
-      load(false)
-      if (res?.data) {
-        setSelectedTask(res.data)
+      const finalCategory = modalFormCategory === 'Custom' && customCategory.trim() ? customCategory.trim() : modalFormCategory
+      
+      if (modalMode === 'edit' && selectedTask?.id) {
+        await handleUpdate(selectedTask.id, {
+          title: modalFormTitle.trim(),
+          date: modalFormDate,
+          scheduledTime: modalFormTime || undefined,
+          category: finalCategory,
+          notes: modalFormNotes.trim() || undefined,
+        })
+        setModalMode(null)
+      } else {
+        const res = await addTask({
+          title: modalFormTitle.trim(),
+          date: modalFormDate,
+          scheduledTime: modalFormTime || undefined,
+          category: finalCategory,
+          notes: modalFormNotes.trim() || undefined,
+        })
+        toast.success('Task created')
+        setModalMode(null)
+        load(false)
+        if (res?.data) {
+          setSelectedTask(res.data)
+        }
       }
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Failed to create task')
+      toast.error(err instanceof Error ? err.message : 'Failed to save task')
     }
   }
 
@@ -269,20 +321,55 @@ export function TasksDashboard(_props: TasksDashboardProps) {
       <div className="tasks-control-bar">
         {/* Row 1: Search & Avatar */}
         <div className="tasks-search-avatar-row">
-          <div className="tasks-search-wrap">
-            <Search size={14} color="rgba(16, 19, 18, 0.3)" />
-            <input
-              type="text"
-              className="tasks-search-input"
-              placeholder="Search tasks..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+            <div className="tasks-search-wrap">
+              <Search size={16} color="rgba(16,19,18,0.4)" />
+              <input
+                type="text"
+                className="tasks-search-input"
+                placeholder="Search tasks..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            
+            <div className="tasks-view-header-row desktop-only">
+              <div className="tasks-view-toggle">
+                <button
+                  type="button"
+                  className={`tasks-view-btn ${viewMode === 'list' ? 'is-active' : ''}`}
+                  onClick={() => setViewMode('list')}
+                >
+                  <List size={13} />
+                  List
+                </button>
+                <button
+                  type="button"
+                  className={`tasks-view-btn ${viewMode === 'kanban' ? 'is-active' : ''}`}
+                  onClick={() => setViewMode('kanban')}
+                >
+                  <Columns3 size={13} />
+                  Kanban
+                </button>
+                <button
+                  type="button"
+                  className={`tasks-view-btn ${viewMode === 'calendar' ? 'is-active' : ''}`}
+                  onClick={() => setViewMode('calendar')}
+                >
+                  <CalendarDays size={13} />
+                  Calendar
+                </button>
+              </div>
+
+              <button type="button" className="tasks-add-btn-primary" onClick={() => setModalMode('add')}>
+                <Plus size={14} strokeWidth={2.5} />
+                <span>New Task</span>
+              </button>
+            </div>
+
+            <div className="tasks-avatar-container">
+              <img src={avatarImage} alt="User" />
+            </div>
           </div>
-          <div className="tasks-avatar-container">
-            <img src={avatarImage} alt="User" />
-          </div>
-        </div>
 
         {/* Row 2: Filters */}
         <div className="tasks-filters-scroll-row">
@@ -328,7 +415,7 @@ export function TasksDashboard(_props: TasksDashboardProps) {
                     )
                   }
                 >
-                  <span className="pill-dot" style={{ background: dotColor }} />
+                  {getCategoryIcon(cat, dotColor, 14)}
                   {cat}
                 </button>
               )
@@ -343,7 +430,7 @@ export function TasksDashboard(_props: TasksDashboardProps) {
                   className={`tasks-filter-pill ${tagFilters.includes(tag) ? 'is-active' : ''}`}
                   onClick={() => setTagFilters(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])}
                 >
-                  <span className="pill-dot" style={{ background: colors.dot }} />
+                  <Tag size={14} color={colors.dot} />
                   {tag}
                 </button>
               )
@@ -351,7 +438,7 @@ export function TasksDashboard(_props: TasksDashboardProps) {
           </div>
         </div>
 
-        <div className="tasks-view-header-row">
+        <div className="tasks-view-header-row mobile-only">
           <div className="tasks-view-toggle">
             <button
               type="button"
@@ -379,7 +466,7 @@ export function TasksDashboard(_props: TasksDashboardProps) {
             </button>
           </div>
 
-          <button type="button" className="tasks-add-btn-primary" onClick={() => setShowAddModal(true)}>
+          <button type="button" className="tasks-add-btn-primary" onClick={() => setModalMode('add')}>
             <Plus size={14} strokeWidth={2.5} />
             <span>New Task</span>
           </button>
@@ -407,6 +494,7 @@ export function TasksDashboard(_props: TasksDashboardProps) {
                   tasks={paginatedTasks}
                   onSelect={setSelectedTask}
                   onStatusChange={handleStatusChange}
+                  onAddTask={() => setModalMode('add')}
                 />
               )}
               
@@ -449,99 +537,159 @@ export function TasksDashboard(_props: TasksDashboardProps) {
             onToggle={handleToggle}
             onDelete={(t) => setDeleteTarget(t)}
             onUpdate={handleUpdate}
+            onEditRequest={() => setModalMode('edit')}
           />
         </div>
       </div>
 
-      {showAddModal && (
-        <div className="tasks-add-modal-overlay" onClick={() => setShowAddModal(false)}>
+      {modalMode && (
+        <div className="tasks-add-modal-overlay" onClick={() => setModalMode(null)}>
           <div className="tasks-add-entry-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Add Entry</h3>
-              <button type="button" className="close-modal-btn" onClick={() => setShowAddModal(false)}>
+              <h3>{modalMode === 'edit' ? 'Edit Task' : 'Add Task'}</h3>
+              <button type="button" className="close-modal-btn" onClick={() => setModalMode(null)}>
                 <X size={16} />
               </button>
             </div>
             
-            <form onSubmit={handleAddTask} className="add-entry-form">
-              <div className="form-group">
-                <label>TASK</label>
-                <input
-                  type="text"
-                  autoFocus
-                  placeholder="e.g. Code review, Study session..."
-                  value={newTaskTitle}
-                  onChange={(e) => setNewTaskTitle(e.target.value)}
-                  className="form-input"
-                />
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>TIME (OPTIONAL)</label>
-                  <div className="input-with-icon">
+            <form onSubmit={handleModalSubmit} className="add-entry-form">
+              <div className="tasks-modal-grid">
+                {/* Left Column: Form */}
+                <div className="tasks-modal-form-col">
+                  <div className="form-group">
+                    <label>TASK TITLE</label>
                     <input
-                      type="time"
-                      value={newTaskTime}
-                      onChange={(e) => setNewTaskTime(e.target.value)}
+                      type="text"
+                      autoFocus
+                      placeholder="e.g. Code review, Study session..."
+                      value={modalFormTitle}
+                      onChange={(e) => setModalFormTitle(e.target.value)}
                       className="form-input"
                     />
-                    <Clock size={14} className="input-icon" />
                   </div>
-                </div>
-                <div className="form-group">
-                  <label>DATE</label>
-                  <div className="input-with-icon">
-                    <input
-                      type="date"
-                      value={newTaskDate}
-                      onChange={(e) => setNewTaskDate(e.target.value)}
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>TIME (OPTIONAL)</label>
+                      <div className="input-with-icon">
+                        <input
+                          type="time"
+                          value={modalFormTime}
+                          onChange={(e) => setModalFormTime(e.target.value)}
+                          className="form-input"
+                        />
+                        <Clock size={14} className="input-icon" />
+                      </div>
+                    </div>
+                    <div className="form-group">
+                      <label>DATE</label>
+                      <div className="input-with-icon">
+                        <input
+                          type="date"
+                          value={modalFormDate}
+                          onChange={(e) => setModalFormDate(e.target.value)}
+                          className="form-input"
+                        />
+                        <CalendarDays size={14} className="input-icon" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label>CATEGORY</label>
+                    <select 
+                      value={modalFormCategory}
+                      onChange={(e) => setModalFormCategory(e.target.value)}
                       className="form-input"
+                    >
+                      {CATEGORIES.map(c => (
+                        <option key={c.key} value={c.key}>{c.label}</option>
+                      ))}
+                      <option value="Custom">Custom...</option>
+                    </select>
+                    {modalFormCategory === 'Custom' && (
+                      <input
+                        type="text"
+                        placeholder="Enter custom category..."
+                        value={customCategory}
+                        onChange={(e) => setCustomCategory(e.target.value)}
+                        className="form-input"
+                        style={{ marginTop: '8px' }}
+                        autoFocus
+                      />
+                    )}
+                  </div>
+
+                  <div className="form-group">
+                    <label>NOTES (OPTIONAL)</label>
+                    <textarea
+                      placeholder="Extra context..."
+                      value={modalFormNotes}
+                      onChange={(e) => setModalFormNotes(e.target.value)}
+                      className="form-input"
+                      rows={3}
                     />
-                    <CalendarDays size={14} className="input-icon" />
+                  </div>
+                </div>
+
+                {/* Right Column: Preview */}
+                <div className="tasks-modal-preview-col">
+                  <div className="preview-label">Preview</div>
+                  
+                  <div className="tasks-kanban-card new-card" style={{ pointerEvents: 'none', width: '100%', maxWidth: '260px' }}>
+                    <div className="kanban-card-title">{modalFormTitle || 'Untitled Task'}</div>
+                    <div className="kanban-card-desc">
+                      {modalFormNotes ? (modalFormNotes.length > 60 ? modalFormNotes.substring(0, 60) + '...' : modalFormNotes) : 'No additional details provided for this task.'}
+                    </div>
+                    
+                    <div className="kanban-card-tags">
+                      <span className="k-tag dept" style={{ background: `${CATEGORY_COLORS[(modalFormCategory === 'Custom' && customCategory.trim() ? 'General' : modalFormCategory) as TaskCategory] || CATEGORY_COLORS.General}14`, color: CATEGORY_COLORS[(modalFormCategory === 'Custom' && customCategory.trim() ? 'General' : modalFormCategory) as TaskCategory] || CATEGORY_COLORS.General }}>
+                        <span className="dot" style={{ background: CATEGORY_COLORS[(modalFormCategory === 'Custom' && customCategory.trim() ? 'General' : modalFormCategory) as TaskCategory] || CATEGORY_COLORS.General, width: 6, height: 6, borderRadius: '50%', display: 'inline-block' }} />
+                        {modalFormCategory === 'Custom' && customCategory.trim() ? customCategory.trim() : modalFormCategory}
+                      </span>
+                    </div>
+                    
+                    {(modalFormTime || modalFormDate) && (
+                      <div className="kanban-card-metrics">
+                        {modalFormTime && (
+                          <span className="k-tag time">
+                            <Clock size={10} style={{ marginRight: 2 }} />
+                            {modalFormTime}
+                          </span>
+                        )}
+                        {modalFormDate && (
+                          <span className="k-tag sla">
+                            <span className="flag">⚑</span>
+                            {modalFormDate.slice(5).replace('-', '/')}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="kanban-card-footer">
+                      <div className="kanban-assignees" style={{ marginLeft: 'auto' }}>
+                        <div className="assignee-avatar" style={{ zIndex: 3, backgroundImage: `url(${avatarImage})` }} />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="form-group">
-                <label>CATEGORY</label>
-                <select 
-                  value={newTaskCategory}
-                  onChange={(e) => setNewTaskCategory(e.target.value)}
-                  className="form-input"
-                >
-                  {CATEGORIES.map(c => (
-                    <option key={c.key} value={c.key}>{c.label}</option>
-                  ))}
-                  <option value="Custom">Custom...</option>
-                </select>
-                {newTaskCategory === 'Custom' && (
-                  <input
-                    type="text"
-                    placeholder="Enter custom category..."
-                    value={customCategory}
-                    onChange={(e) => setCustomCategory(e.target.value)}
-                    className="form-input"
-                    style={{ marginTop: '8px' }}
-                    autoFocus
-                  />
-                )}
+              <div className="modal-footer-actions">
+                {modalMode === 'edit' && selectedTask?.updatedAt ? (
+                  <div className="modal-last-updated">
+                    Last updated: {new Date(selectedTask.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </div>
+                ) : <div />}
+                <div className="modal-btn-group">
+                  <button type="button" className="modal-btn-cancel" onClick={() => setModalMode(null)}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="modal-btn-save" disabled={!modalFormTitle.trim()}>
+                    Save Task
+                  </button>
+                </div>
               </div>
-
-              <div className="form-group">
-                <label>NOTES (OPTIONAL)</label>
-                <textarea
-                  placeholder="Extra context..."
-                  value={newTaskNotes}
-                  onChange={(e) => setNewTaskNotes(e.target.value)}
-                  className="form-input"
-                  rows={3}
-                />
-              </div>
-
-              <button type="submit" className="save-entry-btn" disabled={!newTaskTitle.trim()}>
-                Save Task
-              </button>
             </form>
           </div>
         </div>

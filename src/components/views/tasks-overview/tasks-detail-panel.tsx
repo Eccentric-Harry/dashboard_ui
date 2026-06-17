@@ -60,14 +60,10 @@ interface TasksDetailPanelProps {
   onToggle: (task: DailyTask) => void
   onDelete: (task: DailyTask) => void
   onUpdate: (id: string, data: Partial<DailyTask>) => void
+  onEditRequest?: () => void
 }
 
-export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate }: TasksDetailPanelProps) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [editTitle, setEditTitle] = useState('')
-  const [editNotes, setEditNotes] = useState('')
-  const [editCategory, setEditCategory] = useState('')
-  const [editStatus, setEditStatus] = useState('')
+export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate, onEditRequest }: TasksDetailPanelProps) {
   const [subtasks, setSubtasks] = useState<SubTask[]>(task?.subtasks || [])
   
   const [isAddingSubtask, setIsAddingSubtask] = useState(false)
@@ -83,11 +79,7 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate }
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSubtasks(task.subtasks || [])
       setTags(task.tags || [])
-      setEditTitle(task.title)
-      setEditNotes(task.notes || '')
-      setEditCategory(task.category || 'General')
-      setEditStatus(task.status || (task.completed ? 'DONE' : 'TODO'))
-      setIsEditing(false)
+
       setIsAddingSubtask(false)
       setIsAddingTag(false)
       setNewSubtask('')
@@ -109,26 +101,6 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate }
   const category = task.category || 'General'
   const color = CATEGORY_COLORS[category as TaskCategory] || CATEGORY_COLORS.General
 
-  const handleStartEdit = () => {
-    setEditTitle(task.title)
-    setEditNotes(task.notes || '')
-    setEditCategory(task.category || 'General')
-    setEditStatus(task.status || (task.completed ? 'DONE' : 'TODO'))
-    setIsEditing(true)
-  }
-
-  const handleSaveEdit = () => {
-    if (!task.id) return
-    onUpdate(task.id, { 
-      title: editTitle, 
-      notes: editNotes, 
-      category: editCategory,
-      status: editStatus,
-      completed: editStatus === 'DONE'
-    })
-    setIsEditing(false)
-  }
-
   return (
     <div className="tasks-detail-panel">
       <div className="tasks-detail-panel-header">
@@ -139,116 +111,31 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate }
       </div>
 
       <div className="tasks-detail-body">
-        {isEditing ? (
-          <>
-            <input
-              className="tasks-detail-title-input"
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-              placeholder="Task title"
-            />
-            <div className="tasks-detail-meta" style={{ marginTop: 10 }}>
-              <span className="tasks-detail-badge" style={{ background: color.bg, color: color.text, padding: '2px 8px' }}>
-                <Check size={10} />
-                <input
-                  list="category-options"
-                  value={editCategory}
-                  onChange={(e) => setEditCategory(e.target.value)}
-                  style={{ background: 'transparent', border: 'none', color: 'inherit', outline: 'none', width: '70px', padding: 0 }}
-                  placeholder="Category"
-                />
-                <datalist id="category-options">
-                  <option value="Work" />
-                  <option value="Learning" />
-                  <option value="Fitness" />
-                  <option value="Personal" />
-                  <option value="General" />
-                  <option value="Shopping" />
-                  <option value="Chores" />
-                  <option value="Finance" />
-                </datalist>
-              </span>
-              <span className="tasks-detail-badge" style={{ background: 'rgba(16, 19, 18, 0.04)', color: 'rgba(16, 19, 18, 0.5)', padding: '2px 8px' }}>
-                <Circle size={10} />
-                <select
-                  value={editStatus}
-                  onChange={(e) => setEditStatus(e.target.value)}
-                  style={{ background: 'transparent', border: 'none', color: 'inherit', outline: 'none', padding: 0 }}
-                >
-                  <option value="TODO">To Do</option>
-                  <option value="IN_PROGRESS">In Progress</option>
-                  <option value="DONE">Done</option>
-                </select>
-              </span>
-              {task.date && (
-                <span className="tasks-detail-badge" style={{ background: 'rgba(16, 19, 18, 0.04)', color: 'rgba(16, 19, 18, 0.5)' }}>
-                  <CalendarDays size={10} />
-                  {formatFriendlyDate(task.date)}
-                </span>
-              )}
-              {task.scheduledTime && (
-                <span className="tasks-detail-badge" style={{ background: 'rgba(16, 19, 18, 0.04)', color: 'rgba(16, 19, 18, 0.5)' }}>
-                  <Clock size={10} />
-                  {task.scheduledTime}
-                </span>
-              )}
-              {tags.map((t) => {
-                const colors = getTagColor(t)
-                return (
-                  <span key={t} className="tasks-detail-badge" style={{ background: colors.bg, color: colors.text }}>
-                    {t}
-                  </span>
-                )
-              })}
-            </div>
-
-            <div className="tasks-detail-section">
-              <div className="tasks-detail-section-label">Notes</div>
-              <textarea
-                className="tasks-detail-notes-input"
-                value={editNotes}
-                onChange={(e) => setEditNotes(e.target.value)}
-                placeholder="Add notes..."
-              />
-            </div>
-
-            <div className="tasks-detail-actions">
-              <button type="button" className="tasks-detail-btn primary" onClick={handleSaveEdit}>
-                <Check size={14} />
-                Save
-              </button>
-              <button type="button" className="tasks-detail-btn" style={{ background: 'rgba(255,255,255,0.4)', color: '#101312', border: '1px solid rgba(16,19,18,0.1)' }} onClick={() => setIsEditing(false)}>
-                Cancel
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
             <h2 className="tasks-detail-title">{task.title}</h2>
 
-            <div className="tasks-detail-meta">
-              <span className="tasks-detail-badge" style={{ background: color.bg, color: color.text }}>
+            <div className="tasks-detail-meta-tags">
+              <span className="k-tag" style={{ background: color.bg, color: color.text }}>
                 <Check size={10} />
                 {category}
               </span>
-              <span className="tasks-detail-badge" style={{ background: 'rgba(16, 19, 18, 0.04)', color: 'rgba(16, 19, 18, 0.5)' }}>
+              <span className="k-tag id" style={{ background: '#f3f4f6', color: '#4b5563' }}>
                 <Circle size={10} />
                 {task.status === 'TODO' ? 'To Do' : task.status === 'IN_PROGRESS' ? 'In Progress' : task.status === 'DONE' ? 'Done' : (task.completed ? 'Done' : 'To Do')}
               </span>
               {task.date && (
-                <span className="tasks-detail-badge" style={{ background: 'rgba(16, 19, 18, 0.04)', color: 'rgba(16, 19, 18, 0.5)' }}>
+                <span className="k-tag id" style={{ background: '#f3f4f6', color: '#4b5563' }}>
                   <CalendarDays size={10} />
                   {formatFriendlyDate(task.date)}
                 </span>
               )}
               {task.scheduledTime && (
-                <span className="tasks-detail-badge" style={{ background: 'rgba(16, 19, 18, 0.04)', color: 'rgba(16, 19, 18, 0.5)' }}>
+                <span className="k-tag time" style={{ background: '#f3e8ff', color: '#7e22ce' }}>
                   <Clock size={10} />
                   {task.scheduledTime}
                 </span>
               )}
               {task.completed && (
-                <span className="tasks-detail-badge" style={{ background: 'rgba(16, 185, 129, 0.08)', color: '#047857' }}>
+                <span className="k-tag sla sla-done" style={{ background: '#d1fae5', color: '#047857' }}>
                   <Check size={10} />
                   Completed
                 </span>
@@ -256,36 +143,85 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate }
               {tags.map((t) => {
                 const colors = getTagColor(t)
                 return (
-                  <span key={t} className="tasks-detail-badge" style={{ background: colors.bg, color: colors.text }}>
+                  <span key={t} className="k-tag" style={{ background: colors.bg, color: colors.text }}>
                     {t}
+                    <button type="button" className="tasks-tag-remove" aria-label="Remove tag" onClick={() => {
+                      const newArr = tags.filter(x => x !== t)
+                      setTags(newArr)
+                      if (task.id) onUpdate(task.id, { tags: newArr })
+                    }} style={{ marginLeft: 4, background: 'transparent', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', padding: 0 }}>
+                      <X size={8} color="inherit" />
+                    </button>
                   </span>
                 )
               })}
+              {isAddingTag ? (
+                <input
+                  autoFocus
+                  className="tasks-add-modal-input"
+                  style={{ width: 80, padding: '2px 8px', fontSize: 10, minHeight: 'auto', marginBottom: 0, borderRadius: 12 }}
+                  placeholder="New tag"
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && newTag.trim()) {
+                      if (!tags.includes(newTag.trim())) {
+                        const newArr = [...tags, newTag.trim()]
+                        setTags(newArr)
+                        if (task.id) onUpdate(task.id, { tags: newArr })
+                      }
+                      setNewTag('')
+                      setIsAddingTag(false)
+                    } else if (e.key === 'Escape') {
+                      setIsAddingTag(false)
+                    }
+                  }}
+                  onBlur={() => setIsAddingTag(false)}
+                />
+              ) : (
+                <button type="button" className="k-add-pill" style={{ marginTop: 0 }} onClick={() => setIsAddingTag(true)}>
+                  <Plus size={10} />
+                  Add tag
+                </button>
+              )}
             </div>
 
             <div className="tasks-detail-section">
               <div className="tasks-detail-section-label">Checklist</div>
               {subtasks.length === 0 ? (
-                <p style={{ fontSize: 13, color: 'rgba(16,19,18,0.35)', margin: 0 }}>
-                  No subtasks yet
-                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <p style={{ fontSize: 13, color: 'rgba(16,19,18,0.35)', margin: 0 }}>
+                    No subtasks yet
+                  </p>
+                  {!isAddingSubtask && (
+                    <button type="button" className="k-add-pill" style={{ marginTop: 0 }} onClick={() => setIsAddingSubtask(true)}>
+                      <Plus size={10} />
+                      Add subtask
+                    </button>
+                  )}
+                </div>
               ) : (
                 subtasks.map((st) => (
                   <div key={st.id} className={`tasks-detail-checkbox-item ${st.completed ? 'is-completed' : ''}`}>
-                    <div className={`tasks-circle-check ${st.completed ? 'checked' : ''}`}>
+                    <div className={`tasks-circle-check ${st.completed ? 'checked' : ''}`} onClick={() => {
+                      const newArr = subtasks.map(s => s.id === st.id ? { ...s, completed: !s.completed } : s)
+                      setSubtasks(newArr)
+                      if (task.id) onUpdate(task.id, { subtasks: newArr })
+                    }}>
                       {st.completed && <Check size={10} strokeWidth={3} />}
                     </div>
                     <span className="subtask-text">{st.text}</span>
                   </div>
                 ))
               )}
-              {isAddingSubtask ? (
+
+              {isAddingSubtask && (
                 <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
                   <input
                     autoFocus
-                    className="tasks-add-modal-input"
-                    style={{ padding: '4px 8px', fontSize: 12, minHeight: 'auto', marginBottom: 0 }}
-                    placeholder="New subtask..."
+                    className="tasks-detail-notes-input"
+                    style={{ minHeight: 32, padding: '4px 10px' }}
+                    placeholder="Subtask description..."
                     value={newSubtask}
                     onChange={(e) => setNewSubtask(e.target.value)}
                     onKeyDown={(e) => {
@@ -300,7 +236,7 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate }
                       }
                     }}
                   />
-                  <button type="button" className="tasks-tag-add" onClick={() => {
+                  <button type="button" className="k-add-pill" style={{ marginTop: 0 }} onClick={() => {
                     if (newSubtask.trim()) {
                       const newArr = [...subtasks, { id: Math.random().toString(), text: newSubtask.trim(), completed: false }]
                       setSubtasks(newArr)
@@ -310,8 +246,9 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate }
                     setIsAddingSubtask(false)
                   }}>Add</button>
                 </div>
-              ) : (
-                <button type="button" className="tasks-tag-add" style={{ marginTop: 8 }} onClick={() => setIsAddingSubtask(true)}>
+              )}
+              {subtasks.length > 0 && !isAddingSubtask && (
+                <button type="button" className="k-add-pill" onClick={() => setIsAddingSubtask(true)}>
                   <Plus size={10} />
                   Add subtask
                 </button>
@@ -325,63 +262,7 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate }
               </div>
             )}
 
-            <div className="tasks-detail-section">
-              <div className="tasks-detail-section-label">Tags</div>
-              <div className="tasks-tag-manager">
-                {category !== 'General' && (
-                  <span className="tasks-tag" style={{ background: color.bg, color: color.text }}>
-                    {category}
-                    <button type="button" className="tasks-tag-remove" aria-label="Remove tag">
-                      <X size={8} />
-                    </button>
-                  </span>
-                )}
-                {tags.map((t) => {
-                  const colors = getTagColor(t)
-                  return (
-                    <span key={t} className="tasks-tag" style={{ background: colors.bg, color: colors.text }}>
-                      {t}
-                      <button type="button" className="tasks-tag-remove" aria-label="Remove tag" onClick={() => {
-                        const newArr = tags.filter(x => x !== t)
-                        setTags(newArr)
-                        if (task.id) onUpdate(task.id, { tags: newArr })
-                      }}>
-                        <X size={8} />
-                      </button>
-                    </span>
-                  )
-                })}
-                {isAddingTag ? (
-                  <input
-                    autoFocus
-                    className="tasks-add-modal-input"
-                    style={{ width: 80, padding: '2px 8px', fontSize: 10, minHeight: 'auto', marginBottom: 0, borderRadius: 12 }}
-                    placeholder="New tag"
-                    value={newTag}
-                    onChange={(e) => setNewTag(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && newTag.trim()) {
-                        if (!tags.includes(newTag.trim())) {
-                          const newArr = [...tags, newTag.trim()]
-                          setTags(newArr)
-                          if (task.id) onUpdate(task.id, { tags: newArr })
-                        }
-                        setNewTag('')
-                        setIsAddingTag(false)
-                      } else if (e.key === 'Escape') {
-                        setIsAddingTag(false)
-                      }
-                    }}
-                    onBlur={() => setIsAddingTag(false)}
-                  />
-                ) : (
-                  <button type="button" className="tasks-tag-add" onClick={() => setIsAddingTag(true)}>
-                    <Plus size={10} />
-                    Add tag
-                  </button>
-                )}
-              </div>
-            </div>
+
 
             <div className="tasks-detail-section">
               <div className="tasks-detail-section-label">Timeline</div>
@@ -415,19 +296,17 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate }
               </div>
             </div>
 
-            <div className="tasks-detail-actions">
-              <button type="button" className="tasks-detail-btn primary" onClick={handleStartEdit}>
+            <div className="tasks-detail-actions-modern">
+              <button type="button" className="td-btn-edit" onClick={onEditRequest}>
                 Edit
               </button>
-              <button type="button" className="tasks-detail-btn" style={{ background: 'rgba(255,255,255,0.4)', color: '#101312', border: '1px solid rgba(16,19,18,0.1)' }} onClick={() => onToggle(task)}>
+              <button type="button" className="td-btn-complete" onClick={() => onToggle(task)}>
                 {task.completed ? 'Reopen' : 'Complete'}
               </button>
-              <button type="button" className="tasks-detail-btn danger" onClick={() => onDelete(task)}>
-                <Trash2 size={13} />
+              <button type="button" className="td-btn-delete" onClick={() => onDelete(task)}>
+                <Trash2 size={14} />
               </button>
             </div>
-          </>
-        )}
       </div>
     </div>
   )

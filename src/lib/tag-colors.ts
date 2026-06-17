@@ -1,4 +1,12 @@
 export function getTagColor(tag: string) {
+  if (tag.toLowerCase() === 'dashboard') {
+    return {
+      bg: 'rgba(45, 60, 48, 0.08)',
+      text: '#2d3c30',
+      dot: '#2d3c30'
+    };
+  }
+
   let hash = 0;
   for (let i = 0; i < tag.length; i++) {
     hash = tag.charCodeAt(i) + ((hash << 5) - hash);

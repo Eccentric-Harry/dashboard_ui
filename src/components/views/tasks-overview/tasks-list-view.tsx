@@ -26,30 +26,6 @@ function detectCategory(title: string): TaskCategory {
   return 'General'
 }
 
-function formatFriendlyDate(dateStr: string) {
-  if (!dateStr) return ''
-  try {
-    const parts = dateStr.split('-').map(Number)
-    if (parts.length === 3) {
-      const d = new Date(parts[0], parts[1] - 1, parts[2])
-      const today = new Date()
-      const tomorrow = new Date(today)
-      tomorrow.setDate(tomorrow.getDate() + 1)
-      const yesterday = new Date(today)
-      yesterday.setDate(yesterday.getDate() - 1)
-
-      if (d.toDateString() === today.toDateString()) return 'Today'
-      if (d.toDateString() === tomorrow.toDateString()) return 'Tomorrow'
-      if (d.toDateString() === yesterday.toDateString()) return 'Yesterday'
-
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    }
-    return dateStr
-  } catch {
-    return dateStr
-  }
-}
-
 const isOverdue = (task: DailyTask) => {
   if (task.completed || !task.date) return false
   const parts = task.date.split('-').map(Number)
@@ -94,7 +70,6 @@ export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: Tasks
         const detected = detectCategory(task.title)
         const category = storedCategory || detected
         const theme = CATEGORY_THEMES[category as TaskCategory] || CATEGORY_THEMES.General
-        const CatIcon = theme.icon
         const isOverdueTask = isOverdue(task)
         const isSelected = selectedTask?.id === task.id
 
@@ -115,36 +90,48 @@ export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: Tasks
 
             <div className="task-list-body">
               <div className="task-list-title">{task.title}</div>
-              <div className="task-list-meta">
-                <span
-                  className="task-list-badge"
-                  style={{ background: theme.bg, color: theme.text }}
-                >
-                  <CatIcon size={9} />
+              <div className="task-list-meta" style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+                <span className="k-tag dept" style={{ background: `${theme.color}14`, color: theme.color }}>
+                  <span className="dot" style={{ background: theme.color, width: 6, height: 6, borderRadius: '50%', display: 'inline-block' }} />
                   {category}
                 </span>
+                
+                {task.tags && task.tags.length > 0 && task.tags.map((tag) => (
+                  <span key={tag} className="k-tag id">
+                    <span className="at">#</span>
+                    {tag}
+                  </span>
+                ))}
+                
                 {task.date && (
-                  <span className="task-list-badge" style={{ background: 'rgba(16,19,18,0.04)', color: 'rgba(16,19,18,0.5)' }}>
-                    {formatFriendlyDate(task.date)}
+                  <span className={`k-tag sla ${task.completed ? 'sla-done' : ''}`}>
+                    <span className="flag">⚑</span>
+                    {task.date.slice(5).replace('-', '/')}
                   </span>
                 )}
+                
                 {task.scheduledTime && !task.completed && (
-                  <span className="task-list-badge time">
-                    <Clock size={9} />
+                  <span className="k-tag time">
+                    <Clock size={10} style={{ marginRight: 2 }} />
                     {task.scheduledTime}
                   </span>
                 )}
+                
                 {isOverdueTask && (
-                  <span className="task-list-badge overdue">Overdue</span>
+                  <span className="k-tag sla" style={{ background: 'rgba(212, 71, 82, 0.1)', color: '#d44752' }}>
+                    Overdue
+                  </span>
                 )}
+                
                 {task.completed && (
-                  <span className="task-list-badge completed-badge">
-                    <Check size={9} />
+                  <span className="k-tag sla sla-done" style={{ background: '#d1fae5', color: '#047857' }}>
+                    <Check size={10} />
                     Done
                   </span>
                 )}
+                
                 {task.createdAt && (
-                  <span className="task-list-badge" style={{ background: 'rgba(16,19,18,0.03)', color: 'rgba(16,19,18,0.35)', fontSize: 9 }}>
+                  <span className="k-tag id" style={{ background: 'rgba(16,19,18,0.03)', color: 'rgba(16,19,18,0.35)', fontSize: 9 }}>
                     Created {new Date(task.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </span>
                 )}

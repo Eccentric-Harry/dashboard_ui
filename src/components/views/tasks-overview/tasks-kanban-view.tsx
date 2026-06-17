@@ -1,4 +1,9 @@
+import { Plus, MoreHorizontal, Clock } from 'lucide-react'
 import type { DailyTask } from '../../../lib/api'
+import avatar1 from '../../../assets/avatars/avatar1.png'
+import avatar2 from '../../../assets/avatars/avatar2.png'
+import avatar3 from '../../../assets/avatars/avatar3.png'
+import avatar4 from '../../../assets/avatars/avatar4.png'
 
 type TaskCategory = 'Work' | 'Learning' | 'Fitness' | 'Shopping' | 'Chores' | 'Finance' | 'Personal' | 'General'
 
@@ -25,26 +30,16 @@ function detectCategory(title: string): TaskCategory {
   return 'General'
 }
 
-function formatFriendlyDate(dateStr: string) {
-  if (!dateStr) return ''
-  try {
-    const parts = dateStr.split('-').map(Number)
-    if (parts.length === 3) {
-      const d = new Date(parts[0], parts[1] - 1, parts[2])
-      const today = new Date()
-      if (d.toDateString() === today.toDateString()) return 'Today'
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    }
-    return dateStr
-  } catch {
-    return dateStr
-  }
+function isOverdueTask(task: DailyTask) {
+  if (task.completed || !task.date) return false
+  const d = new Date(task.date + (task.scheduledTime ? `T${task.scheduledTime}` : 'T23:59:59'))
+  return new Date() > d
 }
 
 const COLUMNS = [
-  { key: 'TODO', label: 'To Do', dot: 'rgba(16,19,18,0.2)' },
-  { key: 'IN_PROGRESS', label: 'In Progress', dot: '#0ea5e9' },
-  { key: 'DONE', label: 'Done', dot: '#10b981' },
+  { key: 'TODO', label: 'Assigned', dot: '#6b7280', countColor: '#6b7280', countBg: '#f3f4f6' },
+  { key: 'IN_PROGRESS', label: 'In Progress', dot: '#3b82f6', countColor: '#ffffff', countBg: '#3b82f6' },
+  { key: 'DONE', label: 'Complete', dot: '#10b981', countColor: '#ffffff', countBg: '#10b981' },
 ] as const
 
 type ColumnKey = 'TODO' | 'IN_PROGRESS' | 'DONE'
@@ -52,10 +47,11 @@ type ColumnKey = 'TODO' | 'IN_PROGRESS' | 'DONE'
 interface TasksKanbanViewProps {
   tasks: DailyTask[]
   onSelect: (task: DailyTask) => void
-  onStatusChange: (taskId: string, newStatus: string) => void
+  onStatusChange: (taskId: string, status: string) => void
+  onAddTask?: () => void
 }
 
-export function TasksKanbanView({ tasks, onSelect, onStatusChange }: TasksKanbanViewProps) {
+export function TasksKanbanView({ tasks, onSelect, onStatusChange, onAddTask }: TasksKanbanViewProps) {
   const grouped: Record<ColumnKey, DailyTask[]> = { TODO: [], IN_PROGRESS: [], DONE: [] }
 
   tasks.forEach((task) => {
@@ -107,13 +103,18 @@ export function TasksKanbanView({ tasks, onSelect, onStatusChange }: TasksKanban
   return (
     <div className="tasks-kanban-view">
       {COLUMNS.map((col) => (
-        <div key={col.key} className="tasks-kanban-column">
+        <div key={col.key} className="tasks-kanban-column new-design">
           <div className="tasks-kanban-column-header">
             <div className="col-info">
-              <span className="col-dot" style={{ background: col.dot }} />
+              <span className="col-bar" style={{ background: col.dot }} />
               <h4>{col.label}</h4>
+              <span className="kanban-count-badge" style={{ background: col.countBg, color: col.countColor }}>
+                {grouped[col.key].length}
+              </span>
             </div>
-            <span className="kanban-count">{grouped[col.key].length}</span>
+            <button type="button" className="kanban-add-btn" onClick={onAddTask}>
+              <Plus size={14} color="rgba(16,19,18,0.4)" />
+            </button>
           </div>
           <div 
             className="tasks-kanban-body"
@@ -122,8 +123,11 @@ export function TasksKanbanView({ tasks, onSelect, onStatusChange }: TasksKanban
             onDrop={(e) => handleDrop(e, col.key)}
           >
             {grouped[col.key].length === 0 ? (
-              <div style={{ padding: '20px 10px', textAlign: 'center', fontSize: 12, color: 'rgba(16,19,18,0.25)', fontWeight: 500 }}>
-                No tasks
+              <div className="kanban-empty-dropzone" onClick={onAddTask} style={{ cursor: 'pointer' }}>
+                <div className="empty-plus">
+                  <Plus size={20} color="rgba(16,19,18,0.3)" strokeWidth={1.5} />
+                </div>
+                <span>Drag and drop task here to start</span>
               </div>
             ) : (
               grouped[col.key].map((task) => {
@@ -132,23 +136,69 @@ export function TasksKanbanView({ tasks, onSelect, onStatusChange }: TasksKanban
                 const category = storedCat || detected
                 const color = CATEGORY_COLORS[category as TaskCategory] || CATEGORY_COLORS.General
 
+                const hasTags = task.tags && task.tags.length > 0;
+                const isOverdue = isOverdueTask(task);
+                
+                // Deterministically pick avatar based on task id length or title
+                const avatars = [avatar1, avatar2, avatar3, avatar4]
+                const seed = (task.id || task.title).length
+                const firstAvatar = avatars[seed % 4]
+                
                 return (
                   <div
                     key={task.id}
                     draggable={!!task.id}
                     onDragStart={(e) => task.id && handleDragStart(e, task.id)}
                     onDragEnd={handleDragEnd}
-                    className={`tasks-kanban-card ${task.completed ? 'is-completed' : ''}`}
+                    className={`tasks-kanban-card new-card ${task.completed ? 'is-completed' : ''}`}
                     onClick={() => onSelect(task)}
                     style={{ cursor: task.id ? 'grab' : 'pointer' }}
                   >
-                    <div className="kanban-title">{task.title}</div>
-                    <div className="kanban-footer">
-                      <span className="kanban-badge" style={{ background: `${color}14`, color }}>
-                        <span style={{ width: 5, height: 5, borderRadius: '50%', background: color, display: 'inline-block' }} />
+                    <div className="kanban-card-title">{task.title}</div>
+                    <div className="kanban-card-desc">
+                      {task.notes ? (task.notes.length > 60 ? task.notes.substring(0, 60) + '...' : task.notes) : 'No additional details provided for this task.'}
+                    </div>
+                    
+                    <div className="kanban-card-tags">
+                      <span className="k-tag dept" style={{ background: `${color}14`, color }}>
+                        <span className="dot" style={{ background: color, width: 6, height: 6, borderRadius: '50%', display: 'inline-block' }} />
                         {category}
                       </span>
-                      {task.date && <span className="kanban-date">{formatFriendlyDate(task.date)}</span>}
+                      {hasTags && task.tags!.map((tag) => (
+                        <span key={tag} className="k-tag id">
+                          <span className="at">#</span>
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                    
+                    {(task.scheduledTime || task.date) && (
+                      <div className="kanban-card-metrics">
+                        {task.scheduledTime && (
+                          <span className="k-tag time">
+                            <Clock size={10} style={{ marginRight: 2 }} />
+                            {task.scheduledTime}
+                          </span>
+                        )}
+                        {isOverdue && (
+                          <span className="k-tag sla" style={{ background: 'rgba(212, 71, 82, 0.1)', color: '#d44752' }}>
+                            Overdue
+                          </span>
+                        )}
+                        {task.date && (
+                          <span className={`k-tag sla ${task.completed ? 'sla-done' : ''}`}>
+                            <span className="flag">⚑</span>
+                            {task.date.slice(5).replace('-', '/')}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="kanban-card-footer">
+                      <MoreHorizontal size={14} color="rgba(16,19,18,0.4)" className="more-btn" />
+                      <div className="kanban-assignees">
+                        <div className="assignee-avatar" style={{ zIndex: 3, backgroundImage: `url(${firstAvatar})` }} />
+                      </div>
                     </div>
                   </div>
                 )
