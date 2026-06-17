@@ -772,8 +772,8 @@
   display: flex;
   grid-column: 1 / -1;
   grid-row: 3;
-  height: 610px;
-  min-height: 0;
+  height: auto;
+  min-height: 610px;
   flex-direction: column;
   padding: 18px;
   overflow: hidden;
@@ -792,20 +792,22 @@
 }
 
 .finance-transaction-table {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-height: 0;
-  grid-template-rows: auto 1fr;
   margin-top: 15px;
   overflow: hidden;
 }
 
 .finance-transaction-list {
   display: grid;
+  align-content: start;
+  flex: 1;
   min-height: 0;
   gap: 10px;
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: hidden;
   padding: 4px 6px 4px 2px;
   scrollbar-gutter: stable;
 }
@@ -1381,6 +1383,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   gap: 16px;
   margin-top: 16px;
   padding-top: 14px;
@@ -1601,11 +1604,11 @@
   }
 
   .finance-transaction-table {
-    overflow: visible;
+    /* removed overflow: visible */
   }
 
   .finance-transaction-list {
-    overflow: visible;
+    /* removed overflow: visible */
     overscroll-behavior: auto;
   }
 
@@ -2227,7 +2230,7 @@
   .finance-repayment-card,
   .lending-tracker-card {
     height: auto;
-    max-height: 520px;
+    max-height: 620px;
   }
 
   .finance-transaction-row {
