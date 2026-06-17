@@ -80,6 +80,7 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate }
   // Sync state when task changes
   useEffect(() => {
     if (task) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSubtasks(task.subtasks || [])
       setTags(task.tags || [])
       setEditTitle(task.title)

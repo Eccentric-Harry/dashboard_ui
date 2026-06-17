@@ -17,6 +17,7 @@ const sportIcons: Record<string, LucideIcon> = {
   'E-Bike Ride': Zap,
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function CustomTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null
   const d = payload[0].payload as { name: string; value: number; distance: number }
@@ -37,6 +38,7 @@ type SportBreakdownCardProps = {
 function SportBreakdownCard({ stats, loading }: SportBreakdownCardProps) {
   const [isMounted, setIsMounted] = useState(false)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMounted(true)
   }, [])
 

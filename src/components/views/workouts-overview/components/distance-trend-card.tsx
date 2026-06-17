@@ -7,6 +7,7 @@ type DistanceTrendCardProps = {
   loading: boolean
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function CustomTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null
   const d = payload[0].payload as { date: string; distance: number; pace: number }
@@ -22,6 +23,7 @@ function CustomTooltip({ active, payload }: any) {
 function DistanceTrendCard({ activities, loading }: DistanceTrendCardProps) {
   const [isMounted, setIsMounted] = useState(false)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMounted(true)
   }, [])
 

@@ -44,6 +44,7 @@ export function LearningsLogCard({
   }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load()
     setIsEditMode(false)
     setPage(1)

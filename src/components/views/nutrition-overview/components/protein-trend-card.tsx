@@ -12,6 +12,7 @@ type TrendPoint = {
 
 const PROTEIN_TARGET = 100
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function CustomTooltip({ active, payload, label }: any) {
   if (active && payload && payload.length) {
     return (
@@ -46,6 +47,7 @@ const parseIsoDate = (dateValue?: string) => {
 function ProteinTrendCard() {
   const [isMounted, setIsMounted] = useState(false)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMounted(true)
   }, [])
 

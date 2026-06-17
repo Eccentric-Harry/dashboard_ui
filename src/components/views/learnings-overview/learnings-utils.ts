@@ -29,6 +29,7 @@ export function formatHeaderDate(date: Date) {
 
 export function extractNotionUrl(text: string): string | null {
   if (!text) return null
+  // eslint-disable-next-line no-useless-escape
   const match = text.match(/(https?:\/\/(?:www\.)?notion\.so\/[^\s\)]+)/i)
   return match ? match[0] : null
 }

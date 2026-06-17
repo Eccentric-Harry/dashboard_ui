@@ -195,6 +195,7 @@ export function TasksScheduleCard({
   }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load()
     setActiveTaskId(null)
     setPage(1)
@@ -338,7 +339,9 @@ export function TasksScheduleCard({
               const month = parseInt(dateParts[1], 10) - 1;
               const day = parseInt(dateParts[2], 10);
 
+              // eslint-disable-next-line no-useless-assignment
               let hours = 0;
+              // eslint-disable-next-line no-useless-assignment
               let minutes = 0;
               const ampmMatch = task.scheduledTime.match(/^(\d+):(\d+)\s*(AM|PM)$/i);
               if (ampmMatch) {

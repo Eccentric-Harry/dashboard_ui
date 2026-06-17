@@ -22,7 +22,9 @@ function WorkoutsOverviewDashboard() {
   const [loading, setLoading] = useState(true)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEmbedModalOpen, setIsEmbedModalOpen] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [editingActivity, setEditingActivity] = useState<any>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [activityToDelete, setActivityToDelete] = useState<any>(null)
 
   const refreshData = useCallback(() => {
@@ -39,6 +41,7 @@ function WorkoutsOverviewDashboard() {
       })
   }, [])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { refreshData() }, [refreshData])
 
   return (

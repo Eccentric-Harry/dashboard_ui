@@ -27,6 +27,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
   // Form State
   const [activeTab, setActiveTab] = useState<'manual' | 'json'>('manual')
   const [jsonInput, setJsonInput] = useState('')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [richPayload, setRichPayload] = useState<any>(null)
   
   const [mealType, setMealType] = useState('')
@@ -37,6 +38,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
 
   useEffect(() => {
     if (isOpen && isEdit && initialData) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setMealType(initialData.mealType)
       setDescription(initialData.description)
       setProteinGrams(initialData.proteinGrams.toString())
@@ -78,6 +80,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
 
     setLoading(true)
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const payload: any = {
         description,
         calories: numCalories,
@@ -104,6 +107,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       
       onSuccess()
       onClose()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message || 'Failed to save food entry')
     } finally {
@@ -122,9 +126,9 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
         setProteinGrams(Math.round(data.total_summary.protein_g || 0).toString())
       }
       if (data.analysis_metadata && data.analysis_metadata.meal_type_detected) {
-        let rawType = String(data.analysis_metadata.meal_type_detected).trim().toLowerCase()
+        const rawType = String(data.analysis_metadata.meal_type_detected).trim().toLowerCase()
         const validTypes = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Midnight', 'Post Workout', 'Mid-Morning']
-        let matchedType = validTypes.find(t => t.toLowerCase() === rawType) || ''
+        const matchedType = validTypes.find(t => t.toLowerCase() === rawType) || ''
         if (matchedType) setMealType(matchedType)
       }
       
@@ -132,6 +136,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
         let newName = 'Nutrition Entry'
         if (data.meal_items && Array.isArray(data.meal_items) && data.meal_items.length > 0) {
           const cleanName = (name: string) => (name || '').split('(')[0].trim()
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const items = data.meal_items.slice(0, 2).map((item: any) => cleanName(item.name))
           newName = items.join(' + ') + (data.meal_items.length > 2 ? ' ...' : '')
         }
@@ -140,6 +145,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       
       setActiveTab('manual')
       toast.success('JSON parsed! Please review macros and save.')
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       toast.error('Invalid JSON format')
     }

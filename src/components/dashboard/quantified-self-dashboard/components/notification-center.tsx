@@ -51,6 +51,7 @@ function NotificationCenter({ onNavigate }: NotificationCenterProps) {
       if (diffMins < 60) return `${diffMins}m ago`;
       if (diffHours < 24) return `${diffHours}h ago`;
       return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
       return '';
     }

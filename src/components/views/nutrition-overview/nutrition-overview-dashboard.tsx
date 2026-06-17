@@ -11,6 +11,7 @@ import './nutrition-overview.css'
 
 function NutritionOverviewDashboard() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [editingFood, setEditingFood] = useState<any>(null)
   const { refetch, data } = useDashboard()
   

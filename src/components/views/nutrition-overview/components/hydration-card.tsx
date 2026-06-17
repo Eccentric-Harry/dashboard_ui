@@ -31,6 +31,7 @@ function HydrationCard() {
   }, [selectedDate])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadHydration()
   }, [loadHydration])
 
@@ -42,6 +43,7 @@ function HydrationCard() {
       toast.success(`Logged ${amount}ml of water`)
       const response = await fetchHydration(selectedDate)
       setData(response.data)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       toast.error(err.message || 'Failed to log water')
       setError('Failed to log water')

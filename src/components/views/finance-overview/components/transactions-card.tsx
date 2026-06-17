@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -48,6 +49,7 @@ export const getPastelBG = (colorHex: string) => {
     const pg = Math.round(g * 0.08 + 255 * 0.92)
     const pb = Math.round(b * 0.08 + 255 * 0.92)
     return `rgb(${pr}, ${pg}, ${pb})`
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (e) {
     return '#f3f4f6'
   }

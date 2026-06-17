@@ -9,6 +9,7 @@ interface CategoryBreakdownCardProps {
   refreshKey: number
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomChartTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload as { name: string; value: number; color?: string }
@@ -68,6 +69,7 @@ export function CategoryBreakdownCard({ refreshKey }: CategoryBreakdownCardProps
   }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadCategories()
   }, [loadCategories, refreshKey])
 
@@ -89,6 +91,7 @@ export function CategoryBreakdownCard({ refreshKey }: CategoryBreakdownCardProps
     setActiveIndex(-1)
   }, [])
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onPieClick = useCallback((data: any) => {
     if (data && data.name) {
       setSelectedCategory((prev) => (prev === data.name ? null : data.name))

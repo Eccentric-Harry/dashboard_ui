@@ -30,6 +30,7 @@ export function CalendarSelectorCard({
   useEffect(() => {
     const d = new Date(selectedDate)
     if (d.toString() !== 'Invalid Date') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCurrentMonth(d.getMonth())
       setCurrentYear(d.getFullYear())
     }

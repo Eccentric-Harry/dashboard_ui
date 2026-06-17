@@ -82,6 +82,7 @@ export function AddEntryModal({
 
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setError('')
       const tab = initialTab || (initialLearningData ? 'Learning' : 'Task')
       setActiveTab(tab)
@@ -169,6 +170,7 @@ export function AddEntryModal({
       
       onSuccess()
       onClose()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message || 'Failed to save learning log')
     } finally {

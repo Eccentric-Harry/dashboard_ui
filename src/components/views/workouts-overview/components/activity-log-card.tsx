@@ -9,6 +9,7 @@ type ActivityLogCardProps = {
   onDelete?: (activity: StravaActivity) => void
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sportIcons: Record<string, { icon: any; cls: string }> = {
   Run: { icon: Footprints, cls: 'run-icon' },
   Ride: { icon: Bike, cls: 'ride-icon' },
@@ -85,6 +86,7 @@ function ActivityLogCard({ activities, loading, onEdit, onDelete }: ActivityLogC
   }, [activities, filter])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentPage(1)
   }, [filter])
 

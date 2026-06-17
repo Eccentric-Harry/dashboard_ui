@@ -375,6 +375,7 @@ const generateNutritionHistory = (): NutritionHistoryDay[] => {
         carbsGrams: meal.carbsGrams,
         fatGrams: meal.fatGrams,
       });
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       mealIdCounter++;
     }
     

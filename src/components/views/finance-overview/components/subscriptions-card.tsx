@@ -5,6 +5,7 @@ import { subscriptions, subscriptionSummary } from '../data'
 import { addTransaction } from '../../../../lib/api'
 
 interface SubscriptionsCardProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   transactions: any[]
   onRefresh?: () => void
 }
@@ -205,6 +206,7 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
       setOptimisticPaidIds(prev => new Set(prev).add(id))
       toast.success(`Paid ${subscription.service} subscription`)
       if (onRefresh) onRefresh()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast.error(error.message || `Failed to record payment for ${subscription.service}`)
       console.error('Failed to record subscription payment:', error)

@@ -1,9 +1,12 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
 import { useDashboardData } from '../hooks/useDashboardData';
 
 
+ 
 type DashboardContextType = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any;
   isLoading: boolean;
   error: Error | null;

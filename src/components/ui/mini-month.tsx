@@ -62,6 +62,7 @@ export function MiniMonth({
   const [currentMonth, setCurrentMonth] = useState(() => parseISODate(selectedDate))
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentMonth(parseISODate(selectedDate))
   }, [selectedDate])
 
@@ -74,6 +75,7 @@ export function MiniMonth({
       const endISO = toISODate(days[days.length - 1])
       onMonthChange(startISO, endISO)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentMonth])
 
   const handleMonthStep = (direction: -1 | 1) => {

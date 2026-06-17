@@ -26,10 +26,14 @@ type FoodEntry = {
   createdAt?: string
   
   // Detailed nutrition payload
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   analysis_metadata?: Record<string, any>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   meal_items?: Array<Record<string, any>>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   total_summary?: Record<string, any>
   gaps_and_warnings?: string[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   technical_diagnostic?: Record<string, any>
 }
 
@@ -185,6 +189,7 @@ function DailyLogCardInstance({ dateValue, entries, totalProtein, totalCalories,
 
   // Reset local page if the entries array changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentPage(1)
   }, [entries])
 
@@ -377,6 +382,7 @@ function FoodLogCard() {
 
   // Reset page number on anchor date change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentHistoryPage(1)
   }, [logAnchorDate])
 

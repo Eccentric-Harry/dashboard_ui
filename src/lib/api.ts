@@ -276,7 +276,7 @@ export async function createStravaActivity(data: {
   return response.json();
 }
 
-export async function importStravaJson(payload: any) {
+export async function importStravaJson(payload: unknown) {
   const response = await fetch(`${API_BASE_URL}/workouts/import/strava`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

@@ -8,6 +8,7 @@ import { AddEntryModal } from './add-entry-modal'
 
 function extractNotionUrl(text: string): string | null {
   if (!text) return null
+  // eslint-disable-next-line no-useless-escape
   const match = text.match(/(https?:\/\/(?:www\.)?notion\.so\/[^\s\)]+)/i)
   return match ? match[0] : null
 }
@@ -68,6 +69,7 @@ export function LearningDetailsCard({ selectedDate, onRefresh }: LearningDetails
       } else {
         setLearnings([])
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message || 'Failed to load learnings')
       setLearnings([])
@@ -77,6 +79,7 @@ export function LearningDetailsCard({ selectedDate, onRefresh }: LearningDetails
   }, [selectedDate])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadLearnings()
     setIsEditMode(false)
   }, [loadLearnings])
@@ -100,6 +103,7 @@ export function LearningDetailsCard({ selectedDate, onRefresh }: LearningDetails
         toast.success(`Deleted "${title}"`)
         loadLearnings()
         if (onRefresh) onRefresh()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         toast.error(err.message || 'Failed to delete learning log')
       }

@@ -20,7 +20,7 @@ import {
 
 const originalFetch = window.fetch;
 let calendarItems = [...dummyCalendarItems];
-let financeLogs = [...dummyFinanceLogs];
+const financeLogs = [...dummyFinanceLogs];
 let lendingRecords = [...dummyLendingRecords];
 
 export function enableGuestInterceptor() {
@@ -32,7 +32,7 @@ export function enableGuestInterceptor() {
       return originalFetch(...args);
     }
 
-    const respondWith = (data: any) => {
+    const respondWith = (data: unknown) => {
       return Promise.resolve(new Response(JSON.stringify(data), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
@@ -290,7 +290,7 @@ export function enableGuestInterceptor() {
         const raw = localStorage.getItem(LS_KEY);
         return raw ? JSON.parse(raw) : null;
       };
-      const saveSession = (s: any) => localStorage.setItem(LS_KEY, JSON.stringify(s));
+      const saveSession = (s: unknown) => localStorage.setItem(LS_KEY, JSON.stringify(s));
 
       if (method === 'GET' && urlStr.includes('/current')) {
         return respondWith({ data: getSession() });

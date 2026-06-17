@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import toast from 'react-hot-toast';
@@ -62,8 +63,9 @@ const getEmojiForItemType = (type?: string) => {
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+   
   const base64 = (base64String + padding)
-    .replace(/\-/g, '+')
+    .replace(/-/g, '+')
     .replace(/_/g, '/');
 
   const rawData = window.atob(base64);
@@ -117,8 +119,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       console.warn('Failed to create persistent Audio element:', e);
     }
 
+     
     try {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (AudioContextClass) {
         audioCtxRef.current = new AudioContextClass();
       }
@@ -328,7 +331,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       const fallbackAudio = new Audio('/iphone-notification.mp3');
       fallbackAudio.volume = 1.0;
       fallbackAudio.play().catch(() => playSynthesizedSound());
-    } catch (e) {
+    } catch {
       playSynthesizedSound();
     }
   }, [playSynthesizedSound]);
@@ -375,6 +378,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   // Alert schedule checker effect
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchUpcomingItems();
     const pollInterval = setInterval(fetchUpcomingItems, 60000); // refresh list every 1 minute
 

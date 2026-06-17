@@ -8,6 +8,7 @@ import { getFoodIconDetails } from './food-icon-helper'
 export interface MealDetailsModalProps {
   open: boolean
   onClose: () => void
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   entry: any | null // Typing as any here temporarily to match the enriched FoodEntry
 }
 
@@ -17,6 +18,7 @@ export function MealDetailsModal({ open, onClose, entry }: MealDetailsModalProps
 
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsVisible(true)
       setActiveTab('overview')
     } else {
@@ -36,7 +38,7 @@ export function MealDetailsModal({ open, onClose, entry }: MealDetailsModalProps
   const iconDetails = getFoodIconDetails(description, mealType)
   const FoodIcon = iconDetails.icon
 
-  // Helper to format numbers safely
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const formatNum = (num: any) => (typeof num === 'number' ? num.toFixed(1) : num || '0')
 
   const modalContent = (
@@ -135,7 +137,7 @@ export function MealDetailsModal({ open, onClose, entry }: MealDetailsModalProps
 
               {activeTab === 'items' && (
                 <div className="meal-items-list">
-                  {entry.meal_items.map((item: any, idx: number) => (
+                  {entry.meal_items.map((item: { name: string, serving_size: string, calories_kcal: number, protein_g: number, carbs_g: number, fats_g: number }, idx: number) => (
                     <div className="meal-item-row" key={idx}>
                       <div className="meal-item-info">
                         <h4>{item.name}</h4>

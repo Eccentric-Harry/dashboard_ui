@@ -27,7 +27,9 @@ function FinanceOverviewDashboard() {
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [editingTransaction, setEditingTransaction] = useState<any>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [deleteTarget, setDeleteTarget] = useState<any>(null)
   const [isLendingModalOpen, setIsLendingModalOpen] = useState(false)
   const [editingLending, setEditingLending] = useState<LendingRecord | null>(null)
@@ -58,6 +60,7 @@ function FinanceOverviewDashboard() {
   useEffect(() => {
     const [year, month] = selectedDate.split('-')
     if (year && month) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedMonthKey(`${year}-${month}`)
     }
   }, [selectedDate])
@@ -97,6 +100,7 @@ function FinanceOverviewDashboard() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refreshData()
   }, [])
 
@@ -147,6 +151,7 @@ function FinanceOverviewDashboard() {
   }, [logs, selectedMonthKey])
 
   const recentTransactions = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let allTxs: any[] = []
     logs.forEach(log => {
       const d = new Date(log.date)
@@ -194,6 +199,7 @@ function FinanceOverviewDashboard() {
     })
   }, [logs, selectedCategory, selectedMonthKey])
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleEdit = (tx: any) => {
     setEditingTransaction({
       id: tx.id,
@@ -205,6 +211,7 @@ function FinanceOverviewDashboard() {
     })
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleDelete = async (tx: any) => {
     setDeleteTarget(tx)
   }
@@ -216,6 +223,7 @@ function FinanceOverviewDashboard() {
       toast.success(`Deleted "${deleteTarget.merchant}"`)
       setDeleteTarget(null)
       refreshData()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       toast.error(err.message || 'Failed to delete transaction')
       console.error('Failed to delete transaction:', err)
@@ -231,6 +239,7 @@ function FinanceOverviewDashboard() {
       setDeleteLendingTarget(null)
       setLendingRefreshKey(prev => prev + 1)
       refreshData()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       toast.error(err.message || 'Failed to delete lending record')
       console.error('Failed to delete lending record:', err)

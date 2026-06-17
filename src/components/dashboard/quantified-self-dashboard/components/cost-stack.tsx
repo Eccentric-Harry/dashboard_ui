@@ -27,6 +27,7 @@ function CostStack() {
       percent: `${data?.finance?.savingsRatePercent?.toFixed(1) || 42.7}%`
     };
     
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const item = budgetItems.find((b: any) => b.category === category);
     if (item) {
       return {

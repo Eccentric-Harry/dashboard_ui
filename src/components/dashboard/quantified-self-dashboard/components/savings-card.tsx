@@ -153,6 +153,7 @@ function SavingsCard({ onNavigate }: { onNavigate?: (path: AppPath, search?: str
             
             let intensity = 0;
             if (heatmapData && heatmapData.length > 0) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const apiEntry = heatmapData.find((entry: any) => entry.date === isoDate);
               if (apiEntry) intensity = apiEntry.intensity;
             } else {

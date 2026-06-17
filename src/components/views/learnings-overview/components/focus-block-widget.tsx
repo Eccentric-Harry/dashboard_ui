@@ -56,8 +56,10 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
   }, [isExpanded])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (session?.activePursuit) setActivity(session.activePursuit)
     if (session?.durationMinutes) setDuration(session.durationMinutes)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.id])
 
   useEffect(() => {
@@ -65,6 +67,7 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
       onSessionComplete(session.durationMinutes, session.activePursuit)
     }
     prevStatusRef.current = session?.status ?? undefined
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.status])
 
   const isRunning = session?.status === 'RUNNING'

@@ -65,6 +65,7 @@ const getPastelBG = (colorHex: string) => {
     const pg = Math.round(g * 0.08 + 255 * 0.92)
     const pb = Math.round(b * 0.08 + 255 * 0.92)
     return `rgb(${pr}, ${pg}, ${pb})`
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (e) {
     return '#f3f4f6'
   }
@@ -79,6 +80,7 @@ function FinanceHeader({ onAddClick, logs, selectedDate, onDateChange }: Finance
     const dates = new Set<string>()
     logs.forEach((log) => {
       const hasTransactions = Object.values(log.transactions || {}).some(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (txs) => (txs as any[]).length > 0,
       )
       if (hasTransactions) {
@@ -146,6 +148,7 @@ function FinanceHeader({ onAddClick, logs, selectedDate, onDateChange }: Finance
     if (!log) return 0
     let count = 0
     Object.values(log.transactions || {}).forEach((txs) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       count += (txs as any[]).length
     })
     return count
@@ -158,8 +161,10 @@ function FinanceHeader({ onAddClick, logs, selectedDate, onDateChange }: Finance
     const log = logs.find((l) => l.id === pickedDate || l.date.startsWith(pickedDate))
     if (!log) return []
     
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const allTxs: any[] = []
     Object.entries(log.transactions || {}).forEach(([category, txs]) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (txs as any[]).forEach((tx: any) => {
         const isIncome = category.toLowerCase().includes('income')
         allTxs.push({

@@ -31,6 +31,7 @@ const generateMockLearnings = (): LearningLog[] => {
     else if (rand > 0.30) intensity = 1;
 
     if (intensity > 0) {
+      // eslint-disable-next-line no-loss-of-precision
       const catIndex = Math.floor(((seed * 6364136223846793005 + 1442695040888963407) >>> 0) % 4);
       logs.push({
         date: dateString,

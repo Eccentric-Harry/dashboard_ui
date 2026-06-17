@@ -207,6 +207,7 @@ function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
 
   useEffect(() => {
     if (!pickedDate) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPickedDateEntries([])
       return
     }

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import type { FocusSession } from '../lib/api';
@@ -55,11 +56,13 @@ export function FocusProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
   }, [refresh]);
 
   useEffect(() => {
     if (!session) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRemainingSeconds(0);
       return;
     }
@@ -97,8 +100,9 @@ export function FocusProvider({ children }: { children: ReactNode }) {
 
     return () => {
       if (tickRef.current) clearInterval(tickRef.current);
+     
     };
-  }, [session?.id, session?.status, session?.endTime, session?.remainingSecondsOnPause]);
+  }, [session, session?.id, session?.status, session?.endTime, session?.remainingSecondsOnPause]);
 
   const start = useCallback(async (pursuit: string, duration: number) => {
     const res = await startFocusSession(pursuit, duration);

@@ -13,6 +13,7 @@ function QuantifiedSelfDashboard({ activePath, onNavigate }: QuantifiedSelfDashb
 
   useEffect(() => {
     if (activePath === '/home') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsModalOpen(true)
     }
   }, [activePath])

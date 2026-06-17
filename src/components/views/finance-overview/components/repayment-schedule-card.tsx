@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import { addTransaction, fetchSliceRepayments, type RepaymentInstallment } from '../../../../lib/api'
 
 interface RepaymentScheduleCardProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   transactions: any[]
   onRefresh?: () => void
 }
@@ -93,6 +94,7 @@ export function RepaymentScheduleCard({ transactions, onRefresh }: RepaymentSche
       setOptimisticPaidIds(prev => new Set(prev).add(id))
       toast.success(`Paid Slice installment of ${installment.amount}`)
       if (onRefresh) onRefresh()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast.error(error.message || `Failed to record payment for Slice installment`)
       console.error('Failed to record installment payment:', error)

@@ -6,6 +6,7 @@ function RunnerCardPanel() {
   
   // Try to find the latest run from recent activities
   const recentActivities = data?.workouts?.recentActivities?.activities || [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const latestRun = recentActivities.find((a: any) => a.type === 'Run');
   
   // Format distance

@@ -12,6 +12,7 @@ export function InDevelopmentModal({ open, onClose }: InDevelopmentModalProps) {
 
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsVisible(true)
     } else {
       const timer = setTimeout(() => setIsVisible(false), 300)

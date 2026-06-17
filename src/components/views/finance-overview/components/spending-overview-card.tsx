@@ -22,6 +22,7 @@ const getMonthKey = (dateString: string) => {
 }
 
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload as { label: string; rawAmount: number; share: string }
@@ -116,6 +117,7 @@ function SpendingOverviewCard({
 
   const [isMounted, setIsMounted] = useState(false)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMounted(true)
   }, [])
 

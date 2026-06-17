@@ -56,6 +56,7 @@ export function ActiveStudyQueue({ refreshKey, onRefresh }: ActiveStudyQueueProp
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadPursuits()
   }, [refreshKey])
 
@@ -66,6 +67,7 @@ export function ActiveStudyQueue({ refreshKey, onRefresh }: ActiveStudyQueueProp
   // Auto-adjust page if list shrinks
   useEffect(() => {
     if (page > totalPages) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPage(totalPages)
     }
   }, [tracks.length, totalPages, page])

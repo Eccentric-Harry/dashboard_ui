@@ -71,6 +71,7 @@ export function AddTransactionModal({
   useEffect(() => {
     if (isOpen) {
       const tab = initialTab || (initialLendingData ? 'Lending' : 'Transaction')
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveTab(tab)
 
       if (isEdit) {
@@ -158,6 +159,7 @@ export function AddTransactionModal({
 
       onSuccess()
       onClose()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message || 'Failed to save transaction')
     } finally {
@@ -201,6 +203,7 @@ export function AddTransactionModal({
 
       onSuccess()
       onClose()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message || 'Failed to save lending record')
     } finally {

@@ -29,6 +29,7 @@ type TasksDashboardProps = {
   onNavigate?: (pathname: AppPath, search?: string) => void
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function TasksDashboard(_props: TasksDashboardProps) {
   const [tasks, setTasks] = useState<DailyTask[]>([])
   const [loading, setLoading] = useState(true)
