@@ -361,10 +361,11 @@ export function TasksScheduleCard({
               return new Date() > deadline;
             })()
 
-            const storedCategory = task.category as TaskCategory | undefined
+            const storedCategory = task.category as string | undefined
             const detectedCategory = detectCategory(task.title)
-            const category = (storedCategory && storedCategory in CATEGORY_THEMES) ? storedCategory : detectedCategory
-            const theme = CATEGORY_THEMES[category]
+            const displayCategory = storedCategory || detectedCategory
+            const themeCategory = (displayCategory in CATEGORY_THEMES) ? (displayCategory as TaskCategory) : 'General'
+            const theme = CATEGORY_THEMES[themeCategory]
             const CategoryIcon = theme.icon
 
             return (
@@ -411,7 +412,7 @@ export function TasksScheduleCard({
                         }}
                       >
                         <CategoryIcon size={10} />
-                        {theme.name}
+                        {displayCategory}
                       </span>
                       {task.date && (
                         <span className="learnings-task-badge-premium date" style={{ background: 'rgba(23, 28, 25, 0.05)', color: 'rgba(23, 28, 25, 0.6)', fontWeight: 600 }}>

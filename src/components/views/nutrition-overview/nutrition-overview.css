@@ -1936,8 +1936,11 @@
   font-size: 13px;
   font-weight: 700;
   color: #111514;
-  word-break: break-word;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  display: block;
   line-height: 1.35;
 }
 

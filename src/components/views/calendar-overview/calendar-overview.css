@@ -997,6 +997,7 @@
 .calendar-modal select,
 .calendar-modal textarea {
   width: 100%;
+  box-sizing: border-box;
   min-width: 0;
   padding: 10px 12px;
   border: 1px solid rgba(21, 26, 24, 0.08);
@@ -1249,6 +1250,7 @@
   }
 
   .calendar-form-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
   }
 }

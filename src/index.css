@@ -2980,3 +2980,10 @@ button {
   opacity: 0.5;
   cursor: not-allowed;
 }
+/* Fix pagination button icon sizes universally */
+.pagination-btn svg,
+.mini-pagination-btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
