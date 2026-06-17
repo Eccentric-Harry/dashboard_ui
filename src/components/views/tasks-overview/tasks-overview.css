@@ -1582,8 +1582,8 @@ textarea.form-input {
     gap: 10px;
     align-items: stretch;
     margin-top: 12px;
-    padding-bottom: calc(16px + constant(safe-area-inset-bottom, 34px));
-    padding-bottom: calc(16px + env(safe-area-inset-bottom, 34px));
+    padding-bottom: calc(90px + constant(safe-area-inset-bottom, 34px));
+    padding-bottom: calc(90px + env(safe-area-inset-bottom, 34px));
   }
   .modal-btn-group {
     width: 100%;
@@ -1630,8 +1630,8 @@ textarea.form-input {
   .modal-footer-actions {
     gap: 8px;
     margin-top: 10px;
-    padding-bottom: calc(14px + constant(safe-area-inset-bottom, 34px));
-    padding-bottom: calc(14px + env(safe-area-inset-bottom, 34px));
+    padding-bottom: calc(90px + constant(safe-area-inset-bottom, 34px));
+    padding-bottom: calc(90px + env(safe-area-inset-bottom, 34px));
   }
 }
 
