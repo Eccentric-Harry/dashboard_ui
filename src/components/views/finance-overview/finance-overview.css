@@ -344,9 +344,10 @@
 }
 
 .finance-subscription-card {
-  grid-column: 8 / span 5;
-  grid-row: 3;
-  height: 426px;
+  grid-column: 1 / -1;
+  grid-row: 4;
+  height: max-content;
+  min-height: 200px;
   padding: 20px;
   background: linear-gradient(165deg, rgba(255, 255, 255, 0.9), rgba(244, 248, 243, 0.75));
   display: flex;
@@ -355,6 +356,7 @@
 
 .finance-subscription-list {
   display: grid;
+  align-content: start;
   gap: 12px;
   margin-top: 18px;
   overflow-y: auto;
@@ -394,6 +396,10 @@
   box-shadow: 2px 2px 5px rgba(0,0,0,0.03), inset 1px 1px 0 #fff;
 }
 
+.finance-subscription-list p {
+  margin: 0;
+}
+
 .finance-subscription-list b {
   display: block;
   font-size: 13px;
@@ -420,8 +426,8 @@
 }
 
 .finance-repayment-card {
-  grid-column: 8 / span 5;
-  grid-row: 4;
+  grid-column: 7 / span 6;
+  grid-row: 5;
   height: 426px;
   padding: 20px;
   background: linear-gradient(165deg, rgba(255, 255, 255, 0.9), rgba(244, 248, 243, 0.75));
@@ -430,8 +436,8 @@
 }
 
 .lending-tracker-card {
-  grid-column: 1 / span 7;
-  grid-row: 4;
+  grid-column: 1 / span 6;
+  grid-row: 5;
   height: 426px;
   padding: 20px;
   background: linear-gradient(165deg, rgba(255, 255, 255, 0.9), rgba(244, 248, 243, 0.75));
@@ -441,6 +447,7 @@
 
 .finance-repayment-list {
   display: grid;
+  align-content: start;
   gap: 12px;
   margin-top: 18px;
   overflow-y: auto;
@@ -514,6 +521,10 @@
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.03), inset 1px 1px 0 #fff;
 }
 
+.finance-repayment-list p {
+  margin: 0;
+}
+
 .finance-repayment-list b {
   display: block;
   font-size: 13px;
@@ -541,6 +552,7 @@
 
 .finance-lending-list {
   display: grid;
+  align-content: start;
   gap: 12px;
   margin-top: 18px;
   overflow-y: auto;
@@ -595,6 +607,10 @@
   place-items: center;
   border-radius: 12px;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.03), inset 1px 1px 0 #fff;
+}
+
+.finance-lending-list p {
+  margin: 0;
 }
 
 .finance-lending-list b {
@@ -754,9 +770,9 @@
 
 .finance-transactions-card {
   display: flex;
-  grid-column: 1 / span 7;
+  grid-column: 1 / -1;
   grid-row: 3;
-  height: 486px;
+  height: 610px;
   min-height: 0;
   flex-direction: column;
   padding: 18px;

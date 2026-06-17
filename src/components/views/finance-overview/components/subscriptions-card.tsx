@@ -1,8 +1,8 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Check, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { subscriptions, subscriptionSummary } from '../data'
-import { addTransaction } from '../../../../lib/api'
+import { fetchSubscriptions, addTransaction } from '../../../../lib/api'
+import type { SubscriptionDTO } from '../../../../lib/api'
 
 interface SubscriptionsCardProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -13,16 +13,23 @@ interface SubscriptionsCardProps {
 function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) {
   const [processingId, setProcessingId] = useState<string | null>(null)
   const [optimisticPaidIds, setOptimisticPaidIds] = useState<Set<string>>(new Set())
+  const [apiSubscriptions, setApiSubscriptions] = useState<SubscriptionDTO[]>([])
+
+  useEffect(() => {
+    fetchSubscriptions()
+      .then((res) => setApiSubscriptions(res.data || []))
+      .catch((err) => console.error('Failed to fetch subscriptions:', err))
+  }, [])
 
   const paidIds = useMemo(() => {
     const ids = new Set<string>()
 
     // Check transactions for subscription payments
     transactions.forEach(tx => {
-      subscriptions.forEach(sub => {
+      apiSubscriptions.forEach(sub => {
         // Match by description containing service name
-        if (tx.merchant.toLowerCase().includes(sub.service.toLowerCase())) {
-          ids.add(sub.service)
+        if (tx.merchant.toLowerCase().includes(sub.name.toLowerCase())) {
+          ids.add(sub.name)
         }
       })
     })
@@ -31,7 +38,7 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
     optimisticPaidIds.forEach(id => ids.add(id))
 
     return ids
-  }, [transactions, optimisticPaidIds])
+  }, [transactions, optimisticPaidIds, apiSubscriptions])
 
   const getSubColorStyles = (service: string) => {
     const s = service.toLowerCase()
@@ -185,58 +192,69 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
     return <span>{service.slice(0, 1)}</span>
   }
 
-  const handlePay = async (subscription: typeof subscriptions[0]) => {
-    const id = subscription.service
+  const handlePay = async (subscription: SubscriptionDTO) => {
+    const id = subscription.name
     setProcessingId(id)
 
     try {
-      // Parse amount string like "₹89" to number 89
-      const numericAmount = parseInt(subscription.amount.replace(/[^0-9]/g, ''), 10)
+      const numericAmount = subscription.cost
 
       const today = new Date().toISOString().split('T')[0]
 
       await addTransaction({
-        description: `${subscription.service} Subscription`,
+        description: `${subscription.name} Subscription`,
         amount: numericAmount,
-        category: subscription.service.toLowerCase().includes('jio') ? 'Bills & Utilities' : 'Entertainment',
+        category: subscription.name.toLowerCase().includes('jio') ? 'Bills & Utilities' : 'Entertainment',
         type: 'Expense',
         date: today
       })
 
       setOptimisticPaidIds(prev => new Set(prev).add(id))
-      toast.success(`Paid ${subscription.service} subscription`)
+      toast.success(`Paid ${subscription.name} subscription`)
       if (onRefresh) onRefresh()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      toast.error(error.message || `Failed to record payment for ${subscription.service}`)
+      toast.error(error.message || `Failed to record payment for ${subscription.name}`)
       console.error('Failed to record subscription payment:', error)
     } finally {
       setProcessingId(null)
     }
   }
 
+  const getOrdinalNum = (n: number) => {
+    return n + (n > 0 ? ['th', 'st', 'nd', 'rd'][(n > 3 && n < 21) || n % 10 > 3 ? 0 : n % 10] : '');
+  };
+
+  const totalCost = apiSubscriptions.reduce((sum, sub) => sum + sub.cost, 0);
+
   return (
     <section className="finance-card finance-subscription-card">
       <div className="finance-section-head compact">
         <div>
           <h2>Subscriptions</h2>
-          <p>{subscriptionSummary.change}</p>
+          <p>{apiSubscriptions.length} active renewals</p>
         </div>
-        <strong>{subscriptionSummary.total}</strong>
+        <strong>₹{totalCost}</strong>
       </div>
       <div className="finance-subscription-list">
-        {subscriptions.map((subscription) => {
-          const isProcessing = processingId === subscription.service
-          const isPaid = paidIds.has(subscription.service)
+        {apiSubscriptions.map((subscription) => {
+          const isProcessing = processingId === subscription.name
+          const isPaid = paidIds.has(subscription.name)
+          
+          let renewsText = '';
+          if (subscription.billingDate) {
+            const date = new Date(subscription.billingDate);
+            renewsText = `Renews on ${getOrdinalNum(date.getDate())}`;
+          }
 
           return (
-            <div key={subscription.service} className={isPaid ? 'paid' : ''}>
-              <span className="service-icon" style={getSubColorStyles(subscription.service)}>{getIcon(subscription.service)}</span>
+            <div key={subscription.name} className={isPaid ? 'paid' : ''}>
+              <span className="service-icon" style={getSubColorStyles(subscription.name)}>{getIcon(subscription.name)}</span>
               <p>
-                <b>{subscription.service}</b>
-                <small>{subscription.detail}</small>
+                <b>{subscription.name}</b>
+                <small>{renewsText}</small>
               </p>
-              <strong className="subscription-price">{subscription.amount}</strong>
+              <strong className="subscription-price">₹{subscription.cost}</strong>
               <button
                 className={`pay-button ${isPaid ? 'success' : ''}`}
                 onClick={() => !isPaid && !isProcessing && handlePay(subscription)}

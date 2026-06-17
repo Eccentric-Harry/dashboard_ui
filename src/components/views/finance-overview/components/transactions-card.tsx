@@ -24,7 +24,7 @@ interface TransactionsCardProps {
   onDelete?: (transaction: TransactionProp) => void
 }
 
-const PAGE_SIZE = 6
+const PAGE_SIZE = 7
 
 export const getPastelBG = (colorHex: string) => {
   const hex = colorHex.toLowerCase()

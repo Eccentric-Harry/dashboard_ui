@@ -148,16 +148,7 @@ export const recentTransactions: Transaction[] = [
   },
 ]
 
-export const subscriptions: Subscription[] = [
-  { service: 'Youtube Premium', detail: 'Renews on 14th', amount: '₹89', status: 'Upcoming' },
-  { service: 'Netflix', detail: 'Renews on 28th', amount: '₹199', status: 'Upcoming' },
-  { service: 'Jio Prepaid', detail: 'Renews on 30th', amount: '₹349', status: 'Upcoming' },
-  { service: 'Spotify Premium', detail: 'Renews on 8th', amount: '₹119', status: 'Upcoming' },
-  { service: 'Amazon Prime', detail: 'Renews on 22nd', amount: '₹299', status: 'Upcoming' },
-  { service: 'Disney+ Hotstar', detail: 'Renews on 16th', amount: '₹299', status: 'Upcoming' },
-  { service: 'Apple iCloud+', detail: 'Renews on 5th', amount: '₹99', status: 'Upcoming' },
-  { service: 'Notion Plus', detail: 'Renews on 12th', amount: '₹199', status: 'Upcoming' },
-]
+export const subscriptions: Subscription[] = []
 
 
 export const totalBalance = {

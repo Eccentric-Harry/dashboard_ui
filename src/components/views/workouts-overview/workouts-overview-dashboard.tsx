@@ -14,6 +14,7 @@ import type { StravaActivity, StravaActivityStats } from '../../../lib/api'
 import { Activity, Mountain, Timer, Flame } from 'lucide-react'
 
 import { ConfirmDialog } from '../../ui/confirm-dialog'
+import toast from 'react-hot-toast'
 import './workouts-overview.css'
 
 function WorkoutsOverviewDashboard() {
@@ -118,11 +119,9 @@ function WorkoutsOverviewDashboard() {
         message={`Are you sure you want to delete "${activityToDelete?.activityName}"?`}
         confirmLabel="Delete"
         onConfirm={() => {
-          import('react-hot-toast').then(toast => {
-            toast.default.success('Activity deleted')
-            setActivityToDelete(null)
-            refreshData()
-          })
+          toast.success('Activity deleted')
+          setActivityToDelete(null)
+          refreshData()
         }}
         onCancel={() => setActivityToDelete(null)}
       />

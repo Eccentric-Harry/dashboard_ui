@@ -77,6 +77,22 @@ export async function fetchSpendingSummary(month?: string) {
   return response.json();
 }
 
+export interface SubscriptionDTO {
+  id: string;
+  name: string;
+  cost: number;
+  billingDate: string;
+}
+
+export async function fetchSubscriptions() {
+  const response = await fetch(`${API_BASE_URL}/subscriptions`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch subscriptions');
+  }
+  return response.json();
+}
+
+
 export async function fetchWorkoutsData() {
   const response = await fetch(`${API_BASE_URL}/workouts`);
   if (!response.ok) {
