@@ -466,10 +466,12 @@ export function TasksDashboard(_props: TasksDashboardProps) {
             </button>
           </div>
 
-          <button type="button" className="tasks-add-btn-primary" onClick={() => setModalMode('add')}>
-            <Plus size={14} strokeWidth={2.5} />
-            <span>New Task</span>
-          </button>
+          {!modalMode && (
+            <button type="button" className="tasks-add-btn-primary" onClick={() => setModalMode('add')}>
+              <Plus size={14} strokeWidth={2.5} />
+              <span>New Task</span>
+            </button>
+          )}
         </div>
       </div>
 
