@@ -70,7 +70,7 @@
   box-shadow: 0 0 0 3px rgba(79, 147, 237, 0.16);
 }
 
-.calendar-date-trigger > span,
+.calendar-date-trigger>span,
 .calendar-date-trigger small {
   display: block;
 }
@@ -271,7 +271,8 @@
 .week-ribbon::before,
 .week-ribbon::after {
   content: '';
-  flex: 0 0 20px; /* 24px layout margin minus 4px gap */
+  flex: 0 0 20px;
+  /* 24px layout margin minus 4px gap */
 }
 
 .week-ribbon::-webkit-scrollbar {
@@ -281,7 +282,8 @@
 .week-ribbon button {
   position: relative;
   display: flex;
-  flex: 0 0 calc((100% - 64px) / 5); /* exactly 5 days visible at once */
+  flex: 0 0 calc((100% - 64px) / 5);
+  /* exactly 5 days visible at once */
   min-width: calc((100% - 64px) / 5);
   height: 58px;
   align-items: center;
@@ -336,7 +338,7 @@
   padding: 18px 22px 12px;
 }
 
-.routine-list-header > div {
+.routine-list-header>div {
   display: flex;
   align-items: baseline;
   gap: 8px;
@@ -469,7 +471,7 @@
   overflow: hidden;
 }
 
-.routine-card-copy > span {
+.routine-card-copy>span {
   display: block;
   margin-bottom: 7px;
   color: rgba(37, 42, 40, 0.45);
@@ -500,7 +502,7 @@
   -webkit-line-clamp: 2;
 }
 
-.routine-card.is-active .routine-card-copy > span,
+.routine-card.is-active .routine-card-copy>span,
 .routine-card.is-active .routine-card-copy p {
   color: rgba(255, 255, 255, 0.74);
 }
@@ -600,8 +602,8 @@
   gap: 10px;
 }
 
-.routine-empty > span,
-.focus-empty > span {
+.routine-empty>span,
+.focus-empty>span {
   display: grid;
   width: 54px;
   height: 54px;
@@ -718,8 +720,8 @@
   border: 1px solid color-mix(in srgb, var(--focus-color) 20%, transparent);
   color: var(--focus-color);
   flex-shrink: 0;
-  box-shadow: 0 8px 20px -4px color-mix(in srgb, var(--focus-color) 25%, transparent), 
-              inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  box-shadow: 0 8px 20px -4px color-mix(in srgb, var(--focus-color) 25%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -1022,8 +1024,7 @@
   backdrop-filter: blur(12px);
 }
 
-.calendar-modal,
-.calendar-delete-dialog {
+.calendar-modal {
   position: relative;
   width: min(560px, calc(100vw - 32px));
   max-height: min(760px, calc(100svh - 36px));
@@ -1033,6 +1034,40 @@
   border-radius: 28px;
   background: rgba(250, 252, 247, 0.94);
   box-shadow: 0 30px 80px rgba(16, 19, 18, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.calendar-delete-dialog {
+  position: relative;
+  width: min(400px, calc(100vw - 32px));
+  max-height: min(760px, calc(100svh - 36px));
+  overflow: auto;
+  padding: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 28px;
+  background: rgba(250, 252, 247, 0.94);
+  box-shadow: 0 30px 80px rgba(16, 19, 18, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  text-align: center;
+}
+
+/* Calendar Modal Preview */
+.routine-card.preview-mode {
+  width: 100%;
+  max-width: 280px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: #ffffff;
+  border: 1px solid rgba(16, 19, 18, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+@media (max-width: 768px) {
+  .routine-card.preview-mode {
+    max-width: 100%;
+    padding: 12px 14px;
+  }
 }
 
 .calendar-modal-close {
@@ -1161,11 +1196,6 @@
 .calendar-modal-submit:disabled {
   cursor: not-allowed;
   opacity: 0.6;
-}
-
-.calendar-delete-dialog {
-  width: min(400px, calc(100vw - 32px));
-  text-align: center;
 }
 
 .calendar-delete-icon {
@@ -1320,7 +1350,8 @@
 
   .week-ribbon::before,
   .week-ribbon::after {
-    flex: 0 0 6px; /* 12px total layout margin minus 6px gap */
+    flex: 0 0 6px;
+    /* 12px total layout margin minus 6px gap */
   }
 
   .week-ribbon button {
@@ -1350,9 +1381,21 @@
     max-width: none;
     justify-content: center;
   }
+}
 
-  .calendar-form-row {
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+/* Flex layout columns equal width fix */
+.form-row .form-group {
+  min-width: 0;
+}
+
+/* Calendar Modal Width Overrides for Desktop */
+@media (min-width: 769px) {
+  .tasks-add-modal-overlay .tasks-add-entry-modal {
+    width: 840px;
+    transform: translateX(74px);
+  }
+
+  .tasks-add-entry-modal .tasks-modal-grid {
+    grid-template-columns: 1.4fr 1fr;
   }
 }

@@ -555,14 +555,16 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
       )}
 
       {/* Mobile FAB */}
-      <button 
-        type="button" 
-        className="calendar-mobile-fab" 
-        onClick={() => setModal({ open: true, date: selectedDate })}
-        aria-label="Add routine"
-      >
-        <Plus size={24} strokeWidth={2.5} />
-      </button>
+      {!modal.open && !deleteTarget && (
+        <button 
+          type="button" 
+          className="calendar-mobile-fab" 
+          onClick={() => setModal({ open: true, date: selectedDate })}
+          aria-label="Add routine"
+        >
+          <Plus size={24} strokeWidth={2.5} />
+        </button>
+      )}
     </section>
   )
 }
@@ -773,95 +775,225 @@ function CalendarItemModal({
     }
   }
 
+  const tempItem = { title, category, notes, itemType, startTime, endTime }
+  const routineIconDetails = getRoutineIconDetails(tempItem)
+  const RoutineIcon = routineIconDetails.icon
+
+  const getFormattedTimeRange = () => {
+    if (!startTime) return 'All day'
+    try {
+      const formatTime = (t: string) => {
+        if (!t || !t.includes(':')) return ''
+        const [h, m] = t.split(':').map(Number)
+        if (isNaN(h) || isNaN(m)) return ''
+        return new Date(2000, 0, 1, h, m).toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: m ? '2-digit' : undefined,
+        })
+      }
+      const start = formatTime(startTime)
+      if (!start) return 'All day'
+      const end = endTime ? formatTime(endTime) : ''
+      return end ? `${start} - ${end}` : start
+    } catch {
+      return startTime
+    }
+  }
+
   return (
-    <div className="calendar-modal-backdrop" role="presentation" onClick={onClose}>
-      <div className="calendar-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
-        <button type="button" className="calendar-modal-close" onClick={onClose} aria-label="Close">
-          <X size={16} />
-        </button>
-        <span className="calendar-modal-kicker">{item ? 'Refine routine' : 'Shape your day'}</span>
-        <h2>{item ? 'Edit routine block' : 'Add routine block'}</h2>
-        <form onSubmit={handleSubmit}>
-          <label>
-            Title
-            <input value={title} onChange={(event) => setTitle(event.target.value)} autoFocus />
-          </label>
-          <div className="calendar-form-row">
-            <label>
-              Type
-              <select value={itemType} onChange={(event) => setItemType(event.target.value as CalendarItemType)}>
-                {TYPE_OPTIONS.map((option) => <option key={option}>{option}</option>)}
-              </select>
-            </label>
-            <label>
-              Category
-              <select value={category} onChange={(event) => handleCategory(event.target.value)}>
-                {CATEGORY_OPTIONS.map((option) => <option key={option.label}>{option.label}</option>)}
-              </select>
-            </label>
-          </div>
-          <div className="calendar-form-row">
-            <label>
-              Date
-              <input type="date" value={itemDate} onChange={(event) => setItemDate(event.target.value)} />
-            </label>
-            <label>
-              Accent
-              <input type="color" value={color} onChange={(event) => setColor(event.target.value)} />
-            </label>
-          </div>
-          <div className="calendar-form-row">
-            <label>
-              Starts
-              <input type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} />
-            </label>
-            <label>
-              Ends
-              <input type="time" value={endTime} onChange={(event) => setEndTime(event.target.value)} />
-            </label>
-          </div>
-          <div className="calendar-form-row">
-            <label>
-              Repeats
-              <select
-                value={recurrenceFrequency}
-                onChange={(event) => setRecurrenceFrequency(event.target.value as CalendarRecurrence)}
-              >
-                <option value="NONE">Does not repeat</option>
-                <option value="DAILY">Daily</option>
-                <option value="WEEKLY">Weekly</option>
-                <option value="MONTHLY">Monthly</option>
-              </select>
-            </label>
-            {recurrenceFrequency !== 'NONE' ? (
-              <label>
-                Repeat until
-                <input
-                  type="date"
-                  value={recurrenceUntil}
-                  onChange={(event) => setRecurrenceUntil(event.target.value)}
-                  min={itemDate}
-                />
-              </label>
-            ) : <div />}
-          </div>
-          <label>
-            Notes or checklist
-            <textarea
-              rows={4}
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-              placeholder={'Add context, or use lines like “- [ ] Prepare notes”'}
-            />
-          </label>
-          <label className="calendar-checkbox-row">
-            <input type="checkbox" checked={completed} onChange={(event) => setCompleted(event.target.checked)} />
-            Completed
-          </label>
-          {error && <p className="calendar-form-error">{error}</p>}
-          <button type="submit" className="calendar-modal-submit" disabled={saving}>
-            {saving ? <Loader2 className="animate-spin" size={16} /> : 'Save routine'}
+    <div className="tasks-add-modal-overlay" onClick={onClose}>
+      <div className="tasks-add-entry-modal" onClick={(event) => event.stopPropagation()}>
+        <div className="modal-header">
+          <h3>{item ? 'Edit routine block' : 'Add routine block'}</h3>
+          <button type="button" className="close-modal-btn" onClick={onClose} aria-label="Close">
+            <X size={16} />
           </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="add-entry-form">
+          <div className="tasks-modal-grid">
+            {/* Left Column: Form */}
+            <div className="tasks-modal-form-col">
+              <div className="form-group">
+                <label>ROUTINE TITLE</label>
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder="e.g. Morning Walk, Read Book..."
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="form-input"
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>TYPE</label>
+                  <select
+                    value={itemType}
+                    onChange={(e) => setItemType(e.target.value as CalendarItemType)}
+                    className="form-input"
+                  >
+                    {TYPE_OPTIONS.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>CATEGORY</label>
+                  <select
+                    value={category}
+                    onChange={(e) => handleCategory(e.target.value)}
+                    className="form-input"
+                  >
+                    {CATEGORY_OPTIONS.map((option) => (
+                      <option key={option.label} value={option.label}>{option.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>DATE</label>
+                  <div className="input-with-icon">
+                    <input
+                      type="date"
+                      value={itemDate}
+                      onChange={(e) => setItemDate(e.target.value)}
+                      className="form-input"
+                    />
+                    <CalendarDays size={14} className="input-icon" />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label>REPEATS</label>
+                  <select
+                    value={recurrenceFrequency}
+                    onChange={(e) => setRecurrenceFrequency(e.target.value as CalendarRecurrence)}
+                    className="form-input"
+                  >
+                    <option value="NONE">Does not repeat</option>
+                    <option value="DAILY">Daily</option>
+                    <option value="WEEKLY">Weekly</option>
+                    <option value="MONTHLY">Monthly</option>
+                  </select>
+                </div>
+              </div>
+
+              {recurrenceFrequency !== 'NONE' && (
+                <div className="form-group">
+                  <label>REPEAT UNTIL</label>
+                  <div className="input-with-icon">
+                    <input
+                      type="date"
+                      value={recurrenceUntil}
+                      onChange={(e) => setRecurrenceUntil(e.target.value)}
+                      min={itemDate}
+                      className="form-input"
+                    />
+                    <CalendarDays size={14} className="input-icon" />
+                  </div>
+                </div>
+              )}
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>STARTS</label>
+                  <div className="input-with-icon">
+                    <input
+                      type="time"
+                      value={startTime}
+                      onChange={(e) => setStartTime(e.target.value)}
+                      className="form-input"
+                    />
+                    <Clock size={14} className="input-icon" />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label>ENDS</label>
+                  <div className="input-with-icon">
+                    <input
+                      type="time"
+                      value={endTime}
+                      onChange={(e) => setEndTime(e.target.value)}
+                      className="form-input"
+                    />
+                    <Clock size={14} className="input-icon" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>NOTES OR CHECKLIST (OPTIONAL)</label>
+                <textarea
+                  placeholder="Add context, or use lines like '- [ ] Prepare notes'..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className="form-input"
+                  rows={3}
+                />
+              </div>
+
+              <label className="calendar-checkbox-row" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', fontWeight: 700, color: 'rgba(16, 19, 18, 0.5)', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '4px' }}>
+                <input 
+                  type="checkbox" 
+                  checked={completed} 
+                  onChange={(e) => setCompleted(e.target.checked)} 
+                  style={{ width: '16px', height: '16px', borderRadius: '4px', accentColor: '#101312', cursor: 'pointer' }}
+                />
+                Completed
+              </label>
+            </div>
+
+            {/* Right Column: Preview */}
+            <div className="tasks-modal-preview-col">
+              <div className="preview-label">Preview</div>
+              
+              <div className="routine-card preview-mode" style={{ pointerEvents: 'none', width: '100%', maxWidth: '280px', display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px', borderRadius: '18px', background: '#fff', border: '1px solid rgba(16, 19, 18, 0.08)', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.02)' }}>
+                <span className="routine-card-icon" style={{ 
+                  '--card-color': routineIconDetails.color, 
+                  '--card-bg': routineIconDetails.bg,
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'var(--card-bg)',
+                  color: 'var(--card-color)'
+                } as React.CSSProperties}>
+                  <RoutineIcon size={16} />
+                </span>
+                <div className="routine-card-copy" style={{ display: 'grid', gap: '2px', flex: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(16, 19, 18, 0.4)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    {getFormattedTimeRange()}
+                  </span>
+                  <strong style={{ fontSize: '13.5px', fontWeight: 700, color: '#101312', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title || 'Untitled Routine'}</strong>
+                  <p style={{ margin: 0, fontSize: '11.5px', color: 'rgba(16, 19, 18, 0.55)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {notes || 'No description provided.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="modal-footer-actions">
+            {item?.createdAt ? (
+              <div className="modal-last-updated">
+                Created: {new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              </div>
+            ) : <div />}
+            {error && <p className="calendar-form-error" style={{ color: '#b4232e', fontSize: '11px', fontWeight: 800 }}>{error}</p>}
+            <div className="modal-btn-group">
+              <button type="button" className="modal-btn-cancel" onClick={onClose}>
+                Cancel
+              </button>
+              <button type="submit" className="modal-btn-save" disabled={!title.trim() || saving}>
+                {saving ? <Loader2 className="animate-spin" size={16} /> : 'Save routine'}
+              </button>
+            </div>
+          </div>
         </form>
       </div>
     </div>
