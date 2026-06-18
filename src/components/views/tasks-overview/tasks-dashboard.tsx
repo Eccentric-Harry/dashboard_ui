@@ -497,6 +497,9 @@ export function TasksDashboard(_props: TasksDashboardProps) {
                   onSelect={setSelectedTask}
                   onStatusChange={handleStatusChange}
                   onAddTask={() => setModalMode('add')}
+                  onToggle={handleToggle}
+                  onDelete={(t) => setDeleteTarget(t)}
+                  onEditRequest={(t) => { setSelectedTask(t); setModalMode('edit'); }}
                 />
               )}
               

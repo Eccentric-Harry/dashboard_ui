@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { X, Check, Plus, Trash2, Clock, CalendarDays, Circle } from 'lucide-react'
+import { createPortal } from 'react-dom'
+import { X, Check, Plus, Trash2, Clock, CalendarDays, Circle, MoreHorizontal, Pencil } from 'lucide-react'
 import type { DailyTask } from '../../../lib/api'
 import { getTagColor } from '../../../lib/tag-colors'
 
@@ -73,6 +74,25 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate, 
   const [isAddingTag, setIsAddingTag] = useState(false)
   const [newTag, setNewTag] = useState('')
 
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [dropdownCoords, setDropdownCoords] = useState<{ top: number; right: number } | null>(null)
+
+  useEffect(() => {
+    if (!dropdownOpen) return
+    const handler = () => {
+      setDropdownOpen(false)
+      setDropdownCoords(null)
+    }
+    window.addEventListener('click', handler)
+    window.addEventListener('scroll', handler, true)
+    window.addEventListener('resize', handler)
+    return () => {
+      window.removeEventListener('click', handler)
+      window.removeEventListener('scroll', handler, true)
+      window.removeEventListener('resize', handler)
+    }
+  }, [dropdownOpen])
+
   // Sync state when task changes
   useEffect(() => {
     if (task) {
@@ -105,9 +125,30 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate, 
     <div className="tasks-detail-panel">
       <div className="tasks-detail-panel-header">
         <h3>Task Details</h3>
-        <button type="button" className="tasks-detail-close" onClick={onClose} aria-label="Close detail panel">
-          <X size={14} />
-        </button>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button 
+            type="button" 
+            className="tasks-detail-more" 
+            onClick={(e) => {
+              e.stopPropagation()
+              if (dropdownOpen) {
+                setDropdownOpen(false)
+                setDropdownCoords(null)
+              } else {
+                const rect = e.currentTarget.getBoundingClientRect()
+                setDropdownOpen(true)
+                setDropdownCoords({ top: rect.bottom, right: window.innerWidth - rect.right })
+              }
+            }}
+            aria-label="More options"
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(16,19,18,0.4)', borderRadius: 6 }}
+          >
+            <MoreHorizontal size={14} />
+          </button>
+          <button type="button" className="tasks-detail-close" onClick={onClose} aria-label="Close detail panel">
+            <X size={14} />
+          </button>
+        </div>
       </div>
 
       <div className="tasks-detail-body">
@@ -296,18 +337,23 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate, 
               </div>
             </div>
 
-            <div className="tasks-detail-actions-modern">
-              <button type="button" className="td-btn-edit" onClick={onEditRequest}>
-                Edit
-              </button>
-              <button type="button" className="td-btn-complete" onClick={() => onToggle(task)}>
-                {task.completed ? 'Reopen' : 'Complete'}
-              </button>
-              <button type="button" className="td-btn-delete" onClick={() => onDelete(task)}>
-                <Trash2 size={14} />
-              </button>
-            </div>
       </div>
+      {dropdownOpen && dropdownCoords && createPortal(
+        <div className="routine-card-dropdown" style={{ position: 'fixed', top: dropdownCoords.top + 4, right: dropdownCoords.right, zIndex: 100000 }} onClick={(e) => e.stopPropagation()}>
+          {onEditRequest && (
+            <button onClick={() => { setDropdownOpen(false); onEditRequest() }}>
+              <Pencil size={14} /> Edit
+            </button>
+          )}
+          <button onClick={() => { setDropdownOpen(false); onToggle(task) }}>
+            <Check size={14} /> {task.completed ? 'Reopen' : 'Complete'}
+          </button>
+          <button className="danger" onClick={() => { setDropdownOpen(false); onDelete(task) }}>
+            <Trash2 size={14} /> Delete
+          </button>
+        </div>,
+        document.body
+      )}
     </div>
   )
 }

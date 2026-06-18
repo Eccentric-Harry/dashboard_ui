@@ -1,4 +1,6 @@
-import { Plus, MoreHorizontal, Clock } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
+import { Plus, MoreHorizontal, Clock, Pencil, Check, Trash2 } from 'lucide-react'
 import type { DailyTask } from '../../../lib/api'
 import avatar1 from '../../../assets/avatars/avatar1.png'
 import avatar2 from '../../../assets/avatars/avatar2.png'
@@ -49,10 +51,32 @@ interface TasksKanbanViewProps {
   onSelect: (task: DailyTask) => void
   onStatusChange: (taskId: string, status: string) => void
   onAddTask?: () => void
+  onToggle?: (task: DailyTask) => void
+  onDelete?: (task: DailyTask) => void
+  onEditRequest?: (task: DailyTask) => void
 }
 
-export function TasksKanbanView({ tasks, onSelect, onStatusChange, onAddTask }: TasksKanbanViewProps) {
+export function TasksKanbanView({ tasks, onSelect, onStatusChange, onAddTask, onToggle, onDelete, onEditRequest }: TasksKanbanViewProps) {
   const grouped: Record<ColumnKey, DailyTask[]> = { TODO: [], IN_PROGRESS: [], DONE: [] }
+
+  const [dropdownOpenFor, setDropdownOpenFor] = useState<string | null>(null)
+  const [dropdownCoords, setDropdownCoords] = useState<{ top: number; right: number } | null>(null)
+
+  useEffect(() => {
+    if (!dropdownOpenFor) return
+    const handler = () => {
+      setDropdownOpenFor(null)
+      setDropdownCoords(null)
+    }
+    window.addEventListener('click', handler)
+    window.addEventListener('scroll', handler, true)
+    window.addEventListener('resize', handler)
+    return () => {
+      window.removeEventListener('click', handler)
+      window.removeEventListener('scroll', handler, true)
+      window.removeEventListener('resize', handler)
+    }
+  }, [dropdownOpenFor])
 
   tasks.forEach((task) => {
     let s = task.status || (task.completed ? 'DONE' : 'TODO')
@@ -145,8 +169,8 @@ export function TasksKanbanView({ tasks, onSelect, onStatusChange, onAddTask }: 
                 const firstAvatar = avatars[seed % 4]
                 
                 return (
+                  <React.Fragment key={task.id}>
                   <div
-                    key={task.id}
                     draggable={!!task.id}
                     onDragStart={(e) => task.id && handleDragStart(e, task.id)}
                     onDragEnd={handleDragEnd}
@@ -195,12 +219,49 @@ export function TasksKanbanView({ tasks, onSelect, onStatusChange, onAddTask }: 
                     )}
 
                     <div className="kanban-card-footer">
-                      <MoreHorizontal size={14} color="rgba(16,19,18,0.4)" className="more-btn" />
+                      <div 
+                        className="more-btn"
+                        style={{ cursor: 'pointer', padding: 4, margin: -4 }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (dropdownOpenFor === task.id) {
+                            setDropdownOpenFor(null)
+                            setDropdownCoords(null)
+                          } else {
+                            const rect = e.currentTarget.getBoundingClientRect()
+                            setDropdownOpenFor(task.id!)
+                            setDropdownCoords({ top: rect.bottom, right: window.innerWidth - rect.right })
+                          }
+                        }}
+                      >
+                        <MoreHorizontal size={14} color="rgba(16,19,18,0.4)" />
+                      </div>
                       <div className="kanban-assignees">
                         <div className="assignee-avatar" style={{ zIndex: 3, backgroundImage: `url(${firstAvatar})` }} />
                       </div>
                     </div>
                   </div>
+                  {dropdownOpenFor === task.id && dropdownCoords && createPortal(
+                    <div className="routine-card-dropdown" style={{ position: 'fixed', top: dropdownCoords.top + 4, right: dropdownCoords.right, zIndex: 100000 }} onClick={(e) => e.stopPropagation()}>
+                      {onEditRequest && (
+                        <button onClick={() => { setDropdownOpenFor(null); onEditRequest(task) }}>
+                          <Pencil size={14} /> Edit
+                        </button>
+                      )}
+                      {onToggle && (
+                        <button onClick={() => { setDropdownOpenFor(null); onToggle(task) }}>
+                          <Check size={14} /> {task.completed ? 'Reopen' : 'Complete'}
+                        </button>
+                      )}
+                      {onDelete && (
+                        <button className="danger" onClick={() => { setDropdownOpenFor(null); onDelete(task) }}>
+                          <Trash2 size={14} /> Delete
+                        </button>
+                      )}
+                    </div>,
+                    document.body
+                  )}
+                  </React.Fragment>
                 )
               })
             )}
