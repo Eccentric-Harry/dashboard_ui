@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { Plus, Search, List, Columns3, CalendarDays, X, Clock, Briefcase, BookOpen, Dumbbell, ShoppingCart, Home, DollarSign, User, Hash, LayoutDashboard, Tag, Film } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { fetchTasks, toggleTask, deleteTask, updateTask, addTask } from '../../../lib/api'
@@ -536,7 +537,7 @@ export function TasksDashboard(_props: TasksDashboardProps) {
         </div>
       </div>
 
-      {modalMode && (
+      {modalMode && createPortal(
         <div className="tasks-add-modal-overlay" onClick={() => setModalMode(null)}>
           <div className="tasks-add-entry-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
@@ -695,16 +696,20 @@ export function TasksDashboard(_props: TasksDashboardProps) {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      <ConfirmDialog
-        open={!!deleteTarget}
-        title="Delete task?"
-        message={`Remove "${deleteTarget?.title}" from your schedule?`}
-        onConfirm={handleDelete}
-        onCancel={() => setDeleteTarget(null)}
-      />
+      {!!deleteTarget && createPortal(
+        <ConfirmDialog
+          open={!!deleteTarget}
+          title="Delete task?"
+          message={`Remove "${deleteTarget?.title}" from your schedule?`}
+          onConfirm={handleDelete}
+          onCancel={() => setDeleteTarget(null)}
+        />,
+        document.body
+      )}
     </div>
   )
 }
