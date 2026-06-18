@@ -586,8 +586,9 @@ function FocusDetail({
 
   return (
     <div className="focus-detail">
-      <div className="focus-detail-panel-header">
+      <div className="focus-detail-panel-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <h3>Routine Details</h3>
+        <div className="focus-assignee-avatar" style={{ width: 28, height: 28, border: '2px solid #fff', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', backgroundImage: `url(${avatarImage})` }} title="Eccentric Harry" />
       </div>
 
       <div className="focus-detail-body">
@@ -642,13 +643,6 @@ function FocusDetail({
                 {item.recurrenceFrequency.toLowerCase()}
               </span>
             )}
-          </div>
-        </div>
-
-        <div className="focus-detail-section">
-          <span className="focus-section-label">Assignee</span>
-          <div className="focus-assignees-list">
-            <div className="focus-assignee-avatar" style={{ backgroundImage: `url(${avatarImage})` }} title="Eccentric Harry" />
           </div>
         </div>
 
