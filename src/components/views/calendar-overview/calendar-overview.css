@@ -247,15 +247,31 @@
   border-radius: 28px;
 }
 
+.week-ribbon-wrapper {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(21, 26, 24, 0.06);
+  /* Faded edges to prevent harsh cutting of scrolling dates */
+  mask-image: linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+}
+
 .week-ribbon {
   display: flex;
   flex: 0 0 auto;
   gap: 4px;
-  padding: 18px 18px 15px;
-  border-bottom: 1px solid rgba(21, 26, 24, 0.06);
+  padding: 18px 0 15px;
   overflow-x: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  scroll-padding-inline: 24px;
+  scroll-snap-type: x mandatory;
+}
+
+.week-ribbon::before,
+.week-ribbon::after {
+  content: '';
+  flex: 0 0 20px; /* 24px layout margin minus 4px gap */
 }
 
 .week-ribbon::-webkit-scrollbar {
@@ -265,18 +281,19 @@
 .week-ribbon button {
   position: relative;
   display: flex;
-  flex: 0 0 52px;
-  min-width: 52px;
-  height: 62px;
+  flex: 0 0 calc((100% - 64px) / 5); /* exactly 5 days visible at once */
+  min-width: calc((100% - 64px) / 5);
+  height: 58px;
   align-items: center;
   justify-content: center;
   flex-direction: column;
   gap: 5px;
   border: 0;
-  border-radius: 18px;
+  border-radius: 16px;
   background: transparent;
   color: rgba(21, 26, 24, 0.45);
   cursor: pointer;
+  scroll-snap-align: start;
 }
 
 .week-ribbon button span {
@@ -628,9 +645,7 @@
   display: flex;
   overflow: auto;
   border-radius: 32px;
-  background:
-    radial-gradient(circle at 85% 8%, rgba(121, 177, 246, 0.16), transparent 31%),
-    rgba(250, 252, 247, 0.68);
+  background: rgba(250, 252, 247, 0.68);
 }
 
 .focus-detail {
@@ -638,255 +653,323 @@
   width: 100%;
   min-height: 100%;
   flex-direction: column;
-  padding: clamp(28px, 3.6vw, 52px);
+  background: transparent;
 }
 
-.focus-detail-top {
+.focus-detail-panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 16px 20px 10px;
+  border-bottom: 1px solid rgba(16, 19, 18, 0.06);
+  flex-shrink: 0;
 }
 
-.focus-status {
+.focus-detail-panel-header h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #101312;
+}
+
+.focus-detail-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: clamp(16px, 3.6vw, 36px) 20px 20px;
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.focus-status > span:not(.focus-date-tag):not(.is-live),
-.focus-section-label {
-  color: rgba(21, 26, 24, 0.43);
-  font-size: 10px;
-  font-weight: 850;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+.focus-detail-body::-webkit-scrollbar {
+  width: 5px;
 }
 
-.focus-status > span.is-live {
-  color: #317bd8;
+.focus-detail-body::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.focus-status i {
-  padding: 5px 8px;
+.focus-detail-body::-webkit-scrollbar-thumb {
   border-radius: 999px;
-  background: rgba(79, 147, 237, 0.11);
-  color: #317bd8;
-  font-size: 9px;
-  font-style: normal;
-  font-weight: 850;
+  background: rgba(21, 27, 24, 0.18);
 }
 
-.focus-date-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: 4px;
-  padding: 3px 8px;
-  border-radius: 8px;
-  background: rgba(21, 26, 24, 0.05);
-  color: rgba(21, 26, 24, 0.55);
-  font-size: 10px;
-  font-weight: 750;
-  letter-spacing: normal;
-  text-transform: none;
-  white-space: nowrap;
+.focus-header-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .focus-hero {
   display: flex;
   align-items: center;
-  gap: 19px;
-  margin-top: clamp(28px, 4.5vh, 54px);
+  gap: 16px;
+  margin-top: 4px;
 }
 
 .focus-icon {
-  display: grid;
-  width: 64px;
-  height: 64px;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 22px;
-  background: color-mix(in srgb, var(--focus-color) 13%, white);
-  color: var(--focus-color);
-}
-
-.focus-hero p,
-.focus-hero h2 {
-  margin: 0;
-}
-
-.focus-hero p {
-  margin-bottom: 5px;
-  color: rgba(21, 26, 24, 0.43);
-  font-size: 11px;
-  font-weight: 750;
-}
-
-.focus-hero h2 {
-  max-width: 620px;
-  font-size: clamp(28px, 3.25vw, 46px);
-  font-weight: 650;
-  letter-spacing: -0.045em;
-  line-height: 1.02;
-}
-
-.focus-time-block {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-top: 32px;
-  padding: 18px 20px;
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.44);
-}
-
-.time-block-icon {
-  display: grid;
-  width: 38px;
-  height: 38px;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 13px;
-}
-
-.routine-card-icon {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 11px;
-  background: var(--card-bg, rgba(79, 147, 237, 0.1));
-  color: var(--card-color, #4387e2);
-}
-
-.focus-time-block div {
-  display: grid;
-  gap: 3px;
-}
-
-.focus-time-block span {
-  color: rgba(21, 26, 24, 0.42);
-  font-size: 9px;
-  font-weight: 850;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.focus-time-block strong {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  font-weight: 750;
-}
-
-.focus-time-block small {
-  margin-left: auto;
-  color: rgba(21, 26, 24, 0.42);
-  font-size: 11px;
-  font-weight: 750;
-}
-
-.focus-content {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 26px;
-  margin-top: 30px;
-}
-
-.focus-content section > p {
-  max-width: 700px;
-  margin: 11px 0 0;
-  color: rgba(21, 26, 24, 0.65);
-  font-size: 13px;
-  font-weight: 550;
-  line-height: 1.7;
-}
-
-.focus-checklist {
-  display: grid;
-  gap: 9px;
-  margin-top: 13px;
-}
-
-.focus-checklist > div {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-}
-
-.focus-checklist > div > span {
-  display: grid;
-  width: 19px;
-  height: 19px;
-  flex: 0 0 auto;
-  place-items: center;
-  border: 1px solid rgba(21, 26, 24, 0.16);
-  border-radius: 7px;
-  background: rgba(255, 255, 255, 0.44);
-}
-
-.focus-checklist > div > span.is-checked {
-  border-color: #4387e2;
-  background: #4387e2;
-  color: #fff;
-}
-
-.focus-checklist p {
-  margin: 0;
-  color: rgba(21, 26, 24, 0.7);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.focus-footer {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 20px;
-  margin-top: auto;
-  padding-top: 36px;
-  padding-bottom: 8px;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--focus-color) 12%, #fff), color-mix(in srgb, var(--focus-color) 6%, #fff));
+  border: 1px solid color-mix(in srgb, var(--focus-color) 20%, transparent);
+  color: var(--focus-color);
+  flex-shrink: 0;
+  box-shadow: 0 8px 20px -4px color-mix(in srgb, var(--focus-color) 25%, transparent), 
+              inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.focus-footer > div {
+.focus-icon:hover {
+  transform: scale(1.06) rotate(2deg);
+  box-shadow: 0 10px 24px -4px color-mix(in srgb, var(--focus-color) 35%, transparent);
+}
+
+.focus-detail-title {
+  font-size: clamp(20px, 2.2vw, 24px);
+  font-weight: 700;
+  color: #101312;
+  margin: 0;
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.focus-detail-meta-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.focus-footer > div span {
+.focus-detail-meta-tags .k-tag {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 10px;
-  border-radius: 10px;
-  background: rgba(21, 26, 24, 0.05);
-  color: rgba(21, 26, 24, 0.55);
-  font-size: 10px;
-  font-weight: 750;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
 }
 
-.focus-footer > button {
-  display: inline-flex;
-  min-height: 43px;
+.focus-detail-meta-tags .k-tag .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.focus-detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.focus-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: rgba(16, 19, 18, 0.35);
+  margin-bottom: 2px;
+}
+
+/* Assignee */
+.focus-assignees-list {
+  display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 17px;
-  border: 0;
-  border-radius: 15px;
-  background: #151a18;
-  color: #fff;
-  cursor: pointer;
-  font-size: 11px;
-  font-weight: 800;
+  margin-top: 2px;
 }
 
-.focus-footer > button.is-complete {
-  background: rgba(21, 26, 24, 0.08);
-  color: rgba(21, 26, 24, 0.58);
+.focus-assignee-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(16, 19, 18, 0.08);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.focus-assignee-avatar:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12), 0 0 0 1.5px var(--focus-color, #101312);
+}
+
+/* Notes */
+.focus-detail-notes {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #4b5563;
+  background: rgba(255, 255, 255, 0.45);
+  border-radius: 12px;
+  padding: 14px 16px;
+  border: 1px solid rgba(16, 19, 18, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+/* Checklist */
+.focus-detail-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.focus-detail-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(16, 19, 18, 0.06);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.focus-detail-checkbox-item:hover {
+  background: rgba(255, 255, 255, 0.75);
+  border-color: rgba(16, 19, 18, 0.12);
+}
+
+.focus-detail-checkbox-item.is-completed .subtask-text {
+  text-decoration: line-through;
+  color: rgba(16, 19, 18, 0.35);
+}
+
+.focus-circle-check {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(16, 19, 18, 0.2);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.focus-circle-check.checked {
+  border-color: #1a7a4a;
+  background: #1a7a4a;
+  color: #fff;
+}
+
+.subtask-text {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #101312;
+}
+
+/* Footer Button */
+.focus-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 18px 18px;
+  border-top: 1px solid rgba(16, 19, 18, 0.06);
+  background: transparent;
+}
+
+.focus-footer-btn {
+  width: 280px;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  border-radius: 14px;
+  background: #101312;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.focus-footer-btn:hover:not(:disabled) {
+  background: #2a302c;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.focus-footer-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.focus-footer-btn.is-complete {
+  background: transparent;
+  color: rgba(16, 19, 18, 0.6);
+  border: 1px solid rgba(16, 19, 18, 0.1);
+  box-shadow: none;
+}
+
+.focus-footer-btn.is-complete:hover {
+  background: rgba(16, 19, 18, 0.02);
+  color: #101312;
+  border-color: rgba(16, 19, 18, 0.2);
+  transform: none;
+  box-shadow: none;
+}
+
+.focus-footer-btn.is-cancelled {
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  box-shadow: none;
+}
+
+/* Timeline */
+.focus-detail-timeline {
+  position: relative;
+  padding-left: 20px;
+  margin-top: 4px;
+}
+
+.focus-detail-timeline::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 6px;
+  bottom: 6px;
+  width: 1px;
+  background: rgba(16, 19, 18, 0.15);
+}
+
+.focus-timeline-item {
+  position: relative;
+  padding: 0 0 12px 16px;
+  font-size: 12px;
+  color: #9ca3af;
+  line-height: 1.4;
+}
+
+.focus-timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -2px;
+  top: 5px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #d1d5db;
+}
+
+.focus-timeline-item .timestamp {
+  font-weight: 500;
+  color: #6b7280;
+  margin-right: 6px;
 }
 
 .focus-empty {
@@ -1224,13 +1307,27 @@
     font-size: 27px;
   }
 
+  .week-ribbon-wrapper {
+    mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 12px), transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 12px), transparent);
+  }
+
   .week-ribbon {
-    padding-inline: 10px;
+    padding: 14px 0 12px;
+    gap: 6px;
+    scroll-padding-inline: 12px;
+  }
+
+  .week-ribbon::before,
+  .week-ribbon::after {
+    flex: 0 0 6px; /* 12px total layout margin minus 6px gap */
   }
 
   .week-ribbon button {
-    height: 56px;
-    border-radius: 15px;
+    flex: 0 0 calc((100% - 48px) / 5);
+    min-width: calc((100% - 48px) / 5);
+    height: 52px;
+    border-radius: 12px;
   }
 
   .routine-list-scroll {
@@ -1241,21 +1338,16 @@
     padding: 24px 20px;
   }
 
-  .focus-hero {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .focus-hero h2 {
-    font-size: 36px;
-  }
+  /* focus-hero styles inherited from desktop */
 
   .focus-footer {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .focus-footer > button {
+  .focus-footer-btn {
+    width: 100%;
+    max-width: none;
     justify-content: center;
   }
 

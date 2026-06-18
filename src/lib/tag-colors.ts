@@ -3,6 +3,7 @@ export function getTagColor(tag: string) {
     'work': { bg: 'rgba(14, 165, 233, 0.12)', text: '#0369a1', dot: '#0ea5e9' },
     'learning': { bg: 'rgba(99, 102, 241, 0.12)', text: '#4338ca', dot: '#6366f1' },
     'fitness': { bg: 'rgba(249, 115, 22, 0.12)', text: '#c2410c', dot: '#f97316' },
+    'health': { bg: 'rgba(244, 63, 94, 0.12)', text: '#e11d48', dot: '#f43f5e' },
     'shopping': { bg: 'rgba(217, 119, 6, 0.12)', text: '#b45309', dot: '#d97706' },
     'chores': { bg: 'rgba(168, 85, 247, 0.12)', text: '#7e22ce', dot: '#a855f7' },
     'finance': { bg: 'rgba(16, 185, 129, 0.12)', text: '#047857', dot: '#10b981' },

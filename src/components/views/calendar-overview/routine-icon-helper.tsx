@@ -24,7 +24,7 @@ interface RoutineIconDetails {
 }
 
 const rules: { pattern: RegExp; icon: typeof ListChecks; color: string; bg: string }[] = [
-  { pattern: /\b(doctor|dentist|checkup|medical|clinic|hospital|therapy|massage|wellness|physio|surgery|vaccine|injection|lab test|blood test|eye test|optical|dental)\b/, icon: Heart, color: '#dc2626', bg: '#fee2e2' },
+  { pattern: /\b(doctor|dentist|checkup|medical|clinic|hospital|therapy|massage|wellness|physio|surgery|vaccine|injection|lab test|blood test|eye test|optical|dental|medicine|medication|meds|pill|pills|supplement|supplements)\b/, icon: Heart, color: '#e11d48', bg: '#fff1f2' },
   { pattern: /\b(workout|gym|exercise|run|jog|yoga|meditation|walk|fitness|training|pilates|stretch|cardio|swim|cycle|bike|hike|trek|sport|sports|work out)\b/, icon: Dumbbell, color: '#059669', bg: '#d1fae5' },
   { pattern: /\b(meeting|interview|standup|sync|1:1|one-on-one|catch.up|conference|retro|grooming|planning|appointment|reservation|booking)\b/, icon: Users, color: '#7c3aed', bg: '#f3e8ff' },
   { pattern: /\b(study|learn|read|book|course|class|lecture|tutorial|lesson|homework|assignment|exam|skill|certification|training session|workshop|seminar|webinar)\b/, icon: BookOpen, color: '#0891b2', bg: '#ecfeff' },
@@ -57,7 +57,7 @@ export const getRoutineIconDetails = (item: {
   }
 
   if (category === 'work') return { icon: Briefcase, color: '#2563eb', bg: '#eff6ff' }
-  if (category === 'health') return { icon: Heart, color: '#059669', bg: '#d1fae5' }
+  if (category === 'health') return { icon: Heart, color: '#e11d48', bg: '#fff1f2' }
   if (category === 'learning') return { icon: BookOpen, color: '#0891b2', bg: '#ecfeff' }
   if (category === 'finance') return { icon: Wallet, color: '#d97706', bg: '#fffbeb' }
   if (category === 'social') return { icon: Users, color: '#db2777', bg: '#fdf2f8' }

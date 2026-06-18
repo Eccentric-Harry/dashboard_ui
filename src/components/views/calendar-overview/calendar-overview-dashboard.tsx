@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleCheck,
+  Clock,
   Loader2,
   MoreHorizontal,
   Pencil,
@@ -34,6 +35,8 @@ import type { CalendarItem, CalendarItemPayload, CalendarItemType, CalendarRecur
 import { ConfirmDialog } from '../../ui/confirm-dialog'
 import { MiniMonth } from '../../ui/mini-month'
 import { getRoutineIconDetails } from './routine-icon-helper'
+import avatarImage from '../../../assets/reference-crops/avatar_luffy.png'
+import { getTagColor } from '../../../lib/tag-colors'
 
 import './calendar-overview.css'
 
@@ -75,7 +78,6 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   const calendarRef = useRef<HTMLDivElement>(null)
   const routineListRef = useRef<HTMLDivElement>(null)
   const ribbonRef = useRef<HTMLDivElement>(null)
-
   const scrollableDays = useMemo(() => getScrollableDays(selectedDate), [selectedDate])
   const visibleRange = useMemo(
     () => ({ start: toISODate(scrollableDays[0]), end: toISODate(scrollableDays[scrollableDays.length - 1]) }),
@@ -314,25 +316,27 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
 
       <div className="calendar-focus-split">
         <aside className="routine-navigator">
-          <div className="week-ribbon" aria-label="Scrollable dates" ref={ribbonRef}>
-            {scrollableDays.map((date) => {
-              const isoDate = toISODate(date)
-              const isSelected = isoDate === selectedDate
-              const isToday = isoDate === toISODate(new Date())
-              return (
-                <button
-                  type="button"
-                  key={isoDate}
-                  className={isSelected ? 'is-selected' : ''}
-                  onClick={() => updateSelectedDate(isoDate)}
-                  aria-current={isSelected ? 'date' : undefined}
-                >
-                  <span>{date.toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 2)}</span>
-                  <strong>{date.getDate()}</strong>
-                  {isToday && <i />}
-                </button>
-              )
-            })}
+          <div className="week-ribbon-wrapper">
+            <div className="week-ribbon" aria-label="Scrollable dates" ref={ribbonRef}>
+              {scrollableDays.map((date) => {
+                const isoDate = toISODate(date)
+                const isSelected = isoDate === selectedDate
+                const isToday = isoDate === toISODate(new Date())
+                return (
+                  <button
+                    type="button"
+                    key={isoDate}
+                    className={isSelected ? 'is-selected' : ''}
+                    onClick={() => updateSelectedDate(isoDate)}
+                    aria-current={isSelected ? 'date' : undefined}
+                  >
+                    <span>{date.toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 2)}</span>
+                    <strong>{date.getDate()}</strong>
+                    {isToday && <i />}
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
           <div className="routine-list-header">
@@ -575,68 +579,123 @@ function FocusDetail({
   const checklist = parseChecklist(item.notes)
   const routineIcon = getRoutineIconDetails(item)
   const RoutineIcon = routineIcon.icon
+  const category = item.category || 'Personal'
+  const categoryColors = getTagColor(category)
 
   return (
     <div className="focus-detail">
-      <div className="focus-detail-top">
-        <div className="focus-status">
-          <span className={isCurrent ? 'is-live' : ''}>{isCurrent ? 'Current focus' : 'Routine detail'}</span>
-          {isCurrent && <i>Live now</i>}
-        </div>
-        <span className="focus-date-tag"><CalendarDays size={11} /> {formatShortDate(item.date)}</span>
+      <div className="focus-detail-panel-header">
+        <h3>Routine Details</h3>
       </div>
 
-      <div className="focus-hero">
-        <span className="focus-icon" style={{ '--focus-color': routineIcon.color } as React.CSSProperties}>
-          <RoutineIcon size={25} />
-        </span>
-        <div>
-          <p>{item.category || 'Personal routine'}</p>
-          <h2>{item.title}</h2>
-        </div>
-      </div>
+      <div className="focus-detail-body">
+        <div className="focus-header-group">
+          <div className="focus-hero">
+            <span className="focus-icon" style={{ '--focus-color': routineIcon.color } as React.CSSProperties}>
+              <RoutineIcon size={22} />
+            </span>
+            <h2 className="focus-detail-title">{item.title}</h2>
+          </div>
 
-      <div className="focus-time-block">
-        <span className="time-block-icon" style={{ color: '#4387e2', background: 'rgba(67, 135, 226, 0.12)' }}>
-          <Timer size={18} />
-        </span>
-        <div>
-          <span>Time block</span>
-          <strong>{item.recurrenceFrequency && item.recurrenceFrequency !== 'NONE' && <Repeat2 size={14} />} {formatItemTime(item)}</strong>
+          <div className="focus-detail-meta-tags">
+            <span className="k-tag" style={{ background: categoryColors.bg, color: categoryColors.text }}>
+              <span className="dot" style={{ background: categoryColors.dot }} />
+              {category}
+            </span>
+            {isCurrent && (
+              <span className="k-tag is-live-pill" style={{ background: 'rgba(79, 147, 237, 0.11)', color: '#317bd8' }}>
+                <span className="dot animate-pulse" style={{ background: '#317bd8', width: 6, height: 6, borderRadius: '50%', display: 'inline-block' }} />
+                Live now
+              </span>
+            )}
+            {item.completed && (
+              <span className="k-tag completed-pill" style={{ background: '#d1fae5', color: '#047857' }}>
+                <Check size={10} />
+                Completed
+              </span>
+            )}
+            {item.cancelled && (
+              <span className="k-tag cancelled-pill" style={{ background: 'rgba(239, 68, 68, 0.08)', color: '#ef4444' }}>
+                <XCircle size={10} />
+                Cancelled
+              </span>
+            )}
+            <span className="k-tag calendar-pill" style={{ background: 'rgba(16, 19, 18, 0.03)', color: '#4b5563' }}>
+              <CalendarDays size={10} />
+              {formatShortDate(item.date)}
+            </span>
+            {item.startTime && (
+              <span className="k-tag time-pill" style={{ background: '#f3e8ff', color: '#7e22ce' }}>
+                <Timer size={10} />
+                {formatItemTime(item)}
+              </span>
+            )}
+            <span className="k-tag duration-pill" style={{ background: 'rgba(67, 135, 226, 0.1)', color: '#4387e2' }}>
+              <Clock size={10} />
+              {formatDuration(item)}
+            </span>
+            {item.recurrenceFrequency && item.recurrenceFrequency !== 'NONE' && (
+              <span className="k-tag repeat-pill" style={{ background: 'rgba(217, 119, 6, 0.1)', color: '#d97706' }}>
+                <Repeat2 size={10} />
+                {item.recurrenceFrequency.toLowerCase()}
+              </span>
+            )}
+          </div>
         </div>
-        <small>{formatDuration(item)}</small>
-      </div>
 
-      <div className="focus-content">
-        <section>
+        <div className="focus-detail-section">
+          <span className="focus-section-label">Assignee</span>
+          <div className="focus-assignees-list">
+            <div className="focus-assignee-avatar" style={{ backgroundImage: `url(${avatarImage})` }} title="Eccentric Harry" />
+          </div>
+        </div>
+
+        <div className="focus-detail-section">
           <span className="focus-section-label">Notes</span>
-          <p>{stripChecklist(item.notes) || getFallbackDescription(item)}</p>
-        </section>
+          <div className="focus-detail-notes">
+            {stripChecklist(item.notes) || getFallbackDescription(item)}
+          </div>
+        </div>
 
         {checklist.length > 0 && (
-          <section>
+          <div className="focus-detail-section">
             <span className="focus-section-label">Micro checklist</span>
-            <div className="focus-checklist">
-              {checklist.map((entry) => (
-                <div key={entry.text}>
-                  <span className={entry.checked ? 'is-checked' : ''}>
-                    {entry.checked ? <Check size={12} /> : null}
-                  </span>
-                  <p>{entry.text}</p>
+            <div className="focus-detail-checklist">
+              {checklist.map((entry, index) => (
+                <div 
+                  key={`${entry.text}-${index}`} 
+                  className={`focus-detail-checkbox-item ${entry.checked ? 'is-completed' : ''}`}
+                >
+                  <div className={`focus-circle-check ${entry.checked ? 'checked' : ''}`}>
+                    {entry.checked && <Check size={10} strokeWidth={3} />}
+                  </div>
+                  <span className="subtask-text">{entry.text}</span>
                 </div>
               ))}
             </div>
-          </section>
+          </div>
         )}
+
+        <div className="focus-detail-section">
+          <span className="focus-section-label">Timeline</span>
+          <div className="focus-detail-timeline">
+            {item.createdAt && (
+              <div className="focus-timeline-item">
+                <span className="timestamp">{formatTimelineDate(item.createdAt)}</span>
+                Routine block created
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="focus-footer">
         {item.cancelled ? (
-          <button type="button" className="is-cancelled" disabled style={{ opacity: 0.7, cursor: 'not-allowed' }}>
+          <button type="button" className="focus-footer-btn is-cancelled" disabled style={{ opacity: 0.7, cursor: 'not-allowed' }}>
             <XCircle size={18} /> Cancelled
           </button>
         ) : (
-          <button type="button" className={item.completed ? 'is-complete' : ''} onClick={onToggle}>
+          <button type="button" className={`focus-footer-btn ${item.completed ? 'is-complete' : ''}`} onClick={onToggle}>
             {item.completed ? <CircleCheck size={18} /> : <Check size={18} />}
             {item.completed ? 'Completed' : 'Mark complete'}
           </button>
@@ -933,4 +992,22 @@ function toISODate(date: Date) {
 function colorForCategory(category: string) {
   return CATEGORY_OPTIONS.find((option) => option.label === category)?.color ?? '#2563eb'
 }
+
+function formatTimelineDate(dateStr: string) {
+  if (!dateStr) return ''
+  try {
+    const d = new Date(dateStr)
+    if (isNaN(d.getTime())) return dateStr
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+    const month = months[d.getMonth()]
+    const day = d.getDate()
+    const year = d.getFullYear()
+    const hh = String(d.getHours()).padStart(2, '0')
+    const mm = String(d.getMinutes()).padStart(2, '0')
+    return `${month} ${day}, ${year} ${hh}:${mm}`
+  } catch {
+    return dateStr
+  }
+}
+
 export { CalendarOverviewDashboard }
