@@ -71,7 +71,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   const [deleteTarget, setDeleteTarget] = useState<CalendarItem | null>(null)
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
   const [dropdownOpenFor, setDropdownOpenFor] = useState<string | null>(null)
-  const [dropdownCoords, setDropdownCoords] = useState<{ top: number; right: number } | null>(null)
+  const [dropdownCoords, setDropdownCoords] = useState<{ top: number; right?: number; left?: number } | null>(null)
   const calendarRef = useRef<HTMLDivElement>(null)
   const routineListRef = useRef<HTMLDivElement>(null)
   const ribbonRef = useRef<HTMLDivElement>(null)
@@ -387,8 +387,12 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                                 setDropdownCoords(null)
                               } else {
                                 const rect = e.currentTarget.getBoundingClientRect()
+                                const isLeftHalf = rect.left < window.innerWidth / 2
                                 setDropdownOpenFor(itemKey(item))
-                                setDropdownCoords({ top: rect.bottom, right: window.innerWidth - rect.right })
+                                setDropdownCoords({ 
+                                  top: rect.bottom, 
+                                  ...(isLeftHalf ? { left: rect.left } : { right: window.innerWidth - rect.right })
+                                })
                               }
                             }}
                           >
@@ -396,7 +400,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                           </span>
                         </button>
                         {dropdownOpenFor === itemKey(item) && dropdownCoords && createPortal(
-                          <div className="routine-card-dropdown" style={{ position: 'fixed', top: dropdownCoords.top + 4, right: dropdownCoords.right }} onClick={(e) => e.stopPropagation()}>
+                          <div className="routine-card-dropdown" style={{ position: 'fixed', top: dropdownCoords.top + 8, left: dropdownCoords.left ?? 'auto', right: dropdownCoords.right ?? 'auto' }} onClick={(e) => e.stopPropagation()}>
                             <button onClick={() => { setModal({ open: true, item, date: item.date }); setDropdownOpenFor(null) }}>
                               <Pencil size={14} /> Edit
                             </button>

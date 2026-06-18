@@ -75,7 +75,7 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate, 
   const [newTag, setNewTag] = useState('')
 
   const [dropdownOpen, setDropdownOpen] = useState(false)
-  const [dropdownCoords, setDropdownCoords] = useState<{ top: number; right: number } | null>(null)
+  const [dropdownCoords, setDropdownCoords] = useState<{ top: number; right?: number; left?: number } | null>(null)
 
   useEffect(() => {
     if (!dropdownOpen) return
@@ -136,8 +136,12 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate, 
                 setDropdownCoords(null)
               } else {
                 const rect = e.currentTarget.getBoundingClientRect()
+                const isLeftHalf = rect.left < window.innerWidth / 2
                 setDropdownOpen(true)
-                setDropdownCoords({ top: rect.bottom, right: window.innerWidth - rect.right })
+                setDropdownCoords({ 
+                  top: rect.bottom, 
+                  ...(isLeftHalf ? { left: rect.left } : { right: window.innerWidth - rect.right })
+                })
               }
             }}
             aria-label="More options"
@@ -339,7 +343,7 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate, 
 
       </div>
       {dropdownOpen && dropdownCoords && createPortal(
-        <div className="routine-card-dropdown" style={{ position: 'fixed', top: dropdownCoords.top + 4, right: dropdownCoords.right, zIndex: 100000 }} onClick={(e) => e.stopPropagation()}>
+        <div className="routine-card-dropdown" style={{ position: 'fixed', top: dropdownCoords.top + 8, left: dropdownCoords.left ?? 'auto', right: dropdownCoords.right ?? 'auto', zIndex: 100000 }} onClick={(e) => e.stopPropagation()}>
           {onEditRequest && (
             <button onClick={() => { setDropdownOpen(false); onEditRequest() }}>
               <Pencil size={14} /> Edit

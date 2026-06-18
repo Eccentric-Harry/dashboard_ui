@@ -60,7 +60,7 @@ export function TasksKanbanView({ tasks, onSelect, onStatusChange, onAddTask, on
   const grouped: Record<ColumnKey, DailyTask[]> = { TODO: [], IN_PROGRESS: [], DONE: [] }
 
   const [dropdownOpenFor, setDropdownOpenFor] = useState<string | null>(null)
-  const [dropdownCoords, setDropdownCoords] = useState<{ top: number; right: number } | null>(null)
+  const [dropdownCoords, setDropdownCoords] = useState<{ top: number; right?: number; left?: number } | null>(null)
 
   useEffect(() => {
     if (!dropdownOpenFor) return
@@ -69,10 +69,12 @@ export function TasksKanbanView({ tasks, onSelect, onStatusChange, onAddTask, on
       setDropdownCoords(null)
     }
     window.addEventListener('click', handler)
+    window.addEventListener('close-dropdowns', handler)
     window.addEventListener('scroll', handler, true)
     window.addEventListener('resize', handler)
     return () => {
       window.removeEventListener('click', handler)
+      window.removeEventListener('close-dropdowns', handler)
       window.removeEventListener('scroll', handler, true)
       window.removeEventListener('resize', handler)
     }
@@ -229,8 +231,12 @@ export function TasksKanbanView({ tasks, onSelect, onStatusChange, onAddTask, on
                             setDropdownCoords(null)
                           } else {
                             const rect = e.currentTarget.getBoundingClientRect()
+                            const isLeftHalf = rect.left < window.innerWidth / 2
                             setDropdownOpenFor(task.id!)
-                            setDropdownCoords({ top: rect.bottom, right: window.innerWidth - rect.right })
+                            setDropdownCoords({ 
+                              top: rect.bottom, 
+                              ...(isLeftHalf ? { left: rect.left } : { right: window.innerWidth - rect.right })
+                            })
                           }
                         }}
                       >
@@ -242,7 +248,7 @@ export function TasksKanbanView({ tasks, onSelect, onStatusChange, onAddTask, on
                     </div>
                   </div>
                   {dropdownOpenFor === task.id && dropdownCoords && createPortal(
-                    <div className="routine-card-dropdown" style={{ position: 'fixed', top: dropdownCoords.top + 4, right: dropdownCoords.right, zIndex: 100000 }} onClick={(e) => e.stopPropagation()}>
+                    <div className="routine-card-dropdown" style={{ position: 'fixed', top: dropdownCoords.top + 8, left: dropdownCoords.left ?? 'auto', right: dropdownCoords.right ?? 'auto', zIndex: 100000 }} onClick={(e) => e.stopPropagation()}>
                       {onEditRequest && (
                         <button onClick={() => { setDropdownOpenFor(null); onEditRequest(task) }}>
                           <Pencil size={14} /> Edit

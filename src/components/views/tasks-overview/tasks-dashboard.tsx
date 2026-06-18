@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Plus, Search, List, Columns3, CalendarDays, X, Clock, Briefcase, BookOpen, Dumbbell, ShoppingCart, Home, DollarSign, User, Hash, LayoutDashboard, Tag } from 'lucide-react'
+import { Plus, Search, List, Columns3, CalendarDays, X, Clock, Briefcase, BookOpen, Dumbbell, ShoppingCart, Home, DollarSign, User, Hash, LayoutDashboard, Tag, Film } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { fetchTasks, toggleTask, deleteTask, updateTask, addTask } from '../../../lib/api'
 import type { DailyTask } from '../../../lib/api'
@@ -44,6 +44,7 @@ const getCategoryIcon = (cat: string, color: string, size = 12) => {
     case 'Chores': return <Home {...props} />
     case 'Finance': return <DollarSign {...props} />
     case 'Personal': return <User {...props} />
+    case 'Movies': return <Film {...props} />
     case 'General': return <Hash {...props} />
     case 'Dashboard': return <LayoutDashboard {...props} />
     default: return <Hash {...props} />
@@ -648,8 +649,11 @@ export function TasksDashboard(_props: TasksDashboardProps) {
                     </div>
                     
                     <div className="kanban-card-tags">
-                      <span className="k-tag dept" style={{ background: `${CATEGORY_COLORS[(modalFormCategory === 'Custom' && customCategory.trim() ? 'General' : modalFormCategory) as TaskCategory] || CATEGORY_COLORS.General}14`, color: CATEGORY_COLORS[(modalFormCategory === 'Custom' && customCategory.trim() ? 'General' : modalFormCategory) as TaskCategory] || CATEGORY_COLORS.General }}>
-                        <span className="dot" style={{ background: CATEGORY_COLORS[(modalFormCategory === 'Custom' && customCategory.trim() ? 'General' : modalFormCategory) as TaskCategory] || CATEGORY_COLORS.General, width: 6, height: 6, borderRadius: '50%', display: 'inline-block' }} />
+                      <span className="k-tag dept" style={{ 
+                        background: `${CATEGORY_COLORS[(modalFormCategory === 'Custom' && customCategory.trim() ? customCategory.trim() : modalFormCategory) as TaskCategory] || getTagColor(modalFormCategory === 'Custom' && customCategory.trim() ? customCategory.trim() : modalFormCategory).dot}14`, 
+                        color: CATEGORY_COLORS[(modalFormCategory === 'Custom' && customCategory.trim() ? customCategory.trim() : modalFormCategory) as TaskCategory] || getTagColor(modalFormCategory === 'Custom' && customCategory.trim() ? customCategory.trim() : modalFormCategory).dot 
+                      }}>
+                        <span className="dot" style={{ background: CATEGORY_COLORS[(modalFormCategory === 'Custom' && customCategory.trim() ? customCategory.trim() : modalFormCategory) as TaskCategory] || getTagColor(modalFormCategory === 'Custom' && customCategory.trim() ? customCategory.trim() : modalFormCategory).dot, width: 6, height: 6, borderRadius: '50%', display: 'inline-block' }} />
                         {modalFormCategory === 'Custom' && customCategory.trim() ? customCategory.trim() : modalFormCategory}
                       </span>
                     </div>
