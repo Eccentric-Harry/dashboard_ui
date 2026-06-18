@@ -2,23 +2,13 @@ import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Plus, MoreHorizontal, Clock, Pencil, Check, Trash2 } from 'lucide-react'
 import type { DailyTask } from '../../../lib/api'
+import { getTagColor } from '../../../lib/tag-colors'
 import avatar1 from '../../../assets/avatars/avatar1.png'
 import avatar2 from '../../../assets/avatars/avatar2.png'
 import avatar3 from '../../../assets/avatars/avatar3.png'
 import avatar4 from '../../../assets/avatars/avatar4.png'
 
 type TaskCategory = 'Work' | 'Learning' | 'Fitness' | 'Shopping' | 'Chores' | 'Finance' | 'Personal' | 'General'
-
-const CATEGORY_COLORS: Record<TaskCategory, string> = {
-  Work: '#0ea5e9',
-  Learning: '#6366f1',
-  Fitness: '#f97316',
-  Shopping: '#d97706',
-  Chores: '#a855f7',
-  Finance: '#10b981',
-  Personal: '#8b5cf6',
-  General: '#14b8a6',
-}
 
 function detectCategory(title: string): TaskCategory {
   const t = title.toLowerCase()
@@ -160,7 +150,7 @@ export function TasksKanbanView({ tasks, onSelect, onStatusChange, onAddTask, on
                 const storedCat = task.category as string | undefined
                 const detected = detectCategory(task.title)
                 const category = storedCat || detected
-                const color = CATEGORY_COLORS[category as TaskCategory] || CATEGORY_COLORS.General
+                const categoryInfo = getTagColor(category)
 
                 const hasTags = task.tags && task.tags.length > 0;
                 const isOverdue = isOverdueTask(task);
@@ -186,8 +176,8 @@ export function TasksKanbanView({ tasks, onSelect, onStatusChange, onAddTask, on
                     </div>
                     
                     <div className="kanban-card-tags">
-                      <span className="k-tag dept" style={{ background: `${color}14`, color }}>
-                        <span className="dot" style={{ background: color, width: 6, height: 6, borderRadius: '50%', display: 'inline-block' }} />
+                      <span className="k-tag dept" style={{ background: categoryInfo.bg, color: categoryInfo.text }}>
+                        <span className="dot" style={{ background: categoryInfo.dot, width: 6, height: 6, borderRadius: '50%', display: 'inline-block' }} />
                         {category}
                       </span>
                       {hasTags && task.tags!.map((tag) => (

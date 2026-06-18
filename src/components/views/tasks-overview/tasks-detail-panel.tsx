@@ -12,16 +12,6 @@ interface SubTask {
 
 type TaskCategory = 'Work' | 'Learning' | 'Fitness' | 'Shopping' | 'Chores' | 'Finance' | 'Personal' | 'General'
 
-const CATEGORY_COLORS: Record<TaskCategory, { bg: string; text: string }> = {
-  Work: { bg: 'rgba(14, 165, 233, 0.12)', text: '#0369a1' },
-  Learning: { bg: 'rgba(99, 102, 241, 0.12)', text: '#4338ca' },
-  Fitness: { bg: 'rgba(249, 115, 22, 0.12)', text: '#c2410c' },
-  Shopping: { bg: 'rgba(217, 119, 6, 0.12)', text: '#b45309' },
-  Chores: { bg: 'rgba(168, 85, 247, 0.12)', text: '#7e22ce' },
-  Finance: { bg: 'rgba(16, 185, 129, 0.12)', text: '#047857' },
-  Personal: { bg: 'rgba(139, 92, 246, 0.12)', text: '#6d28d9' },
-  General: { bg: 'rgba(20, 184, 166, 0.12)', text: '#0f766e' },
-}
 
 function formatTimelineDate(dateStr: string) {
   if (!dateStr) return ''
@@ -119,7 +109,7 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate, 
   }
 
   const category = task.category || 'General'
-  const color = CATEGORY_COLORS[category as TaskCategory] || CATEGORY_COLORS.General
+  const categoryInfo = getTagColor(category)
 
   return (
     <div className="tasks-detail-panel">
@@ -160,8 +150,8 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate, 
             <h2 className="tasks-detail-title">{task.title}</h2>
 
             <div className="tasks-detail-meta-tags">
-              <span className="k-tag" style={{ background: color.bg, color: color.text }}>
-                <Check size={10} />
+              <span className="k-tag" style={{ background: categoryInfo.bg, color: categoryInfo.text }}>
+                <span className="dot" style={{ background: categoryInfo.dot, width: 6, height: 6, borderRadius: '50%', display: 'inline-block' }} />
                 {category}
               </span>
               <span className="k-tag id" style={{ background: '#f3f4f6', color: '#4b5563' }}>

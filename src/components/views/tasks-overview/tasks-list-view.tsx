@@ -1,18 +1,8 @@
-import { Check, Clock, Briefcase, BookOpen, Dumbbell, ShoppingCart, Sparkles, DollarSign, CheckSquare } from 'lucide-react'
+import { Check, Clock, CheckSquare } from 'lucide-react'
 import type { DailyTask } from '../../../lib/api'
+import { getTagColor } from '../../../lib/tag-colors'
 
 type TaskCategory = 'Work' | 'Learning' | 'Fitness' | 'Shopping' | 'Chores' | 'Finance' | 'Personal' | 'General'
-
-const CATEGORY_THEMES: Record<TaskCategory, { color: string; bg: string; text: string; icon: React.ComponentType<{ size?: number }> }> = {
-  Work: { color: '#0ea5e9', bg: 'rgba(14,165,233,0.08)', text: '#0369a1', icon: Briefcase },
-  Learning: { color: '#6366f1', bg: 'rgba(99,102,241,0.08)', text: '#4338ca', icon: BookOpen },
-  Fitness: { color: '#f97316', bg: 'rgba(249,115,22,0.08)', text: '#c2410c', icon: Dumbbell },
-  Shopping: { color: '#d97706', bg: 'rgba(217,119,6,0.08)', text: '#b45309', icon: ShoppingCart },
-  Chores: { color: '#a855f7', bg: 'rgba(168,85,247,0.08)', text: '#7e22ce', icon: Sparkles },
-  Finance: { color: '#10b981', bg: 'rgba(16,185,129,0.08)', text: '#047857', icon: DollarSign },
-  Personal: { color: '#8b5cf6', bg: 'rgba(139,92,246,0.08)', text: '#6d28d9', icon: Sparkles },
-  General: { color: '#14b8a6', bg: 'rgba(20,184,166,0.08)', text: '#0f766e', icon: CheckSquare },
-}
 
 function detectCategory(title: string): TaskCategory {
   const t = title.toLowerCase()
@@ -69,7 +59,7 @@ export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: Tasks
         const storedCategory = task.category as string | undefined
         const detected = detectCategory(task.title)
         const category = storedCategory || detected
-        const theme = CATEGORY_THEMES[category as TaskCategory] || CATEGORY_THEMES.General
+        const categoryInfo = getTagColor(category)
         const isOverdueTask = isOverdue(task)
         const isSelected = selectedTask?.id === task.id
 
@@ -91,8 +81,8 @@ export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: Tasks
             <div className="task-list-body">
               <div className="task-list-title">{task.title}</div>
               <div className="task-list-meta" style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
-                <span className="k-tag dept" style={{ background: `${theme.color}14`, color: theme.color }}>
-                  <span className="dot" style={{ background: theme.color, width: 6, height: 6, borderRadius: '50%', display: 'inline-block' }} />
+                <span className="k-tag dept" style={{ background: categoryInfo.bg, color: categoryInfo.text }}>
+                  <span className="dot" style={{ background: categoryInfo.dot, width: 6, height: 6, borderRadius: '50%', display: 'inline-block' }} />
                   {category}
                 </span>
                 

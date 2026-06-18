@@ -1,19 +1,9 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { DailyTask } from '../../../lib/api'
+import { getTagColor } from '../../../lib/tag-colors'
 
 type TaskCategory = 'Work' | 'Learning' | 'Fitness' | 'Shopping' | 'Chores' | 'Finance' | 'Personal' | 'General'
-
-const CATEGORY_COLORS: Record<string, string> = {
-  Work: '#0ea5e9',
-  Learning: '#6366f1',
-  Fitness: '#f97316',
-  Shopping: '#d97706',
-  Chores: '#a855f7',
-  Finance: '#10b981',
-  Personal: '#8b5cf6',
-  General: '#14b8a6',
-}
 
 function detectCategory(title: string): string {
   const t = title.toLowerCase()
@@ -196,7 +186,7 @@ export function TasksCalendarView({ tasks, onSelect }: TasksCalendarViewProps) {
                       const storedCat = t.category as string | undefined
                       const detected = detectCategory(t.title)
                       const category = storedCat || detected
-                      const blockColor = CATEGORY_COLORS[category as TaskCategory] || CATEGORY_COLORS.General
+                      const blockColor = getTagColor(category).dot
 
                       return (
                         <div

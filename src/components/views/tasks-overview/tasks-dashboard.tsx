@@ -15,24 +15,13 @@ type ViewMode = 'list' | 'kanban' | 'calendar'
 type FilterStatus = 'all' | 'pending' | 'completed'
 type TaskCategory = 'Work' | 'Learning' | 'Fitness' | 'Shopping' | 'Chores' | 'Finance' | 'Personal' | 'General'
 
-const CATEGORIES: { key: TaskCategory; label: string; color: string }[] = [
-  { key: 'Work', label: 'Work', color: '#0ea5e9' },
-  { key: 'Learning', label: 'Learning', color: '#6366f1' },
-  { key: 'Fitness', label: 'Fitness', color: '#f97316' },
-  { key: 'Personal', label: 'Personal', color: '#8b5cf6' },
-  { key: 'General', label: 'General', color: '#14b8a6' },
+const CATEGORIES: { key: string; label: string }[] = [
+  { key: 'Work', label: 'Work' },
+  { key: 'Learning', label: 'Learning' },
+  { key: 'Fitness', label: 'Fitness' },
+  { key: 'Personal', label: 'Personal' },
+  { key: 'General', label: 'General' },
 ]
-
-const CATEGORY_COLORS: Record<TaskCategory, string> = {
-  Work: '#0ea5e9',
-  Learning: '#6366f1',
-  Fitness: '#f97316',
-  Shopping: '#d97706',
-  Chores: '#a855f7',
-  Finance: '#10b981',
-  Personal: '#8b5cf6',
-  General: '#14b8a6',
-}
 
 const getCategoryIcon = (cat: string, color: string, size = 12) => {
   const props = { size, color }
@@ -403,8 +392,7 @@ export function TasksDashboard(_props: TasksDashboardProps) {
           {/* Categories */}
           <div className="tasks-filter-group">
             {uniqueCategories.map((cat) => {
-              const isStandard = CATEGORIES.some(c => c.key === cat)
-              const dotColor = isStandard ? CATEGORIES.find(c => c.key === cat)!.color : getTagColor(cat).dot
+              const dotColor = getTagColor(cat).dot
               return (
                 <button
                   key={cat}
@@ -649,13 +637,19 @@ export function TasksDashboard(_props: TasksDashboardProps) {
                     </div>
                     
                     <div className="kanban-card-tags">
-                      <span className="k-tag dept" style={{ 
-                        background: `${CATEGORY_COLORS[(modalFormCategory === 'Custom' && customCategory.trim() ? customCategory.trim() : modalFormCategory) as TaskCategory] || getTagColor(modalFormCategory === 'Custom' && customCategory.trim() ? customCategory.trim() : modalFormCategory).dot}14`, 
-                        color: CATEGORY_COLORS[(modalFormCategory === 'Custom' && customCategory.trim() ? customCategory.trim() : modalFormCategory) as TaskCategory] || getTagColor(modalFormCategory === 'Custom' && customCategory.trim() ? customCategory.trim() : modalFormCategory).dot 
-                      }}>
-                        <span className="dot" style={{ background: CATEGORY_COLORS[(modalFormCategory === 'Custom' && customCategory.trim() ? customCategory.trim() : modalFormCategory) as TaskCategory] || getTagColor(modalFormCategory === 'Custom' && customCategory.trim() ? customCategory.trim() : modalFormCategory).dot, width: 6, height: 6, borderRadius: '50%', display: 'inline-block' }} />
-                        {modalFormCategory === 'Custom' && customCategory.trim() ? customCategory.trim() : modalFormCategory}
-                      </span>
+                      {(() => {
+                        const actualCategory = modalFormCategory === 'Custom' && customCategory.trim() ? customCategory.trim() : modalFormCategory
+                        const categoryInfo = getTagColor(actualCategory)
+                        return (
+                          <span className="k-tag dept" style={{ 
+                            background: categoryInfo.bg, 
+                            color: categoryInfo.text 
+                          }}>
+                            <span className="dot" style={{ background: categoryInfo.dot, width: 6, height: 6, borderRadius: '50%', display: 'inline-block' }} />
+                            {actualCategory}
+                          </span>
+                        )
+                      })()}
                     </div>
                     
                     {(modalFormTime || modalFormDate) && (
