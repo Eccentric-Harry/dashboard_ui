@@ -3,7 +3,6 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { DailyTask } from '../../../lib/api'
 import { getTagColor } from '../../../lib/tag-colors'
 
-type TaskCategory = 'Work' | 'Learning' | 'Fitness' | 'Shopping' | 'Chores' | 'Finance' | 'Personal' | 'General'
 
 function detectCategory(title: string): string {
   const t = title.toLowerCase()

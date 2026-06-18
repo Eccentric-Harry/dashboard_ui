@@ -10,7 +10,6 @@ interface SubTask {
   completed?: boolean
 }
 
-type TaskCategory = 'Work' | 'Learning' | 'Fitness' | 'Shopping' | 'Chores' | 'Finance' | 'Personal' | 'General'
 
 
 function formatTimelineDate(dateStr: string) {
