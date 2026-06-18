@@ -231,11 +231,12 @@ export function TasksKanbanView({ tasks, onSelect, onStatusChange, onAddTask, on
                             setDropdownCoords(null)
                           } else {
                             const rect = e.currentTarget.getBoundingClientRect()
+                            const zoom = parseFloat(window.getComputedStyle(document.documentElement).zoom || '1')
                             const isLeftHalf = rect.left < window.innerWidth / 2
                             setDropdownOpenFor(task.id!)
                             setDropdownCoords({ 
-                              top: rect.bottom, 
-                              ...(isLeftHalf ? { left: rect.left } : { right: window.innerWidth - rect.right })
+                              top: rect.bottom / zoom, 
+                              ...(isLeftHalf ? { left: rect.left / zoom } : { right: (window.innerWidth - rect.right) / zoom })
                             })
                           }
                         }}
