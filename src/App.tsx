@@ -343,7 +343,9 @@ function App() {
             );
           }}
         </Toaster>
-        {content}
+        <div key={pathname} className="route-view-container">
+          {content}
+        </div>
         <MobileNotificationTrigger />
         <NotificationCenter onNavigate={navigateTo} />
         <OverlayLoader show={showOverlay} />

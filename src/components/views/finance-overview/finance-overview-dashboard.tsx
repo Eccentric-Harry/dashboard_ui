@@ -284,9 +284,9 @@ function FinanceOverviewDashboard() {
       />
       <div className={`finance-dashboard-grid${isGuest ? ' finance-dashboard-guest' : ''}`}>
         <div className="finance-stats-row">
-          <BalanceSummaryCard />
+          <BalanceSummaryCard loading={loading} />
           {metrics.map((metric) => (
-            <MetricCard key={metric.label} metric={metric} />
+            <MetricCard key={metric.label} metric={metric} loading={loading} />
           ))}
         </div>
         <SpendingOverviewCard 
@@ -295,6 +295,7 @@ function FinanceOverviewDashboard() {
           onCategorySelect={setSelectedCategory} 
           selectedMonthKey={selectedMonthKey}
           onMonthSelect={setSelectedMonthKey}
+          loading={loading}
         />
         <TransactionsCard 
           transactions={recentTransactions} 

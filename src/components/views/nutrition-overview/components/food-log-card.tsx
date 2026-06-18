@@ -304,7 +304,8 @@ function DailyLogCardInstance({ dateValue, entries, totalProtein, totalCalories,
 }
 
 function FoodLogCard() {
-  const { data } = useDashboard()
+  const { data, isLoading } = useDashboard()
+  
   const foodEntries = useMemo<FoodEntry[]>(() => data?.health?.foodEntries || [], [data?.health?.foodEntries])
   const logAnchorDate = data?.date || isoDate(new Date())
   const [historyEntries, setHistoryEntries] = useState<FoodEntry[]>([])
@@ -318,14 +319,9 @@ function FoodLogCard() {
 
   const loadHistoryEntries = useCallback(async () => {
     try {
-      // 1. Fetch flat list of all entries from the past 365 days in a single optimized database call
       const response = await fetchFoodEntries(365)
       const rangeEntries = extractEntries(response)
-
-      // 2. Extract food entries for Today from dashboard context
       const selectedDateEntries = foodEntries.map((entry) => ({ ...entry, date: entry.date || logAnchorDate }))
-
-      // 3. Merge cleanly to prevent duplicates
       setHistoryEntries(mergeFoodEntries([...rangeEntries, ...selectedDateEntries], logAnchorDate))
     } catch (error) {
       console.error('Failed to load 365 days food history', error)
@@ -385,6 +381,52 @@ function FoodLogCard() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentHistoryPage(1)
   }, [logAnchorDate])
+
+  if (isLoading) {
+    return (
+      <section className="nutrition-food-log-card" aria-label="Recent food logs loading">
+        <div className="nutrition-food-log-head">
+          <div className="nutrition-section-head compact">
+            <span className="nutrition-section-icon">
+              <CalendarDays size={15} />
+            </span>
+            <div>
+              <p>Food Log</p>
+              <h2>Recent Food Logs</h2>
+            </div>
+          </div>
+        </div>
+
+        <div className="nutrition-daily-log-grid">
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <article key={idx} className="nutrition-daily-log-card" style={{ pointerEvents: 'none' }}>
+              <div className="nutrition-daily-log-card-head" style={{ borderBottom: '1px solid rgba(20,24,22,0.04)', paddingBottom: '10px' }}>
+                <div className="nutrition-daily-log-title" style={{ width: '60%' }}>
+                  <div className="skeleton-shimmer skeleton-rect" style={{ width: '80px', height: '14px', borderRadius: '3px' }} />
+                  <div className="skeleton-shimmer skeleton-rect" style={{ width: '40px', height: '8px', marginTop: '6px', borderRadius: '2px' }} />
+                </div>
+                <div className="nutrition-daily-log-card-actions" style={{ display: 'flex', gap: '8px' }}>
+                  <div className="skeleton-shimmer skeleton-rect" style={{ width: '35px', height: '14px', borderRadius: '3px' }} />
+                  <div className="skeleton-shimmer skeleton-rect" style={{ width: '55px', height: '14px', borderRadius: '3px' }} />
+                </div>
+              </div>
+              <div className="nutrition-daily-log-entries" style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {Array.from({ length: 2 }).map((_, entryIdx) => (
+                  <div key={entryIdx} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <div className="skeleton-shimmer skeleton-circle" style={{ width: '18px', height: '18px' }} />
+                    <div style={{ flex: 1 }}>
+                      <div className="skeleton-shimmer skeleton-rect" style={{ width: '70%', height: '10px', borderRadius: '2px' }} />
+                    </div>
+                    <div className="skeleton-shimmer skeleton-rect" style={{ width: '30px', height: '10px', borderRadius: '2px' }} />
+                  </div>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="nutrition-food-log-card" aria-label="Food log">

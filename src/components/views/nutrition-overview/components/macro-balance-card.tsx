@@ -50,7 +50,8 @@ interface MacroBalanceCardProps {
 }
 
 function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
-  const { data, refetch } = useDashboard()
+  const { data, isLoading, refetch } = useDashboard()
+  
   const selectedDate = data?.date || isoDate(new Date())
   const dailyFood = data?.health?.dailyFood || { calories: 0, calorieGoal: CALORIE_TARGET }
   const circularGoals = useMemo<CircularGoal[]>(() => data?.health?.circularGoals || [], [data?.health?.circularGoals])
@@ -83,6 +84,52 @@ function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
       }
     }
   }, [])
+
+  if (isLoading) {
+    return (
+      <section className="nutrition-card nutrition-macro-card" aria-label="Daily nutrition summary loading">
+        <div className="nutrition-card-head">
+          <div>
+            <p>Daily Nutrition Summary</p>
+            <div className="skeleton-shimmer skeleton-rect" style={{ width: '200px', height: '18px', marginTop: '6px', borderRadius: '4px' }} />
+          </div>
+        </div>
+
+        <div className="nutrition-rings nutrition-rings-two" style={{ display: 'flex', gap: '24px', justifyContent: 'center', margin: '20px 0' }}>
+          {Array.from({ length: 2 }).map((_, idx) => (
+            <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+              <div className="skeleton-shimmer skeleton-circle" style={{ width: '76px', height: '76px' }} />
+              <div className="skeleton-shimmer skeleton-rect" style={{ width: '50px', height: '12px', borderRadius: '3px' }} />
+            </div>
+          ))}
+        </div>
+
+        <div className="nutrition-today-log">
+          <div className="nutrition-today-log-head">
+            <div>
+              <p>Daily Log</p>
+              <h3>Today's Food Log</h3>
+            </div>
+          </div>
+          <div className="nutrition-today-log-list" style={{ padding: '8px 0', display: 'flex', flexDirection: 'column', gap: '12px', overflow: 'hidden' }}>
+            {Array.from({ length: 3 }).map((_, idx) => (
+              <div key={idx} style={{ display: 'flex', gap: '12px', alignItems: 'center', padding: '8px 14px' }}>
+                <div className="skeleton-shimmer skeleton-circle" style={{ width: '28px', height: '28px' }} />
+                <div style={{ flex: 1 }}>
+                  <div className="skeleton-shimmer skeleton-rect" style={{ width: '60%', height: '12px', borderRadius: '3px' }} />
+                  <div className="skeleton-shimmer skeleton-rect" style={{ width: '30%', height: '8px', marginTop: '6px', borderRadius: '2px' }} />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                  <div className="skeleton-shimmer skeleton-rect" style={{ width: '35px', height: '12px', borderRadius: '3px' }} />
+                  <div className="skeleton-shimmer skeleton-rect" style={{ width: '45px', height: '8px', borderRadius: '2px' }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   const proteinGoal = circularGoals.find((goal) => goal.label === 'Protein')
   const proteinLogged = proteinGoal?.value || 0

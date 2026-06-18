@@ -347,9 +347,22 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
 
           <div className="routine-list-scroll" ref={routineListRef}>
             {loading ? (
-              <div className="calendar-loading">
-                <Loader2 className="animate-spin" size={18} />
-                Loading your routine
+              <div className="routine-timeline" style={{ pointerEvents: 'none' }}>
+                {Array.from({ length: 4 }).map((_, idx) => (
+                  <div className="routine-row status-future" key={idx}>
+                    <span className="routine-node skeleton-circle skeleton-shimmer" style={{ width: 14, height: 14, border: 'none' }} />
+                    <div className="routine-card-wrapper" style={{ flex: 1 }}>
+                      <div className="routine-card" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px' }}>
+                        <span className="routine-card-icon skeleton-circle skeleton-shimmer" style={{ width: 32, height: 32, borderRadius: 10, flexShrink: 0 }} />
+                        <div className="routine-card-copy" style={{ flex: 1 }}>
+                          <span className="skeleton-rect skeleton-shimmer mb-1.5" style={{ width: '30%', height: 10 }} />
+                          <strong className="skeleton-rect skeleton-shimmer mb-1.5" style={{ width: idx % 2 === 0 ? '70%' : '55%', height: 14 }} />
+                          <span className="skeleton-rect skeleton-shimmer" style={{ width: '85%', height: 10 }} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : selectedItems.length ? (
               <div className="routine-timeline">
@@ -440,7 +453,41 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
         </aside>
 
         <main className="focus-canvas">
-          {selectedItem ? (
+          {loading ? (
+            <div className="focus-detail" style={{ pointerEvents: 'none' }}>
+              <div className="focus-detail-top">
+                <div className="focus-status">
+                  <span className="skeleton-rect skeleton-shimmer" style={{ width: 80, height: 14 }} />
+                </div>
+                <span className="skeleton-rect skeleton-shimmer" style={{ width: 100, height: 14 }} />
+              </div>
+
+              <div className="focus-hero" style={{ marginTop: 24 }}>
+                <span className="focus-icon skeleton-circle skeleton-shimmer" style={{ width: 50, height: 50 }} />
+                <div style={{ flex: 1 }}>
+                  <span className="skeleton-rect skeleton-shimmer mb-2.5" style={{ width: '30%', height: 12 }} />
+                  <span className="skeleton-rect skeleton-shimmer" style={{ width: '60%', height: 22 }} />
+                </div>
+              </div>
+
+              <div className="focus-time-block" style={{ marginTop: 24, display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span className="skeleton-circle skeleton-shimmer" style={{ width: 32, height: 32 }} />
+                <div style={{ flex: 1 }}>
+                  <span className="skeleton-rect skeleton-shimmer mb-1.5" style={{ width: '40%', height: 10 }} />
+                  <span className="skeleton-rect skeleton-shimmer" style={{ width: '60%', height: 14 }} />
+                </div>
+              </div>
+
+              <div className="focus-content" style={{ marginTop: 24 }}>
+                <section>
+                  <span className="skeleton-rect skeleton-shimmer mb-2.5" style={{ width: 50, height: 10 }} />
+                  <span className="skeleton-rect skeleton-shimmer mb-1.5" style={{ width: '80%', height: 12 }} />
+                  <span className="skeleton-rect skeleton-shimmer mb-1.5" style={{ width: '90%', height: 12 }} />
+                  <span className="skeleton-rect skeleton-shimmer" style={{ width: '50%', height: 12 }} />
+                </section>
+              </div>
+            </div>
+          ) : selectedItem ? (
             <FocusDetail
               item={selectedItem}
               isCurrent={currentItem ? itemKey(currentItem) === itemKey(selectedItem) : false}

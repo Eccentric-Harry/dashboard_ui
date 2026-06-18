@@ -46,6 +46,26 @@ const CircularStat = ({ data, label, unit, isLoading }: { data: any, label: stri
 function IndicatorCard() {
   const { data, isLoading } = useDashboard();
   
+  if (isLoading) {
+    return (
+      <section className="indicator-panel" style={{ display: 'flex', flexDirection: 'column', padding: '24px 22px', boxSizing: 'border-box' }}>
+        <div className="mb-4">
+          <span className="runner-eyebrow">NUTRITION SUMMARY</span>
+          <div className="skeleton-shimmer skeleton-rect" style={{ width: '140px', height: '12px', marginTop: '8px', borderRadius: '3px' }} />
+        </div>
+        
+        <div className="flex flex-row gap-4 w-full justify-center items-center flex-1">
+          {Array.from({ length: 2 }).map((_, idx) => (
+            <div key={idx} className="flex flex-col items-center justify-center p-2.5 bg-white rounded-[20px] shadow-[0_4px_16px_rgba(0,0,0,0.03)] flex-1 min-w-0" style={{ minHeight: '130px' }}>
+              <div className="skeleton-shimmer skeleton-circle" style={{ width: '72px', height: '72px' }} />
+              <div className="skeleton-shimmer skeleton-rect" style={{ width: '45px', height: '12px', marginTop: '12px', borderRadius: '3px' }} />
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
   const circularGoals = data?.health?.circularGoals;
 
   const getGoalData = (label: string, defaultCurrent: number, defaultTarget: number, color: string, track: string) => {

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
-import { PieChart as PieIcon, Loader2, X } from 'lucide-react'
+import { PieChart as PieIcon, X } from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { fetchLearnings } from '../../../../lib/api'
 import type { LearningLog } from '../../../../lib/api'
@@ -125,9 +125,53 @@ export function CategoryBreakdownCard({ refreshKey }: CategoryBreakdownCardProps
       </h3>
 
       {loading ? (
-        <div className="flex flex-col justify-center items-center py-12 gap-2 flex-1">
-          <Loader2 className="animate-spin text-[#1a7a4a]" size={24} />
-          <span className="text-xs text-gray-400 font-medium">Loading distribution...</span>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch mt-2">
+          {/* Column 1: Doughnut Chart Skeleton */}
+          <div className="lg:col-span-4 relative flex items-center justify-center min-h-[220px]">
+            {/* Shimmering circle representing the pie chart ring */}
+            <div className="skeleton-circle skeleton-shimmer" style={{ width: 140, height: 140, border: '16px solid rgba(23, 28, 25, 0.04)', background: 'transparent' }} />
+            {/* Center Text Skeleton */}
+            <div 
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                textAlign: 'center',
+                pointerEvents: 'none'
+              }}
+            >
+              <span className="skeleton-rect skeleton-shimmer" style={{ width: 40, height: 10, margin: '0 auto 4px' }} />
+              <span className="skeleton-rect skeleton-shimmer" style={{ width: 25, height: 20, margin: '0 auto' }} />
+            </div>
+          </div>
+
+          {/* Column 2: Legends list Skeleton */}
+          <div className="lg:col-span-4 flex flex-col justify-center">
+            <div className="flex flex-col gap-2.5">
+              {Array.from({ length: 4 }).map((_, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center gap-3 p-2.5 rounded-xl border border-transparent bg-white/30"
+                >
+                  <div className="w-7 h-7 rounded-lg skeleton-rect skeleton-shimmer" />
+                  <div className="min-w-0 flex-1">
+                    <span className="skeleton-rect skeleton-shimmer mb-1.5" style={{ width: idx % 2 === 0 ? '55%' : '45%', height: 11 }} />
+                    <span className="skeleton-rect skeleton-shimmer" style={{ width: '70%', height: 8 }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Column 3: Linked learnings section Skeleton */}
+          <div className="lg:col-span-4 border-t lg:border-t-0 lg:border-l border-gray-100 pt-6 lg:pt-0 lg:pl-6 flex flex-col justify-center">
+            <div className="flex flex-col items-center justify-center flex-1 text-center py-6 px-4 bg-gray-50/20 rounded-2xl border border-dashed border-gray-200/50">
+              <span className="skeleton-circle skeleton-shimmer mb-2.5" style={{ width: 24, height: 24 }} />
+              <span className="skeleton-rect skeleton-shimmer mb-1.5" style={{ width: 80, height: 10 }} />
+              <span className="skeleton-rect skeleton-shimmer" style={{ width: 140, height: 8 }} />
+            </div>
+          </div>
         </div>
       ) : categories.length === 0 ? (
         <p className="learnings-empty py-12 text-center text-xs text-gray-400 italic">

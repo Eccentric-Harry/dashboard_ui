@@ -169,7 +169,14 @@ function PromptsOverviewDashboard() {
           </div>
           <div className="prompts-list">
             {loading ? (
-              <div className="prompt-placeholder"><Loader2 className="animate-spin" /></div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {Array.from({ length: itemsPerPage }).map((_, idx) => (
+                  <div key={idx} className="prompt-list-item" style={{ pointerEvents: 'none' }}>
+                    <span className="skeleton-rect skeleton-shimmer mb-2.5" style={{ width: idx % 2 === 0 ? '60%' : '45%', height: 14 }} />
+                    <span className="skeleton-rect skeleton-shimmer" style={{ width: '90%', height: 11 }} />
+                  </div>
+                ))}
+              </div>
             ) : paginatedPrompts.length === 0 ? (
               <div className="prompt-placeholder">No prompts found.</div>
             ) : (

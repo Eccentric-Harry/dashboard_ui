@@ -123,12 +123,18 @@ function ProteinTrendCard() {
 
   if (isLoading || displayTrend.length === 0) {
     return (
-      <section className="nutrition-card nutrition-trend-card">
+      <section className="nutrition-card nutrition-trend-card" style={{ display: 'flex', flexDirection: 'column' }}>
         <div className="nutrition-dark-head">
           <div>
             <p>Weekly Protein Consistency</p>
-            <h2>Loading...</h2>
+            <div className="skeleton-shimmer skeleton-rect" style={{ width: '85px', height: '22px', marginTop: '6px', borderRadius: '4px' }} />
           </div>
+          <span className="nutrition-days-pill">7 days</span>
+        </div>
+        <div style={{ flex: 1, width: '100%', minHeight: '130px', marginTop: '20px', display: 'flex', alignItems: 'flex-end', gap: '12px', opacity: 0.35, padding: '0 10px' }}>
+          {Array.from({ length: 7 }).map((_, idx) => (
+            <div key={idx} className="skeleton-shimmer" style={{ flex: 1, height: `${[40, 60, 50, 75, 45, 90, 65][idx]}%`, borderRadius: '4px 4px 0 0' }} />
+          ))}
         </div>
       </section>
     )

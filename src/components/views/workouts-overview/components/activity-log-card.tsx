@@ -177,7 +177,26 @@ function ActivityLogCard({ activities, loading, onEdit, onDelete }: ActivityLogC
         </div>
         <div className="workouts-log-list">
           {loading ? (
-            <div className="workouts-loading"><span className="workouts-loading-dot">Loading activities…</span></div>
+            Array.from({ length: 5 }).map((_, idx) => (
+              <div className="workouts-log-row" key={`loader-${idx}`} style={{ pointerEvents: 'none' }}>
+                <div className="workouts-activity-name">
+                  <div className="skeleton-shimmer skeleton-circle" style={{ width: '28px', height: '28px', borderRadius: '10px' }} />
+                  <div style={{ flex: 1, marginLeft: '12px' }}>
+                    <div className="skeleton-shimmer skeleton-rect" style={{ width: '120px', height: '12px', borderRadius: '3px' }} />
+                    <div className="skeleton-shimmer skeleton-rect" style={{ width: '60px', height: '8px', marginTop: '6px', borderRadius: '2px' }} />
+                  </div>
+                </div>
+                <span>
+                  <div className="skeleton-shimmer skeleton-rect" style={{ width: '60px', height: '12px', borderRadius: '3px' }} />
+                </span>
+                <span className="mobile-hide">
+                  <div className="skeleton-shimmer skeleton-rect" style={{ width: '55px', height: '14px', borderRadius: '4px' }} />
+                </span>
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <div className="skeleton-shimmer skeleton-rect" style={{ width: '65px', height: '18px', borderRadius: '6px' }} />
+                </div>
+              </div>
+            ))
           ) : paginated.length === 0 ? (
             <div className="workouts-loading">No activities found</div>
           ) : (

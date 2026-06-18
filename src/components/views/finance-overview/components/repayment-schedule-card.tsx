@@ -117,11 +117,22 @@ export function RepaymentScheduleCard({ transactions, onRefresh }: RepaymentSche
         <div className="finance-section-head compact">
           <div>
             <h2>Repayment Schedule</h2>
-            <p>Loading installments...</p>
+            <span className="skeleton-rect skeleton-shimmer" style={{ width: 120, height: 10, marginTop: 6 }} />
           </div>
+          <span className="skeleton-rect skeleton-shimmer" style={{ width: 80, height: 20 }} />
         </div>
-        <div style={{ display: 'grid', placeItems: 'center', flex: 1, minHeight: '150px' }}>
-          <Loader2 className="animate-spin" size={24} style={{ color: '#db2777' }} />
+        <div className="finance-repayment-list" style={{ marginTop: 12 }}>
+          {Array.from({ length: ITEMS_PER_PAGE }).map((_, idx) => (
+            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span className="skeleton-rect skeleton-shimmer" style={{ width: 32, height: 32, borderRadius: 10, flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <span className="skeleton-rect skeleton-shimmer mb-1.5" style={{ width: '40%', height: 12 }} />
+                <span className="skeleton-rect skeleton-shimmer" style={{ width: '25%', height: 8 }} />
+              </div>
+              <span className="skeleton-rect skeleton-shimmer" style={{ width: 60, height: 14, marginRight: 12 }} />
+              <span className="skeleton-rect skeleton-shimmer" style={{ width: 44, height: 24, borderRadius: 12 }} />
+            </div>
+          ))}
         </div>
       </section>
     )

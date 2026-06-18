@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
   Check,
-  Loader2,
   Pencil,
   Trash2,
   ListTodo,
@@ -320,9 +319,30 @@ export function TasksScheduleCard({
       </div>
 
       {loading ? (
-        <div className="learnings-loading" style={{ marginTop: 24 }}>
-          <Loader2 className="spinner animate-spin" size={14} />
-          Loading tasks...
+        <div className="learnings-tasks-list-premium" style={{ marginTop: 18 }}>
+          {Array.from({ length: PAGE_SIZE }).map((_, idx) => (
+            <div
+              key={idx}
+              className="learnings-task-item-premium"
+              style={{
+                '--theme-color': 'rgba(23, 28, 25, 0.06)',
+                '--theme-bg-light': 'rgba(23, 28, 25, 0.02)',
+                '--theme-border-light': 'rgba(23, 28, 25, 0.06)',
+                '--theme-shadow-color': 'rgba(0, 0, 0, 0)',
+              } as React.CSSProperties}
+            >
+              <div className="learnings-task-check-premium skeleton-rect skeleton-shimmer" style={{ width: 22, height: 22, border: 'none', background: 'none' }} />
+              <div className="learnings-task-content-premium" style={{ flex: 1 }}>
+                <div className="learnings-task-title-row-premium">
+                  <span className="skeleton-rect skeleton-shimmer" style={{ width: idx % 2 === 0 ? '65%' : '45%', height: 14 }} />
+                </div>
+                <div className="learnings-task-meta-row-premium" style={{ marginTop: 8 }}>
+                  <span className="skeleton-rect skeleton-shimmer" style={{ width: 60, height: 18, borderRadius: 10 }} />
+                  <span className="skeleton-rect skeleton-shimmer" style={{ width: 80, height: 18, borderRadius: 10 }} />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       ) : tasks.length === 0 ? (
         <p className="learnings-empty" style={{ marginTop: 18 }}>

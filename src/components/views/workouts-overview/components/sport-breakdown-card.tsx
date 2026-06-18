@@ -67,7 +67,27 @@ function SportBreakdownCard({ stats, loading }: SportBreakdownCardProps) {
         </div>
       </div>
       {loading ? (
-        <div className="workouts-loading"><span className="workouts-loading-dot">Loading…</span></div>
+        <div className="workouts-breakdown-body" style={{ pointerEvents: 'none' }}>
+          <div className="workouts-breakdown-chart" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="skeleton-shimmer skeleton-circle" style={{ width: '130px', height: '130px' }} />
+          </div>
+          <div className="workouts-breakdown-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div className="workouts-breakdown-header">
+              <span className="header-sport">Sport</span>
+              <span className="header-sessions">Sessions</span>
+              <span className="header-distance">Distance</span>
+            </div>
+            {Array.from({ length: 3 }).map((_, idx) => (
+              <div key={idx} className="workouts-breakdown-row" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <div style={{ flex: 1 }}>
+                  <div className="skeleton-shimmer skeleton-rect" style={{ width: '80px', height: '14px', borderRadius: '3px' }} />
+                </div>
+                <div className="skeleton-shimmer skeleton-rect" style={{ width: '25px', height: '14px', borderRadius: '3px' }} />
+                <div className="skeleton-shimmer skeleton-rect" style={{ width: '45px', height: '12px', borderRadius: '3px' }} />
+              </div>
+            ))}
+          </div>
+        </div>
       ) : (
         <div className="workouts-breakdown-body">
           <div className="workouts-breakdown-chart">

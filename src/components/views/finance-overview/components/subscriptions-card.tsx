@@ -14,11 +14,18 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
   const [processingId, setProcessingId] = useState<string | null>(null)
   const [optimisticPaidIds, setOptimisticPaidIds] = useState<Set<string>>(new Set())
   const [apiSubscriptions, setApiSubscriptions] = useState<SubscriptionDTO[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetchSubscriptions()
-      .then((res) => setApiSubscriptions(res.data || []))
-      .catch((err) => console.error('Failed to fetch subscriptions:', err))
+      .then((res) => {
+        setApiSubscriptions(res.data || [])
+        setLoading(false)
+      })
+      .catch((err) => {
+        console.error('Failed to fetch subscriptions:', err)
+        setLoading(false)
+      })
   }, [])
 
   const paidIds = useMemo(() => {
@@ -226,6 +233,33 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
   };
 
   const totalCost = apiSubscriptions.reduce((sum, sub) => sum + sub.cost, 0);
+
+  if (loading) {
+    return (
+      <section className="finance-card finance-subscription-card">
+        <div className="finance-section-head compact">
+          <div>
+            <h2>Subscriptions</h2>
+            <span className="skeleton-rect skeleton-shimmer" style={{ width: 100, height: 10, marginTop: 6 }} />
+          </div>
+          <span className="skeleton-rect skeleton-shimmer" style={{ width: 80, height: 20 }} />
+        </div>
+        <div className="finance-subscription-list" style={{ marginTop: 12 }}>
+          {Array.from({ length: 3 }).map((_, idx) => (
+            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span className="skeleton-circle skeleton-shimmer" style={{ width: 32, height: 32, borderRadius: 10, flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <span className="skeleton-rect skeleton-shimmer mb-1.5" style={{ width: '40%', height: 12 }} />
+                <span className="skeleton-rect skeleton-shimmer" style={{ width: '25%', height: 8 }} />
+              </div>
+              <span className="skeleton-rect skeleton-shimmer" style={{ width: 50, height: 14, marginRight: 12 }} />
+              <span className="skeleton-rect skeleton-shimmer" style={{ width: 44, height: 24, borderRadius: 12 }} />
+            </div>
+          ))}
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="finance-card finance-subscription-card">

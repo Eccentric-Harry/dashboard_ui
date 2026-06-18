@@ -200,6 +200,7 @@ export function TasksDashboard(_props: TasksDashboardProps) {
     }
   }
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (modalMode === 'edit' && selectedTask) {
       setModalFormTitle(selectedTask.title)
@@ -217,6 +218,7 @@ export function TasksDashboard(_props: TasksDashboardProps) {
       setModalFormNotes('')
     }
   }, [modalMode, selectedTask])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleModalSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -469,9 +471,44 @@ export function TasksDashboard(_props: TasksDashboardProps) {
       <div className={`tasks-content-grid ${selectedTask ? 'has-selection' : ''}`}>
         <div className="tasks-viewport">
           {loading ? (
-            <div className="tasks-empty-state">
-              <p>Loading tasks...</p>
-            </div>
+            viewMode === 'list' ? (
+              <div className="tasks-list-view" style={{ pointerEvents: 'none' }}>
+                {Array.from({ length: 5 }).map((_, idx) => (
+                  <div key={idx} className="tasks-list-card" style={{ display: 'flex', gap: '12px', alignItems: 'center', padding: '16px' }}>
+                    <div className="skeleton-shimmer skeleton-circle" style={{ width: '22px', height: '22px' }} />
+                    <div style={{ flex: 1 }}>
+                      <div className="skeleton-shimmer skeleton-rect" style={{ width: '40%', height: '14px', borderRadius: '3px' }} />
+                      <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
+                        <div className="skeleton-shimmer skeleton-rect" style={{ width: '70px', height: '14px', borderRadius: '4px' }} />
+                        <div className="skeleton-shimmer skeleton-rect" style={{ width: '45px', height: '14px', borderRadius: '4px' }} />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              /* Kanban view skeleton loading */
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', height: '100%', pointerEvents: 'none' }}>
+                {Array.from({ length: 3 }).map((_, colIdx) => (
+                  <div key={colIdx} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <div className="skeleton-shimmer skeleton-rect" style={{ width: '80px', height: '16px', borderRadius: '3px' }} />
+                      <div className="skeleton-shimmer skeleton-circle" style={{ width: '18px', height: '18px' }} />
+                    </div>
+                    {Array.from({ length: 2 }).map((_, cardIdx) => (
+                      <div key={cardIdx} className="tasks-kanban-card" style={{ padding: '14px' }}>
+                        <div className="skeleton-shimmer skeleton-rect" style={{ width: '70%', height: '14px', borderRadius: '3px' }} />
+                        <div className="skeleton-shimmer skeleton-rect" style={{ width: '90%', height: '10px', marginTop: '8px', borderRadius: '2px' }} />
+                        <div style={{ display: 'flex', gap: '6px', marginTop: '12px' }}>
+                          <div className="skeleton-shimmer skeleton-rect" style={{ width: '50px', height: '14px', borderRadius: '4px' }} />
+                          <div className="skeleton-shimmer skeleton-rect" style={{ width: '40px', height: '14px', borderRadius: '4px' }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )
           ) : viewMode === 'list' || viewMode === 'kanban' ? (
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
               {viewMode === 'list' ? (

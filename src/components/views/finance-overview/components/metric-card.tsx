@@ -2,9 +2,10 @@ import type { FinanceMetric } from '../data'
 
 type MetricCardProps = {
   metric: FinanceMetric
+  loading?: boolean
 }
 
-function MetricCard({ metric }: MetricCardProps) {
+function MetricCard({ metric, loading = false }: MetricCardProps) {
   const Icon = metric.icon
 
   return (
@@ -13,7 +14,11 @@ function MetricCard({ metric }: MetricCardProps) {
         <Icon size={15} strokeWidth={2.2} />
       </div>
       <p>{metric.label}</p>
-      <strong>{metric.value}</strong>
+      {loading ? (
+        <div className="skeleton-shimmer skeleton-rect" style={{ width: '85px', height: '18px', marginTop: '6px', borderRadius: '4px' }} />
+      ) : (
+        <strong>{metric.value}</strong>
+      )}
     </section>
   )
 }

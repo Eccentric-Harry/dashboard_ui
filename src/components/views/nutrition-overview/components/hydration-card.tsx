@@ -65,10 +65,25 @@ function HydrationCard() {
 
   if (loading) {
     return (
-      <section className="nutrition-card nutrition-hydration-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '24px' }} aria-label="Loading hydration">
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '16px', color: '#3b82f6' }}>
-          <RefreshCw size={36} style={{ animation: 'spin 2s linear infinite' }} />
-          <span>Refreshing...</span>
+      <section className="nutrition-card nutrition-hydration-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '20px 24px' }} aria-label="Daily hydration loading">
+        <div className="nutrition-card-head">
+          <div>
+            <p>Daily Hydration</p>
+            <h2 style={{ fontSize: '18px', paddingTop: '2px' }}>Water Intake</h2>
+          </div>
+          <div className="skeleton-shimmer skeleton-rect" style={{ width: '45px', height: '18px', borderRadius: '4px' }} />
+        </div>
+
+        <div className="nutrition-rings" style={{ marginTop: 'auto', marginBottom: 'auto', justifyContent: 'center', display: 'flex' }}>
+          <div style={{ width: '170px', height: '170px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="skeleton-shimmer skeleton-circle" style={{ width: '160px', height: '160px' }} />
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
+          <div className="skeleton-shimmer skeleton-rect" style={{ width: '48px', height: '40px', borderRadius: '8px' }} />
+          <div className="skeleton-shimmer skeleton-rect" style={{ flex: 1, height: '40px', borderRadius: '8px' }} />
+          <div className="skeleton-shimmer skeleton-rect" style={{ flex: 1, height: '40px', borderRadius: '8px' }} />
         </div>
       </section>
     )

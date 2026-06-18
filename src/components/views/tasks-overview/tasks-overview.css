@@ -274,7 +274,7 @@
   gap: 14px;
   align-items: flex-start;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   position: relative;
 }
 
@@ -289,6 +289,13 @@
   flex-shrink: 0;
   margin-right: -374px; /* 360 + 14 gap to hide completely */
   transition: margin-right 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (min-width: 921px) {
+  .tasks-detail-wrapper {
+    position: sticky;
+    top: 0;
+  }
 }
 
 .tasks-content-grid.has-selection .tasks-detail-wrapper {

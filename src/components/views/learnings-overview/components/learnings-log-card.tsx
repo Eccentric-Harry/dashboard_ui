@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { BookOpen, ChevronLeft, ChevronRight, Edit2, Loader2, Pencil, Trash2 } from 'lucide-react'
+import { BookOpen, ChevronLeft, ChevronRight, Edit2, Pencil, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { fetchLearnings, deleteLearning } from '../../../../lib/api'
 import type { LearningLog } from '../../../../lib/api'
@@ -107,10 +107,25 @@ export function LearningsLogCard({
       </div>
 
       {loading ? (
-        <p className="learnings-loading" style={{ marginTop: 16 }}>
-          <Loader2 className="spinner animate-spin" size={14} />
-          Loading learnings...
-        </p>
+        <div className="learnings-log-list" style={{ marginTop: 14 }}>
+          {Array.from({ length: PAGE_SIZE }).map((_, idx) => (
+            <article key={idx} className="learnings-log-item">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <span className="skeleton-rect skeleton-shimmer" style={{ width: 55, height: 14, borderRadius: 6 }} />
+                    <span className="skeleton-rect skeleton-shimmer" style={{ width: 65, height: 10 }} />
+                  </div>
+                  <span className="skeleton-circle skeleton-shimmer" style={{ width: 18, height: 18 }} />
+                </div>
+                <div style={{ marginTop: 4 }}>
+                  <span className="skeleton-rect skeleton-shimmer mb-2" style={{ width: idx % 2 === 0 ? '80%' : '60%', height: 14 }} />
+                  <span className="skeleton-rect skeleton-shimmer" style={{ width: '90%', height: 11 }} />
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
       ) : learnings.length === 0 ? (
         <p className="learnings-empty" style={{ marginTop: 16 }}>
           No learnings logged yet.

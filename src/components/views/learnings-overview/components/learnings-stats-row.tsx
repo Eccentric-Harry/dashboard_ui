@@ -16,28 +16,36 @@ export function LearningsStatsRow({ summary, loading }: LearningsStatsRowProps) 
   const items = [
     {
       label: 'Learnings',
-      value: loading ? '—' : String(stats?.totalLearningsCount ?? 0),
+      value: loading ? (
+        <span className="skeleton-rect skeleton-shimmer" style={{ width: '40px', height: '22px', display: 'inline-block', verticalAlign: 'middle', borderRadius: '4px' }} />
+      ) : String(stats?.totalLearningsCount ?? 0),
       hint: 'total logged',
       icon: BookOpen,
       tone: 'learnings' as const,
     },
     {
       label: 'Tasks',
-      value: loading ? '—' : `${stats?.totalTasksCompleted ?? 0}/${stats?.totalTasksCount ?? 0}`,
+      value: loading ? (
+        <span className="skeleton-rect skeleton-shimmer" style={{ width: '50px', height: '22px', display: 'inline-block', verticalAlign: 'middle', borderRadius: '4px' }} />
+      ) : `${stats?.totalTasksCompleted ?? 0}/${stats?.totalTasksCount ?? 0}`,
       hint: 'done',
       icon: CheckSquare,
       tone: 'tasks' as const,
     },
     {
       label: 'Pursuits',
-      value: loading ? '—' : String(stats?.totalPursuitsCount ?? 0),
+      value: loading ? (
+        <span className="skeleton-rect skeleton-shimmer" style={{ width: '40px', height: '22px', display: 'inline-block', verticalAlign: 'middle', borderRadius: '4px' }} />
+      ) : String(stats?.totalPursuitsCount ?? 0),
       hint: 'active',
       icon: GraduationCap,
       tone: 'streak' as const,
     },
     {
       label: 'This week',
-      value: loading ? '—' : String(weeklyEntries),
+      value: loading ? (
+        <span className="skeleton-rect skeleton-shimmer" style={{ width: '40px', height: '22px', display: 'inline-block', verticalAlign: 'middle', borderRadius: '4px' }} />
+      ) : String(weeklyEntries),
       hint: 'entries',
       icon: Target,
       tone: 'week' as const,
@@ -73,6 +81,16 @@ export function LearningsStatsRow({ summary, loading }: LearningsStatsRowProps) 
                     </div>
                   )
                 })}
+              </div>
+            )}
+            {item.tone === 'week' && loading && (
+              <div className="learnings-weekly-dots">
+                {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((weekday, idx) => (
+                  <div key={idx} className="weekly-dot-col">
+                    <span className="weekly-dot-label" style={{ opacity: 0.5 }}>{weekday}</span>
+                    <span className="weekly-dot skeleton-circle skeleton-shimmer" style={{ width: '7px', height: '7px', display: 'block', borderWidth: 0 }} />
+                  </div>
+                ))}
               </div>
             )}
           </div>

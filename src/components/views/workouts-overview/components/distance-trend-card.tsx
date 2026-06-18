@@ -56,7 +56,11 @@ function DistanceTrendCard({ activities, loading }: DistanceTrendCardProps) {
       </div>
       <div className="workouts-trend-chart">
         {loading ? (
-          <div className="workouts-loading"><span className="workouts-loading-dot">Loading chart…</span></div>
+          <div style={{ flex: 1, width: '100%', minHeight: '140px', display: 'flex', alignItems: 'flex-end', gap: '8px', opacity: 0.25, padding: '10px 0', pointerEvents: 'none' }}>
+            {Array.from({ length: 10 }).map((_, idx) => (
+              <div key={idx} className="skeleton-shimmer" style={{ flex: 1, height: `${[35, 50, 42, 60, 52, 70, 58, 80, 64, 88][idx]}%`, borderRadius: '3px 3px 0 0' }} />
+            ))}
+          </div>
         ) : isMounted ? (
           <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
             <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>

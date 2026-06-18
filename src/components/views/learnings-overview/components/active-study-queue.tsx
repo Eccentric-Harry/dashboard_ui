@@ -414,9 +414,33 @@ export function ActiveStudyQueue({ refreshKey, onRefresh }: ActiveStudyQueueProp
       )}
 
       {isLoading ? (
-        <div className="flex flex-col justify-center items-center py-12 gap-2 flex-1">
-          <Loader2 className="animate-spin text-[#1a7a4a]" size={24} />
-          <span className="text-xs text-gray-400 font-medium">Loading pursuits...</span>
+        <div className="flex flex-col gap-3 flex-1 overflow-y-auto">
+          {Array.from({ length: TRACKS_PAGE_SIZE }).map((_, idx) => (
+            <div
+              key={idx}
+              className="bg-white border border-gray-100/80 rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,0.02)]"
+            >
+              <div className="flex justify-between items-center mb-2.5">
+                <span className="skeleton-rect skeleton-shimmer" style={{ width: 68, height: 16, borderRadius: 6 }} />
+                <span className="skeleton-circle skeleton-shimmer" style={{ width: 20, height: 20 }} />
+              </div>
+              <div className="mb-3">
+                <span className="skeleton-rect skeleton-shimmer" style={{ width: idx === 0 ? '75%' : '60%', height: 16 }} />
+              </div>
+              <div className="flex items-center justify-between gap-4 mt-4">
+                <span className="skeleton-rect skeleton-shimmer" style={{ flex: 1, height: 6, borderRadius: 3 }} />
+                <span className="skeleton-rect skeleton-shimmer" style={{ width: 45, height: 12 }} />
+              </div>
+              <div className="mt-4 border-t border-gray-50 pt-3 flex flex-col gap-3">
+                {Array.from({ length: idx === 0 ? 3 : 2 }).map((_, stepIdx) => (
+                  <div key={stepIdx} className="flex items-start gap-2.5 py-0.5">
+                    <span className="skeleton-circle skeleton-shimmer" style={{ width: 18, height: 18, flexShrink: 0, marginTop: 1 }} />
+                    <span className="skeleton-rect skeleton-shimmer" style={{ width: stepIdx === 0 ? '45%' : stepIdx === 1 ? '65%' : '35%', height: 12, marginTop: 4 }} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
         <div className="flex flex-col gap-3 flex-1 overflow-y-auto">

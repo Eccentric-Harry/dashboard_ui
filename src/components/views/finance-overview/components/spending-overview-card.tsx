@@ -9,6 +9,7 @@ interface SpendingOverviewCardProps {
   onCategorySelect?: (category: string | null) => void
   selectedMonthKey?: string
   onMonthSelect?: (monthKey: string) => void
+  loading?: boolean
 }
 
 const formatMonth = (dateString: string) => {
@@ -54,7 +55,8 @@ function SpendingOverviewCard({
   selectedCategory = null, 
   onCategorySelect,
   selectedMonthKey = '',
-  onMonthSelect
+  onMonthSelect,
+  loading = false
 }: SpendingOverviewCardProps) {
   // Extract all available months from logs
   const availableMonths = useMemo(() => {
@@ -148,6 +150,51 @@ function SpendingOverviewCard({
   }, [selectedCategory, spendingData.categories])
 
   const centerIndex = selectedIndex !== -1 ? selectedIndex : activeIndex
+
+  if (loading) {
+    return (
+      <section className="finance-card finance-spending-card">
+        <div className="finance-section-head">
+          <div>
+            <h2>Spending Overview</h2>
+          </div>
+          <span className="skeleton-rect skeleton-shimmer" style={{ width: 100, height: 28, borderRadius: 11 }} />
+        </div>
+
+        <div className="finance-spending-body" style={{ marginTop: 12 }}>
+          <div className="finance-donut-container relative flex items-center justify-center">
+            {/* Shimmering circle representing the pie chart ring */}
+            <div className="skeleton-circle skeleton-shimmer" style={{ width: 140, height: 140, border: '16px solid rgba(23, 28, 25, 0.04)', background: 'transparent' }} />
+            {/* Center Text Skeleton */}
+            <div 
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                textAlign: 'center',
+                pointerEvents: 'none'
+              }}
+            >
+              <span className="skeleton-rect skeleton-shimmer" style={{ width: 40, height: 10, margin: '0 auto 4px' }} />
+              <span className="skeleton-rect skeleton-shimmer" style={{ width: 60, height: 20, margin: '0 auto' }} />
+            </div>
+          </div>
+
+          <div className="finance-category-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {Array.from({ length: 4 }).map((_, idx) => (
+              <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid rgba(0,0,0,0.02)', paddingBottom: '8px' }}>
+                <span className="skeleton-circle skeleton-shimmer" style={{ width: 22, height: 22, flexShrink: 0 }} />
+                <span className="skeleton-rect skeleton-shimmer" style={{ width: '40%', height: 12 }} />
+                <span className="skeleton-rect skeleton-shimmer" style={{ width: '20%', height: 12, marginLeft: 'auto' }} />
+                <span className="skeleton-rect skeleton-shimmer" style={{ width: '15%', height: 10 }} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="finance-card finance-spending-card">

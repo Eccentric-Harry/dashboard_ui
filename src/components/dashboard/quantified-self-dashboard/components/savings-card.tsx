@@ -163,17 +163,18 @@ function SavingsCard({ onNavigate }: { onNavigate?: (path: AppPath, search?: str
             return (
               <div
                 key={i}
-                onClick={() => onNavigate?.('/learnings', `?date=${isoDate}`)}
-                title={`${dateLabel} · ${intensity > 0 ? `${intensity} session${intensity > 1 ? 's' : ''}` : 'No activity'}`}
+                className={isLoading ? 'skeleton-shimmer' : ''}
+                onClick={() => !isLoading && onNavigate?.('/learnings', `?date=${isoDate}`)}
+                title={isLoading ? 'Loading...' : `${dateLabel} · ${intensity > 0 ? `${intensity} session${intensity > 1 ? 's' : ''}` : 'No activity'}`}
                 style={{
                   aspectRatio: '1/1',
-                  background: intensityColors[intensity],
+                  background: isLoading ? undefined : intensityColors[intensity],
                   borderRadius: '2px',
                   transition: 'background-color 0.25s ease, transform 0.1s ease',
-                  cursor: 'pointer',
+                  cursor: isLoading ? 'default' : 'pointer',
                 }}
-                onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'scale(1.3)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'scale(1)'; }}
+                onMouseEnter={e => { if (!isLoading) (e.currentTarget as HTMLDivElement).style.transform = 'scale(1.3)'; }}
+                onMouseLeave={e => { if (!isLoading) (e.currentTarget as HTMLDivElement).style.transform = 'scale(1)'; }}
               />
             );
           })}

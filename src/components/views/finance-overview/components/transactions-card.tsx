@@ -99,7 +99,23 @@ function TransactionsCard({ transactions = [], loading = false, onEdit, onDelete
         </div>
         <div className="finance-transaction-list" role="rowgroup">
           {loading ? (
-            <div className="p-4 text-center text-sm text-gray-500">Loading...</div>
+            Array.from({ length: 5 }).map((_, idx) => (
+              <div className="finance-transaction-row" key={`loader-${idx}`} role="row" style={{ pointerEvents: 'none' }}>
+                <div className="finance-transaction-merchant" role="cell">
+                  <div className="skeleton-shimmer skeleton-circle" style={{ width: '28px', height: '28px', borderRadius: '12px' }} />
+                  <div style={{ flex: 1, marginLeft: '12px' }}>
+                    <div className="skeleton-shimmer skeleton-rect" style={{ width: '120px', height: '12px', borderRadius: '3px' }} />
+                    <div className="skeleton-shimmer skeleton-rect" style={{ width: '60px', height: '8px', marginTop: '6px', borderRadius: '2px' }} />
+                  </div>
+                </div>
+                <div className="finance-transaction-category" role="cell">
+                  <div className="skeleton-shimmer skeleton-rect" style={{ width: '80px', height: '18px', borderRadius: '9999px' }} />
+                </div>
+                <div className="finance-transaction-amount-group" role="cell">
+                  <div className="skeleton-shimmer skeleton-rect" style={{ width: '60px', height: '14px', borderRadius: '3px' }} />
+                </div>
+              </div>
+            ))
           ) : paginated.length === 0 ? (
             <div className="p-4 text-center text-sm text-gray-500">No recent transactions</div>
           ) : (

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, Pencil, Trash2, Loader2, BookOpen, Edit2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, BookOpen, Edit2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { mockTasksData } from '../../../dashboard/quantified-self-dashboard/data'
 import { fetchLearnings, deleteLearning } from '../../../../lib/api'
@@ -209,9 +209,26 @@ export function LearningDetailsCard({ selectedDate, onRefresh }: LearningDetails
           </h3>
 
           {loading ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#526057', padding: '16px 20px', background: 'rgba(255, 255, 255, 0.4)', borderRadius: '16px' }}>
-              <Loader2 className="spinner animate-spin" size={16} />
-              <span style={{ fontSize: '14px' }}>Loading learnings...</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {Array.from({ length: 2 }).map((_, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    padding: '18px 20px',
+                    borderRadius: '16px',
+                    background: 'rgba(255, 255, 255, 0.6)',
+                    border: '1px solid rgba(255, 255, 255, 0.8)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.015)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px'
+                  }}
+                >
+                  <span className="skeleton-rect skeleton-shimmer" style={{ width: 60, height: 16, borderRadius: 6 }} />
+                  <span className="skeleton-rect skeleton-shimmer" style={{ width: idx === 0 ? '70%' : '55%', height: 16, marginTop: 4 }} />
+                  <span className="skeleton-rect skeleton-shimmer" style={{ width: '90%', height: 12, marginTop: 4 }} />
+                </div>
+              ))}
             </div>
           ) : error ? (
             <div style={{ color: '#d83542', fontSize: '14px', padding: '16px 20px', background: 'rgba(216, 53, 66, 0.05)', borderRadius: '16px', border: '1px solid rgba(216, 53, 66, 0.1)' }}>
