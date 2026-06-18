@@ -3045,27 +3045,41 @@ button {
   right: 0;
   height: 3px;
   z-index: 100000;
-  background: linear-gradient(90deg, #35b64b, #2563eb, #35b64b);
-  background-size: 200% 100%;
-  box-shadow: 0 1px 6px rgba(53, 182, 75, 0.35);
+  background: rgba(26, 122, 74, 0.06);
   pointer-events: none;
   opacity: 0;
   transform: translateY(-3px);
   transition: opacity 0.25s ease, transform 0.25s ease;
+  overflow: hidden;
+}
+
+.global-top-progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -40%;
+  bottom: 0;
+  width: 40%;
+  background: #1a7a4a;
+  border-radius: 99px;
+  box-shadow: 0 0 6px rgba(26, 122, 74, 0.3);
 }
 
 .global-top-progress-bar.visible {
   opacity: 1;
   transform: translateY(0);
-  animation: top-bar-slide 1.4s linear infinite;
 }
 
-@keyframes top-bar-slide {
+.global-top-progress-bar.visible::after {
+  animation: top-bar-indeterminate 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes top-bar-indeterminate {
   0% {
-    background-position: 200% 0;
+    left: -40%;
   }
   100% {
-    background-position: -200% 0;
+    left: 100%;
   }
 }
 
