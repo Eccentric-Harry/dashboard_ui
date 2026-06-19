@@ -753,86 +753,36 @@
     grid-column: span 12 !important;
   }
 
-  /* Variant 1 mobile reset */
-  .people-card--v1 .people-card-header {
-    padding-right: 0;
-  }
-
+  /* Mobile adjustments to keep desktop aesthetic */
   .people-card--v1 .people-card-avatar {
-    position: static !important;
-    top: auto !important;
-    right: auto !important;
-    width: 48px;
-    height: 48px;
-    border: 2px solid rgba(0, 0, 0, 0.04) !important;
-    box-shadow: none !important;
-    transform: none !important;
-    margin: 0 !important;
+    right: -4px;
   }
 
   .people-card-quote-floating {
-    display: none;
-  }
-
-  /* Variant 2 mobile reset */
-  .people-card--v2 {
-    margin-top: 0;
+    font-size: 80px;
+    left: 4px;
   }
 
   .people-card--v2 .people-card-avatar-top {
-    position: static;
-    width: 48px;
-    height: 48px;
-    border: 2px solid rgba(0, 0, 0, 0.04);
-    box-shadow: none;
-    margin-bottom: 8px;
-  }
-
-  .people-card--v2 .people-card-content {
-    padding-top: 0;
+    left: 16px;
   }
 
   .people-card-quote-floating-bottom {
-    display: none;
-  }
-
-  /* Variant 3 mobile reset */
-  .people-card--v3 {
-    flex-direction: column;
-  }
-
-  .people-card--v3 .people-card-split-image {
-    width: 100%;
-    height: 200px;
-    min-height: auto;
-    border-top-left-radius: 19px;
-    border-top-right-radius: 19px;
-    border-bottom-left-radius: 0;
+    font-size: 80px;
+    right: 8px;
+    bottom: -36px;
   }
 
   .people-card--v3 .people-card-split-content {
-    width: 100%;
-    padding: 24px;
+    padding: 16px;
   }
 
-  /* Variant 4 mobile reset */
+  .people-card--v3 .people-card-split-image {
+    min-height: 180px;
+  }
+
   .people-card--v4 {
-    padding: 24px;
-    gap: 16px;
-  }
-
-  .people-avatar-stack {
-    position: static;
-    margin-top: 12px;
-  }
-
-  /* Variant 5 mobile reset */
-  .people-card--v5 .people-bubble-tail {
-    display: none;
-  }
-  
-  .people-card--v5 .people-bubble-author {
-    padding-left: 8px;
+    margin-bottom: 12px;
   }
 
   .people-modal {

@@ -109,69 +109,78 @@ function NotificationCenter({ onNavigate }: NotificationCenterProps) {
         </div>
 
         {/* Quick Access Section */}
-        <div style={{ padding: '0 20px 16px', borderBottom: '1px solid rgba(16, 19, 18, 0.06)', marginBottom: '8px' }}>
-          <h3 style={{ fontSize: '11px', textTransform: 'uppercase', color: 'rgba(16,19,18,0.5)', letterSpacing: '0.05em', marginBottom: '12px', fontWeight: 700 }}>Quick Access</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+        <div className="quick-access-section">
+          <h3 className="quick-access-section-title">Quick Access</h3>
+          <div className={`quick-access-grid ${isPushSupported ? 'four-items' : 'three-items'}`}>
             <button 
+              type="button"
               onClick={() => { setIsOpen(false); if (onNavigate) onNavigate('/prompts'); }}
-              style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center', justifyContent: 'center', height: '52px', background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(16,19,18,0.04)', borderRadius: '12px', color: '#101312', cursor: 'pointer', transition: 'all 0.2s ease', width: '100%', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}
-              onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.9)'; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)'; }}
-              onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.6)'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.02)'; }}
+              className="quick-access-tile"
             >
-              <Terminal size={16} />
-              <span style={{ fontSize: '9px', fontWeight: 600, opacity: 0.6 }}>Prompts</span>
+              <div className="tile-icon-wrapper">
+                <Terminal size={16} />
+              </div>
+              <div className="tile-info">
+                <span className="tile-title">Prompts</span>
+                <span className="tile-subtitle">Manage library</span>
+              </div>
             </button>
+
             <button 
+              type="button"
               onClick={() => {
                 setBusy('refresh');
                 location.reload();
               }}
-              style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center', justifyContent: 'center', height: '52px', background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(16,19,18,0.04)', borderRadius: '12px', color: '#101312', cursor: 'pointer', transition: 'all 0.2s ease', width: '100%', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}
-              onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.9)'; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)'; }}
-              onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.6)'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.02)'; }}
+              className="quick-access-tile"
               title="Reload page (⌘R)"
               aria-label="Reload page"
             >
-              <RefreshCw size={16} className={busy === 'refresh' ? 'animate-spin' : ''} />
-              <span style={{ fontSize: '9px', fontWeight: 600, opacity: 0.6 }}>Refresh</span>
+              <div className="tile-icon-wrapper">
+                <RefreshCw size={16} className={busy === 'refresh' ? 'animate-spin' : ''} />
+              </div>
+              <div className="tile-info">
+                <span className="tile-title">Refresh</span>
+                <span className="tile-subtitle">Sync dashboard</span>
+              </div>
             </button>
 
             {isPushSupported && (
               <button 
+                type="button"
                 onClick={async () => {
                   setBusy('toggle');
                   await toggleDesktopNotifications();
                   setBusy(null);
                 }}
-                style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center', justifyContent: 'center', height: '52px', background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(16,19,18,0.04)', borderRadius: '12px', color: desktopEnabled ? '#10b981' : '#101312', cursor: 'pointer', transition: 'all 0.2s ease', width: '100%', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}
-                onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.9)'; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)'; }}
-                onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.6)'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.02)'; }}
+                className={`quick-access-tile ${desktopEnabled ? 'active' : ''}`}
                 title={desktopEnabled ? 'Disable push alerts' : 'Enable push alerts'}
                 aria-label={desktopEnabled ? 'Disable push alerts' : 'Enable push alerts'}
               >
-                {busy === 'toggle' ? <Loader2 size={16} className="animate-spin" /> : desktopEnabled ? <Bell size={16} /> : <BellOff size={16} />}
-                <span style={{ fontSize: '9px', fontWeight: 600, opacity: 0.6 }}>{desktopEnabled ? 'Alerts On' : 'Alerts Off'}</span>
+                <div className="tile-icon-wrapper">
+                  {busy === 'toggle' ? <Loader2 size={16} className="animate-spin" /> : desktopEnabled ? <Bell size={16} /> : <BellOff size={16} />}
+                </div>
+                <div className="tile-info">
+                  <span className="tile-title">Push Alerts</span>
+                  <span className="tile-subtitle">{desktopEnabled ? 'Enabled' : 'Disabled'}</span>
+                </div>
               </button>
             )}
 
             <button 
+              type="button"
               onClick={toggleFinanceGrids}
-              style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center', justifyContent: 'center', height: '52px', background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(16,19,18,0.04)', borderRadius: '12px', color: '#101312', cursor: 'pointer', transition: 'all 0.2s ease', width: '100%', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}
-              onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.9)'; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)'; }}
-              onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.6)'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.02)'; }}
+              className={`quick-access-tile ${showFinanceGrids ? 'active' : ''}`}
               title={showFinanceGrids ? 'Hide Repayment Grids' : 'Show Repayment Grids'}
             >
-              {showFinanceGrids ? <Eye size={16} /> : <EyeOff size={16} />}
-              <span style={{ fontSize: '9px', fontWeight: 600, opacity: 0.6 }}>{showFinanceGrids ? 'Grids Vis' : 'Grids Hid'}</span>
+              <div className="tile-icon-wrapper">
+                {showFinanceGrids ? <Eye size={16} /> : <EyeOff size={16} />}
+              </div>
+              <div className="tile-info">
+                <span className="tile-title">Finance Grids</span>
+                <span className="tile-subtitle">{showFinanceGrids ? 'Visible' : 'Hidden'}</span>
+              </div>
             </button>
-
-            {/* Empty placeholders */}
-            {Array.from({ length: isPushSupported ? 2 : 3 }).map((_, i) => (
-              <div 
-                key={i} 
-                style={{ height: '52px', background: 'rgba(16,19,18,0.03)', borderRadius: '12px' }} 
-              />
-            ))}
           </div>
         </div>
 
@@ -204,6 +213,10 @@ function NotificationCenter({ onNavigate }: NotificationCenterProps) {
               </div>
               <h3>All caught up!</h3>
               <p>You have no notifications, reminders, or tasks waiting for you right now.</p>
+              <div className="status-indicator">
+                <span className="status-dot animate-pulse"></span>
+                All systems operational
+              </div>
             </div>
           ) : (
             <div className="notification-feed">

@@ -353,7 +353,8 @@ button {
   background: rgba(217, 223, 217, 0.78);
 }
 
-.side-rail button span {
+.side-rail button span.rail-tooltip,
+.side-rail button span.rail-bubble {
   position: absolute;
   left: 33px;
   top: 2px;
@@ -1946,7 +1947,7 @@ button {
   bottom: 0;
   right: 0;
   width: min(420px, 100%);
-  background: linear-gradient(180deg, rgba(235, 242, 237, 0.88) 0%, rgba(246, 250, 247, 0.92) 60%, rgba(254, 255, 254, 0.96) 100%);
+  background: linear-gradient(180deg, rgba(245, 249, 246, 0.97) 0%, rgba(250, 253, 251, 0.98) 60%, rgba(255, 255, 255, 0.99) 100%);
   backdrop-filter: blur(48px) saturate(200%);
   -webkit-backdrop-filter: blur(48px) saturate(200%);
   border-left: 1px solid rgba(255, 255, 255, 0.45);
@@ -1990,12 +1991,14 @@ button {
 
 .unread-badge {
   padding: 3px 9px;
-  background: #ff3b30;
-  color: #ffffff;
-  border-radius: 12px;
-  font-size: 10.5px;
-  font-weight: 700;
-  box-shadow: 0 2px 8px rgba(255, 59, 48, 0.25);
+  background: rgba(26, 122, 74, 0.08);
+  color: #1a7a4a;
+  border: 1px solid rgba(26, 122, 74, 0.16);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  box-shadow: 0 2px 6px rgba(26, 122, 74, 0.04);
 }
 
 .close-drawer-btn {
@@ -2017,6 +2020,132 @@ button {
   color: #1c241f;
   transform: scale(1.05);
 }
+
+/* Quick Access Redesign */
+.quick-access-section {
+  padding: 4px 24px 18px;
+  border-bottom: 1px solid rgba(16, 19, 18, 0.06);
+  margin-bottom: 8px;
+}
+
+.quick-access-section-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: rgba(16, 19, 18, 0.45);
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+
+.quick-access-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.quick-access-grid.three-items> :first-child {
+  grid-column: span 2;
+}
+
+.quick-access-tile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(82, 96, 87, 0.08);
+  border-radius: 14px;
+  color: #101312;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
+  width: 100%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.01);
+}
+
+.quick-access-tile:hover {
+  background: #ffffff;
+  border-color: rgba(26, 122, 74, 0.18);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(26, 122, 74, 0.05);
+}
+
+.quick-access-tile:active {
+  transform: translateY(0);
+}
+
+.tile-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: rgba(82, 96, 87, 0.05);
+  color: #526057;
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+}
+
+.quick-access-tile:hover .tile-icon-wrapper {
+  background: rgba(26, 122, 74, 0.08);
+  color: #1a7a4a;
+}
+
+.quick-access-tile.active {
+  background: rgba(26, 122, 74, 0.04);
+  border-color: rgba(26, 122, 74, 0.18);
+}
+
+.quick-access-tile.active .tile-icon-wrapper {
+  background: rgba(26, 122, 74, 0.1);
+  color: #1a7a4a;
+}
+
+.tile-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tile-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #101312;
+  line-height: 1.2;
+}
+
+.tile-subtitle {
+  font-size: 9.5px;
+  color: rgba(16, 19, 18, 0.45);
+  font-weight: 500;
+  line-height: 1.3;
+  margin-top: 1px;
+}
+
+/* System Status Indicator */
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  padding: 4px 10px;
+  background: rgba(26, 122, 74, 0.06);
+  border: 1px solid rgba(26, 122, 74, 0.12);
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #1a7a4a;
+}
+
+.status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 6px #10b981;
+}
+
 
 /* Settings Accordion */
 .settings-accordion-trigger {
@@ -2227,7 +2356,7 @@ button {
 /* Redesigned Pill/Capsule notification card */
 .notification-item {
   padding: 10px 14px 10px 10px;
-  border-radius: 32px;
+  border-radius: 16px;
   background: rgba(255, 255, 255, 0.65);
   border: 1px solid rgba(255, 255, 255, 0.5);
   box-shadow:
@@ -2235,7 +2364,7 @@ button {
     0 6px 12px -5px rgba(36, 48, 39, 0.015),
     inset 0 -1.5px 3px rgba(0, 0, 0, 0.01),
     inset 0 1px 1px rgba(255, 255, 255, 0.85);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.2s ease;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -2243,7 +2372,6 @@ button {
 }
 
 .notification-item:hover {
-  transform: translateY(-2px) scale(1.01);
   background: #ffffff;
   border-color: rgba(255, 255, 255, 0.9);
   box-shadow:
@@ -2251,37 +2379,66 @@ button {
     0 8px 16px -6px rgba(36, 48, 39, 0.03);
 }
 
+/* Category-specific unread notification styling */
+.notification-item.unread.item-task {
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.05) 0%, rgba(255, 255, 255, 0.85) 100%);
+  border-color: rgba(16, 185, 129, 0.22);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.04);
+}
+
+.notification-item.unread.item-task:hover {
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.07) 0%, rgba(255, 255, 255, 0.95) 100%);
+  border-color: rgba(16, 185, 129, 0.35);
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.06);
+}
+
+.notification-item.unread.item-event {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.05) 0%, rgba(255, 255, 255, 0.85) 100%);
+  border-color: rgba(59, 130, 246, 0.22);
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.04);
+}
+
+.notification-item.unread.item-event:hover {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.07) 0%, rgba(255, 255, 255, 0.95) 100%);
+  border-color: rgba(59, 130, 246, 0.35);
+  box-shadow: 0 6px 18px rgba(59, 130, 246, 0.06);
+}
+
+.notification-item.unread.item-reminder {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.05) 0%, rgba(255, 255, 255, 0.85) 100%);
+  border-color: rgba(245, 158, 11, 0.22);
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.04);
+}
+
+.notification-item.unread.item-reminder:hover {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.07) 0%, rgba(255, 255, 255, 0.95) 100%);
+  border-color: rgba(245, 158, 11, 0.35);
+  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.06);
+}
+
+.notification-item.unread.item-milestone {
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.05) 0%, rgba(255, 255, 255, 0.85) 100%);
+  border-color: rgba(139, 92, 246, 0.22);
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.04);
+}
+
+.notification-item.unread.item-milestone:hover {
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.07) 0%, rgba(255, 255, 255, 0.95) 100%);
+  border-color: rgba(139, 92, 246, 0.35);
+  box-shadow: 0 6px 18px rgba(139, 92, 246, 0.06);
+}
+
+/* Fallback unread style */
 .notification-item.unread {
-  background: rgba(255, 255, 255, 0.82);
-  border-color: rgba(16, 185, 129, 0.18);
-  box-shadow:
-    0 8px 20px -4px rgba(16, 185, 129, 0.04),
-    0 6px 12px -5px rgba(0, 0, 0, 0.015),
-    inset 0 -1.5px 3px rgba(0, 0, 0, 0.01);
+  background: linear-gradient(90deg, rgba(82, 96, 87, 0.04) 0%, rgba(255, 255, 255, 0.85) 100%);
+  border-color: rgba(82, 96, 87, 0.15);
+  box-shadow: 0 4px 14px rgba(82, 96, 87, 0.03);
 }
 
 .notification-item.unread:hover {
-  background: #ffffff;
-  border-color: rgba(16, 185, 129, 0.26);
-}
-
-.notification-item.unread::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 4px;
-  transform: translateY(-50%);
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 6px #10b981;
-  transition: all 0.2s ease;
-  z-index: 2;
-}
-
-.notification-item.unread .notif-layout-row {
-  padding-left: 6px;
+  background: linear-gradient(90deg, rgba(82, 96, 87, 0.06) 0%, rgba(255, 255, 255, 0.95) 100%);
+  border-color: rgba(82, 96, 87, 0.25);
+  box-shadow: 0 6px 18px rgba(82, 96, 87, 0.05);
 }
 
 .notif-layout-row {
@@ -2340,7 +2497,7 @@ button {
 
 .item-reminder .notif-icon-inner-circle {
   background: #ffedd5;
-  color: #ea580c;
+  color: #eb5a0c;
   border: 1px solid rgba(234, 88, 12, 0.15);
 }
 
@@ -2589,7 +2746,9 @@ button {
 }
 
 @keyframes footer-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .animate-spin {
@@ -2606,49 +2765,27 @@ button {
 
 /* Sidebar Notification Bell circular badge neomorphism (Desktop) */
 .side-rail button.rail-notifications-btn {
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.side-rail button.rail-notifications-btn:hover {
-  transform: scale(1.08);
-}
-
-.side-rail button.rail-notifications-btn:active {
-  transform: scale(0.95);
+  transition: all 0.15s ease;
 }
 
 .rail-notification-badge {
   position: absolute;
-  top: -3px;
-  right: -1px;
-  min-width: 14px;
-  height: 14px;
-  padding: 0 3px;
-  border-radius: 50%;
-  background: #ff3b30;
+  top: -2px;
+  right: -2px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 4px;
+  border-radius: 20px;
+  background: #f43f5e;
   color: #ffffff;
   font-size: 8.5px;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 6px rgba(255, 59, 48, 0.4);
+  box-shadow: 0 2px 6px rgba(244, 63, 94, 0.35);
   border: 1.5px solid #ffffff;
-  animation: badge-pulse 2s infinite;
-}
-
-@keyframes badge-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.6);
-  }
-
-  70% {
-    box-shadow: 0 0 0 5px rgba(255, 59, 48, 0);
-  }
-
-  100% {
-    box-shadow: 0 0 0 0 rgba(255, 59, 48, 0);
-  }
+  pointer-events: none;
 }
 
 .mobile-notification-trigger {
@@ -2775,7 +2912,7 @@ button {
 
   /* Cards slightly wider on mobile full-screen */
   .notification-item {
-    border-radius: 18px;
+    border-radius: 16px;
     margin-bottom: 10px;
   }
 
@@ -2980,6 +3117,7 @@ button {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
 /* Fix pagination button icon sizes universally */
 .pagination-btn svg,
 .mini-pagination-btn svg {
@@ -2995,6 +3133,7 @@ button {
   0% {
     background-position: 200% 0;
   }
+
   100% {
     background-position: -200% 0;
   }
@@ -3002,12 +3141,10 @@ button {
 
 /* Core Shimmer class */
 .skeleton-shimmer {
-  background: linear-gradient(
-    90deg,
-    rgba(20, 24, 22, 0.05) 25%,
-    rgba(20, 24, 22, 0.12) 37%,
-    rgba(20, 24, 22, 0.05) 63%
-  );
+  background: linear-gradient(90deg,
+      rgba(20, 24, 22, 0.05) 25%,
+      rgba(20, 24, 22, 0.12) 37%,
+      rgba(20, 24, 22, 0.05) 63%);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.5s ease infinite;
 }
@@ -3032,6 +3169,7 @@ button {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -3078,8 +3216,8 @@ button {
   0% {
     left: -40%;
   }
+
   100% {
     left: 100%;
   }
 }
-
