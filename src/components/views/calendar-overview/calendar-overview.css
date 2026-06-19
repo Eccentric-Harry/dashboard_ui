@@ -250,6 +250,7 @@
 .week-ribbon-wrapper {
   position: relative;
   overflow: hidden;
+  flex: 0 0 auto;
   border-bottom: 1px solid rgba(21, 26, 24, 0.06);
   /* Faded edges to prevent harsh cutting of scrolling dates */
   mask-image: linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent);
