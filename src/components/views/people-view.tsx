@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   BadgeCheck,
   Coffee,
@@ -434,7 +435,7 @@ type InteractionModalProps = {
 }
 
 function InteractionModal({ interaction, onClose }: InteractionModalProps) {
-  return (
+  return createPortal(
     <div className="people-modal-backdrop" role="presentation" onMouseDown={onClose}>
       <article
         className="people-modal"
@@ -499,7 +500,8 @@ function InteractionModal({ interaction, onClose }: InteractionModalProps) {
           </section>
         )}
       </article>
-    </div>
+    </div>,
+    document.body
   )
 }
 

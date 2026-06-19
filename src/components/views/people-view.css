@@ -10,20 +10,35 @@
   scrollbar-gutter: stable;
 }
 
-.people-dashboard::-webkit-scrollbar,
-.people-modal::-webkit-scrollbar {
+.people-dashboard::-webkit-scrollbar {
   width: 9px;
 }
-.people-dashboard::-webkit-scrollbar-track,
-.people-modal::-webkit-scrollbar-track {
+.people-dashboard::-webkit-scrollbar-track {
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.04);
 }
-.people-dashboard::-webkit-scrollbar-thumb,
-.people-modal::-webkit-scrollbar-thumb {
+.people-dashboard::-webkit-scrollbar-thumb {
   border: 2px solid rgba(255, 255, 255, 0.8);
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.15);
+}
+
+/* Premium modal backdrop scrollbar */
+.people-modal-backdrop::-webkit-scrollbar {
+  width: 10px;
+}
+.people-modal-backdrop::-webkit-scrollbar-track {
+  background: transparent;
+}
+.people-modal-backdrop::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  background-clip: padding-box;
+}
+.people-modal-backdrop::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.35);
+  background-clip: padding-box;
 }
 
 .people-header {
@@ -432,17 +447,18 @@
   z-index: 120000;
   display: grid;
   place-items: center;
-  padding: 26px;
-  background: rgba(17, 22, 19, 0.4);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  padding: 40px 24px;
+  background: rgba(17, 22, 19, 0.45);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  overflow-y: auto;
   animation: people-fade-in 0.2s ease both;
 }
 
 .people-modal {
   position: relative;
   width: min(720px, 100%);
-  max-height: min(850px, calc(100svh - 52px));
+  max-height: min(850px, calc(100svh - 80px));
   overflow-y: auto;
   padding: 32px 48px;
   border-radius: 24px;
@@ -451,6 +467,7 @@
   color: #101312;
   animation: people-modal-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
   text-align: center;
+  margin: auto;
 }
 
 .people-modal-close {
@@ -821,7 +838,8 @@
   .people-modal {
     padding: 24px 20px;
     border-radius: 20px;
-    max-height: calc(100svh - 160px);
+    max-height: none;
+    overflow: visible;
   }
 
   .people-modal-hero {
