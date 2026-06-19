@@ -1,11 +1,11 @@
 import {
+  Activity,
   Bell,
   BookOpen,
   Briefcase,
   CalendarDays,
   Coffee,
   Dumbbell,
-  Heart,
   Home,
   ListChecks,
   Milestone,
@@ -23,7 +23,7 @@ interface RoutineIconDetails {
 }
 
 const rules: { pattern: RegExp; icon: typeof ListChecks; color: string; bg: string }[] = [
-  { pattern: /\b(doctor|dentist|checkup|medical|clinic|hospital|therapy|massage|wellness|physio|surgery|vaccine|injection|lab test|blood test|eye test|optical|dental|medicine|medication|meds|pill|pills|supplement|supplements)\b/, icon: Heart, color: '#be123c', bg: '#fce8ec' },
+  { pattern: /\b(doctor|dentist|checkup|medical|clinic|hospital|therapy|massage|wellness|physio|surgery|vaccine|injection|lab test|blood test|eye test|optical|dental|medicine|medication|meds|pill|pills|supplement|supplements)\b/, icon: Activity, color: '#059669', bg: '#ecfdf5' },
   { pattern: /\b(workout|gym|exercise|run|jog|yoga|meditation|walk|fitness|training|pilates|stretch|cardio|swim|cycle|bike|hike|trek|sport|sports|work out)\b/, icon: Dumbbell, color: '#047857', bg: '#e0f2ec' },
   { pattern: /\b(meeting|interview|standup|sync|1:1|one-on-one|catch.up|conference|retro|grooming|planning|appointment|reservation|booking)\b/, icon: Users, color: '#6d28d9', bg: '#f0ebf7' },
   { pattern: /\b(study|learn|read|book|course|class|lecture|tutorial|lesson|homework|assignment|exam|skill|certification|training session|workshop|seminar|webinar)\b/, icon: BookOpen, color: '#0e7490', bg: '#e8f4f7' },
@@ -56,7 +56,7 @@ export const getRoutineIconDetails = (item: {
   }
 
   if (category === 'work') return { icon: Briefcase, color: '#1d4ed8', bg: '#e9eef7' }
-  if (category === 'health') return { icon: Heart, color: '#be123c', bg: '#fce8ec' }
+  if (category === 'health') return { icon: Activity, color: '#059669', bg: '#ecfdf5' }
   if (category === 'learning') return { icon: BookOpen, color: '#0e7490', bg: '#e8f4f7' }
   if (category === 'finance') return { icon: Wallet, color: '#b45309', bg: '#f7f0df' }
   if (category === 'social') return { icon: Users, color: '#be185d', bg: '#f7e8ef' }

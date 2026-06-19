@@ -45,7 +45,7 @@ const TYPE_OPTIONS: CalendarItemType[] = ['TASK', 'EVENT', 'REMINDER', 'MILESTON
 const CATEGORY_HUES: Record<string, number> = {
   Personal: 270,
   Work: 210,
-  Health: 340,
+  Health: 142,
   Learning: 175,
   Finance: 35,
   Social: 330,
@@ -64,7 +64,7 @@ function hueForCategory(category?: string) {
 const CATEGORY_OPTIONS = [
   { label: 'Personal', color: '#7c3aed' },
   { label: 'Work', color: '#2563eb' },
-  { label: 'Health', color: '#e11d48' },
+  { label: 'Health', color: '#10b981' },
   { label: 'Learning', color: '#0d9488' },
   { label: 'Finance', color: '#d97706' },
   { label: 'Social', color: '#db2777' },

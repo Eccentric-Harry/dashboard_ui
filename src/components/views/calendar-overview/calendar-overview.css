@@ -463,19 +463,14 @@
   border-color: hsla(var(--cat-hue, 210), 45%, 50%, 0.25);
   background: rgba(255, 255, 255, 0.72);
   box-shadow: 0 4px 12px hsla(var(--cat-hue, 210), 30%, 40%, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
-  transform: translateY(-1px);
 }
 
 .routine-card.is-active {
   border-color: hsla(var(--cat-hue, 210), 55%, 42%, 0.35);
-  background: linear-gradient(135deg,
-    hsla(var(--cat-hue, 210), 40%, 96%, 0.92),
-    hsla(var(--cat-hue, 210), 30%, 94%, 0.85)
-  );
+  background: hsla(var(--cat-hue, 210), 35%, 95%, 0.92);
   box-shadow:
     0 8px 24px hsla(var(--cat-hue, 210), 45%, 40%, 0.1),
     0 2px 6px rgba(0, 0, 0, 0.04);
-  transform: translateY(-1px);
 }
 
 .routine-card-copy {
@@ -496,10 +491,6 @@
   color: var(--card-color, #1d4ed8);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   transition: transform 200ms ease, box-shadow 200ms ease;
-}
-
-.routine-card:hover .routine-card-icon {
-  transform: scale(1.05);
 }
 
 .routine-card-time {
@@ -569,13 +560,7 @@
   top: 28px;
   bottom: 28px;
   width: 2px;
-  background: linear-gradient(
-    to bottom,
-    hsla(var(--cat-hue, 210), 40%, 70%, 0.08),
-    hsla(var(--cat-hue, 210), 40%, 60%, 0.18) 20%,
-    hsla(var(--cat-hue, 210), 40%, 60%, 0.18) 80%,
-    hsla(var(--cat-hue, 210), 40%, 70%, 0.08)
-  );
+  background: hsla(var(--cat-hue, 210), 40%, 60%, 0.15);
   border-radius: 2px;
 }
 
@@ -631,9 +616,7 @@
   padding: 17px 16px 16px;
   border-color: color-mix(in srgb, var(--card-color, #1d4ed8) 14%, transparent);
   border-radius: 22px;
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--card-color, #1d4ed8) 12%, #ffffff), color-mix(in srgb, var(--card-color, #1d4ed8) 5%, #ffffff)),
-    var(--card-bg, #ffffff);
+  background: var(--card-bg, #ffffff);
   box-shadow: 0 12px 28px color-mix(in srgb, var(--card-color, #1d4ed8) 9%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.62);
 }
 
@@ -653,17 +636,13 @@
 
 .routine-card:hover {
   border-color: color-mix(in srgb, var(--card-color, #1d4ed8) 24%, transparent);
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--card-color, #1d4ed8) 16%, #ffffff), color-mix(in srgb, var(--card-color, #1d4ed8) 7%, #ffffff)),
-    var(--card-bg, #ffffff);
+  background: color-mix(in srgb, var(--card-color, #1d4ed8) 4%, var(--card-bg, #ffffff));
   box-shadow: 0 16px 34px color-mix(in srgb, var(--card-color, #1d4ed8) 12%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.68);
 }
 
 .routine-card.is-active {
   border-color: color-mix(in srgb, var(--card-color, #1d4ed8) 36%, transparent);
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--card-color, #1d4ed8) 18%, #ffffff), color-mix(in srgb, var(--card-color, #1d4ed8) 8%, #ffffff)),
-    var(--card-bg, #ffffff);
+  background: color-mix(in srgb, var(--card-color, #1d4ed8) 6%, var(--card-bg, #ffffff));
   box-shadow: 0 18px 42px color-mix(in srgb, var(--card-color, #1d4ed8) 16%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.76);
 }
 
@@ -981,8 +960,10 @@
 }
 
 .focus-status-pill.is-done {
-  background: #dff7ea;
-  color: #157347;
+  background: rgba(16, 185, 129, 0.06);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.16);
+  padding: 0 9px;
 }
 
 .focus-status-pill.is-cancelled {
