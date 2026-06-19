@@ -41,11 +41,31 @@ import { getTagColor } from '../../../lib/tag-colors'
 import './calendar-overview.css'
 
 const TYPE_OPTIONS: CalendarItemType[] = ['TASK', 'EVENT', 'REMINDER', 'MILESTONE']
+
+const CATEGORY_HUES: Record<string, number> = {
+  Personal: 270,
+  Work: 210,
+  Health: 340,
+  Learning: 175,
+  Finance: 35,
+  Social: 330,
+}
+
+function hueForCategory(category?: string) {
+  if (!category) return 210
+  if (CATEGORY_HUES[category]) return CATEGORY_HUES[category]
+  let hash = 0
+  for (let i = 0; i < category.length; i++) {
+    hash = category.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  return Math.abs(hash) % 360
+}
+
 const CATEGORY_OPTIONS = [
   { label: 'Personal', color: '#7c3aed' },
   { label: 'Work', color: '#2563eb' },
-  { label: 'Health', color: '#059669' },
-  { label: 'Learning', color: '#0891b2' },
+  { label: 'Health', color: '#e11d48' },
+  { label: 'Learning', color: '#0d9488' },
   { label: 'Finance', color: '#d97706' },
   { label: 'Social', color: '#db2777' },
 ]
@@ -373,8 +393,15 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                 {selectedItems.map((item) => {
                   const isActive = selectedItem && itemKey(item) === itemKey(selectedItem)
                   const status = getItemStatus(item, selectedDate)
+                  const routineIcon = getRoutineIconDetails(item)
+                  const CardIcon = routineIcon.icon
+                  const notePreview = stripChecklist(item.notes) || getFallbackDescription(item)
                   return (
-                    <div className={`routine-row status-${status}`} key={itemKey(item)}>
+                    <div
+                      className={`routine-row status-${status} ${getRoutineBlockClass(item)}`}
+                      key={itemKey(item)}
+                      style={{ '--cat-hue': hueForCategory(item.category) } as React.CSSProperties}
+                    >
                       <span className={`routine-node ${isActive ? 'is-active' : ''}`}>
                         {item.completed ? <Check size={11} /> : item.cancelled ? <X size={11} /> : null}
                       </span>
@@ -383,17 +410,16 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                           type="button"
                           className={`routine-card ${isActive ? 'is-active' : ''}`}
                           onClick={() => setSelectedItemKey(itemKey(item))}
+                          style={{ '--cat-hue': hueForCategory(item.category), '--card-color': routineIcon.color, '--card-bg': routineIcon.bg } as React.CSSProperties}
                         >
-                          <span className="routine-card-icon" style={{ '--card-color': getRoutineIconDetails(item).color, '--card-bg': getRoutineIconDetails(item).bg } as React.CSSProperties}>
-                            {(() => {
-                              const CardIcon = getRoutineIconDetails(item).icon
-                              return <CardIcon size={16} />
-                            })()}
+                          <span className="routine-card-icon">
+                            <CardIcon size={17} />
                           </span>
                           <div className="routine-card-copy">
-                            <span>{formatItemTime(item)}</span>
+                            <span className="routine-card-time-badge">{formatTimelineLabel(item)}</span>
                             <strong>{item.title}</strong>
-                            <p>{item.notes || getFallbackDescription(item)}</p>
+                            <span className="routine-card-subtime">{formatRoutineSubline(item)}</span>
+                            <p>{notePreview}</p>
                           </div>
                           <span
                             className="routine-card-more-trigger"
@@ -583,104 +609,107 @@ function FocusDetail({
   const RoutineIcon = routineIcon.icon
   const category = item.category || 'Personal'
   const categoryColors = getTagColor(category)
+  const catHue = hueForCategory(category)
+  const notes = stripChecklist(item.notes) || getFallbackDescription(item)
+  const statusLabel = item.cancelled ? 'Cancelled' : item.completed ? 'Completed' : isCurrent ? 'Live now' : 'Planned'
 
   return (
-    <div className="focus-detail">
+    <div className="focus-detail" style={{ '--cat-hue': catHue, '--focus-color': routineIcon.color } as React.CSSProperties}>
       <div className="focus-detail-panel-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <h3>Routine Details</h3>
         <div className="focus-assignee-avatar" style={{ width: 28, height: 28, border: '2px solid #fff', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', backgroundImage: `url(${avatarImage})` }} title="Eccentric Harry" />
       </div>
 
       <div className="focus-detail-body">
-        <div className="focus-header-group">
-          <div className="focus-hero">
-            <span className="focus-icon" style={{ '--focus-color': routineIcon.color } as React.CSSProperties}>
+        <div className="focus-summary-card">
+          <div className="focus-summary-main">
+            <span className="focus-icon">
               <RoutineIcon size={22} />
             </span>
-            <h2 className="focus-detail-title">{item.title}</h2>
-          </div>
-
-          <div className="focus-detail-meta-tags">
-            <span className="k-tag" style={{ background: categoryColors.bg, color: categoryColors.text }}>
-              <span className="dot" style={{ background: categoryColors.dot }} />
-              {category}
-            </span>
-            {isCurrent && (
-              <span className="k-tag is-live-pill" style={{ background: 'rgba(79, 147, 237, 0.11)', color: '#317bd8' }}>
-                <span className="dot animate-pulse" style={{ background: '#317bd8', width: 6, height: 6, borderRadius: '50%', display: 'inline-block' }} />
-                Live now
-              </span>
-            )}
-            {item.completed && (
-              <span className="k-tag completed-pill" style={{ background: '#d1fae5', color: '#047857' }}>
-                <Check size={10} />
-                Completed
-              </span>
-            )}
-            {item.cancelled && (
-              <span className="k-tag cancelled-pill" style={{ background: 'rgba(239, 68, 68, 0.08)', color: '#ef4444' }}>
-                <XCircle size={10} />
-                Cancelled
-              </span>
-            )}
-            <span className="k-tag calendar-pill" style={{ background: 'rgba(16, 19, 18, 0.03)', color: '#4b5563' }}>
-              <CalendarDays size={10} />
-              {formatShortDate(item.date)}
-            </span>
-            {item.startTime && (
-              <span className="k-tag time-pill" style={{ background: '#f3e8ff', color: '#7e22ce' }}>
-                <Timer size={10} />
-                {formatItemTime(item)}
-              </span>
-            )}
-            <span className="k-tag duration-pill" style={{ background: 'rgba(67, 135, 226, 0.1)', color: '#4387e2' }}>
-              <Clock size={10} />
-              {formatDuration(item)}
-            </span>
-            {item.recurrenceFrequency && item.recurrenceFrequency !== 'NONE' && (
-              <span className="k-tag repeat-pill" style={{ background: 'rgba(217, 119, 6, 0.1)', color: '#d97706' }}>
-                <Repeat2 size={10} />
-                {item.recurrenceFrequency.toLowerCase()}
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div className="focus-detail-section">
-          <span className="focus-section-label">Notes</span>
-          <div className="focus-detail-notes">
-            {stripChecklist(item.notes) || getFallbackDescription(item)}
-          </div>
-        </div>
-
-        {checklist.length > 0 && (
-          <div className="focus-detail-section">
-            <span className="focus-section-label">Micro checklist</span>
-            <div className="focus-detail-checklist">
-              {checklist.map((entry, index) => (
-                <div 
-                  key={`${entry.text}-${index}`} 
-                  className={`focus-detail-checkbox-item ${entry.checked ? 'is-completed' : ''}`}
-                >
-                  <div className={`focus-circle-check ${entry.checked ? 'checked' : ''}`}>
-                    {entry.checked && <Check size={10} strokeWidth={3} />}
-                  </div>
-                  <span className="subtask-text">{entry.text}</span>
-                </div>
-              ))}
+            <div>
+              <div className="focus-status-strip">
+                <span className={`focus-status-pill ${isCurrent ? 'is-live' : ''} ${item.completed ? 'is-done' : ''} ${item.cancelled ? 'is-cancelled' : ''}`}>
+                  <span />
+                  {statusLabel}
+                </span>
+                <span className="focus-category-mark" style={{ background: categoryColors.bg, color: categoryColors.text }}>
+                  <span style={{ background: categoryColors.dot }} />
+                  {category}
+                </span>
+              </div>
+              <h2 className="focus-detail-title">{item.title}</h2>
+              <p className="focus-summary-note">{notes}</p>
             </div>
           </div>
-        )}
+        </div>
 
-        <div className="focus-detail-section">
-          <span className="focus-section-label">Timeline</span>
-          <div className="focus-detail-timeline">
-            {item.createdAt && (
-              <div className="focus-timeline-item">
-                <span className="timestamp">{formatTimelineDate(item.createdAt)}</span>
-                Routine block created
+        <div className="focus-detail-layout">
+          <section className="focus-detail-section focus-schedule-card">
+            <span className="focus-section-label">Schedule</span>
+            <div className="focus-facts-grid">
+              <div className="focus-fact">
+                <CalendarDays size={15} />
+                <span>Date</span>
+                <strong>{formatShortDate(item.date)}</strong>
               </div>
+              <div className="focus-fact">
+                <Timer size={15} />
+                <span>Time</span>
+                <strong>{formatItemTime(item)}</strong>
+              </div>
+              <div className="focus-fact">
+                <Clock size={15} />
+                <span>Duration</span>
+                <strong>{formatDuration(item)}</strong>
+              </div>
+              <div className="focus-fact">
+                <Repeat2 size={15} />
+                <span>Repeats</span>
+                <strong>{formatRecurrence(item)}</strong>
+              </div>
+            </div>
+          </section>
+
+          <div className="focus-detail-right-column">
+            <section className="focus-detail-section focus-notes-card">
+              <span className="focus-section-label">Notes</span>
+              <div className="focus-detail-notes">
+                {notes}
+              </div>
+            </section>
+
+            {checklist.length > 0 && (
+              <section className="focus-detail-section focus-checklist-card">
+                <span className="focus-section-label">Micro checklist</span>
+                <div className="focus-detail-checklist">
+                  {checklist.map((entry, index) => (
+                    <div 
+                      key={`${entry.text}-${index}`} 
+                      className={`focus-detail-checkbox-item ${entry.checked ? 'is-completed' : ''}`}
+                    >
+                      <div className={`focus-circle-check ${entry.checked ? 'checked' : ''}`}>
+                        {entry.checked && <Check size={10} strokeWidth={3} />}
+                      </div>
+                      <span className="subtask-text">{entry.text}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
             )}
+
+            <section className="focus-detail-section focus-history-card">
+              <span className="focus-section-label">History</span>
+              <div className="focus-detail-timeline">
+                {item.createdAt ? (
+                  <div className="focus-timeline-item">
+                    <span className="timestamp">{formatTimelineDate(item.createdAt)}</span>
+                    Routine block created
+                  </div>
+                ) : (
+                  <div className="focus-timeline-item">No history yet</div>
+                )}
+              </div>
+            </section>
           </div>
         </div>
       </div>
@@ -725,10 +754,33 @@ function CalendarItemModal({
   const [recurrenceFrequency, setRecurrenceFrequency] = useState<CalendarRecurrence>(item?.recurrenceFrequency ?? 'NONE')
   const [recurrenceUntil, setRecurrenceUntil] = useState(item?.recurrenceUntil ?? '')
   const [error, setError] = useState('')
+  const [showCustomCategory, setShowCustomCategory] = useState(false)
+  const [customCategoryInput, setCustomCategoryInput] = useState('')
+  const [customCategories, setCustomCategories] = useState<string[]>([])
+
+  const allCategoryOptions = [...CATEGORY_OPTIONS, ...customCategories.map((name) => ({ label: name, color: colorForCategory(name) }))]
 
   const handleCategory = (nextCategory: string) => {
+    if (nextCategory === '__custom__') {
+      setShowCustomCategory(true)
+      setCustomCategoryInput('')
+      return
+    }
+    setShowCustomCategory(false)
     setCategory(nextCategory)
     setColor(colorForCategory(nextCategory))
+  }
+
+  const handleAddCustomCategory = () => {
+    const trimmed = customCategoryInput.trim()
+    if (!trimmed) return
+    if (!customCategories.includes(trimmed)) {
+      setCustomCategories((prev) => [...prev, trimmed])
+    }
+    setCategory(trimmed)
+    setColor(colorForCategory(trimmed))
+    setShowCustomCategory(false)
+    setCustomCategoryInput('')
   }
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -835,15 +887,50 @@ function CalendarItemModal({
                 </div>
                 <div className="form-group">
                   <label>CATEGORY</label>
-                  <select
-                    value={category}
-                    onChange={(e) => handleCategory(e.target.value)}
-                    className="form-input"
-                  >
-                    {CATEGORY_OPTIONS.map((option) => (
-                      <option key={option.label} value={option.label}>{option.label}</option>
-                    ))}
-                  </select>
+                  {showCustomCategory ? (
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <input
+                        type="text"
+                        placeholder="Enter category name"
+                        value={customCategoryInput}
+                        onChange={(e) => setCustomCategoryInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') { e.preventDefault(); handleAddCustomCategory() }
+                        }}
+                        className="form-input"
+                        autoFocus
+                        style={{ flex: 1 }}
+                      />
+                      <button
+                        type="button"
+                        className="modal-btn-save"
+                        onClick={handleAddCustomCategory}
+                        disabled={!customCategoryInput.trim()}
+                        style={{ padding: '0 12px', fontSize: '11px', whiteSpace: 'nowrap', height: 'auto' }}
+                      >
+                        Add
+                      </button>
+                      <button
+                        type="button"
+                        className="modal-btn-cancel"
+                        onClick={() => setShowCustomCategory(false)}
+                        style={{ padding: '0 10px', fontSize: '11px', whiteSpace: 'nowrap', height: 'auto' }}
+                      >
+                        Back
+                      </button>
+                    </div>
+                  ) : (
+                    <select
+                      value={category}
+                      onChange={(e) => handleCategory(e.target.value)}
+                      className="form-input"
+                    >
+                      {allCategoryOptions.map((option) => (
+                        <option key={option.label} value={option.label}>{option.label}</option>
+                      ))}
+                      <option value="__custom__">+ Add custom...</option>
+                    </select>
+                  )}
                 </div>
               </div>
 
@@ -1076,6 +1163,39 @@ function formatDuration(item: CalendarItem) {
   return remaining ? `${hours}h ${remaining}m` : `${hours}h`
 }
 
+function getDurationMinutes(item: CalendarItem) {
+  if (!item.startTime || !item.endTime) return null
+  return Math.max(0, timeToMinutes(item.endTime) - timeToMinutes(item.startTime))
+}
+
+function getRoutineBlockClass(item: CalendarItem) {
+  const duration = getDurationMinutes(item)
+  const noteLength = stripChecklist(item.notes).length
+  const checklistCount = parseChecklist(item.notes).length
+
+  if ((duration !== null && duration <= 15) && noteLength < 42 && checklistCount === 0) return 'is-quick'
+  if ((duration !== null && duration >= 90) || noteLength > 64 || checklistCount > 0) return 'is-roomy'
+  return 'is-standard'
+}
+
+function formatTimelineLabel(item: CalendarItem) {
+  if (item.allDay || !item.startTime) return 'All day'
+  return formatClockTime(item.startTime)
+}
+
+function formatRoutineSubline(item: CalendarItem) {
+  if (item.allDay || !item.startTime) return formatShortDate(item.date)
+  const dateLabel = item.date === toISODate(new Date())
+    ? 'Today'
+    : parseISODate(item.date).toLocaleDateString('en-US', { weekday: 'short' })
+  return `${dateLabel} ${formatClockTime(item.startTime)}`
+}
+
+function formatRecurrence(item: CalendarItem) {
+  if (!item.recurrenceFrequency || item.recurrenceFrequency === 'NONE') return 'None'
+  return item.recurrenceFrequency.charAt(0) + item.recurrenceFrequency.slice(1).toLowerCase()
+}
+
 function formatItemTime(item: CalendarItem) {
   if (item.allDay || !item.startTime) return 'All day'
   const start = formatClockTime(item.startTime)
@@ -1116,7 +1236,10 @@ function toISODate(date: Date) {
 }
 
 function colorForCategory(category: string) {
-  return CATEGORY_OPTIONS.find((option) => option.label === category)?.color ?? '#2563eb'
+  const match = CATEGORY_OPTIONS.find((option) => option.label === category)
+  if (match) return match.color
+  const h = hueForCategory(category)
+  return `hsl(${h}, 55%, 42%)`
 }
 
 function formatTimelineDate(dateStr: string) {

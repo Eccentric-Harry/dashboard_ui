@@ -11,6 +11,7 @@ import { TasksCalendarView } from './tasks-calendar-view'
 import { TasksDetailPanel } from './tasks-detail-panel'
 import avatarImage from '../../../assets/reference-crops/avatar_luffy.png'
 import { getTagColor } from '../../../lib/tag-colors'
+import type { AppPath } from '../../dashboard/quantified-self-dashboard/data'
 
 type ViewMode = 'list' | 'kanban' | 'calendar'
 type FilterStatus = 'all' | 'pending' | 'completed'
@@ -40,7 +41,6 @@ const getCategoryIcon = (cat: string, color: string, size = 12) => {
     default: return <Hash {...props} />
   }
 }
-import type { AppPath } from '../../dashboard/quantified-self-dashboard/data'
 
 type TasksDashboardProps = {
   searchParams?: URLSearchParams

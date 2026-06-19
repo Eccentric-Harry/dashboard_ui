@@ -1,15 +1,15 @@
 export function getTagColor(tag: string) {
   const standardColors: Record<string, { bg: string, text: string, dot: string }> = {
-    'work': { bg: 'rgba(14, 165, 233, 0.12)', text: '#0369a1', dot: '#0ea5e9' },
-    'learning': { bg: 'rgba(99, 102, 241, 0.12)', text: '#4338ca', dot: '#6366f1' },
-    'fitness': { bg: 'rgba(249, 115, 22, 0.12)', text: '#c2410c', dot: '#f97316' },
-    'health': { bg: 'rgba(244, 63, 94, 0.12)', text: '#e11d48', dot: '#f43f5e' },
-    'shopping': { bg: 'rgba(217, 119, 6, 0.12)', text: '#b45309', dot: '#d97706' },
-    'chores': { bg: 'rgba(168, 85, 247, 0.12)', text: '#7e22ce', dot: '#a855f7' },
-    'finance': { bg: 'rgba(16, 185, 129, 0.12)', text: '#047857', dot: '#10b981' },
-    'personal': { bg: 'rgba(139, 92, 246, 0.12)', text: '#6d28d9', dot: '#8b5cf6' },
-    'general': { bg: 'rgba(20, 184, 166, 0.12)', text: '#0f766e', dot: '#14b8a6' },
-    'dashboard': { bg: 'rgba(45, 60, 48, 0.08)', text: '#2d3c30', dot: '#2d3c30' }
+    'work': { bg: 'hsla(210, 55%, 92%, 0.7)', text: '#1e40af', dot: '#2563eb' },
+    'learning': { bg: 'hsla(175, 50%, 90%, 0.7)', text: '#0f766e', dot: '#0d9488' },
+    'fitness': { bg: 'hsla(25, 55%, 90%, 0.7)', text: '#9a3412', dot: '#ea580c' },
+    'health': { bg: 'hsla(340, 55%, 92%, 0.7)', text: '#9f1239', dot: '#e11d48' },
+    'shopping': { bg: 'hsla(40, 50%, 90%, 0.7)', text: '#92400e', dot: '#d97706' },
+    'chores': { bg: 'hsla(270, 50%, 92%, 0.7)', text: '#5b21b6', dot: '#7c3aed' },
+    'finance': { bg: 'hsla(35, 50%, 90%, 0.7)', text: '#92400e', dot: '#d97706' },
+    'personal': { bg: 'hsla(270, 50%, 92%, 0.7)', text: '#5b21b6', dot: '#7c3aed' },
+    'general': { bg: 'hsla(170, 30%, 90%, 0.7)', text: '#166534', dot: '#16a34a' },
+    'dashboard': { bg: 'hsla(140, 15%, 90%, 0.7)', text: '#3f3f46', dot: '#52525b' }
   };
 
   const normalized = tag.toLowerCase().trim();
@@ -23,8 +23,8 @@ export function getTagColor(tag: string) {
   }
   const h = Math.abs(hash) % 360;
   return {
-    bg: `hsla(${h}, 85%, 50%, 0.12)`,
-    text: `hsl(${h}, 85%, 35%)`,
-    dot: `hsl(${h}, 85%, 50%)`
+    bg: `hsla(${h}, 45%, 92%, 0.7)`,
+    text: `hsl(${h}, 55%, 30%)`,
+    dot: `hsl(${h}, 60%, 45%)`
   };
 }
