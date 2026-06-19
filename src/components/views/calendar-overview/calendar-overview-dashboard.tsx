@@ -376,13 +376,15 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                   <div className="routine-row status-future" key={idx}>
                     <span className="routine-node skeleton-circle skeleton-shimmer" style={{ width: 14, height: 14, border: 'none' }} />
                     <div className="routine-card-wrapper" style={{ flex: 1 }}>
-                      <div className="routine-card" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px' }}>
-                        <span className="routine-card-icon skeleton-circle skeleton-shimmer" style={{ width: 32, height: 32, borderRadius: 10, flexShrink: 0 }} />
-                        <div className="routine-card-copy" style={{ flex: 1 }}>
-                          <span className="skeleton-rect skeleton-shimmer mb-1.5" style={{ width: '30%', height: 10 }} />
-                          <strong className="skeleton-rect skeleton-shimmer mb-1.5" style={{ width: idx % 2 === 0 ? '70%' : '55%', height: 14 }} />
-                          <span className="skeleton-rect skeleton-shimmer" style={{ width: '85%', height: 10 }} />
+                      <div className="routine-card" style={{ pointerEvents: 'none' }}>
+                        <span className="routine-card-icon skeleton-circle skeleton-shimmer" style={{ width: 42, height: 42 }} />
+                        <div className="routine-card-copy">
+                          <span className="routine-card-time-badge skeleton-rect skeleton-shimmer" style={{ width: '25%', height: 10, margin: '2px 0 6px' }} />
+                          <strong className="skeleton-rect skeleton-shimmer" style={{ width: idx % 2 === 0 ? '70%' : '55%', height: 14, margin: '2px 0 6px' }} />
+                          <span className="routine-card-subtime skeleton-rect skeleton-shimmer" style={{ width: '40%', height: 10, margin: '2px 0 6px' }} />
+                          <p className="skeleton-rect skeleton-shimmer" style={{ width: '85%', height: 10, marginTop: 8 }} />
                         </div>
+                        <span className="routine-card-more-trigger skeleton-rect skeleton-shimmer" style={{ width: 16, height: 16, borderRadius: 4 }} />
                       </div>
                     </div>
                   </div>
@@ -484,37 +486,68 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
 
         <main className="focus-canvas">
           {loading ? (
-            <div className="focus-detail" style={{ pointerEvents: 'none' }}>
-              <div className="focus-detail-top">
-                <div className="focus-status">
-                  <span className="skeleton-rect skeleton-shimmer" style={{ width: 80, height: 14 }} />
-                </div>
-                <span className="skeleton-rect skeleton-shimmer" style={{ width: 100, height: 14 }} />
+            <div className="focus-detail" style={{ pointerEvents: 'none', opacity: 0.7 }}>
+              <div className="focus-detail-panel-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <h3>Routine Details</h3>
+                <span className="focus-assignee-avatar skeleton-circle skeleton-shimmer" style={{ width: 28, height: 28 }} />
               </div>
 
-              <div className="focus-hero" style={{ marginTop: 24 }}>
-                <span className="focus-icon skeleton-circle skeleton-shimmer" style={{ width: 50, height: 50 }} />
-                <div style={{ flex: 1 }}>
-                  <span className="skeleton-rect skeleton-shimmer mb-2.5" style={{ width: '30%', height: 12 }} />
-                  <span className="skeleton-rect skeleton-shimmer" style={{ width: '60%', height: 22 }} />
+              <div className="focus-detail-body">
+                <div className="focus-summary-card">
+                  <div className="focus-summary-main">
+                    <span className="focus-icon skeleton-circle skeleton-shimmer" style={{ width: 44, height: 44 }} />
+                    <div style={{ flex: 1 }}>
+                      <div className="focus-status-strip">
+                        <span className="focus-status-pill skeleton-shimmer" style={{ width: 75, height: 24, border: 'none', background: 'rgba(20, 24, 22, 0.05)' }} />
+                        <span className="focus-category-mark skeleton-shimmer" style={{ width: 65, height: 24, border: 'none', background: 'rgba(20, 24, 22, 0.05)' }} />
+                      </div>
+                      <h2 className="focus-detail-title" style={{ margin: '10px 0 6px', border: 'none' }}>
+                        <span className="skeleton-rect skeleton-shimmer" style={{ width: '60%', height: 20 }} />
+                      </h2>
+                      <div className="focus-summary-note">
+                        <span className="skeleton-rect skeleton-shimmer" style={{ width: '85%', height: 10, marginBottom: 6 }} />
+                        <span className="skeleton-rect skeleton-shimmer" style={{ width: '50%', height: 10 }} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="focus-detail-layout">
+                  <section className="focus-detail-section focus-schedule-card">
+                    <span className="focus-section-label">Schedule</span>
+                    <div className="focus-facts-grid">
+                      {Array.from({ length: 4 }).map((_, idx) => (
+                        <div className="focus-fact" key={idx}>
+                          <span className="skeleton-circle skeleton-shimmer" style={{ width: 15, height: 15, margin: 0 }} />
+                          <span className="skeleton-rect skeleton-shimmer" style={{ width: '35%', height: 10, margin: 0 }} />
+                          <strong className="skeleton-rect skeleton-shimmer" style={{ width: '65%', height: 12, margin: '2px 0 0' }} />
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+
+                  <div className="focus-detail-right-column">
+                    <section className="focus-detail-section focus-notes-card">
+                      <span className="focus-section-label">Notes</span>
+                      <div className="focus-detail-notes" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        <span className="skeleton-rect skeleton-shimmer" style={{ width: '90%', height: 11 }} />
+                        <span className="skeleton-rect skeleton-shimmer" style={{ width: '80%', height: 11 }} />
+                        <span className="skeleton-rect skeleton-shimmer" style={{ width: '45%', height: 11 }} />
+                      </div>
+                    </section>
+
+                    <section className="focus-detail-section focus-history-card">
+                      <span className="focus-section-label">History</span>
+                      <div className="focus-detail-timeline">
+                        <span className="skeleton-rect skeleton-shimmer" style={{ width: '65%', height: 11 }} />
+                      </div>
+                    </section>
+                  </div>
                 </div>
               </div>
 
-              <div className="focus-time-block" style={{ marginTop: 24, display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span className="skeleton-circle skeleton-shimmer" style={{ width: 32, height: 32 }} />
-                <div style={{ flex: 1 }}>
-                  <span className="skeleton-rect skeleton-shimmer mb-1.5" style={{ width: '40%', height: 10 }} />
-                  <span className="skeleton-rect skeleton-shimmer" style={{ width: '60%', height: 14 }} />
-                </div>
-              </div>
-
-              <div className="focus-content" style={{ marginTop: 24 }}>
-                <section>
-                  <span className="skeleton-rect skeleton-shimmer mb-2.5" style={{ width: 50, height: 10 }} />
-                  <span className="skeleton-rect skeleton-shimmer mb-1.5" style={{ width: '80%', height: 12 }} />
-                  <span className="skeleton-rect skeleton-shimmer mb-1.5" style={{ width: '90%', height: 12 }} />
-                  <span className="skeleton-rect skeleton-shimmer" style={{ width: '50%', height: 12 }} />
-                </section>
+              <div className="focus-footer">
+                <span className="skeleton-rect skeleton-shimmer" style={{ width: 140, height: 40, borderRadius: 14 }} />
               </div>
             </div>
           ) : selectedItem ? (
