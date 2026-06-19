@@ -4,7 +4,6 @@ import {
   Coffee,
   type LucideIcon,
   Target,
-  UsersRound,
   X,
 } from 'lucide-react'
 
@@ -279,13 +278,9 @@ function PeopleDashboard() {
   return (
     <section className="people-dashboard" aria-label="Mentorship and memories">
       <header className="people-header">
-        <div>
+        <div className="people-header-title">
           <p>People archive</p>
           <h1>Mentorship &amp; Memories</h1>
-        </div>
-        <div className="people-log-count" aria-label={`${seniorInteractions.length} active connection logs`}>
-          <UsersRound size={15} />
-          <span>{seniorInteractions.length} active connection logs</span>
         </div>
       </header>
 
