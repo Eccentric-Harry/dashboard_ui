@@ -12,6 +12,7 @@ import { LearningsOverview } from './components/views/learnings-view'
 import { CalendarOverview } from './components/views/calendar-view'
 import { PromptsOverview } from './components/views/prompts-view'
 import { TasksOverview } from './components/views/tasks-view'
+import { PeopleOverview } from './components/views/people-view'
 import { FocusProvider } from './contexts/FocusContext'
 import { isStandalone } from './lib/utils'
 import { subscribeToActiveRequests } from './lib/api'
@@ -87,6 +88,10 @@ function normalizePathname(pathname: string): AppPath {
 
   if (pathname === '/tasks') {
     return '/tasks'
+  }
+
+  if (pathname === '/people') {
+    return '/people'
   }
 
   return '/nutrition'
@@ -256,6 +261,8 @@ function App() {
     content = <PromptsOverview activePath={pathname} onNavigate={navigateTo} />
   } else if (pathname === '/tasks') {
     content = <TasksOverview activePath={pathname} onNavigate={navigateTo} searchParams={searchParams} />
+  } else if (pathname === '/people') {
+    content = <PeopleOverview activePath={pathname} onNavigate={navigateTo} />
   } else {
     content = <QuantifiedSelfDashboard activePath={pathname} onNavigate={navigateTo} />
   }
