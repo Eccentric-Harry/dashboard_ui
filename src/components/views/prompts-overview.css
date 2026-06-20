@@ -143,7 +143,6 @@
 
 .prompt-list-item:hover {
   background: rgba(255, 255, 255, 0.7);
-  transform: translateY(-1px);
 }
 
 .prompt-list-item.active {
