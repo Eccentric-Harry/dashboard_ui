@@ -527,6 +527,11 @@ export async function deleteTask(id: string) {
 export type CalendarItemType = 'TASK' | 'EVENT' | 'REMINDER' | 'MILESTONE';
 export type CalendarRecurrence = 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY';
 
+export interface TaskHistoryEvent {
+  timestamp: string;
+  message: string;
+}
+
 export interface CalendarItem {
   id?: string;
   occurrenceId?: string;
@@ -545,6 +550,7 @@ export interface CalendarItem {
   sortOrder?: number;
   recurrenceFrequency?: CalendarRecurrence;
   recurrenceUntil?: string;
+  history?: TaskHistoryEvent[];
   createdAt?: string;
 }
 

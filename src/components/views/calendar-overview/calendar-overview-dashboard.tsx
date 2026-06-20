@@ -733,14 +733,22 @@ function FocusDetail({
             <section className="focus-detail-section focus-history-card">
               <span className="focus-section-label">History</span>
               <div className="focus-detail-timeline">
+                {item.history && item.history.length > 0 ? (
+                  [...item.history].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).map((hist, idx) => (
+                    <div className="focus-timeline-item" key={idx}>
+                      <span className="timestamp">{formatTimelineDate(hist.timestamp)}</span>
+                      {hist.message}
+                    </div>
+                  ))
+                ) : null}
                 {item.createdAt ? (
                   <div className="focus-timeline-item">
                     <span className="timestamp">{formatTimelineDate(item.createdAt)}</span>
                     Routine block created
                   </div>
-                ) : (
+                ) : !item.history?.length ? (
                   <div className="focus-timeline-item">No history yet</div>
-                )}
+                ) : null}
               </div>
             </section>
           </div>
@@ -841,7 +849,15 @@ function CalendarItemModal({
     try {
       if (item?.id) {
         await updateCalendarItem(item.id, payload)
-        toast.success(`Updated "${title.trim()}"`)
+        let toastMsg = `Updated "${title.trim()}"`
+        if (item.title !== title.trim()) {
+          toastMsg = `Task title updated from "${item.title}" to "${title.trim()}"`
+        } else if (item.date !== itemDate && item.originalDate !== itemDate) {
+          toastMsg = `Task moved from ${item.date} to ${itemDate}`
+        } else if (item.startTime !== startTime) {
+          toastMsg = `Task time updated from ${item.startTime || 'none'} to ${startTime || 'none'}`
+        }
+        toast.success(toastMsg)
       } else {
         await createCalendarItem(payload)
         toast.success(`Added "${title.trim()}"`)
