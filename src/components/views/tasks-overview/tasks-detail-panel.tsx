@@ -12,20 +12,20 @@ interface SubTask {
 
 
 
-function formatTimelineDate(dateStr: string) {
-  if (!dateStr) return ''
+function formatTimelineDateParts(dateStr: string) {
+  if (!dateStr) return { date: '', time: '' }
   try {
     const d = new Date(dateStr)
-    if (isNaN(d.getTime())) return dateStr
+    if (isNaN(d.getTime())) return { date: dateStr, time: '' }
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
     const month = months[d.getMonth()]
     const day = d.getDate()
     const year = d.getFullYear()
     const hh = String(d.getHours()).padStart(2, '0')
     const mm = String(d.getMinutes()).padStart(2, '0')
-    return `${month} ${day}, ${year} ${hh}:${mm}`
+    return { date: `${month} ${day}, ${year}`, time: `${hh}:${mm}` }
   } catch {
-    return dateStr
+    return { date: dateStr, time: '' }
   }
 }
 
@@ -304,8 +304,11 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate, 
               <div className="tasks-detail-timeline">
                 {task.createdAt && (
                   <div className="tasks-timeline-item">
-                    <span className="timestamp">{formatTimelineDate(task.createdAt)}</span>
-                    Task created
+                    <span className="timestamp-date">{formatTimelineDateParts(task.createdAt).date}</span>
+                    <div className="tasks-timeline-content">
+                      <span className="timestamp-time">{formatTimelineDateParts(task.createdAt).time}</span>
+                      <span className="timestamp-msg">Task created</span>
+                    </div>
                   </div>
                 )}
                 {/* Future Event-Sourcing mapping will go here:
@@ -318,14 +321,20 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate, 
                 */}
                 {task.updatedAt && task.createdAt && new Date(task.updatedAt).getTime() > new Date(task.createdAt).getTime() && (
                   <div className="tasks-timeline-item">
-                    <span className="timestamp">{formatTimelineDate(task.updatedAt)}</span>
-                    Task last updated
+                    <span className="timestamp-date">{formatTimelineDateParts(task.updatedAt).date}</span>
+                    <div className="tasks-timeline-content">
+                      <span className="timestamp-time">{formatTimelineDateParts(task.updatedAt).time}</span>
+                      <span className="timestamp-msg">Task last updated</span>
+                    </div>
                   </div>
                 )}
                 {task.completedAt && (
                   <div className="tasks-timeline-item">
-                    <span className="timestamp">{formatTimelineDate(task.completedAt)}</span>
-                    Task completed
+                    <span className="timestamp-date">{formatTimelineDateParts(task.completedAt).date}</span>
+                    <div className="tasks-timeline-content">
+                      <span className="timestamp-time">{formatTimelineDateParts(task.completedAt).time}</span>
+                      <span className="timestamp-msg">Task completed</span>
+                    </div>
                   </div>
                 )}
               </div>

@@ -734,17 +734,26 @@ function FocusDetail({
               <span className="focus-section-label">History</span>
               <div className="focus-detail-timeline">
                 {item.history && item.history.length > 0 ? (
-                  [...item.history].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).map((hist, idx) => (
-                    <div className="focus-timeline-item" key={idx}>
-                      <span className="timestamp">{formatTimelineDate(hist.timestamp)}</span>
-                      {hist.message}
-                    </div>
-                  ))
+                  [...item.history].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).map((hist, idx) => {
+                    const { date, time } = formatTimelineDateParts(hist.timestamp)
+                    return (
+                      <div className="focus-timeline-item" key={idx}>
+                        <span className="timestamp-date">{date}</span>
+                        <div className="focus-timeline-content">
+                          <span className="timestamp-time">{time}</span>
+                          <span className="timestamp-msg">{hist.message}</span>
+                        </div>
+                      </div>
+                    )
+                  })
                 ) : null}
                 {item.createdAt ? (
                   <div className="focus-timeline-item">
-                    <span className="timestamp">{formatTimelineDate(item.createdAt)}</span>
-                    Routine block created
+                    <span className="timestamp-date">{formatTimelineDateParts(item.createdAt).date}</span>
+                    <div className="focus-timeline-content">
+                      <span className="timestamp-time">{formatTimelineDateParts(item.createdAt).time}</span>
+                      <span className="timestamp-msg">Routine block created</span>
+                    </div>
                   </div>
                 ) : !item.history?.length ? (
                   <div className="focus-timeline-item">No history yet</div>
@@ -1291,20 +1300,21 @@ function colorForCategory(category: string) {
   return `hsl(${h}, 55%, 42%)`
 }
 
-function formatTimelineDate(dateStr: string) {
-  if (!dateStr) return ''
+
+function formatTimelineDateParts(dateStr: string) {
+  if (!dateStr) return { date: '', time: '' }
   try {
     const d = new Date(dateStr)
-    if (isNaN(d.getTime())) return dateStr
+    if (isNaN(d.getTime())) return { date: dateStr, time: '' }
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
     const month = months[d.getMonth()]
     const day = d.getDate()
     const year = d.getFullYear()
     const hh = String(d.getHours()).padStart(2, '0')
     const mm = String(d.getMinutes()).padStart(2, '0')
-    return `${month} ${day}, ${year} ${hh}:${mm}`
+    return { date: `${month} ${day}, ${year}`, time: `${hh}:${mm}` }
   } catch {
-    return dateStr
+    return { date: dateStr, time: '' }
   }
 }
 
