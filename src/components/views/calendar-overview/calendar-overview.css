@@ -1727,7 +1727,7 @@
   }
 
   .routine-row {
-    grid-template-columns: 52px 12px minmax(0, 1fr);
+    grid-template-columns: 22px minmax(0, 1fr);
     gap: 7px;
   }
 
