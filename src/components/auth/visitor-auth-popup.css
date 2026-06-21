@@ -37,7 +37,7 @@
 
 .visitor-auth-slider {
   display: flex;
-  width: 200%;
+  width: 300%;
   transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
   position: relative;
   z-index: 1;
@@ -48,11 +48,15 @@
 }
 
 .visitor-auth-slider.step-2 {
-  transform: translateX(-50%);
+  transform: translateX(-33.333%);
+}
+
+.visitor-auth-slider.step-3 {
+  transform: translateX(-66.666%);
 }
 
 .visitor-auth-pane {
-  width: 50%;
+  width: 33.333%;
   padding: 40px 32px;
   display: flex;
   flex-direction: column;
@@ -127,48 +131,68 @@
   align-items: center;
 }
 
-.visitor-auth-input-group {
+.visitor-auth-input-container {
   width: 100%;
   position: relative;
-  margin-bottom: 28px;
+  margin-bottom: 16px;
 }
 
-.visitor-auth-input {
+.visitor-auth-input-field {
   width: 100%;
   padding: 12px 16px;
   border: 1px solid #d1d5db;
   border-radius: 10px;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 500;
   outline: none;
   transition: all 0.2s;
   box-sizing: border-box;
   background: #f9fafb;
-  text-align: center;
-  letter-spacing: 0.2em;
+  text-align: left;
 }
 
-.visitor-auth-input:focus {
+.visitor-auth-input-field:focus {
   border-color: #1a7a4a;
   background: white;
   box-shadow: 0 0 0 4px rgba(26, 122, 74, 0.1);
 }
 
-.visitor-auth-input.error {
+.visitor-auth-input-field.error {
   border-color: #ef4444;
   background: #fef2f2;
   animation: shake 0.4s;
+}
+
+.visitor-auth-error-msg {
+  color: #ef4444;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-align: center;
+  margin: 0 0 16px 0;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  padding: 8px 12px;
+  border-radius: 8px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .visitor-auth-buttons {
   display: flex;
   gap: 12px;
   width: 100%;
+  margin-top: 8px;
+}
+
+.visitor-auth-buttons-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
 }
 
 .visitor-auth-btn {
-  flex: 1;
-  padding: 12px 0;
+  padding: 12px 16px;
   border-radius: 10px;
   font-size: 0.95rem;
   font-weight: 600;
@@ -197,6 +221,17 @@
   transform: translateY(0);
 }
 
+.visitor-auth-btn.primary-outline {
+  background: transparent;
+  color: #1a7a4a;
+  border: 2px solid #1a7a4a;
+}
+
+.visitor-auth-btn.primary-outline:hover {
+  background: rgba(26, 122, 74, 0.05);
+  transform: translateY(-1px);
+}
+
 .visitor-auth-btn.secondary {
   background: #f3f4f6;
   color: #374151;
@@ -205,6 +240,25 @@
 
 .visitor-auth-btn.secondary:hover {
   background: #e5e7eb;
+}
+
+.visitor-auth-toggle-link {
+  color: #1a7a4a;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  margin-top: 20px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.visitor-auth-toggle-link:hover {
+  color: #145e39;
+  text-decoration: underline;
+}
+
+.full-width {
+  width: 100%;
 }
 
 @keyframes shake {
