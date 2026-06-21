@@ -51,10 +51,14 @@ self.addEventListener('push', (event) => {
     icon: '/logo.png',
     badge: '/logo.png',
     tag: data.tag || 'dashboard-notification',
-    data: data.url || '/',
+    data: { url: data.url || '/', itemId: data.itemId || null },
     vibrate: [100, 50, 100],
     sound: '/iphone-notification.mp3',
-    requireInteraction: true
+    requireInteraction: true,
+    actions: [
+      { action: 'snooze', title: 'Snooze 10m' },
+      { action: 'open', title: 'Open App' }
+    ]
   };
 
   event.waitUntil(
@@ -65,14 +69,44 @@ self.addEventListener('push', (event) => {
 // Handle notification click events
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const urlToOpen = event.notification.data || '/';
+  
+  if (event.action === 'snooze') {
+    const itemId = event.notification.data?.itemId;
+    event.waitUntil(
+      clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+        if (windowClients.length > 0) {
+          windowClients.forEach(client => {
+            client.postMessage({ type: 'SNOOZE_NOTIFICATION', itemId });
+          });
+        } else {
+          // Best effort snooze if app is closed.
+          setTimeout(() => {
+            const title = event.notification.title;
+            const options = {
+              body: event.notification.body,
+              icon: event.notification.icon,
+              badge: event.notification.badge,
+              tag: event.notification.tag,
+              data: event.notification.data,
+              requireInteraction: true,
+              actions: event.notification.actions
+            };
+            self.registration.showNotification(title, options);
+          }, 10 * 60 * 1000);
+        }
+      })
+    );
+    return;
+  }
+
+  const urlToOpen = event.notification.data?.url || '/';
   
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
       // If a tab is already open, focus it
       for (let i = 0; i < windowClients.length; i++) {
         const client = windowClients[i];
-        if (client.url === urlToOpen && 'focus' in client) {
+        if (client.url.includes(urlToOpen) && 'focus' in client) {
           return client.focus();
         }
       }

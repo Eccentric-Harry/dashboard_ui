@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import toast from 'react-hot-toast';
+import { Bell, Calendar, Clock, Trophy, Info, Moon } from 'lucide-react';
 import {
   fetchCalendarItemsForRange,
   fetchVapidPublicKey,
@@ -46,18 +47,18 @@ const getLocalDateStr = (d: Date) => {
   return `${year}-${month}-${date}`;
 };
 
-const getEmojiForItemType = (type?: string) => {
+const getIconForItemType = (type?: string) => {
   switch (type) {
     case 'TASK':
-      return '📝';
+      return <Clock size={18} className="text-blue-500" />;
     case 'EVENT':
-      return '📅';
+      return <Calendar size={18} className="text-indigo-500" />;
     case 'REMINDER':
-      return '🔔';
+      return <Bell size={18} className="text-amber-500" />;
     case 'MILESTONE':
-      return '🏆';
+      return <Trophy size={18} className="text-emerald-500" />;
     default:
-      return '📢';
+      return <Info size={18} className="text-gray-500" />;
   }
 };
 
@@ -90,6 +91,11 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const [desktopEnabled, setDesktopEnabled] = useState<boolean>(() => {
     return localStorage.getItem('dashboard_desktop_notifications_enabled') === 'true';
+  });
+
+  const [snoozedItems, setSnoozedItems] = useState<Record<string, number>>(() => {
+    const saved = localStorage.getItem('dashboard_snoozed_items');
+    return saved ? JSON.parse(saved) : {};
   });
 
   const [items, setItems] = useState<CalendarItem[]>([]);
@@ -204,6 +210,31 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         .catch((err) => {
           console.error('Notification Service Worker registration failed:', err);
         });
+
+      const handleMessage = (event: MessageEvent) => {
+        if (event.data && event.data.type === 'SNOOZE_NOTIFICATION') {
+          const itemId = event.data.itemId;
+          if (!itemId) return;
+          
+          const resumeAt = Date.now() + 10 * 60 * 1000;
+          setSnoozedItems((prev) => {
+            const updated = { ...prev, [itemId]: resumeAt };
+            localStorage.setItem('dashboard_snoozed_items', JSON.stringify(updated));
+            return updated;
+          });
+          
+          setNotifiedKeys((prev) => {
+            const updated = prev.filter(k => !k.startsWith(`${itemId}:`));
+            localStorage.setItem('dashboard_notified_keys', JSON.stringify(updated));
+            return updated;
+          });
+          
+          toast.success('Alert snoozed for 10 minutes', { icon: <Moon size={18} className="text-indigo-400" /> });
+        }
+      };
+      
+      navigator.serviceWorker.addEventListener('message', handleMessage);
+      return () => navigator.serviceWorker.removeEventListener('message', handleMessage);
     }
   }, []);
 
@@ -211,6 +242,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const itemsRef = useRef(items);
   const notifiedKeysRef = useRef(notifiedKeys);
   const desktopEnabledRef = useRef(desktopEnabled);
+  const snoozedItemsRef = useRef(snoozedItems);
 
   useEffect(() => {
     itemsRef.current = items;
@@ -223,6 +255,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     desktopEnabledRef.current = desktopEnabled;
   }, [desktopEnabled]);
+
+  useEffect(() => {
+    snoozedItemsRef.current = snoozedItems;
+  }, [snoozedItems]);
 
   // Fetch occurrences for today and tomorrow
   const fetchUpcomingItems = useCallback(async () => {
@@ -338,10 +374,16 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const triggerAlert = useCallback((item: CalendarItem, message: string) => {
     // 1. In-App Toast
-    toast(message, {
-      icon: getEmojiForItemType(item.itemType),
-      duration: 6000,
-    });
+    toast(
+      <div className="flex flex-col">
+        <span className="font-medium text-sm">{item.title}</span>
+        <span className="text-xs opacity-80">{message}</span>
+      </div>,
+      {
+        icon: getIconForItemType(item.itemType),
+        duration: 6000,
+      }
+    );
 
     // 2. Audio Beep
     playSound();
@@ -349,10 +391,26 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     // 3. Desktop Native Alert
     if (desktopEnabledRef.current && 'Notification' in window && Notification.permission === 'granted') {
       try {
-        new Notification(item.title, {
-          body: message,
-          icon: '/logo.png',
-        });
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.ready.then((reg) => {
+            reg.showNotification(item.title, {
+              body: message,
+              icon: '/logo.png',
+              tag: `dashboard-notification-${item.id}`,
+              requireInteraction: true,
+              actions: [
+                { action: 'snooze', title: 'Snooze 10m' },
+                { action: 'open', title: 'Open' }
+              ],
+              data: { url: '/', itemId: item.id }
+            } as any);
+          });
+        } else {
+          new Notification(item.title, {
+            body: message,
+            icon: '/logo.png',
+          });
+        }
       } catch (e) {
         console.error('Desktop notification trigger failed:', e);
       }
@@ -412,6 +470,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         const key = `${item.id}:${item.date}:${item.startTime || 'allday'}`;
         if (currentNotified.includes(key)) return;
 
+        // Skip if snoozed
+        if (snoozedItemsRef.current[item.id]) {
+          if (Date.now() < snoozedItemsRef.current[item.id]) {
+            return; // Still snoozed
+          }
+        }
+
         // Skip completed tasks/reminders
         if ((item.itemType === 'TASK' || item.itemType === 'REMINDER') && item.completed) {
           return;
@@ -425,13 +490,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           const isPast9AM = now.getHours() >= 9;
           if (item.date === todayStr && isPast9AM) {
             shouldTrigger = true;
-            alertMessage = `Today: ${item.title} (All day)`;
+            alertMessage = `Scheduled for today`;
           }
         } else if (item.startTime) {
           // Trigger timed items when start time is reached/passed today
           if (item.date === todayStr && currentHHMM >= item.startTime) {
             shouldTrigger = true;
-            alertMessage = `${item.itemType === 'EVENT' ? 'Event' : 'Reminder'}: "${item.title}" starts now at ${item.startTime}`;
+            alertMessage = `Starting now`;
           }
         }
 
