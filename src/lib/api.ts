@@ -975,7 +975,7 @@ if (typeof window !== 'undefined') {
   const originalFetch = window.fetch;
   window.fetch = async function (...args) {
     const url = typeof args[0] === 'string' ? args[0] : args[0] instanceof URL ? args[0].href : '';
-    const options = args[1];
+    let options = args[1];
     const isGet = !options || !options.method || options.method.toUpperCase() === 'GET';
     const isLocalApi = url.includes('/api/v1/');
 
@@ -985,8 +985,21 @@ if (typeof window !== 'undefined') {
       requestChangeListeners.forEach(cb => cb(activeGetRequests));
     }
 
+    const isGuestMode = localStorage.getItem('isGuest') === 'true';
+    if (!isGuestMode && isLocalApi && !url.includes('/auth/verify')) {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        const headers = new Headers(options?.headers);
+        headers.set('Authorization', `Bearer ${token}`);
+        options = {
+          ...options,
+          headers
+        };
+      }
+    }
+
     try {
-      return await originalFetch(...args);
+      return await originalFetch(args[0], options);
     } finally {
       if (shouldTrack) {
         activeGetRequests--;
@@ -1002,6 +1015,32 @@ export async function verifyPasscode(passcode: string) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ passcode }),
   });
+  return response.json();
+}
+
+export async function loginUser(username: string, passcode: string) {
+  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, passcode }),
+  });
+  if (!response.ok) {
+    const errData = await response.json().catch(() => ({}));
+    throw new Error(errData?.data?.message || 'Invalid username or passcode');
+  }
+  return response.json();
+}
+
+export async function signupUser(username: string, displayName: string, passcode: string) {
+  const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, displayName, passcode }),
+  });
+  if (!response.ok) {
+    const errData = await response.json().catch(() => ({}));
+    throw new Error(errData?.data?.message || 'Signup failed. Username might be taken.');
+  }
   return response.json();
 }
 

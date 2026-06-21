@@ -21,6 +21,13 @@ function SideRail({ activePath, onNavigate }: DashboardStageProps) {
     '--visible-count': mobileNavItems.length,
   } as CSSProperties
 
+  const handleSettingsClick = () => {
+    if (window.confirm('Do you want to log out of your session?')) {
+      localStorage.clear()
+      window.location.reload()
+    }
+  }
+
   return (
     <aside className="side-rail" aria-label="Dashboard navigation">
       <img className="rail-avatar" src={avatarImage} alt="" />
@@ -54,7 +61,7 @@ function SideRail({ activePath, onNavigate }: DashboardStageProps) {
               aria-label={label}
               title={label}
               className={`${muted && !isNotifications ? 'muted' : ''} ${isNotifications && isOpen ? 'active' : ''} ${isNotifications ? 'rail-notifications-btn' : ''}`.trim() || undefined}
-              onClick={isNotifications ? () => setIsOpen(!isOpen) : undefined}
+              onClick={isNotifications ? () => setIsOpen(!isOpen) : (label === 'Settings' ? handleSettingsClick : undefined)}
             >
               <Icon size={16} />
               {isNotifications && unreadCount > 0 && (

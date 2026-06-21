@@ -32,22 +32,6 @@ if (isGuest) {
   enableGuestInterceptor();
 }
 
-if (authToken && !isGuest) {
-  const origFetch = window.fetch.bind(window);
-  window.fetch = (input, init) => {
-    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-    if (url && url.includes('/api/v1/')) {
-      return origFetch(input, {
-        ...init,
-        headers: {
-          ...init?.headers,
-          'Authorization': `Bearer ${authToken}`,
-        },
-      });
-    }
-    return origFetch(input, init);
-  };
-}
 
 function normalizePathname(pathname: string): AppPath {
   if (pathname === '/home') {
