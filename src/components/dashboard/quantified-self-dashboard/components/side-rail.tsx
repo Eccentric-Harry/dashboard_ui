@@ -1,5 +1,5 @@
-import type { CSSProperties } from 'react'
-import avatarImage from '../../../../assets/reference-crops/avatar_luffy.png'
+import { type CSSProperties, useEffect, useState } from 'react'
+import { getAvatarImage } from '../../../views/profile-view'
 import { type AppPath, navItems, railBottomItems } from '../data'
 import { useNotifications } from '../../../../contexts/NotificationContext'
 
@@ -10,15 +10,24 @@ type DashboardStageProps = {
 
 function SideRail({ activePath, onNavigate }: DashboardStageProps) {
   const { unreadCount, isOpen, setIsOpen } = useNotifications()
+  const [avatar, setAvatar] = useState(() => localStorage.getItem('avatarUrl') || 'luffy')
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setAvatar(localStorage.getItem('avatarUrl') || 'luffy')
+    }
+    window.addEventListener('profile-updated', handleUpdate)
+    return () => window.removeEventListener('profile-updated', handleUpdate)
+  }, [])
 
   const mobileNavItems = navItems.filter((item) => item.to && !item.mobileHidden)
-  const activeMobileIndex = Math.max(
-    0,
-    mobileNavItems.findIndex((item) => item.to === activePath),
-  )
+  const rawActiveMobileIndex = mobileNavItems.findIndex((item) => item.to === activePath)
+  const showActiveIndicator = rawActiveMobileIndex !== -1
+  const activeMobileIndex = showActiveIndicator ? rawActiveMobileIndex : 0
   const navStyle = {
     '--active-index': activeMobileIndex,
     '--visible-count': mobileNavItems.length,
+    '--indicator-opacity': showActiveIndicator ? 1 : 0,
   } as CSSProperties
 
   const handleSettingsClick = () => {
@@ -30,7 +39,15 @@ function SideRail({ activePath, onNavigate }: DashboardStageProps) {
 
   return (
     <aside className="side-rail" aria-label="Dashboard navigation">
-      <img className="rail-avatar" src={avatarImage} alt="" />
+      <button 
+        type="button" 
+        className="rail-avatar-btn" 
+        onClick={() => onNavigate('/profile')}
+        title="View Profile"
+        aria-label="View Profile"
+      >
+        <img className="rail-avatar" src={getAvatarImage(avatar)} alt="Profile" />
+      </button>
       <nav style={navStyle}>
         {navItems.map((item) => {
           const { label, icon: Icon, to, muted, bubble } = item

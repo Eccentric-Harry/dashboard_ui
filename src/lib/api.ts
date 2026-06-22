@@ -1044,3 +1044,43 @@ export async function signupUser(username: string, displayName: string, passcode
   return response.json();
 }
 
+export interface UserProfile {
+  id: string;
+  displayName: string;
+  avatarUrl?: string;
+  email?: string;
+  bio?: string;
+  phoneNumber?: string;
+  age?: number;
+  weight?: number;
+  height?: number;
+  targetCalories?: number;
+  targetProtein?: number;
+  timezone?: string;
+  workingHours?: string;
+  title?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export async function getUserProfile(): Promise<{ data: UserProfile }> {
+  const response = await fetch(`${API_BASE_URL}/users/profile`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch user profile');
+  }
+  return response.json();
+}
+
+export async function updateUserProfile(data: Partial<UserProfile>): Promise<{ data: UserProfile }> {
+  const response = await fetch(`${API_BASE_URL}/users/profile`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to update user profile');
+  }
+  return response.json();
+}
+
+

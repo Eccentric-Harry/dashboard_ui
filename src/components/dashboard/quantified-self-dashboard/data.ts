@@ -19,7 +19,7 @@ import {
   Terminal,
 } from 'lucide-react'
 
-export type AppPath = '/home' | '/finance' | '/nutrition' | '/learnings' | '/workouts' | '/calendar' | '/prompts' | '/tasks' | '/people'
+export type AppPath = '/home' | '/finance' | '/nutrition' | '/learnings' | '/workouts' | '/calendar' | '/prompts' | '/tasks' | '/people' | '/profile'
 
 export interface DashboardNavItem {
   label: string

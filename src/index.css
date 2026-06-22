@@ -319,10 +319,24 @@ button {
   border: 0.5px solid rgba(255, 255, 255, 0.4);
 }
 
+.rail-avatar-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  display: block;
+  margin-top: 13px;
+}
+
+.rail-avatar-btn:hover {
+  transform: scale(1.08);
+}
+
 .rail-avatar {
   width: 35px;
   height: 35px;
-  margin-top: 13px;
   border: 5px solid #fff;
   border-radius: 50%;
   object-fit: cover;
@@ -1282,8 +1296,8 @@ button {
     border: 0.5px solid rgba(255, 255, 255, 0.4);
   }
 
-  .rail-avatar {
-    display: none;
+  .side-rail .rail-avatar-btn {
+    display: none !important;
   }
 
   .side-rail nav {
@@ -1308,7 +1322,8 @@ button {
     background: rgba(255, 255, 255, 0.58);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
     pointer-events: none;
-    transition: left 260ms cubic-bezier(0.16, 1, 0.3, 1);
+    transition: left 260ms cubic-bezier(0.16, 1, 0.3, 1), opacity 260ms ease;
+    opacity: var(--indicator-opacity, 1);
   }
 
   .side-rail button {
@@ -2074,6 +2089,25 @@ button {
   transform: translateY(0);
 }
 
+.full-width-tile {
+  grid-column: span 2;
+}
+
+.quick-access-tile.logout-tile:hover {
+  border-color: rgba(241, 105, 119, 0.25);
+  box-shadow: 0 6px 16px rgba(241, 105, 119, 0.08);
+}
+
+.tile-icon-wrapper.logout-icon-wrapper {
+  background: rgba(241, 105, 119, 0.1);
+  color: #f16977;
+}
+
+.quick-access-tile.logout-tile:hover .tile-icon-wrapper.logout-icon-wrapper {
+  background: #f16977;
+  color: white;
+}
+
 .tile-icon-wrapper {
   display: flex;
   align-items: center;
@@ -2788,7 +2822,7 @@ button {
   pointer-events: none;
 }
 
-.mobile-notification-trigger {
+.mobile-profile-trigger {
   display: none;
 }
 
@@ -2923,12 +2957,17 @@ button {
     background: rgba(0, 0, 0, 0.05);
   }
 
-  /* ── Floating bell trigger ── */
-  .mobile-notification-trigger {
+  /* Default triggers hidden on desktop */
+  .mobile-profile-trigger {
+    display: none;
+  }
+
+  /* ── Mobile top-right profile trigger ── */
+  .mobile-profile-trigger {
     display: flex;
     align-items: center;
     justify-content: center;
-    position: absolute;
+    position: fixed;
     top: 28px;
     right: 20px;
     z-index: 990;
@@ -2941,13 +2980,12 @@ button {
       0 8px 20px rgba(0, 0, 0, 0.08),
       0 1px 3px rgba(0, 0, 0, 0.02),
       inset 0 1px 1px #ffffff;
-    color: #202321;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     padding: 0;
   }
 
-  .mobile-notification-trigger:active {
+  .mobile-profile-trigger:active {
     transform: scale(0.94);
     background: #f0f1f6;
   }

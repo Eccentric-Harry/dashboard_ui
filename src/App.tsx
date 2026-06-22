@@ -13,13 +13,13 @@ import { CalendarOverview } from './components/views/calendar-view'
 import { PromptsOverview } from './components/views/prompts-view'
 import { TasksOverview } from './components/views/tasks-view'
 import { PeopleOverview } from './components/views/people-view'
+import { ProfileOverview, getAvatarImage } from './components/views/profile-view'
 import { FocusProvider } from './contexts/FocusContext'
 import { isStandalone } from './lib/utils'
 import { subscribeToActiveRequests } from './lib/api'
 import { OverlayLoader } from './components/ui/OverlayLoader'
 import { NotificationProvider, useNotifications } from './contexts/NotificationContext'
 import { NotificationCenter } from './components/dashboard/quantified-self-dashboard/components/notification-center'
-import avatarImage from './assets/reference-crops/avatar_luffy.png'
 import { VisitorAuthPopup } from './components/auth/VisitorAuthPopup'
 import { enableGuestInterceptor } from './lib/guest-interceptor'
 
@@ -78,20 +78,37 @@ function normalizePathname(pathname: string): AppPath {
     return '/people'
   }
 
+  if (pathname === '/profile') {
+    return '/profile'
+  }
+
   return '/nutrition'
 }
 
-function MobileNotificationTrigger() {
-  const { unreadCount, setIsOpen, isOpen } = useNotifications();
+function MobileProfileTrigger({ onNavigate }: { onNavigate: (path: AppPath) => void; activePath: AppPath }) {
+  const [avatar, setAvatar] = useState(() => localStorage.getItem('avatarUrl') || 'luffy');
+  const { unreadCount } = useNotifications();
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setAvatar(localStorage.getItem('avatarUrl') || 'luffy');
+    };
+    window.addEventListener('profile-updated', handleUpdate);
+    return () => window.removeEventListener('profile-updated', handleUpdate);
+  }, []);
+
+  const handleClick = () => {
+    onNavigate('/profile');
+  };
 
   return (
     <button
       type="button"
-      className="mobile-notification-trigger"
-      onClick={() => setIsOpen(!isOpen)}
-      aria-label="Open notifications"
+      className="mobile-profile-trigger"
+      onClick={handleClick}
+      aria-label="Open Profile"
     >
-      <img src={avatarImage} alt="Profile" className="mobile-profile-avatar" />
+      <img src={getAvatarImage(avatar)} alt="Profile" className="mobile-profile-avatar" />
       {unreadCount > 0 && (
         <span className="mobile-notification-badge">{unreadCount}</span>
       )}
@@ -247,6 +264,8 @@ function App() {
     content = <TasksOverview activePath={pathname} onNavigate={navigateTo} searchParams={searchParams} />
   } else if (pathname === '/people') {
     content = <PeopleOverview activePath={pathname} onNavigate={navigateTo} />
+  } else if (pathname === '/profile') {
+    content = <ProfileOverview activePath={pathname} onNavigate={navigateTo} />
   } else {
     content = <QuantifiedSelfDashboard activePath={pathname} onNavigate={navigateTo} />
   }
@@ -340,12 +359,12 @@ function App() {
         <div key={pathname} className="route-view-container">
           {content}
         </div>
-        <MobileNotificationTrigger />
+        <MobileProfileTrigger onNavigate={navigateTo} activePath={pathname} />
         <NotificationCenter onNavigate={navigateTo} />
         <OverlayLoader show={showOverlay} />
       </NotificationProvider>
       </FocusProvider>
-    </DashboardProvider>
+      </DashboardProvider>
     </>
   );
 }

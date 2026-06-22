@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Trash2, Bell, BellOff, Calendar, CheckSquare, Trophy, Eye, EyeOff, Clock, Loader2, RefreshCw, Terminal } from 'lucide-react';
+import { X, Trash2, Bell, BellOff, Calendar, CheckSquare, Trophy, Eye, EyeOff, Clock, Loader2, RefreshCw, Terminal, LogOut } from 'lucide-react';
 import { useNotifications } from '../../../../contexts/NotificationContext';
 import type { AppPath } from '../data';
 
@@ -111,7 +111,7 @@ function NotificationCenter({ onNavigate }: NotificationCenterProps) {
         {/* Quick Access Section */}
         <div className="quick-access-section">
           <h3 className="quick-access-section-title">Quick Access</h3>
-          <div className={`quick-access-grid ${isPushSupported ? 'four-items' : 'three-items'}`}>
+          <div className="quick-access-grid">
             <button 
               type="button"
               onClick={() => { setIsOpen(false); if (onNavigate) onNavigate('/prompts'); }}
@@ -179,6 +179,26 @@ function NotificationCenter({ onNavigate }: NotificationCenterProps) {
               <div className="tile-info">
                 <span className="tile-title">Finance Grids</span>
                 <span className="tile-subtitle">{showFinanceGrids ? 'Visible' : 'Hidden'}</span>
+              </div>
+            </button>
+
+            <button 
+              type="button"
+              onClick={() => {
+                if (window.confirm('Do you want to log out of your session?')) {
+                  localStorage.clear();
+                  window.location.reload();
+                }
+              }}
+              className="quick-access-tile logout-tile full-width-tile"
+              title="Log out session"
+            >
+              <div className="tile-icon-wrapper logout-icon-wrapper">
+                <LogOut size={16} />
+              </div>
+              <div className="tile-info">
+                <span className="tile-title">Log Out</span>
+                <span className="tile-subtitle font-semibold">End current session</span>
               </div>
             </button>
           </div>
