@@ -107,7 +107,7 @@ export function VisitorAuthPopup() {
                 <LogIn size={20} className="visitor-auth-top-icon" />
               </div>
 
-              <h2 className="visitor-auth-title">Sign in to Zenith OS</h2>
+              <h2 className="visitor-auth-title">Sign in to Life OS</h2>
               <p className="visitor-auth-subtitle">Unlock your isolated metrics vault.</p>
 
               {errorMsg && (
