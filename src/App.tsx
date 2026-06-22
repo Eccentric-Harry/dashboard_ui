@@ -253,9 +253,12 @@ function App() {
 
   const currentDate = searchParams.get('date') || undefined;
 
+  if (!isGuest && !authToken) {
+    return <VisitorAuthPopup />;
+  }
+
   return (
     <>
-      {!isGuest && !authToken && <VisitorAuthPopup />}
       <DashboardProvider date={currentDate}>
       <FocusProvider>
       <NotificationProvider>

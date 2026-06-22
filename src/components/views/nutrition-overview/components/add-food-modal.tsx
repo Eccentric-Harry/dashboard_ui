@@ -95,6 +95,11 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
         payload.total_summary = richPayload.total_summary
         payload.gaps_and_warnings = richPayload.gaps_and_warnings
         payload.technical_diagnostic = richPayload.technical_diagnostic
+        payload.acne_impact_assessment = richPayload.acne_impact_assessment
+        payload.recomposition_assessment = richPayload.recomposition_assessment
+        payload.satiety_and_energy_profile = richPayload.satiety_and_energy_profile
+        payload.nutritional_balance_diagnostic = richPayload.nutritional_balance_diagnostic
+        payload.daily_context = richPayload.daily_context
       }
 
       if (isEdit && initialData?.id) {
@@ -137,8 +142,8 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
         if (data.meal_items && Array.isArray(data.meal_items) && data.meal_items.length > 0) {
           const cleanName = (name: string) => (name || '').split('(')[0].trim()
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const items = data.meal_items.slice(0, 2).map((item: any) => cleanName(item.name))
-          newName = items.join(' + ') + (data.meal_items.length > 2 ? ' ...' : '')
+          const items = data.meal_items.map((item: any) => cleanName(item.name))
+          newName = items.join(' + ')
         }
         setDescription(newName)
       }

@@ -319,3 +319,711 @@
     gap: 0.5rem;
   }
 }
+
+/* ─── Enriched UI Styles for Precision Nutrition ─── */
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Enriched Meal Item Row */
+.meal-item-row-enriched {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 16px;
+  padding: 1.25rem;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+}
+
+.meal-item-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.meal-item-header-row h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.item-source-badge {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 0.125rem;
+}
+
+.meal-item-calories-badge {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.meal-item-calories-badge strong {
+  font-size: 1.1rem;
+  color: #0f172a;
+}
+
+.meal-item-macros-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  background: rgba(248, 250, 252, 0.8);
+  padding: 0.6rem;
+  border-radius: 10px;
+  margin-bottom: 0.75rem;
+  text-align: center;
+}
+
+.meal-item-macros-grid div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.meal-item-macros-grid span {
+  font-size: 0.65rem;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.meal-item-macros-grid strong {
+  font-size: 0.85rem;
+  color: #334155;
+}
+
+.item-acne-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.acne-tag {
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+}
+
+.acne-tag.dairy {
+  background-color: #fee2e2;
+  color: #ef4444;
+}
+
+.acne-tag.gi {
+  background-color: #ffedd5;
+  color: #f97316;
+}
+
+.acne-tag.omega6 {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.item-anti-acne-positives {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: #10b981;
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+/* Sub-tabs under Insights */
+.meal-insights-subtabs {
+  display: flex;
+  gap: 0.35rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+  scrollbar-width: none;
+}
+
+.meal-insights-subtabs::-webkit-scrollbar {
+  display: none;
+}
+
+.meal-insights-subtab {
+  flex-shrink: 0;
+  background: rgba(241, 245, 249, 0.7);
+  border: 1px solid transparent;
+  color: #64748b;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.meal-insights-subtab:hover {
+  background: rgba(226, 232, 240, 0.8);
+  color: #334155;
+}
+
+.meal-insights-subtab.active {
+  background: #202321;
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Rich Diagnostic Cards */
+.rich-diagnostic-card {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 16px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+.assessment-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.card-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.severity-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.25px;
+}
+
+.skin-verdict-box {
+  display: flex;
+  gap: 0.6rem;
+  background: rgba(16, 185, 129, 0.06);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  border-radius: 10px;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.heart-icon-skin {
+  color: #10b981;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.skin-verdict-text {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #065f46;
+  line-height: 1.45;
+}
+
+.description-text {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #334155;
+  margin: 0 0 1rem 0;
+}
+
+/* Diagnostic Grid */
+.diagnostic-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.grid-item {
+  background: rgba(248, 250, 252, 0.7);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  border-radius: 12px;
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.grid-item.full-width {
+  grid-column: span 2;
+}
+
+.grid-label {
+  font-size: 0.7rem;
+  color: #64748b;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.flex-value {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  color: #0f172a;
+}
+
+.flex-value strong {
+  font-weight: 700;
+}
+
+.slash-target {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.grid-subtext {
+  font-size: 0.75rem;
+  color: #475569;
+  margin: 0;
+}
+
+.dairy-summary-text {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: #334155;
+  margin: 0;
+}
+
+/* Skin positives container */
+.skin-positives-container {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed rgba(226, 232, 240, 0.8);
+}
+
+.skin-positives-container h5 {
+  font-size: 0.85rem;
+  margin: 0 0 0.5rem 0;
+  display: flex;
+  align-items: center;
+  color: #0f172a;
+}
+
+.skin-positives-container ul {
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 0.8rem;
+  color: #334155;
+}
+
+.skin-positives-container li {
+  margin-bottom: 0.25rem;
+}
+
+/* Visual Gauge */
+.visual-gauge-container {
+  width: 100%;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+
+.visual-gauge-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+  border-radius: 4px;
+  transition: width 0.4s ease-out;
+}
+
+.score-badge {
+  background: rgba(32, 35, 33, 0.05);
+  padding: 0.2rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #202321;
+}
+
+/* Satiety & Balance */
+.timing-text {
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: #334155;
+}
+
+.macronutrient-qualities {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+
+.macro-quality-item {
+  background: rgba(248, 250, 252, 0.6);
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.macro-tag-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.15rem 0.4rem;
+  border-radius: 6px;
+  flex-shrink: 0;
+  width: 60px;
+  text-align: center;
+}
+
+.macro-quality-item p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #334155;
+  line-height: 1.35;
+}
+
+.micronutrient-analysis-section {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.micro-block h5 {
+  font-size: 0.85rem;
+  margin: 0 0 0.6rem 0;
+  color: #475569;
+  font-weight: 600;
+}
+
+.micro-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.micro-row {
+  background: rgba(248, 250, 252, 0.6);
+  padding: 0.6rem;
+  border-radius: 10px;
+}
+
+.micro-row-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  margin-bottom: 0.3rem;
+}
+
+.micro-name {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.micro-amount {
+  color: #64748b;
+}
+
+.micro-row-progress-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.micro-row-progress-container .micro-row-progress-bar {
+  height: 6px;
+  border-radius: 3px;
+}
+
+.micro-pct {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #ef4444;
+  width: 35px;
+  text-align: right;
+}
+
+.micro-acne-link {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.75rem;
+  color: #d97706;
+}
+
+.micro-strength-item {
+  background: rgba(240, 253, 244, 0.6);
+  border: 1px solid rgba(187, 247, 208, 0.4);
+  padding: 0.6rem;
+  border-radius: 10px;
+}
+
+.micro-strength-item strong {
+  font-size: 0.8rem;
+  color: #15803d;
+  display: block;
+  margin-bottom: 0.15rem;
+}
+
+.micro-strength-item p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #166534;
+  line-height: 1.35;
+}
+
+.balance-suggestions-block {
+  margin-top: 1rem;
+}
+
+.balance-suggestions-block h5 {
+  font-size: 0.85rem;
+  margin: 0 0 0.6rem 0;
+  color: #475569;
+  font-weight: 600;
+}
+
+.suggestions-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.suggestion-item-card {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 12px;
+  padding: 0.75rem;
+}
+
+.suggestion-item-card .item-card-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+
+.addition-title {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #0f172a;
+}
+
+.effort-badge {
+  margin-left: auto;
+  font-size: 0.65rem;
+  background: #f1f5f9;
+  color: #475569;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  text-transform: capitalize;
+}
+
+.suggestion-item-card p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.acne-benefit-text {
+  margin-top: 0.25rem !important;
+  font-size: 0.75rem !important;
+  color: #059669 !important;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
+.suggestion-item-card.swap-card {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px dashed rgba(203, 213, 225, 0.8);
+}
+
+.swap-details {
+  display: flex;
+  align-items: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.swap-out-label {
+  color: #94a3b8;
+  text-decoration: line-through;
+}
+
+.swap-in-label {
+  color: #10b981;
+}
+
+.swap-benefit {
+  color: #475569 !important;
+  font-size: 0.75rem !important;
+  line-height: 1.35;
+}
+
+/* Warnings and Gaps tab styles */
+.warnings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.rich-warning-card {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-left-width: 4px;
+  padding: 1rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.01);
+}
+
+.rich-warning-card.severity-high {
+  border-left-color: #ef4444;
+}
+
+.rich-warning-card.severity-moderate,
+.rich-warning-card.severity-medium,
+.rich-warning-card.severity-elevated {
+  border-left-color: #f59e0b;
+}
+
+.rich-warning-card.severity-low {
+  border-left-color: #10b981;
+}
+
+.warning-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.warning-title-block {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.warning-icon {
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.rich-warning-card.severity-high .warning-icon {
+  color: #ef4444;
+}
+.rich-warning-card.severity-moderate .warning-icon,
+.rich-warning-card.severity-medium .warning-icon,
+.rich-warning-card.severity-elevated .warning-icon {
+  color: #f59e0b;
+}
+.rich-warning-card.severity-low .warning-icon {
+  color: #10b981;
+}
+
+.warning-title-block h4 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.warning-badge-block {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.warning-acne-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: #fee2e2;
+  color: #ef4444;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+
+.warning-matters {
+  font-size: 0.8rem;
+  color: #334155;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.4;
+}
+
+.warning-fix-block {
+  background: #f8fafc;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border-left: 2px solid #cbd5e1;
+}
+
+.fix-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 0.15rem;
+}
+
+.warning-fix-block p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #334155;
+  line-height: 1.35;
+}
+
+.no-rich-data-msg {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  padding: 2rem 0;
+  margin: 0;
+}
+
+.info-card {
+  background: #f0f9ff;
+  border-color: #bae6fd;
+}
+
+.info-card .insight-icon {
+  color: #0284c7;
+}
+
+.nutrition-extra-details {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.detail-row span {
+  color: #64748b;
+}
+
+.detail-row strong {
+  color: #334155;
+  font-weight: 600;
+}
+
