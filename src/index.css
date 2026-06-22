@@ -2967,10 +2967,10 @@ button {
     display: flex;
     align-items: center;
     justify-content: center;
-    position: fixed;
-    top: 28px;
-    right: 20px;
-    z-index: 990;
+    position: absolute !important;
+    top: 28px !important;
+    right: 20px !important;
+    z-index: 9999 !important;
     width: 44px;
     height: 44px;
     background: #ffffff;
