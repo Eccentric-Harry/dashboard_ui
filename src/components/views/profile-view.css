@@ -792,6 +792,117 @@
   color: #18181b;
 }
 
+/* ─── Two-Column Desktop Layout ─── */
+.profile-content-layout {
+  display: flex;
+  flex-direction: row;
+  gap: 48px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  margin-top: 16px;
+  width: 100%;
+}
+
+.profile-left-col {
+  flex: 0 0 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: sticky;
+  top: 0;
+  align-self: start;
+}
+
+.profile-left-col .profile-porsche-card {
+  margin: 0;
+}
+
+.profile-left-col .profile-notifications-option-card {
+  margin: 0;
+  width: 100%;
+  max-width: 440px;
+}
+
+.profile-left-quotes {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  width: 100%;
+  max-width: 440px;
+}
+
+.profile-right-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 780px;
+}
+
+.profile-quotes-header {
+  margin-bottom: 4px;
+}
+
+.profile-quotes-header p {
+  color: rgba(23, 28, 25, 0.54);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin: 0;
+}
+
+.profile-quotes-header h2 {
+  margin-top: 4px;
+  margin-bottom: 0;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: #101312;
+}
+
+.profile-quotes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+.profile-quote-card {
+  width: 100%;
+  background: #eaebed;
+  border: 6px solid #ffffff;
+  border-radius: 20px;
+  box-shadow: 
+    0 12px 32px rgba(0, 0, 0, 0.05),
+    0 2px 8px rgba(0, 0, 0, 0.02);
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-quote-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.08),
+    0 6px 16px rgba(0, 0, 0, 0.04);
+}
+
+.profile-quote-card img {
+  width: 100%;
+  height: auto;
+  display: block;
+  mix-blend-mode: multiply;
+  opacity: 0.9;
+  transition: opacity 0.3s ease;
+}
+
+.profile-quote-card:hover img {
+  opacity: 1;
+}
+
 /* ═══════════════════════════════════════════════════════ */
 /* RESPONSIVE — Tablet                                    */
 /* ═══════════════════════════════════════════════════════ */
@@ -800,6 +911,9 @@
   .profile-container {
     inset: 132px 32px 48px 100px;
     padding: 24px 16px;
+  }
+  .profile-content-layout {
+    gap: 24px;
   }
 }
 
@@ -823,6 +937,53 @@
     border-radius: 0;
     overflow: visible;
     overscroll-behavior: auto;
+  }
+
+  .profile-content-layout {
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+  }
+
+  .profile-left-col {
+    flex: none;
+    width: 100%;
+    max-width: 440px;
+    align-items: center;
+    position: static;
+  }
+
+  .profile-left-col .profile-porsche-card {
+    margin: 0 auto;
+  }
+
+  .profile-left-col .profile-notifications-option-card {
+    margin: 0 auto;
+  }
+
+  .profile-left-quotes {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .profile-right-col {
+    width: 100%;
+    max-width: 440px;
+    align-items: center;
+  }
+
+  .profile-quotes-header {
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .profile-quotes-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .profile-quote-card {
+    max-width: 100%;
   }
 
   /* Route header — mobile sizing */

@@ -365,98 +365,136 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                 /* ═══════════════════════════════════════════ */
                 /* READ-ONLY — Premium Porsche Card Layout    */
                 /* ═══════════════════════════════════════════ */
-                <div className="profile-porsche-card">
-                  {/* Card Image Cover Header */}
-                  <div className="profile-porsche-img-container">
-                    <img
-                      src={getAvatarImage(avatarUrl)}
-                      alt="Profile Banner"
-                      className="profile-porsche-img"
-                    />
+                <div className="profile-content-layout">
+                  <div className="profile-left-col">
+                    <div className="profile-porsche-card">
+                      {/* Card Image Cover Header */}
+                      <div className="profile-porsche-img-container">
+                        <img
+                          src={getAvatarImage(avatarUrl)}
+                          alt="Profile Banner"
+                          className="profile-porsche-img"
+                        />
+                      </div>
+
+                      {/* Attributes Badges Row */}
+                      <div className="profile-porsche-badges">
+                        <div className="profile-porsche-pill">
+                          <span className={`profile-porsche-dot status-${(status || 'Online').toLowerCase().replace(/\s+/g, '-')}`}></span>
+                          <span>{status || 'Online'}</span>
+                        </div>
+                        <div className="profile-porsche-pill">
+                          <Globe size={12} strokeWidth={2.5} />
+                          <span>{timezone || 'GMT+5:30'}</span>
+                        </div>
+                        <div className="profile-porsche-pill">
+                          <Clock size={12} strokeWidth={2.5} />
+                          <span>{workingHours || '10 AM - 6 PM'}</span>
+                        </div>
+                      </div>
+
+                      {/* Main Information Block */}
+                      <div className="profile-porsche-content">
+                        <h2 className="profile-porsche-name">{displayName || 'Your Name'}</h2>
+                        <h3 className="profile-porsche-title">{title || 'Intern'}</h3>
+                        <p className="profile-porsche-description">
+                          {bio || 'Ready to learn, design, and develop premium dashboard systems.'}
+                        </p>
+                        {email && (
+                          <a href={`mailto:${email}`} className="profile-porsche-email-link">
+                            <Mail size={13} />
+                            <span>{email}</span>
+                          </a>
+                        )}
+                      </div>
+
+                      {/* Actions & Timestamps Footer */}
+                      <div className="profile-porsche-footer">
+                        <span className="profile-porsche-last-updated">
+                          {formatLastUpdated(profile?.updatedAt || profile?.createdAt)}
+                        </span>
+                        <div className="profile-porsche-actions">
+                          <button
+                            type="button"
+                            className="profile-porsche-logout-btn"
+                            onClick={handleLogout}
+                          >
+                            <LogOut size={14} />
+                            <span>Log Out</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="profile-porsche-edit-btn"
+                            onClick={() => setIsEditing(true)}
+                          >
+                            <Pencil size={14} />
+                            <span>Edit Profile</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="profile-notifications-option-card"
+                      onClick={() => setIsOpen(true)}
+                    >
+                      <div className="profile-notif-option-content">
+                        <div className="profile-notif-icon-wrapper">
+                          <Bell size={18} />
+                          {unreadCount > 0 && (
+                            <span className="profile-notif-badge">{unreadCount}</span>
+                          )}
+                        </div>
+                        <div className="profile-notif-text">
+                          <h3>Notifications</h3>
+                          <p>
+                            {unreadCount > 0
+                              ? `You have ${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`
+                              : 'All caught up'}
+                          </p>
+                        </div>
+                      </div>
+                      <ChevronRight size={18} className="profile-notif-chevron" />
+                    </button>
+
+                    <div className="profile-left-quotes">
+                      <div className="profile-quote-card">
+                        <img src="/quotes/quote_1.png" alt="1% Better Every Day" />
+                      </div>
+                      <div className="profile-quote-card">
+                        <img src="/quotes/quote_2.png" alt="Get Shit Done" />
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Attributes Badges Row */}
-                  <div className="profile-porsche-badges">
-                    <div className="profile-porsche-pill">
-                      <span className={`profile-porsche-dot status-${(status || 'Online').toLowerCase().replace(/\s+/g, '-')}`}></span>
-                      <span>{status || 'Online'}</span>
+                  <div className="profile-right-col">
+                    <div className="profile-quotes-header">
+                      <p>Inspiration</p>
+                      <h2>Mindset & Focus</h2>
                     </div>
-                    <div className="profile-porsche-pill">
-                      <Globe size={12} strokeWidth={2.5} />
-                      <span>{timezone || 'GMT+5:30'}</span>
-                    </div>
-                    <div className="profile-porsche-pill">
-                      <Clock size={12} strokeWidth={2.5} />
-                      <span>{workingHours || '10 AM - 6 PM'}</span>
-                    </div>
-                  </div>
-
-                  {/* Main Information Block */}
-                  <div className="profile-porsche-content">
-                    <h2 className="profile-porsche-name">{displayName || 'Your Name'}</h2>
-                    <h3 className="profile-porsche-title">{title || 'Intern'}</h3>
-                    <p className="profile-porsche-description">
-                      {bio || 'Ready to learn, design, and develop premium dashboard systems.'}
-                    </p>
-                    {email && (
-                      <a href={`mailto:${email}`} className="profile-porsche-email-link">
-                        <Mail size={13} />
-                        <span>{email}</span>
-                      </a>
-                    )}
-                  </div>
-
-                  {/* Actions & Timestamps Footer */}
-                  <div className="profile-porsche-footer">
-                    <span className="profile-porsche-last-updated">
-                      {formatLastUpdated(profile?.updatedAt || profile?.createdAt)}
-                    </span>
-                    <div className="profile-porsche-actions">
-                      <button
-                        type="button"
-                        className="profile-porsche-logout-btn"
-                        onClick={handleLogout}
-                      >
-                        <LogOut size={14} />
-                        <span>Log Out</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="profile-porsche-edit-btn"
-                        onClick={() => setIsEditing(true)}
-                      >
-                        <Pencil size={14} />
-                        <span>Edit Profile</span>
-                      </button>
+                    <div className="profile-quotes-grid">
+                      <div className="profile-quote-card">
+                        <img src="/quotes/quote_3.png" alt="Yesterday NOW Tomorrow" />
+                      </div>
+                      <div className="profile-quote-card">
+                        <img src="/quotes/quote_4.png" alt="Fuck What People Think" />
+                      </div>
+                      <div className="profile-quote-card">
+                        <img src="/quotes/quote_5.png" alt="Trust The Process" />
+                      </div>
+                      <div className="profile-quote-card">
+                        <img src="/quotes/quote_6.png" alt="Upgrade Your Life In Silence" />
+                      </div>
+                      <div className="profile-quote-card">
+                        <img src="/quotes/quote_7.png" alt="Distraction Focus" />
+                      </div>
+                      <div className="profile-quote-card">
+                        <img src="/quotes/quote_8.png" alt="A Calm Mind Is Powerful" />
+                      </div>
                     </div>
                   </div>
                 </div>
-              )}
-
-              {!isEditing && (
-                <button
-                  type="button"
-                  className="profile-notifications-option-card"
-                  onClick={() => setIsOpen(true)}
-                >
-                  <div className="profile-notif-option-content">
-                    <div className="profile-notif-icon-wrapper">
-                      <Bell size={18} />
-                      {unreadCount > 0 && (
-                        <span className="profile-notif-badge">{unreadCount}</span>
-                      )}
-                    </div>
-                    <div className="profile-notif-text">
-                      <h3>Notifications</h3>
-                      <p>
-                        {unreadCount > 0
-                          ? `You have ${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`
-                          : 'All caught up'}
-                      </p>
-                    </div>
-                  </div>
-                  <ChevronRight size={18} className="profile-notif-chevron" />
-                </button>
               )}
             </>
           )}
