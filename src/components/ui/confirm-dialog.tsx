@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import './confirm-dialog.css'
 
@@ -14,7 +15,7 @@ interface ConfirmDialogProps {
 export function ConfirmDialog({ open, title, message, confirmLabel = 'Delete', cancelLabel = 'Cancel', onConfirm, onCancel }: ConfirmDialogProps) {
   if (!open) return null
 
-  return (
+  const modalContent = (
     <div className="confirm-modal-backdrop" onClick={onCancel}>
       <div className="confirm-popover" onClick={e => e.stopPropagation()}>
         <div className="confirm-header">
@@ -37,4 +38,6 @@ export function ConfirmDialog({ open, title, message, confirmLabel = 'Delete', c
       </div>
     </div>
   )
+
+  return createPortal(modalContent, document.body)
 }
