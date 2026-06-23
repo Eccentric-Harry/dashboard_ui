@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getAvatarImage } from '../../../views/profile-view'
+import { getAvatarImage } from '../../../../lib/avatar'
 
 function TopChip() {
   const [avatar, setAvatar] = useState(() => localStorage.getItem('avatarUrl') || 'luffy')

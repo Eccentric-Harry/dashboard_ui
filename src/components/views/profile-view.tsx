@@ -7,12 +7,7 @@ import type { AppPath } from '../dashboard/quantified-self-dashboard/data';
 import toast from 'react-hot-toast';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { ConfirmDialog } from '../ui/confirm-dialog';
-
-import avatar1 from '../../assets/avatars/avatar1.png';
-import avatar2 from '../../assets/avatars/avatar2.png';
-import avatar3 from '../../assets/avatars/avatar3.png';
-import avatar4 from '../../assets/avatars/avatar4.png';
-import avatarLuffy from '../../assets/reference-crops/avatar_luffy.png';
+import { getAvatarImage, avatarPresets } from '../../lib/avatar';
 import './profile-view.css';
 
 type ProfileOverviewProps = {
@@ -20,21 +15,6 @@ type ProfileOverviewProps = {
   onNavigate: (pathname: AppPath) => void;
 };
 
-export const getAvatarImage = (avatarUrl?: string) => {
-  if (avatarUrl === 'avatar1') return avatar1;
-  if (avatarUrl === 'avatar2') return avatar2;
-  if (avatarUrl === 'avatar3') return avatar3;
-  if (avatarUrl === 'avatar4') return avatar4;
-  return avatarLuffy;
-};
-
-const avatarPresets = [
-  { id: 'luffy', name: 'Luffy (Default)', img: avatarLuffy },
-  { id: 'avatar1', name: 'Ninja', img: avatar1 },
-  { id: 'avatar2', name: 'Hacker', img: avatar2 },
-  { id: 'avatar3', name: 'Explorer', img: avatar3 },
-  { id: 'avatar4', name: 'Cyberpunk', img: avatar4 },
-];
 
 const timezonePresets = [
   'GMT-12', 'GMT-11', 'GMT-10', 'GMT-9', 'GMT-8', 'GMT-7', 'GMT-6', 'GMT-5',

@@ -1,5 +1,5 @@
-import { type CSSProperties, useEffect, useState } from 'react'
-import { getAvatarImage } from '../../../views/profile-view'
+import { useEffect, useState } from 'react'
+import { getAvatarImage } from '../../../../lib/avatar'
 import { type AppPath, navItems, railBottomItems } from '../data'
 import { useNotifications } from '../../../../contexts/NotificationContext'
 import { ConfirmDialog } from '../../../ui/confirm-dialog'
@@ -30,7 +30,7 @@ function SideRail({ activePath, onNavigate }: DashboardStageProps) {
     '--active-index': activeMobileIndex,
     '--visible-count': mobileNavItems.length,
     '--indicator-opacity': showActiveIndicator ? 1 : 0,
-  } as CSSProperties
+  } as any
 
   const handleSettingsClick = () => {
     setShowLogoutDialog(true)
@@ -55,6 +55,8 @@ function SideRail({ activePath, onNavigate }: DashboardStageProps) {
       <nav style={navStyle}>
         {navItems.map((item) => {
           const { label, icon: Icon, to, muted, bubble } = item
+          const btnClassName = `${to && activePath === to ? 'active' : ''} ${muted ? 'muted' : ''} ${item.mobileHidden ? 'mobile-hidden' : ''}`.trim() || undefined
+
           return (
           <button
             key={label}
@@ -62,7 +64,7 @@ function SideRail({ activePath, onNavigate }: DashboardStageProps) {
             aria-label={label}
             title={label}
             aria-current={to && activePath === to ? 'page' : undefined}
-            className={`${to && activePath === to ? 'active' : ''} ${muted ? 'muted' : ''} ${item.mobileHidden ? 'mobile-hidden' : ''}`.trim() || undefined}
+            className={btnClassName}
             onClick={to ? () => onNavigate(to) : undefined}
           >
             <Icon size={16} strokeWidth={2} />
@@ -74,6 +76,10 @@ function SideRail({ activePath, onNavigate }: DashboardStageProps) {
       <div className="rail-bottom">
         {railBottomItems.map(({ label, icon: Icon, muted }) => {
           const isNotifications = label === 'Notifications'
+          const btnClassName = `${muted && !isNotifications ? 'muted' : ''} ${isNotifications && isOpen ? 'active' : ''} ${isNotifications ? 'rail-notifications-btn' : ''}`.trim() || undefined
+          const handleBottomClick = isNotifications
+            ? () => setIsOpen(!isOpen)
+            : (label === 'Settings' ? handleSettingsClick : undefined)
           
           return (
             <button
@@ -81,8 +87,8 @@ function SideRail({ activePath, onNavigate }: DashboardStageProps) {
               type="button"
               aria-label={label}
               title={label}
-              className={`${muted && !isNotifications ? 'muted' : ''} ${isNotifications && isOpen ? 'active' : ''} ${isNotifications ? 'rail-notifications-btn' : ''}`.trim() || undefined}
-              onClick={isNotifications ? () => setIsOpen(!isOpen) : (label === 'Settings' ? handleSettingsClick : undefined)}
+              className={btnClassName}
+              onClick={handleBottomClick}
             >
               <Icon size={16} />
               {isNotifications && unreadCount > 0 && (
