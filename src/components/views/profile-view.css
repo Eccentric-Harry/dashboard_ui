@@ -1,26 +1,82 @@
+/* ═══════════════════════════════════════════════════════ */
+/* Profile View — Porsche 911 inspired redesign           */
+/* ═══════════════════════════════════════════════════════ */
+
 .profile-container {
   position: absolute;
-  inset: 118px 54px 42px 202px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  inset: 132px 58px 48px 206px;
+  z-index: 2;
+  overflow-x: hidden;
   overflow-y: auto;
-  padding: 24px;
+  padding: 32px 24px 72px 24px;
+  color: #101312;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
   box-sizing: border-box;
 }
 
-/* Edit Profile Card */
-.profile-edit-card {
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 24px;
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.08);
+/* ─── Header ─── */
+.profile-header {
+  display: flex;
+  height: 56px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px 0 2px;
+  margin-bottom: 32px;
+}
+
+.profile-header p,
+.profile-header h1 {
+  margin: 0;
+}
+
+.profile-header p {
+  color: rgba(23, 28, 25, 0.54);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.profile-header h1 {
+  margin-top: 4px;
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  color: #101312;
+}
+
+/* ─── Profile Card Shell — Porsche Inspired ─── */
+.profile-porsche-card {
+  border: 8px solid #ffffff;
+  border-radius: 26px;
+  background: #eaebed;
+  box-shadow: 
+    0 20px 48px rgba(0, 0, 0, 0.09),
+    0 4px 14px rgba(0, 0, 0, 0.04);
   width: 100%;
-  max-width: 740px;
+  max-width: 440px;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  margin: 0 auto;
   animation: cardFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  overflow: hidden;
+}
+
+/* Edit Mode Card is slightly wider to hold input form grid nicely */
+.profile-porsche-card-edit {
+  max-width: 760px;
+  max-height: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-porsche-card-edit form {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  overflow: visible;
 }
 
 @keyframes cardFadeIn {
@@ -34,10 +90,214 @@
   }
 }
 
-/* Card Header */
+/* Image Cover Header */
+.profile-porsche-img-container {
+  width: 100%;
+  height: 170px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+
+.profile-porsche-img {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  border: 5px solid #ffffff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  object-fit: cover;
+  object-position: center;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.profile-porsche-img-container:hover .profile-porsche-img {
+  transform: scale(1.05);
+}
+
+/* Attributes Badges Row */
+.profile-porsche-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 18px 24px 8px 24px;
+}
+
+.profile-porsche-pill {
+  background: #ffffff;
+  border-radius: 9999px;
+  padding: 4px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #4b5563;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.profile-porsche-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  color: #111827;
+}
+
+.profile-porsche-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+}
+
+.profile-porsche-dot.status-online {
+  background: #10b981;
+}
+
+.profile-porsche-dot.status-offline {
+  background: #9ca3af;
+}
+
+.profile-porsche-dot.status-away {
+  background: #f59e0b;
+}
+
+.profile-porsche-dot.status-do-not-disturb {
+  background: #ef4444;
+}
+
+.profile-porsche-pill svg {
+  color: #1c1d1f;
+}
+
+/* Main Content Typography */
+.profile-porsche-content {
+  padding: 12px 24px 28px 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-porsche-name {
+  font-size: 28px;
+  font-weight: 700;
+  color: #0d0e10;
+  letter-spacing: -0.01em;
+  margin: 0;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.profile-porsche-title {
+  font-size: 38px;
+  font-weight: 700;
+  color: #8c8d90;
+  text-transform: uppercase;
+  letter-spacing: -0.04em;
+  margin: 2px 0 0 0;
+  line-height: 0.95;
+}
+
+.profile-porsche-description {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #55575c;
+  margin: 14px 0 0 0;
+  letter-spacing: -0.01em;
+}
+
+.profile-porsche-email-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  font-size: 12.5px;
+  color: #4b5563;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  width: fit-content;
+}
+
+.profile-porsche-email-link:hover {
+  color: #111827;
+  transform: translateX(2px);
+}
+
+.profile-porsche-email-link svg {
+  color: #7c7e85;
+}
+
+/* Footer Section inside Card */
+.profile-porsche-footer {
+  padding: 16px 24px;
+  background: transparent;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.profile-porsche-last-updated {
+  font-size: 11px;
+  color: #7c7e85;
+  font-weight: 550;
+}
+
+.profile-porsche-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.profile-porsche-logout-btn {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  color: #1c1d1f;
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.profile-porsche-logout-btn:hover {
+  background: #000000;
+  color: #ffffff;
+  border-color: #000000;
+  transform: translateY(-1px);
+}
+
+.profile-porsche-edit-btn {
+  background: #1c1d1f;
+  color: #ffffff;
+  padding: 6px 14px;
+  border-radius: 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.profile-porsche-edit-btn:hover {
+  background: #000000;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+}
+
+/* ═══════════════════════════════════════════════════════ */
+/* EDIT MODE FORM STYLING                                 */
+/* ═══════════════════════════════════════════════════════ */
+
 .profile-card-header {
   padding: 24px 28px 20px 28px;
-  border-bottom: 1px solid #f4f4f5;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -66,58 +326,59 @@
 }
 
 .profile-close-btn:hover {
-  background: #f4f4f5;
+  background: rgba(0, 0, 0, 0.04);
   color: #18181b;
 }
 
-/* Card Body */
 .profile-card-body {
   display: flex;
-  gap: 28px;
-  padding: 28px;
+  gap: 20px;
+  padding: 20px;
   align-items: stretch;
 }
 
-/* Left Form Panel */
+.profile-porsche-card-edit .profile-card-body {
+  overflow-y: visible;
+  flex: none;
+}
+
 .profile-form-panel {
   flex: 1.25;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
 }
 
 .profile-dashed-divider {
   width: 1px;
-  border-left: 1px dashed #e4e4e7;
+  border-left: 1px dashed rgba(0, 0, 0, 0.1);
   margin: 0 4px;
 }
 
-/* Right Preview Panel */
 .profile-preview-panel {
   flex: 0.95;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 10px;
+  padding: 6px;
   position: relative;
 }
 
 .preview-label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  color: #a1a1aa;
+  color: #8c8d90;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
-/* Preview Avatar */
 .preview-avatar-wrapper {
   position: relative;
-  width: 104px;
-  height: 104px;
-  margin-bottom: 16px;
+  width: 80px;
+  height: 80px;
+  margin-bottom: 12px;
 }
 
 .preview-avatar {
@@ -125,8 +386,8 @@
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid #f4f4f5;
-  background: #f4f4f5;
+  border: 4px solid #ffffff;
+  background: #ffffff;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
@@ -138,7 +399,7 @@
   height: 28px;
   border-radius: 50%;
   background: #ffffff;
-  border: 1px solid #e4e4e7;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
   display: flex;
   align-items: center;
@@ -163,7 +424,7 @@
   left: 50%;
   transform: translateX(-50%);
   background: #ffffff;
-  border: 1px solid #e4e4e7;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.15);
   border-radius: 16px;
   padding: 14px;
@@ -241,24 +502,24 @@
   border: 1px solid #ffffff;
 }
 
-/* Preview Texts */
 .preview-name {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: #18181b;
-  margin: 0 0 4px 0;
+  margin: 0 0 2px 0;
   text-align: center;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-transform: uppercase;
 }
 
 .preview-title {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 400;
   color: #71717a;
-  margin: 0 0 16px 0;
+  margin: 0 0 8px 0;
   text-align: center;
   max-width: 100%;
   overflow: hidden;
@@ -266,39 +527,29 @@
   white-space: nowrap;
 }
 
-.preview-schedule {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: #71717a;
-  background: #f4f4f5;
-  padding: 6px 14px;
-  border-radius: 20px;
-}
-
-/* Form Styling */
+/* Form inputs styling */
 .profile-input-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   width: 100%;
 }
 
 .profile-input-group label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: #71717a;
 }
 
 .profile-input-group input,
-.profile-input-group select {
+.profile-input-group select,
+.profile-textarea {
   width: 100%;
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid #e4e4e7;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   background: #ffffff;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: #18181b;
   outline: none;
@@ -307,8 +558,15 @@
   font-family: inherit;
 }
 
+.profile-textarea {
+  resize: none;
+  line-height: 1.45;
+  height: 52px;
+}
+
 .profile-input-group input:focus,
-.profile-input-group select:focus {
+.profile-input-group select:focus,
+.profile-textarea:focus {
   border-color: #18181b;
   box-shadow: 0 0 0 2px rgba(24, 24, 27, 0.05);
 }
@@ -319,36 +577,6 @@
   gap: 16px;
 }
 
-/* Read-Only Info Field Styling */
-.profile-info-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 100%;
-}
-
-.profile-info-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: #71717a;
-}
-
-.profile-info-value {
-  width: 100%;
-  padding: 10px 14px;
-  border-radius: 10px;
-  background: #f4f4f5;
-  border: 1px solid transparent;
-  font-size: 14px;
-  font-weight: 500;
-  color: #18181b;
-  box-sizing: border-box;
-  min-height: 41px;
-  display: flex;
-  align-items: center;
-}
-
-/* Select wrapper for custom dropdown arrow */
 .profile-select-wrapper {
   position: relative;
   width: 100%;
@@ -364,7 +592,6 @@
   background-size: 14px;
 }
 
-/* Input with icon wrapper */
 .profile-input-with-icon {
   position: relative;
   width: 100%;
@@ -383,34 +610,28 @@
   pointer-events: none;
 }
 
-/* Footer styling */
+/* Edit Card Footer */
 .profile-card-footer {
   padding: 20px 28px;
-  border-top: 1px solid #f4f4f5;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #fafafa;
-  border-bottom-left-radius: 24px;
-  border-bottom-right-radius: 24px;
-}
-
-.profile-last-updated {
-  font-size: 12px;
-  color: #71717a;
 }
 
 .profile-footer-buttons {
   display: flex;
+  flex-direction: row;
+  align-items: center;
   gap: 12px;
 }
 
 .profile-cancel-btn {
   background: #ffffff;
-  border: 1px solid #e4e4e7;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   color: #18181b;
   padding: 10px 18px;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -422,39 +643,12 @@
   background: #f4f4f5;
 }
 
-.profile-submit-btn,
-.profile-edit-toggle-btn {
+.profile-submit-btn {
   background: #18181b;
   border: none;
   color: #ffffff;
   padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  outline: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.profile-submit-btn:hover,
-.profile-edit-toggle-btn:hover {
-  background: #27272a;
-}
-
-.profile-submit-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.profile-logout-btn {
-  background: #fff5f5;
-  border: 1px solid #ffe3e3;
-  color: #ef4444;
-  padding: 10px 18px;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -464,13 +658,21 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.profile-logout-btn:hover {
-  background: #fee2e2;
+.profile-submit-btn:hover {
+  background: #000000;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
-/* Loading state styling */
+.profile-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Loading panel */
 .profile-loading-panel {
   display: flex;
   flex-direction: column;
@@ -480,20 +682,130 @@
   color: #71717a;
   gap: 12px;
   font-weight: 500;
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 24px;
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.08);
+  border: 8px solid #ffffff;
+  border-radius: 26px;
+  background: #eaebed;
+  box-shadow: 
+    0 20px 48px rgba(0, 0, 0, 0.09);
   width: 100%;
-  max-width: 740px;
+  max-width: 440px;
+  margin: 0 auto;
 }
 
-/* Responsiveness overrides */
+/* ═══════════════════════════════════════════════════════ */
+/* NOTIFICATIONS CARD REDESIGN                            */
+/* ═══════════════════════════════════════════════════════ */
+
+.profile-notifications-option-card {
+  margin: 20px auto 0 auto;
+  background: #eaebed;
+  border: 6px solid #ffffff;
+  border-radius: 20px;
+  box-shadow: 
+    0 12px 32px rgba(0, 0, 0, 0.05),
+    0 2px 8px rgba(0, 0, 0, 0.02);
+  width: 100%;
+  max-width: 440px;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
+  color: inherit;
+  animation: cardFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.profile-notifications-option-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 16px 36px rgba(0, 0, 0, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.profile-notif-option-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.profile-notif-icon-wrapper {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #18181b;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.profile-notifications-option-card:hover .profile-notif-icon-wrapper {
+  background: #1c1d1f;
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
+.profile-notif-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: #16a34a;
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  min-width: 14px;
+  height: 14px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  border: 1.5px solid white;
+}
+
+.profile-notif-text h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #18181b;
+}
+
+.profile-notif-text p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #52525b;
+}
+
+.profile-notif-chevron {
+  color: #a1a1aa;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s ease;
+}
+
+.profile-notifications-option-card:hover .profile-notif-chevron {
+  transform: translateX(4px);
+  color: #18181b;
+}
+
+/* ═══════════════════════════════════════════════════════ */
+/* RESPONSIVE — Tablet                                    */
+/* ═══════════════════════════════════════════════════════ */
+
 @media (max-width: 1024px) {
   .profile-container {
-    inset: 118px 32px 42px 100px;
+    inset: 132px 32px 48px 100px;
+    padding: 24px 16px;
   }
 }
+
+/* ═══════════════════════════════════════════════════════ */
+/* RESPONSIVE — Mobile                                    */
+/* ═══════════════════════════════════════════════════════ */
 
 @media (max-width: 768px) {
   .profile-container {
@@ -501,21 +813,67 @@
     inset: auto;
     width: 100%;
     height: auto;
-    padding: 20px 20px calc(110px + env(safe-area-inset-bottom, 0px)) 20px;
-    margin-top: 88px;
+    padding: 24px 16px calc(110px + env(safe-area-inset-bottom, 0px)) 16px;
+    margin-top: 0;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    background: transparent;
+    box-shadow: none;
+    border-radius: 0;
+    overflow: visible;
+    overscroll-behavior: auto;
   }
 
-  .profile-edit-card {
-    border-radius: 20px;
+  /* Route header — mobile sizing */
+  .profile-header {
+    width: 100%;
+    flex-direction: column;
+    text-align: center;
+    gap: 14px;
+    margin-bottom: 24px;
+    padding: 0;
+  }
+
+  .profile-header h1 {
+    font-size: 20px;
+    letter-spacing: -0.03em;
+    white-space: normal;
+    margin-top: 4px;
+  }
+
+  .profile-header p {
+    font-size: 10px;
+    line-height: 1.35;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  .profile-porsche-card,
+  .profile-notifications-option-card {
+    max-width: 100%;
+  }
+
+  .profile-porsche-img-container {
+    height: 140px;
+  }
+
+  .profile-porsche-img-container .profile-porsche-img {
+    width: 96px;
+    height: 96px;
+    border-width: 4px;
+  }
+
+  /* Edit mode mobile */
+  .profile-porsche-card-edit {
     max-width: 100%;
   }
 
   .profile-card-body {
     flex-direction: column;
-    gap: 24px;
-    padding: 24px;
+    gap: 16px;
+    padding: 16px;
   }
 
   .profile-dashed-divider {
@@ -524,59 +882,90 @@
 
   .profile-preview-panel {
     order: -1;
-    border-bottom: 1px dashed #e4e4e7;
-    padding-bottom: 24px;
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.08);
+    padding-bottom: 12px;
     margin-bottom: 8px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 16px;
+    width: 100%;
+    padding-left: 8px;
+  }
+
+  .preview-label {
+    display: none;
+  }
+
+  .preview-avatar-wrapper {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+
+  .preview-avatar {
+    border-width: 2px;
+  }
+
+  .preview-name {
+    font-size: 15px;
+    text-align: left;
+    margin: 0;
+  }
+
+  .preview-title {
+    font-size: 12px;
+    text-align: left;
+    margin: 0;
   }
 
   .profile-form-panel {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .profile-porsche-footer {
+    flex-direction: column;
     gap: 16px;
+    align-items: center;
+    padding: 20px;
   }
 
-  .profile-form-panel > *:nth-child(1) {
-    grid-column: 1;
-    grid-row: 1;
+  .profile-porsche-footer .profile-porsche-actions {
+    width: 100%;
+    display: flex;
+    gap: 12px;
   }
 
-  .profile-form-panel > *:nth-child(4) {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-  .profile-form-panel > *:nth-child(2) {
-    grid-column: span 2;
-    grid-row: 2;
-  }
-
-  .profile-form-panel > *:nth-child(3) {
-    grid-column: span 2;
-    grid-row: 3;
+  .profile-porsche-logout-btn,
+  .profile-porsche-edit-btn {
+    flex: 1;
+    text-align: center;
+    justify-content: center;
+    padding: 10px 16px;
   }
 
   .profile-card-footer {
     flex-direction: column;
     gap: 16px;
     align-items: center;
-    border-bottom-left-radius: 20px;
-    border-bottom-right-radius: 20px;
-    padding: 20px 24px;
+    padding: 20px;
   }
 
-  .profile-footer-buttons {
+  .profile-card-footer .profile-footer-buttons {
     width: 100%;
     display: flex;
     gap: 12px;
   }
 
   .profile-cancel-btn,
-  .profile-submit-btn,
-  .profile-edit-toggle-btn,
-  .profile-logout-btn {
+  .profile-submit-btn {
     flex: 1;
     text-align: center;
     justify-content: center;
-    padding: 12px 16px;
+    padding: 10px 16px;
   }
 }

@@ -2,6 +2,7 @@ import { type CSSProperties, useEffect, useState } from 'react'
 import { getAvatarImage } from '../../../views/profile-view'
 import { type AppPath, navItems, railBottomItems } from '../data'
 import { useNotifications } from '../../../../contexts/NotificationContext'
+import { ConfirmDialog } from '../../../ui/confirm-dialog'
 
 type DashboardStageProps = {
   activePath: AppPath
@@ -11,6 +12,7 @@ type DashboardStageProps = {
 function SideRail({ activePath, onNavigate }: DashboardStageProps) {
   const { unreadCount, isOpen, setIsOpen } = useNotifications()
   const [avatar, setAvatar] = useState(() => localStorage.getItem('avatarUrl') || 'luffy')
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false)
 
   useEffect(() => {
     const handleUpdate = () => {
@@ -31,10 +33,12 @@ function SideRail({ activePath, onNavigate }: DashboardStageProps) {
   } as CSSProperties
 
   const handleSettingsClick = () => {
-    if (window.confirm('Do you want to log out of your session?')) {
-      localStorage.clear()
-      window.location.reload()
-    }
+    setShowLogoutDialog(true)
+  }
+
+  const confirmLogout = () => {
+    localStorage.clear()
+    window.location.reload()
   }
 
   return (
@@ -88,6 +92,16 @@ function SideRail({ activePath, onNavigate }: DashboardStageProps) {
           )
         })}
       </div>
+
+      <ConfirmDialog
+        open={showLogoutDialog}
+        title="Log out"
+        message="Do you want to log out of your session?"
+        confirmLabel="Log Out"
+        cancelLabel="Cancel"
+        onConfirm={confirmLogout}
+        onCancel={() => setShowLogoutDialog(false)}
+      />
     </aside>
   )
 }

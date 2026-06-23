@@ -1059,6 +1059,7 @@ export interface UserProfile {
   timezone?: string;
   workingHours?: string;
   title?: string;
+  status?: string;
   createdAt?: string;
   updatedAt?: string;
 }

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { X, Trash2, Bell, BellOff, Calendar, CheckSquare, Trophy, Eye, EyeOff, Clock, Loader2, RefreshCw, Terminal, LogOut } from 'lucide-react';
 import { useNotifications } from '../../../../contexts/NotificationContext';
 import type { AppPath } from '../data';
+import { ConfirmDialog } from '../../../ui/confirm-dialog';
 
 type NotificationCenterProps = {
   onNavigate?: (path: AppPath) => void;
@@ -25,6 +26,7 @@ function NotificationCenter({ onNavigate }: NotificationCenterProps) {
 
   const drawerRef = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState<'refresh' | 'toggle' | null>(null);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const [showFinanceGrids, setShowFinanceGrids] = useState(() => {
     const stored = localStorage.getItem('showFinanceGrids');
@@ -73,7 +75,9 @@ function NotificationCenter({ onNavigate }: NotificationCenterProps) {
 
   const isPushSupported = 'serviceWorker' in navigator && 'PushManager' in window;
 
-  return createPortal(
+  return (
+    <>
+    {createPortal(
     <div 
       className="notification-center-overlay" 
       onClick={(e) => {
@@ -184,12 +188,7 @@ function NotificationCenter({ onNavigate }: NotificationCenterProps) {
 
             <button 
               type="button"
-              onClick={() => {
-                if (window.confirm('Do you want to log out of your session?')) {
-                  localStorage.clear();
-                  window.location.reload();
-                }
-              }}
+              onClick={() => setShowLogoutDialog(true)}
               className="quick-access-tile logout-tile full-width-tile"
               title="Log out session"
             >
@@ -302,6 +301,21 @@ function NotificationCenter({ onNavigate }: NotificationCenterProps) {
       </div>
     </div>,
     document.body
+    )}
+
+      <ConfirmDialog
+        open={showLogoutDialog}
+        title="Log out"
+        message="Do you want to log out of your session?"
+        confirmLabel="Log Out"
+        cancelLabel="Cancel"
+        onConfirm={() => {
+          localStorage.clear();
+          window.location.reload();
+        }}
+        onCancel={() => setShowLogoutDialog(false)}
+      />
+    </>
   );
 }
 
