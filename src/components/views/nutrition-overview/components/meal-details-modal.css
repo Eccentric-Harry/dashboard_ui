@@ -882,23 +882,8 @@
   background: #ffffff;
   border-radius: 14px;
   border: 1px solid rgba(226, 232, 240, 0.8);
-  border-left-width: 4px;
   padding: 1rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.01);
-}
-
-.rich-warning-card.severity-high {
-  border-left-color: #ef4444;
-}
-
-.rich-warning-card.severity-moderate,
-.rich-warning-card.severity-medium,
-.rich-warning-card.severity-elevated {
-  border-left-color: #f59e0b;
-}
-
-.rich-warning-card.severity-low {
-  border-left-color: #10b981;
 }
 
 .warning-card-header {
@@ -964,7 +949,7 @@
   background: #f8fafc;
   padding: 0.5rem 0.75rem;
   border-radius: 8px;
-  border-left: 2px solid #cbd5e1;
+  border: 1px solid #cbd5e1;
 }
 
 .fix-label {
