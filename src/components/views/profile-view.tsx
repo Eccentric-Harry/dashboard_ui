@@ -79,6 +79,10 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
           setTitle(data.title || '');
           setBio(data.bio || '');
           setStatus(data.status || 'Online');
+          
+          localStorage.setItem('avatarUrl', data.avatarUrl || 'luffy');
+          localStorage.setItem('displayName', data.displayName || '');
+          window.dispatchEvent(new Event('profile-updated'));
         }
       } catch (err) {
         toast.error('Failed to load profile data');

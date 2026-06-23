@@ -16,7 +16,7 @@ import { PeopleOverview } from './components/views/people-view'
 import { ProfileOverview, getAvatarImage } from './components/views/profile-view'
 import { FocusProvider } from './contexts/FocusContext'
 import { isStandalone } from './lib/utils'
-import { subscribeToActiveRequests } from './lib/api'
+import { subscribeToActiveRequests, getUserProfile } from './lib/api'
 import { OverlayLoader } from './components/ui/OverlayLoader'
 import { NotificationProvider, useNotifications } from './contexts/NotificationContext'
 import { NotificationCenter } from './components/dashboard/quantified-self-dashboard/components/notification-center'
@@ -139,6 +139,25 @@ function App() {
   const [activeRequests, setActiveRequests] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(true)
   const [showOverlay, setShowOverlay] = useState(true)
+
+  // Prefetch profile on mount to sync global avatar and name in localStorage
+  useEffect(() => {
+    async function prefetchProfile() {
+      try {
+        const res = await getUserProfile()
+        if (res?.data) {
+          localStorage.setItem('avatarUrl', res.data.avatarUrl || 'luffy')
+          localStorage.setItem('displayName', res.data.displayName || 'User')
+          window.dispatchEvent(new Event('profile-updated'))
+        }
+      } catch (err) {
+        console.error('Failed to prefetch profile', err)
+      }
+    }
+    if (isGuest || authToken) {
+      prefetchProfile()
+    }
+  }, [])
 
   // Track active API calls
   useEffect(() => {
