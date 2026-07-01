@@ -15,7 +15,7 @@ import type { AppPath } from '../../dashboard/quantified-self-dashboard/data'
 
 type ViewMode = 'list' | 'kanban' | 'calendar'
 type FilterStatus = 'all' | 'pending' | 'completed'
-type TaskCategory = 'Work' | 'Learning' | 'Fitness' | 'Shopping' | 'Chores' | 'Finance' | 'Personal' | 'General'
+type TaskCategory = 'Work' | 'Learning' | 'Fitness' | 'Shopping' | 'Chores' | 'Finance' | 'Personal' | 'General' | 'Movies'
 
 const CATEGORIES: { key: string; label: string }[] = [
   { key: 'Work', label: 'Work' },
@@ -285,6 +285,15 @@ export function TasksDashboard(_props: TasksDashboardProps) {
       })
     }
 
+    if (viewMode === 'kanban' && !categoryFilters.includes('Movies')) {
+      result = result.filter((t) => {
+        const storedCat = t.category as string | undefined
+        const detected = detectCategory(t.title)
+        const cat = storedCat || detected
+        return cat !== 'Movies'
+      })
+    }
+
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
@@ -297,7 +306,7 @@ export function TasksDashboard(_props: TasksDashboardProps) {
     })
 
     return result
-  }, [tasks, searchQuery, statusFilter, categoryFilters, tagFilters, uniqueTags])
+  }, [tasks, searchQuery, statusFilter, categoryFilters, tagFilters, uniqueTags, viewMode])
 
   // Sliced tasks for pagination (List and Kanban views)
   const paginatedTasks = useMemo(() => {
@@ -513,7 +522,7 @@ export function TasksDashboard(_props: TasksDashboardProps) {
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
               {viewMode === 'list' ? (
                 <TasksListView
-                  tasks={paginatedTasks}
+                  tasks={filteredTasks}
                   selectedTask={selectedTask}
                   onSelect={setSelectedTask}
                   onToggle={handleToggle}
@@ -530,7 +539,7 @@ export function TasksDashboard(_props: TasksDashboardProps) {
                 />
               )}
               
-              {totalPages > 1 && (
+              {viewMode === 'kanban' && totalPages > 1 && (
                 <div className="tasks-pagination-bar">
                   <button 
                     type="button" 
@@ -760,5 +769,6 @@ function detectCategory(title: string): TaskCategory {
   if (/\b(laundry|clean|wash|tidy|fix|vacuum|dishes|cook|meal)\b/.test(t)) return 'Chores'
   if (/\b(finance|bill|pay|bank|credit|tax|rent|money|salary|budget)\b/.test(t)) return 'Finance'
   if (/\b(personal|family|friend|call\s+\w+|plan|travel|trip)\b/.test(t)) return 'Personal'
+  if (/\b(watch|movie|film|netflix|show|series|cinema|season|episode|documentary|anime|youtube|stream)\b/.test(t)) return 'Movies'
   return 'General'
 }
