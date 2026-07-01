@@ -1810,3 +1810,69 @@
     grid-template-columns: 1.4fr 1fr;
   }
 }
+
+/* ==========================================================================
+   Refactored Premium Theme Styling for Routine Blocks
+   ========================================================================== */
+
+.routine-card {
+  --card-color: var(--card-color-default, #1d4ed8);
+  --card-bg: var(--card-bg-default, #ffffff);
+  position: relative;
+}
+
+/* ==========================================
+   Approach 1: Glassmorphic Theme (Default)
+   ========================================== */
+
+.theme-glassmorphic .routine-card {
+  background: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(0, 0, 0, 0.04) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.015), inset 0 1px 0 rgba(255, 255, 255, 0.65) !important;
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), background 200ms ease, box-shadow 200ms ease, border-color 200ms ease !important;
+}
+
+.theme-glassmorphic .routine-card:hover {
+  background: rgba(255, 255, 255, 0.88) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.75) !important;
+}
+
+.theme-glassmorphic .routine-card.is-active {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: color-mix(in srgb, var(--card-color) 35%, rgba(0, 0, 0, 0.08)) !important;
+  box-shadow: 0 12px 32px color-mix(in srgb, var(--card-color) 8%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.85) !important;
+}
+
+/* Restricted Icon container color logic */
+.theme-glassmorphic .routine-card-icon {
+  background: color-mix(in srgb, var(--card-color) 8%, rgba(255, 255, 255, 0.9)) !important;
+  color: var(--card-color) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+}
+
+.theme-glassmorphic .routine-card.is-active .routine-card-icon {
+  background: color-mix(in srgb, var(--card-color) 14%, rgba(255, 255, 255, 0.95)) !important;
+  color: var(--card-color) !important;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--card-color) 12%, transparent) !important;
+  transform: scale(1.05) !important;
+}
+
+/* Glassmorphic Details Card overrides */
+.theme-glassmorphic .focus-summary-card {
+  background: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(0, 0, 0, 0.04) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.015), inset 0 1px 0 rgba(255, 255, 255, 0.65) !important;
+}
+
+.theme-glassmorphic .focus-icon {
+  background: color-mix(in srgb, var(--focus-color) 8%, rgba(255, 255, 255, 0.9)) !important;
+  border-color: rgba(0, 0, 0, 0.04) !important;
+  color: var(--focus-color) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+}
+

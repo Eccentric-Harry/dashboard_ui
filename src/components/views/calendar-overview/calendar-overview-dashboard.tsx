@@ -61,6 +61,8 @@ function hueForCategory(category?: string) {
   return Math.abs(hash) % 360
 }
 
+
+
 const CATEGORY_OPTIONS = [
   { label: 'Personal', color: '#7c3aed' },
   { label: 'Work', color: '#2563eb' },
@@ -275,7 +277,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   }
 
   return (
-    <section className="calendar-dashboard" aria-label="Daily routine">
+    <section className="calendar-dashboard theme-glassmorphic" aria-label="Daily routine">
       <header className="calendar-header">
         <div className="calendar-date-picker" ref={calendarRef}>
           <span className="calendar-eyebrow">Daily rhythm</span>
@@ -412,7 +414,11 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                           type="button"
                           className={`routine-card ${isActive ? 'is-active' : ''}`}
                           onClick={() => setSelectedItemKey(itemKey(item))}
-                          style={{ '--cat-hue': hueForCategory(item.category), '--card-color': routineIcon.color, '--card-bg': routineIcon.bg } as React.CSSProperties}
+                          style={{
+                            '--cat-hue': hueForCategory(item.category),
+                            '--card-color-default': routineIcon.color,
+                            '--card-bg-default': routineIcon.bg
+                          } as React.CSSProperties}
                         >
                           <span className="routine-card-icon">
                             <CardIcon size={17} />
@@ -647,7 +653,10 @@ function FocusDetail({
   const statusLabel = item.cancelled ? 'Cancelled' : item.completed ? 'Completed' : isCurrent ? 'Live now' : 'Planned'
 
   return (
-    <div className="focus-detail" style={{ '--cat-hue': catHue, '--focus-color': routineIcon.color } as React.CSSProperties}>
+    <div
+      className="focus-detail"
+      style={{ '--cat-hue': catHue, '--focus-color': routineIcon.color } as React.CSSProperties}
+    >
       <div className="focus-detail-panel-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <h3>Routine Details</h3>
         <div className="focus-assignee-avatar" style={{ width: 28, height: 28, border: '2px solid #fff', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', backgroundImage: `url(${avatarImage})` }} title="Eccentric Harry" />
@@ -905,7 +914,7 @@ function CalendarItemModal({
   }
 
   return (
-    <div className="tasks-add-modal-overlay" onClick={onClose}>
+    <div className="tasks-add-modal-overlay theme-glassmorphic" onClick={onClose}>
       <div className="tasks-add-entry-modal" onClick={(event) => event.stopPropagation()}>
         <div className="modal-header">
           <h3>{item ? 'Edit routine block' : 'Add routine block'}</h3>
@@ -1089,19 +1098,17 @@ function CalendarItemModal({
             <div className="tasks-modal-preview-col">
               <div className="preview-label">Preview</div>
               
-              <div className="routine-card preview-mode" style={{ pointerEvents: 'none', width: '100%', maxWidth: '280px', display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px', borderRadius: '18px', background: '#fff', border: '1px solid rgba(16, 19, 18, 0.08)', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.02)' }}>
-                <span className="routine-card-icon" style={{ 
-                  '--card-color': routineIconDetails.color, 
-                  '--card-bg': routineIconDetails.bg,
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'var(--card-bg)',
-                  color: 'var(--card-color)'
-                } as React.CSSProperties}>
+              <div
+                className="routine-card preview-mode"
+                style={{
+                  pointerEvents: 'none',
+                  width: '100%',
+                  maxWidth: '280px',
+                  '--card-color-default': routineIconDetails.color,
+                  '--card-bg-default': routineIconDetails.bg
+                } as React.CSSProperties}
+              >
+                <span className="routine-card-icon">
                   <RoutineIcon size={16} />
                 </span>
                 <div className="routine-card-copy" style={{ display: 'grid', gap: '2px', flex: 1, minWidth: 0 }}>
