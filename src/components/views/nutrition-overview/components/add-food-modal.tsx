@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { X, Loader2, ClipboardCheck, Sparkles, Camera, CheckCircle, AlertTriangle, RotateCcw, ChevronRight } from 'lucide-react'
+import { X, Loader2, ClipboardCheck, Sparkles, Camera, CheckCircle, AlertTriangle, RotateCcw, Upload, Wifi } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
 import { addFoodEntry, updateFoodEntry, analyzeMeal, type MealAnalysisApiResponse, type GeminiMedicalAnalysis } from '../../../../lib/api'
@@ -68,9 +68,12 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
   const [aiDate, setAiDate] = useState(selectedDate)
   const [isDragOver, setIsDragOver] = useState(false)
   const [aiError, setAiError] = useState('')
+  const [aiErrorCode, setAiErrorCode] = useState<number | null>(null)
   const [aiResult, setAiResult] = useState<MealAnalysisApiResponse | null>(null)
 
   const stageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
+  const galleryInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (isOpen && isEdit && initialData) {
@@ -99,6 +102,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       setAiMealType('')
       setAiDate(selectedDate)
       setAiError('')
+      setAiErrorCode(null)
       setAiResult(null)
     }
     return () => {
@@ -199,6 +203,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
   const handleAiSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setAiError('')
+    setAiErrorCode(null)
     if (!aiCanSubmit) {
       setAiError('Add an image or description, and select a meal type.')
       return
@@ -213,10 +218,13 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       setAiPhase('results')
     } catch (err: unknown) {
       if (stageTimerRef.current) clearTimeout(stageTimerRef.current)
-      const msg = err instanceof Error ? err.message : 'Analysis failed'
-      setAiError(msg)
+      const rawMsg = err instanceof Error ? err.message : 'Analysis failed'
+      // Parse HTTP status code from the error message when available
+      const codeMatch = rawMsg.match(/(\d{3})/)
+      const code = codeMatch ? parseInt(codeMatch[1], 10) : null
+      setAiErrorCode(code)
+      setAiError(rawMsg)
       setAiPhase('input')
-      toast.error('AI analysis failed. Please try again.')
     }
   }
 
@@ -230,6 +238,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
     setAiPhase('input')
     setAiResult(null)
     setAiError('')
+    setAiErrorCode(null)
   }
 
   if (!isOpen) return null
@@ -241,7 +250,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
         role="dialog"
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
-        style={{ width: 'min(560px, calc(100vw - 42px))', maxHeight: 'min(88vh, 740px)', overflowY: 'auto' }}
+        style={{ width: 'min(560px, calc(100vw - 42px))', maxHeight: 'min(90vh, 760px)', display: 'flex', flexDirection: 'column' }}
       >
         {aiPhase !== 'processing' && (
           <button type="button" className="finance-modal-close" onClick={onClose}>
@@ -279,7 +288,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
 
         {/* ═══════════════ MANUAL TAB ═══════════════ */}
         {activeTab === 'manual' && (
-          <form onSubmit={handleSubmit} className="add-tx-form">
+          <form onSubmit={handleSubmit} className="add-tx-form" style={{ flex: 1, overflowY: 'auto', paddingRight: '6px' }}>
             <div className="form-group">
               <label>Food Name</label>
               <input
@@ -335,7 +344,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
           <>
             {/* ── Phase 1: Input ──────────────────────────── */}
             {aiPhase === 'input' && (
-              <form onSubmit={handleAiSubmit} className="add-tx-form" style={{ gap: 0 }}>
+              <form onSubmit={handleAiSubmit} className="add-tx-form" style={{ gap: 0, flex: 1, overflowY: 'auto', paddingRight: '6px' }}>
                 <p style={{ fontSize: '13px', color: 'rgba(16,19,18,0.5)', margin: '0 0 16px', lineHeight: 1.5 }}>
                   Upload a photo or describe your meal — Gemini identifies every item and calculates full clinical nutrition.
                 </p>
@@ -355,18 +364,49 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                     onDragLeave={() => setIsDragOver(false)}
                     onDrop={onDrop}
                   >
+                    {/* Hidden gallery input */}
                     <input
+                      ref={galleryInputRef}
                       type="file"
                       accept="image/jpeg,image/png,image/webp,image/heic"
                       onChange={e => { const f = e.target.files?.[0]; if (f) handleImageDrop(f) }}
                       tabIndex={-1}
                       id="af-file-input"
+                      style={{ display: 'none' }}
                     />
-                    <div className="af-drop-icon">
-                      <Camera size={20} />
+                    {/* Hidden camera capture input */}
+                    <input
+                      ref={cameraInputRef}
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handleImageDrop(f) }}
+                      tabIndex={-1}
+                      id="af-camera-input"
+                      style={{ display: 'none' }}
+                    />
+                    <p className="af-drop-label">Snap or upload your meal</p>
+                    <p className="af-drop-sublabel" style={{ marginBottom: '14px' }}>JPG, PNG, WEBP, HEIC · max 10 MB</p>
+                    <div className="af-upload-actions">
+                      <button
+                        type="button"
+                        className="af-upload-btn"
+                        onClick={() => cameraInputRef.current?.click()}
+                        aria-label="Take photo"
+                      >
+                        <Camera size={16} />
+                        Camera
+                      </button>
+                      <button
+                        type="button"
+                        className="af-upload-btn af-upload-btn--secondary"
+                        onClick={() => galleryInputRef.current?.click()}
+                        aria-label="Browse gallery"
+                      >
+                        <Upload size={16} />
+                        Gallery
+                      </button>
                     </div>
-                    <p className="af-drop-label">Drop a photo here, or click to browse</p>
-                    <p className="af-drop-sublabel">JPG, PNG, WEBP, HEIC · max 10 MB</p>
                   </div>
                 )}
 
@@ -397,7 +437,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                   </div>
                 </div>
 
-                {aiError && <p className="add-tx-error" style={{ marginBottom: '12px' }}>{aiError}</p>}
+                {aiError && <AiErrorCard code={aiErrorCode} message={aiError} onRetry={() => { setAiError(''); setAiErrorCode(null) }} />}
 
                 <button type="submit" className="add-tx-submit af-submit-btn" disabled={!aiCanSubmit} id="ai-analyze-submit-btn">
                   <Sparkles size={15} />
@@ -408,25 +448,104 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
 
             {/* ── Phase 2: Processing ──────────────────────── */}
             {aiPhase === 'processing' && (
-              <div className="af-processing-container">
-                <div className="af-loader-box">
-                  <div className="af-glowing-ring">
-                    <div className="af-glowing-ring-inner" />
+              <div className="af-processing-container-updated">
+                {/* Central floating Glassmorphic Hub */}
+                <div className="af-processing-hub">
+                  <div className="af-loader-box">
+                    <div className="af-pulse-rings">
+                      <div className="af-pulse-ring af-pulse-ring--1" />
+                      <div className="af-pulse-ring af-pulse-ring--2" />
+                      <div className="af-pulse-ring af-pulse-ring--3" />
+                    </div>
+                    <div className="af-pulse-core" />
                   </div>
-                  <Sparkles className="af-loader-sparkles" size={22} />
+                  
+                  <div className="af-hub-header">
+                    <h3 className="af-hub-title">{STAGE_MESSAGES[stageIndex].label}</h3>
+                    <p className="af-hub-subtitle">{STAGE_MESSAGES[stageIndex].sub}</p>
+                  </div>
+
+                  <div className="af-loading-checklist">
+                    <div className="af-check-item completed">
+                      <span className="af-check-dot" />
+                      <span>Loaded profile & target metrics</span>
+                    </div>
+                    <div className={`af-check-item ${stageIndex >= 1 ? 'completed' : 'active'}`}>
+                      <span className="af-check-dot" />
+                      <span>Gemini: Identifying food items</span>
+                    </div>
+                    <div className={`af-check-item ${stageIndex >= 2 ? 'completed' : stageIndex === 1 ? 'active' : 'pending'}`}>
+                      <span className="af-check-dot" />
+                      <span>Orchestrating clinical diagnostics</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="af-loading-checklist">
-                  <div className="af-check-item completed">
-                    <span className="af-check-dot" />
-                    <span>Loaded profile & target metrics</span>
+
+                {/* Background Pinterest-style loading skeletons */}
+                <div className="af-skeleton-masonry">
+                  {/* Card 1: Meal Summary skeleton */}
+                  <div className="af-skeleton-card">
+                    <div className="af-skeleton-header" style={{ width: '80%' }} />
+                    <div className="af-skeleton-line" style={{ width: '50%' }} />
                   </div>
-                  <div className={`af-check-item ${stageIndex >= 1 ? 'completed' : 'active'}`}>
-                    <span className="af-check-dot" />
-                    <span>Gemini: Identifying food items</span>
+
+                  {/* Card 2: Macros Contribution skeleton */}
+                  <div className="af-skeleton-card">
+                    <div className="af-skeleton-header" style={{ width: '60%' }} />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+                      {[85, 45, 65, 30, 50].map((w, i) => (
+                        <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <div className="af-skeleton-line" style={{ width: '25%' }} />
+                          <div className="af-skeleton-bar-track">
+                            <div className="af-skeleton-bar-fill" style={{ width: `${w}%` }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className={`af-check-item ${stageIndex >= 2 ? 'completed' : stageIndex === 1 ? 'active' : 'pending'}`}>
-                    <span className="af-check-dot" />
-                    <span>Orchestrating clinical diagnostics</span>
+
+                  {/* Card 3: Identified Items list skeleton */}
+                  <div className="af-skeleton-card" style={{ gridRow: 'span 2' }}>
+                    <div className="af-skeleton-header" style={{ width: '70%' }} />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '6px' }}>
+                      {[...Array(3)].map((_, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', padding: '6px 0', borderBottom: '1px solid rgba(20,24,22,0.03)' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+                            <div className="af-skeleton-line" style={{ width: '75%' }} />
+                            <div className="af-skeleton-line" style={{ width: '40%', height: '8px' }} />
+                          </div>
+                          <div className="af-skeleton-line" style={{ width: '45px', height: '14px', borderRadius: '12px' }} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Card 4: Health Context skeleton */}
+                  <div className="af-skeleton-card">
+                    <div className="af-skeleton-header" style={{ width: '65%' }} />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div className="af-skeleton-line" style={{ width: '40%' }} />
+                        <div className="af-skeleton-line" style={{ width: '30px', height: '14px', borderRadius: '10px' }} />
+                      </div>
+                      <div className="af-skeleton-line" style={{ width: '90%' }} />
+                      <div className="af-skeleton-line" style={{ width: '85%' }} />
+                    </div>
+                  </div>
+
+                  {/* Card 5: Assessment skeleton */}
+                  <div className="af-skeleton-card" style={{ gridColumn: 'span 2' }}>
+                    <div className="af-skeleton-header" style={{ width: '40%' }} />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '4px' }}>
+                      <div>
+                        <div className="af-skeleton-line" style={{ width: '80%', marginBottom: '6px' }} />
+                        <div className="af-skeleton-line" style={{ width: '90%' }} />
+                      </div>
+                      <div>
+                        <div className="af-skeleton-line" style={{ width: '75%', marginBottom: '6px' }} />
+                        <div className="af-skeleton-line" style={{ width: '85%' }} />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -434,7 +553,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
 
             {/* ── Phase 3: Results ─────────────────────────── */}
             {aiPhase === 'results' && aiResult && (
-              <div className="af-results-container">
+              <div className="af-results-container" style={{ flex: 1, overflowY: 'auto', paddingRight: '6px' }}>
                 {/* Summary strip */}
                 <div className="af-result-summary">
                   <div className="af-result-summary-left">
@@ -462,7 +581,21 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                             <span className="af-item-name">{item.name}</span>
                             <span className="af-item-serving">{item.serving_size}</span>
                           </div>
-                          <span className="af-item-kcal">{Math.round(item.calories)} kcal</span>
+                          {/* Macro breakdown */}
+                          <div className="af-item-macros">
+                            <span className="af-item-macro-chip">
+                              <span>{Math.round(item.calories)}</span> kcal
+                            </span>
+                            <span className="af-item-macro-chip">
+                              <span>{Math.round(item.protein)}</span>g P
+                            </span>
+                            <span className="af-item-macro-chip">
+                              <span>{Math.round(item.carbs)}</span>g C
+                            </span>
+                            <span className="af-item-macro-chip">
+                              <span>{Math.round(item.fat)}</span>g F
+                            </span>
+                          </div>
                           <span className={`af-item-badge ${item.confidence}`}>{item.confidence}</span>
                         </div>
                       ))}
@@ -550,7 +683,10 @@ function MedicalAlerts({ items }: { items: GeminiMedicalAnalysis[] }) {
   if (significant.length === 0) return null
   return (
     <div>
-      <p className="af-section-label">Health context</p>
+      <p className="af-section-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <AlertTriangle size={11} style={{ color: 'rgba(16, 19, 18, 0.45)' }} />
+        Health context
+      </p>
       <div className="af-medical-list">
         {significant.map((item, i) => (
           <div className={`af-medical-card ${item.risk}`} key={i}>
@@ -558,9 +694,14 @@ function MedicalAlerts({ items }: { items: GeminiMedicalAnalysis[] }) {
               <span className="af-medical-condition">{item.condition}</span>
               <span className={`af-risk-chip ${item.risk}`}>{item.risk}</span>
             </div>
-            {item.findings?.slice(0, 2).map((f, j) => (
-              <p className="af-medical-finding" key={j}>— {f}</p>
-            ))}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '6px' }}>
+              {item.findings?.slice(0, 3).map((f, j) => (
+                <div key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                  <span style={{ fontSize: '11px', color: 'rgba(16, 19, 18, 0.45)', lineHeight: '1.4', userSelect: 'none', marginTop: '1px' }}>•</span>
+                  <p className="af-medical-finding" style={{ margin: 0, flex: 1 }}>{f}</p>
+                </div>
+              ))}
+            </div>
           </div>
         ))}
       </div>
@@ -577,17 +718,66 @@ function AssessmentRow({ assessment }: { assessment: MealAnalysisApiResponse['an
       <div className="af-assessment-grid">
         {assessment.strengths?.slice(0, 2).map((s, i) => (
           <div className="af-assess-item strength" key={i}>
-            <ChevronRight size={11} style={{ flexShrink: 0, marginTop: 1 }} />
+            <CheckCircle size={12} style={{ flexShrink: 0, marginTop: 2, color: '#1a8b30' }} />
             <span>{s}</span>
           </div>
         ))}
         {assessment.improvements?.slice(0, 2).map((s, i) => (
           <div className="af-assess-item improve" key={i}>
-            <ChevronRight size={11} style={{ flexShrink: 0, marginTop: 1 }} />
+            <AlertTriangle size={12} style={{ flexShrink: 0, marginTop: 2, color: '#b77a1a' }} />
             <span>{s}</span>
           </div>
         ))}
       </div>
+    </div>
+  )
+}
+
+// ─── AI Error Card ─────────────────────────────────────────────────────────
+
+function AiErrorCard({ code, message, onRetry }: { code: number | null; message: string; onRetry: () => void }) {
+  const is503 = code === 503
+  const is429 = code === 429
+  const isTimeout = code === 408 || code === 504
+
+  const { icon, title, body, hint } = (() => {
+    if (is503) return {
+      icon: <Wifi size={18} />,
+      title: 'AI Service Busy',
+      body: 'Gemini is experiencing high demand right now. This is temporary.',
+      hint: 'Try again in a few seconds — it usually clears up quickly.',
+    }
+    if (is429) return {
+      icon: <AlertTriangle size={18} />,
+      title: 'Too Many Requests',
+      body: 'You have hit the API rate limit. Please wait a moment.',
+      hint: 'Wait 30–60 seconds before retrying.',
+    }
+    if (isTimeout) return {
+      icon: <Loader2 size={18} />,
+      title: 'Analysis Timed Out',
+      body: 'The analysis took too long and was interrupted.',
+      hint: 'Try with a simpler description or a smaller image.',
+    }
+    return {
+      icon: <AlertTriangle size={18} />,
+      title: 'Analysis Failed',
+      body: 'Something went wrong while processing your meal.',
+      hint: message.length < 120 ? message : 'Please try again.',
+    }
+  })()
+
+  return (
+    <div className="af-error-card" role="alert">
+      <div className="af-error-card-icon">{icon}</div>
+      <div className="af-error-card-body">
+        <p className="af-error-card-title">{title}</p>
+        <p className="af-error-card-text">{body}</p>
+        <p className="af-error-card-hint">{hint}</p>
+      </div>
+      <button type="button" className="af-error-card-retry" onClick={onRetry} aria-label="Dismiss error">
+        <X size={13} />
+      </button>
     </div>
   )
 }

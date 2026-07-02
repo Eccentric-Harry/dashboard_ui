@@ -160,10 +160,12 @@ export async function analyzeMeal(
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Meal analysis failed: ${errorText}`);
+    let detail = ''
+    try { detail = await response.text() } catch { /* ignore */ }
+    // Include the numeric status so the UI can render contextual error cards
+    throw new Error(`${response.status}: ${detail || response.statusText}`)
   }
-  return response.json();
+  return response.json()
 }
 
 export async function fetchSpendingSummary(month?: string) {
