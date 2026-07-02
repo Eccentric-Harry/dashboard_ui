@@ -1870,3 +1870,54 @@
   }
 }
 
+/* Avatar Relative Wrapper and Absolute Notification Indicator */
+.profile-avatar-wrapper-rel {
+  position: relative;
+  display: inline-block;
+}
+
+.profile-avatar-notif-btn {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: #1c1d1f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 0;
+  z-index: 10;
+}
+
+.profile-avatar-notif-btn:hover {
+  background: #f4f4f5;
+  transform: scale(1.06);
+  color: #000000;
+}
+
+.profile-avatar-notif-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #10b981; /* Emerald green badge */
+  color: #ffffff;
+  font-size: 8.5px;
+  font-weight: 750;
+  min-width: 15px;
+  height: 15px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #ffffff;
+  padding: 0 2px;
+  box-sizing: border-box;
+}
+

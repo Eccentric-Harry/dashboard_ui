@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { 
-  Loader2, X, Clock, Pencil, LogOut, Mail, Globe, Bell, ChevronRight,
+  Loader2, X, Clock, Pencil, LogOut, Mail, Globe, Bell,
   Activity, Target, Plus
 } from 'lucide-react';
 import { getUserProfile, updateUserProfile, type UserProfile } from '../../lib/api';
@@ -252,11 +252,24 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                     <div className="profile-porsche-identity-section">
                       {/* Card Image Cover Header */}
                       <div className="profile-porsche-img-container">
-                        <img
-                          src={getAvatarImage(avatarUrl)}
-                          alt="Profile Banner"
-                          className="profile-porsche-img"
-                        />
+                        <div className="profile-avatar-wrapper-rel">
+                          <img
+                            src={getAvatarImage(avatarUrl)}
+                            alt="Profile Banner"
+                            className="profile-porsche-img"
+                          />
+                          <button
+                            type="button"
+                            className="profile-avatar-notif-btn"
+                            onClick={() => setIsOpen(true)}
+                            aria-label="Open notifications"
+                          >
+                            <Bell size={14} />
+                            {unreadCount > 0 && (
+                              <span className="profile-avatar-notif-badge">{unreadCount}</span>
+                            )}
+                          </button>
+                        </div>
                       </div>
 
                       {/* Attributes Badges Row */}
@@ -471,30 +484,7 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                   </div>
                 </div>
 
-                {/* Notifications Options */}
-                <button
-                  type="button"
-                  className="profile-notifications-option-card"
-                  onClick={() => setIsOpen(true)}
-                >
-                  <div className="profile-notif-option-content">
-                    <div className="profile-notif-icon-wrapper">
-                      <Bell size={18} />
-                      {unreadCount > 0 && (
-                        <span className="profile-notif-badge">{unreadCount}</span>
-                      )}
-                    </div>
-                    <div className="profile-notif-text">
-                      <h3>Notifications</h3>
-                      <p>
-                        {unreadCount > 0
-                          ? `You have ${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`
-                          : 'All caught up'}
-                      </p>
-                    </div>
-                  </div>
-                  <ChevronRight size={18} className="profile-notif-chevron" />
-                </button>
+                {/* Removed bottom notifications card */}
               </div>
             )}
           </div>
