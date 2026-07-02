@@ -55,18 +55,18 @@
     0 20px 48px rgba(0, 0, 0, 0.09),
     0 4px 14px rgba(0, 0, 0, 0.04);
   width: 100%;
-  max-width: 440px;
+  max-width: none;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  margin: 0 auto;
+  margin: 0;
   animation: cardFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   overflow: hidden;
 }
 
 /* Edit Mode Card is slightly wider to hold input form grid nicely */
 .profile-porsche-card-edit {
-  max-width: 760px;
+  max-width: none;
   max-height: none;
   display: flex;
   flex-direction: column;
@@ -792,35 +792,36 @@
   color: #18181b;
 }
 
-/* ─── Two-Column Desktop Layout ─── */
+/* ─── Single-Column Desktop Layout ─── */
 .profile-content-layout {
   display: flex;
-  flex-direction: row;
-  gap: 48px;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 32px;
+  align-items: stretch;
   justify-content: flex-start;
   margin-top: 16px;
   width: 100%;
 }
 
 .profile-left-col {
-  flex: 0 0 440px;
+  width: 100%;
+  flex: none;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  position: sticky;
-  top: 0;
-  align-self: start;
+  position: static;
 }
 
 .profile-left-col .profile-porsche-card {
   margin: 0;
+  width: 100%;
+  max-width: none;
 }
 
 .profile-left-col .profile-notifications-option-card {
   margin: 0;
   width: 100%;
-  max-width: 440px;
+  max-width: none;
 }
 
 .profile-left-quotes {
@@ -828,15 +829,16 @@
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
   width: 100%;
-  max-width: 440px;
+  max-width: none;
 }
 
 .profile-right-col {
-  flex: 1;
+  flex: none;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 24px;
-  max-width: 780px;
+  max-width: none;
 }
 
 .profile-quotes-header {
@@ -903,33 +905,7 @@
   opacity: 1;
 }
 
-@media (max-width: 1200px) {
-  .profile-content-layout {
-    flex-direction: column;
-    align-items: center;
-    gap: 32px;
-    width: 100%;
-  }
 
-  .profile-left-col {
-    flex: none;
-    width: 100%;
-    max-width: 440px;
-    align-items: center;
-    position: static;
-  }
-
-  .profile-right-col {
-    width: 100%;
-    max-width: 600px;
-    align-items: stretch;
-  }
-
-  .profile-left-col .profile-porsche-card,
-  .profile-left-col .profile-notifications-option-card {
-    margin: 0 auto;
-  }
-}
 
 /* ═══════════════════════════════════════════════════════ */
 /* RESPONSIVE — Tablet                                    */
