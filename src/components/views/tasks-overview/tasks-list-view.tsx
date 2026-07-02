@@ -61,9 +61,9 @@ interface TasksListViewProps {
 }
 
 export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: TasksListViewProps) {
-  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>(() => {
+  const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>(() => {
     try {
-      const saved = localStorage.getItem('tasks-expanded-categories')
+      const saved = localStorage.getItem('tasks-collapsed-categories')
       return saved ? JSON.parse(saved) : {}
     } catch {
       return {}
@@ -71,10 +71,10 @@ export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: Tasks
   })
 
   const toggleCategory = (category: string) => {
-    setExpandedCategories((prev) => {
+    setCollapsedCategories((prev) => {
       const next = { ...prev, [category]: !prev[category] }
       try {
-        localStorage.setItem('tasks-expanded-categories', JSON.stringify(next))
+        localStorage.setItem('tasks-collapsed-categories', JSON.stringify(next))
       } catch (e) {
         console.error(e)
       }
@@ -97,9 +97,21 @@ export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: Tasks
   }, [tasks])
 
   const sortedCategories = useMemo(() => {
+    const definedOrder = ['Work', 'Learning', 'Personal', 'General']
     return Object.keys(groupedTasks).sort((a, b) => {
-      if (a === 'General') return 1
-      if (b === 'General') return -1
+      if (a === 'Movies') return 1
+      if (b === 'Movies') return -1
+      
+      const indexA = definedOrder.indexOf(a)
+      const indexB = definedOrder.indexOf(b)
+      
+      if (indexA !== -1 && indexB !== -1) {
+        return indexA - indexB
+      }
+      
+      if (indexA !== -1) return -1
+      if (indexB !== -1) return 1
+      
       return a.localeCompare(b)
     })
   }, [groupedTasks])
@@ -134,7 +146,7 @@ export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: Tasks
     <div className="tasks-list-view">
       {sortedCategories.map((category) => {
         const categoryTasks = groupedTasks[category]
-        const isCollapsed = !expandedCategories[category]
+        const isCollapsed = !!collapsedCategories[category]
         const categoryInfo = getTagColor(category)
         const completedCount = categoryTasks.filter((t) => t.completed).length
         const totalCount = categoryTasks.length

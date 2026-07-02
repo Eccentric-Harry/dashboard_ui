@@ -35,7 +35,7 @@ import type { CalendarItem, CalendarItemPayload, CalendarItemType, CalendarRecur
 import { ConfirmDialog } from '../../ui/confirm-dialog'
 import { MiniMonth } from '../../ui/mini-month'
 import { getRoutineIconDetails } from './routine-icon-helper'
-import avatarImage from '../../../assets/reference-crops/avatar_luffy.png'
+import { getAvatarImage } from '../../../lib/avatar'
 import { getTagColor } from '../../../lib/tag-colors'
 
 import './calendar-overview.css'
@@ -651,6 +651,13 @@ function FocusDetail({
   const catHue = hueForCategory(category)
   const notes = stripChecklist(item.notes) || getFallbackDescription(item)
   const statusLabel = item.cancelled ? 'Cancelled' : item.completed ? 'Completed' : isCurrent ? 'Live now' : 'Planned'
+  const [avatarSrc, setAvatarSrc] = useState(() => getAvatarImage(localStorage.getItem('avatarUrl') || 'luffy'))
+
+  useEffect(() => {
+    const handleUpdate = () => setAvatarSrc(getAvatarImage(localStorage.getItem('avatarUrl') || 'luffy'))
+    window.addEventListener('profile-updated', handleUpdate)
+    return () => window.removeEventListener('profile-updated', handleUpdate)
+  }, [])
 
   return (
     <div
@@ -659,7 +666,7 @@ function FocusDetail({
     >
       <div className="focus-detail-panel-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <h3>Routine Details</h3>
-        <div className="focus-assignee-avatar" style={{ width: 28, height: 28, border: '2px solid #fff', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', backgroundImage: `url(${avatarImage})` }} title="Eccentric Harry" />
+        <div className="focus-assignee-avatar" style={{ width: 28, height: 28, border: '2px solid #fff', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', backgroundImage: `url(${avatarSrc})` }} title="Profile" />
       </div>
 
       <div className="focus-detail-body">
