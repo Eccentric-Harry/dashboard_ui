@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { 
   Loader2, X, Clock, Pencil, LogOut, Mail, Globe, Bell, ChevronRight,
-  Activity, Target, ShieldAlert, Heart, Plus
+  Activity, Target, Plus
 } from 'lucide-react';
 import { getUserProfile, updateUserProfile, type UserProfile } from '../../lib/api';
 import { SideRail } from '../dashboard/quantified-self-dashboard/components/side-rail';
@@ -290,6 +290,51 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                         )}
                       </div>
 
+                      {/* Embedded Biometrics & Conditions to fill empty space */}
+                      <div className="profile-left-embedded-stats">
+                        <div className="embedded-biometrics">
+                          <div className="embedded-stat-row">
+                            <span className="lbl">Age</span>
+                            <span className="val">
+                              {profile?.physicalMetrics?.age ?? '—'} <span className="unit">yrs</span>
+                            </span>
+                          </div>
+                          <div className="embedded-stat-row">
+                            <span className="lbl">Gender</span>
+                            <span className="val capitalize">
+                              {profile?.physicalMetrics?.gender?.toLowerCase() ?? '—'}
+                            </span>
+                          </div>
+                          <div className="embedded-stat-row">
+                            <span className="lbl">Height</span>
+                            <span className="val">
+                              {profile?.physicalMetrics?.height ?? '—'} <span className="unit">cm</span>
+                            </span>
+                          </div>
+                          <div className="embedded-stat-row">
+                            <span className="lbl">Weight</span>
+                            <span className="val">
+                              {profile?.physicalMetrics?.weight ?? '—'} <span className="unit">kg</span>
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="embedded-conditions">
+                          <h4 className="embedded-section-title">Conditions & Flags</h4>
+                          {profile?.medicalConditions && profile.medicalConditions.length > 0 ? (
+                            <div className="medical-pills-list">
+                              {profile.medicalConditions.map((condition, idx) => (
+                                <span key={idx} className="medical-pill">
+                                  {condition}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="no-conditions-text">No conditions flagged</div>
+                          )}
+                        </div>
+                      </div>
+
                       {/* Actions & Timestamps Footer */}
                       <div className="profile-porsche-footer">
                         <span className="profile-porsche-last-updated">
@@ -320,44 +365,10 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                     <div className="profile-porsche-health-section">
                       <div className="profile-quotes-header">
                         <p>Health & Performance</p>
-                        <h2>Biometrics & TDEE</h2>
+                        <h2>Calculated Targets & Metrics</h2>
                       </div>
                       
                       <div className="profile-bento-grid">
-                        {/* Card A: Biometrics Overview */}
-                        <div className="profile-health-card card-biometrics">
-                          <div className="card-header-icon">
-                            <Heart className="text-gray-500" size={16} style={{ color: '#4b5563' }} />
-                            <span className="card-tag">Biometrics</span>
-                          </div>
-                          <div className="biometrics-grid">
-                            <div className="biometrics-item">
-                              <span className="biometrics-label">Age</span>
-                              <span className="biometrics-value">
-                                {profile?.physicalMetrics?.age ?? '—'} <span className="unit">yrs</span>
-                              </span>
-                            </div>
-                            <div className="biometrics-item">
-                              <span className="biometrics-label">Gender</span>
-                              <span className="biometrics-value capitalize">
-                                {profile?.physicalMetrics?.gender?.toLowerCase() ?? '—'}
-                              </span>
-                            </div>
-                            <div className="biometrics-item">
-                              <span className="biometrics-label">Height</span>
-                              <span className="biometrics-value">
-                                {profile?.physicalMetrics?.height ?? '—'} <span className="unit">cm</span>
-                              </span>
-                            </div>
-                            <div className="biometrics-item">
-                              <span className="biometrics-label">Weight</span>
-                              <span className="biometrics-value">
-                                {profile?.physicalMetrics?.weight ?? '—'} <span className="unit">kg</span>
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
                         {/* Card B: The Metric Ring / Status */}
                         <div className="profile-health-card card-status">
                           <div className="card-header-icon">
@@ -453,29 +464,6 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                               </div>
                             );
                           })()}
-                        </div>
-
-                        {/* Card D: Medical & Dietary Flags */}
-                        <div className="profile-health-card card-medical">
-                          <div className="card-header-icon">
-                            <ShieldAlert className="text-gray-500" size={16} style={{ color: '#4b5563' }} />
-                            <span className="card-tag">Conditions & Flags</span>
-                          </div>
-                          <div className="medical-conditions-container">
-                            {profile?.medicalConditions && profile.medicalConditions.length > 0 ? (
-                              <div className="medical-pills-list">
-                                {profile.medicalConditions.map((condition, idx) => (
-                                  <span key={idx} className="medical-pill">
-                                    {condition}
-                                  </span>
-                                ))}
-                              </div>
-                            ) : (
-                              <div className="no-conditions-text">
-                                No conditions flagged
-                              </div>
-                            )}
-                          </div>
                         </div>
                       </div>
                     </div>
