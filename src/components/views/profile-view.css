@@ -64,6 +64,49 @@
   overflow: hidden;
 }
 
+/* Unified Porsche Card Split Container */
+.profile-porsche-card-split {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+}
+
+.profile-porsche-identity-section {
+  flex: 0 0 380px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  border-right: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.profile-porsche-health-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-sizing: border-box;
+  padding: 32px;
+  background: rgba(255, 255, 255, 0.12); /* Frosted contrast highlight */
+}
+
+@media (max-width: 1024px) {
+  .profile-porsche-card-split {
+    flex-direction: column;
+  }
+  
+  .profile-porsche-identity-section {
+    flex: none;
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  }
+  
+  .profile-porsche-health-section {
+    width: 100%;
+    padding: 24px 16px;
+  }
+}
+
 /* Edit Mode Card is slightly wider to hold input form grid nicely */
 .profile-porsche-card-edit {
   max-width: none;

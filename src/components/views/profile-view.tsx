@@ -244,263 +244,269 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
               </div>
             ) : (
               <div className="profile-content-layout">
-                {/* LEFT COLUMN: Identity Block */}
-                <div className="profile-left-col">
-                  <div className="profile-porsche-card">
-                    {/* Card Image Cover Header */}
-                    <div className="profile-porsche-img-container">
-                      <img
-                        src={getAvatarImage(avatarUrl)}
-                        alt="Profile Banner"
-                        className="profile-porsche-img"
-                      />
+                {/* Unified Porsche Card containing both Identity and Health Stats */}
+                <div className="profile-porsche-card">
+                  <div className="profile-porsche-card-split">
+                    
+                    {/* Left Panel: Identity & Actions */}
+                    <div className="profile-porsche-identity-section">
+                      {/* Card Image Cover Header */}
+                      <div className="profile-porsche-img-container">
+                        <img
+                          src={getAvatarImage(avatarUrl)}
+                          alt="Profile Banner"
+                          className="profile-porsche-img"
+                        />
+                      </div>
+
+                      {/* Attributes Badges Row */}
+                      <div className="profile-porsche-badges">
+                        <div className="profile-porsche-pill">
+                          <span className={`profile-porsche-dot status-${(status || 'Online').toLowerCase().replace(/\s+/g, '-')}`}></span>
+                          <span>{status || 'Online'}</span>
+                        </div>
+                        <div className="profile-porsche-pill">
+                          <Globe size={12} strokeWidth={2.5} />
+                          <span>{timezone || 'GMT+5:30'}</span>
+                        </div>
+                        <div className="profile-porsche-pill">
+                          <Clock size={12} strokeWidth={2.5} />
+                          <span>{workingHours || '10 AM - 6 PM'}</span>
+                        </div>
+                      </div>
+
+                      {/* Main Information Block */}
+                      <div className="profile-porsche-content">
+                        <h2 className="profile-porsche-name">{displayName || 'Your Name'}</h2>
+                        <h3 className="profile-porsche-title">{title || 'Intern'}</h3>
+                        <p className="profile-porsche-description">
+                          {bio || 'Ready to learn, design, and develop premium dashboard systems.'}
+                        </p>
+                        {email && (
+                          <a href={`mailto:${email}`} className="profile-porsche-email-link">
+                            <Mail size={13} />
+                            <span>{email}</span>
+                          </a>
+                        )}
+                      </div>
+
+                      {/* Actions & Timestamps Footer */}
+                      <div className="profile-porsche-footer">
+                        <span className="profile-porsche-last-updated">
+                          {formatLastUpdated(profile?.updatedAt || profile?.createdAt)}
+                        </span>
+                        <div className="profile-porsche-actions">
+                          <button
+                            type="button"
+                            className="profile-porsche-logout-btn"
+                            onClick={handleLogout}
+                          >
+                            <LogOut size={14} />
+                            <span>Log Out</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="profile-porsche-edit-btn"
+                            onClick={() => setIsEditing(true)}
+                          >
+                            <Pencil size={14} />
+                            <span>Edit Profile</span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Attributes Badges Row */}
-                    <div className="profile-porsche-badges">
-                      <div className="profile-porsche-pill">
-                        <span className={`profile-porsche-dot status-${(status || 'Online').toLowerCase().replace(/\s+/g, '-')}`}></span>
-                        <span>{status || 'Online'}</span>
+                    {/* Right Panel: Health & Performance Bento Grid */}
+                    <div className="profile-porsche-health-section">
+                      <div className="profile-quotes-header">
+                        <p>Health & Performance</p>
+                        <h2>Biometrics & TDEE</h2>
                       </div>
-                      <div className="profile-porsche-pill">
-                        <Globe size={12} strokeWidth={2.5} />
-                        <span>{timezone || 'GMT+5:30'}</span>
-                      </div>
-                      <div className="profile-porsche-pill">
-                        <Clock size={12} strokeWidth={2.5} />
-                        <span>{workingHours || '10 AM - 6 PM'}</span>
+                      
+                      <div className="profile-bento-grid">
+                        {/* Card A: Biometrics Overview */}
+                        <div className="profile-health-card card-biometrics">
+                          <div className="card-header-icon">
+                            <Heart className="text-gray-500" size={16} style={{ color: '#4b5563' }} />
+                            <span className="card-tag">Biometrics</span>
+                          </div>
+                          <div className="biometrics-grid">
+                            <div className="biometrics-item">
+                              <span className="biometrics-label">Age</span>
+                              <span className="biometrics-value">
+                                {profile?.physicalMetrics?.age ?? '—'} <span className="unit">yrs</span>
+                              </span>
+                            </div>
+                            <div className="biometrics-item">
+                              <span className="biometrics-label">Gender</span>
+                              <span className="biometrics-value capitalize">
+                                {profile?.physicalMetrics?.gender?.toLowerCase() ?? '—'}
+                              </span>
+                            </div>
+                            <div className="biometrics-item">
+                              <span className="biometrics-label">Height</span>
+                              <span className="biometrics-value">
+                                {profile?.physicalMetrics?.height ?? '—'} <span className="unit">cm</span>
+                              </span>
+                            </div>
+                            <div className="biometrics-item">
+                              <span className="biometrics-label">Weight</span>
+                              <span className="biometrics-value">
+                                {profile?.physicalMetrics?.weight ?? '—'} <span className="unit">kg</span>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Card B: The Metric Ring / Status */}
+                        <div className="profile-health-card card-status">
+                          <div className="card-header-icon">
+                            <Activity className="text-gray-500" size={16} style={{ color: '#4b5563' }} />
+                            <span className="card-tag">BMI & BMR Status</span>
+                          </div>
+                          <div className="status-metrics-wrapper">
+                            <div className="bmi-circle-container">
+                              <div className="bmi-circle">
+                                <span className="bmi-number">{profile?.bmi ?? '—'}</span>
+                                <span className="bmi-label">BMI</span>
+                              </div>
+                              <div className="bmi-status-indicator">
+                                <span className={`bmi-badge status-${getBmiStatusClass(profile?.bmi)}`}>
+                                  {getBmiStatus(profile?.bmi)}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="tdee-container">
+                              <div className="tdee-block">
+                                <span className="tdee-label">TDEE</span>
+                                <span className="tdee-value">
+                                  {profile?.tdee ? Math.round(profile.tdee).toLocaleString() : '—'} <span className="unit">kcal</span>
+                                </span>
+                              </div>
+                              <div className="bmr-block">
+                                <span className="bmr-label">BMR</span>
+                                <span className="bmr-value">
+                                  {profile?.bmr ? Math.round(profile.bmr).toLocaleString() : '—'} <span className="unit">kcal</span>
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Card C: Daily Nutrition Targets */}
+                        <div className="profile-health-card card-nutrition-targets">
+                          <div className="card-header-icon">
+                            <Target className="text-[#4b5563]" size={16} />
+                            <span className="card-tag">Nutrition Targets</span>
+                          </div>
+                          <div className="nutrition-target-main">
+                            <span className="nutr-kcal-val">
+                              {profile?.dynamicTargets?.calculatedCalories ? Math.round(profile.dynamicTargets.calculatedCalories).toLocaleString() : '—'} <span className="unit">kcal</span>
+                            </span>
+                            <span className="nutr-kcal-lbl">Target Calorie Intake</span>
+                          </div>
+                          {(() => {
+                            const calcCal = profile?.dynamicTargets?.calculatedCalories || 0;
+                            const calcProt = profile?.dynamicTargets?.calculatedProtein || 0;
+                            const calcCarb = profile?.dynamicTargets?.calculatedCarbs || 0;
+                            const calcFat = profile?.dynamicTargets?.calculatedFat || 0;
+
+                            const protPct = calcCal > 0 ? Math.round((calcProt * 4 / calcCal) * 100) : 0;
+                            const carbPct = calcCal > 0 ? Math.round((calcCarb * 4 / calcCal) * 100) : 0;
+                            const fatPct = calcCal > 0 ? Math.max(0, 100 - protPct - carbPct) : 0;
+
+                            return (
+                              <div className="nutrition-macros-grid">
+                                <div className="macro-bar-item protein">
+                                  <div className="macro-info">
+                                    <span className="macro-name">Protein</span>
+                                    <span className="macro-gram">
+                                      {calcProt ?? '—'}g <span className="pct-label">({protPct}%)</span>
+                                    </span>
+                                  </div>
+                                  <div className="macro-progress-track">
+                                    <div className="macro-progress-fill" style={{ width: `${protPct}%` }}></div>
+                                  </div>
+                                </div>
+                                <div className="macro-bar-item carbs">
+                                  <div className="macro-info">
+                                    <span className="macro-name">Carbs</span>
+                                    <span className="macro-gram">
+                                      {calcCarb ?? '—'}g <span className="pct-label">({carbPct}%)</span>
+                                    </span>
+                                  </div>
+                                  <div className="macro-progress-track">
+                                    <div className="macro-progress-fill" style={{ width: `${carbPct}%` }}></div>
+                                  </div>
+                                </div>
+                                <div className="macro-bar-item fat">
+                                  <div className="macro-info">
+                                    <span className="macro-name">Fats</span>
+                                    <span className="macro-gram">
+                                      {calcFat ?? '—'}g <span className="pct-label">({fatPct}%)</span>
+                                    </span>
+                                  </div>
+                                  <div className="macro-progress-track">
+                                    <div className="macro-progress-fill" style={{ width: `${fatPct}%` }}></div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+
+                        {/* Card D: Medical & Dietary Flags */}
+                        <div className="profile-health-card card-medical">
+                          <div className="card-header-icon">
+                            <ShieldAlert className="text-gray-500" size={16} style={{ color: '#4b5563' }} />
+                            <span className="card-tag">Conditions & Flags</span>
+                          </div>
+                          <div className="medical-conditions-container">
+                            {profile?.medicalConditions && profile.medicalConditions.length > 0 ? (
+                              <div className="medical-pills-list">
+                                {profile.medicalConditions.map((condition, idx) => (
+                                  <span key={idx} className="medical-pill">
+                                    {condition}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="no-conditions-text">
+                                No conditions flagged
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
+                    
+                  </div>
+                </div>
 
-                    {/* Main Information Block */}
-                    <div className="profile-porsche-content">
-                      <h2 className="profile-porsche-name">{displayName || 'Your Name'}</h2>
-                      <h3 className="profile-porsche-title">{title || 'Intern'}</h3>
-                      <p className="profile-porsche-description">
-                        {bio || 'Ready to learn, design, and develop premium dashboard systems.'}
-                      </p>
-                      {email && (
-                        <a href={`mailto:${email}`} className="profile-porsche-email-link">
-                          <Mail size={13} />
-                          <span>{email}</span>
-                        </a>
+                {/* Notifications Options */}
+                <button
+                  type="button"
+                  className="profile-notifications-option-card"
+                  onClick={() => setIsOpen(true)}
+                >
+                  <div className="profile-notif-option-content">
+                    <div className="profile-notif-icon-wrapper">
+                      <Bell size={18} />
+                      {unreadCount > 0 && (
+                        <span className="profile-notif-badge">{unreadCount}</span>
                       )}
                     </div>
-
-                    {/* Actions & Timestamps Footer */}
-                    <div className="profile-porsche-footer">
-                      <span className="profile-porsche-last-updated">
-                        {formatLastUpdated(profile?.updatedAt || profile?.createdAt)}
-                      </span>
-                      <div className="profile-porsche-actions">
-                        <button
-                          type="button"
-                          className="profile-porsche-logout-btn"
-                          onClick={handleLogout}
-                        >
-                          <LogOut size={14} />
-                          <span>Log Out</span>
-                        </button>
-                        <button
-                          type="button"
-                          className="profile-porsche-edit-btn"
-                          onClick={() => setIsEditing(true)}
-                        >
-                          <Pencil size={14} />
-                          <span>Edit Profile</span>
-                        </button>
-                      </div>
+                    <div className="profile-notif-text">
+                      <h3>Notifications</h3>
+                      <p>
+                        {unreadCount > 0
+                          ? `You have ${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`
+                          : 'All caught up'}
+                      </p>
                     </div>
                   </div>
-
-                  <button
-                    type="button"
-                    className="profile-notifications-option-card"
-                    onClick={() => setIsOpen(true)}
-                  >
-                    <div className="profile-notif-option-content">
-                      <div className="profile-notif-icon-wrapper">
-                        <Bell size={18} />
-                        {unreadCount > 0 && (
-                          <span className="profile-notif-badge">{unreadCount}</span>
-                        )}
-                      </div>
-                      <div className="profile-notif-text">
-                        <h3>Notifications</h3>
-                        <p>
-                          {unreadCount > 0
-                            ? `You have ${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`
-                            : 'All caught up'}
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronRight size={18} className="profile-notif-chevron" />
-                  </button>
-                </div>
-
-                {/* RIGHT COLUMN: Bento Health Grid Widgets */}
-                <div className="profile-right-col">
-                  <div className="profile-quotes-header">
-                    <p>Health & Performance</p>
-                    <h2>Biometrics & TDEE</h2>
-                  </div>
-                  
-                  <div className="profile-bento-grid">
-                    {/* Card A: Biometrics Overview */}
-                    <div className="profile-health-card card-biometrics">
-                      <div className="card-header-icon">
-                        <Heart className="text-gray-500" size={16} style={{ color: '#4b5563' }} />
-                        <span className="card-tag">Biometrics</span>
-                      </div>
-                      <div className="biometrics-grid">
-                        <div className="biometrics-item">
-                          <span className="biometrics-label">Age</span>
-                          <span className="biometrics-value">
-                            {profile?.physicalMetrics?.age ?? '—'} <span className="unit">yrs</span>
-                          </span>
-                        </div>
-                        <div className="biometrics-item">
-                          <span className="biometrics-label">Gender</span>
-                          <span className="biometrics-value capitalize">
-                            {profile?.physicalMetrics?.gender?.toLowerCase() ?? '—'}
-                          </span>
-                        </div>
-                        <div className="biometrics-item">
-                          <span className="biometrics-label">Height</span>
-                          <span className="biometrics-value">
-                            {profile?.physicalMetrics?.height ?? '—'} <span className="unit">cm</span>
-                          </span>
-                        </div>
-                        <div className="biometrics-item">
-                          <span className="biometrics-label">Weight</span>
-                          <span className="biometrics-value">
-                            {profile?.physicalMetrics?.weight ?? '—'} <span className="unit">kg</span>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Card B: The Metric Ring / Status */}
-                    <div className="profile-health-card card-status">
-                      <div className="card-header-icon">
-                        <Activity className="text-gray-500" size={16} style={{ color: '#4b5563' }} />
-                        <span className="card-tag">BMI & BMR Status</span>
-                      </div>
-                      <div className="status-metrics-wrapper">
-                        <div className="bmi-circle-container">
-                          <div className="bmi-circle">
-                            <span className="bmi-number">{profile?.bmi ?? '—'}</span>
-                            <span className="bmi-label">BMI</span>
-                          </div>
-                          <div className="bmi-status-indicator">
-                            <span className={`bmi-badge status-${getBmiStatusClass(profile?.bmi)}`}>
-                              {getBmiStatus(profile?.bmi)}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="tdee-container">
-                          <div className="tdee-block">
-                            <span className="tdee-label">TDEE</span>
-                            <span className="tdee-value">
-                              {profile?.tdee ? Math.round(profile.tdee).toLocaleString() : '—'} <span className="unit">kcal</span>
-                            </span>
-                          </div>
-                          <div className="bmr-block">
-                            <span className="bmr-label">BMR</span>
-                            <span className="bmr-value">
-                              {profile?.bmr ? Math.round(profile.bmr).toLocaleString() : '—'} <span className="unit">kcal</span>
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Card C: Daily Nutrition Targets */}
-                    <div className="profile-health-card card-nutrition-targets">
-                      <div className="card-header-icon">
-                        <Target className="text-[#4b5563]" size={16} />
-                        <span className="card-tag">Nutrition Targets</span>
-                      </div>
-                      <div className="nutrition-target-main">
-                        <span className="nutr-kcal-val">
-                          {profile?.dynamicTargets?.calculatedCalories ? Math.round(profile.dynamicTargets.calculatedCalories).toLocaleString() : '—'} <span className="unit">kcal</span>
-                        </span>
-                        <span className="nutr-kcal-lbl">Target Calorie Intake</span>
-                      </div>
-                      {(() => {
-                        const calcCal = profile?.dynamicTargets?.calculatedCalories || 0;
-                        const calcProt = profile?.dynamicTargets?.calculatedProtein || 0;
-                        const calcCarb = profile?.dynamicTargets?.calculatedCarbs || 0;
-                        const calcFat = profile?.dynamicTargets?.calculatedFat || 0;
-
-                        const protPct = calcCal > 0 ? Math.round((calcProt * 4 / calcCal) * 100) : 0;
-                        const carbPct = calcCal > 0 ? Math.round((calcCarb * 4 / calcCal) * 100) : 0;
-                        const fatPct = calcCal > 0 ? Math.max(0, 100 - protPct - carbPct) : 0;
-
-                        return (
-                          <div className="nutrition-macros-grid">
-                            <div className="macro-bar-item protein">
-                              <div className="macro-info">
-                                <span className="macro-name">Protein</span>
-                                <span className="macro-gram">
-                                  {calcProt ?? '—'}g <span className="pct-label">({protPct}%)</span>
-                                </span>
-                              </div>
-                              <div className="macro-progress-track">
-                                <div className="macro-progress-fill" style={{ width: `${protPct}%` }}></div>
-                              </div>
-                            </div>
-                            <div className="macro-bar-item carbs">
-                              <div className="macro-info">
-                                <span className="macro-name">Carbs</span>
-                                <span className="macro-gram">
-                                  {calcCarb ?? '—'}g <span className="pct-label">({carbPct}%)</span>
-                                </span>
-                              </div>
-                              <div className="macro-progress-track">
-                                <div className="macro-progress-fill" style={{ width: `${carbPct}%` }}></div>
-                              </div>
-                            </div>
-                            <div className="macro-bar-item fat">
-                              <div className="macro-info">
-                                <span className="macro-name">Fats</span>
-                                <span className="macro-gram">
-                                  {calcFat ?? '—'}g <span className="pct-label">({fatPct}%)</span>
-                                </span>
-                              </div>
-                              <div className="macro-progress-track">
-                                <div className="macro-progress-fill" style={{ width: `${fatPct}%` }}></div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })()}
-                    </div>
-
-                    {/* Card D: Medical & Dietary Flags */}
-                    <div className="profile-health-card card-medical">
-                      <div className="card-header-icon">
-                        <ShieldAlert className="text-gray-500" size={16} style={{ color: '#4b5563' }} />
-                        <span className="card-tag">Conditions & Flags</span>
-                      </div>
-                      <div className="medical-conditions-container">
-                        {profile?.medicalConditions && profile.medicalConditions.length > 0 ? (
-                          <div className="medical-pills-list">
-                            {profile.medicalConditions.map((condition, idx) => (
-                              <span key={idx} className="medical-pill">
-                                {condition}
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="no-conditions-text">
-                            No conditions flagged
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                  <ChevronRight size={18} className="profile-notif-chevron" />
+                </button>
               </div>
             )}
           </div>
