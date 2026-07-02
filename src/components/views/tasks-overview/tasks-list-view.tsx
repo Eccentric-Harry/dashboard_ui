@@ -61,25 +61,13 @@ interface TasksListViewProps {
 }
 
 export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: TasksListViewProps) {
-  const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>(() => {
-    try {
-      const saved = localStorage.getItem('tasks-collapsed-categories')
-      return saved ? JSON.parse(saved) : {}
-    } catch {
-      return {}
-    }
-  })
+  const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({})
 
   const toggleCategory = (category: string) => {
-    setCollapsedCategories((prev) => {
-      const next = { ...prev, [category]: !prev[category] }
-      try {
-        localStorage.setItem('tasks-collapsed-categories', JSON.stringify(next))
-      } catch (e) {
-        console.error(e)
-      }
-      return next
-    })
+    setCollapsedCategories((prev) => ({
+      ...prev,
+      [category]: !prev[category]
+    }))
   }
 
   const groupedTasks = useMemo(() => {
@@ -101,17 +89,17 @@ export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: Tasks
     return Object.keys(groupedTasks).sort((a, b) => {
       if (a === 'Movies') return 1
       if (b === 'Movies') return -1
-      
+
       const indexA = definedOrder.indexOf(a)
       const indexB = definedOrder.indexOf(b)
-      
+
       if (indexA !== -1 && indexB !== -1) {
         return indexA - indexB
       }
-      
+
       if (indexA !== -1) return -1
       if (indexB !== -1) return 1
-      
+
       return a.localeCompare(b)
     })
   }, [groupedTasks])
@@ -199,41 +187,41 @@ export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: Tasks
                           <span className="dot" style={{ background: categoryInfo.dot, width: 6, height: 6, borderRadius: '50%', display: 'inline-block' }} />
                           {category}
                         </span>
-                        
+
                         {task.tags && task.tags.length > 0 && task.tags.map((tag) => (
                           <span key={tag} className="k-tag id">
                             <span className="at">#</span>
                             {tag}
                           </span>
                         ))}
-                        
+
                         {task.date && (
                           <span className={`k-tag sla ${task.completed ? 'sla-done' : ''}`}>
                             <span className="flag">⚑</span>
                             {task.date.slice(5).replace('-', '/')}
                           </span>
                         )}
-                        
+
                         {task.scheduledTime && !task.completed && (
                           <span className="k-tag time">
                             <Clock size={10} style={{ marginRight: 2 }} />
                             {task.scheduledTime}
                           </span>
                         )}
-                        
+
                         {isOverdueTask && (
                           <span className="k-tag sla" style={{ background: 'rgba(212, 71, 82, 0.1)', color: '#d44752' }}>
                             Overdue
                           </span>
                         )}
-                        
+
                         {task.completed && (
                           <span className="k-tag sla sla-done" style={{ background: '#d1fae5', color: '#047857' }}>
                             <Check size={10} />
                             Done
                           </span>
                         )}
-                        
+
                         {task.createdAt && (
                           <span className="k-tag id" style={{ background: 'rgba(16,19,18,0.03)', color: 'rgba(16,19,18,0.35)', fontSize: 9 }}>
                             Created {new Date(task.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
