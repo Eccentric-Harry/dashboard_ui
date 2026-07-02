@@ -68,6 +68,104 @@ export async function deleteFoodEntry(mealId: string, entryId: string) {
   return response.json();
 }
 
+
+// ─── Gemini AI Meal Analysis ───────────────────────────────────────────────
+
+export interface GeminiMealItem {
+  name: string;
+  serving_size: string;
+  confidence: 'high' | 'medium' | 'low';
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number;
+  sugar: number;
+  sodium: number;
+  saturated_fat: number;
+}
+
+export interface GeminiMealTotals {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number;
+  sugar: number;
+  sodium: number;
+}
+
+export interface GeminiDailyTargetProgress {
+  calories_pct: number;
+  protein_pct: number;
+  carbs_pct: number;
+  fat_pct: number;
+  fiber_pct: number;
+}
+
+export interface GeminiMedicalAnalysis {
+  condition: string;
+  risk: 'low' | 'moderate' | 'high';
+  findings: string[];
+  recommendations: string[];
+}
+
+export interface GeminiOverallAssessment {
+  meal_quality: 'excellent' | 'good' | 'fair' | 'poor';
+  fitness_alignment: string;
+  strengths: string[];
+  concerns: string[];
+  improvements: string[];
+}
+
+export interface GeminiAnalysisResult {
+  meal_items: GeminiMealItem[];
+  meal_totals: GeminiMealTotals;
+  daily_target_progress: GeminiDailyTargetProgress;
+  medical_analysis: GeminiMedicalAnalysis[];
+  overall_assessment: GeminiOverallAssessment;
+}
+
+export interface MealAnalysisApiResponse {
+  mealEntryId: string;
+  mealType: string;
+  date: string;
+  description: string;
+  calories: number;
+  proteinGrams: number;
+  analysis: GeminiAnalysisResult;
+}
+
+/**
+ * Submit a meal image and/or text description for two-stage Gemini AI analysis.
+ * Stage 1 identifies food items, Stage 2 calculates full nutrition + medical context.
+ * The backend auto-persists the result and returns the full analysis.
+ */
+export async function analyzeMeal(
+  file: File | null,
+  description: string | null,
+  mealType: string,
+  date: string
+): Promise<{ data: MealAnalysisApiResponse }> {
+  const formData = new FormData();
+  if (file) formData.append('file', file);
+  if (description && description.trim()) formData.append('description', description.trim());
+  formData.append('mealType', mealType);
+  formData.append('date', date);
+
+  // Do NOT set Content-Type manually — browser sets multipart/form-data boundary
+  const response = await fetch(`${API_BASE_URL}/meals/analyze`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Meal analysis failed: ${errorText}`);
+  }
+  return response.json();
+}
+
 export async function fetchSpendingSummary(month?: string) {
   const query = month ? `?month=${month}` : '';
   const response = await fetch(`${API_BASE_URL}/dashboard/spending-summary${query}`);

@@ -2503,6 +2503,44 @@
   bottom: 90px;
   right: 20px;
   z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+/* AI Scan button — green gradient pill above the Add FAB */
+.nutrition-ai-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(53, 182, 75, 0.4);
+  background: linear-gradient(135deg, rgba(53, 182, 75, 0.18), rgba(40, 160, 62, 0.12));
+  color: #35b64b;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: 0 4px 20px rgba(53, 182, 75, 0.18);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+.nutrition-ai-btn:hover {
+  background: linear-gradient(135deg, rgba(53, 182, 75, 0.28), rgba(40, 160, 62, 0.2));
+  border-color: rgba(53, 182, 75, 0.7);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(53, 182, 75, 0.28);
+}
+.nutrition-ai-btn svg {
+  animation: ai-sparkle-spin 3s ease-in-out infinite;
+}
+@keyframes ai-sparkle-spin {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  50%       { transform: rotate(15deg) scale(1.15); }
 }
 
 .nutrition-add-btn {
