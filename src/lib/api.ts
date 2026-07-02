@@ -1044,6 +1044,20 @@ export async function signupUser(username: string, displayName: string, passcode
   return response.json();
 }
 
+export interface PhysicalMetrics {
+  age?: number;
+  gender?: string;
+  height?: number;
+  weight?: number;
+}
+
+export interface DynamicTargets {
+  calculatedCalories?: number;
+  calculatedProtein?: number;
+  calculatedCarbs?: number;
+  calculatedFat?: number;
+}
+
 export interface UserProfile {
   id: string;
   displayName: string;
@@ -1062,6 +1076,15 @@ export interface UserProfile {
   status?: string;
   createdAt?: string;
   updatedAt?: string;
+
+  physicalMetrics?: PhysicalMetrics;
+  activityLevel?: 'SEDENTARY' | 'LIGHTLY_ACTIVE' | 'MODERATELY_ACTIVE' | 'ACTIVE' | 'VERY_ACTIVE';
+  fitnessGoal?: 'LOSE_WEIGHT' | 'MAINTAIN_WEIGHT' | 'GAIN_MUSCLE';
+  medicalConditions?: string[];
+  dynamicTargets?: DynamicTargets;
+  bmi?: number;
+  bmr?: number;
+  tdee?: number;
 }
 
 export async function getUserProfile(): Promise<{ data: UserProfile }> {

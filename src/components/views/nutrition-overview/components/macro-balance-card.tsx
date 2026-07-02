@@ -133,9 +133,10 @@ function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
 
   const proteinGoal = circularGoals.find((goal) => goal.label === 'Protein')
   const proteinLogged = proteinGoal?.value || 0
-  const proteinTarget = PROTEIN_TARGET
-  const proteinProgress = Math.round((proteinLogged / PROTEIN_TARGET) * 100) || 0
+  const proteinTarget = proteinGoal?.target || dailyFood.proteinGoalGrams || PROTEIN_TARGET
+  const proteinProgress = Math.round((proteinLogged / proteinTarget) * 100) || 0
   const caloriesLogged = Number(dailyFood.calories) || 0
+  const caloriesTarget = dailyFood.calorieGoal || circularGoals.find((goal) => goal.label === 'Calories')?.target || CALORIE_TARGET
 
   const progressRings = [
     {
@@ -150,7 +151,7 @@ function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
       id: 'calories',
       label: 'Total Calories',
       logged: caloriesLogged,
-      target: CALORIE_TARGET,
+      target: caloriesTarget,
       unit: ' kcal',
       color: '#eab308',
     },

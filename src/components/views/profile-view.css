@@ -903,6 +903,34 @@
   opacity: 1;
 }
 
+@media (max-width: 1200px) {
+  .profile-content-layout {
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+    width: 100%;
+  }
+
+  .profile-left-col {
+    flex: none;
+    width: 100%;
+    max-width: 440px;
+    align-items: center;
+    position: static;
+  }
+
+  .profile-right-col {
+    width: 100%;
+    max-width: 600px;
+    align-items: stretch;
+  }
+
+  .profile-left-col .profile-porsche-card,
+  .profile-left-col .profile-notifications-option-card {
+    margin: 0 auto;
+  }
+}
+
 /* ═══════════════════════════════════════════════════════ */
 /* RESPONSIVE — Tablet                                    */
 /* ═══════════════════════════════════════════════════════ */
@@ -1130,3 +1158,605 @@
     padding: 10px 16px;
   }
 }
+
+/* ═══════════════════════════════════════════════════════ */
+/* BENTO HEALTH GRID LAYOUT                               */
+/* ═══════════════════════════════════════════════════════ */
+
+.profile-bento-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .profile-bento-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+.profile-health-card {
+  background: #eaebed;
+  border: 6px solid #ffffff;
+  border-radius: 20px;
+  box-shadow: 
+    0 12px 32px rgba(0, 0, 0, 0.05),
+    0 2px 8px rgba(0, 0, 0, 0.02);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-sizing: border-box;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Hover state has no translateY pop-up effect */
+
+.card-header-icon {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-header-icon svg {
+  color: #4b5563; /* Subtle neutral icon coloring */
+}
+
+.card-tag {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #71717a;
+}
+
+/* Biometrics overview widget */
+.biometrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.biometrics-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 14px;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.01);
+}
+
+.biometrics-label {
+  font-size: 11px;
+  color: #71717a;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.biometrics-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #18181b;
+}
+
+.biometrics-value .unit {
+  font-size: 11px;
+  color: #a1a1aa;
+  font-weight: 400;
+}
+
+/* BMI status circle & TDEE status widget */
+.status-metrics-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  justify-content: space-around;
+  height: 100%;
+}
+
+.bmi-circle-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.bmi-circle {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  border: 4px solid #a8c3d8; /* subtle gray-blue ring */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.bmi-number {
+  font-size: 20px;
+  font-weight: 750;
+  color: #2c3e50;
+  letter-spacing: -0.02em;
+}
+
+.bmi-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #7f8c8d;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.bmi-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.bmi-badge.status-normal {
+  background: #d8ebd4;
+  color: #3e6b35;
+}
+
+.bmi-badge.status-overweight {
+  background: #f7e3d4;
+  color: #a15d2a;
+}
+
+.bmi-badge.status-underweight {
+  background: #e5e7eb;
+  color: #4b5563;
+}
+
+.bmi-badge.status-obese {
+  background: #fcdad7;
+  color: #9c2e2e;
+}
+
+.tdee-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tdee-block, .bmr-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.tdee-label, .bmr-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #71717a;
+  text-transform: uppercase;
+}
+
+.tdee-value {
+  font-size: 18px;
+  font-weight: 750;
+  color: #18181b;
+}
+
+.bmr-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.tdee-value .unit, .bmr-value .unit {
+  font-size: 11px;
+  color: #71717a;
+  font-weight: 400;
+}
+
+/* Daily Nutrition Targets macro display */
+.nutrition-target-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  padding: 12px;
+  border-radius: 14px;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.01);
+}
+
+.nutr-kcal-val {
+  font-size: 24px;
+  font-weight: 800;
+  color: #1c1d1f;
+}
+
+.nutr-kcal-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  color: #7c7e85;
+  text-transform: uppercase;
+  margin-top: 2px;
+  letter-spacing: 0.04em;
+}
+
+.nutrition-macros-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.macro-bar-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.macro-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.macro-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.macro-gram {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.macro-gram .pct-label {
+  font-size: 10px;
+  color: #71717a;
+  font-weight: 500;
+  margin-left: 3px;
+}
+
+.macro-progress-track {
+  height: 6px;
+  width: 100%;
+  background: #ffffff;
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.02);
+}
+
+.macro-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+}
+
+.protein .macro-progress-fill { background: #c77d7d; } /* desaturated rose/rust */
+.carbs .macro-progress-fill { background: #8ba3b8; }   /* desaturated slate-blue */
+.fat .macro-progress-fill { background: #d1b390; }     /* desaturated wheat/tan */
+
+/* Conditions / medical flags */
+.medical-conditions-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  justify-content: center;
+}
+
+.medical-pills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.medical-pill {
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  background: #ffffff;
+  color: #374151;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.01);
+}
+
+.no-conditions-text {
+  font-size: 13px;
+  color: #9ca3af;
+  font-style: italic;
+  text-align: center;
+}
+
+/* ═══════════════════════════════════════════════════════ */
+/* EDIT PROFILE DIALOG MODAL                              */
+/* ═══════════════════════════════════════════════════════ */
+
+.profile-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.profile-modal-card {
+  background: #eaebed;
+  border: 8px solid #ffffff;
+  border-radius: 26px;
+  box-shadow: 
+    0 24px 64px rgba(0, 0, 0, 0.15),
+    0 8px 24px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.profile-modal-card form {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+.animate-modal-in {
+  animation: modalScaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes modalScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.profile-modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent;
+}
+
+.profile-modal-header h2 {
+  font-size: 20px;
+  font-weight: 650;
+  color: #111827;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.profile-modal-close-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #71717a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.profile-modal-close-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: #111827;
+}
+
+.profile-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex: 1;
+  min-height: 0;
+}
+
+.profile-modal-tabs-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+@media (max-width: 768px) {
+  .profile-modal-tabs-content {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .profile-modal-card {
+    max-height: 95vh;
+    border-width: 4px;
+  }
+  .profile-modal-overlay {
+    padding: 12px;
+  }
+  .profile-modal-body {
+    padding: 16px;
+    gap: 16px;
+  }
+  .profile-modal-footer {
+    padding: 12px 16px;
+  }
+}
+
+.modal-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section-title {
+  font-size: 11px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #4b5563;
+  margin: 0 0 4px 0;
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.1);
+  padding-bottom: 8px;
+}
+
+.profile-modal-avatar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.h-divider {
+  width: 100%;
+  height: 1px;
+  border-top: 1px dashed rgba(0, 0, 0, 0.1);
+  margin: 4px 0;
+}
+
+.avatar-picker-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.avatar-scroll-list {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 2px;
+  scrollbar-width: thin;
+}
+
+.avatar-picker-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: #ffffff;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #4b5563;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+.avatar-picker-pill:hover {
+  background: #f3f4f6;
+}
+
+.avatar-picker-pill.selected {
+  background: #111827;
+  color: #ffffff;
+  border-color: #111827;
+}
+
+.avatar-img-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent;
+}
+
+/* Medical selector pills style */
+.medical-conditions-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.medical-checkbox-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.medical-pill-select {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  background: #ffffff;
+  color: #4b5563;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.medical-pill-select:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.medical-pill-select.selected {
+  background: #111827;
+  color: #ffffff;
+  border-color: #111827;
+}
+
+.custom-condition-add {
+  display: flex;
+  gap: 8px;
+}
+
+.custom-condition-add input {
+  flex: 1;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.add-custom-cond-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #4b5563;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-custom-cond-btn:hover {
+  background: #1f2937;
+}
+
