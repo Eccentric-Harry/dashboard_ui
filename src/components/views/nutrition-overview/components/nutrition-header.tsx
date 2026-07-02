@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { CalendarCheck, ChevronDown, LoaderCircle, X, Plus, Sparkles } from 'lucide-react'
+import { CalendarCheck, ChevronDown, LoaderCircle, X, Plus } from 'lucide-react'
 import { useDashboard } from '../../../../contexts/DashboardContext'
 import { fetchFoodEntries } from '../../../../lib/api'
 import { isStandalone } from '../../../../lib/utils'
@@ -87,10 +87,9 @@ const extractEntries = (response: unknown): FoodEntry[] => {
 
 interface NutritionHeaderProps {
   onAddClick?: () => void
-  onAiClick?: () => void
 }
 
-function NutritionHeader({ onAddClick, onAiClick }: NutritionHeaderProps) {
+function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
   const { data } = useDashboard()
   const foodEntries = useMemo<FoodEntry[]>(() => data?.health?.foodEntries || [], [data?.health?.foodEntries])
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
@@ -362,20 +361,8 @@ function NutritionHeader({ onAddClick, onAiClick }: NutritionHeaderProps) {
         )}
       </div>
 
-      <div className="nutrition-header-actions">
-        {onAiClick && (
-          <button
-            type="button"
-            onClick={onAiClick}
-            className="nutrition-ai-btn"
-            id="ai-meal-scan-btn"
-            aria-label="AI Meal Scan"
-          >
-            <Sparkles size={13} />
-            <span>AI Scan</span>
-          </button>
-        )}
-        {onAddClick && (
+      {onAddClick && (
+        <div className="nutrition-header-actions">
           <button
             type="button"
             onClick={onAddClick}
@@ -384,8 +371,8 @@ function NutritionHeader({ onAddClick, onAiClick }: NutritionHeaderProps) {
             <Plus size={14} strokeWidth={3} />
             <span>Add</span>
           </button>
-        )}
-      </div>
+        </div>
+      )}
     </header>
   )
 }
