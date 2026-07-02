@@ -415,7 +415,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                 <div className="form-group" style={{ marginBottom: '16px' }}>
                   <textarea
                     className="af-description-textarea"
-                    placeholder={`Describe your meal… e.g. "Grilled chicken breast with brown rice and steamed broccoli"`}
+                    placeholder={`Describe your meal…`}
                     value={aiDescription}
                     onChange={e => setAiDescription(e.target.value)}
                     rows={2}

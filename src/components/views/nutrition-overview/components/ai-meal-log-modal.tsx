@@ -241,7 +241,7 @@ export function AiMealLogModal({ isOpen, onClose, onSuccess, selectedDate }: AiM
               {/* Text description */}
               <textarea
                 className="ai-description-textarea"
-                placeholder="Describe your meal… e.g. 'Grilled chicken breast with brown rice and steamed broccoli'"
+                placeholder="Describe your meal.."
                 value={description}
                 onChange={e => setDescription(e.target.value)}
                 rows={3}
