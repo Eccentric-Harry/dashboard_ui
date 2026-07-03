@@ -2,6 +2,7 @@ import avatar1 from '../assets/avatars/avatar1.png'
 import avatar2 from '../assets/avatars/avatar2.png'
 import avatar3 from '../assets/avatars/avatar3.png'
 import avatar4 from '../assets/avatars/avatar4.png'
+import avatarUser from '../assets/avatars/avatar_user.png'
 import avatarLuffy from '../assets/reference-crops/avatar_luffy.png'
 
 export const getAvatarImage = (avatarUrl?: string) => {
@@ -9,6 +10,7 @@ export const getAvatarImage = (avatarUrl?: string) => {
   if (avatarUrl === 'avatar2') return avatar2
   if (avatarUrl === 'avatar3') return avatar3
   if (avatarUrl === 'avatar4') return avatar4
+  if (avatarUrl === 'user') return avatarUser
   return avatarLuffy
 }
 
