@@ -3814,7 +3814,7 @@
 
 .af-compact-alert-btn {
   padding: 6px 14px;
-  border-radius: 999px;
+  border-radius: 10px;
   background: #101312; /* Matches primary app button theme */
   color: #fff;
   font-size: 11px;
