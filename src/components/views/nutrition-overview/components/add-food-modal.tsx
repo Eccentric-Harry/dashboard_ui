@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { X, Loader2, ClipboardCheck, Sparkles, Camera, CheckCircle, AlertTriangle, RotateCcw, Upload, Wifi } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
-import { addFoodEntry, updateFoodEntry, analyzeMeal, type MealAnalysisApiResponse, type GeminiMedicalAnalysis } from '../../../../lib/api'
+import { addFoodEntry, updateFoodEntry, type MealAnalysisApiResponse, type GeminiMedicalAnalysis } from '../../../../lib/api'
+import { useNotifications } from '../../../../contexts/NotificationContext'
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -46,6 +47,10 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  // Notifications & Background tasks context
+  const { backgroundScans, startBackgroundScan, desktopEnabled, toggleDesktopNotifications } = useNotifications()
+  const [currentTaskId, setCurrentTaskId] = useState<string | null>(null)
+
   // Tab state
   const [activeTab, setActiveTab] = useState<'manual' | 'ai'>('manual')
 
@@ -84,6 +89,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       setDate(initialData.date)
       setRichPayload(null)
       setActiveTab('manual')
+      setCurrentTaskId(null)
     } else if (isOpen && !isEdit) {
       setMealType('')
       setDescription('')
@@ -104,11 +110,35 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       setAiError('')
       setAiErrorCode(null)
       setAiResult(null)
+      setCurrentTaskId(null)
     }
     return () => {
       if (stageTimerRef.current) clearTimeout(stageTimerRef.current)
     }
   }, [isOpen, isEdit, initialData, selectedDate])
+
+  const currentTask = currentTaskId ? backgroundScans.find(t => t.id === currentTaskId) : null
+
+  useEffect(() => {
+    if (!currentTask) return
+
+    if (currentTask.status === 'success') {
+      if (stageTimerRef.current) clearTimeout(stageTimerRef.current)
+      setAiResult(currentTask.result)
+      setAiPhase('results')
+    } else if (currentTask.status === 'failed') {
+      if (stageTimerRef.current) clearTimeout(stageTimerRef.current)
+      const rawMsg = currentTask.error || 'Analysis failed'
+      const codeMatch = rawMsg.match(/(\d{3})/)
+      const code = codeMatch ? parseInt(codeMatch[1], 10) : null
+      setAiErrorCode(code)
+      setAiError(rawMsg)
+      setAiPhase('input')
+      setCurrentTaskId(null)
+    }
+  }, [currentTask])
+
+  const isNotificationsEnabled = desktopEnabled && typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted'
 
   // ── Manual form submit ────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
@@ -208,21 +238,17 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       setAiError('Add an image or description, and select a meal type.')
       return
     }
+
     setAiPhase('processing')
     setStageIndex(0)
     cycleStages()
+
     try {
-      const res = await analyzeMeal(imageFile, aiDescription || null, aiMealType, aiDate)
-      if (stageTimerRef.current) clearTimeout(stageTimerRef.current)
-      setAiResult(res.data)
-      setAiPhase('results')
+      const taskId = await startBackgroundScan(imageFile, aiDescription || null, aiMealType, aiDate)
+      setCurrentTaskId(taskId)
     } catch (err: unknown) {
       if (stageTimerRef.current) clearTimeout(stageTimerRef.current)
-      const rawMsg = err instanceof Error ? err.message : 'Analysis failed'
-      // Parse HTTP status code from the error message when available
-      const codeMatch = rawMsg.match(/(\d{3})/)
-      const code = codeMatch ? parseInt(codeMatch[1], 10) : null
-      setAiErrorCode(code)
+      const rawMsg = err instanceof Error ? err.message : 'Failed to start background scan'
       setAiError(rawMsg)
       setAiPhase('input')
     }
@@ -244,7 +270,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
   if (!isOpen) return null
 
   return createPortal(
-    <div className="finance-modal-backdrop" role="presentation" onClick={aiPhase !== 'processing' ? onClose : undefined}>
+    <div className="finance-modal-backdrop" role="presentation" onClick={onClose}>
       <div
         className="finance-modal-popover add-tx-modal"
         role="dialog"
@@ -252,11 +278,9 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
         onClick={(e) => e.stopPropagation()}
         style={{ width: 'min(560px, calc(100vw - 42px))', maxHeight: 'min(90vh, 760px)', display: 'flex', flexDirection: 'column' }}
       >
-        {aiPhase !== 'processing' && (
-          <button type="button" className="finance-modal-close" onClick={onClose}>
-            <X size={15} />
-          </button>
-        )}
+        <button type="button" className="finance-modal-close" onClick={onClose}>
+          <X size={15} />
+        </button>
 
         <h2 style={{ fontSize: '22px', marginBottom: '16px' }}>
           {isEdit ? 'Edit Food Entry' : 'Add Food Entry'}
@@ -349,6 +373,19 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                   Upload a photo or describe your meal — Gemini identifies every item and calculates full clinical nutrition.
                 </p>
 
+                {!isNotificationsEnabled && (
+                  <div className="af-notification-prompt-card">
+                    <div className="af-notification-prompt-icon">🔔</div>
+                    <div className="af-notification-prompt-text">
+                      <h4>Enable Notifications First</h4>
+                      <p>Gemini AI analysis takes 10-15s. Enable alerts to close this modal or leave the page while we process it in the background.</p>
+                    </div>
+                    <button type="button" onClick={toggleDesktopNotifications} className="af-notification-prompt-btn">
+                      Enable
+                    </button>
+                  </div>
+                )}
+
                 {/* Drag-drop zone */}
                 {imagePreviewUrl ? (
                   <div className="af-image-preview">
@@ -439,7 +476,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
 
                 {aiError && <AiErrorCard code={aiErrorCode} message={aiError} onRetry={() => { setAiError(''); setAiErrorCode(null) }} />}
 
-                <button type="submit" className="add-tx-submit af-submit-btn" disabled={!aiCanSubmit} id="ai-analyze-submit-btn">
+                <button type="submit" className="add-tx-submit af-submit-btn" disabled={!aiCanSubmit || !isNotificationsEnabled} id="ai-analyze-submit-btn">
                   <Sparkles size={15} />
                   Analyse with AI
                 </button>
@@ -464,7 +501,6 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                     <h3 className="af-hub-title">{STAGE_MESSAGES[stageIndex].label}</h3>
                     <p className="af-hub-subtitle">{STAGE_MESSAGES[stageIndex].sub}</p>
                   </div>
-
                   <div className="af-loading-checklist">
                     <div className="af-check-item completed">
                       <span className="af-check-dot" />
@@ -479,6 +515,17 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                       <span>Orchestrating clinical diagnostics</span>
                     </div>
                   </div>
+                  <p className="af-processing-background-hint">
+                    This analysis is running in the background. You may safely close this modal or leave the page; we will notify you once your meal log is ready!
+                  </p>
+                  
+                  <button
+                    type="button"
+                    className="af-background-run-btn"
+                    onClick={onClose}
+                  >
+                    Run in Background
+                  </button>
                 </div>
 
                 {/* Background Pinterest-style loading skeletons */}

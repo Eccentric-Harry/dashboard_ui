@@ -8,6 +8,7 @@ import {
   fetchVapidPublicKey,
   subscribeDevice,
   unsubscribeDevice,
+  analyzeMeal,
 } from '../lib/api';
 import type { CalendarItem } from '../lib/api';
 
@@ -19,6 +20,17 @@ export interface InAppNotification {
   timestamp: string;
   itemType: 'TASK' | 'EVENT' | 'REMINDER' | 'MILESTONE';
   isRead: boolean;
+}
+
+export interface BackgroundScanTask {
+  id: string;
+  description: string;
+  mealType: string;
+  date: string;
+  status: 'processing' | 'success' | 'failed';
+  error?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  result?: any;
 }
 
 type NotificationContextType = {
@@ -36,6 +48,13 @@ type NotificationContextType = {
   toggleDesktopNotifications: () => Promise<boolean>;
   refetchItems: () => Promise<void>;
   playSound: () => void;
+  backgroundScans: BackgroundScanTask[];
+  startBackgroundScan: (
+    file: File | null,
+    description: string | null,
+    mealType: string,
+    date: string
+  ) => Promise<string>;
 };
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -92,6 +111,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [desktopEnabled, setDesktopEnabled] = useState<boolean>(() => {
     return localStorage.getItem('dashboard_desktop_notifications_enabled') === 'true';
   });
+
+  const [backgroundScans, setBackgroundScans] = useState<BackgroundScanTask[]>([]);
 
   const [snoozedItems, setSnoozedItems] = useState<Record<string, number>>(() => {
     const saved = localStorage.getItem('dashboard_snoozed_items');
@@ -610,6 +631,101 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const startBackgroundScan = useCallback(async (
+    file: File | null,
+    description: string | null,
+    mealType: string,
+    date: string
+  ): Promise<string> => {
+    const taskId = `scan-${Date.now()}`;
+    const newTask: BackgroundScanTask = {
+      id: taskId,
+      description: description || 'AI meal scan',
+      mealType,
+      date,
+      status: 'processing',
+    };
+
+    setBackgroundScans((prev) => [newTask, ...prev]);
+
+    // Perform analysis asynchronously
+    analyzeMeal(file, description, mealType, date)
+      .then((res) => {
+        setBackgroundScans((prev) =>
+          prev.map((t) => (t.id === taskId ? { ...t, status: 'success', result: res.data } : t))
+        );
+
+        playSound();
+
+        const newNotif: InAppNotification = {
+          id: `ai-meal-success-${Date.now()}`,
+          itemId: res.data.mealEntryId || '',
+          title: 'AI Meal Logged!',
+          message: `✨ Added: ${res.data.description} (${res.data.calories} kcal, ${res.data.proteinGrams}g Protein)`,
+          timestamp: new Date().toISOString(),
+          itemType: 'MILESTONE',
+          isRead: false,
+        };
+        setNotifications((prev) => {
+          const updated = [newNotif, ...prev];
+          localStorage.setItem('dashboard_notifications', JSON.stringify(updated));
+          return updated;
+        });
+
+        if (Notification.permission === 'granted') {
+          try {
+            new Notification('AI Meal Logged!', {
+              body: `✨ Added: ${res.data.description} (${res.data.calories} kcal)`,
+              icon: '/logo.png',
+            });
+          } catch (e) {
+            console.error('Desktop notification failed:', e);
+          }
+        }
+
+        toast.success(`✨ AI Meal Analysis complete and logged!`);
+        window.dispatchEvent(new Event('dashboard-updated'));
+      })
+      .catch((err: unknown) => {
+        const errorMsg = err instanceof Error ? err.message : 'Analysis failed';
+        setBackgroundScans((prev) =>
+          prev.map((t) => (t.id === taskId ? { ...t, status: 'failed', error: errorMsg } : t))
+        );
+
+        playSound();
+
+        const newNotif: InAppNotification = {
+          id: `ai-meal-failed-${Date.now()}`,
+          itemId: '',
+          title: 'AI Meal Scan Failed',
+          message: `❌ Failed to analyze "${description || 'AI meal scan'}": ${errorMsg}`,
+          timestamp: new Date().toISOString(),
+          itemType: 'REMINDER',
+          isRead: false,
+        };
+        setNotifications((prev) => {
+          const updated = [newNotif, ...prev];
+          localStorage.setItem('dashboard_notifications', JSON.stringify(updated));
+          return updated;
+        });
+
+        if (Notification.permission === 'granted') {
+          try {
+            new Notification('AI Meal Scan Failed', {
+              body: `❌ Failed: ${errorMsg}`,
+              icon: '/logo.png',
+            });
+          } catch (e) {
+            console.error('Desktop notification failed:', e);
+          }
+        }
+
+        toast.error(`❌ AI Meal analysis failed: ${errorMsg}`);
+      });
+
+    return taskId;
+  }, [playSound]);
+
 
 
   return (
@@ -629,6 +745,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         toggleDesktopNotifications,
         refetchItems,
         playSound,
+        backgroundScans,
+        startBackgroundScan,
       }}
     >
       {children}

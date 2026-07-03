@@ -38,6 +38,16 @@ export function useDashboardData(date?: string) {
     loadData();
   }, [loadData]);
 
+  useEffect(() => {
+    const handleUpdate = () => {
+      loadData();
+    };
+    window.addEventListener('dashboard-updated', handleUpdate);
+    return () => {
+      window.removeEventListener('dashboard-updated', handleUpdate);
+    };
+  }, [loadData]);
+
   // Simplify access for components that used data?.health directly
   const computedData = data ? { ...data.dashboard, workouts: data.workouts } : null;
 
