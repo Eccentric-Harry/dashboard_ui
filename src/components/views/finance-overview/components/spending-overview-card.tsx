@@ -61,6 +61,20 @@ function SpendingOverviewCard({
   // Extract all available months from logs
   const availableMonths = useMemo(() => {
     const monthsMap = new Map<string, string>()
+
+    // Always include the current month
+    const nowKey = getMonthKey(new Date().toISOString())
+    monthsMap.set(nowKey, formatMonth(new Date().toISOString()))
+
+    // Always include selectedMonthKey if it exists
+    if (selectedMonthKey) {
+      const [year, month] = selectedMonthKey.split('-')
+      if (year && month) {
+        const dummyDate = `${year}-${month}-01T00:00:00.000Z`
+        monthsMap.set(selectedMonthKey, formatMonth(dummyDate))
+      }
+    }
+
     logs.forEach(log => {
       const key = getMonthKey(log.date)
       if (!monthsMap.has(key)) {
@@ -70,7 +84,7 @@ function SpendingOverviewCard({
 
     // Sort descending (newest first)
     return Array.from(monthsMap.entries()).sort((a, b) => b[0].localeCompare(a[0]))
-  }, [logs])
+  }, [logs, selectedMonthKey])
 
   // Calculate spending for the selected month
   const spendingData = useMemo(() => {

@@ -35,13 +35,14 @@ function FinanceOverviewDashboard() {
   const [editingLending, setEditingLending] = useState<LendingRecord | null>(null)
   const [deleteLendingTarget, setDeleteLendingTarget] = useState<LendingRecord | null>(null)
   const [lendingRefreshKey, setLendingRefreshKey] = useState(0)
-  const [selectedMonthKey, setSelectedMonthKey] = useState<string>(() => {
-    const d = new Date()
-    return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`
-  })
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const params = new URLSearchParams(window.location.search)
     return params.get('date') || new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)
+  })
+  const [selectedMonthKey, setSelectedMonthKey] = useState<string>(() => {
+    const params = new URLSearchParams(window.location.search)
+    const dStr = params.get('date') || new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)
+    return dStr.substring(0, 7)
   })
 
   const [showFinanceGrids, setShowFinanceGrids] = useState(() => {
@@ -74,6 +75,10 @@ function FinanceOverviewDashboard() {
       const params = new URLSearchParams(window.location.search)
       const nextDate = params.get('date') || new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)
       setSelectedDate(nextDate)
+      const [year, month] = nextDate.split('-')
+      if (year && month) {
+        setSelectedMonthKey(`${year}-${month}`)
+      }
     }
 
     window.addEventListener('popstate', handlePopState)
@@ -82,13 +87,13 @@ function FinanceOverviewDashboard() {
     }
   }, [])
 
-  useEffect(() => {
-    const [year, month] = selectedDate.split('-')
+  const handleDateChange = (date: string) => {
+    setSelectedDate(date)
+    const [year, month] = date.split('-')
     if (year && month) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedMonthKey(`${year}-${month}`)
     }
-  }, [selectedDate])
+  }
 
 
   const refreshData = () => {
@@ -96,27 +101,6 @@ function FinanceOverviewDashboard() {
     fetchDailyFinanceLogs(365).then((res) => {
       const fetchedLogs = res.data || []
       setLogs(fetchedLogs)
-      
-      // If current month has no data, default to most recent month with data
-      if (fetchedLogs.length > 0) {
-        const availableMonthKeys = Array.from(new Set(fetchedLogs.map((log: DailyFinancialLog) => {
-          const d = new Date(log.date)
-          return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`
-        }))).sort().reverse()
-        
-        const params = new URLSearchParams(window.location.search)
-        const dateParam = params.get('date')
-        const currentMonthKey = dateParam 
-          ? dateParam.substring(0, 7)
-          : `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}`
-        
-        if (!availableMonthKeys.includes(currentMonthKey)) {
-          setSelectedMonthKey(availableMonthKeys[0] as string)
-        } else {
-          setSelectedMonthKey(currentMonthKey)
-        }
-      }
-      
       setLoading(false)
     }).catch(err => {
       console.error(err)
@@ -280,7 +264,7 @@ function FinanceOverviewDashboard() {
         onAddClick={() => setIsAddModalOpen(true)} 
         logs={logs}
         selectedDate={selectedDate}
-        onDateChange={setSelectedDate}
+        onDateChange={handleDateChange}
       />
       <div className={`finance-dashboard-grid${isGuest ? ' finance-dashboard-guest' : ''}`}>
         <div className="finance-stats-row">
