@@ -159,9 +159,9 @@ export function AiMealLogModal({ isOpen, onClose, onSuccess, selectedDate }: AiM
   }
 
   const handleSave = () => {
-    onSuccess()
-    onClose()
-    toast.success(`✨ Logged: ${result?.description || 'AI meal'}`)
+     onSuccess()
+     onClose()
+     toast.success(`Logged: ${result?.description || 'AI meal'}`)
   }
 
   const handleReanalyze = () => {

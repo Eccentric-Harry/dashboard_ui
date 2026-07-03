@@ -257,7 +257,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
   const handleAiSave = () => {
     onSuccess()
     onClose()
-    toast.success(`✨ Logged: ${aiResult?.description || 'AI meal'}`)
+    toast.success(`Logged: ${aiResult?.description || 'AI meal'}`)
   }
 
   const handleReanalyze = () => {

@@ -83,7 +83,7 @@ const getIconForItemType = (type?: string) => {
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-   
+
   const base64 = (base64String + padding)
     .replace(/-/g, '+')
     .replace(/_/g, '/');
@@ -95,6 +95,38 @@ function urlBase64ToUint8Array(base64String: string) {
     outputArray[i] = rawData.charCodeAt(i);
   }
   return outputArray;
+}
+
+function parseNotificationError(errorMsg: string): string {
+  const match = errorMsg.match(/^(\d{3}):\s*(.*)$/);
+  if (match) {
+    const code = match[1];
+    const jsonStr = match[2];
+    try {
+      const parsed = JSON.parse(jsonStr);
+      const source = parsed?.meta?.source;
+      if (source) {
+        if (source.includes('gemini-error') || source.includes('provider-error')) {
+          return 'AI nutrition analysis pipeline encountered a service error. Please try again.';
+        }
+        if (source.includes('validation-error')) {
+          return 'Invalid input details provided. Please review and try again.';
+        }
+        if (source.includes('persistence-error')) {
+          return 'Could not save the meal entry. Database error.';
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    if (code === '500') return 'Internal server error while processing your meal.';
+    if (code === '404') return 'Service endpoint not found.';
+    if (code === '400') return 'Bad request. The parameters could not be processed.';
+    if (code === '503') return 'AI Service temporarily unavailable due to high load. Please retry.';
+    if (code === '429') return 'Too many requests. Rate limit reached, please try again in a minute.';
+  }
+  return errorMsg;
 }
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
@@ -146,7 +178,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       console.warn('Failed to create persistent Audio element:', e);
     }
 
-     
+
     try {
       const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (AudioContextClass) {
@@ -236,24 +268,24 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         if (event.data && event.data.type === 'SNOOZE_NOTIFICATION') {
           const itemId = event.data.itemId;
           if (!itemId) return;
-          
+
           const resumeAt = Date.now() + 10 * 60 * 1000;
           setSnoozedItems((prev) => {
             const updated = { ...prev, [itemId]: resumeAt };
             localStorage.setItem('dashboard_snoozed_items', JSON.stringify(updated));
             return updated;
           });
-          
+
           setNotifiedKeys((prev) => {
             const updated = prev.filter(k => !k.startsWith(`${itemId}:`));
             localStorage.setItem('dashboard_notified_keys', JSON.stringify(updated));
             return updated;
           });
-          
+
           toast.success('Alert snoozed for 10 minutes', { icon: <Moon size={18} className="text-indigo-400" /> });
         }
       };
-      
+
       navigator.serviceWorker.addEventListener('message', handleMessage);
       return () => navigator.serviceWorker.removeEventListener('message', handleMessage);
     }
@@ -419,6 +451,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               icon: '/logo.png',
               tag: `dashboard-notification-${item.id}`,
               requireInteraction: true,
+              silent: true,
               actions: [
                 { action: 'snooze', title: 'Snooze 10m' },
                 { action: 'open', title: 'Open' }
@@ -430,6 +463,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           new Notification(item.title, {
             body: message,
             icon: '/logo.png',
+            silent: true,
           });
         }
       } catch (e) {

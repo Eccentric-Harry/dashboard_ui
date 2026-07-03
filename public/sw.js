@@ -54,6 +54,7 @@ self.addEventListener('push', (event) => {
     data: { url: data.url || '/', itemId: data.itemId || null },
     vibrate: [100, 50, 100],
     sound: '/iphone-notification.mp3',
+    silent: true,
     requireInteraction: true,
     actions: [
       { action: 'snooze', title: 'Snooze 10m' },
