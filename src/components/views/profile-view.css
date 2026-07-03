@@ -4,14 +4,12 @@
 
 .profile-container {
   position: absolute;
-  inset: 132px 58px 48px 206px;
+  inset: 110px 58px 24px 206px;
   z-index: 2;
-  overflow-x: hidden;
-  overflow-y: auto;
-  padding: 32px 24px 72px 24px;
+  overflow: hidden;
+  padding: 20px 24px;
   color: #101312;
   overscroll-behavior: contain;
-  scrollbar-gutter: stable;
   box-sizing: border-box;
 }
 
@@ -85,7 +83,7 @@
   flex-direction: column;
   gap: 20px;
   box-sizing: border-box;
-  padding: 32px;
+  padding: 24px;
   background: rgba(255, 255, 255, 0.12); /* Frosted contrast highlight */
 }
 
@@ -136,7 +134,7 @@
 /* Image Cover Header */
 .profile-porsche-img-container {
   width: 100%;
-  height: 170px;
+  height: 140px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -856,7 +854,7 @@
   gap: 32px;
   align-items: stretch;
   justify-content: flex-start;
-  margin-top: 16px;
+  margin-top: 0;
   width: 100%;
 }
 
@@ -970,8 +968,8 @@
 
 @media (max-width: 1024px) {
   .profile-container {
-    inset: 132px 32px 48px 100px;
-    padding: 24px 16px;
+    inset: 110px 32px 24px 100px;
+    padding: 20px 16px;
   }
   .profile-content-layout {
     gap: 24px;

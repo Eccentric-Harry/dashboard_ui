@@ -229,13 +229,7 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
           <TopChip />
 
           <div className="profile-container">
-            {/* Route Header — matches workouts header design pattern */}
-            <header className="profile-header">
-              <div>
-                <p>Your account</p>
-                <h1>Profile</h1>
-              </div>
-            </header>
+
 
             {loading ? (
               <div className="profile-loading-panel glass-panel">
