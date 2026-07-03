@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { X, Loader2, ClipboardCheck, Sparkles, Camera, CheckCircle, AlertTriangle, RotateCcw, Upload, Wifi } from 'lucide-react'
+import { X, Loader2, ClipboardCheck, Camera, CheckCircle, AlertTriangle, RotateCcw, Upload, Wifi, Bell, Scan } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
 import { addFoodEntry, updateFoodEntry, type MealAnalysisApiResponse, type GeminiMedicalAnalysis } from '../../../../lib/api'
@@ -304,7 +304,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
               onClick={() => setActiveTab('ai')}
               id="ai-tab-btn"
             >
-              <Sparkles size={14} />
+              <Scan size={14} />
               AI Scan
             </button>
           </div>
@@ -374,13 +374,12 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                 </p>
 
                 {!isNotificationsEnabled && (
-                  <div className="af-notification-prompt-card">
-                    <div className="af-notification-prompt-icon">🔔</div>
-                    <div className="af-notification-prompt-text">
-                      <h4>Enable Notifications First</h4>
-                      <p>Gemini AI analysis takes 10-15s. Enable alerts to close this modal or leave the page while we process it in the background.</p>
-                    </div>
-                    <button type="button" onClick={toggleDesktopNotifications} className="af-notification-prompt-btn">
+                  <div className="af-compact-alert">
+                    <Bell size={16} className="af-compact-alert-icon" />
+                    <span className="af-compact-alert-text">
+                      Enable push alerts to close this modal while Gemini analyses (takes 1-2 mins).
+                    </span>
+                    <button type="button" onClick={toggleDesktopNotifications} className="af-compact-alert-btn">
                       Enable
                     </button>
                   </div>
@@ -477,7 +476,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                 {aiError && <AiErrorCard code={aiErrorCode} message={aiError} onRetry={() => { setAiError(''); setAiErrorCode(null) }} />}
 
                 <button type="submit" className="add-tx-submit af-submit-btn" disabled={!aiCanSubmit || !isNotificationsEnabled} id="ai-analyze-submit-btn">
-                  <Sparkles size={15} />
+                  <Scan size={15} />
                   Analyse with AI
                 </button>
               </form>
@@ -516,7 +515,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                     </div>
                   </div>
                   <p className="af-processing-background-hint">
-                    This analysis is running in the background. You may safely close this modal or leave the page; we will notify you once your meal log is ready!
+                    Gemini AI analysis takes 1 to 2 minutes. You may safely close this modal or leave the page; we will notify you once your meal log is ready!
                   </p>
                   
                   <button
