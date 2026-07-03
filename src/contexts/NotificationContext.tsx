@@ -695,7 +695,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           id: `ai-meal-success-${Date.now()}`,
           itemId: res.data.mealEntryId || '',
           title: 'AI Meal Logged!',
-          message: `✨ Added: ${res.data.description} (${res.data.calories} kcal, ${res.data.proteinGrams}g Protein)`,
+          message: `Added: ${res.data.description} (${res.data.calories} kcal, ${res.data.proteinGrams}g Protein)`,
           timestamp: new Date().toISOString(),
           itemType: 'MILESTONE',
           isRead: false,
@@ -709,21 +709,23 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         if (Notification.permission === 'granted') {
           try {
             new Notification('AI Meal Logged!', {
-              body: `✨ Added: ${res.data.description} (${res.data.calories} kcal)`,
+              body: `Added: ${res.data.description} (${res.data.calories} kcal)`,
               icon: '/logo.png',
+              silent: true,
             });
           } catch (e) {
             console.error('Desktop notification failed:', e);
           }
         }
 
-        toast.success(`✨ AI Meal Analysis complete and logged!`);
+        toast.success(`AI Meal Analysis complete and logged!`);
         window.dispatchEvent(new Event('dashboard-updated'));
       })
       .catch((err: unknown) => {
         const errorMsg = err instanceof Error ? err.message : 'Analysis failed';
+        const parsedError = parseNotificationError(errorMsg);
         setBackgroundScans((prev) =>
-          prev.map((t) => (t.id === taskId ? { ...t, status: 'failed', error: errorMsg } : t))
+          prev.map((t) => (t.id === taskId ? { ...t, status: 'failed', error: parsedError } : t))
         );
 
         playSound();
@@ -732,7 +734,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           id: `ai-meal-failed-${Date.now()}`,
           itemId: '',
           title: 'AI Meal Scan Failed',
-          message: `❌ Failed to analyze "${description || 'AI meal scan'}": ${errorMsg}`,
+          message: `Failed to analyze "${description || 'AI meal scan'}": ${parsedError}`,
           timestamp: new Date().toISOString(),
           itemType: 'REMINDER',
           isRead: false,
@@ -746,15 +748,16 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         if (Notification.permission === 'granted') {
           try {
             new Notification('AI Meal Scan Failed', {
-              body: `❌ Failed: ${errorMsg}`,
+              body: `Failed: ${parsedError}`,
               icon: '/logo.png',
+              silent: true,
             });
           } catch (e) {
             console.error('Desktop notification failed:', e);
           }
         }
 
-        toast.error(`❌ AI Meal analysis failed: ${errorMsg}`);
+        toast.error(`AI Meal analysis failed: ${parsedError}`);
       });
 
     return taskId;
