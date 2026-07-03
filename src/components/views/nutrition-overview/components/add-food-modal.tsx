@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { X, Loader2, ClipboardCheck, Camera, CheckCircle, AlertTriangle, RotateCcw, Upload, Wifi, Bell, Scan } from 'lucide-react'
+import { X, Loader2, ClipboardCheck, Camera, CheckCircle, AlertTriangle, RotateCcw, Upload, Wifi, Bell, Scan, Shield, TrendingUp, Sparkles } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
-import { addFoodEntry, updateFoodEntry, type MealAnalysisApiResponse, type GeminiMedicalAnalysis } from '../../../../lib/api'
+import { addFoodEntry, updateFoodEntry, type MealAnalysisApiResponse, type ClinicalFlag, type IngredientBreakdown } from '../../../../lib/api'
 import { useNotifications } from '../../../../contexts/NotificationContext'
 
 // ─── Types ────────────────────────────────────────────────────────────────
@@ -22,7 +22,7 @@ const MACRO_COLORS: Record<string, string> = {
   Protein:  '#35b64b',
   Carbs:    '#3b82f6',
   Fat:      '#ef4444',
-  Fiber:    '#8b5cf6',
+  Sodium:   '#8b5cf6',
 }
 
 // ─── Props ────────────────────────────────────────────────────────────────
@@ -606,58 +606,35 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                     <p className="af-result-name">{aiResult.description}</p>
                     <p className="af-result-meta">{aiResult.calories} kcal · {aiResult.proteinGrams}g protein · {aiResult.mealType}</p>
                   </div>
-                  {aiResult.analysis.overall_assessment && (
-                    <QualityBadge quality={aiResult.analysis.overall_assessment.meal_quality} />
+                  {aiResult.analysis.meal_score && (
+                    <QualityBadge score={aiResult.analysis.meal_score} />
                   )}
                 </div>
 
                 {/* Macro bars */}
-                {aiResult.analysis.daily_target_progress && (
-                  <MacroBars progress={aiResult.analysis.daily_target_progress} />
+                {aiResult.analysis.daily_budget_analysis?.percentage_of_daily_goals_this_meal && (
+                  <MacroBars progress={aiResult.analysis.daily_budget_analysis.percentage_of_daily_goals_this_meal} />
                 )}
 
-                {/* Item list */}
-                {aiResult.analysis.meal_items?.length > 0 && (
+                {/* Ingredients breakdown */}
+                {aiResult.analysis.ingredients_breakdown?.length > 0 && (
                   <div className="af-items-section">
                     <p className="af-section-label">Identified Items</p>
                     <div className="af-items-list">
-                      {aiResult.analysis.meal_items.map((item, i) => (
-                        <div className="af-item-row" key={i}>
-                          <div className="af-item-name-col">
-                            <span className="af-item-name">{item.name}</span>
-                            <span className="af-item-serving">{item.serving_size}</span>
-                          </div>
-                          {/* Macro breakdown */}
-                          <div className="af-item-macros">
-                            <span className="af-item-macro-chip">
-                              <span>{Math.round(item.calories)}</span> kcal
-                            </span>
-                            <span className="af-item-macro-chip">
-                              <span>{Math.round(item.protein)}</span>g P
-                            </span>
-                            <span className="af-item-macro-chip">
-                              <span>{Math.round(item.carbs)}</span>g C
-                            </span>
-                            <span className="af-item-macro-chip">
-                              <span>{Math.round(item.fat)}</span>g F
-                            </span>
-                          </div>
-                          <span className={`af-item-badge ${item.confidence}`}>{item.confidence}</span>
-                        </div>
+                      {aiResult.analysis.ingredients_breakdown.map((item, i) => (
+                        <AfIngredientRow key={i} item={item} />
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* Medical alerts */}
-                {aiResult.analysis.medical_analysis?.length > 0 && (
-                  <MedicalAlerts items={aiResult.analysis.medical_analysis} />
+                {/* Clinical flags */}
+                {aiResult.analysis.clinical_flags?.length > 0 && (
+                  <AfClinicalFlagList flags={aiResult.analysis.clinical_flags} />
                 )}
 
-                {/* Assessment */}
-                {aiResult.analysis.overall_assessment && (
-                  <AssessmentRow assessment={aiResult.analysis.overall_assessment} />
-                )}
+                {/* Assessment: positive highlights + recommendations */}
+                <AfAssessmentRow analysis={aiResult.analysis} />
 
                 {/* Actions */}
                 <div className="af-action-row">
@@ -682,7 +659,9 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
 
 // ─── Sub-components ────────────────────────────────────────────────────────
 
-function QualityBadge({ quality }: { quality: string }) {
+function QualityBadge({ score }: { score: MealAnalysisApiResponse['analysis']['meal_score'] }) {
+  const grade = score.letter_grade || 'C'
+  const quality = grade === 'A' ? 'excellent' : grade === 'B' ? 'good' : grade === 'C' ? 'fair' : 'poor'
   const colors: Record<string, { bg: string; color: string }> = {
     excellent: { bg: 'rgba(53,182,75,0.1)', color: '#1a8b30' },
     good:      { bg: 'rgba(53,182,75,0.07)', color: '#35b64b' },
@@ -695,18 +674,18 @@ function QualityBadge({ quality }: { quality: string }) {
       {quality === 'excellent' || quality === 'good'
         ? <CheckCircle size={11} />
         : <AlertTriangle size={11} />}
-      {quality}
+      {grade} · {score.overall_score}/100
     </span>
   )
 }
 
-function MacroBars({ progress }: { progress: MealAnalysisApiResponse['analysis']['daily_target_progress'] }) {
+function MacroBars({ progress }: { progress: MealAnalysisApiResponse['analysis']['daily_budget_analysis']['percentage_of_daily_goals_this_meal'] }) {
   const bars = [
     { label: 'Calories', pct: progress.calories_pct, color: MACRO_COLORS.Calories },
     { label: 'Protein',  pct: progress.protein_pct,  color: MACRO_COLORS.Protein },
     { label: 'Carbs',    pct: progress.carbs_pct,    color: MACRO_COLORS.Carbs },
     { label: 'Fat',      pct: progress.fat_pct,      color: MACRO_COLORS.Fat },
-    { label: 'Fiber',    pct: progress.fiber_pct,    color: MACRO_COLORS.Fiber },
+    { label: 'Sodium',   pct: progress.sodium_pct,   color: MACRO_COLORS.Sodium },
   ]
   return (
     <div className="af-macro-bars">
@@ -724,54 +703,94 @@ function MacroBars({ progress }: { progress: MealAnalysisApiResponse['analysis']
   )
 }
 
-function MedicalAlerts({ items }: { items: GeminiMedicalAnalysis[] }) {
-  const significant = items.filter(i => i.risk !== 'low' || (i.findings?.length ?? 0) > 0)
+function AfIngredientRow({ item }: { item: IngredientBreakdown }) {
+  const n = item.nutrients
+  return (
+    <div className="af-item-row">
+      <div className="af-item-name-col">
+        <span className="af-item-name">
+          {item.common_name || item.name}
+          {item.is_hidden && <span style={{ fontSize: '9px', marginLeft: 4, padding: '1px 5px', borderRadius: 8, background: 'rgba(139,92,246,0.1)', color: '#7c3aed' }}>hidden</span>}
+        </span>
+        <span className="af-item-serving">{item.estimated_weight_g}g</span>
+      </div>
+      <div className="af-item-macros">
+        <span className="af-item-macro-chip">
+          <span>{Math.round(n?.calories_kcal ?? 0)}</span> kcal
+        </span>
+        <span className="af-item-macro-chip">
+          <span>{Math.round(n?.protein_g ?? 0)}</span>g P
+        </span>
+        <span className="af-item-macro-chip">
+          <span>{Math.round(n?.carbohydrates_g ?? 0)}</span>g C
+        </span>
+        <span className="af-item-macro-chip">
+          <span>{Math.round(n?.fat_g ?? 0)}</span>g F
+        </span>
+      </div>
+      {item.clinical_item_flags?.length > 0 && (
+        <span className="af-item-badge low" title={item.clinical_item_flags.join(', ')}>⚠</span>
+      )}
+    </div>
+  )
+}
+
+function AfClinicalFlagList({ flags }: { flags: ClinicalFlag[] }) {
+  const significant = flags.filter(f => f.severity !== 'LOW')
   if (significant.length === 0) return null
   return (
     <div>
       <p className="af-section-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <AlertTriangle size={11} style={{ color: 'rgba(16, 19, 18, 0.45)' }} />
-        Health context
+        <Shield size={11} style={{ color: 'rgba(16, 19, 18, 0.45)' }} />
+        Clinical Flags ({significant.length})
       </p>
       <div className="af-medical-list">
-        {significant.map((item, i) => (
-          <div className={`af-medical-card ${item.risk}`} key={i}>
-            <div className="af-medical-header">
-              <span className="af-medical-condition">{item.condition}</span>
-              <span className={`af-risk-chip ${item.risk}`}>{item.risk}</span>
+        {significant.map((flag, i) => {
+          const riskLevel = flag.severity === 'CRITICAL' || flag.severity === 'HIGH' ? 'high'
+            : flag.severity === 'MODERATE' ? 'moderate' : 'low'
+          return (
+            <div className={`af-medical-card ${riskLevel}`} key={i}>
+              <div className="af-medical-header">
+                <span className="af-medical-condition">{flag.title}</span>
+                <span className={`af-risk-chip ${riskLevel}`}>{flag.severity}</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '6px' }}>
+                {flag.mechanistic_pathway && (
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                    <span style={{ fontSize: '11px', color: 'rgba(16, 19, 18, 0.45)', lineHeight: '1.4', userSelect: 'none', marginTop: '1px' }}>•</span>
+                    <p className="af-medical-finding" style={{ margin: 0, flex: 1 }}>{flag.mechanistic_pathway}</p>
+                  </div>
+                )}
+                {flag.quantified_risk && (
+                  <p style={{ fontSize: '0.68rem', opacity: 0.6, margin: '2px 0 0' }}>{flag.quantified_risk}</p>
+                )}
+              </div>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '6px' }}>
-              {item.findings?.slice(0, 3).map((f, j) => (
-                <div key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
-                  <span style={{ fontSize: '11px', color: 'rgba(16, 19, 18, 0.45)', lineHeight: '1.4', userSelect: 'none', marginTop: '1px' }}>•</span>
-                  <p className="af-medical-finding" style={{ margin: 0, flex: 1 }}>{f}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
 }
 
-function AssessmentRow({ assessment }: { assessment: MealAnalysisApiResponse['analysis']['overall_assessment'] }) {
-  const has = assessment.strengths?.length > 0 || assessment.improvements?.length > 0
-  if (!has) return null
+function AfAssessmentRow({ analysis }: { analysis: MealAnalysisApiResponse['analysis'] }) {
+  const hasHighlights = (analysis.positive_highlights?.length ?? 0) > 0
+  const hasRecs = (analysis.recommendations?.length ?? 0) > 0
+  if (!hasHighlights && !hasRecs) return null
   return (
     <div>
       <p className="af-section-label">Assessment</p>
       <div className="af-assessment-grid">
-        {assessment.strengths?.slice(0, 2).map((s, i) => (
+        {analysis.positive_highlights?.slice(0, 2).map((h, i) => (
           <div className="af-assess-item strength" key={i}>
-            <CheckCircle size={12} style={{ flexShrink: 0, marginTop: 2, color: '#1a8b30' }} />
-            <span>{s}</span>
+            <TrendingUp size={12} style={{ flexShrink: 0, marginTop: 2, color: '#1a8b30' }} />
+            <span><strong>{h.ingredient_or_aspect}</strong>: {h.benefit}</span>
           </div>
         ))}
-        {assessment.improvements?.slice(0, 2).map((s, i) => (
+        {analysis.recommendations?.slice(0, 2).map((r, i) => (
           <div className="af-assess-item improve" key={i}>
-            <AlertTriangle size={12} style={{ flexShrink: 0, marginTop: 2, color: '#b77a1a' }} />
-            <span>{s}</span>
+            <Sparkles size={12} style={{ flexShrink: 0, marginTop: 2, color: '#b77a1a' }} />
+            <span><strong>{r.title}</strong>: {r.action}</span>
           </div>
         ))}
       </div>

@@ -2,13 +2,14 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import {
   X, Upload, Sparkles, CheckCircle, AlertTriangle,
-  ChevronRight, RotateCcw, Camera
+  ChevronRight, RotateCcw, Camera, Shield, TrendingUp
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import {
   analyzeMeal,
   type MealAnalysisApiResponse,
-  type GeminiMedicalAnalysis,
+  type ClinicalFlag,
+  type IngredientBreakdown,
 } from '../../../../lib/api'
 import './ai-meal-log-modal.css'
 
@@ -32,7 +33,7 @@ const MACRO_COLORS: Record<string, string> = {
   Protein:  '#35b64b',
   Carbs:    '#76e4ff',
   Fat:      '#f87171',
-  Fiber:    '#a78bfa',
+  Sodium:   '#a78bfa',
 }
 
 // ─── Props ────────────────────────────────────────────────────────────────
@@ -332,62 +333,38 @@ export function AiMealLogModal({ isOpen, onClose, onSuccess, selectedDate }: AiM
             </div>
 
             <div className="ai-results-container">
-              {/* Quality banner */}
-              {result.analysis.overall_assessment && (
-                <QualityBanner assessment={result.analysis.overall_assessment} />
+              {/* Meal Score Banner */}
+              {result.analysis.meal_score && (
+                <ScoreBanner score={result.analysis.meal_score} />
               )}
 
               {/* Macro progress bars */}
-              {result.analysis.daily_target_progress && (
-                <MacroBars progress={result.analysis.daily_target_progress} />
+              {result.analysis.daily_budget_analysis?.percentage_of_daily_goals_this_meal && (
+                <MacroBars progress={result.analysis.daily_budget_analysis.percentage_of_daily_goals_this_meal} />
               )}
 
-              {/* Meal items */}
-              {result.analysis.meal_items?.length > 0 && (
+              {/* Ingredients breakdown */}
+              {result.analysis.ingredients_breakdown?.length > 0 && (
                 <div>
                   <p className="ai-section-heading">
                     <Upload size={10} style={{ display: 'inline', marginRight: 4 }} />
-                    Identified Items ({result.analysis.meal_items.length})
+                    Identified Items ({result.analysis.ingredients_breakdown.length})
                   </p>
                   <div className="ai-items-list">
-                    {result.analysis.meal_items.map((item, i) => (
-                      <div className="ai-item-row" key={i}>
-                        <div className="ai-item-name-col">
-                          <p className="ai-item-name">{item.name}</p>
-                          <p className="ai-item-serving">{item.serving_size}</p>
-                        </div>
-                        <div className="ai-item-macros">
-                          <span className="ai-item-macro-chip">
-                            <span>{Math.round(item.calories)}</span> kcal
-                          </span>
-                          <span className="ai-item-macro-chip">
-                            <span>{Math.round(item.protein)}g</span> P
-                          </span>
-                          <span className="ai-item-macro-chip">
-                            <span>{Math.round(item.carbs)}g</span> C
-                          </span>
-                          <span className="ai-item-macro-chip">
-                            <span>{Math.round(item.fat)}g</span> F
-                          </span>
-                        </div>
-                        <span className={`ai-item-confidence ${item.confidence}`}>
-                          {item.confidence}
-                        </span>
-                      </div>
+                    {result.analysis.ingredients_breakdown.map((item, i) => (
+                      <IngredientRow key={i} item={item} />
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Medical analysis */}
-              {result.analysis.medical_analysis?.length > 0 && (
-                <MedicalAlerts items={result.analysis.medical_analysis} />
+              {/* Clinical flags */}
+              {result.analysis.clinical_flags?.length > 0 && (
+                <ClinicalFlagList flags={result.analysis.clinical_flags} />
               )}
 
-              {/* Strengths / Improvements */}
-              {result.analysis.overall_assessment && (
-                <AssessmentBlock assessment={result.analysis.overall_assessment} />
-              )}
+              {/* Positive highlights + Recommendations */}
+              <AssessmentBlock analysis={result.analysis} />
 
               {/* Action row */}
               <div className="ai-action-row">
@@ -421,17 +398,20 @@ export function AiMealLogModal({ isOpen, onClose, onSuccess, selectedDate }: AiM
 
 // ─── Sub-components ────────────────────────────────────────────────────────
 
-function QualityBanner({ assessment }: { assessment: MealAnalysisApiResponse['analysis']['overall_assessment'] }) {
-  const quality = assessment.meal_quality || 'good'
+function ScoreBanner({ score }: { score: MealAnalysisApiResponse['analysis']['meal_score'] }) {
+  const grade = score.letter_grade || 'C'
+  const quality = grade === 'A' ? 'excellent' : grade === 'B' ? 'good' : grade === 'C' ? 'fair' : 'poor'
   return (
     <div className={`ai-quality-banner ${quality}`}>
       {quality === 'excellent' || quality === 'good'
         ? <CheckCircle size={20} />
         : <AlertTriangle size={20} />}
       <div className="ai-quality-label">
-        <p className="ai-quality-title">{quality} meal quality</p>
-        {assessment.fitness_alignment && (
-          <p className="ai-quality-alignment">{assessment.fitness_alignment}</p>
+        <p className="ai-quality-title">
+          {grade} · {score.overall_score}/100 — {quality} meal quality
+        </p>
+        {score.score_rationale && (
+          <p className="ai-quality-alignment">{score.score_rationale}</p>
         )}
       </div>
       <ChevronRight size={16} style={{ opacity: 0.4 }} />
@@ -439,13 +419,13 @@ function QualityBanner({ assessment }: { assessment: MealAnalysisApiResponse['an
   )
 }
 
-function MacroBars({ progress }: { progress: MealAnalysisApiResponse['analysis']['daily_target_progress'] }) {
+function MacroBars({ progress }: { progress: MealAnalysisApiResponse['analysis']['daily_budget_analysis']['percentage_of_daily_goals_this_meal'] }) {
   const bars = [
     { label: 'Calories', pct: progress.calories_pct, color: MACRO_COLORS.Calories },
     { label: 'Protein',  pct: progress.protein_pct,  color: MACRO_COLORS.Protein },
     { label: 'Carbs',    pct: progress.carbs_pct,    color: MACRO_COLORS.Carbs },
     { label: 'Fat',      pct: progress.fat_pct,      color: MACRO_COLORS.Fat },
-    { label: 'Fiber',    pct: progress.fiber_pct,    color: MACRO_COLORS.Fiber },
+    { label: 'Sodium',   pct: progress.sodium_pct,   color: MACRO_COLORS.Sodium },
   ]
   return (
     <div className="ai-macro-bars">
@@ -469,53 +449,105 @@ function MacroBars({ progress }: { progress: MealAnalysisApiResponse['analysis']
   )
 }
 
-function MedicalAlerts({ items }: { items: GeminiMedicalAnalysis[] }) {
-  const significant = items.filter(i => i.risk !== 'low' || (i.findings?.length ?? 0) > 0)
+function IngredientRow({ item }: { item: IngredientBreakdown }) {
+  const n = item.nutrients
+  return (
+    <div className="ai-item-row">
+      <div className="ai-item-name-col">
+        <p className="ai-item-name">
+          {item.common_name || item.name}
+          {item.is_hidden && <span className="ai-hidden-badge" title="Hidden ingredient (inferred)">hidden</span>}
+        </p>
+        <p className="ai-item-serving">{item.estimated_weight_g}g</p>
+      </div>
+      <div className="ai-item-macros">
+        <span className="ai-item-macro-chip">
+          <span>{Math.round(n?.calories_kcal ?? 0)}</span> kcal
+        </span>
+        <span className="ai-item-macro-chip">
+          <span>{Math.round(n?.protein_g ?? 0)}g</span> P
+        </span>
+        <span className="ai-item-macro-chip">
+          <span>{Math.round(n?.carbohydrates_g ?? 0)}g</span> C
+        </span>
+        <span className="ai-item-macro-chip">
+          <span>{Math.round(n?.fat_g ?? 0)}g</span> F
+        </span>
+      </div>
+      {item.clinical_item_flags?.length > 0 && (
+        <span className="ai-item-confidence low" title={item.clinical_item_flags.join(', ')}>
+          ⚠
+        </span>
+      )}
+    </div>
+  )
+}
+
+function ClinicalFlagList({ flags }: { flags: ClinicalFlag[] }) {
+  const significant = flags.filter(f => f.severity !== 'LOW')
   if (significant.length === 0) return null
   return (
     <div>
       <p className="ai-section-heading">
-        <AlertTriangle size={10} style={{ display: 'inline', marginRight: 4 }} />
-        Health Context
+        <Shield size={10} style={{ display: 'inline', marginRight: 4 }} />
+        Clinical Flags ({significant.length})
       </p>
       <div className="ai-medical-alerts">
-        {significant.map((item, i) => (
-          <div className={`ai-medical-card ${item.risk}`} key={i}>
-            <div className="ai-medical-card-header">
-              <p className="ai-medical-condition">{item.condition}</p>
-              <span className={`ai-risk-badge ${item.risk}`}>{item.risk}</span>
+        {significant.map((flag, i) => {
+          const riskLevel = flag.severity === 'CRITICAL' ? 'high'
+            : flag.severity === 'HIGH' ? 'high'
+            : flag.severity === 'MODERATE' ? 'moderate' : 'low'
+          return (
+            <div className={`ai-medical-card ${riskLevel}`} key={i}>
+              <div className="ai-medical-card-header">
+                <p className="ai-medical-condition">{flag.title}</p>
+                <span className={`ai-risk-badge ${riskLevel}`}>{flag.severity}</span>
+              </div>
+              {flag.mechanistic_pathway && (
+                <ul className="ai-medical-findings">
+                  <li>{flag.mechanistic_pathway}</li>
+                </ul>
+              )}
+              {flag.quantified_risk && (
+                <p style={{ fontSize: '0.7rem', opacity: 0.7, margin: '4px 0 0' }}>{flag.quantified_risk}</p>
+              )}
             </div>
-            {item.findings?.length > 0 && (
-              <ul className="ai-medical-findings">
-                {item.findings.slice(0, 3).map((f, j) => <li key={j}>{f}</li>)}
-              </ul>
-            )}
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
 }
 
-function AssessmentBlock({ assessment }: { assessment: MealAnalysisApiResponse['analysis']['overall_assessment'] }) {
-  const hasStrengths = assessment.strengths?.length > 0
-  const hasImprovements = assessment.improvements?.length > 0
-  if (!hasStrengths && !hasImprovements) return null
+function AssessmentBlock({ analysis }: { analysis: MealAnalysisApiResponse['analysis'] }) {
+  const hasHighlights = (analysis.positive_highlights?.length ?? 0) > 0
+  const hasRecommendations = (analysis.recommendations?.length ?? 0) > 0
+  if (!hasHighlights && !hasRecommendations) return null
   return (
     <div className="ai-assessment-row">
-      {hasStrengths && (
+      {hasHighlights && (
         <div className="ai-assessment-block">
-          <p className="ai-assessment-title" style={{ color: '#35b64b' }}>Strengths</p>
+          <p className="ai-assessment-title" style={{ color: '#35b64b' }}>
+            <TrendingUp size={10} style={{ display: 'inline', marginRight: 4 }} />
+            Strengths
+          </p>
           <ul className="ai-assessment-list">
-            {assessment.strengths.slice(0, 3).map((s, i) => <li key={i}>{s}</li>)}
+            {analysis.positive_highlights!.slice(0, 3).map((h, i) => (
+              <li key={i}><strong>{h.ingredient_or_aspect}</strong>: {h.benefit}</li>
+            ))}
           </ul>
         </div>
       )}
-      {hasImprovements && (
+      {hasRecommendations && (
         <div className="ai-assessment-block">
-          <p className="ai-assessment-title" style={{ color: '#ffc45f' }}>Improvements</p>
+          <p className="ai-assessment-title" style={{ color: '#ffc45f' }}>
+            <Sparkles size={10} style={{ display: 'inline', marginRight: 4 }} />
+            Recommendations
+          </p>
           <ul className="ai-assessment-list">
-            {assessment.improvements.slice(0, 3).map((s, i) => <li key={i}>{s}</li>)}
+            {analysis.recommendations!.slice(0, 3).map((r, i) => (
+              <li key={i}><strong>{r.title}</strong>: {r.action}</li>
+            ))}
           </ul>
         </div>
       )}

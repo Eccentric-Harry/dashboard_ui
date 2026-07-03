@@ -69,61 +69,176 @@ export async function deleteFoodEntry(mealId: string, entryId: string) {
 }
 
 
-// ─── Gemini AI Meal Analysis ───────────────────────────────────────────────
+// ─── Gemini AI Meal Analysis (Stage 2 Clinical Assessment Schema) ──────────
 
-export interface GeminiMealItem {
+export interface IngredientNutrients {
+  calories_kcal: number;
+  protein_g: number;
+  carbohydrates_g: number;
+  fat_g: number;
+  saturated_fat_g: number;
+  dietary_fiber_g: number;
+  sugar_g: number;
+  sodium_mg: number;
+}
+
+export interface ItemMathCheck {
+  expected_kcal: number;
+  stated_kcal: number;
+  passed: boolean;
+}
+
+export interface IngredientBreakdown {
+  item_id: number;
   name: string;
-  serving_size: string;
-  confidence: 'high' | 'medium' | 'low';
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  fiber: number;
-  sugar: number;
-  sodium: number;
-  saturated_fat: number;
+  common_name: string;
+  estimated_weight_g: number;
+  is_hidden: boolean;
+  nutrition_per_100g_source: string;
+  nutrients: IngredientNutrients;
+  item_math_check: ItemMathCheck;
+  glycaemic_index_estimate: number | null;
+  glycaemic_load_contribution: number | null;
+  clinical_item_flags: string[];
 }
 
-export interface GeminiMealTotals {
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  fiber: number;
-  sugar: number;
-  sodium: number;
+export interface MathVerification {
+  expected_calories_from_macros: number;
+  stated_calories: number;
+  delta_kcal: number;
+  gate_passed: boolean;
 }
 
-export interface GeminiDailyTargetProgress {
+export interface MacroTotals {
+  calories_kcal: number;
+  protein_g: number;
+  carbohydrates_g: number;
+  fat_g: number;
+  saturated_fat_g: number;
+  unsaturated_fat_g: number;
+  trans_fat_g: number;
+  dietary_fiber_g: number;
+  sugar_g: number;
+  added_sugar_g: number;
+  sodium_mg: number;
+  potassium_mg: number;
+  cholesterol_mg: number;
+  math_verification: MathVerification;
+}
+
+export interface GiOffender {
+  ingredient_name: string;
+  gi_estimate: number;
+  gl_contribution: number;
+  clinical_note: string;
+}
+
+export interface GlycaemicAssessment {
+  total_meal_glycaemic_load: number;
+  gl_classification: string;
+  insulin_impact_summary: string;
+  highest_gi_offenders: GiOffender[];
+}
+
+export interface BudgetValues {
+  calories_kcal: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+  sodium_mg: number;
+}
+
+export interface BudgetStatus {
+  calories: string;
+  protein: string;
+  carbs: string;
+  fat: string;
+  sodium: string;
+}
+
+export interface DailyGoalPercentages {
   calories_pct: number;
   protein_pct: number;
   carbs_pct: number;
   fat_pct: number;
-  fiber_pct: number;
+  sodium_pct: number;
 }
 
-export interface GeminiMedicalAnalysis {
-  condition: string;
-  risk: 'low' | 'moderate' | 'high';
-  findings: string[];
-  recommendations: string[];
+export interface DailyBudgetAnalysis {
+  remaining_budget_before_this_meal: BudgetValues;
+  remaining_budget_after_this_meal: BudgetValues;
+  budget_status: BudgetStatus;
+  percentage_of_daily_goals_this_meal: DailyGoalPercentages;
 }
 
-export interface GeminiOverallAssessment {
-  meal_quality: 'excellent' | 'good' | 'fair' | 'poor';
-  fitness_alignment: string;
-  strengths: string[];
-  concerns: string[];
-  improvements: string[];
+export interface ClinicalFlag {
+  flag_id: string;
+  severity: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
+  category: string;
+  condition_link: string;
+  title: string;
+  evidence_basis: string;
+  mechanistic_pathway: string;
+  affected_ingredients: string[];
+  quantified_risk: string;
+  urgency: string;
+}
+
+export interface MealScore {
+  overall_score: number;
+  score_rationale: string;
+  macro_balance_score: number;
+  glycaemic_score: number;
+  micronutrient_density_score: number;
+  condition_safety_score: number;
+  letter_grade: 'A' | 'B' | 'C' | 'D' | 'F';
+}
+
+export interface Recommendation {
+  rec_id: string;
+  priority: string;
+  type: string;
+  title: string;
+  action: string;
+  rationale: string;
+  example: string;
+  condition_targeted: string;
+}
+
+export interface PositiveHighlight {
+  highlight_id: string;
+  ingredient_or_aspect: string;
+  benefit: string;
+  evidence: string;
+}
+
+export interface NextMealGuidance {
+  suggested_calorie_range_kcal: string;
+  priority_nutrients_to_target: string[];
+  foods_to_favour: string[];
+  foods_to_limit: string[];
+  timing_recommendation: string;
+  hydration_note: string;
 }
 
 export interface GeminiAnalysisResult {
-  meal_items: GeminiMealItem[];
-  meal_totals: GeminiMealTotals;
-  daily_target_progress: GeminiDailyTargetProgress;
-  medical_analysis: GeminiMedicalAnalysis[];
-  overall_assessment: GeminiOverallAssessment;
+  _reasoning_scratchpad?: string;
+  pipeline_stage: string;
+  meal_label: string;
+  cuisine_type: string;
+  meal_type: string;
+  analysis_timestamp_utc: string;
+  macro_totals: MacroTotals;
+  ingredients_breakdown: IngredientBreakdown[];
+  glycaemic_assessment: GlycaemicAssessment;
+  daily_budget_analysis: DailyBudgetAnalysis;
+  clinical_flags: ClinicalFlag[];
+  meal_score: MealScore;
+  recommendations: Recommendation[];
+  positive_highlights: PositiveHighlight[];
+  next_meal_guidance: NextMealGuidance;
+  data_quality_flags: string[];
+  disclaimer: string;
 }
 
 export interface MealAnalysisApiResponse {
