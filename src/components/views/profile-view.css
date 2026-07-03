@@ -727,24 +727,138 @@
   cursor: not-allowed;
 }
 
-/* Loading panel */
-.profile-loading-panel {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 24px;
-  color: #71717a;
-  gap: 12px;
-  font-weight: 500;
-  border: 8px solid #ffffff;
-  border-radius: 26px;
-  background: #eaebed;
-  box-shadow: 
-    0 20px 48px rgba(0, 0, 0, 0.09);
+/* Skeleton Loading styles */
+.skeleton-pulse {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes skeletonPulse {
+  0% {
+    opacity: 0.65;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.65;
+  }
+}
+
+.skeleton-avatar {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.05);
+  border: 5px solid #ffffff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.03);
+}
+
+.skeleton-pill {
+  width: 75px;
+  height: 22px;
+  border-radius: 9999px;
+}
+
+.skeleton-name {
+  width: 160px;
+  height: 28px;
+  margin-bottom: 8px;
+}
+
+.skeleton-title {
+  width: 220px;
+  height: 36px;
+  margin-bottom: 12px;
+}
+
+.skeleton-text {
   width: 100%;
-  max-width: 440px;
-  margin: 0 auto;
+  height: 48px;
+  margin-bottom: 12px;
+}
+
+.skeleton-email {
+  width: 180px;
+  height: 16px;
+}
+
+.skeleton-biometric-row {
+  width: 100%;
+  height: 52px;
+  border-radius: 12px;
+}
+
+.skeleton-section-title {
+  width: 120px;
+  height: 12px;
+  margin-bottom: 8px;
+}
+
+.skeleton-conditions-list {
+  display: flex;
+  gap: 6px;
+}
+
+.skeleton-condition-pill {
+  width: 64px;
+  height: 20px;
+  border-radius: 9999px;
+}
+
+.skeleton-footer-text {
+  width: 130px;
+  height: 14px;
+}
+
+.skeleton-footer-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.skeleton-button {
+  width: 80px;
+  height: 28px;
+  border-radius: 10px;
+}
+
+.skeleton-section-sub {
+  width: 140px;
+  height: 12px;
+  margin-bottom: 8px;
+}
+
+.skeleton-card {
+  height: 180px;
+  justify-content: space-between;
+}
+
+.skeleton-card-header {
+  width: 120px;
+  height: 16px;
+}
+
+.skeleton-circle {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+}
+
+.skeleton-stats {
+  width: 120px;
+  height: 60px;
+}
+
+.skeleton-nutrition-val {
+  width: 150px;
+  height: 32px;
+}
+
+.skeleton-macro-item {
+  width: 100%;
+  height: 32px;
+  border-radius: 6px;
 }
 
 /* ═══════════════════════════════════════════════════════ */

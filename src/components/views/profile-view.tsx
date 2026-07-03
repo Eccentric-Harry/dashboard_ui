@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { 
-  Loader2, X, Clock, Pencil, LogOut, Mail, Globe, Bell,
+  X, Clock, Pencil, LogOut, Mail, Globe, Bell,
   Activity, Target, Plus
 } from 'lucide-react';
 import { getUserProfile, updateUserProfile, type UserProfile } from '../../lib/api';
@@ -232,9 +232,79 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
 
 
             {loading ? (
-              <div className="profile-loading-panel glass-panel">
-                <Loader2 className="animate-spin text-[#18181b]" size={36} />
-                <p>Loading your profile details...</p>
+              <div className="profile-content-layout">
+                {/* Skeleton Porsche Card layout */}
+                <div className="profile-porsche-card">
+                  <div className="profile-porsche-card-split">
+                    {/* Left Panel Skeleton */}
+                    <div className="profile-porsche-identity-section">
+                      <div className="profile-porsche-img-container">
+                        <div className="skeleton-avatar skeleton-pulse"></div>
+                      </div>
+                      <div className="profile-porsche-badges">
+                        <div className="skeleton-pill skeleton-pulse"></div>
+                        <div className="skeleton-pill skeleton-pulse"></div>
+                        <div className="skeleton-pill skeleton-pulse"></div>
+                      </div>
+                      <div className="profile-porsche-content">
+                        <div className="skeleton-name skeleton-pulse"></div>
+                        <div className="skeleton-title skeleton-pulse"></div>
+                        <div className="skeleton-text skeleton-pulse"></div>
+                        <div className="skeleton-email skeleton-pulse"></div>
+                      </div>
+                      <div className="profile-left-embedded-stats">
+                        <div className="embedded-biometrics">
+                          <div className="skeleton-biometric-row skeleton-pulse"></div>
+                          <div className="skeleton-biometric-row skeleton-pulse"></div>
+                          <div className="skeleton-biometric-row skeleton-pulse"></div>
+                          <div className="skeleton-biometric-row skeleton-pulse"></div>
+                        </div>
+                        <div className="embedded-conditions">
+                          <div className="skeleton-section-title skeleton-pulse"></div>
+                          <div className="skeleton-conditions-list">
+                            <div className="skeleton-condition-pill skeleton-pulse"></div>
+                            <div className="skeleton-condition-pill skeleton-pulse"></div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="profile-porsche-footer">
+                        <div className="skeleton-footer-text skeleton-pulse"></div>
+                        <div className="skeleton-footer-buttons">
+                          <div className="skeleton-button skeleton-pulse"></div>
+                          <div className="skeleton-button skeleton-pulse"></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Panel Skeleton */}
+                    <div className="profile-porsche-health-section">
+                      <div className="profile-quotes-header">
+                        <div className="skeleton-section-sub skeleton-pulse"></div>
+                        <div className="skeleton-section-title skeleton-pulse"></div>
+                      </div>
+                      <div className="profile-bento-grid">
+                        <div className="profile-health-card skeleton-card">
+                          <div className="skeleton-card-header skeleton-pulse"></div>
+                          <div className="status-metrics-wrapper">
+                            <div className="skeleton-circle skeleton-pulse"></div>
+                            <div className="skeleton-stats skeleton-pulse"></div>
+                          </div>
+                        </div>
+                        <div className="profile-health-card skeleton-card">
+                          <div className="skeleton-card-header skeleton-pulse"></div>
+                          <div className="nutrition-target-main">
+                            <div className="skeleton-nutrition-val skeleton-pulse"></div>
+                          </div>
+                          <div className="nutrition-macros-grid">
+                            <div className="skeleton-macro-item skeleton-pulse"></div>
+                            <div className="skeleton-macro-item skeleton-pulse"></div>
+                            <div className="skeleton-macro-item skeleton-pulse"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="profile-content-layout">
