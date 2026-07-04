@@ -25,7 +25,7 @@
  * 5. Attendees: Attendees are not stored or returned in the database/API response.
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   CalendarDays,
@@ -300,6 +300,46 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   const [otherCalendarsOpen, setOtherCalendarsOpen] = useState(true)
   const [isFullView, setIsFullView] = useState(false)
 
+  const canvasContainerRef = useRef<HTMLDivElement | null>(null)
+  const weeklyScrollContainerRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // 1. Daily/Weekly view: vertical auto-scroll to current time
+      if ((viewType === 'daily' || viewType === 'weekly') && weeklyScrollContainerRef.current) {
+        const container = weeklyScrollContainerRef.current
+        const now = new Date()
+        const currentHour = now.getHours()
+        const currentMinute = now.getMinutes()
+        const minutesSinceMidnight = currentHour * 60 + currentMinute
+        
+        // Each hour row is 80px tall. Center the scroll position vertically.
+        const targetScrollTop = (minutesSinceMidnight / 60) * 80 - container.clientHeight / 2
+        container.scrollTo({
+          top: Math.max(0, targetScrollTop),
+          behavior: 'smooth'
+        })
+      }
+      
+      // 2. Monthly view: horizontal auto-scroll to current day (is-today cell)
+      if (viewType === 'monthly' && canvasContainerRef.current) {
+        const container = canvasContainerRef.current
+        const todayCell = container.querySelector('.month-day-cell.is-today')
+        if (todayCell) {
+          const containerRect = container.getBoundingClientRect()
+          const cellRect = todayCell.getBoundingClientRect()
+          const offset = cellRect.left - containerRect.left - (containerRect.width - cellRect.width) / 2
+          container.scrollTo({
+            left: container.scrollLeft + offset,
+            behavior: 'smooth'
+          })
+        }
+      }
+    }, 100)
+
+    return () => clearTimeout(timer)
+  }, [viewType, selectedDate, loading])
+
   const [profileAvatar, setProfileAvatar] = useState(() => getAvatarImage(localStorage.getItem('avatarUrl') || 'luffy'))
 
   useEffect(() => {
@@ -466,11 +506,13 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
 
   const currentItem = useMemo(() => findCurrentItem(selectedItems, selectedDate), [selectedDate, selectedItems])
   const selectedItem = useMemo(() => {
-    const explicit = selectedItems.find((item) => itemKey(item) === selectedItemKey)
-    if (explicit) return explicit
+    if (selectedItemKey) {
+      const explicit = filteredItems.find((item) => itemKey(item) === selectedItemKey)
+      if (explicit) return explicit
+    }
     if (currentItem && !currentItem.completed) return currentItem
     return selectedItems.find((item) => !item.completed) ?? selectedItems[0] ?? null
-  }, [currentItem, selectedItemKey, selectedItems])
+  }, [currentItem, selectedItemKey, selectedItems, filteredItems])
 
   const updateSelectedDate = (date: string) => {
     setSelectedDate(date)
@@ -581,9 +623,9 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   }
 
   const HOUR_TICKS = useMemo(() => {
-    return Array.from({ length: 15 }, (_, i) => {
-      const h = i + 8
-      const label = h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h - 12} PM`
+    return Array.from({ length: 24 }, (_, i) => {
+      const h = i
+      const label = h === 0 ? '12 AM' : h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h - 12} PM`
       return { hour: h, label }
     })
   }, [])
@@ -703,7 +745,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
           </div>
 
           {/* Stage Calendar Body Grid */}
-          <div className="stage-grid-canvas">
+          <div className="stage-grid-canvas" ref={canvasContainerRef}>
             {loading ? (
               <div className="stage-loader">
                 <Loader2 size={32} className="animate-spin text-teal-600" />
@@ -711,7 +753,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
             ) : viewType === 'monthly' ? (
               <MonthViewGrid />
             ) : (
-              <div className={`calendar-grid-scrollable view-${viewType}`}>
+              <div className={`calendar-grid-scrollable view-${viewType}`} ref={weeklyScrollContainerRef}>
                 {/* Day Columns Header */}
                 <div className="grid-header-days" style={{ gridTemplateColumns: `80px repeat(${viewType === 'weekly' ? 4 : 1}, minmax(0, 1fr))` }}>
                   <div className="grid-header-tz">
@@ -1143,13 +1185,6 @@ function FocusDetail({
   const catHue = hueForCategory(category)
   const notes = stripChecklist(item.notes) || getFallbackDescription(item)
   const statusLabel = item.cancelled ? 'Cancelled' : item.completed ? 'Completed' : isCurrent ? 'Live now' : 'Planned'
-  const [avatarSrc, setAvatarSrc] = useState(() => getAvatarImage(localStorage.getItem('avatarUrl') || 'luffy'))
-
-  useEffect(() => {
-    const handleUpdate = () => setAvatarSrc(getAvatarImage(localStorage.getItem('avatarUrl') || 'luffy'))
-    window.addEventListener('profile-updated', handleUpdate)
-    return () => window.removeEventListener('profile-updated', handleUpdate)
-  }, [])
 
   return (
     <div
@@ -1172,7 +1207,6 @@ function FocusDetail({
               <X size={15} />
             </button>
           )}
-          <div className="focus-assignee-avatar" style={{ width: 28, height: 28, border: '2px solid #fff', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', backgroundImage: `url(${avatarSrc})` }} title="Profile" />
         </div>
 
         {menuOpen && (
@@ -1897,8 +1931,8 @@ function calculateTimeStyles(item: CalendarItem) {
   const startMin = timeToMinutes(item.startTime)
   const endMin = item.endTime ? timeToMinutes(item.endTime) : startMin + 60
   
-  const gridStartMin = 8 * 60
-  const gridEndMin = 22 * 60
+  const gridStartMin = 0 * 60
+  const gridEndMin = 24 * 60
   
   const clampedStart = Math.max(gridStartMin, Math.min(gridEndMin, startMin))
   const clampedEnd = Math.max(gridStartMin, Math.min(gridEndMin, endMin))
