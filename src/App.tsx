@@ -86,7 +86,7 @@ function normalizePathname(pathname: string): AppPath {
   return '/nutrition'
 }
 
-function MobileProfileTrigger({ onNavigate }: { onNavigate: (path: AppPath) => void; activePath: AppPath }) {
+function MobileProfileTrigger({ onNavigate, activePath }: { onNavigate: (path: AppPath) => void; activePath: AppPath }) {
   const [avatar, setAvatar] = useState(() => localStorage.getItem('avatarUrl') || 'luffy');
   const { unreadCount } = useNotifications();
 
@@ -101,6 +101,10 @@ function MobileProfileTrigger({ onNavigate }: { onNavigate: (path: AppPath) => v
   const handleClick = () => {
     onNavigate('/profile');
   };
+
+  if (activePath === '/profile') {
+    return null;
+  }
 
   return (
     <button
