@@ -1494,7 +1494,7 @@
 
   .finance-header-actions {
     position: fixed;
-    bottom: 90px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 96px);
     right: 20px;
     z-index: 1000;
   }
@@ -2167,7 +2167,7 @@
 
   .finance-header-actions {
     position: fixed;
-    bottom: 90px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 96px);
     right: 20px;
     z-index: 1000;
   }

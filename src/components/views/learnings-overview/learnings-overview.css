@@ -1857,7 +1857,7 @@
 /* Floating Action Button (FAB) styles */
 .learnings-fab-container {
   position: fixed;
-  bottom: 90px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 96px);
   /* Float above the mobile bottom nav bar, aligned with other routes */
   right: 20px;
   z-index: 1010;
