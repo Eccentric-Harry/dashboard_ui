@@ -48,6 +48,7 @@ interface MiniMonthProps {
   maxDate?: string
   disableFutureMonths?: boolean
   allowFuture?: boolean
+  highlightedRange?: string[]
 }
 
 export function MiniMonth({
@@ -58,13 +59,15 @@ export function MiniMonth({
   maxDate,
   disableFutureMonths,
   allowFuture,
+  highlightedRange,
 }: MiniMonthProps) {
+  const [prevSelected, setPrevSelected] = useState(selectedDate)
   const [currentMonth, setCurrentMonth] = useState(() => parseISODate(selectedDate))
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+  if (selectedDate !== prevSelected) {
+    setPrevSelected(selectedDate)
     setCurrentMonth(parseISODate(selectedDate))
-  }, [selectedDate])
+  }
 
   const days = monthGrid(currentMonth)
   const activeMonthIndex = currentMonth.getMonth()
@@ -128,6 +131,7 @@ export function MiniMonth({
         {days.map((date) => {
           const iso = toISODate(date)
           const isSelected = iso === selectedDate
+          const isHighlighted = highlightedRange ? highlightedRange.includes(iso) : false
           const isMuted = date.getMonth() !== activeMonthIndex
           const isToday = iso === todayISO
           const isFuture = allowFuture ? false : (maxDate ? iso > maxDate : iso > todayISO)
@@ -136,7 +140,7 @@ export function MiniMonth({
             <button
               key={iso}
               type="button"
-              className={`${isSelected ? 'is-selected' : ''} ${isMuted ? 'is-muted' : ''} ${
+              className={`${isSelected ? 'is-selected' : ''} ${isHighlighted ? 'is-in-range' : ''} ${isMuted ? 'is-muted' : ''} ${
                 isToday ? 'today' : ''
               } ${isFuture ? 'future' : ''}`}
               disabled={maxDate !== undefined && iso > maxDate}

@@ -42,12 +42,37 @@ export const getRoutineIconDetails = (item: {
   title?: string
   category?: string
   notes?: string
+  color?: string
 }): RoutineIconDetails => {
   const title = (item.title || '').toLowerCase().trim()
   const category = (item.category || '').toLowerCase().trim()
   const notes = (item.notes || '').toLowerCase().trim()
   const type = (item.itemType || '').toUpperCase()
   const text = `${title} ${notes}`
+
+  // If the item has an explicit custom hex color (e.g., from Google Calendar), use it!
+  if (item.color && item.color.startsWith('#')) {
+    let icon = ListChecks
+    for (const rule of rules) {
+      if (rule.pattern.test(text)) {
+        icon = rule.icon
+        break
+      }
+    }
+    if (icon === ListChecks) {
+      if (category === 'work') icon = Briefcase
+      else if (category === 'health') icon = Activity
+      else if (category === 'learning') icon = BookOpen
+      else if (category === 'finance') icon = Wallet
+      else if (category === 'social') icon = Users
+      else if (category === 'personal') icon = Home
+      else if (type === 'EVENT') icon = CalendarDays
+      else if (type === 'REMINDER') icon = Bell
+      else if (type === 'MILESTONE') icon = Milestone
+    }
+    const bg = item.color.length === 7 ? `${item.color}26` : `${item.color.slice(0, 7)}26`
+    return { icon, color: item.color, bg }
+  }
 
   for (const rule of rules) {
     if (rule.pattern.test(text)) {
