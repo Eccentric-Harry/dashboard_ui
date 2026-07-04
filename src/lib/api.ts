@@ -1322,4 +1322,48 @@ export async function updateUserProfile(data: Partial<UserProfile>): Promise<{ d
   return response.json();
 }
 
+export interface GoogleSyncStatus {
+  connected: boolean;
+  email?: string;
+  lastSyncedAt?: string;
+  webhookExpiration?: string;
+}
+
+export async function fetchGoogleSyncStatus(): Promise<{ data: GoogleSyncStatus }> {
+  const response = await fetch(`${API_BASE_URL}/google-calendar/auth/status`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch Google Sync status');
+  }
+  return response.json();
+}
+
+export async function fetchGoogleAuthUrl(): Promise<{ data: { url: string } }> {
+  const response = await fetch(`${API_BASE_URL}/google-calendar/auth/url`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch Google Auth URL');
+  }
+  return response.json();
+}
+
+export async function disconnectGoogleCalendar(): Promise<{ data: { status: string } }> {
+  const response = await fetch(`${API_BASE_URL}/google-calendar/auth/disconnect`, {
+    method: 'POST',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to disconnect Google Calendar');
+  }
+  return response.json();
+}
+
+export async function triggerGoogleSync(): Promise<{ data: { status: string } }> {
+  const response = await fetch(`${API_BASE_URL}/google-calendar/sync`, {
+    method: 'POST',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to trigger Google sync');
+  }
+  return response.json();
+}
+
+
 
