@@ -1,9 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { 
   X, Clock, Pencil, LogOut, Mail, Globe, Bell,
-  Activity, Target, Plus
+  Activity, Target, Plus, Calendar, RefreshCw
 } from 'lucide-react';
-import { getUserProfile, updateUserProfile, type UserProfile } from '../../lib/api';
+import { 
+  getUserProfile, 
+  updateUserProfile, 
+  fetchGoogleSyncStatus,
+  fetchGoogleAuthUrl,
+  disconnectGoogleCalendar,
+  triggerGoogleSync,
+  type UserProfile,
+  type GoogleSyncStatus
+} from '../../lib/api';
 import { SideRail } from '../dashboard/quantified-self-dashboard/components/side-rail';
 import { TopChip } from '../dashboard/quantified-self-dashboard/components/top-chip';
 import type { AppPath } from '../dashboard/quantified-self-dashboard/data';
@@ -60,6 +69,11 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
   const [saving, setSaving] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+
+  // Google Calendar Sync States
+  const [syncStatus, setSyncStatus] = useState<GoogleSyncStatus | null>(null);
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [authUrlLoading, setAuthUrlLoading] = useState(false);
 
   // General profile form states
   const [displayName, setDisplayName] = useState('');
@@ -121,6 +135,83 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
     }
     loadProfile();
   }, []);
+
+  const loadSyncStatus = async () => {
+    try {
+      const res = await fetchGoogleSyncStatus();
+      if (res?.data) {
+        setSyncStatus(res.data);
+      }
+    } catch (err) {
+      console.error('Failed to load Google sync status:', err);
+    }
+  };
+
+  useEffect(() => {
+    loadSyncStatus();
+  }, []);
+
+  useEffect(() => {
+    const handleOAuthMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'GOOGLE_CALENDAR_CONNECTED') {
+        toast.success('Successfully connected to Google Calendar!');
+        loadSyncStatus();
+      }
+    };
+    window.addEventListener('message', handleOAuthMessage);
+    return () => window.removeEventListener('message', handleOAuthMessage);
+  }, []);
+
+  const handleConnectGoogle = async () => {
+    setAuthUrlLoading(true);
+    try {
+      const res = await fetchGoogleAuthUrl();
+      if (res?.data?.url) {
+        const width = 600;
+        const height = 700;
+        const left = window.screenX + (window.outerWidth - width) / 2;
+        const top = window.screenY + (window.outerHeight - height) / 2;
+        window.open(
+          res.data.url,
+          'google-calendar-auth',
+          `width=${width},height=${height},left=${left},top=${top}`
+        );
+      } else {
+        toast.error('Failed to get Google authorization URL');
+      }
+    } catch (err) {
+      toast.error('Failed to initiate Google Calendar connection');
+    } finally {
+      setAuthUrlLoading(false);
+    }
+  };
+
+  const handleDisconnectGoogle = async () => {
+    if (!window.confirm('Are you sure you want to disconnect from Google Calendar? This will stop all synchronization.')) {
+      return;
+    }
+    try {
+      await disconnectGoogleCalendar();
+      toast.success('Disconnected from Google Calendar');
+      setSyncStatus({ connected: false });
+    } catch (err) {
+      toast.error('Failed to disconnect from Google Calendar');
+    }
+  };
+
+  const handleSyncNow = async () => {
+    setSyncLoading(true);
+    try {
+      await triggerGoogleSync();
+      toast.success('Calendar synchronization triggered');
+      setTimeout(loadSyncStatus, 2000);
+    } catch (err) {
+      toast.error('Failed to trigger calendar sync');
+    } finally {
+      setSyncLoading(false);
+    }
+  };
+
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -542,6 +633,71 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                             );
                           })()}
                         </div>
+
+                        {/* Card D: Google Calendar Integration */}
+                        <div className="profile-health-card card-google-sync">
+                          <div className="card-header-icon">
+                            <Calendar className="text-gray-500" size={16} style={{ color: '#4b5563' }} />
+                            <span className="card-tag">Google Calendar Sync</span>
+                          </div>
+                          
+                          <div className="google-sync-card-content">
+                            {syncStatus?.connected ? (
+                              <div className="connected-status-wrapper">
+                                <div className="status-indicator-badge connected">
+                                  <span className="dot"></span>
+                                  <span>Sync Active</span>
+                                </div>
+                                <div className="connection-info">
+                                  <span className="info-label">Account</span>
+                                  <span className="info-value truncate-email" title={syncStatus.email}>{syncStatus.email}</span>
+                                </div>
+                                <div className="connection-info">
+                                  <span className="info-label">Last Synced</span>
+                                  <span className="info-value">
+                                    {syncStatus.lastSyncedAt 
+                                      ? new Date(syncStatus.lastSyncedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit' }) 
+                                      : 'Waiting for Sync'}
+                                  </span>
+                                </div>
+                                <div className="google-sync-actions">
+                                  <button 
+                                    className="sync-btn-now" 
+                                    onClick={handleSyncNow}
+                                    disabled={syncLoading}
+                                  >
+                                    <RefreshCw size={12} className={syncLoading ? 'animate-spin' : ''} style={{ marginRight: '6px' }} />
+                                    <span>{syncLoading ? 'Syncing...' : 'Sync Now'}</span>
+                                  </button>
+                                  <button 
+                                    className="sync-btn-disconnect" 
+                                    onClick={handleDisconnectGoogle}
+                                  >
+                                    Disconnect
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="disconnected-status-wrapper">
+                                <div className="status-indicator-badge disconnected">
+                                  <span className="dot"></span>
+                                  <span>Not Connected</span>
+                                </div>
+                                <p className="sync-description">
+                                  Synchronize your calendar events and dashboard tasks bidirectionally in real-time.
+                                </p>
+                                <button 
+                                  className="sync-btn-connect" 
+                                  onClick={handleConnectGoogle}
+                                  disabled={authUrlLoading}
+                                >
+                                  {authUrlLoading ? 'Redirecting...' : 'Link Calendar'}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
                       </div>
                     </div>
                     

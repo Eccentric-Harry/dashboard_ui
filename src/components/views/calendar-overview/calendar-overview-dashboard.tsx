@@ -1,7 +1,33 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+/**
+ * CODEBASE ANALYSIS FINDINGS (PHASE 1)
+ * 
+ * 1A — FRONTEND ANALYSIS
+ * 1. Page Component: `CalendarOverview` in `components/views/calendar-view.tsx` acts as the frame. It renders `CalendarOverviewDashboard` inside `dashboard-stage`.
+ * 2. Weekly/Day Grid Component: Implemented directly in `CalendarOverviewDashboard` (this file). Day headers are mapped over `weekDays` or `selectedDate` under `.grid-header-days`, and day columns are mapped under `.grid-columns-container` rendering `.grid-day-column`.
+ * 3. Event Card/Chip Component: Rendered as `<button className="grid-event-card">` within each `.grid-day-column`.
+ * 4. Left Sidebar Panel: Contains `.sidebar-search-block` (Search Input), `.sidebar-month-card` (`MiniMonth` component), `.quick-reminder-card` (Meeting Reminder), `.calendar-filter-card` (Filters Accordion), and `.calendar-other-accordion` (Other Calendars).
+ * 5. Custom Hooks: State (e.g. `selectedDate`, `items`, `viewType`, `categoryFilters`) is managed directly via React standard hooks (`useState`, `useMemo`, `useCallback`, `useEffect`).
+ * 6. TypeScript Interfaces: `CalendarItem` (defined in `lib/api.ts`) contains: `id`, `occurrenceId`, `date`, `originalDate`, `title`, `startTime`, `endTime`, `allDay`, `itemType`, `category`, `color`, `notes`, `completed`, `cancelled`, `sortOrder`, `recurrenceFrequency`, `recurrenceUntil`, `history`, `createdAt`. It has no `attendees` field.
+ * 7. API Service: Functions in `lib/api.ts` fetch data via browser `fetch` (e.g. `fetchCalendarItemsForRange`, `createCalendarItem`, `updateCalendarItem`, `toggleCalendarItem`, `deleteCalendarItem`).
+ * 
+ * 1B — BACKEND ANALYSIS
+ * 1. Controller: `CalendarController` in backend handles requests mapped to `/api/v1/calendar/items`.
+ * 2. Endpoints:
+ *    - GET `/api/v1/calendar/items/range`: Accepts query params `startDate` and `endDate`. Returns a list of `CalendarItemOccurrence` wrapped in `ApiResponse`.
+ *    - GET `/api/v1/calendar/items/{id}`: Fetches a single source `DailyTask` item.
+ *    - POST `/api/v1/calendar/items`: Creates a new calendar item (request payload: `CalendarItemRequest`).
+ *    - PUT `/api/v1/calendar/items/{id}`: Updates a source calendar item.
+ *    - PATCH `/api/v1/calendar/items/{id}/toggle`: Toggles completion.
+ *    - PATCH `/api/v1/calendar/items/{id}/toggle-cancel`: Toggles cancellation.
+ *    - DELETE `/api/v1/calendar/items/{id}`: Deletes a calendar item or a specific occurrence.
+ * 3. Entity Class: `DailyTask` (MongoDB collection `daily_tasks`) has: `id`, `userId`, `title`, `date`, `scheduledTime`, `startTime`, `endTime`, `allDay`, `itemType`, `category`, `color`, `notes`, `completed`, `cancelled`, `status`, `completedAt`, `sortOrder`, `recurrenceFrequency`, `recurrenceUntil`, `completedDates`, `cancelledDates`, `excludedDates`, `subtasks`, `tags`, `history`, `googleEventId`, `lastSyncedAt`, `createdAt`, `updatedAt`.
+ * 4. Enums: Recurrence is defined by `CalendarRecurrence` (`NONE`, `DAILY`, `WEEKLY`, `MONTHLY`). Event types in UI are `TASK`, `EVENT`, `REMINDER`, `MILESTONE`.
+ * 5. Attendees: Attendees are not stored or returned in the database/API response.
+ */
+
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
-  AlarmClock,
   CalendarDays,
   Check,
   ChevronDown,
@@ -10,11 +36,9 @@ import {
   CircleCheck,
   Clock,
   Loader2,
-  MoreHorizontal,
-  Pencil,
   Plus,
   Repeat2,
-  Sparkles,
+  Search,
   Timer,
   Trash2,
   X,
@@ -61,7 +85,185 @@ function hueForCategory(category?: string) {
   return Math.abs(hash) % 360
 }
 
+const MOCK_USERS = [
+  { name: 'John Doe', avatar: getAvatarImage('luffy') },
+  { name: 'Sarah Connor', avatar: getAvatarImage('avatar1') },
+  { name: 'Alex Mercer', avatar: getAvatarImage('avatar2') },
+  { name: 'Emma Watson', avatar: getAvatarImage('avatar3') },
+  { name: 'Bruce Wayne', avatar: '' },
+  { name: 'Clark Kent', avatar: '' },
+]
 
+function getInitials(name: string) {
+  const parts = name.trim().split(/\s+/)
+  if (parts.length === 0) return ''
+  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
+function getInitialsBg(name: string) {
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const h = Math.abs(hash) % 360
+  return `hsl(${h}, 60%, 80%)`
+}
+
+function getInitialsColor(name: string) {
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const h = Math.abs(hash) % 360
+  return `hsl(${h}, 60%, 25%)`
+}
+
+function getEventClassification(item: CalendarItem): 'BIRTHDAY' | 'DEADLINE' | 'MEETING' | 'MILESTONE' | 'PERSONAL' | 'TASK' | 'DEFAULT' {
+  const titleLower = (item.title || '').toLowerCase()
+  const categoryLower = (item.category || '').toLowerCase()
+  const typeUpper = (item.itemType || '').toUpperCase()
+
+  if (categoryLower === 'birthday' || titleLower.includes('birthday')) {
+    return 'BIRTHDAY'
+  }
+  if (titleLower.includes('deadline') || titleLower.includes('due') || titleLower.includes('submit')) {
+    return 'DEADLINE'
+  }
+  if (
+    typeUpper === 'EVENT' ||
+    categoryLower === 'social' ||
+    titleLower.includes('meeting') ||
+    titleLower.includes('sync') ||
+    titleLower.includes('huddle') ||
+    titleLower.includes('call')
+  ) {
+    return 'MEETING'
+  }
+  if (typeUpper === 'MILESTONE') {
+    return 'MILESTONE'
+  }
+  if (categoryLower === 'personal') {
+    return 'PERSONAL'
+  }
+  if (typeUpper === 'TASK') {
+    return 'TASK'
+  }
+  return 'DEFAULT'
+}
+
+function getMockAttendeesForItem(item: CalendarItem) {
+  const isMeeting = getEventClassification(item) === 'MEETING'
+  if (!isMeeting) return []
+
+  const hash = item.id ? item.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) : item.title.length
+  const count = (hash % 4) + 2
+  
+  const attendeesList = []
+  for (let i = 0; i < count; i++) {
+    attendeesList.push(MOCK_USERS[(hash + i) % MOCK_USERS.length])
+  }
+  return attendeesList
+}
+
+function getEventStyleClasses(item: CalendarItem) {
+  if (item.color) {
+    const hex = item.color.startsWith('#') ? item.color : `#${item.color}`
+    return {
+      style: {
+        backgroundColor: `${hex}33`,
+        color: hex,
+      },
+      className: 'event-custom',
+    }
+  }
+
+  const classification = getEventClassification(item)
+  switch (classification) {
+    case 'BIRTHDAY':
+      return { className: 'event-birthday' }
+    case 'DEADLINE':
+      return { className: 'event-deadline' }
+    case 'MEETING':
+      return { className: 'event-meeting' }
+    case 'MILESTONE':
+      return { className: 'event-milestone' }
+    case 'PERSONAL':
+      return { className: 'event-personal' }
+    case 'TASK':
+      return { className: 'event-task' }
+    default:
+      return { className: 'event-default' }
+  }
+}
+
+function renderAvatarStack(attendees: Array<{ name: string; avatar: string }>) {
+  if (!attendees || attendees.length === 0) return null
+  const maxVisible = 3
+  const visibleAttendees = attendees.slice(0, maxVisible)
+  const remaining = attendees.length - maxVisible
+
+  return (
+    <div className="event-avatar-stack">
+      {visibleAttendees.map((att, idx) => {
+        const initials = getInitials(att.name)
+        const bg = getInitialsBg(att.name)
+        const textColor = getInitialsColor(att.name)
+        return att.avatar ? (
+          <img
+            key={idx}
+            src={att.avatar}
+            alt={att.name}
+            className="avatar-circle"
+            style={{ zIndex: 5 - idx }}
+          />
+        ) : (
+          <span
+            key={idx}
+            className="avatar-circle-initials"
+            style={{
+              zIndex: 5 - idx,
+              backgroundColor: bg,
+              color: textColor,
+            }}
+          >
+            {initials}
+          </span>
+        )
+      })}
+      {remaining > 0 && (
+        <span className="avatar-more-badge" style={{ zIndex: 1 }}>
+          +{remaining}
+        </span>
+      )}
+    </div>
+  )
+}
+
+function getFourDays(dateStr: string) {
+  const selected = parseISODate(dateStr)
+  const day = selected.getDay()
+  
+  let startDate: Date
+  if (day >= 1 && day <= 4) {
+    const diff = selected.getDate() - day + 1
+    startDate = new Date(selected.setDate(diff))
+  } else {
+    const diff = selected.getDate() - (day === 0 ? 2 : day - 5)
+    startDate = new Date(selected.setDate(diff))
+  }
+  
+  return Array.from({ length: 4 }, (_, idx) => {
+    const d = new Date(startDate)
+    d.setDate(startDate.getDate() + idx)
+    return d
+  })
+}
+
+function formatSelectedDateHeader(dateStr: string) {
+  const date = parseISODate(dateStr)
+  return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+}
 
 const CATEGORY_OPTIONS = [
   { label: 'Personal', color: '#7c3aed' },
@@ -94,41 +296,71 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   const [loading, setLoading] = useState(false)
   const [modal, setModal] = useState<ModalState>({ open: false })
   const [deleteTarget, setDeleteTarget] = useState<CalendarItem | null>(null)
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false)
-  const [dropdownOpenFor, setDropdownOpenFor] = useState<string | null>(null)
-  const [dropdownCoords, setDropdownCoords] = useState<{ top: number; right?: number; left?: number } | null>(null)
-  const calendarRef = useRef<HTMLDivElement>(null)
-  const routineListRef = useRef<HTMLDivElement>(null)
-  const ribbonRef = useRef<HTMLDivElement>(null)
+
+  const [viewType, setViewType] = useState<'daily' | 'weekly' | 'monthly'>('weekly')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [uncheckedCategories, setUncheckedCategories] = useState<string[]>([])
+  const [upcomingItem, setUpcomingItem] = useState<CalendarItem | null>(null)
+  const [filtersOpen, setFiltersOpen] = useState(true)
+  const [otherCalendarsOpen, setOtherCalendarsOpen] = useState(true)
+
+  const [profileAvatar, setProfileAvatar] = useState(() => getAvatarImage(localStorage.getItem('avatarUrl') || 'luffy'))
+
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      setProfileAvatar(getAvatarImage(localStorage.getItem('avatarUrl') || 'luffy'))
+    }
+    
+    window.addEventListener('profile-updated', handleProfileUpdate)
+    return () => window.removeEventListener('profile-updated', handleProfileUpdate)
+  }, [])
   const scrollableDays = useMemo(() => getScrollableDays(selectedDate), [selectedDate])
   const visibleRange = useMemo(
     () => ({ start: toISODate(scrollableDays[0]), end: toISODate(scrollableDays[scrollableDays.length - 1]) }),
     [scrollableDays],
   )
 
-  useEffect(() => {
-    if (!ribbonRef.current) return
-    const timer = setTimeout(() => {
-      const selectedBtn = ribbonRef.current?.querySelector('.is-selected') as HTMLElement
-      if (selectedBtn) {
-        selectedBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+  const loadUpcomingItem = useCallback(async () => {
+    try {
+      const todayStr = toISODate(new Date())
+      const futureDate = new Date()
+      futureDate.setDate(futureDate.getDate() + 30)
+      const futureStr = toISODate(futureDate)
+      
+      const response = await fetchCalendarItemsForRange(todayStr, futureStr)
+      const futureItems = (response?.data ?? []).filter((item: CalendarItem) => {
+        if (item.completed || item.cancelled) return false
+        return item.date >= todayStr
+      })
+      
+      if (futureItems.length > 0) {
+        futureItems.sort((a: CalendarItem, b: CalendarItem) => {
+          const dateCompare = a.date.localeCompare(b.date)
+          if (dateCompare !== 0) return dateCompare
+          return (a.startTime ?? '99:99').localeCompare(b.startTime ?? '99:99')
+        })
+        setUpcomingItem(futureItems[0])
+      } else {
+        setUpcomingItem(null)
       }
-    }, 50)
-    return () => clearTimeout(timer)
-  }, [selectedDate, scrollableDays])
+    } catch (err) {
+      console.error('Failed to load upcoming item', err)
+    }
+  }, [])
 
   const loadItems = useCallback(async () => {
     setLoading(true)
     try {
       const response = await fetchCalendarItemsForRange(visibleRange.start, visibleRange.end)
       setItems(response?.data ?? [])
+      await loadUpcomingItem()
     } catch (error) {
       setItems([])
       toast.error(error instanceof Error ? error.message : 'Failed to load calendar')
     } finally {
       setLoading(false)
     }
-  }, [visibleRange.end, visibleRange.start])
+  }, [visibleRange.end, visibleRange.start, loadUpcomingItem])
 
   useEffect(() => {
     const initialLoad = window.setTimeout(loadItems, 0)
@@ -140,35 +372,66 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     }
   }, [loadItems])
 
-  useEffect(() => {
-    if (!dropdownOpenFor) return
-    const handler = () => {
-      setDropdownOpenFor(null)
-      setDropdownCoords(null)
-    }
-    window.addEventListener('click', handler)
-    window.addEventListener('scroll', handler, true)
-    window.addEventListener('resize', handler)
-    return () => {
-      window.removeEventListener('click', handler)
-      window.removeEventListener('scroll', handler, true)
-      window.removeEventListener('resize', handler)
-    }
-  }, [dropdownOpenFor])
-
-  const selectedItems = useMemo(() => byDate(items, selectedDate), [items, selectedDate])
-
-  useEffect(() => {
-    if (loading || !selectedItems.length) return
-    const isIpad = window.matchMedia('(min-width: 768px) and (max-width: 1024px)').matches
-    if (!isIpad) return
-    const timer = setTimeout(() => {
-      if (routineListRef.current) {
-        routineListRef.current.scrollTop = 200
+  const actualCategories = useMemo(() => {
+    const cats = new Set<string>()
+    cats.add('Work')
+    cats.add('Personal')
+    cats.add('Health')
+    cats.add('Learning')
+    cats.add('Finance')
+    cats.add('Social')
+    items.forEach((item) => {
+      if (item.category) {
+        const formatted = item.category.trim()
+        if (formatted) cats.add(formatted)
       }
-    }, 100)
-    return () => clearTimeout(timer)
-  }, [loading, selectedItems.length])
+    })
+    return Array.from(cats)
+  }, [items])
+
+  const filteredItems = useMemo(() => {
+    return items.filter((item) => {
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase().trim()
+        const title = (item.title || '').toLowerCase()
+        const notes = (item.notes || '').toLowerCase()
+        if (!title.includes(query) && !notes.includes(query)) {
+          return false
+        }
+      }
+      const itemCategory = item.category || 'Personal'
+      return !uncheckedCategories.includes(itemCategory)
+    })
+  }, [items, searchQuery, uncheckedCategories])
+
+  const selectedItems = useMemo(() => byDate(filteredItems, selectedDate), [filteredItems, selectedDate])
+
+  const sidebarUpcomingItem = useMemo(() => {
+    if (upcomingItem) return upcomingItem
+
+    return {
+      id: 'mock-meeting',
+      title: 'UX Huddle Call',
+      startTime: '09:00',
+      endTime: '09:30',
+      date: toISODate(new Date()),
+      itemType: 'EVENT',
+      category: 'Social',
+      completed: false,
+      cancelled: false,
+    } as CalendarItem
+  }, [upcomingItem])
+
+  const fourDays = useMemo(() => getFourDays(selectedDate), [selectedDate])
+  
+  const weekItemsByDay = useMemo(() => {
+    return fourDays.map((d) => {
+      const iso = toISODate(d)
+      const dayItems = filteredItems.filter((item) => item.date === iso)
+      return dayItems.sort(compareItems)
+    })
+  }, [fourDays, filteredItems])
+
   const currentItem = useMemo(() => findCurrentItem(selectedItems, selectedDate), [selectedDate, selectedItems])
   const selectedItem = useMemo(() => {
     const explicit = selectedItems.find((item) => itemKey(item) === selectedItemKey)
@@ -183,15 +446,18 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     onNavigate('/calendar', `?date=${date}`)
   }
 
-  const handleStep = (direction: -1 | 1) => {
+  const handleStep = (direction: number) => {
     const date = parseISODate(selectedDate)
-    date.setDate(date.getDate() + direction)
+    if (viewType === 'monthly') {
+      date.setMonth(date.getMonth() + direction)
+    } else {
+      date.setDate(date.getDate() + direction)
+    }
     updateSelectedDate(toISODate(date))
   }
 
   const handleDateSelect = (dateStr: string) => {
     updateSelectedDate(dateStr)
-    setIsCalendarOpen(false)
   }
 
   const handleToggle = async (item: CalendarItem) => {
@@ -234,33 +500,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     }
   }
 
-  const handleMoveToTomorrow = async (item: CalendarItem) => {
-    if (!item.id) return
-    const parsed = parseISODate(item.date)
-    parsed.setDate(parsed.getDate() + 1)
-    try {
-      await updateCalendarItem(item.id, {
-        title: item.title,
-        date: toISODate(parsed),
-        startTime: item.startTime,
-        endTime: item.endTime,
-        allDay: item.allDay,
-        itemType: item.itemType,
-        category: item.category,
-        color: item.color,
-        notes: item.notes,
-        completed: item.completed,
-        sortOrder: item.sortOrder,
-        recurrenceFrequency: item.recurrenceFrequency,
-        recurrenceUntil: item.recurrenceUntil,
-      })
-      toast.success(`Moved "${item.title}" to tomorrow`)
-      await loadItems()
-      window.dispatchEvent(new CustomEvent('calendar-updated'))
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to move item')
-    }
-  }
+
 
   const handleDeleteRecurring = async (mode: 'ONLY_THIS' | 'ALL') => {
     if (!deleteTarget?.id) return
@@ -276,306 +516,379 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     }
   }
 
+  const HOUR_TICKS = useMemo(() => {
+    return Array.from({ length: 15 }, (_, i) => {
+      const h = i + 8
+      const label = h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h - 12} PM`
+      return { hour: h, label }
+    })
+  }, [])
+
+  const MonthViewGrid = () => {
+    const current = parseISODate(selectedDate)
+    const days = monthGrid(current)
+    
+    return (
+      <div className="monthly-view-grid">
+        <div className="month-grid-header">
+          {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((day) => (
+            <div key={day} className="month-grid-header-cell">{day}</div>
+          ))}
+        </div>
+        <div className="month-grid-body">
+          {days.map((d) => {
+            const iso = toISODate(d)
+            const isSelected = iso === selectedDate
+            const isToday = iso === toISODate(new Date())
+            const isSameMonth = d.getMonth() === current.getMonth()
+            const dayItems = filteredItems.filter((item) => item.date === iso)
+            
+            return (
+              <div
+                key={iso}
+                className={`month-day-cell ${isSelected ? 'is-selected' : ''} ${isToday ? 'is-today' : ''} ${isSameMonth ? 'is-current-month' : 'is-other-month'}`}
+                onClick={() => updateSelectedDate(iso)}
+              >
+                <span className="month-day-num">{d.getDate()}</span>
+                <div className="month-day-events">
+                  {dayItems.slice(0, 3).map((item) => {
+                    const routineIcon = getRoutineIconDetails(item)
+                    return (
+                      <div
+                        key={itemKey(item)}
+                        className="month-event-capsule"
+                        style={{ '--capsule-color': routineIcon.color } as React.CSSProperties}
+                        title={item.title}
+                      >
+                        {item.title}
+                      </div>
+                    )
+                  })}
+                  {dayItems.length > 3 && (
+                    <div className="month-more-indicator">+{dayItems.length - 3} more</div>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <section className="calendar-dashboard theme-glassmorphic" aria-label="Daily routine">
-      <header className="calendar-header">
-        <div className="calendar-date-picker" ref={calendarRef}>
-          <span className="calendar-eyebrow">Daily rhythm</span>
-          <button
-            type="button"
-            className="calendar-date-trigger"
-            aria-expanded={isCalendarOpen}
-            aria-haspopup="dialog"
-            onClick={() => setIsCalendarOpen((open) => !open)}
-          >
-            <span>
-              <span className="calendar-date-title-wrap">
-                <strong>{formatHeaderDate(parseISODate(selectedDate))}</strong>
-                <ChevronDown size={20} className="calendar-date-chevron" />
-              </span>
-              <small>
-                {selectedItems.length
-                  ? `${selectedItems.filter((item) => item.completed).length} of ${selectedItems.length} complete`
-                  : 'A quiet day with room to focus'}
-              </small>
-            </span>
-          </button>
-
-          {isCalendarOpen && (
-            <>
-              <div className="calendar-calendar-overlay" onClick={() => setIsCalendarOpen(false)} />
-              <div className="calendar-calendar-popover" role="dialog" aria-label="Choose date">
-                <MiniMonth
-                  selectedDate={selectedDate}
-                  onSelect={handleDateSelect}
-                  allowFuture
-                />
-              </div>
-            </>
-          )}
-        </div>
-
-        <div className="calendar-header-actions">
-          <div className="calendar-day-nav" aria-label="Change date">
-            <button type="button" onClick={() => handleStep(-1)} aria-label="Previous day">
-              <ChevronLeft size={17} />
-            </button>
-            <button type="button" onClick={() => updateSelectedDate(toISODate(new Date()))}>Today</button>
-            <button type="button" onClick={() => handleStep(1)} aria-label="Next day">
-              <ChevronRight size={17} />
-            </button>
-          </div>
-          <button
-            type="button"
-            className="calendar-add-button"
-            onClick={() => setModal({ open: true, date: selectedDate })}
-          >
-            <Plus size={17} />
-            Add routine
-          </button>
-        </div>
-      </header>
-
       <div className="calendar-focus-split">
+        {/* Left Sidebar Panel */}
         <aside className="routine-navigator">
-          <div className="week-ribbon-wrapper">
-            <div className="week-ribbon" aria-label="Scrollable dates" ref={ribbonRef}>
-              {scrollableDays.map((date) => {
-                const isoDate = toISODate(date)
-                const isSelected = isoDate === selectedDate
-                const isToday = isoDate === toISODate(new Date())
-                return (
+          {/* Search Input Bar */}
+          <div className="sidebar-search-block">
+            <div className="search-input-wrapper">
+              <Search size={14} className="search-icon" />
+              <input
+                type="text"
+                placeholder="Search a task..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <kbd className="search-shortcut">⌘S</kbd>
+            </div>
+          </div>
+
+          {/* Mini Calendar Widget */}
+          <div className="sidebar-month-card">
+            <MiniMonth
+              selectedDate={selectedDate}
+              onSelect={handleDateSelect}
+              allowFuture
+              highlightedRange={viewType === 'weekly' ? fourDays.map((d) => toISODate(d)) : undefined}
+            />
+          </div>
+
+          {/* Teal Meeting Reminder / Upcoming Event Card */}
+          {sidebarUpcomingItem && (
+            <div className="quick-reminder-card">
+              <div className="reminder-eyebrow">
+                {(() => {
+                  const classification = getEventClassification(sidebarUpcomingItem)
+                  if (classification === 'MEETING') return 'Meeting reminder'
+                  if (classification === 'DEADLINE' || classification === 'TASK') return 'Upcoming task'
+                  if (classification === 'MILESTONE') return 'Upcoming milestone'
+                  return 'Upcoming event'
+                })()}
+              </div>
+              <h3 className="reminder-title">{sidebarUpcomingItem.title}</h3>
+              <div className="reminder-time-row">
+                <Clock size={12} />
+                <span>
+                  {`${formatClockTime(sidebarUpcomingItem.startTime || '09:00')} - ${formatClockTime(sidebarUpcomingItem.endTime || '09:30')}`}
+                </span>
+              </div>
+              <div className="reminder-footer">
+                {renderAvatarStack(
+                  sidebarUpcomingItem.id === 'mock-meeting'
+                    ? [
+                        { name: 'John Doe', avatar: profileAvatar },
+                        { name: 'Sarah Connor', avatar: getAvatarImage('avatar1') },
+                        { name: 'Alex Mercer', avatar: getAvatarImage('avatar2') },
+                        { name: 'Emma Watson', avatar: getAvatarImage('avatar3') },
+                      ]
+                    : getMockAttendeesForItem(sidebarUpcomingItem)
+                )}
+                <div className="reminder-actions">
                   <button
                     type="button"
-                    key={isoDate}
-                    className={isSelected ? 'is-selected' : ''}
-                    onClick={() => updateSelectedDate(isoDate)}
-                    aria-current={isSelected ? 'date' : undefined}
+                    className="btn-decline"
+                    aria-label="Decline"
+                    onClick={() => {
+                      if (sidebarUpcomingItem.id !== 'mock-meeting') {
+                        handleToggleCancel(sidebarUpcomingItem)
+                      } else {
+                        toast.success('Mock meeting declined')
+                      }
+                    }}
                   >
-                    <span>{date.toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 2)}</span>
-                    <strong>{date.getDate()}</strong>
-                    {isToday && <i />}
+                    <X size={13} />
                   </button>
-                )
-              })}
-            </div>
-          </div>
-
-          <div className="routine-list-header">
-            <div>
-              <span>Routine</span>
-              <strong>{selectedItems.length} blocks</strong>
-            </div>
-            <button type="button" onClick={() => setModal({ open: true, date: selectedDate })} aria-label="Add routine">
-              <Plus size={17} />
-            </button>
-          </div>
-
-          <div className="routine-list-scroll" ref={routineListRef}>
-            {loading ? (
-              <div className="routine-timeline" style={{ pointerEvents: 'none' }}>
-                {Array.from({ length: 4 }).map((_, idx) => (
-                  <div className="routine-row status-future" key={idx}>
-                    <span className="routine-node skeleton-circle skeleton-shimmer" style={{ width: 14, height: 14, border: 'none' }} />
-                    <div className="routine-card-wrapper" style={{ flex: 1 }}>
-                      <div className="routine-card" style={{ pointerEvents: 'none' }}>
-                        <span className="routine-card-icon skeleton-circle skeleton-shimmer" style={{ width: 42, height: 42 }} />
-                        <div className="routine-card-copy">
-                          <span className="routine-card-time-badge skeleton-rect skeleton-shimmer" style={{ width: '25%', height: 10, margin: '2px 0 6px' }} />
-                          <strong className="skeleton-rect skeleton-shimmer" style={{ width: idx % 2 === 0 ? '70%' : '55%', height: 14, margin: '2px 0 6px' }} />
-                          <span className="routine-card-subtime skeleton-rect skeleton-shimmer" style={{ width: '40%', height: 10, margin: '2px 0 6px' }} />
-                          <p className="skeleton-rect skeleton-shimmer" style={{ width: '85%', height: 10, marginTop: 8 }} />
-                        </div>
-                        <span className="routine-card-more-trigger skeleton-rect skeleton-shimmer" style={{ width: 16, height: 16, borderRadius: 4 }} />
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  <button
+                    type="button"
+                    className="btn-accept"
+                    aria-label="Accept"
+                    onClick={() => {
+                      if (sidebarUpcomingItem.id !== 'mock-meeting') {
+                        handleToggle(sidebarUpcomingItem)
+                      } else {
+                        toast.success('Mock meeting accepted')
+                      }
+                    }}
+                  >
+                    <Check size={13} />
+                  </button>
+                </div>
               </div>
-            ) : selectedItems.length ? (
-              <div className="routine-timeline">
-                {selectedItems.map((item) => {
-                  const isActive = selectedItem && itemKey(item) === itemKey(selectedItem)
-                  const status = getItemStatus(item, selectedDate)
-                  const routineIcon = getRoutineIconDetails(item)
-                  const CardIcon = routineIcon.icon
-                  const notePreview = stripChecklist(item.notes) || getFallbackDescription(item)
+            </div>
+          )}
+
+          {/* Filters Collapsible Accordion */}
+          <div className="calendar-filter-card">
+            <button
+              type="button"
+              className="filter-header-btn"
+              onClick={() => setFiltersOpen(!filtersOpen)}
+            >
+              <span>Filters</span>
+              <ChevronDown size={14} className={`accordion-chevron ${filtersOpen ? 'open' : ''}`} />
+            </button>
+            {filtersOpen && (
+              <div className="filter-list">
+                {actualCategories.map((cat) => {
+                  const checked = !uncheckedCategories.includes(cat)
+                  const color = colorForCategory(cat)
                   return (
-                    <div
-                      className={`routine-row status-${status} ${getRoutineBlockClass(item)}`}
-                      key={itemKey(item)}
-                      style={{ '--cat-hue': hueForCategory(item.category) } as React.CSSProperties}
-                    >
-                      <span className={`routine-node ${isActive ? 'is-active' : ''}`}>
-                        {item.completed ? <Check size={11} /> : item.cancelled ? <X size={11} /> : null}
-                      </span>
-                      <div className="routine-card-wrapper">
-                        <button
-                          type="button"
-                          className={`routine-card ${isActive ? 'is-active' : ''}`}
-                          onClick={() => setSelectedItemKey(itemKey(item))}
-                          style={{
-                            '--cat-hue': hueForCategory(item.category),
-                            '--card-color-default': routineIcon.color,
-                            '--card-bg-default': routineIcon.bg
-                          } as React.CSSProperties}
-                        >
-                          <span className="routine-card-icon">
-                            <CardIcon size={17} />
-                          </span>
-                          <div className="routine-card-copy">
-                            <span className="routine-card-time-badge">{formatTimelineLabel(item)}</span>
-                            <strong>{item.title}</strong>
-                            <span className="routine-card-subtime">{formatRoutineSubline(item)}</span>
-                            <p>{notePreview}</p>
-                          </div>
-                          <span
-                            className="routine-card-more-trigger"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              if (dropdownOpenFor === itemKey(item)) {
-                                setDropdownOpenFor(null)
-                                setDropdownCoords(null)
-                              } else {
-                                const rect = e.currentTarget.getBoundingClientRect()
-                                const zoom = parseFloat(window.getComputedStyle(document.documentElement).zoom || '1')
-                                const isLeftHalf = rect.left < window.innerWidth / 2
-                                setDropdownOpenFor(itemKey(item))
-                                setDropdownCoords({ 
-                                  top: rect.bottom / zoom, 
-                                  ...(isLeftHalf ? { left: rect.left / zoom } : { right: (window.innerWidth - rect.right) / zoom })
-                                })
-                              }
-                            }}
-                          >
-                            <MoreHorizontal size={18} />
-                          </span>
-                        </button>
-                        {dropdownOpenFor === itemKey(item) && dropdownCoords && createPortal(
-                          <div className="routine-card-dropdown" style={{ position: 'fixed', top: dropdownCoords.top + 8, left: dropdownCoords.left ?? 'auto', right: dropdownCoords.right ?? 'auto' }} onClick={(e) => e.stopPropagation()}>
-                            <button onClick={() => { setModal({ open: true, item, date: item.date }); setDropdownOpenFor(null) }}>
-                              <Pencil size={14} /> Edit
-                            </button>
-                            <button onClick={() => { setDropdownOpenFor(null); handleMoveToTomorrow(item) }}>
-                              <CalendarDays size={14} /> Move to tomorrow
-                            </button>
-                            <button onClick={() => { setDropdownOpenFor(null); handleToggle(item) }}>
-                              <Check size={14} /> {item.completed ? 'Mark incomplete' : 'Mark complete'}
-                            </button>
-                            <button onClick={() => { setDropdownOpenFor(null); handleToggleCancel(item) }}>
-                              <XCircle size={14} /> {item.cancelled ? 'Restore' : 'Mark cancelled'}
-                            </button>
-                            <button className="danger" onClick={() => { setDropdownOpenFor(null); setDeleteTarget(item) }}>
-                              <Trash2 size={14} /> Delete
-                            </button>
-                          </div>,
-                          document.body
-                        )}
-                      </div>
-                    </div>
+                    <label key={cat} className="filter-checkbox-item">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => {
+                          if (checked) {
+                            setUncheckedCategories([...uncheckedCategories, cat])
+                          } else {
+                            setUncheckedCategories(uncheckedCategories.filter((c) => c !== cat))
+                          }
+                        }}
+                      />
+                      <span className="checkbox-custom" style={{ '--checkbox-color': color } as React.CSSProperties} />
+                      <span className="checkbox-label">{cat}</span>
+                    </label>
                   )
                 })}
               </div>
-            ) : (
-              <div className="routine-empty">
-                <span><Sparkles size={22} /></span>
-                <strong>Your day is open</strong>
-                <p>Add the first block and shape a calm, intentional routine.</p>
-                <button type="button" onClick={() => setModal({ open: true, date: selectedDate })}>
-                  <Plus size={16} />
-                  Add a routine
-                </button>
+            )}
+          </div>
+
+          {/* Other Calendars Accordion */}
+          <div className="calendar-other-accordion">
+            <button
+              type="button"
+              className="filter-header-btn"
+              onClick={() => setOtherCalendarsOpen(!otherCalendarsOpen)}
+            >
+              <span>Other Calendars</span>
+              <ChevronDown size={14} className={`accordion-chevron ${otherCalendarsOpen ? 'open' : ''}`} />
+            </button>
+            {otherCalendarsOpen && (
+              <div className="other-calendars-list">
+                <div className="other-calendar-item">
+                  <span className="bullet-dot" style={{ background: '#10b981' }} />
+                  <span>Holidays in United States</span>
+                </div>
+                <div className="other-calendar-item">
+                  <span className="bullet-dot" style={{ background: '#3b82f6' }} />
+                  <span>GitHub Contributions</span>
+                </div>
               </div>
             )}
           </div>
         </aside>
 
+        {/* Right Main Grid Stage */}
         <main className="focus-canvas">
-          {loading ? (
-            <div className="focus-detail" style={{ pointerEvents: 'none', opacity: 0.7 }}>
-              <div className="focus-detail-panel-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <h3>Routine Details</h3>
-                <span className="focus-assignee-avatar skeleton-circle skeleton-shimmer" style={{ width: 28, height: 28 }} />
+          <div className="calendar-main-stage">
+            {/* Navigation & view selection row */}
+            <div className="stage-navigation-row">
+              <div className="date-range-navigator">
+                <button type="button" className="nav-arrow" onClick={() => handleStep(viewType === 'weekly' ? -4 : -1)}>
+                  <ChevronLeft size={16} />
+                </button>
+                <h2 className="range-title">
+                  {viewType === 'weekly' || viewType === 'daily'
+                    ? formatSelectedDateHeader(selectedDate)
+                    : parseISODate(selectedDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                </h2>
+                <button type="button" className="nav-arrow" onClick={() => handleStep(viewType === 'weekly' ? 4 : 1)}>
+                  <ChevronRight size={16} />
+                </button>
               </div>
 
-              <div className="focus-detail-body">
-                <div className="focus-summary-card">
-                  <div className="focus-summary-main">
-                    <span className="focus-icon skeleton-circle skeleton-shimmer" style={{ width: 44, height: 44 }} />
-                    <div style={{ flex: 1 }}>
-                      <div className="focus-status-strip">
-                        <span className="focus-status-pill skeleton-shimmer" style={{ width: 75, height: 24, border: 'none', background: 'rgba(20, 24, 22, 0.05)' }} />
-                        <span className="focus-category-mark skeleton-shimmer" style={{ width: 65, height: 24, border: 'none', background: 'rgba(20, 24, 22, 0.05)' }} />
-                      </div>
-                      <h2 className="focus-detail-title" style={{ margin: '10px 0 6px', border: 'none' }}>
-                        <span className="skeleton-rect skeleton-shimmer" style={{ width: '60%', height: 20 }} />
-                      </h2>
-                      <div className="focus-summary-note">
-                        <span className="skeleton-rect skeleton-shimmer" style={{ width: '85%', height: 10, marginBottom: 6 }} />
-                        <span className="skeleton-rect skeleton-shimmer" style={{ width: '50%', height: 10 }} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <div className="view-switcher-tabs">
+                {(['daily', 'weekly', 'monthly'] as const).map((view) => (
+                  <button
+                    key={view}
+                    type="button"
+                    className={`view-tab ${viewType === view ? 'is-selected' : ''}`}
+                    onClick={() => setViewType(view)}
+                  >
+                    {view.charAt(0).toUpperCase() + view.slice(1)}
+                  </button>
+                ))}
+              </div>
 
-                <div className="focus-detail-layout">
-                  <section className="focus-detail-section focus-schedule-card">
-                    <span className="focus-section-label">Schedule</span>
-                    <div className="focus-facts-grid">
-                      {Array.from({ length: 4 }).map((_, idx) => (
-                        <div className="focus-fact" key={idx}>
-                          <span className="skeleton-circle skeleton-shimmer" style={{ width: 15, height: 15, margin: 0 }} />
-                          <span className="skeleton-rect skeleton-shimmer" style={{ width: '35%', height: 10, margin: 0 }} />
-                          <strong className="skeleton-rect skeleton-shimmer" style={{ width: '65%', height: 12, margin: '2px 0 0' }} />
+              <button
+                type="button"
+                className="create-event-btn"
+                onClick={() => setModal({ open: true, date: selectedDate })}
+              >
+                <Plus size={16} />
+                Create Event
+              </button>
+            </div>
+
+            {/* Stage Calendar Body Grid */}
+            <div className="stage-grid-canvas">
+              {loading ? (
+                <div className="stage-loader">
+                  <Loader2 size={32} className="animate-spin text-teal-600" />
+                </div>
+              ) : viewType === 'monthly' ? (
+                <MonthViewGrid />
+              ) : (
+                <div className="calendar-grid-scrollable">
+                  {/* Day Columns Header */}
+                  <div className="grid-header-days" style={{ gridTemplateColumns: `80px repeat(${viewType === 'weekly' ? 4 : 1}, minmax(0, 1fr))` }}>
+                    <div className="grid-header-tz">
+                      <span>{viewType === 'weekly' ? 'GMT+05:30' : 'Time'}</span>
+                    </div>
+                    {(viewType === 'weekly' ? fourDays : [parseISODate(selectedDate)]).map((d) => {
+                      const iso = toISODate(d)
+                      const isSelected = iso === selectedDate
+                      const isToday = iso === toISODate(new Date())
+                      return (
+                        <div
+                          key={iso}
+                          className={`grid-header-day-card ${isSelected ? 'is-selected' : ''} ${isToday ? 'is-today' : ''}`}
+                          onClick={() => updateSelectedDate(iso)}
+                        >
+                          <span className="day-name">{d.toLocaleDateString('en-US', { weekday: 'long' })}</span>
+                          <strong className="day-number-pill">{d.getDate()}</strong>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Grid hour cells */}
+                  <div className="grid-body-canvas">
+                    <div className="grid-lines-container">
+                      {HOUR_TICKS.map((tick) => (
+                        <div key={tick.hour} className="grid-hour-row" style={{ height: 80 }}>
+                          <span className="hour-label">{tick.label}</span>
+                          <div className="grid-line" />
                         </div>
                       ))}
                     </div>
-                  </section>
 
-                  <div className="focus-detail-right-column">
-                    <section className="focus-detail-section focus-notes-card">
-                      <span className="focus-section-label">Notes</span>
-                      <div className="focus-detail-notes" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        <span className="skeleton-rect skeleton-shimmer" style={{ width: '90%', height: 11 }} />
-                        <span className="skeleton-rect skeleton-shimmer" style={{ width: '80%', height: 11 }} />
-                        <span className="skeleton-rect skeleton-shimmer" style={{ width: '45%', height: 11 }} />
-                      </div>
-                    </section>
-
-                    <section className="focus-detail-section focus-history-card">
-                      <span className="focus-section-label">History</span>
-                      <div className="focus-detail-timeline">
-                        <span className="skeleton-rect skeleton-shimmer" style={{ width: '65%', height: 11 }} />
-                      </div>
-                    </section>
+                    <div className="grid-columns-container" style={{ gridTemplateColumns: `80px repeat(${viewType === 'weekly' ? 4 : 1}, minmax(0, 1fr))` }}>
+                      <div className="time-column-spacer" />
+                      {(viewType === 'weekly' ? fourDays : [parseISODate(selectedDate)]).map((d, dayIdx) => {
+                        const iso = toISODate(d)
+                        const dayItems = viewType === 'weekly' ? weekItemsByDay[dayIdx] : selectedItems
+                        const positioned = getPositionedItems(dayItems)
+                        return (
+                          <div key={iso} className="grid-day-column">
+                            {positioned.map(({ item, top, height, width, left }) => {
+                              const status = getItemStatus(item, iso)
+                              const isActive = selectedItem && itemKey(item) === itemKey(selectedItem)
+                              const isAllDay = item.allDay || !item.startTime
+                              const cardStyles = getEventStyleClasses(item)
+                              const attendees = getMockAttendeesForItem(item)
+                              return (
+                                <button
+                                  type="button"
+                                  key={itemKey(item)}
+                                  className={`grid-event-card status-${status} ${isActive ? 'is-active' : ''} ${cardStyles.className}`}
+                                  onClick={() => setSelectedItemKey(itemKey(item))}
+                                  style={{
+                                    position: 'absolute',
+                                    top: `${top}px`,
+                                    height: `${height}px`,
+                                    width: width,
+                                    left: left,
+                                    ...cardStyles.style
+                                  } as React.CSSProperties}
+                                >
+                                  {isAllDay ? (
+                                    <div className="event-card-content is-all-day">
+                                      <strong className="event-title">{item.title}</strong>
+                                    </div>
+                                  ) : (
+                                    <div className="event-card-content">
+                                      <div className="event-details-top">
+                                        <strong className="event-title">{item.title}</strong>
+                                        <span className="event-time">
+                                          <Clock size={12} />
+                                          {formatItemTime(item)}
+                                        </span>
+                                      </div>
+                                      {attendees.length > 0 && renderAvatarStack(attendees)}
+                                    </div>
+                                  )}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
                 </div>
-              </div>
-
-              <div className="focus-footer">
-                <span className="skeleton-rect skeleton-shimmer" style={{ width: 140, height: 40, borderRadius: 14 }} />
-              </div>
+              )}
             </div>
-          ) : selectedItem ? (
+          </div>
+        </main>
+      </div>
+
+      {/* Sleek details inspection popup modal */}
+      {selectedItemKey && selectedItem && (
+        <div className="details-modal-overlay" onClick={() => setSelectedItemKey(null)}>
+          <div className="details-modal-content" onClick={(e) => e.stopPropagation()}>
             <FocusDetail
               item={selectedItem}
               isCurrent={currentItem ? itemKey(currentItem) === itemKey(selectedItem) : false}
               onToggle={() => handleToggle(selectedItem)}
+              onClose={() => setSelectedItemKey(null)}
             />
-          ) : (
-            <div className="focus-empty">
-              <span><AlarmClock size={28} /></span>
-              <p>Current focus</p>
-              <h2>Nothing scheduled</h2>
-              <small>This space is yours. Add a routine block when you are ready.</small>
-              <button type="button" onClick={() => setModal({ open: true, date: selectedDate })}>
-                <Plus size={17} />
-                Create focus block
-              </button>
-            </div>
-          )}
-        </main>
-      </div>
+          </div>
+        </div>
+      )}
 
       {modal.open && createPortal(
         <CalendarItemModal
@@ -638,10 +951,12 @@ function FocusDetail({
   item,
   isCurrent,
   onToggle,
+  onClose,
 }: {
   item: CalendarItem
   isCurrent: boolean
   onToggle: () => void
+  onClose?: () => void
 }) {
   const checklist = parseChecklist(item.notes)
   const routineIcon = getRoutineIconDetails(item)
@@ -666,7 +981,14 @@ function FocusDetail({
     >
       <div className="focus-detail-panel-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <h3>Routine Details</h3>
-        <div className="focus-assignee-avatar" style={{ width: 28, height: 28, border: '2px solid #fff', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', backgroundImage: `url(${avatarSrc})` }} title="Profile" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {onClose && (
+            <button type="button" className="drawer-close-btn" onClick={onClose} aria-label="Close details">
+              <X size={15} />
+            </button>
+          )}
+          <div className="focus-assignee-avatar" style={{ width: 28, height: 28, border: '2px solid #fff', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', backgroundImage: `url(${avatarSrc})` }} title="Profile" />
+        </div>
       </div>
 
       <div className="focus-detail-body">
@@ -1223,7 +1545,31 @@ function stripChecklist(notes?: string) {
 
 function getFallbackDescription(item: CalendarItem) {
   const category = item.category?.toLowerCase() || 'personal'
-  return `A focused ${category} block for moving the day forward.`
+  const title = item.title?.toLowerCase() || ''
+  
+  if (title.includes('medicine') || title.includes('pill') || title.includes('supplement') || title.includes('dose')) {
+    return 'Scheduled health routine for supplements and medications.'
+  }
+  if (title.includes('workout') || title.includes('gym') || title.includes('run') || title.includes('exercise') || title.includes('fit')) {
+    return 'Physical activity and body fitness routine block.'
+  }
+  if (title.includes('meeting') || title.includes('sync') || title.includes('1:1') || title.includes('standup') || title.includes('discuss')) {
+    return 'Collaboration and team alignment sync session.'
+  }
+  if (title.includes('study') || title.includes('learn') || title.includes('read') || title.includes('course') || title.includes('book')) {
+    return 'Dedicated learning hour for skills development.'
+  }
+  if (title.includes('code') || title.includes('deploy') || title.includes('bug') || title.includes('pr') || title.includes('dev')) {
+    return 'Active engineering focus block for coding and deployment.'
+  }
+  if (title.includes('pay') || title.includes('bill') || title.includes('finance') || title.includes('tax')) {
+    return 'Financial planning and utility dues tracking log.'
+  }
+  if (title.includes('lunch') || title.includes('dinner') || title.includes('breakfast') || title.includes('coffee') || title.includes('meal')) {
+    return 'Nutritional intake and scheduled meal break.'
+  }
+  
+  return `A structured ${category} focus slot to optimize daily progress.`
 }
 
 function formatDuration(item: CalendarItem) {
@@ -1235,33 +1581,7 @@ function formatDuration(item: CalendarItem) {
   return remaining ? `${hours}h ${remaining}m` : `${hours}h`
 }
 
-function getDurationMinutes(item: CalendarItem) {
-  if (!item.startTime || !item.endTime) return null
-  return Math.max(0, timeToMinutes(item.endTime) - timeToMinutes(item.startTime))
-}
 
-function getRoutineBlockClass(item: CalendarItem) {
-  const duration = getDurationMinutes(item)
-  const noteLength = stripChecklist(item.notes).length
-  const checklistCount = parseChecklist(item.notes).length
-
-  if ((duration !== null && duration <= 15) && noteLength < 42 && checklistCount === 0) return 'is-quick'
-  if ((duration !== null && duration >= 90) || noteLength > 64 || checklistCount > 0) return 'is-roomy'
-  return 'is-standard'
-}
-
-function formatTimelineLabel(item: CalendarItem) {
-  if (item.allDay || !item.startTime) return 'All day'
-  return formatClockTime(item.startTime)
-}
-
-function formatRoutineSubline(item: CalendarItem) {
-  if (item.allDay || !item.startTime) return formatShortDate(item.date)
-  const dateLabel = item.date === toISODate(new Date())
-    ? 'Today'
-    : parseISODate(item.date).toLocaleDateString('en-US', { weekday: 'short' })
-  return `${dateLabel} ${formatClockTime(item.startTime)}`
-}
 
 function formatRecurrence(item: CalendarItem) {
   if (!item.recurrenceFrequency || item.recurrenceFrequency === 'NONE') return 'None'
@@ -1278,18 +1598,10 @@ function formatClockTime(time: string) {
   const [hours, minutes] = time.split(':').map(Number)
   return new Date(2000, 0, 1, hours, minutes).toLocaleTimeString('en-US', {
     hour: 'numeric',
-    minute: minutes ? '2-digit' : undefined,
+    minute: '2-digit',
   })
 }
 
-function formatHeaderDate(date: Date) {
-  return date.toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  })
-}
 
 function formatShortDate(date: string) {
   return parseISODate(date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
@@ -1330,6 +1642,122 @@ function formatTimelineDateParts(dateStr: string) {
   } catch {
     return { date: dateStr, time: '' }
   }
+}
+
+
+
+
+
+function calculateTimeStyles(item: CalendarItem) {
+  if (item.allDay || !item.startTime) {
+    return { top: 0, height: 50, isAllDay: true }
+  }
+  
+  const startMin = timeToMinutes(item.startTime)
+  const endMin = item.endTime ? timeToMinutes(item.endTime) : startMin + 60
+  
+  const gridStartMin = 8 * 60
+  const gridEndMin = 22 * 60
+  
+  const clampedStart = Math.max(gridStartMin, Math.min(gridEndMin, startMin))
+  const clampedEnd = Math.max(gridStartMin, Math.min(gridEndMin, endMin))
+  
+  const topOffset = ((clampedStart - gridStartMin) / 60) * 80
+  const heightVal = ((clampedEnd - clampedStart) / 60) * 80
+  
+  return {
+    top: topOffset,
+    height: Math.max(52, heightVal),
+    isAllDay: false
+  }
+}
+
+interface PositionedItem {
+  item: CalendarItem
+  top: number
+  height: number
+  width: string
+  left: string
+  isAllDay: boolean
+}
+
+function getPositionedItems(dayItems: CalendarItem[]): PositionedItem[] {
+  const timed = dayItems.filter((item) => !item.allDay && item.startTime)
+  const allDay = dayItems.filter((item) => item.allDay || !item.startTime)
+  
+  const result: PositionedItem[] = []
+  const sorted = [...timed].sort((a, b) => (a.startTime ?? '').localeCompare(b.startTime ?? ''))
+  
+  const columns: CalendarItem[][] = []
+  for (const item of sorted) {
+    let placed = false
+    for (let colIdx = 0; colIdx < columns.length; colIdx++) {
+      const lastItem = columns[colIdx][columns[colIdx].length - 1]
+      const lastEnd = lastItem.endTime ? timeToMinutes(lastItem.endTime) : timeToMinutes(lastItem.startTime ?? '00:00') + 60
+      const currentStart = timeToMinutes(item.startTime ?? '00:00')
+      
+      if (currentStart >= lastEnd) {
+        columns[colIdx].push(item)
+        placed = true
+        break
+      }
+    }
+    if (!placed) {
+      columns.push([item])
+    }
+  }
+  
+  const totalCols = columns.length
+  columns.forEach((colItems, colIdx) => {
+    colItems.forEach((item) => {
+      const { top, height, isAllDay } = calculateTimeStyles(item)
+      result.push({
+        item,
+        top,
+        height,
+        width: `${100 / totalCols}%`,
+        left: `${(colIdx * 100) / totalCols}%`,
+        isAllDay
+      })
+    })
+  })
+  
+  allDay.forEach((item, idx) => {
+    result.push({
+      item,
+      top: idx * 30,
+      height: 25,
+      width: '100%',
+      left: '0%',
+      isAllDay: true
+    })
+  })
+  
+  return result
+}
+
+function monthGrid(date: Date) {
+  const first = new Date(date.getFullYear(), date.getMonth(), 1)
+  const gridStart = startOfWeek(first)
+  const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0)
+  const gridEnd = startOfWeek(lastDay)
+  gridEnd.setDate(gridEnd.getDate() + 6)
+  const totalDays = Math.round((gridEnd.getTime() - gridStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
+  return daysBetween(gridStart, totalDays)
+}
+
+function daysBetween(start: Date, count: number) {
+  return Array.from({ length: count }, (_, index) => {
+    const date = new Date(start)
+    date.setDate(start.getDate() + index)
+    return date
+  })
+}
+
+function startOfWeek(date: Date) {
+  const next = new Date(date)
+  next.setDate(date.getDate() - date.getDay())
+  return next
 }
 
 export { CalendarOverviewDashboard }

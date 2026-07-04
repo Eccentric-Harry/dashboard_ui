@@ -132,3 +132,13 @@
   border-radius: 50%;
   background: #9ee7e8;
 }
+
+.mini-month-grid button.is-in-range:not(.is-selected) {
+  background: rgba(13, 148, 136, 0.12) !important;
+  color: #0d9488 !important;
+  border-radius: 6px;
+}
+
+.mini-month-grid button.is-in-range:not(.is-selected):hover {
+  background: rgba(13, 148, 136, 0.2) !important;
+}

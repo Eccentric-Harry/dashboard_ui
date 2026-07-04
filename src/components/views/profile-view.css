@@ -6,11 +6,12 @@
   position: absolute;
   inset: 110px 58px 24px 206px;
   z-index: 2;
-  overflow: hidden;
+  overflow-y: auto;
   padding: 20px 24px;
   color: #101312;
   overscroll-behavior: contain;
   box-sizing: border-box;
+  scrollbar-width: thin;
 }
 
 /* ─── Header ─── */
@@ -2035,5 +2036,159 @@
   border: 1.5px solid #ffffff;
   padding: 0 2px;
   box-sizing: border-box;
+}
+
+/* Google Calendar Sync Bento Card */
+.card-google-sync {
+  background: #eaebed;
+  min-height: 240px;
+}
+
+.google-sync-card-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: space-between;
+  flex-grow: 1;
+}
+
+.connected-status-wrapper, .disconnected-status-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  justify-content: space-between;
+  flex-grow: 1;
+}
+
+.status-indicator-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 12px;
+  width: fit-content;
+}
+
+.status-indicator-badge.connected {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+}
+
+.status-indicator-badge.connected .dot {
+  width: 8px;
+  height: 8px;
+  background-color: #10b981;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-indicator-badge.disconnected {
+  background: rgba(107, 114, 128, 0.1);
+  color: #4b5563;
+}
+
+.status-indicator-badge.disconnected .dot {
+  width: 8px;
+  height: 8px;
+  background-color: #6b7280;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.sync-description {
+  font-size: 13px;
+  color: #4b5563;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.connection-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.connection-info .info-label {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.connection-info .info-value {
+  color: #1c1d1f;
+  font-weight: 600;
+}
+
+.truncate-email {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.google-sync-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.sync-btn-connect, .sync-btn-now, .sync-btn-disconnect {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  height: 38px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border: none;
+  box-sizing: border-box;
+  padding: 0 16px;
+}
+
+.sync-btn-connect {
+  background: #1c1d1f;
+  color: #ffffff;
+  width: 100%;
+}
+
+.sync-btn-connect:hover {
+  background: #000000;
+  transform: translateY(-1px);
+}
+
+.sync-btn-now {
+  background: #ffffff;
+  color: #1c1d1f;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.sync-btn-now:hover:not(:disabled) {
+  background: #f4f4f5;
+  transform: translateY(-1px);
+}
+
+.sync-btn-now:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.sync-btn-disconnect {
+  background: rgba(239, 68, 68, 0.08);
+  color: #dc2626;
+}
+
+.sync-btn-disconnect:hover {
+  background: rgba(239, 68, 68, 0.15);
+  transform: translateY(-1px);
 }
 
