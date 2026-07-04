@@ -33,20 +33,16 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  CircleCheck,
   Clock,
   Loader2,
   Maximize2,
   Minimize2,
-  MoreHorizontal,
   Pencil,
   Plus,
-  Repeat2,
   Search,
-  Timer,
   Trash2,
+  AlignLeft,
   X,
-  XCircle,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -64,7 +60,7 @@ import { ConfirmDialog } from '../../ui/confirm-dialog'
 import { MiniMonth } from '../../ui/mini-month'
 import { getRoutineIconDetails } from './routine-icon-helper'
 import { getAvatarImage } from '../../../lib/avatar'
-import { getTagColor } from '../../../lib/tag-colors'
+
 
 import './calendar-overview.css'
 
@@ -170,9 +166,42 @@ function getMockAttendeesForItem(item: CalendarItem) {
   return attendeesList
 }
 
+function overrideLightColors(colorStr: string, category?: string) {
+  const upper = colorStr.toUpperCase()
+  if (upper === '#C8F3A3' || upper === 'C8F3A3' || (category && category.toLowerCase() === 'personal')) {
+    return '#7c3aed' // Bold Violet
+  }
+  if (upper === '#9EE7E8' || upper === '9EE7E8' || (category && category.toLowerCase() === 'health')) {
+    return '#10b981' // Bold Emerald
+  }
+  if (upper === '#9BD7FF' || upper === '9BD7FF' || (category && category.toLowerCase() === 'work')) {
+    return '#2563eb' // Bold Blue
+  }
+  if (upper === '#C9BFF6' || upper === 'C9BFF6' || (category && category.toLowerCase() === 'learning')) {
+    return '#0d9488' // Bold Teal
+  }
+  if (upper === '#FFD37D' || upper === 'FFD37D' || (category && category.toLowerCase() === 'finance')) {
+    return '#d97706' // Bold Amber
+  }
+  if (upper === '#FFB4D2' || upper === 'FFB4D2' || (category && category.toLowerCase() === 'social')) {
+    return '#db2777' // Bold Pink/Rose
+  }
+  return colorStr
+}
+
+function bannerForCategory(category?: string) {
+  const cat = (category || 'default').toLowerCase()
+  if (cat === 'personal') return '/banners/personal.jpg'
+  if (cat === 'work') return '/banners/work.jpg'
+  if (cat === 'health') return '/banners/health.jpg'
+  if (cat === 'learning') return '/banners/learning.jpg'
+  return '/banners/default.jpg'
+}
+
 function getEventStyleClasses(item: CalendarItem) {
   // Use custom item color if set
-  const color = item.color || colorForCategory(item.category || 'Personal')
+  const rawColor = item.color || colorForCategory(item.category || 'Personal')
+  const color = overrideLightColors(rawColor, item.category)
   
   let formattedColor = color
   if (!color.startsWith('#') && !color.startsWith('hsl')) {
@@ -235,22 +264,14 @@ function renderAvatarStack(attendees: Array<{ name: string; avatar: string }>) {
   )
 }
 
-function getFourDays(dateStr: string) {
+function getThreeDays(dateStr: string) {
   const selected = parseISODate(dateStr)
-  const day = selected.getDay()
+  const d1 = new Date(selected)
+  d1.setDate(selected.getDate() - 1)
   
-  let startDate: Date
-  if (day >= 1 && day <= 4) {
-    const diff = selected.getDate() - day + 1
-    startDate = new Date(selected.setDate(diff))
-  } else {
-    const diff = selected.getDate() - (day === 0 ? 2 : day - 5)
-    startDate = new Date(selected.setDate(diff))
-  }
-  
-  return Array.from({ length: 4 }, (_, idx) => {
-    const d = new Date(startDate)
-    d.setDate(startDate.getDate() + idx)
+  return Array.from({ length: 3 }, (_, idx) => {
+    const d = new Date(d1)
+    d.setDate(d1.getDate() + idx)
     return d
   })
 }
@@ -288,6 +309,8 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   })
   const [items, setItems] = useState<CalendarItem[]>([])
   const [selectedItemKey, setSelectedItemKey] = useState<string | null>(null)
+  const [hoveredItemKey, setHoveredItemKey] = useState<string | null>(null)
+  const [anchorRect, setAnchorRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null)
   const [loading, setLoading] = useState(false)
   const [modal, setModal] = useState<ModalState>({ open: false })
   const [deleteTarget, setDeleteTarget] = useState<CalendarItem | null>(null)
@@ -494,15 +517,15 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     }
   }, [items, upcomingItem])
 
-  const fourDays = useMemo(() => getFourDays(selectedDate), [selectedDate])
+  const threeDays = useMemo(() => getThreeDays(selectedDate), [selectedDate])
   
   const weekItemsByDay = useMemo(() => {
-    return fourDays.map((d) => {
+    return threeDays.map((d) => {
       const iso = toISODate(d)
       const dayItems = filteredItems.filter((item) => item.date === iso)
       return dayItems.sort(compareItems)
     })
-  }, [fourDays, filteredItems])
+  }, [threeDays, filteredItems])
 
   const currentItem = useMemo(() => findCurrentItem(selectedItems, selectedDate), [selectedDate, selectedItems])
   const selectedItem = useMemo(() => {
@@ -513,6 +536,16 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     if (currentItem && !currentItem.completed) return currentItem
     return selectedItems.find((item) => !item.completed) ?? selectedItems[0] ?? null
   }, [currentItem, selectedItemKey, selectedItems, filteredItems])
+
+  const activeItem = useMemo(() => {
+    if (selectedItemKey) {
+      return filteredItems.find((item) => itemKey(item) === selectedItemKey) ?? null
+    }
+    if (hoveredItemKey) {
+      return filteredItems.find((item) => itemKey(item) === hoveredItemKey) ?? null
+    }
+    return null
+  }, [selectedItemKey, hoveredItemKey, filteredItems])
 
   const updateSelectedDate = (date: string) => {
     setSelectedDate(date)
@@ -574,37 +607,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     }
   }
 
-  const handleMoveToTomorrow = async (item: CalendarItem) => {
-    if (!item.id) return
-    try {
-      const currentDate = parseISODate(item.date)
-      currentDate.setDate(currentDate.getDate() + 1)
-      const tomorrowStr = toISODate(currentDate)
-      
-      const payload: CalendarItemPayload = {
-        title: item.title,
-        date: tomorrowStr,
-        startTime: item.startTime,
-        endTime: item.endTime,
-        allDay: item.allDay,
-        itemType: item.itemType,
-        category: item.category,
-        color: item.color,
-        notes: item.notes,
-        completed: item.completed,
-        recurrenceFrequency: item.recurrenceFrequency,
-        recurrenceUntil: item.recurrenceUntil,
-      }
-      
-      await updateCalendarItem(item.id, payload)
-      toast.success(`Moved "${item.title}" to tomorrow`)
-      setSelectedItemKey(null)
-      await loadItems()
-      window.dispatchEvent(new CustomEvent('calendar-updated'))
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to move item')
-    }
-  }
+
 
 
 
@@ -663,8 +666,26 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                       <div
                         key={itemKey(item)}
                         className="month-event-capsule"
-                        style={{ '--capsule-color': routineIcon.color } as React.CSSProperties}
+                        style={{ '--capsule-color': routineIcon.color, cursor: 'pointer' } as React.CSSProperties}
                         title={item.title}
+                        onMouseEnter={(e) => {
+                          if (selectedItemKey) return
+                          const rect = e.currentTarget.getBoundingClientRect()
+                          setHoveredItemKey(itemKey(item))
+                          setAnchorRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
+                        }}
+                        onMouseLeave={() => {
+                          if (selectedItemKey) return
+                          setHoveredItemKey(null)
+                          setAnchorRect(null)
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          const rect = e.currentTarget.getBoundingClientRect()
+                          setSelectedItemKey(itemKey(item))
+                          setHoveredItemKey(null)
+                          setAnchorRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
+                        }}
                       >
                         {item.title}
                       </div>
@@ -697,7 +718,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
           {/* Navigation & view selection row */}
           <div className="stage-navigation-row">
             <div className="date-range-navigator">
-              <button type="button" className="nav-arrow" onClick={() => handleStep(viewType === 'weekly' ? -4 : -1)}>
+              <button type="button" className="nav-arrow" onClick={() => handleStep(viewType === 'weekly' ? -3 : -1)}>
                 <ChevronLeft size={16} />
               </button>
               <h2 className="range-title">
@@ -705,7 +726,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                   ? formatSelectedDateHeader(selectedDate)
                   : parseISODate(selectedDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
               </h2>
-              <button type="button" className="nav-arrow" onClick={() => handleStep(viewType === 'weekly' ? 4 : 1)}>
+              <button type="button" className="nav-arrow" onClick={() => handleStep(viewType === 'weekly' ? 3 : 1)}>
                 <ChevronRight size={16} />
               </button>
             </div>
@@ -718,7 +739,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                   className={`view-tab ${viewType === view ? 'is-selected' : ''}`}
                   onClick={() => setViewType(view)}
                 >
-                  {view.charAt(0).toUpperCase() + view.slice(1)}
+                  {view === 'weekly' ? '3-Day' : view.charAt(0).toUpperCase() + view.slice(1)}
                 </button>
               ))}
             </div>
@@ -755,11 +776,11 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
             ) : (
               <div className={`calendar-grid-scrollable view-${viewType}`} ref={weeklyScrollContainerRef}>
                 {/* Day Columns Header */}
-                <div className="grid-header-days" style={{ gridTemplateColumns: `80px repeat(${viewType === 'weekly' ? 4 : 1}, minmax(0, 1fr))` }}>
+                <div className="grid-header-days" style={{ gridTemplateColumns: `56px repeat(${viewType === 'weekly' ? 3 : 1}, minmax(0, 1fr))` }}>
                   <div className="grid-header-tz">
-                    <span>{viewType === 'weekly' ? 'GMT+05:30' : 'Time'}</span>
+                    <span>{viewType === 'weekly' ? 'GMT+5:30' : 'Time'}</span>
                   </div>
-                  {(viewType === 'weekly' ? fourDays : [parseISODate(selectedDate)]).map((d, dayIdx) => {
+                  {(viewType === 'weekly' ? threeDays : [parseISODate(selectedDate)]).map((d, dayIdx) => {
                     const iso = toISODate(d)
                     const isSelected = iso === selectedDate
                     const isToday = iso === toISODate(new Date())
@@ -793,9 +814,23 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                                   type="button"
                                   key={itemKey(item)}
                                   className={`all-day-event-chip ${isActive ? 'is-active' : ''}`}
+                                  onMouseEnter={(e) => {
+                                    if (selectedItemKey) return
+                                    const rect = e.currentTarget.getBoundingClientRect()
+                                    setHoveredItemKey(itemKey(item))
+                                    setAnchorRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
+                                  }}
+                                  onMouseLeave={() => {
+                                    if (selectedItemKey) return
+                                    setHoveredItemKey(null)
+                                    setAnchorRect(null)
+                                  }}
                                   onClick={(e) => {
                                     e.stopPropagation()
+                                    const rect = e.currentTarget.getBoundingClientRect()
                                     setSelectedItemKey(itemKey(item))
+                                    setHoveredItemKey(null)
+                                    setAnchorRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
                                   }}
                                   style={{
                                     width: '100%',
@@ -836,9 +871,9 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                     ))}
                   </div>
 
-                  <div className="grid-columns-container" style={{ gridTemplateColumns: `80px repeat(${viewType === 'weekly' ? 4 : 1}, minmax(0, 1fr))` }}>
+                  <div className="grid-columns-container" style={{ gridTemplateColumns: `56px repeat(${viewType === 'weekly' ? 3 : 1}, minmax(0, 1fr))` }}>
                     <div className="time-column-spacer" />
-                    {(viewType === 'weekly' ? fourDays : [parseISODate(selectedDate)]).map((d, dayIdx) => {
+                    {(viewType === 'weekly' ? threeDays : [parseISODate(selectedDate)]).map((d, dayIdx) => {
                       const iso = toISODate(d)
                       const dayItems = viewType === 'weekly' ? weekItemsByDay[dayIdx] : selectedItems
                       const positioned = getPositionedItems(dayItems)
@@ -855,7 +890,24 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                                 type="button"
                                 key={itemKey(item)}
                                 className={`grid-event-card status-${status} ${isActive ? 'is-active' : ''} ${cardStyles.className}`}
-                                onClick={() => setSelectedItemKey(itemKey(item))}
+                                onMouseEnter={(e) => {
+                                  if (selectedItemKey) return
+                                  const rect = e.currentTarget.getBoundingClientRect()
+                                  setHoveredItemKey(itemKey(item))
+                                  setAnchorRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
+                                }}
+                                onMouseLeave={() => {
+                                  if (selectedItemKey) return
+                                  setHoveredItemKey(null)
+                                  setAnchorRect(null)
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  const rect = e.currentTarget.getBoundingClientRect()
+                                  setSelectedItemKey(itemKey(item))
+                                  setHoveredItemKey(null)
+                                  setAnchorRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
+                                }}
                                 style={{
                                   position: 'absolute',
                                   top: `${top}px`,
@@ -895,6 +947,134 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                 </div>
               </div>
             )}
+
+            {/* Google Calendar Overlap Popover Card */}
+            {activeItem && anchorRect && (
+              <div 
+                className="calendar-details-popover"
+                style={{
+                  position: 'fixed',
+                  top: `${Math.max(80, Math.min(anchorRect.top + (anchorRect.height / 2) - 180, window.innerHeight - 460))}px`,
+                  left: `${anchorRect.left + anchorRect.width + 412 < window.innerWidth 
+                    ? anchorRect.left + anchorRect.width + 8 
+                    : Math.max(10, anchorRect.left - 408)}px`
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Banner Image header */}
+                <div 
+                  className="popover-banner-header"
+                  style={{
+                    height: '140px',
+                    backgroundImage: `url(${bannerForCategory(activeItem.category)})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    position: 'relative'
+                  }}
+                >
+                  {/* Top-Right Action overlay */}
+                  <div className="popover-banner-actions">
+                    <button 
+                      type="button" 
+                      className="popover-action-btn"
+                      title="Edit"
+                      onClick={() => {
+                        setSelectedItemKey(null)
+                        setHoveredItemKey(null)
+                        setAnchorRect(null)
+                        setModal({ open: true, item: activeItem, date: activeItem.date })
+                      }}
+                    >
+                      <Pencil size={15} />
+                    </button>
+                    <button 
+                      type="button" 
+                      className="popover-action-btn"
+                      title="Delete"
+                      onClick={() => {
+                        setDeleteTarget(activeItem)
+                        setSelectedItemKey(null)
+                        setHoveredItemKey(null)
+                        setAnchorRect(null)
+                      }}
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                    <button 
+                      type="button" 
+                      className="popover-action-btn close-btn"
+                      title="Close"
+                      onClick={() => {
+                        setSelectedItemKey(null)
+                        setHoveredItemKey(null)
+                        setAnchorRect(null)
+                      }}
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Popover content body */}
+                <div className="popover-body-content">
+                  <div className="popover-title-row">
+                    <span 
+                      className="category-bullet" 
+                      style={{ backgroundColor: overrideLightColors(activeItem.color || colorForCategory(activeItem.category || 'Personal'), activeItem.category) }} 
+                    />
+                    <div className="title-text-col">
+                      <h4 className="popover-title">{activeItem.title}</h4>
+                      <span className="popover-category-tag" style={{ color: overrideLightColors(activeItem.color || colorForCategory(activeItem.category || 'Personal'), activeItem.category) }}>
+                        {activeItem.category || 'Personal'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="popover-detail-section">
+                    <div className="popover-detail-row">
+                      <Clock size={16} className="detail-icon" />
+                      <div className="detail-text">
+                        <span className="detail-date-range">
+                          {formatSelectedDateHeader(activeItem.date)}
+                        </span>
+                        <span className="detail-time-range">
+                          {activeItem.allDay || !activeItem.startTime ? 'All day' : `${activeItem.startTime} - ${activeItem.endTime || ''}`}
+                        </span>
+                      </div>
+                    </div>
+
+
+                    {activeItem.notes && (
+                      <div className="popover-detail-row align-start">
+                        <AlignLeft size={16} className="detail-icon mt-0.5" />
+                        <span className="detail-text notes-text">{stripChecklist(activeItem.notes) || activeItem.notes}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Bottom Actions footer */}
+                <div className="popover-footer-actions">
+                  <span className="going-label">Complete task?</span>
+                  <div className="going-options">
+                    <button 
+                      type="button" 
+                      className={`going-btn ${activeItem.completed ? 'is-active' : ''}`}
+                      onClick={() => handleToggle(activeItem)}
+                    >
+                      Yes
+                    </button>
+                    <button 
+                      type="button" 
+                      className={`going-btn ${!activeItem.completed ? 'is-active' : ''}`}
+                      onClick={() => handleToggle(activeItem)}
+                    >
+                      No
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </main>
@@ -926,7 +1106,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
               selectedDate={selectedDate}
               onSelect={handleDateSelect}
               allowFuture
-              highlightedRange={viewType === 'weekly' ? fourDays.map((d) => toISODate(d)) : undefined}
+              highlightedRange={viewType === 'weekly' ? threeDays.map((d) => toISODate(d)) : undefined}
             />
           </div>
 
@@ -1076,29 +1256,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
         renderMainCanvas(true),
         document.body
       )}
-      {/* Sleek details inspection popup modal */}
-      {selectedItemKey && selectedItem && (
-        <div className="details-modal-overlay" onClick={() => setSelectedItemKey(null)}>
-          <div className="details-modal-content" onClick={(e) => e.stopPropagation()}>
-            <FocusDetail
-              item={selectedItem}
-              isCurrent={currentItem ? itemKey(currentItem) === itemKey(selectedItem) : false}
-              onToggle={() => handleToggle(selectedItem)}
-              onToggleCancel={() => handleToggleCancel(selectedItem)}
-              onDelete={() => {
-                setDeleteTarget(selectedItem)
-                setSelectedItemKey(null)
-              }}
-              onEdit={() => {
-                setSelectedItemKey(null)
-                setModal({ open: true, item: selectedItem, date: selectedItem.date })
-              }}
-              onMoveToTomorrow={() => handleMoveToTomorrow(selectedItem)}
-              onClose={() => setSelectedItemKey(null)}
-            />
-          </div>
-        </div>
-      )}
+
 
       {modal.open && createPortal(
         <CalendarItemModal
@@ -1154,242 +1312,6 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
         </button>
       )}
     </section>
-  )
-}
-
-function FocusDetail({
-  item,
-  isCurrent,
-  onToggle,
-  onToggleCancel,
-  onDelete,
-  onEdit,
-  onMoveToTomorrow,
-  onClose,
-}: {
-  item: CalendarItem
-  isCurrent: boolean
-  onToggle: () => void
-  onToggleCancel: () => void
-  onDelete: () => void
-  onEdit: () => void
-  onMoveToTomorrow: () => void
-  onClose?: () => void
-}) {
-  const [menuOpen, setMenuOpen] = useState(false)
-  const checklist = parseChecklist(item.notes)
-  const routineIcon = getRoutineIconDetails(item)
-  const RoutineIcon = routineIcon.icon
-  const category = item.category || 'Personal'
-  const categoryColors = getTagColor(category)
-  const catHue = hueForCategory(category)
-  const notes = stripChecklist(item.notes) || getFallbackDescription(item)
-  const statusLabel = item.cancelled ? 'Cancelled' : item.completed ? 'Completed' : isCurrent ? 'Live now' : 'Planned'
-
-  return (
-    <div
-      className="focus-detail"
-      style={{ '--cat-hue': catHue, '--focus-color': routineIcon.color } as React.CSSProperties}
-    >
-      <div className="focus-detail-panel-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
-        <h3>Routine Details</h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button
-            type="button"
-            className="drawer-more-btn"
-            onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="More actions"
-          >
-            <MoreHorizontal size={15} />
-          </button>
-          {onClose && (
-            <button type="button" className="drawer-close-btn" onClick={onClose} aria-label="Close details">
-              <X size={15} />
-            </button>
-          )}
-        </div>
-
-        {menuOpen && (
-          <div className="focus-detail-dropdown">
-            <button
-              type="button"
-              className="focus-detail-dropdown-item"
-              onClick={() => {
-                setMenuOpen(false)
-                onEdit()
-              }}
-            >
-              <Pencil size={14} /> Edit
-            </button>
-            <button
-              type="button"
-              className="focus-detail-dropdown-item"
-              onClick={() => {
-                setMenuOpen(false)
-                onMoveToTomorrow()
-              }}
-            >
-              <CalendarDays size={14} /> Move to tomorrow
-            </button>
-            <button
-              type="button"
-              className="focus-detail-dropdown-item"
-              onClick={() => {
-                setMenuOpen(false)
-                onToggle()
-              }}
-            >
-              <Check size={14} /> {item.completed ? 'Mark incomplete' : 'Mark complete'}
-            </button>
-            <button
-              type="button"
-              className="focus-detail-dropdown-item"
-              onClick={() => {
-                setMenuOpen(false)
-                onToggleCancel()
-              }}
-            >
-              <XCircle size={14} /> {item.cancelled ? 'Restore event' : 'Mark cancelled'}
-            </button>
-            <div style={{ height: 1, backgroundColor: 'rgba(0, 0, 0, 0.05)', margin: '4px 0' }} />
-            <button
-              type="button"
-              className="focus-detail-dropdown-item danger"
-              onClick={() => {
-                setMenuOpen(false)
-                onDelete()
-              }}
-            >
-              <Trash2 size={14} /> Delete
-            </button>
-          </div>
-        )}
-      </div>
-
-      <div className="focus-detail-body">
-        <div className="focus-summary-card">
-          <div className="focus-summary-main">
-            <span className="focus-icon">
-              <RoutineIcon size={22} />
-            </span>
-            <div>
-              <div className="focus-status-strip">
-                <span className={`focus-status-pill ${isCurrent ? 'is-live' : ''} ${item.completed ? 'is-done' : ''} ${item.cancelled ? 'is-cancelled' : ''}`}>
-                  <span />
-                  {statusLabel}
-                </span>
-                <span className="focus-category-mark" style={{ background: categoryColors.bg, color: categoryColors.text }}>
-                  <span style={{ background: categoryColors.dot }} />
-                  {category}
-                </span>
-              </div>
-              <h2 className="focus-detail-title">{item.title}</h2>
-              <p className="focus-summary-note">{notes}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="focus-detail-layout">
-          <section className="focus-detail-section focus-schedule-card">
-            <span className="focus-section-label">Schedule</span>
-            <div className="focus-facts-grid">
-              <div className="focus-fact">
-                <CalendarDays size={15} />
-                <span>Date</span>
-                <strong>{formatShortDate(item.date)}</strong>
-              </div>
-              <div className="focus-fact">
-                <Timer size={15} />
-                <span>Time</span>
-                <strong>{formatItemTime(item)}</strong>
-              </div>
-              <div className="focus-fact">
-                <Clock size={15} />
-                <span>Duration</span>
-                <strong>{formatDuration(item)}</strong>
-              </div>
-              <div className="focus-fact">
-                <Repeat2 size={15} />
-                <span>Repeats</span>
-                <strong>{formatRecurrence(item)}</strong>
-              </div>
-            </div>
-          </section>
-
-          <div className="focus-detail-right-column">
-            <section className="focus-detail-section focus-notes-card">
-              <span className="focus-section-label">Notes</span>
-              <div className="focus-detail-notes">
-                {notes}
-              </div>
-            </section>
-
-            {checklist.length > 0 && (
-              <section className="focus-detail-section focus-checklist-card">
-                <span className="focus-section-label">Micro checklist</span>
-                <div className="focus-detail-checklist">
-                  {checklist.map((entry, index) => (
-                    <div 
-                      key={`${entry.text}-${index}`} 
-                      className={`focus-detail-checkbox-item ${entry.checked ? 'is-completed' : ''}`}
-                    >
-                      <div className={`focus-circle-check ${entry.checked ? 'checked' : ''}`}>
-                        {entry.checked && <Check size={10} strokeWidth={3} />}
-                      </div>
-                      <span className="subtask-text">{entry.text}</span>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            <section className="focus-detail-section focus-history-card">
-              <span className="focus-section-label">History</span>
-              <div className="focus-detail-timeline">
-                {item.history && item.history.length > 0 ? (
-                  [...item.history].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).map((hist, idx) => {
-                    const { date, time } = formatTimelineDateParts(hist.timestamp)
-                    return (
-                      <div className="focus-timeline-item" key={idx}>
-                        <span className="timestamp-date">{date}</span>
-                        <div className="focus-timeline-content">
-                          <span className="timestamp-time">{time}</span>
-                          <span className="timestamp-msg">{hist.message}</span>
-                        </div>
-                      </div>
-                    )
-                  })
-                ) : null}
-                {item.createdAt ? (
-                  <div className="focus-timeline-item">
-                    <span className="timestamp-date">{formatTimelineDateParts(item.createdAt).date}</span>
-                    <div className="focus-timeline-content">
-                      <span className="timestamp-time">{formatTimelineDateParts(item.createdAt).time}</span>
-                      <span className="timestamp-msg">Routine block created</span>
-                    </div>
-                  </div>
-                ) : !item.history?.length ? (
-                  <div className="focus-timeline-item">No history yet</div>
-                ) : null}
-              </div>
-            </section>
-          </div>
-        </div>
-      </div>
-
-      <div className="focus-footer">
-        {item.cancelled ? (
-          <button type="button" className="focus-footer-btn is-cancelled" disabled style={{ opacity: 0.7, cursor: 'not-allowed' }}>
-            <XCircle size={18} /> Cancelled
-          </button>
-        ) : (
-          <button type="button" className={`focus-footer-btn ${item.completed ? 'is-complete' : ''}`} onClick={onToggle}>
-            {item.completed ? <CircleCheck size={18} /> : <Check size={18} />}
-            {item.completed ? 'Completed' : 'Mark complete'}
-          </button>
-        )}
-      </div>
-    </div>
   )
 }
 
@@ -1801,13 +1723,7 @@ function itemKey(item: CalendarItem) {
   return item.occurrenceId ?? `${item.id ?? item.title}-${item.date}-${item.startTime ?? 'all-day'}`
 }
 
-function parseChecklist(notes?: string) {
-  if (!notes) return []
-  return notes.split('\n').flatMap((line) => {
-    const match = line.trim().match(/^[-*]\s+\[([ xX])\]\s+(.+)$/)
-    return match ? [{ checked: match[1].toLowerCase() === 'x', text: match[2] }] : []
-  })
-}
+
 
 function stripChecklist(notes?: string) {
   if (!notes) return ''
@@ -1818,50 +1734,7 @@ function stripChecklist(notes?: string) {
     .trim()
 }
 
-function getFallbackDescription(item: CalendarItem) {
-  const category = item.category?.toLowerCase() || 'personal'
-  const title = item.title?.toLowerCase() || ''
-  
-  if (title.includes('medicine') || title.includes('pill') || title.includes('supplement') || title.includes('dose')) {
-    return 'Scheduled health routine for supplements and medications.'
-  }
-  if (title.includes('workout') || title.includes('gym') || title.includes('run') || title.includes('exercise') || title.includes('fit')) {
-    return 'Physical activity and body fitness routine block.'
-  }
-  if (title.includes('meeting') || title.includes('sync') || title.includes('1:1') || title.includes('standup') || title.includes('discuss')) {
-    return 'Collaboration and team alignment sync session.'
-  }
-  if (title.includes('study') || title.includes('learn') || title.includes('read') || title.includes('course') || title.includes('book')) {
-    return 'Dedicated learning hour for skills development.'
-  }
-  if (title.includes('code') || title.includes('deploy') || title.includes('bug') || title.includes('pr') || title.includes('dev')) {
-    return 'Active engineering focus block for coding and deployment.'
-  }
-  if (title.includes('pay') || title.includes('bill') || title.includes('finance') || title.includes('tax')) {
-    return 'Financial planning and utility dues tracking log.'
-  }
-  if (title.includes('lunch') || title.includes('dinner') || title.includes('breakfast') || title.includes('coffee') || title.includes('meal')) {
-    return 'Nutritional intake and scheduled meal break.'
-  }
-  
-  return `A structured ${category} focus slot to optimize daily progress.`
-}
 
-function formatDuration(item: CalendarItem) {
-  if (!item.startTime || !item.endTime) return item.allDay ? 'All day' : 'Flexible'
-  const minutes = timeToMinutes(item.endTime) - timeToMinutes(item.startTime)
-  if (minutes < 60) return `${minutes} min`
-  const hours = Math.floor(minutes / 60)
-  const remaining = minutes % 60
-  return remaining ? `${hours}h ${remaining}m` : `${hours}h`
-}
-
-
-
-function formatRecurrence(item: CalendarItem) {
-  if (!item.recurrenceFrequency || item.recurrenceFrequency === 'NONE') return 'None'
-  return item.recurrenceFrequency.charAt(0) + item.recurrenceFrequency.slice(1).toLowerCase()
-}
 
 function formatItemTime(item: CalendarItem) {
   if (item.allDay || !item.startTime) return 'All day'
@@ -1878,9 +1751,7 @@ function formatClockTime(time: string) {
 }
 
 
-function formatShortDate(date: string) {
-  return parseISODate(date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
-}
+
 
 function parseISODate(value: string) {
   const [year, month, day] = value.split('-').map(Number)
@@ -1902,22 +1773,7 @@ function colorForCategory(category: string) {
 }
 
 
-function formatTimelineDateParts(dateStr: string) {
-  if (!dateStr) return { date: '', time: '' }
-  try {
-    const d = new Date(dateStr)
-    if (isNaN(d.getTime())) return { date: dateStr, time: '' }
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-    const month = months[d.getMonth()]
-    const day = d.getDate()
-    const year = d.getFullYear()
-    const hh = String(d.getHours()).padStart(2, '0')
-    const mm = String(d.getMinutes()).padStart(2, '0')
-    return { date: `${month} ${day}, ${year}`, time: `${hh}:${mm}` }
-  } catch {
-    return { date: dateStr, time: '' }
-  }
-}
+
 
 
 
