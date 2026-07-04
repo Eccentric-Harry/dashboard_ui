@@ -37,6 +37,29 @@ const rules: { pattern: RegExp; icon: typeof ListChecks; color: string; bg: stri
   { pattern: /\b(call|phone|skype|facetime|discord|slack|message|text|email|inbox|correspondence)\b/, icon: Users, color: '#6366f1', bg: '#eef0f7' },
 ]
 
+function overrideLightColors(colorStr: string, category?: string) {
+  const upper = colorStr.toUpperCase()
+  if (upper === '#C8F3A3' || upper === 'C8F3A3' || (category && category.toLowerCase() === 'personal')) {
+    return '#7c3aed' // Bold Violet
+  }
+  if (upper === '#9EE7E8' || upper === '9EE7E8' || (category && category.toLowerCase() === 'health')) {
+    return '#10b981' // Bold Emerald
+  }
+  if (upper === '#9BD7FF' || upper === '9BD7FF' || (category && category.toLowerCase() === 'work')) {
+    return '#2563eb' // Bold Blue
+  }
+  if (upper === '#C9BFF6' || upper === 'C9BFF6' || (category && category.toLowerCase() === 'learning')) {
+    return '#0d9488' // Bold Teal
+  }
+  if (upper === '#FFD37D' || upper === 'FFD37D' || (category && category.toLowerCase() === 'finance')) {
+    return '#d97706' // Bold Amber
+  }
+  if (upper === '#FFB4D2' || upper === 'FFB4D2' || (category && category.toLowerCase() === 'social')) {
+    return '#db2777' // Bold Pink/Rose
+  }
+  return colorStr
+}
+
 export const getRoutineIconDetails = (item: {
   itemType?: string
   title?: string
@@ -50,8 +73,10 @@ export const getRoutineIconDetails = (item: {
   const type = (item.itemType || '').toUpperCase()
   const text = `${title} ${notes}`
 
+  const rawColor = item.color ? overrideLightColors(item.color, item.category) : undefined
+
   // If the item has an explicit custom hex color (e.g., from Google Calendar), use it!
-  if (item.color && item.color.startsWith('#')) {
+  if (rawColor && rawColor.startsWith('#')) {
     let icon = ListChecks
     for (const rule of rules) {
       if (rule.pattern.test(text)) {
@@ -70,8 +95,8 @@ export const getRoutineIconDetails = (item: {
       else if (type === 'REMINDER') icon = Bell
       else if (type === 'MILESTONE') icon = Milestone
     }
-    const bg = item.color.length === 7 ? `${item.color}26` : `${item.color.slice(0, 7)}26`
-    return { icon, color: item.color, bg }
+    const bg = rawColor.length === 7 ? `${rawColor}26` : `${rawColor.slice(0, 7)}26`
+    return { icon, color: rawColor, bg }
   }
 
   for (const rule of rules) {
