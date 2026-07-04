@@ -36,6 +36,10 @@ import {
   CircleCheck,
   Clock,
   Loader2,
+  Maximize2,
+  Minimize2,
+  MoreHorizontal,
+  Pencil,
   Plus,
   Repeat2,
   Search,
@@ -167,33 +171,24 @@ function getMockAttendeesForItem(item: CalendarItem) {
 }
 
 function getEventStyleClasses(item: CalendarItem) {
-  if (item.color) {
-    const hex = item.color.startsWith('#') ? item.color : `#${item.color}`
-    return {
-      style: {
-        backgroundColor: `${hex}33`,
-        color: hex,
-      },
-      className: 'event-custom',
-    }
+  // Use custom item color if set
+  const color = item.color || colorForCategory(item.category || 'Personal')
+  
+  let formattedColor = color
+  if (!color.startsWith('#') && !color.startsWith('hsl')) {
+    formattedColor = `#${color}`
   }
-
-  const classification = getEventClassification(item)
-  switch (classification) {
-    case 'BIRTHDAY':
-      return { className: 'event-birthday' }
-    case 'DEADLINE':
-      return { className: 'event-deadline' }
-    case 'MEETING':
-      return { className: 'event-meeting' }
-    case 'MILESTONE':
-      return { className: 'event-milestone' }
-    case 'PERSONAL':
-      return { className: 'event-personal' }
-    case 'TASK':
-      return { className: 'event-task' }
-    default:
-      return { className: 'event-default' }
+  
+  // Google Calendar style: solid background with white text and bold fonts
+  return {
+    style: {
+      backgroundColor: formattedColor,
+      color: '#ffffff',
+      fontWeight: '700',
+      borderRadius: '8px',
+      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)',
+    },
+    className: 'event-custom',
   }
 }
 
@@ -303,6 +298,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   const [upcomingItem, setUpcomingItem] = useState<CalendarItem | null>(null)
   const [filtersOpen, setFiltersOpen] = useState(true)
   const [otherCalendarsOpen, setOtherCalendarsOpen] = useState(true)
+  const [isFullView, setIsFullView] = useState(false)
 
   const [profileAvatar, setProfileAvatar] = useState(() => getAvatarImage(localStorage.getItem('avatarUrl') || 'luffy'))
 
@@ -407,20 +403,56 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   const selectedItems = useMemo(() => byDate(filteredItems, selectedDate), [filteredItems, selectedDate])
 
   const sidebarUpcomingItem = useMemo(() => {
-    if (upcomingItem) return upcomingItem
-
+    // 1. Prioritize a timed event happening right now today
+    const todayStr = toISODate(new Date())
+    const now = new Date().getHours() * 60 + new Date().getMinutes()
+    
+    // Get all today's items from the local loaded items
+    const todayItems = items.filter(item => item.date === todayStr && !item.completed && !item.cancelled)
+    
+    const current = todayItems.find(item => {
+      if (!item.startTime) return false
+      const start = timeToMinutes(item.startTime)
+      const end = item.endTime ? timeToMinutes(item.endTime) : start + 60
+      return now >= start && now < end
+    })
+    
+    if (current) {
+      return { item: current, label: 'Live Now' }
+    }
+    
+    // 2. Next, check if there's an all-day event for today
+    const todayAllDay = todayItems.find(item => item.allDay || !item.startTime)
+    if (todayAllDay) {
+      return { item: todayAllDay, label: "Today's Event" }
+    }
+    
+    // 3. Next, use the loaded upcomingItem
+    if (upcomingItem) {
+      const classification = getEventClassification(upcomingItem)
+      let eyebrow = 'Upcoming event'
+      if (classification === 'MEETING') eyebrow = 'Upcoming meeting'
+      else if (classification === 'DEADLINE' || classification === 'TASK') eyebrow = 'Upcoming task'
+      else if (classification === 'MILESTONE') eyebrow = 'Upcoming milestone'
+      return { item: upcomingItem, label: eyebrow }
+    }
+    
+    // 4. Fallback to mock item
     return {
-      id: 'mock-meeting',
-      title: 'UX Huddle Call',
-      startTime: '09:00',
-      endTime: '09:30',
-      date: toISODate(new Date()),
-      itemType: 'EVENT',
-      category: 'Social',
-      completed: false,
-      cancelled: false,
-    } as CalendarItem
-  }, [upcomingItem])
+      item: {
+        id: 'mock-meeting',
+        title: 'UX Huddle Call',
+        startTime: '09:00',
+        endTime: '09:30',
+        date: todayStr,
+        itemType: 'EVENT',
+        category: 'Social',
+        completed: false,
+        cancelled: false,
+      } as CalendarItem,
+      label: 'Meeting reminder'
+    }
+  }, [items, upcomingItem])
 
   const fourDays = useMemo(() => getFourDays(selectedDate), [selectedDate])
   
@@ -500,6 +532,38 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     }
   }
 
+  const handleMoveToTomorrow = async (item: CalendarItem) => {
+    if (!item.id) return
+    try {
+      const currentDate = parseISODate(item.date)
+      currentDate.setDate(currentDate.getDate() + 1)
+      const tomorrowStr = toISODate(currentDate)
+      
+      const payload: CalendarItemPayload = {
+        title: item.title,
+        date: tomorrowStr,
+        startTime: item.startTime,
+        endTime: item.endTime,
+        allDay: item.allDay,
+        itemType: item.itemType,
+        category: item.category,
+        color: item.color,
+        notes: item.notes,
+        completed: item.completed,
+        recurrenceFrequency: item.recurrenceFrequency,
+        recurrenceUntil: item.recurrenceUntil,
+      }
+      
+      await updateCalendarItem(item.id, payload)
+      toast.success(`Moved "${item.title}" to tomorrow`)
+      setSelectedItemKey(null)
+      await loadItems()
+      window.dispatchEvent(new CustomEvent('calendar-updated'))
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to move item')
+    }
+  }
+
 
 
   const handleDeleteRecurring = async (mode: 'ONLY_THIS' | 'ALL') => {
@@ -576,6 +640,225 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     )
   }
 
+  const renderMainCanvas = (isFullMode: boolean) => {
+    return (
+      <main
+        className={`focus-canvas ${isFullMode ? 'is-full-view-active' : ''}`}
+        onClick={() => {
+          if (isFullMode) setIsFullView(false)
+        }}
+      >
+        <div
+          className="calendar-main-stage"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Navigation & view selection row */}
+          <div className="stage-navigation-row">
+            <div className="date-range-navigator">
+              <button type="button" className="nav-arrow" onClick={() => handleStep(viewType === 'weekly' ? -4 : -1)}>
+                <ChevronLeft size={16} />
+              </button>
+              <h2 className="range-title">
+                {viewType === 'weekly' || viewType === 'daily'
+                  ? formatSelectedDateHeader(selectedDate)
+                  : parseISODate(selectedDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+              </h2>
+              <button type="button" className="nav-arrow" onClick={() => handleStep(viewType === 'weekly' ? 4 : 1)}>
+                <ChevronRight size={16} />
+              </button>
+            </div>
+
+            <div className="view-switcher-tabs">
+              {(['daily', 'weekly', 'monthly'] as const).map((view) => (
+                <button
+                  key={view}
+                  type="button"
+                  className={`view-tab ${viewType === view ? 'is-selected' : ''}`}
+                  onClick={() => setViewType(view)}
+                >
+                  {view.charAt(0).toUpperCase() + view.slice(1)}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <button
+                type="button"
+                className="create-event-btn"
+                onClick={() => setModal({ open: true, date: selectedDate })}
+              >
+                <Plus size={14} />
+                Create event
+              </button>
+              <button
+                type="button"
+                className="calendar-expand-btn"
+                onClick={() => setIsFullView(!isFullView)}
+                aria-label={isFullView ? "Minimize calendar" : "Expand calendar"}
+                title={isFullView ? "Minimize calendar" : "Expand calendar"}
+              >
+                {isFullView ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Stage Calendar Body Grid */}
+          <div className="stage-grid-canvas">
+            {loading ? (
+              <div className="stage-loader">
+                <Loader2 size={32} className="animate-spin text-teal-600" />
+              </div>
+            ) : viewType === 'monthly' ? (
+              <MonthViewGrid />
+            ) : (
+              <div className={`calendar-grid-scrollable view-${viewType}`}>
+                {/* Day Columns Header */}
+                <div className="grid-header-days" style={{ gridTemplateColumns: `80px repeat(${viewType === 'weekly' ? 4 : 1}, minmax(0, 1fr))` }}>
+                  <div className="grid-header-tz">
+                    <span>{viewType === 'weekly' ? 'GMT+05:30' : 'Time'}</span>
+                  </div>
+                  {(viewType === 'weekly' ? fourDays : [parseISODate(selectedDate)]).map((d, dayIdx) => {
+                    const iso = toISODate(d)
+                    const isSelected = iso === selectedDate
+                    const isToday = iso === toISODate(new Date())
+                    const dayItems = viewType === 'weekly' ? weekItemsByDay[dayIdx] : selectedItems
+                    const dayAllDayItems = dayItems.filter((item) => item.allDay || !item.startTime)
+                    return (
+                      <div
+                        key={iso}
+                        className="grid-header-column-wrapper"
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 8,
+                          padding: '4px 0',
+                        }}
+                      >
+                        <div
+                          className={`grid-header-day-card ${isSelected ? 'is-selected' : ''} ${isToday ? 'is-today' : ''}`}
+                          onClick={() => updateSelectedDate(iso)}
+                        >
+                          <span className="day-name">{d.toLocaleDateString('en-US', { weekday: 'long' })}</span>
+                          <strong className="day-number-pill">{d.getDate()}</strong>
+                        </div>
+                        {dayAllDayItems.length > 0 && (
+                          <div className="all-day-events-container" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            {dayAllDayItems.map((item) => {
+                              const cardStyles = getEventStyleClasses(item)
+                              const isActive = selectedItem && itemKey(item) === itemKey(selectedItem)
+                              return (
+                                <button
+                                  type="button"
+                                  key={itemKey(item)}
+                                  className={`all-day-event-chip ${isActive ? 'is-active' : ''}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setSelectedItemKey(itemKey(item))
+                                  }}
+                                  style={{
+                                    width: '100%',
+                                    textAlign: 'left',
+                                    padding: '6px 8px',
+                                    borderRadius: '6px',
+                                    fontSize: '11px',
+                                    fontWeight: '700',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    backgroundColor: cardStyles.style.backgroundColor,
+                                    color: cardStyles.style.color,
+                                    boxShadow: isActive ? `0 0 0 2px #ffffff, 0 0 0 4px ${cardStyles.style.color}` : 'none',
+                                    zIndex: isActive ? 2 : 1,
+                                  }}
+                                >
+                                  <div className="event-title" style={{ fontSize: 11, WebkitLineClamp: 1, color: 'inherit' }}>
+                                    {item.title}
+                                  </div>
+                                </button>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Grid hour cells */}
+                <div className="grid-body-canvas">
+                  <div className="grid-lines-container">
+                    {HOUR_TICKS.map((tick) => (
+                      <div key={tick.hour} className="grid-hour-row" style={{ height: 80 }}>
+                        <span className="hour-label">{tick.label}</span>
+                        <div className="grid-line" />
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="grid-columns-container" style={{ gridTemplateColumns: `80px repeat(${viewType === 'weekly' ? 4 : 1}, minmax(0, 1fr))` }}>
+                    <div className="time-column-spacer" />
+                    {(viewType === 'weekly' ? fourDays : [parseISODate(selectedDate)]).map((d, dayIdx) => {
+                      const iso = toISODate(d)
+                      const dayItems = viewType === 'weekly' ? weekItemsByDay[dayIdx] : selectedItems
+                      const positioned = getPositionedItems(dayItems)
+                      return (
+                        <div key={iso} className="grid-day-column">
+                          {positioned.map(({ item, top, height, width, left }) => {
+                            const status = getItemStatus(item, iso)
+                            const isActive = selectedItem && itemKey(item) === itemKey(selectedItem)
+                            const isAllDay = item.allDay || !item.startTime
+                            const cardStyles = getEventStyleClasses(item)
+                            const attendees = getMockAttendeesForItem(item)
+                            return (
+                              <button
+                                type="button"
+                                key={itemKey(item)}
+                                className={`grid-event-card status-${status} ${isActive ? 'is-active' : ''} ${cardStyles.className}`}
+                                onClick={() => setSelectedItemKey(itemKey(item))}
+                                style={{
+                                  position: 'absolute',
+                                  top: `${top}px`,
+                                  height: `${height}px`,
+                                  width: width,
+                                  left: left,
+                                  ...cardStyles.style,
+                                  ...(isActive ? {
+                                    boxShadow: `0 0 0 2px #ffffff, 0 0 0 4px ${cardStyles.style?.color || '#7c3aed'}`,
+                                    zIndex: 11,
+                                  } : {})
+                                } as React.CSSProperties}
+                              >
+                                {isAllDay ? (
+                                  <div className="event-card-content is-all-day">
+                                    <strong className="event-title">{item.title}</strong>
+                                  </div>
+                                ) : (
+                                  <div className="event-card-content">
+                                    <div className="event-details-top">
+                                      <strong className="event-title">{item.title}</strong>
+                                      <span className="event-time">
+                                        <Clock size={12} />
+                                        {formatItemTime(item)}
+                                      </span>
+                                    </div>
+                                    {attendees.length > 0 && renderAvatarStack(attendees)}
+                                  </div>
+                                )}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+    )
+  }
+
   return (
     <section className="calendar-dashboard theme-glassmorphic" aria-label="Daily routine">
       <div className="calendar-focus-split">
@@ -605,69 +888,77 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
             />
           </div>
 
-          {/* Teal Meeting Reminder / Upcoming Event Card */}
-          {sidebarUpcomingItem && (
-            <div className="quick-reminder-card">
-              <div className="reminder-eyebrow">
-                {(() => {
-                  const classification = getEventClassification(sidebarUpcomingItem)
-                  if (classification === 'MEETING') return 'Meeting reminder'
-                  if (classification === 'DEADLINE' || classification === 'TASK') return 'Upcoming task'
-                  if (classification === 'MILESTONE') return 'Upcoming milestone'
-                  return 'Upcoming event'
-                })()}
-              </div>
-              <h3 className="reminder-title">{sidebarUpcomingItem.title}</h3>
-              <div className="reminder-time-row">
-                <Clock size={12} />
-                <span>
-                  {`${formatClockTime(sidebarUpcomingItem.startTime || '09:00')} - ${formatClockTime(sidebarUpcomingItem.endTime || '09:30')}`}
-                </span>
-              </div>
-              <div className="reminder-footer">
-                {renderAvatarStack(
-                  sidebarUpcomingItem.id === 'mock-meeting'
-                    ? [
-                        { name: 'John Doe', avatar: profileAvatar },
-                        { name: 'Sarah Connor', avatar: getAvatarImage('avatar1') },
-                        { name: 'Alex Mercer', avatar: getAvatarImage('avatar2') },
-                        { name: 'Emma Watson', avatar: getAvatarImage('avatar3') },
-                      ]
-                    : getMockAttendeesForItem(sidebarUpcomingItem)
-                )}
-                <div className="reminder-actions">
-                  <button
-                    type="button"
-                    className="btn-decline"
-                    aria-label="Decline"
-                    onClick={() => {
-                      if (sidebarUpcomingItem.id !== 'mock-meeting') {
-                        handleToggleCancel(sidebarUpcomingItem)
-                      } else {
-                        toast.success('Mock meeting declined')
-                      }
-                    }}
-                  >
-                    <X size={13} />
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-accept"
-                    aria-label="Accept"
-                    onClick={() => {
-                      if (sidebarUpcomingItem.id !== 'mock-meeting') {
-                        handleToggle(sidebarUpcomingItem)
-                      } else {
-                        toast.success('Mock meeting accepted')
-                      }
-                    }}
-                  >
-                    <Check size={13} />
-                  </button>
+          {/* Dynamic Upcoming/Live Card */}
+          {sidebarUpcomingItem && (() => {
+            const { item: sidebarItem, label: sidebarLabel } = sidebarUpcomingItem
+            const categoryColor = colorForCategory(sidebarItem.category || 'Personal')
+            
+            return (
+              <div 
+                className="quick-reminder-card"
+                style={{
+                  background: `linear-gradient(135deg, ${categoryColor}, ${categoryColor})`,
+                  boxShadow: `0 10px 25px ${categoryColor}40`,
+                }}
+              >
+                <div className="reminder-eyebrow">
+                  {sidebarLabel}
+                </div>
+                <h3 className="reminder-title">{sidebarItem.title}</h3>
+                <div className="reminder-time-row">
+                  <Clock size={12} />
+                  <span>
+                    {sidebarItem.allDay || !sidebarItem.startTime
+                      ? 'All day'
+                      : `${formatClockTime(sidebarItem.startTime)} - ${formatClockTime(sidebarItem.endTime || '10:00')}`
+                    }
+                  </span>
+                </div>
+                <div className="reminder-footer">
+                  {renderAvatarStack(
+                    sidebarItem.id === 'mock-meeting'
+                      ? [
+                          { name: 'John Doe', avatar: profileAvatar },
+                          { name: 'Sarah Connor', avatar: getAvatarImage('avatar1') },
+                          { name: 'Alex Mercer', avatar: getAvatarImage('avatar2') },
+                          { name: 'Emma Watson', avatar: getAvatarImage('avatar3') },
+                        ]
+                      : getMockAttendeesForItem(sidebarItem)
+                  )}
+                  <div className="reminder-actions">
+                    <button
+                      type="button"
+                      className="btn-decline"
+                      aria-label="Decline"
+                      onClick={() => {
+                        if (sidebarItem.id !== 'mock-meeting') {
+                          handleToggleCancel(sidebarItem)
+                        } else {
+                          toast.success('Mock meeting declined')
+                        }
+                      }}
+                    >
+                      <X size={13} />
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-accept"
+                      aria-label="Accept"
+                      onClick={() => {
+                        if (sidebarItem.id !== 'mock-meeting') {
+                          handleToggle(sidebarItem)
+                        } else {
+                          toast.success('Mock meeting accepted')
+                        }
+                      }}
+                    >
+                      <Check size={13} />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )
+          })()}
 
           {/* Filters Collapsible Accordion */}
           <div className="calendar-filter-card">
@@ -732,150 +1023,17 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
         </aside>
 
         {/* Right Main Grid Stage */}
-        <main className="focus-canvas">
-          <div className="calendar-main-stage">
-            {/* Navigation & view selection row */}
-            <div className="stage-navigation-row">
-              <div className="date-range-navigator">
-                <button type="button" className="nav-arrow" onClick={() => handleStep(viewType === 'weekly' ? -4 : -1)}>
-                  <ChevronLeft size={16} />
-                </button>
-                <h2 className="range-title">
-                  {viewType === 'weekly' || viewType === 'daily'
-                    ? formatSelectedDateHeader(selectedDate)
-                    : parseISODate(selectedDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                </h2>
-                <button type="button" className="nav-arrow" onClick={() => handleStep(viewType === 'weekly' ? 4 : 1)}>
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-
-              <div className="view-switcher-tabs">
-                {(['daily', 'weekly', 'monthly'] as const).map((view) => (
-                  <button
-                    key={view}
-                    type="button"
-                    className={`view-tab ${viewType === view ? 'is-selected' : ''}`}
-                    onClick={() => setViewType(view)}
-                  >
-                    {view.charAt(0).toUpperCase() + view.slice(1)}
-                  </button>
-                ))}
-              </div>
-
-              <button
-                type="button"
-                className="create-event-btn"
-                onClick={() => setModal({ open: true, date: selectedDate })}
-              >
-                <Plus size={16} />
-                Create Event
-              </button>
-            </div>
-
-            {/* Stage Calendar Body Grid */}
-            <div className="stage-grid-canvas">
-              {loading ? (
-                <div className="stage-loader">
-                  <Loader2 size={32} className="animate-spin text-teal-600" />
-                </div>
-              ) : viewType === 'monthly' ? (
-                <MonthViewGrid />
-              ) : (
-                <div className="calendar-grid-scrollable">
-                  {/* Day Columns Header */}
-                  <div className="grid-header-days" style={{ gridTemplateColumns: `80px repeat(${viewType === 'weekly' ? 4 : 1}, minmax(0, 1fr))` }}>
-                    <div className="grid-header-tz">
-                      <span>{viewType === 'weekly' ? 'GMT+05:30' : 'Time'}</span>
-                    </div>
-                    {(viewType === 'weekly' ? fourDays : [parseISODate(selectedDate)]).map((d) => {
-                      const iso = toISODate(d)
-                      const isSelected = iso === selectedDate
-                      const isToday = iso === toISODate(new Date())
-                      return (
-                        <div
-                          key={iso}
-                          className={`grid-header-day-card ${isSelected ? 'is-selected' : ''} ${isToday ? 'is-today' : ''}`}
-                          onClick={() => updateSelectedDate(iso)}
-                        >
-                          <span className="day-name">{d.toLocaleDateString('en-US', { weekday: 'long' })}</span>
-                          <strong className="day-number-pill">{d.getDate()}</strong>
-                        </div>
-                      )
-                    })}
-                  </div>
-
-                  {/* Grid hour cells */}
-                  <div className="grid-body-canvas">
-                    <div className="grid-lines-container">
-                      {HOUR_TICKS.map((tick) => (
-                        <div key={tick.hour} className="grid-hour-row" style={{ height: 80 }}>
-                          <span className="hour-label">{tick.label}</span>
-                          <div className="grid-line" />
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="grid-columns-container" style={{ gridTemplateColumns: `80px repeat(${viewType === 'weekly' ? 4 : 1}, minmax(0, 1fr))` }}>
-                      <div className="time-column-spacer" />
-                      {(viewType === 'weekly' ? fourDays : [parseISODate(selectedDate)]).map((d, dayIdx) => {
-                        const iso = toISODate(d)
-                        const dayItems = viewType === 'weekly' ? weekItemsByDay[dayIdx] : selectedItems
-                        const positioned = getPositionedItems(dayItems)
-                        return (
-                          <div key={iso} className="grid-day-column">
-                            {positioned.map(({ item, top, height, width, left }) => {
-                              const status = getItemStatus(item, iso)
-                              const isActive = selectedItem && itemKey(item) === itemKey(selectedItem)
-                              const isAllDay = item.allDay || !item.startTime
-                              const cardStyles = getEventStyleClasses(item)
-                              const attendees = getMockAttendeesForItem(item)
-                              return (
-                                <button
-                                  type="button"
-                                  key={itemKey(item)}
-                                  className={`grid-event-card status-${status} ${isActive ? 'is-active' : ''} ${cardStyles.className}`}
-                                  onClick={() => setSelectedItemKey(itemKey(item))}
-                                  style={{
-                                    position: 'absolute',
-                                    top: `${top}px`,
-                                    height: `${height}px`,
-                                    width: width,
-                                    left: left,
-                                    ...cardStyles.style
-                                  } as React.CSSProperties}
-                                >
-                                  {isAllDay ? (
-                                    <div className="event-card-content is-all-day">
-                                      <strong className="event-title">{item.title}</strong>
-                                    </div>
-                                  ) : (
-                                    <div className="event-card-content">
-                                      <div className="event-details-top">
-                                        <strong className="event-title">{item.title}</strong>
-                                        <span className="event-time">
-                                          <Clock size={12} />
-                                          {formatItemTime(item)}
-                                        </span>
-                                      </div>
-                                      {attendees.length > 0 && renderAvatarStack(attendees)}
-                                    </div>
-                                  )}
-                                </button>
-                              )
-                            })}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </main>
+        {isFullView ? (
+          <div className="focus-canvas-placeholder" style={{ flex: 1 }} />
+        ) : (
+          renderMainCanvas(false)
+        )}
       </div>
 
+      {isFullView && createPortal(
+        renderMainCanvas(true),
+        document.body
+      )}
       {/* Sleek details inspection popup modal */}
       {selectedItemKey && selectedItem && (
         <div className="details-modal-overlay" onClick={() => setSelectedItemKey(null)}>
@@ -884,6 +1042,16 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
               item={selectedItem}
               isCurrent={currentItem ? itemKey(currentItem) === itemKey(selectedItem) : false}
               onToggle={() => handleToggle(selectedItem)}
+              onToggleCancel={() => handleToggleCancel(selectedItem)}
+              onDelete={() => {
+                setDeleteTarget(selectedItem)
+                setSelectedItemKey(null)
+              }}
+              onEdit={() => {
+                setSelectedItemKey(null)
+                setModal({ open: true, item: selectedItem, date: selectedItem.date })
+              }}
+              onMoveToTomorrow={() => handleMoveToTomorrow(selectedItem)}
               onClose={() => setSelectedItemKey(null)}
             />
           </div>
@@ -951,13 +1119,22 @@ function FocusDetail({
   item,
   isCurrent,
   onToggle,
+  onToggleCancel,
+  onDelete,
+  onEdit,
+  onMoveToTomorrow,
   onClose,
 }: {
   item: CalendarItem
   isCurrent: boolean
   onToggle: () => void
+  onToggleCancel: () => void
+  onDelete: () => void
+  onEdit: () => void
+  onMoveToTomorrow: () => void
   onClose?: () => void
 }) {
+  const [menuOpen, setMenuOpen] = useState(false)
   const checklist = parseChecklist(item.notes)
   const routineIcon = getRoutineIconDetails(item)
   const RoutineIcon = routineIcon.icon
@@ -979,9 +1156,17 @@ function FocusDetail({
       className="focus-detail"
       style={{ '--cat-hue': catHue, '--focus-color': routineIcon.color } as React.CSSProperties}
     >
-      <div className="focus-detail-panel-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div className="focus-detail-panel-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
         <h3>Routine Details</h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button
+            type="button"
+            className="drawer-more-btn"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="More actions"
+          >
+            <MoreHorizontal size={15} />
+          </button>
           {onClose && (
             <button type="button" className="drawer-close-btn" onClick={onClose} aria-label="Close details">
               <X size={15} />
@@ -989,6 +1174,62 @@ function FocusDetail({
           )}
           <div className="focus-assignee-avatar" style={{ width: 28, height: 28, border: '2px solid #fff', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', backgroundImage: `url(${avatarSrc})` }} title="Profile" />
         </div>
+
+        {menuOpen && (
+          <div className="focus-detail-dropdown">
+            <button
+              type="button"
+              className="focus-detail-dropdown-item"
+              onClick={() => {
+                setMenuOpen(false)
+                onEdit()
+              }}
+            >
+              <Pencil size={14} /> Edit
+            </button>
+            <button
+              type="button"
+              className="focus-detail-dropdown-item"
+              onClick={() => {
+                setMenuOpen(false)
+                onMoveToTomorrow()
+              }}
+            >
+              <CalendarDays size={14} /> Move to tomorrow
+            </button>
+            <button
+              type="button"
+              className="focus-detail-dropdown-item"
+              onClick={() => {
+                setMenuOpen(false)
+                onToggle()
+              }}
+            >
+              <Check size={14} /> {item.completed ? 'Mark incomplete' : 'Mark complete'}
+            </button>
+            <button
+              type="button"
+              className="focus-detail-dropdown-item"
+              onClick={() => {
+                setMenuOpen(false)
+                onToggleCancel()
+              }}
+            >
+              <XCircle size={14} /> {item.cancelled ? 'Restore event' : 'Mark cancelled'}
+            </button>
+            <div style={{ height: 1, backgroundColor: 'rgba(0, 0, 0, 0.05)', margin: '4px 0' }} />
+            <button
+              type="button"
+              className="focus-detail-dropdown-item danger"
+              onClick={() => {
+                setMenuOpen(false)
+                onDelete()
+              }}
+            >
+              <Trash2 size={14} /> Delete
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="focus-detail-body">
@@ -1683,7 +1924,6 @@ interface PositionedItem {
 
 function getPositionedItems(dayItems: CalendarItem[]): PositionedItem[] {
   const timed = dayItems.filter((item) => !item.allDay && item.startTime)
-  const allDay = dayItems.filter((item) => item.allDay || !item.startTime)
   
   const result: PositionedItem[] = []
   const sorted = [...timed].sort((a, b) => (a.startTime ?? '').localeCompare(b.startTime ?? ''))
@@ -1719,17 +1959,6 @@ function getPositionedItems(dayItems: CalendarItem[]): PositionedItem[] {
         left: `${(colIdx * 100) / totalCols}%`,
         isAllDay
       })
-    })
-  })
-  
-  allDay.forEach((item, idx) => {
-    result.push({
-      item,
-      top: idx * 30,
-      height: 25,
-      width: '100%',
-      left: '0%',
-      isAllDay: true
     })
   })
   

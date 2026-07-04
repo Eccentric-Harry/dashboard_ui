@@ -209,34 +209,12 @@ button {
   height: 900px;
   margin: 0 auto;
   overflow: hidden;
-  background:
-    linear-gradient(83deg, transparent 0 46%, rgba(255, 255, 255, 0.42) 46.1%, transparent 46.3%),
-    linear-gradient(176deg, transparent 0 58%, rgba(255, 255, 255, 0.42) 58.1%, transparent 58.3%),
-    radial-gradient(circle at 70% 35%, rgba(255, 255, 255, 0.28), transparent 26%),
-    #dfe4df;
+  background: #dfe4df;
 }
 
 .dashboard-stage::before,
 .dashboard-stage::after {
-  position: absolute;
-  content: '';
-  pointer-events: none;
-  border: 2px solid rgba(255, 255, 255, 0.34);
-  border-radius: 50%;
-}
-
-.dashboard-stage::before {
-  width: 900px;
-  height: 900px;
-  left: 365px;
-  top: -688px;
-}
-
-.dashboard-stage::after {
-  width: 720px;
-  height: 720px;
-  left: 866px;
-  top: 208px;
+  display: none;
 }
 
 .date-tiles {
