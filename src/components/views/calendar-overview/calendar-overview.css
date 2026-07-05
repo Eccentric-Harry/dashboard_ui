@@ -1636,6 +1636,11 @@
   .focus-history-card {
     grid-column: auto;
   }
+
+  .view-tab {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
 }
 
 /* iPad 11" portrait: pre-scroll routine list so mid-day items are visible */
@@ -2411,6 +2416,7 @@
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
 }
 
 .view-tab.is-selected {
@@ -2608,8 +2614,8 @@
 
 /* Absolute Event Cards */
 .grid-event-card {
-  padding: 10px 12px;
-  border-radius: 12px;
+  padding: 6px 10px;
+  border-radius: 10px;
   text-align: left;
   cursor: pointer;
   overflow: hidden;
@@ -2670,10 +2676,10 @@
 }
 
 .event-title {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 650;
   color: inherit;
-  line-height: 1.3;
+  line-height: 1.25;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -2685,10 +2691,14 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
+  font-size: 11px;
   color: inherit;
-  opacity: 0.8;
-  margin-top: 2px;
+  opacity: 0.85;
+  margin-top: 1px;
+}
+
+.event-time svg {
+  flex-shrink: 0;
 }
 
 .event-avatar-stack {
