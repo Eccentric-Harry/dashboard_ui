@@ -290,6 +290,54 @@ const CATEGORY_OPTIONS = [
   { label: 'Social', color: '#db2777' },
 ]
 
+function getPopoverStyle(rect: { top: number; left: number; width: number; height: number }) {
+  if (typeof window === 'undefined') return {}
+  const isMobile = window.innerWidth <= 600
+
+  if (isMobile) {
+    return {
+      position: 'fixed' as const,
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      width: 'calc(100vw - 32px)',
+      maxWidth: '400px',
+      zIndex: 2000,
+    }
+  }
+
+  const popoverWidth = 400
+  const popoverHeight = 440 // estimated max height
+  const gap = 8
+  const padding = 16
+  const sidebarBoundary = 490 // Desktop sidebar boundary
+
+  // Horizontal calculation: default right side of the card
+  let left = rect.left + rect.width + gap
+  if (left + popoverWidth + padding > window.innerWidth) {
+    // Try left side, ensuring it doesn't overlap the left sidebar menu area
+    const leftTry = rect.left - popoverWidth - gap
+    if (leftTry >= sidebarBoundary) {
+      left = leftTry
+    } else {
+      // Overlap the event chip itself (align right edges) instead of pushing to the left part of the screen
+      left = Math.max(sidebarBoundary, rect.left + rect.width - popoverWidth)
+    }
+  }
+
+  // Vertical calculation: default center alignment relative to the chip
+  let top = rect.top + (rect.height / 2) - (popoverHeight / 2)
+  // Clamp top to keep it in viewport
+  top = Math.max(padding, Math.min(window.innerHeight - popoverHeight - padding, top))
+
+  return {
+    position: 'fixed' as const,
+    top: `${top}px`,
+    left: `${left}px`,
+    zIndex: 2000,
+  }
+}
+
 type CalendarOverviewDashboardProps = {
   searchParams: URLSearchParams
   onNavigate: (pathname: AppPath, search?: string) => void
@@ -315,12 +363,27 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   const [modal, setModal] = useState<ModalState>({ open: false })
   const [deleteTarget, setDeleteTarget] = useState<CalendarItem | null>(null)
 
-  const [viewType, setViewType] = useState<'daily' | 'weekly' | 'monthly'>('weekly')
+  const [viewType, setViewType] = useState<'daily' | 'weekly' | 'monthly'>(() => {
+    if (typeof window !== 'undefined' && window.innerWidth <= 820) {
+      return 'daily'
+    }
+    return 'weekly'
+  })
   const [searchQuery, setSearchQuery] = useState('')
   const [uncheckedCategories, setUncheckedCategories] = useState<string[]>([])
   const [upcomingItem, setUpcomingItem] = useState<CalendarItem | null>(null)
-  const [filtersOpen, setFiltersOpen] = useState(true)
-  const [otherCalendarsOpen, setOtherCalendarsOpen] = useState(true)
+  const [filtersOpen, setFiltersOpen] = useState(() => {
+    if (typeof window !== 'undefined' && window.innerWidth <= 820) {
+      return false
+    }
+    return true
+  })
+  const [otherCalendarsOpen, setOtherCalendarsOpen] = useState(() => {
+    if (typeof window !== 'undefined' && window.innerWidth <= 820) {
+      return false
+    }
+    return true
+  })
   const [isFullView, setIsFullView] = useState(false)
 
   const canvasContainerRef = useRef<HTMLDivElement | null>(null)
@@ -358,10 +421,10 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
           })
         }
       }
-    }, 100)
+    }, 200)
 
     return () => clearTimeout(timer)
-  }, [viewType, selectedDate, loading])
+  }, [viewType, selectedDate, loading, items])
 
   const [profileAvatar, setProfileAvatar] = useState(() => getAvatarImage(localStorage.getItem('avatarUrl') || 'luffy'))
 
@@ -373,6 +436,23 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     window.addEventListener('profile-updated', handleProfileUpdate)
     return () => window.removeEventListener('profile-updated', handleProfileUpdate)
   }, [])
+
+  useEffect(() => {
+    const handleDocumentClick = () => {
+      setSelectedItemKey(null)
+      setAnchorRect(null)
+    }
+    document.addEventListener('click', handleDocumentClick)
+    return () => {
+      document.removeEventListener('click', handleDocumentClick)
+    }
+  }, [])
+
+  useEffect(() => {
+    setSelectedItemKey(null)
+    setHoveredItemKey(null)
+    setAnchorRect(null)
+  }, [isFullView])
   const scrollableDays = useMemo(() => getScrollableDays(selectedDate), [selectedDate])
   const visibleRange = useMemo(
     () => ({ start: toISODate(scrollableDays[0]), end: toISODate(scrollableDays[scrollableDays.length - 1]) }),
@@ -713,7 +793,11 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
       >
         <div
           className="calendar-main-stage"
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation()
+            setSelectedItemKey(null)
+            setAnchorRect(null)
+          }}
         >
           {/* Navigation & view selection row */}
           <div className="stage-navigation-row">
@@ -744,7 +828,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
               ))}
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div className="stage-actions-group">
               <button
                 type="button"
                 className="create-event-btn"
@@ -949,131 +1033,131 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
             )}
 
             {/* Google Calendar Overlap Popover Card */}
-            {activeItem && anchorRect && (
-              <div 
-                className="calendar-details-popover"
-                style={{
-                  position: 'fixed',
-                  top: `${Math.max(80, Math.min(anchorRect.top + (anchorRect.height / 2) - 180, window.innerHeight - 460))}px`,
-                  left: `${anchorRect.left + anchorRect.width + 412 < window.innerWidth 
-                    ? anchorRect.left + anchorRect.width + 8 
-                    : Math.max(10, anchorRect.left - 408)}px`
-                }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* Banner Image header */}
+            {activeItem && anchorRect && createPortal(
+              <>
+                <div className="popover-backdrop-mobile" onClick={() => {
+                  setSelectedItemKey(null)
+                  setAnchorRect(null)
+                }} />
                 <div 
-                  className="popover-banner-header"
-                  style={{
-                    height: '140px',
-                    backgroundImage: `url(${bannerForCategory(activeItem.category)})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    position: 'relative'
-                  }}
+                  className={`calendar-details-popover ${!selectedItemKey && hoveredItemKey ? 'is-hover' : ''}`}
+                  style={getPopoverStyle(anchorRect)}
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  {/* Top-Right Action overlay */}
-                  <div className="popover-banner-actions">
-                    <button 
-                      type="button" 
-                      className="popover-action-btn"
-                      title="Edit"
-                      onClick={() => {
-                        setSelectedItemKey(null)
-                        setHoveredItemKey(null)
-                        setAnchorRect(null)
-                        setModal({ open: true, item: activeItem, date: activeItem.date })
-                      }}
-                    >
-                      <Pencil size={15} />
-                    </button>
-                    <button 
-                      type="button" 
-                      className="popover-action-btn"
-                      title="Delete"
-                      onClick={() => {
-                        setDeleteTarget(activeItem)
-                        setSelectedItemKey(null)
-                        setHoveredItemKey(null)
-                        setAnchorRect(null)
-                      }}
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                    <button 
-                      type="button" 
-                      className="popover-action-btn close-btn"
-                      title="Close"
-                      onClick={() => {
-                        setSelectedItemKey(null)
-                        setHoveredItemKey(null)
-                        setAnchorRect(null)
-                      }}
-                    >
-                      <X size={15} />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Popover content body */}
-                <div className="popover-body-content">
-                  <div className="popover-title-row">
-                    <span 
-                      className="category-bullet" 
-                      style={{ backgroundColor: overrideLightColors(activeItem.color || colorForCategory(activeItem.category || 'Personal'), activeItem.category) }} 
-                    />
-                    <div className="title-text-col">
-                      <h4 className="popover-title">{activeItem.title}</h4>
-                      <span className="popover-category-tag" style={{ color: overrideLightColors(activeItem.color || colorForCategory(activeItem.category || 'Personal'), activeItem.category) }}>
-                        {activeItem.category || 'Personal'}
-                      </span>
+                  {/* Banner Image header */}
+                  <div 
+                    className="popover-banner-header"
+                    style={{
+                      height: '140px',
+                      backgroundImage: `url(${bannerForCategory(activeItem.category)})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      position: 'relative'
+                    }}
+                  >
+                    {/* Top-Right Action overlay */}
+                    <div className="popover-banner-actions">
+                      <button 
+                        type="button" 
+                        className="popover-action-btn"
+                        title="Edit"
+                        onClick={() => {
+                          setSelectedItemKey(null)
+                          setHoveredItemKey(null)
+                          setAnchorRect(null)
+                          setModal({ open: true, item: activeItem, date: activeItem.date })
+                        }}
+                      >
+                        <Pencil size={15} />
+                      </button>
+                      <button 
+                        type="button" 
+                        className="popover-action-btn"
+                        title="Delete"
+                        onClick={() => {
+                          setDeleteTarget(activeItem)
+                          setSelectedItemKey(null)
+                          setHoveredItemKey(null)
+                          setAnchorRect(null)
+                        }}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                      <button 
+                        type="button" 
+                        className="popover-action-btn close-btn"
+                        title="Close"
+                        onClick={() => {
+                          setSelectedItemKey(null)
+                          setHoveredItemKey(null)
+                          setAnchorRect(null)
+                        }}
+                      >
+                        <X size={15} />
+                      </button>
                     </div>
                   </div>
 
-                  <div className="popover-detail-section">
-                    <div className="popover-detail-row">
-                      <Clock size={16} className="detail-icon" />
-                      <div className="detail-text">
-                        <span className="detail-date-range">
-                          {formatSelectedDateHeader(activeItem.date)}
-                        </span>
-                        <span className="detail-time-range">
-                          {activeItem.allDay || !activeItem.startTime ? 'All day' : `${activeItem.startTime} - ${activeItem.endTime || ''}`}
+                  {/* Popover content body */}
+                  <div className="popover-body-content">
+                    <div className="popover-title-row">
+                      <span 
+                        className="category-bullet" 
+                        style={{ backgroundColor: overrideLightColors(activeItem.color || colorForCategory(activeItem.category || 'Personal'), activeItem.category) }} 
+                      />
+                      <div className="title-text-col">
+                        <h4 className="popover-title">{activeItem.title}</h4>
+                        <span className="popover-category-tag" style={{ color: overrideLightColors(activeItem.color || colorForCategory(activeItem.category || 'Personal'), activeItem.category) }}>
+                          {activeItem.category || 'Personal'}
                         </span>
                       </div>
                     </div>
 
-
-                    {activeItem.notes && (
-                      <div className="popover-detail-row align-start">
-                        <AlignLeft size={16} className="detail-icon mt-0.5" />
-                        <span className="detail-text notes-text">{stripChecklist(activeItem.notes) || activeItem.notes}</span>
+                    <div className="popover-detail-section">
+                      <div className="popover-detail-row">
+                        <Clock size={16} className="detail-icon" />
+                        <div className="detail-text">
+                          <span className="detail-date-range">
+                            {formatSelectedDateHeader(activeItem.date)}
+                          </span>
+                          <span className="detail-time-range">
+                            {activeItem.allDay || !activeItem.startTime ? 'All day' : `${activeItem.startTime} - ${activeItem.endTime || ''}`}
+                          </span>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                </div>
 
-                {/* Bottom Actions footer */}
-                <div className="popover-footer-actions">
-                  <span className="going-label">Complete task?</span>
-                  <div className="going-options">
-                    <button 
-                      type="button" 
-                      className={`going-btn ${activeItem.completed ? 'is-active' : ''}`}
-                      onClick={() => handleToggle(activeItem)}
-                    >
-                      Yes
-                    </button>
-                    <button 
-                      type="button" 
-                      className={`going-btn ${!activeItem.completed ? 'is-active' : ''}`}
-                      onClick={() => handleToggle(activeItem)}
-                    >
-                      No
-                    </button>
+                      {activeItem.notes && (
+                        <div className="popover-detail-row align-start">
+                          <AlignLeft size={16} className="detail-icon mt-0.5" />
+                          <span className="detail-text notes-text">{stripChecklist(activeItem.notes) || activeItem.notes}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Bottom Actions footer */}
+                  <div className="popover-footer-actions">
+                    <span className="going-label">Complete task?</span>
+                    <div className="going-options">
+                      <button 
+                        type="button" 
+                        className={`going-btn ${activeItem.completed ? 'is-active' : ''}`}
+                        onClick={() => handleToggle(activeItem)}
+                      >
+                        Yes
+                      </button>
+                      <button 
+                        type="button" 
+                        className={`going-btn ${!activeItem.completed ? 'is-active' : ''}`}
+                        onClick={() => handleToggle(activeItem)}
+                      >
+                        No
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </>,
+              document.body
             )}
           </div>
         </div>
@@ -1083,6 +1167,14 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
 
   return (
     <section className="calendar-dashboard theme-glassmorphic" aria-label="Daily routine">
+      <header className="calendar-header">
+        <div>
+          <span className="calendar-eyebrow">Routine & Schedule</span>
+          <h1>Daily Routine</h1>
+          <p>Plan your day, track tasks, and build consistent habits.</p>
+        </div>
+      </header>
+
       <div className="calendar-focus-split">
         {/* Left Sidebar Panel */}
         <aside className="routine-navigator">
@@ -1130,10 +1222,19 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                 <div className="reminder-time-row">
                   <Clock size={12} />
                   <span>
-                    {sidebarItem.allDay || !sidebarItem.startTime
-                      ? 'All day'
-                      : `${formatClockTime(sidebarItem.startTime)} - ${formatClockTime(sidebarItem.endTime || '10:00')}`
-                    }
+                    {(() => {
+                      const todayStr = toISODate(new Date())
+                      const isToday = sidebarItem.date === todayStr
+                      const datePart = isToday 
+                        ? '' 
+                        : `${parseISODate(sidebarItem.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • `
+                      
+                      const timePart = sidebarItem.allDay || !sidebarItem.startTime
+                        ? 'All day'
+                        : `${formatClockTime(sidebarItem.startTime)} - ${formatClockTime(sidebarItem.endTime || '10:00')}`
+                      
+                      return `${datePart}${timePart}`
+                    })()}
                   </span>
                 </div>
                 <div className="reminder-footer">

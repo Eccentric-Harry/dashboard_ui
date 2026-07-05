@@ -62,6 +62,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
   const [date, setDate] = useState(selectedDate)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [richPayload, setRichPayload] = useState<any>(null)
+  const [jsonPayload, setJsonPayload] = useState('')
 
   // AI tab state
   const [aiPhase, setAiPhase] = useState<Phase>('input')
@@ -88,6 +89,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       setCalories(initialData.calories.toString())
       setDate(initialData.date)
       setRichPayload(null)
+      setJsonPayload('')
       setActiveTab('manual')
       setCurrentTaskId(null)
     } else if (isOpen && !isEdit) {
@@ -97,6 +99,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       setCalories('')
       setDate(selectedDate)
       setRichPayload(null)
+      setJsonPayload('')
       setActiveTab('manual')
       // Reset AI state
       setAiPhase('input')
@@ -144,38 +147,131 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (!description || !calories || !proteinGrams || !date || !mealType) {
-      setError('Please fill in all fields including Meal Type')
-      return
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let finalPayload: any = null
+
+    if (jsonPayload.trim()) {
+      try {
+        const parsed = JSON.parse(jsonPayload)
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const getVal = (keys: string[], fallback: any = null) => {
+          for (const k of keys) {
+            if (parsed && typeof parsed === 'object' && k in parsed) {
+              return parsed[k]
+            }
+          }
+          return fallback
+        }
+
+        // Normalize timestamp
+        let parsedTimestamp = getVal(['timestamp', 'createdAt'])
+        if (parsedTimestamp && typeof parsedTimestamp === 'object' && '$date' in parsedTimestamp) {
+          parsedTimestamp = parsedTimestamp['$date']
+        }
+
+        const parsedDate = getVal(['date', 'dateString', 'date_string'], date)
+        const parsedMealType = getVal(['mealType', 'meal_type', 'meal'], mealType)
+        const parsedDescription = getVal(['description', 'mealLabel', 'meal_label'], description)
+
+        const parsedCalories = getVal(['calories', 'calories_kcal', 'totalCalories'])
+        const parsedProtein = getVal(['proteinGrams', 'protein_grams', 'protein', 'totalProteinGrams'])
+
+        const numCalories = parsedCalories !== null && parsedCalories !== undefined
+          ? Math.round(parseFloat(parsedCalories))
+          : (calories ? Math.round(parseFloat(calories)) : null)
+        const numProtein = parsedProtein !== null && parsedProtein !== undefined
+          ? Math.round(parseFloat(parsedProtein))
+          : (proteinGrams ? Math.round(parseFloat(proteinGrams)) : null)
+
+        if (!parsedDescription) {
+          throw new Error('Description is required (not found in JSON or inputs)')
+        }
+        if (numCalories === null || isNaN(numCalories) || numCalories < 0) {
+          throw new Error('Calories is required and must be non-negative (not found in JSON or inputs)')
+        }
+        if (numProtein === null || isNaN(numProtein) || numProtein < 0) {
+          throw new Error('Protein is required and must be non-negative (not found in JSON or inputs)')
+        }
+        if (!parsedMealType) {
+          throw new Error('Meal Type is required (not found in JSON or inputs)')
+        }
+        if (!parsedDate) {
+          throw new Error('Date is required (not found in JSON or inputs)')
+        }
+
+        finalPayload = {
+          description: parsedDescription,
+          calories: numCalories,
+          proteinGrams: numProtein,
+          mealType: parsedMealType,
+          date: parsedDate,
+          timestamp: parsedTimestamp,
+          mealQuality: getVal(['mealQuality', 'meal_quality', 'letterGrade', 'letter_grade']),
+          notes: getVal(['notes']),
+          recipeCategory: getVal(['recipeCategory', 'recipe_category']),
+          serving: getVal(['serving']),
+          servingNotes: getVal(['servingNotes', 'serving_notes']),
+          sourceNotes: getVal(['sourceNotes', 'source_notes']),
+          importKey: getVal(['importKey', 'import_key']),
+          analysis_metadata: getVal(['analysisMetadata', 'analysis_metadata']),
+          meal_items: getVal(['mealItems', 'meal_items']),
+          total_summary: getVal(['totalSummary', 'total_summary']),
+          gaps_and_warnings: getVal(['gapsAndWarnings', 'gaps_and_warnings']),
+          technical_diagnostic: getVal(['technicalDiagnostic', 'technical_diagnostic']),
+          acne_impact_assessment: getVal(['acneImpactAssessment', 'acne_impact_assessment']),
+          health_analysis: getVal(['healthAnalysis', 'health_analysis']),
+          recomposition_assessment: getVal(['recompositionAssessment', 'recomposition_assessment']),
+          satiety_and_energy_profile: getVal(['satietyAndEnergyProfile', 'satiety_and_energy_profile']),
+          nutritional_balance_diagnostic: getVal(['nutritionalBalanceDiagnostic', 'nutritional_balance_diagnostic']),
+          daily_context: getVal(['dailyContext', 'daily_context'])
+        }
+      } catch (err: any) {
+        setError('JSON Error: ' + err.message)
+        return
+      }
+    } else {
+      if (!description || !calories || !proteinGrams || !date || !mealType) {
+        setError('Please fill in all fields including Meal Type')
+        return
+      }
+      const numCalories = Math.round(parseFloat(calories))
+      const numProtein = Math.round(parseFloat(proteinGrams))
+      if (isNaN(numCalories) || numCalories < 0 || isNaN(numProtein) || numProtein < 0) {
+        setError('Macros must be 0 or greater')
+        return
+      }
+      finalPayload = {
+        description,
+        calories: numCalories,
+        proteinGrams: numProtein,
+        mealType,
+        date
+      }
+      if (richPayload) {
+        finalPayload.analysis_metadata = richPayload.analysis_metadata
+        finalPayload.meal_items = richPayload.meal_items
+        finalPayload.total_summary = richPayload.total_summary
+        finalPayload.gaps_and_warnings = richPayload.gaps_and_warnings
+        finalPayload.technical_diagnostic = richPayload.technical_diagnostic
+        finalPayload.acne_impact_assessment = richPayload.acne_impact_assessment
+        finalPayload.health_analysis = richPayload.health_analysis
+        finalPayload.recomposition_assessment = richPayload.recomposition_assessment
+        finalPayload.satiety_and_energy_profile = richPayload.satiety_and_energy_profile
+        finalPayload.nutritional_balance_diagnostic = richPayload.nutritional_balance_diagnostic
+        finalPayload.daily_context = richPayload.daily_context
+      }
     }
-    const numCalories = Math.round(parseFloat(calories))
-    const numProtein = Math.round(parseFloat(proteinGrams))
-    if (isNaN(numCalories) || numCalories < 0 || isNaN(numProtein) || numProtein < 0) {
-      setError('Macros must be 0 or greater')
-      return
-    }
+
     setLoading(true)
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const payload: any = { description, calories: numCalories, proteinGrams: numProtein, mealType, date }
-      if (richPayload) {
-        payload.analysis_metadata = richPayload.analysis_metadata
-        payload.meal_items = richPayload.meal_items
-        payload.total_summary = richPayload.total_summary
-        payload.gaps_and_warnings = richPayload.gaps_and_warnings
-        payload.technical_diagnostic = richPayload.technical_diagnostic
-        payload.acne_impact_assessment = richPayload.acne_impact_assessment
-        payload.recomposition_assessment = richPayload.recomposition_assessment
-        payload.satiety_and_energy_profile = richPayload.satiety_and_energy_profile
-        payload.nutritional_balance_diagnostic = richPayload.nutritional_balance_diagnostic
-        payload.daily_context = richPayload.daily_context
-      }
       if (isEdit && initialData?.id) {
-        await updateFoodEntry(date, initialData.id, payload)
-        toast.success(`Updated "${description}"`)
+        await updateFoodEntry(finalPayload.date, initialData.id, finalPayload)
+        toast.success(`Updated "${finalPayload.description}"`)
       } else {
-        await addFoodEntry(payload)
-        toast.success(`Logged "${description}"`)
+        await addFoodEntry(finalPayload)
+        toast.success(`Logged "${finalPayload.description}"`)
       }
       onSuccess()
       onClose()
@@ -355,9 +451,29 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
               </div>
             </div>
 
+            <div className="form-separator" style={{ margin: '16px 0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ flex: 1, height: '1px', background: 'rgba(20, 24, 22, 0.1)' }} />
+              <span style={{ padding: '0 12px', fontSize: '11px', color: 'rgba(16, 19, 18, 0.4)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>OR</span>
+              <div style={{ flex: 1, height: '1px', background: 'rgba(20, 24, 22, 0.1)' }} />
+            </div>
+
+            <div className="form-group">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <label style={{ margin: 0 }}>Paste AI JSON Payload</label>
+                <span className="import-hint" style={{ fontSize: '10px' }}>Paste raw meal log JSON response generated by AI</span>
+              </div>
+              <textarea
+                className="json-textarea"
+                placeholder='{&#10;  "description": "Lemon Rice",&#10;  "calories": 472,&#10;  "proteinGrams": 10,&#10;  "mealItems": [ ... ],&#10;  "totalSummary": { ... },&#10;  "acneImpactAssessment": { ... }&#10;}'
+                value={jsonPayload}
+                onChange={(e) => setJsonPayload(e.target.value)}
+                style={{ height: '120px', minHeight: '120px', resize: 'vertical' }}
+              />
+            </div>
+
             {error && <p className="add-tx-error">{error}</p>}
 
-            <button type="submit" className="add-tx-submit" disabled={loading}>
+            <button type="submit" className="add-tx-submit af-submit-btn" disabled={loading} style={{ width: '100%', marginTop: '16px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {loading ? <Loader2 className="spinner" size={18} /> : 'Save Food'}
             </button>
           </form>
