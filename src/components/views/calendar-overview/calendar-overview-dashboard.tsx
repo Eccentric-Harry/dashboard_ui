@@ -835,7 +835,8 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                 onClick={() => setModal({ open: true, date: selectedDate })}
               >
                 <Plus size={14} />
-                Create event
+                <span className="create-event-text-desktop">Create event</span>
+                <span className="create-event-text-ipad">Add</span>
               </button>
               <button
                 type="button"
