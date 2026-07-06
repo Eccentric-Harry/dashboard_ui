@@ -67,20 +67,21 @@ import './calendar-overview.css'
 const TYPE_OPTIONS: CalendarItemType[] = ['TASK', 'EVENT', 'REMINDER', 'MILESTONE']
 
 const CATEGORY_HUES: Record<string, number> = {
-  Personal: 270,
-  Work: 210,
-  Health: 142,
-  Learning: 175,
-  Finance: 35,
-  Social: 330,
+  personal: 270,
+  work: 210,
+  health: 142,
+  learning: 175,
+  finance: 35,
+  social: 330,
 }
 
 function hueForCategory(category?: string) {
-  if (!category) return 210
-  if (CATEGORY_HUES[category]) return CATEGORY_HUES[category]
+  const normalized = (category || '').trim().toLowerCase()
+  if (!normalized) return 210
+  if (CATEGORY_HUES[normalized] !== undefined) return CATEGORY_HUES[normalized]
   let hash = 0
-  for (let i = 0; i < category.length; i++) {
-    hash = category.charCodeAt(i) + ((hash << 5) - hash)
+  for (let i = 0; i < normalized.length; i++) {
+    hash = normalized.charCodeAt(i) + ((hash << 5) - hash)
   }
   return Math.abs(hash) % 360
 }
@@ -199,23 +200,24 @@ function bannerForCategory(category?: string) {
 }
 
 function getEventStyleClasses(item: CalendarItem) {
-  // Use custom item color if set
-  const rawColor = item.color || colorForCategory(item.category || 'Personal')
-  const color = overrideLightColors(rawColor, item.category)
-  
+  const color = displayColorForItem(item)
+
   let formattedColor = color
   if (!color.startsWith('#') && !color.startsWith('hsl')) {
     formattedColor = `#${color}`
   }
   
-  // Google Calendar style: solid background with white text and bold fonts
+  // Subtle pastel background (12% of the theme color mixed with white)
+  const bgSubtle = `color-mix(in srgb, ${formattedColor} 12%, #ffffff)`
+  
   return {
     style: {
-      backgroundColor: formattedColor,
-      color: '#ffffff',
-      fontWeight: '700',
+      backgroundColor: bgSubtle,
+      color: '#1e293b',
+      fontWeight: '600',
       borderRadius: '8px',
-      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)',
+      border: 'none',
+      boxShadow: 'none',
     },
     className: 'event-custom',
   }
@@ -288,7 +290,23 @@ const CATEGORY_OPTIONS = [
   { label: 'Learning', color: '#0d9488' },
   { label: 'Finance', color: '#d97706' },
   { label: 'Social', color: '#db2777' },
+  { label: 'Movies', color: '#e11d48' },
 ]
+
+/**
+ * Single source of truth for what color an item renders with, everywhere
+ * (filters, month capsules, grid chips, popover, sidebar card). The category
+ * always determines the color — registered categories use the shared palette
+ * and unknown ones a stable hash hue — so a category can never render two
+ * different colors across the UI. A stored item color only applies when the
+ * item has no category at all (e.g. some Google-synced events).
+ */
+function displayColorForItem(item: { category?: string; color?: string }) {
+  const normalized = (item.category || '').trim().toLowerCase()
+  if (normalized) return colorForCategory(item.category!)
+  if (item.color) return overrideLightColors(item.color, item.category)
+  return colorForCategory('Personal')
+}
 
 function getPopoverStyle(rect: { top: number; left: number; width: number; height: number }) {
   if (typeof window === 'undefined') return {}
@@ -334,6 +352,37 @@ function getPopoverStyle(rect: { top: number; left: number; width: number; heigh
     position: 'fixed' as const,
     top: `${top}px`,
     left: `${left}px`,
+    zIndex: 2000,
+  }
+}
+
+function getOverflowPopoverStyle(rect: { top: number; left: number; width: number; height: number }) {
+  if (typeof window === 'undefined') return {}
+  const isMobile = window.innerWidth <= 600
+
+  if (isMobile) {
+    return {
+      position: 'fixed' as const,
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      width: 'calc(100vw - 48px)',
+      maxWidth: '320px',
+      zIndex: 2000,
+    }
+  }
+
+  // Sit on top of the day cell, slightly expanded beyond its bounds
+  const width = Math.max(rect.width + 32, 260)
+  const padding = 12
+  const left = Math.max(padding, Math.min(window.innerWidth - width - padding, rect.left - 16))
+  const top = Math.max(padding, Math.min(window.innerHeight - 340, rect.top - 8))
+
+  return {
+    position: 'fixed' as const,
+    top: `${top}px`,
+    left: `${left}px`,
+    width: `${width}px`,
     zIndex: 2000,
   }
 }
@@ -425,9 +474,10 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   })
   const [items, setItems] = useState<CalendarItem[]>([])
   const [selectedItemKey, setSelectedItemKey] = useState<string | null>(null)
-  const [hoveredItemKey, setHoveredItemKey] = useState<string | null>(null)
   const [anchorRect, setAnchorRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null)
+  const [overflowDay, setOverflowDay] = useState<{ date: string; rect: { top: number; left: number; width: number; height: number } } | null>(null)
   const [loading, setLoading] = useState(false)
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false)
   const [modal, setModal] = useState<ModalState>({ open: false })
   const [deleteTarget, setDeleteTarget] = useState<CalendarItem | null>(null)
 
@@ -441,12 +491,6 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   const [uncheckedCategories, setUncheckedCategories] = useState<string[]>([])
   const [upcomingItem, setUpcomingItem] = useState<CalendarItem | null>(null)
   const [filtersOpen, setFiltersOpen] = useState(() => {
-    if (typeof window !== 'undefined' && window.innerWidth <= 820) {
-      return false
-    }
-    return true
-  })
-  const [otherCalendarsOpen, setOtherCalendarsOpen] = useState(() => {
     if (typeof window !== 'undefined' && window.innerWidth <= 820) {
       return false
     }
@@ -466,13 +510,24 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
         const currentHour = now.getHours()
         const currentMinute = now.getMinutes()
         const minutesSinceMidnight = currentHour * 60 + currentMinute
-        
-        // Each hour row is 80px tall. Center the scroll position vertically.
-        const targetScrollTop = (minutesSinceMidnight / 60) * 80 - container.clientHeight / 2
-        container.scrollTo({
-          top: Math.max(0, targetScrollTop),
-          behavior: 'smooth'
-        })
+        const timeOffset = (minutesSinceMidnight / 60) * 80 // each hour row is 80px tall
+
+        const isInternallyScrollable = container.scrollHeight > container.clientHeight + 8
+        if (isInternallyScrollable) {
+          // Desktop: the grid scrolls inside its own container — center current time.
+          container.scrollTo({
+            top: Math.max(0, timeOffset - container.clientHeight / 2),
+            behavior: 'smooth',
+          })
+        } else {
+          // Mobile: the grid flows freely and the page itself scrolls (Apple
+          // Calendar style) — scroll the window so current time is centered.
+          const containerTop = container.getBoundingClientRect().top + window.scrollY
+          window.scrollTo({
+            top: Math.max(0, containerTop + timeOffset - window.innerHeight / 2),
+            behavior: 'smooth',
+          })
+        }
       }
       
       // 2. Monthly view: horizontal auto-scroll to current day (is-today cell)
@@ -509,23 +564,45 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     const handleDocumentClick = () => {
       setSelectedItemKey(null)
       setAnchorRect(null)
+      setOverflowDay(null)
+    }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setSelectedItemKey(null)
+        setAnchorRect(null)
+        setOverflowDay(null)
+      }
     }
     document.addEventListener('click', handleDocumentClick)
+    document.addEventListener('keydown', handleKeyDown)
     return () => {
       document.removeEventListener('click', handleDocumentClick)
+      document.removeEventListener('keydown', handleKeyDown)
     }
   }, [])
 
   useEffect(() => {
     setSelectedItemKey(null)
-    setHoveredItemKey(null)
     setAnchorRect(null)
+    setOverflowDay(null)
   }, [isFullView])
-  const scrollableDays = useMemo(() => getScrollableDays(selectedDate), [selectedDate])
-  const visibleRange = useMemo(
-    () => ({ start: toISODate(scrollableDays[0]), end: toISODate(scrollableDays[scrollableDays.length - 1]) }),
-    [scrollableDays],
-  )
+
+  // The fetch window must always cover everything the current view can render.
+  // Monthly: the exact month grid. Daily/3-day: a 4-week window snapped to week
+  // boundaries so navigating between nearby dates reuses the same range (no refetch).
+  const visibleRange = useMemo(() => {
+    const selected = parseISODate(selectedDate)
+    if (viewType === 'monthly') {
+      const gridDays = monthGrid(selected)
+      return { start: toISODate(gridDays[0]), end: toISODate(gridDays[gridDays.length - 1]) }
+    }
+    const anchor = startOfWeek(selected)
+    const start = new Date(anchor)
+    start.setDate(anchor.getDate() - 7)
+    const end = new Date(anchor)
+    end.setDate(anchor.getDate() + 20)
+    return { start: toISODate(start), end: toISODate(end) }
+  }, [selectedDate, viewType])
 
   const loadUpcomingItem = useCallback(async () => {
     try {
@@ -555,29 +632,49 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     }
   }, [])
 
+  // Monotonic sequence guards against out-of-order responses: only the most
+  // recently issued request may update state, so rapid date clicks can never
+  // leave stale data on screen.
+  const requestSeqRef = useRef(0)
+
   const loadItems = useCallback(async () => {
+    const seq = ++requestSeqRef.current
     setLoading(true)
     try {
       const response = await fetchCalendarItemsForRange(visibleRange.start, visibleRange.end)
+      if (seq !== requestSeqRef.current) return
       setItems(response?.data ?? [])
-      await loadUpcomingItem()
     } catch (error) {
-      setItems([])
+      if (seq !== requestSeqRef.current) return
       toast.error(error instanceof Error ? error.message : 'Failed to load calendar')
     } finally {
-      setLoading(false)
+      if (seq === requestSeqRef.current) {
+        setLoading(false)
+        setHasLoadedOnce(true)
+      }
     }
-  }, [visibleRange.end, visibleRange.start, loadUpcomingItem])
+  }, [visibleRange.end, visibleRange.start])
 
   useEffect(() => {
-    const initialLoad = window.setTimeout(loadItems, 0)
-    const handleCalendarUpdate = () => loadItems()
+    const timer = window.setTimeout(loadItems, 0)
+    return () => window.clearTimeout(timer)
+  }, [loadItems])
+
+  useEffect(() => {
+    const timer = window.setTimeout(loadUpcomingItem, 0)
+    return () => window.clearTimeout(timer)
+  }, [loadUpcomingItem])
+
+  useEffect(() => {
+    const handleCalendarUpdate = () => {
+      loadItems()
+      loadUpcomingItem()
+    }
     window.addEventListener('calendar-updated', handleCalendarUpdate)
     return () => {
-      window.clearTimeout(initialLoad)
       window.removeEventListener('calendar-updated', handleCalendarUpdate)
     }
-  }, [loadItems])
+  }, [loadItems, loadUpcomingItem])
 
   const actualCategories = useMemo(() => {
     const cats = new Set<string>()
@@ -594,6 +691,37 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
       }
     })
     return Array.from(cats)
+  }, [items])
+
+  const existingCustomCategories = useMemo(() => {
+    const standardLabels = new Set(CATEGORY_OPTIONS.map((opt) => opt.label))
+    const custom = new Set<string>()
+    
+    try {
+      const saved = localStorage.getItem('calendar_custom_categories')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed)) {
+          parsed.forEach((cat) => {
+            const trimmed = cat.trim()
+            if (trimmed) custom.add(trimmed)
+          })
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load custom categories from localStorage', e)
+    }
+
+    items.forEach((item) => {
+      if (item.category) {
+        const trimmed = item.category.trim()
+        if (trimmed && !standardLabels.has(trimmed)) {
+          custom.add(trimmed)
+        }
+      }
+    })
+
+    return Array.from(custom)
   }, [items])
 
   const filteredItems = useMemo(() => {
@@ -689,11 +817,8 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     if (selectedItemKey) {
       return filteredItems.find((item) => itemKey(item) === selectedItemKey) ?? null
     }
-    if (hoveredItemKey) {
-      return filteredItems.find((item) => itemKey(item) === hoveredItemKey) ?? null
-    }
     return null
-  }, [selectedItemKey, hoveredItemKey, filteredItems])
+  }, [selectedItemKey, filteredItems])
 
   const updateSelectedDate = (date: string) => {
     setSelectedDate(date)
@@ -715,60 +840,76 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     updateSelectedDate(dateStr)
   }
 
+  // Mutations apply optimistically: the local list updates instantly, the API
+  // call runs in the background, and 'calendar-updated' triggers a single
+  // guarded refetch for server truth. On failure the local change is reverted.
   const handleToggle = async (item: CalendarItem) => {
     if (!item.id) return
+    const key = itemKey(item)
+    const nextCompleted = !item.completed
+    setItems((prev) => prev.map((it) => (itemKey(it) === key ? { ...it, completed: nextCompleted } : it)))
     try {
       const isRecurring = item.recurrenceFrequency && item.recurrenceFrequency !== 'NONE'
       await toggleCalendarItem(item.id, isRecurring ? item.date : undefined)
-      toast.success(item.completed ? `Reopened "${item.title}"` : `Completed "${item.title}"`)
-      await loadItems()
+      toast.success(nextCompleted ? `Completed "${item.title}"` : `Reopened "${item.title}"`)
       window.dispatchEvent(new CustomEvent('calendar-updated'))
     } catch (error) {
+      setItems((prev) => prev.map((it) => (itemKey(it) === key ? { ...it, completed: item.completed } : it)))
       toast.error(error instanceof Error ? error.message : 'Failed to update item')
     }
   }
 
   const handleToggleCancel = async (item: CalendarItem) => {
     if (!item.id) return
+    const key = itemKey(item)
+    const nextCancelled = !item.cancelled
+    setItems((prev) => prev.map((it) => (itemKey(it) === key ? { ...it, cancelled: nextCancelled } : it)))
     try {
       const isRecurring = item.recurrenceFrequency && item.recurrenceFrequency !== 'NONE'
       await toggleCancelCalendarItem(item.id, isRecurring ? item.date : undefined)
-      toast.success(item.cancelled ? `Restored "${item.title}"` : `Cancelled "${item.title}"`)
-      await loadItems()
+      toast.success(nextCancelled ? `Cancelled "${item.title}"` : `Restored "${item.title}"`)
       window.dispatchEvent(new CustomEvent('calendar-updated'))
     } catch (error) {
+      setItems((prev) => prev.map((it) => (itemKey(it) === key ? { ...it, cancelled: item.cancelled } : it)))
       toast.error(error instanceof Error ? error.message : 'Failed to update item')
     }
   }
 
   const handleDelete = async () => {
-    if (!deleteTarget?.id) return
+    const target = deleteTarget
+    if (!target?.id) return
+    const prevItems = items
+    setItems((prev) => prev.filter((it) => it.id !== target.id))
+    setDeleteTarget(null)
+    setSelectedItemKey(null)
+    setAnchorRect(null)
     try {
-      await deleteCalendarItem(deleteTarget.id)
-      toast.success(`Deleted "${deleteTarget.title}"`)
-      setDeleteTarget(null)
-      setSelectedItemKey(null)
-      await loadItems()
+      await deleteCalendarItem(target.id)
+      toast.success(`Deleted "${target.title}"`)
       window.dispatchEvent(new CustomEvent('calendar-updated'))
     } catch (error) {
+      setItems(prevItems)
       toast.error(error instanceof Error ? error.message : 'Failed to delete item')
     }
   }
 
 
-
-
-
   const handleDeleteRecurring = async (mode: 'ONLY_THIS' | 'ALL') => {
-    if (!deleteTarget?.id) return
+    const target = deleteTarget
+    if (!target?.id) return
+    const prevItems = items
+    setItems((prev) =>
+      prev.filter((it) => (mode === 'ONLY_THIS' ? !(it.id === target.id && it.date === target.date) : it.id !== target.id)),
+    )
+    setDeleteTarget(null)
+    setSelectedItemKey(null)
+    setAnchorRect(null)
     try {
-      await deleteCalendarItem(deleteTarget.id, mode === 'ONLY_THIS' ? deleteTarget.date : undefined)
+      await deleteCalendarItem(target.id, mode === 'ONLY_THIS' ? target.date : undefined)
       toast.success(mode === 'ONLY_THIS' ? 'Occurrence deleted' : 'Recurring routine deleted')
-      setDeleteTarget(null)
-      setSelectedItemKey(null)
-      await loadItems()
       window.dispatchEvent(new CustomEvent('calendar-updated'))
     } catch (error) {
+      setItems(prevItems)
       toast.error(error instanceof Error ? error.message : 'Failed to delete item')
     }
   }
@@ -808,39 +949,38 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
               >
                 <span className="month-day-num">{d.getDate()}</span>
                 <div className="month-day-events">
-                  {dayItems.slice(0, 3).map((item) => {
-                    const routineIcon = getRoutineIconDetails(item)
-                    return (
-                      <div
-                        key={itemKey(item)}
-                        className="month-event-capsule"
-                        style={{ '--capsule-color': routineIcon.color, cursor: 'pointer' } as React.CSSProperties}
-                        title={item.title}
-                        onMouseEnter={(e) => {
-                          if (selectedItemKey) return
-                          const rect = e.currentTarget.getBoundingClientRect()
-                          setHoveredItemKey(itemKey(item))
-                          setAnchorRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
-                        }}
-                        onMouseLeave={() => {
-                          if (selectedItemKey) return
-                          setHoveredItemKey(null)
-                          setAnchorRect(null)
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          const rect = e.currentTarget.getBoundingClientRect()
-                          setSelectedItemKey(itemKey(item))
-                          setHoveredItemKey(null)
-                          setAnchorRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
-                        }}
-                      >
-                        {item.title}
-                      </div>
-                    )
-                  })}
+                  {dayItems.slice(0, 3).map((item) => (
+                    <div
+                      key={itemKey(item)}
+                      className="month-event-capsule"
+                      style={{ '--capsule-color': displayColorForItem(item), cursor: 'pointer' } as React.CSSProperties}
+                      title={item.title}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        const rect = e.currentTarget.getBoundingClientRect()
+                        setSelectedItemKey(itemKey(item))
+                        setOverflowDay(null)
+                        setAnchorRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
+                      }}
+                    >
+                      {item.title}
+                    </div>
+                  ))}
                   {dayItems.length > 3 && (
-                    <div className="month-more-indicator">+{dayItems.length - 3} more</div>
+                    <button
+                      type="button"
+                      className="month-more-indicator"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        const cell = e.currentTarget.closest('.month-day-cell')
+                        const rect = (cell ?? e.currentTarget).getBoundingClientRect()
+                        setSelectedItemKey(null)
+                        setAnchorRect(null)
+                        setOverflowDay({ date: iso, rect: { top: rect.top, left: rect.left, width: rect.width, height: rect.height } })
+                      }}
+                    >
+                      +{dayItems.length - 3} more
+                    </button>
                   )}
                 </div>
               </div>
@@ -867,7 +1007,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
             setAnchorRect(null)
           }}
         >
-          {loading ? (
+          {loading && !hasLoadedOnce ? (
             <CalendarSkeleton viewType={viewType} />
           ) : (
             <>
@@ -967,22 +1107,10 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                                   type="button"
                                   key={itemKey(item)}
                                   className={`all-day-event-chip ${isActive ? 'is-active' : ''}`}
-                                  onMouseEnter={(e) => {
-                                    if (selectedItemKey) return
-                                    const rect = e.currentTarget.getBoundingClientRect()
-                                    setHoveredItemKey(itemKey(item))
-                                    setAnchorRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
-                                  }}
-                                  onMouseLeave={() => {
-                                    if (selectedItemKey) return
-                                    setHoveredItemKey(null)
-                                    setAnchorRect(null)
-                                  }}
                                   onClick={(e) => {
                                     e.stopPropagation()
                                     const rect = e.currentTarget.getBoundingClientRect()
                                     setSelectedItemKey(itemKey(item))
-                                    setHoveredItemKey(null)
                                     setAnchorRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
                                   }}
                                   style={{
@@ -996,7 +1124,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                                     cursor: 'pointer',
                                     backgroundColor: cardStyles.style.backgroundColor,
                                     color: cardStyles.style.color,
-                                    boxShadow: isActive ? `0 0 0 2px #ffffff, 0 0 0 4px ${cardStyles.style.color}` : 'none',
+                                    boxShadow: isActive ? `0 0 0 2px #ffffff, 0 0 0 4px ${displayColorForItem(item)}` : 'none',
                                     zIndex: isActive ? 2 : 1,
                                   }}
                                 >
@@ -1043,22 +1171,10 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                                 type="button"
                                 key={itemKey(item)}
                                 className={`grid-event-card status-${status} ${isActive ? 'is-active' : ''} ${cardStyles.className}`}
-                                onMouseEnter={(e) => {
-                                  if (selectedItemKey) return
-                                  const rect = e.currentTarget.getBoundingClientRect()
-                                  setHoveredItemKey(itemKey(item))
-                                  setAnchorRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
-                                }}
-                                onMouseLeave={() => {
-                                  if (selectedItemKey) return
-                                  setHoveredItemKey(null)
-                                  setAnchorRect(null)
-                                }}
                                 onClick={(e) => {
                                   e.stopPropagation()
                                   const rect = e.currentTarget.getBoundingClientRect()
                                   setSelectedItemKey(itemKey(item))
-                                  setHoveredItemKey(null)
                                   setAnchorRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
                                 }}
                                 style={{
@@ -1069,7 +1185,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                                   left: left,
                                   ...cardStyles.style,
                                   ...(isActive ? {
-                                    boxShadow: `0 0 0 2px #ffffff, 0 0 0 4px ${cardStyles.style?.color || '#7c3aed'}`,
+                                    boxShadow: `0 0 0 2px #ffffff, 0 0 0 4px ${displayColorForItem(item)}`,
                                     zIndex: 11,
                                   } : {})
                                 } as React.CSSProperties}
@@ -1108,8 +1224,8 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                   setSelectedItemKey(null)
                   setAnchorRect(null)
                 }} />
-                <div 
-                  className={`calendar-details-popover ${!selectedItemKey && hoveredItemKey ? 'is-hover' : ''}`}
+                <div
+                  className="calendar-details-popover"
                   style={getPopoverStyle(anchorRect)}
                   onClick={(e) => e.stopPropagation()}
                 >
@@ -1132,33 +1248,30 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                         title="Edit"
                         onClick={() => {
                           setSelectedItemKey(null)
-                          setHoveredItemKey(null)
                           setAnchorRect(null)
                           setModal({ open: true, item: activeItem, date: activeItem.date })
                         }}
                       >
                         <Pencil size={15} />
                       </button>
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         className="popover-action-btn"
                         title="Delete"
                         onClick={() => {
                           setDeleteTarget(activeItem)
                           setSelectedItemKey(null)
-                          setHoveredItemKey(null)
                           setAnchorRect(null)
                         }}
                       >
                         <Trash2 size={15} />
                       </button>
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         className="popover-action-btn close-btn"
                         title="Close"
                         onClick={() => {
                           setSelectedItemKey(null)
-                          setHoveredItemKey(null)
                           setAnchorRect(null)
                         }}
                       >
@@ -1170,13 +1283,13 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                   {/* Popover content body */}
                   <div className="popover-body-content">
                     <div className="popover-title-row">
-                      <span 
-                        className="category-bullet" 
-                        style={{ backgroundColor: overrideLightColors(activeItem.color || colorForCategory(activeItem.category || 'Personal'), activeItem.category) }} 
+                      <span
+                        className="category-bullet"
+                        style={{ backgroundColor: displayColorForItem(activeItem) }}
                       />
                       <div className="title-text-col">
                         <h4 className="popover-title">{activeItem.title}</h4>
-                        <span className="popover-category-tag" style={{ color: overrideLightColors(activeItem.color || colorForCategory(activeItem.category || 'Personal'), activeItem.category) }}>
+                        <span className="popover-category-tag" style={{ color: displayColorForItem(activeItem) }}>
                           {activeItem.category || 'Personal'}
                         </span>
                       </div>
@@ -1208,21 +1321,73 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                   <div className="popover-footer-actions">
                     <span className="going-label">Complete task?</span>
                     <div className="going-options">
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         className={`going-btn ${activeItem.completed ? 'is-active' : ''}`}
-                        onClick={() => handleToggle(activeItem)}
+                        onClick={() => {
+                          if (!activeItem.completed) handleToggle(activeItem)
+                        }}
                       >
                         Yes
                       </button>
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         className={`going-btn ${!activeItem.completed ? 'is-active' : ''}`}
-                        onClick={() => handleToggle(activeItem)}
+                        onClick={() => {
+                          if (activeItem.completed) handleToggle(activeItem)
+                        }}
                       >
                         No
                       </button>
                     </div>
+                  </div>
+                </div>
+              </>,
+              document.body
+            )}
+
+            {/* "+N more" day overflow popover (Google Calendar style) */}
+            {overflowDay && createPortal(
+              <>
+                <div className="popover-backdrop-mobile" onClick={() => setOverflowDay(null)} />
+                <div
+                  className="month-overflow-popover"
+                  style={getOverflowPopoverStyle(overflowDay.rect)}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="overflow-popover-header">
+                    <div className="overflow-popover-date">
+                      <span className="overflow-day-name">
+                        {parseISODate(overflowDay.date).toLocaleDateString('en-US', { weekday: 'short' })}
+                      </span>
+                      <strong className="overflow-day-number">{parseISODate(overflowDay.date).getDate()}</strong>
+                    </div>
+                    <button type="button" className="overflow-close-btn" aria-label="Close" onClick={() => setOverflowDay(null)}>
+                      <X size={14} />
+                    </button>
+                  </div>
+                  <div className="overflow-popover-list">
+                    {byDate(filteredItems, overflowDay.date).map((item) => (
+                      <button
+                        type="button"
+                        key={itemKey(item)}
+                        className={`overflow-event-row ${item.completed ? 'is-completed' : ''}`}
+                        style={{ '--capsule-color': displayColorForItem(item) } as React.CSSProperties}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          const rect = e.currentTarget.getBoundingClientRect()
+                          setOverflowDay(null)
+                          setSelectedItemKey(itemKey(item))
+                          setAnchorRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
+                        }}
+                      >
+                        <span className="overflow-event-dot" />
+                        <span className="overflow-event-title">{item.title}</span>
+                        <span className="overflow-event-time">
+                          {item.allDay || !item.startTime ? 'All day' : formatClockTime(item.startTime)}
+                        </span>
+                      </button>
+                    ))}
                   </div>
                 </div>
               </>,
@@ -1276,7 +1441,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
           {/* Dynamic Upcoming/Live Card */}
           {sidebarUpcomingItem && (() => {
             const { item: sidebarItem, label: sidebarLabel } = sidebarUpcomingItem
-            const categoryColor = colorForCategory(sidebarItem.category || 'Personal')
+            const categoryColor = displayColorForItem(sidebarItem)
             
             return (
               <div 
@@ -1391,29 +1556,6 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
             )}
           </div>
 
-          {/* Other Calendars Accordion */}
-          <div className="calendar-other-accordion">
-            <button
-              type="button"
-              className="filter-header-btn"
-              onClick={() => setOtherCalendarsOpen(!otherCalendarsOpen)}
-            >
-              <span>Other Calendars</span>
-              <ChevronDown size={14} className={`accordion-chevron ${otherCalendarsOpen ? 'open' : ''}`} />
-            </button>
-            {otherCalendarsOpen && (
-              <div className="other-calendars-list">
-                <div className="other-calendar-item">
-                  <span className="bullet-dot" style={{ background: '#10b981' }} />
-                  <span>Holidays in United States</span>
-                </div>
-                <div className="other-calendar-item">
-                  <span className="bullet-dot" style={{ background: '#3b82f6' }} />
-                  <span>GitHub Contributions</span>
-                </div>
-              </div>
-            )}
-          </div>
         </aside>
 
         {/* Right Main Grid Stage */}
@@ -1434,10 +1576,10 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
         <CalendarItemModal
           date={modal.date}
           item={modal.item}
+          existingCustomCategories={existingCustomCategories}
           onClose={() => setModal({ open: false })}
-          onSaved={async () => {
+          onSaved={() => {
             setModal({ open: false })
-            await loadItems()
             window.dispatchEvent(new CustomEvent('calendar-updated'))
           }}
         />,
@@ -1490,11 +1632,13 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
 function CalendarItemModal({
   date,
   item,
+  existingCustomCategories = [],
   onClose,
   onSaved,
 }: {
   date: string
   item?: CalendarItem
+  existingCustomCategories?: string[]
   onClose: () => void
   onSaved: () => void
 }) {
@@ -1513,7 +1657,26 @@ function CalendarItemModal({
   const [error, setError] = useState('')
   const [showCustomCategory, setShowCustomCategory] = useState(false)
   const [customCategoryInput, setCustomCategoryInput] = useState('')
-  const [customCategories, setCustomCategories] = useState<string[]>([])
+  const [customCategories, setCustomCategories] = useState<string[]>(() => {
+    const unique = new Set(existingCustomCategories)
+    if (item?.category) {
+      const standardLabels = new Set(CATEGORY_OPTIONS.map((opt) => opt.label))
+      const trimmed = item.category.trim()
+      if (trimmed && !standardLabels.has(trimmed)) {
+        unique.add(trimmed)
+      }
+    }
+    try {
+      const saved = localStorage.getItem('calendar_custom_categories')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed)) {
+          parsed.forEach((c) => unique.add(c.trim()))
+        }
+      }
+    } catch (e) {}
+    return Array.from(unique)
+  })
 
   const allCategoryOptions = [...CATEGORY_OPTIONS, ...customCategories.map((name) => ({ label: name, color: colorForCategory(name) }))]
 
@@ -1531,8 +1694,15 @@ function CalendarItemModal({
   const handleAddCustomCategory = () => {
     const trimmed = customCategoryInput.trim()
     if (!trimmed) return
+    let nextList = customCategories
     if (!customCategories.includes(trimmed)) {
-      setCustomCategories((prev) => [...prev, trimmed])
+      nextList = [...customCategories, trimmed]
+      setCustomCategories(nextList)
+      try {
+        localStorage.setItem('calendar_custom_categories', JSON.stringify(nextList))
+      } catch (e) {
+        console.error('Failed to save custom category to localStorage', e)
+      }
     }
     setCategory(trimmed)
     setColor(colorForCategory(trimmed))
@@ -1773,7 +1943,7 @@ function CalendarItemModal({
               <div className="form-group">
                 <label>NOTES OR CHECKLIST (OPTIONAL)</label>
                 <textarea
-                  placeholder="Add context, or use lines like '- [ ] Prepare notes'..."
+                  placeholder="Add context to your event"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   className="form-input"
@@ -1842,17 +2012,6 @@ function CalendarItemModal({
       </div>
     </div>
   )
-}
-
-function getScrollableDays(date: string) {
-  const selected = parseISODate(date)
-  const start = new Date(selected)
-  start.setDate(selected.getDate() - 14)
-  return Array.from({ length: 45 }, (_, index) => {
-    const next = new Date(start)
-    next.setDate(start.getDate() + index)
-    return next
-  })
 }
 
 function byDate(items: CalendarItem[], date: string) {
@@ -1938,7 +2097,8 @@ function toISODate(date: Date) {
 }
 
 function colorForCategory(category: string) {
-  const match = CATEGORY_OPTIONS.find((option) => option.label === category)
+  const normalized = (category || '').trim().toLowerCase()
+  const match = CATEGORY_OPTIONS.find((option) => option.label.toLowerCase() === normalized)
   if (match) return match.color
   const h = hueForCategory(category)
   return `hsl(${h}, 55%, 42%)`

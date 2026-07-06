@@ -225,7 +225,7 @@
   display: grid;
   min-height: 0;
   flex: 1 1 auto;
-  grid-template-columns: 280px 1fr;
+  grid-template-columns: 310px 1fr;
   gap: 24px;
   align-items: stretch;
 }
@@ -248,6 +248,10 @@
   overflow-y: auto;
   scrollbar-width: thin;
   padding: 20px 14px;
+}
+
+.routine-navigator > * {
+  flex-shrink: 0 !important;
 }
 
 .week-ribbon-wrapper {
@@ -1619,7 +1623,7 @@
   }
 
   .calendar-focus-split {
-    grid-template-columns: 260px 1fr;
+    grid-template-columns: 290px 1fr;
     gap: 16px;
   }
 
@@ -1765,21 +1769,51 @@
     cursor: pointer;
   }
 
+  /* Apple Calendar-style mobile layout: the timeline is the page. The main
+     canvas renders first and flows at natural height so the whole page
+     scrolls freely; the sidebar (search, mini month, filters) moves below. */
   .calendar-focus-split {
     display: flex;
     flex-direction: column;
-  }
-
-  .routine-navigator {
-    min-height: 560px;
+    gap: 16px;
   }
 
   .focus-canvas {
-    min-height: 600px;
+    order: -1;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .routine-navigator {
+    min-height: 0;
+    overflow-y: visible;
+  }
+
+  .calendar-main-stage {
+    height: auto;
+    overflow: visible;
+    padding: 16px 12px;
   }
 
   .stage-grid-canvas {
-    height: 560px !important;
+    height: auto !important;
+    overflow: visible;
+  }
+
+  /* Monthly view still pans horizontally inside its canvas */
+  .stage-grid-canvas:has(.monthly-view-grid) {
+    overflow-x: auto;
+    overflow-y: visible;
+  }
+
+  .calendar-grid-scrollable {
+    flex: none;
+    overflow-y: visible;
+  }
+
+  /* Keep the day header pinned while the page scrolls through the timeline */
+  .grid-header-days {
+    top: 0;
   }
 }
 
@@ -2168,8 +2202,7 @@
 }
 
 /* Left Sidebar - Accordions & Filters */
-.calendar-filter-card,
-.calendar-other-accordion {
+.calendar-filter-card {
   background: #ffffff;
   border: 1px solid rgba(0, 0, 0, 0.04);
   border-radius: 16px;
@@ -2259,29 +2292,6 @@
 
 .filter-checkbox-item input:checked ~ .checkbox-custom::after {
   display: block;
-}
-
-.other-calendars-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 12px;
-  padding-top: 8px;
-  border-top: 1px dashed rgba(0, 0, 0, 0.05);
-}
-
-.other-calendar-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: #4b5563;
-}
-
-.bullet-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
 }
 
 /* Right Panel Main Stage Layout */
@@ -2638,8 +2648,8 @@
   text-align: left;
   cursor: pointer;
   overflow: hidden;
-  border: none !important;
-  box-shadow: none !important;
+  border: none;
+  box-shadow: none;
   transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -2858,8 +2868,136 @@
 .month-more-indicator {
   font-size: 9px;
   color: #64748b;
+  font-weight: 600;
+  padding: 2px 4px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.month-more-indicator:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #1e293b;
+}
+
+/* "+N more" day overflow popover */
+.month-overflow-popover {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.16);
+  padding: 12px;
+  max-height: 320px;
+  display: flex;
+  flex-direction: column;
+  animation: modalScaleUp 180ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.overflow-popover-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 2px 4px 8px;
+}
+
+.overflow-popover-date {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+}
+
+.overflow-day-name {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #71717a;
+}
+
+.overflow-day-number {
+  font-size: 22px;
+  font-weight: 700;
+  color: #18181b;
+  line-height: 1.1;
+}
+
+.overflow-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #71717a;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.overflow-close-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.overflow-popover-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.overflow-event-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.overflow-event-row:hover {
+  background: color-mix(in srgb, var(--capsule-color, #3b82f6) 10%, #ffffff);
+}
+
+.overflow-event-row.is-completed .overflow-event-title {
+  text-decoration: line-through;
+  color: #94a3b8;
+}
+
+.overflow-event-dot {
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--capsule-color, #3b82f6);
+}
+
+.overflow-event-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.overflow-event-time {
+  flex: 0 0 auto;
+  font-size: 10.5px;
   font-weight: 500;
-  padding-left: 4px;
+  color: #71717a;
 }
 
 /* Center popup modal for event details */
@@ -3309,11 +3447,6 @@
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-/* Hover popover pointer-events helper */
-.calendar-details-popover.is-hover {
-  pointer-events: none !important;
 }
 
 /* Mobile responsive stage navigation adjustments */
