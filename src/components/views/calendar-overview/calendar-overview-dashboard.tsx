@@ -347,6 +347,74 @@ type ModalState =
   | { open: false; item?: never; date?: never }
   | { open: true; item?: CalendarItem; date: string }
 
+const CalendarSkeleton = ({ viewType }: { viewType: 'daily' | 'weekly' | 'monthly' }) => {
+  return (
+    <div className={`calendar-skeleton view-${viewType}`}>
+      {/* Header / Navigation row skeleton */}
+      <div className="skeleton-nav-row">
+        <div className="skeleton-pill skeleton-date" />
+        <div className="skeleton-pill skeleton-tabs" />
+        <div className="skeleton-pill skeleton-btn" />
+      </div>
+
+      {viewType === 'monthly' ? (
+        <div className="skeleton-monthly-grid">
+          <div className="skeleton-month-header">
+            {Array.from({ length: 7 }).map((_, i) => (
+              <div key={i} className="skeleton-month-header-cell" />
+            ))}
+          </div>
+          <div className="skeleton-month-cells">
+            {Array.from({ length: 35 }).map((_, i) => (
+              <div key={i} className="skeleton-month-cell">
+                <div className="skeleton-month-date" />
+                {i % 4 === 0 && <div className="skeleton-month-event" />}
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Grid header skeleton */}
+          <div className="skeleton-grid-header" style={{ gridTemplateColumns: `56px repeat(${viewType === 'weekly' ? 3 : 1}, minmax(0, 1fr))` }}>
+            <div className="skeleton-tz-box" />
+            {Array.from({ length: viewType === 'weekly' ? 3 : 1 }).map((_, i) => (
+              <div key={i} className="skeleton-day-card" />
+            ))}
+          </div>
+
+          {/* Grid body skeleton */}
+          <div className="skeleton-grid-body" style={{ gridTemplateColumns: `56px repeat(${viewType === 'weekly' ? 3 : 1}, minmax(0, 1fr))` }}>
+            <div className="skeleton-time-column">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="skeleton-time-slot" />
+              ))}
+            </div>
+            <div className="skeleton-columns" style={{ gridColumn: `span ${viewType === 'weekly' ? 3 : 1}`, gridTemplateColumns: `repeat(${viewType === 'weekly' ? 3 : 1}, minmax(0, 1fr))` }}>
+              {Array.from({ length: viewType === 'weekly' ? 3 : 1 }).map((_, i) => (
+                <div key={i} className="skeleton-column">
+                  {i === 0 && (
+                    <>
+                      <div className="skeleton-event-chip" style={{ top: '20%', height: '80px', width: '90%' }} />
+                      <div className="skeleton-event-chip" style={{ top: '55%', height: '50px', width: '80%' }} />
+                    </>
+                  )}
+                  {i === 1 && (
+                    <div className="skeleton-event-chip" style={{ top: '35%', height: '110px', width: '85%' }} />
+                  )}
+                  {i === 2 && (
+                    <div className="skeleton-event-chip" style={{ top: '15%', height: '60px', width: '90%' }} />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOverviewDashboardProps) {
   const [selectedDate, setSelectedDate] = useState(() => {
     const fromParams = searchParams.get('date')
@@ -799,7 +867,11 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
             setAnchorRect(null)
           }}
         >
-          {/* Navigation & view selection row */}
+          {loading ? (
+            <CalendarSkeleton viewType={viewType} />
+          ) : (
+            <>
+              {/* Navigation & view selection row */}
           <div className="stage-navigation-row">
             <div className="date-range-navigator">
               <button type="button" className="nav-arrow" onClick={() => handleStep(viewType === 'weekly' ? -3 : -1)}>
@@ -852,11 +924,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
 
           {/* Stage Calendar Body Grid */}
           <div className="stage-grid-canvas" ref={canvasContainerRef}>
-            {loading ? (
-              <div className="stage-loader">
-                <Loader2 size={32} className="animate-spin text-teal-600" />
-              </div>
-            ) : viewType === 'monthly' ? (
+            {viewType === 'monthly' ? (
               <MonthViewGrid />
             ) : (
               <div className={`calendar-grid-scrollable view-${viewType}`} ref={weeklyScrollContainerRef}>
@@ -1161,6 +1229,8 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
               document.body
             )}
           </div>
+          </>
+        )}
         </div>
       </main>
     )

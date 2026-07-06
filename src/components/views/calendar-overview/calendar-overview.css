@@ -2374,6 +2374,7 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 20px;
+  padding-right: 8px;
 }
 
 .date-range-navigator {
@@ -2607,7 +2608,7 @@
 .grid-columns-container {
   position: absolute;
   top: 24px;
-  bottom: 24px;
+  height: 1920px;
   left: 12px;
   right: 24px;
   display: grid;
@@ -2713,10 +2714,12 @@
   color: inherit;
   opacity: 0.85;
   margin-top: 1px;
+  line-height: 1;
 }
 
 .event-time svg {
   flex-shrink: 0;
+  margin-top: -1px;
 }
 
 .event-avatar-stack {
@@ -3363,6 +3366,229 @@
   /* Hide upcoming event cards to recover space, but keep mini calendar visible */
   .quick-reminder-card {
     display: none !important;
+  }
+}
+
+/* ==========================================
+   Shimmering Calendar Skeleton UI
+   ========================================== */
+.calendar-skeleton {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  gap: 20px;
+}
+
+.skeleton-nav-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.skeleton-pill {
+  background: rgba(21, 26, 24, 0.05);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-pill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.35),
+    transparent
+  );
+  animation: shimmer-effect 1.5s infinite;
+}
+
+.skeleton-date {
+  width: 180px;
+  height: 36px;
+}
+
+.skeleton-tabs {
+  width: 220px;
+  height: 36px;
+}
+
+.skeleton-btn {
+  width: 100px;
+  height: 36px;
+}
+
+.skeleton-grid-header {
+  display: grid;
+  gap: 12px;
+}
+
+.skeleton-tz-box {
+  height: 70px;
+  background: rgba(21, 26, 24, 0.03);
+  border-radius: 16px;
+}
+
+.skeleton-day-card {
+  height: 70px;
+  background: rgba(21, 26, 24, 0.04);
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-day-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.35),
+    transparent
+  );
+  animation: shimmer-effect 1.5s infinite;
+}
+
+.skeleton-grid-body {
+  flex: 1;
+  display: grid;
+  gap: 12px;
+  min-height: 400px;
+}
+
+.skeleton-time-column {
+  display: flex;
+  flex-direction: column;
+  gap: 60px;
+  padding-top: 10px;
+}
+
+.skeleton-time-slot {
+  height: 12px;
+  width: 32px;
+  background: rgba(21, 26, 24, 0.03);
+  border-radius: 4px;
+  align-self: flex-end;
+}
+
+.skeleton-columns {
+  display: grid;
+  gap: 12px;
+  height: 100%;
+}
+
+.skeleton-column {
+  background: rgba(244, 244, 245, 0.4);
+  border-radius: 16px;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-event-chip {
+  position: absolute;
+  left: 5%;
+  border-radius: 10px;
+  background: rgba(21, 26, 24, 0.05);
+  overflow: hidden;
+}
+
+.skeleton-event-chip::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.35),
+    transparent
+  );
+  animation: shimmer-effect 1.5s infinite;
+}
+
+/* Monthly View Skeleton specific rules */
+.skeleton-monthly-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 400px;
+}
+
+.skeleton-month-header {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.skeleton-month-header-cell {
+  height: 24px;
+  background: rgba(21, 26, 24, 0.03);
+  border-radius: 8px;
+}
+
+.skeleton-month-cells {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: repeat(5, 1fr);
+  gap: 8px;
+  flex: 1;
+}
+
+.skeleton-month-cell {
+  background: rgba(244, 244, 245, 0.4);
+  border-radius: 12px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 70px;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-month-date {
+  width: 18px;
+  height: 14px;
+  background: rgba(21, 26, 24, 0.03);
+  border-radius: 4px;
+}
+
+.skeleton-month-event {
+  height: 16px;
+  background: rgba(21, 26, 24, 0.05);
+  border-radius: 6px;
+  width: 80%;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-month-event::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.35),
+    transparent
+  );
+  animation: shimmer-effect 1.5s infinite;
+}
+
+@keyframes shimmer-effect {
+  100% {
+    transform: translateX(100%);
   }
 }
 
