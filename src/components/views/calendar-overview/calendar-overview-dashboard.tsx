@@ -50,7 +50,9 @@ import type { AppPath } from '../../dashboard/quantified-self-dashboard/data'
 import {
   createCalendarItem,
   deleteCalendarItem,
+  disconnectGoogleCalendar,
   fetchCalendarItemsForRange,
+  fetchGoogleAuthUrl,
   fetchGoogleSyncStatus,
   pushLocalEventsToGoogle,
   toggleCalendarItem,
@@ -58,7 +60,7 @@ import {
   triggerGoogleSync,
   updateCalendarItem,
 } from '../../../lib/api'
-import type { CalendarItem, CalendarItemPayload, CalendarItemType, CalendarRecurrence, GoogleSyncStatus } from '../../../lib/api'
+import type { CalendarItem, CalendarItemPayload, CalendarItemType, CalendarRecurrence, GoogleCalendarAccount, GoogleSyncStatus } from '../../../lib/api'
 import { ConfirmDialog } from '../../ui/confirm-dialog'
 import { MiniMonth } from '../../ui/mini-month'
 import { getRoutineIconDetails } from './routine-icon-helper'
@@ -492,7 +494,8 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   })
   const [searchQuery, setSearchQuery] = useState('')
   const [uncheckedCategories, setUncheckedCategories] = useState<string[]>([])
-  const [upcomingItem, setUpcomingItem] = useState<CalendarItem | null>(null)
+  const [upcomingItems, setUpcomingItems] = useState<CalendarItem[]>([])
+  const [upcomingCardIndex, setUpcomingCardIndex] = useState(0)
   const [filtersOpen, setFiltersOpen] = useState(() => {
     if (typeof window !== 'undefined' && window.innerWidth <= 820) {
       return false
@@ -554,17 +557,27 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
 
   const [profileAvatar, setProfileAvatar] = useState(() => getAvatarImage(localStorage.getItem('avatarUrl') || 'luffy'))
   const [googleSyncStatus, setGoogleSyncStatus] = useState<GoogleSyncStatus | null>(null)
-  const [googlePushing, setGooglePushing] = useState(false)
-  const [googleSyncing, setGoogleSyncing] = useState(false)
+  const [googlePushingEmail, setGooglePushingEmail] = useState<string | null>(null)
+  const [googleSyncingEmail, setGoogleSyncingEmail] = useState<string | null>(null)
+  const [googleDisconnectingEmail, setGoogleDisconnectingEmail] = useState<string | null>(null)
+  const [googleConnecting, setGoogleConnecting] = useState(false)
 
   useEffect(() => {
     const handleProfileUpdate = () => {
       setProfileAvatar(getAvatarImage(localStorage.getItem('avatarUrl') || 'luffy'))
     }
-    
+
     window.addEventListener('profile-updated', handleProfileUpdate)
     return () => window.removeEventListener('profile-updated', handleProfileUpdate)
   }, [])
+
+  useEffect(() => {
+    if (deleteTarget) {
+      document.body.classList.add('calendar-modal-open')
+    } else {
+      document.body.classList.remove('calendar-modal-open')
+    }
+  }, [deleteTarget])
 
   useEffect(() => {
     const handleDocumentClick = () => {
@@ -612,27 +625,34 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
 
   const loadUpcomingItem = useCallback(async () => {
     try {
-      const todayStr = toISODate(new Date())
+      const now = new Date()
+      const todayStr = toISODate(now)
+      const nowMinutes = now.getHours() * 60 + now.getMinutes()
       const futureDate = new Date()
       futureDate.setDate(futureDate.getDate() + 30)
       const futureStr = toISODate(futureDate)
-      
+
       const response = await fetchCalendarItemsForRange(todayStr, futureStr)
-      const futureItems = (response?.data ?? []).filter((item: CalendarItem) => {
+      const candidates = (response?.data ?? []).filter((item: CalendarItem) => {
         if (item.completed || item.cancelled) return false
-        return item.date >= todayStr
+        if (item.date > todayStr) return true
+        // For today's items, skip timed events whose endTime has already passed
+        if (item.date === todayStr) {
+          if (!item.startTime || item.allDay) return true
+          const endMinutes = item.endTime ? timeToMinutes(item.endTime) : timeToMinutes(item.startTime) + 60
+          return endMinutes > nowMinutes
+        }
+        return false
       })
-      
-      if (futureItems.length > 0) {
-        futureItems.sort((a: CalendarItem, b: CalendarItem) => {
-          const dateCompare = a.date.localeCompare(b.date)
-          if (dateCompare !== 0) return dateCompare
-          return (a.startTime ?? '99:99').localeCompare(b.startTime ?? '99:99')
-        })
-        setUpcomingItem(futureItems[0])
-      } else {
-        setUpcomingItem(null)
-      }
+
+      candidates.sort((a: CalendarItem, b: CalendarItem) => {
+        const dateCompare = a.date.localeCompare(b.date)
+        if (dateCompare !== 0) return dateCompare
+        return (a.startTime ?? '99:99').localeCompare(b.startTime ?? '99:99')
+      })
+
+      setUpcomingItems(candidates.slice(0, 5))
+      setUpcomingCardIndex(0)
     } catch (err) {
       console.error('Failed to load upcoming item', err)
     }
@@ -688,30 +708,79 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
       .catch(() => setGoogleSyncStatus(null))
   }, [])
 
-  const handleGooglePushLocal = async () => {
-    setGooglePushing(true)
+  const refreshGoogleStatus = async () => {
+    const res = await fetchGoogleSyncStatus()
+    setGoogleSyncStatus(res.data)
+  }
+
+  const handleGoogleConnect = async () => {
+    setGoogleConnecting(true)
     try {
-      const res = await pushLocalEventsToGoogle()
-      const pushed = res.data?.pushed ?? 0
+      const res = await fetchGoogleAuthUrl()
+      const url = res.data?.url
+      if (!url) throw new Error('No auth URL returned')
+      const popup = window.open(url, 'google-oauth', 'width=600,height=700,left=200,top=100')
+      const onMsg = (e: MessageEvent) => {
+        if (e.data?.type === 'GOOGLE_CALENDAR_CONNECTED') {
+          window.removeEventListener('message', onMsg)
+          refreshGoogleStatus().catch(() => {})
+          toast.success(`Connected ${e.data.email}`)
+          setGoogleConnecting(false)
+        }
+      }
+      window.addEventListener('message', onMsg)
+      // Fallback: if popup closes without postMessage
+      const timer = setInterval(() => {
+        if (popup?.closed) {
+          clearInterval(timer)
+          window.removeEventListener('message', onMsg)
+          setGoogleConnecting(false)
+          refreshGoogleStatus().catch(() => {})
+        }
+      }, 800)
+    } catch (err) {
+      toast.error((err as Error).message ?? 'Failed to start Google login')
+      setGoogleConnecting(false)
+    }
+  }
+
+  const handleGooglePushLocal = async (email?: string) => {
+    setGooglePushingEmail(email ?? '__all__')
+    try {
+      const res = await pushLocalEventsToGoogle(email)
+      const pushed = res.data?.totalPushed ?? 0
       toast.success(`Pushed ${pushed} event${pushed === 1 ? '' : 's'} to Google Calendar`)
     } catch (err) {
       toast.error((err as Error).message ?? 'Failed to push events')
     } finally {
-      setGooglePushing(false)
+      setGooglePushingEmail(null)
     }
   }
 
-  const handleGooglePullSync = async () => {
-    setGoogleSyncing(true)
+  const handleGooglePullSync = async (email?: string) => {
+    setGoogleSyncingEmail(email ?? '__all__')
     try {
-      await triggerGoogleSync()
+      await triggerGoogleSync(email)
       toast.success('Google Calendar sync triggered')
-      const res = await fetchGoogleSyncStatus()
-      setGoogleSyncStatus(res.data)
+      await refreshGoogleStatus()
     } catch (err) {
       toast.error('Sync failed')
     } finally {
-      setGoogleSyncing(false)
+      setGoogleSyncingEmail(null)
+    }
+  }
+
+  const handleGoogleDisconnect = async (email: string) => {
+    if (!window.confirm(`Disconnect ${email} from Google Calendar sync?`)) return
+    setGoogleDisconnectingEmail(email)
+    try {
+      await disconnectGoogleCalendar(email)
+      toast.success(`Disconnected ${email}`)
+      await refreshGoogleStatus()
+    } catch (err) {
+      toast.error('Failed to disconnect account')
+    } finally {
+      setGoogleDisconnectingEmail(null)
     }
   }
 
@@ -805,13 +874,20 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
       return { item: todayAllDay, label: "Today's Event" }
     }
     
-    // 3. Next, use the loaded upcomingItem
+    // 3. Next, use the loaded upcomingItems carousel
+    const upcomingItem = upcomingItems[upcomingCardIndex] ?? null
     if (upcomingItem) {
+      const todayStr2 = toISODate(new Date())
+      const nowMin2 = new Date().getHours() * 60 + new Date().getMinutes()
+      const isPast = upcomingItem.date < todayStr2 ||
+        (upcomingItem.date === todayStr2 && upcomingItem.endTime && timeToMinutes(upcomingItem.endTime) <= nowMin2)
       const classification = getEventClassification(upcomingItem)
-      let eyebrow = 'Upcoming event'
-      if (classification === 'MEETING') eyebrow = 'Upcoming meeting'
-      else if (classification === 'DEADLINE' || classification === 'TASK') eyebrow = 'Upcoming task'
-      else if (classification === 'MILESTONE') eyebrow = 'Upcoming milestone'
+      let eyebrow = isPast ? 'Past activity' : 'Upcoming event'
+      if (!isPast) {
+        if (classification === 'MEETING') eyebrow = 'Upcoming meeting'
+        else if (classification === 'DEADLINE' || classification === 'TASK') eyebrow = 'Upcoming task'
+        else if (classification === 'MILESTONE') eyebrow = 'Upcoming milestone'
+      }
       return { item: upcomingItem, label: eyebrow }
     }
     
@@ -830,7 +906,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
       } as CalendarItem,
       label: 'Meeting reminder'
     }
-  }, [items, upcomingItem])
+  }, [items, upcomingItems, upcomingCardIndex])
 
   const threeDays = useMemo(() => getThreeDays(selectedDate), [selectedDate])
   
@@ -1204,7 +1280,6 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                             const isActive = selectedItem && itemKey(item) === itemKey(selectedItem)
                             const isAllDay = item.allDay || !item.startTime
                             const cardStyles = getEventStyleClasses(item)
-                            const attendees = getMockAttendeesForItem(item)
                             return (
                               <button
                                 type="button"
@@ -1242,7 +1317,6 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                                         {formatItemTime(item)}
                                       </span>
                                     </div>
-                                    {attendees.length > 0 && renderAvatarStack(attendees)}
                                   </div>
                                 )}
                               </button>
@@ -1481,9 +1555,10 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
           {sidebarUpcomingItem && (() => {
             const { item: sidebarItem, label: sidebarLabel } = sidebarUpcomingItem
             const categoryColor = displayColorForItem(sidebarItem)
-            
+            const showCarousel = upcomingItems.length > 1 && sidebarItem.id !== 'mock-meeting'
+
             return (
-              <div 
+              <div
                 className="quick-reminder-card"
                 style={{
                   background: `linear-gradient(135deg, ${categoryColor}, ${categoryColor})`,
@@ -1492,6 +1567,25 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
               >
                 <div className="reminder-eyebrow">
                   {sidebarLabel}
+                  {showCarousel && (
+                    <span className="upcoming-carousel-controls">
+                      <button
+                        type="button"
+                        className="carousel-arrow"
+                        onClick={(e) => { e.stopPropagation(); setUpcomingCardIndex(i => Math.max(0, i - 1)) }}
+                        disabled={upcomingCardIndex === 0}
+                        aria-label="Previous"
+                      >‹</button>
+                      <span className="carousel-index">{upcomingCardIndex + 1}/{upcomingItems.length}</span>
+                      <button
+                        type="button"
+                        className="carousel-arrow"
+                        onClick={(e) => { e.stopPropagation(); setUpcomingCardIndex(i => Math.min(upcomingItems.length - 1, i + 1)) }}
+                        disabled={upcomingCardIndex === upcomingItems.length - 1}
+                        aria-label="Next"
+                      >›</button>
+                    </span>
+                  )}
                 </div>
                 <h3 className="reminder-title">{sidebarItem.title}</h3>
                 <div className="reminder-time-row">
@@ -1513,16 +1607,12 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                   </span>
                 </div>
                 <div className="reminder-footer">
-                  {renderAvatarStack(
-                    sidebarItem.id === 'mock-meeting'
-                      ? [
-                          { name: 'John Doe', avatar: profileAvatar },
-                          { name: 'Sarah Connor', avatar: getAvatarImage('avatar1') },
-                          { name: 'Alex Mercer', avatar: getAvatarImage('avatar2') },
-                          { name: 'Emma Watson', avatar: getAvatarImage('avatar3') },
-                        ]
-                      : getMockAttendeesForItem(sidebarItem)
-                  )}
+                  {sidebarItem.id === 'mock-meeting' && renderAvatarStack([
+                    { name: 'John Doe', avatar: profileAvatar },
+                    { name: 'Sarah Connor', avatar: getAvatarImage('avatar1') },
+                    { name: 'Alex Mercer', avatar: getAvatarImage('avatar2') },
+                    { name: 'Emma Watson', avatar: getAvatarImage('avatar3') },
+                  ])}
                   <div className="reminder-actions">
                     <button
                       type="button"
@@ -1574,21 +1664,33 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                   const checked = !uncheckedCategories.includes(cat)
                   const color = colorForCategory(cat)
                   return (
-                    <label key={cat} className="filter-checkbox-item">
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => {
-                          if (checked) {
-                            setUncheckedCategories([...uncheckedCategories, cat])
-                          } else {
-                            setUncheckedCategories(uncheckedCategories.filter((c) => c !== cat))
-                          }
-                        }}
-                      />
-                      <span className="checkbox-custom" style={{ '--checkbox-color': color } as React.CSSProperties} />
-                      <span className="checkbox-label">{cat}</span>
-                    </label>
+                    <div key={cat} className="filter-checkbox-row">
+                      <label className="filter-checkbox-item">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => {
+                            if (checked) {
+                              setUncheckedCategories([...uncheckedCategories, cat])
+                            } else {
+                              setUncheckedCategories(uncheckedCategories.filter((c) => c !== cat))
+                            }
+                          }}
+                        />
+                        <span className="checkbox-custom" style={{ '--checkbox-color': color } as React.CSSProperties} />
+                        <span className="checkbox-label">{cat}</span>
+                      </label>
+                      <label className="category-color-swatch" title={`Change color for ${cat}`} style={{ background: color }}>
+                        <input
+                          type="color"
+                          value={color}
+                          onChange={(e) => {
+                            setCustomCategoryColor(cat, e.target.value)
+                            setUncheckedCategories([...uncheckedCategories]) // force re-render
+                          }}
+                        />
+                      </label>
+                    </div>
                   )
                 })}
               </div>
@@ -1596,35 +1698,69 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
           </div>
 
           {/* Google Calendar Sync Card */}
-          {googleSyncStatus?.connected && (
-            <div className="calendar-google-sync-card">
-              <div className="google-sync-header">
-                <span className="google-sync-dot" />
-                <span className="google-sync-label">Google Calendar</span>
-              </div>
-              <p className="google-sync-email">{googleSyncStatus.email}</p>
-              <div className="google-sync-actions">
-                <button
-                  type="button"
-                  className="google-sync-btn"
-                  disabled={googleSyncing}
-                  onClick={handleGooglePullSync}
-                  title="Pull latest events from Google Calendar"
-                >
-                  {googleSyncing ? <Loader2 size={11} className="spin-icon" /> : '↓'} Pull
-                </button>
-                <button
-                  type="button"
-                  className="google-sync-btn google-sync-btn--push"
-                  disabled={googlePushing}
-                  onClick={handleGooglePushLocal}
-                  title="Push local-only events to Google Calendar"
-                >
-                  {googlePushing ? <Loader2 size={11} className="spin-icon" /> : '↑'} Push
-                </button>
-              </div>
+          <div className="calendar-google-sync-card">
+            <div className="google-sync-header">
+              <span className="google-sync-dot" style={{ background: googleSyncStatus?.connected ? '#4caf50' : '#aaa' }} />
+              <span className="google-sync-label">Google Calendar</span>
             </div>
-          )}
+
+            {(googleSyncStatus?.accounts ?? []).map((account: GoogleCalendarAccount) => {
+              const isPulling = googleSyncingEmail === account.email
+              const isPushing = googlePushingEmail === account.email
+              const isDisconnecting = googleDisconnectingEmail === account.email
+              return (
+                <div key={account.email} className="google-account-row">
+                  <div className="google-account-info">
+                    <span className="google-account-email">{account.email}</span>
+                    {account.lastSyncedAt && (
+                      <span className="google-account-synced">
+                        {new Date(account.lastSyncedAt).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                  <div className="google-sync-actions">
+                    <button
+                      type="button"
+                      className="google-sync-btn"
+                      disabled={isPulling || isPushing}
+                      onClick={() => handleGooglePullSync(account.email)}
+                      title="Pull latest events from this Google account"
+                    >
+                      {isPulling ? <Loader2 size={11} className="spin-icon" /> : '↓'} Pull
+                    </button>
+                    <button
+                      type="button"
+                      className="google-sync-btn google-sync-btn--push"
+                      disabled={isPulling || isPushing}
+                      onClick={() => handleGooglePushLocal(account.email)}
+                      title="Push local-only events to this Google account"
+                    >
+                      {isPushing ? <Loader2 size={11} className="spin-icon" /> : '↑'} Push
+                    </button>
+                    <button
+                      type="button"
+                      className="google-sync-btn google-sync-btn--disconnect"
+                      disabled={isDisconnecting}
+                      onClick={() => handleGoogleDisconnect(account.email)}
+                      title="Disconnect this Google account"
+                    >
+                      {isDisconnecting ? <Loader2 size={11} className="spin-icon" /> : '×'}
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+
+            <button
+              type="button"
+              className="google-connect-btn"
+              disabled={googleConnecting}
+              onClick={handleGoogleConnect}
+            >
+              {googleConnecting ? <Loader2 size={11} className="spin-icon" /> : '+'}
+              {googleConnecting ? ' Connecting…' : (googleSyncStatus?.connected ? ' Add account' : ' Connect Google')}
+            </button>
+          </div>
 
         </aside>
 
@@ -1712,6 +1848,11 @@ function CalendarItemModal({
   onClose: () => void
   onSaved: () => void
 }) {
+  useEffect(() => {
+    document.body.classList.add('calendar-modal-open')
+    return () => document.body.classList.remove('calendar-modal-open')
+  }, [])
+
   const [saving, setSaving] = useState(false)
   const [title, setTitle] = useState(item?.title ?? '')
   const [itemDate, setItemDate] = useState(item?.originalDate ?? item?.date ?? date)
@@ -2166,8 +2307,24 @@ function toISODate(date: Date) {
   return `${year}-${month}-${day}`
 }
 
+const CUSTOM_COLORS_KEY = 'calendar_category_custom_colors'
+
+let _customCategoryColors: Record<string, string> = (() => {
+  try {
+    const saved = localStorage.getItem(CUSTOM_COLORS_KEY)
+    if (saved) return JSON.parse(saved)
+  } catch {}
+  return {}
+})()
+
+function setCustomCategoryColor(category: string, color: string) {
+  _customCategoryColors = { ..._customCategoryColors, [category.toLowerCase()]: color }
+  try { localStorage.setItem(CUSTOM_COLORS_KEY, JSON.stringify(_customCategoryColors)) } catch {}
+}
+
 function colorForCategory(category: string) {
   const normalized = (category || '').trim().toLowerCase()
+  if (_customCategoryColors[normalized]) return _customCategoryColors[normalized]
   const match = CATEGORY_OPTIONS.find((option) => option.label.toLowerCase() === normalized)
   if (match) return match.color
   const h = hueForCategory(category)

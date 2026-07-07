@@ -1322,53 +1322,53 @@ export async function updateUserProfile(data: Partial<UserProfile>): Promise<{ d
   return response.json();
 }
 
-export interface GoogleSyncStatus {
-  connected: boolean;
-  email?: string;
+export interface GoogleCalendarAccount {
+  email: string;
   lastSyncedAt?: string;
   webhookExpiration?: string;
 }
 
+export interface GoogleSyncStatus {
+  connected: boolean;
+  email?: string;            // first account (legacy compat)
+  accounts: GoogleCalendarAccount[];
+}
+
 export async function fetchGoogleSyncStatus(): Promise<{ data: GoogleSyncStatus }> {
   const response = await fetch(`${API_BASE_URL}/google-calendar/auth/status`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch Google Sync status');
-  }
+  if (!response.ok) throw new Error('Failed to fetch Google Sync status');
   return response.json();
 }
 
 export async function fetchGoogleAuthUrl(): Promise<{ data: { url: string } }> {
   const response = await fetch(`${API_BASE_URL}/google-calendar/auth/url`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch Google Auth URL');
-  }
+  if (!response.ok) throw new Error('Failed to fetch Google Auth URL');
   return response.json();
 }
 
-export async function disconnectGoogleCalendar(): Promise<{ data: { status: string } }> {
-  const response = await fetch(`${API_BASE_URL}/google-calendar/auth/disconnect`, {
-    method: 'POST',
-  });
-  if (!response.ok) {
-    throw new Error('Failed to disconnect Google Calendar');
-  }
+export async function disconnectGoogleCalendar(email?: string): Promise<{ data: { status: string } }> {
+  const url = email
+    ? `${API_BASE_URL}/google-calendar/auth/disconnect?email=${encodeURIComponent(email)}`
+    : `${API_BASE_URL}/google-calendar/auth/disconnect`;
+  const response = await fetch(url, { method: 'POST' });
+  if (!response.ok) throw new Error('Failed to disconnect Google Calendar');
   return response.json();
 }
 
-export async function triggerGoogleSync(): Promise<{ data: { status: string } }> {
-  const response = await fetch(`${API_BASE_URL}/google-calendar/sync`, {
-    method: 'POST',
-  });
-  if (!response.ok) {
-    throw new Error('Failed to trigger Google sync');
-  }
+export async function triggerGoogleSync(email?: string): Promise<{ data: { status: string } }> {
+  const url = email
+    ? `${API_BASE_URL}/google-calendar/sync?email=${encodeURIComponent(email)}`
+    : `${API_BASE_URL}/google-calendar/sync`;
+  const response = await fetch(url, { method: 'POST' });
+  if (!response.ok) throw new Error('Failed to trigger Google sync');
   return response.json();
 }
 
-export async function pushLocalEventsToGoogle(): Promise<{ data: { status: string; pushed: number } }> {
-  const response = await fetch(`${API_BASE_URL}/google-calendar/push-local`, {
-    method: 'POST',
-  });
+export async function pushLocalEventsToGoogle(email?: string): Promise<{ data: { status: string; totalPushed: number; byAccount: Record<string, number> } }> {
+  const url = email
+    ? `${API_BASE_URL}/google-calendar/push-local?email=${encodeURIComponent(email)}`
+    : `${API_BASE_URL}/google-calendar/push-local`;
+  const response = await fetch(url, { method: 'POST' });
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
     throw new Error((body?.data?.error) ?? 'Failed to push local events to Google Calendar');
