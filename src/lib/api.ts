@@ -1367,3 +1367,162 @@ export async function triggerGoogleSync(): Promise<{ data: { status: string } }>
 
 
 
+
+// ─── Mind (mental wellness) ────────────────────────────────────────────────
+// Mirrors the `mind_entries` collection + MindController. Canonical types live here;
+// mind-types.ts re-exports them alongside its UI constants.
+
+export interface ApiMeta {
+  requestId: string;
+  timestamp: string;
+  source: string;
+}
+
+export interface ApiEnvelope<T> {
+  data: T;
+  meta: ApiMeta;
+}
+
+export type MindEntryType = 'THOUGHT' | 'WIN' | 'GRATITUDE' | 'AFFIRMATION' | 'REFLECTION' | 'INTENTION';
+export type MindEntryStatus = 'OPEN' | 'RESOLVED' | 'PARKED' | 'RELEASED' | 'CONVERTED';
+export type MindValueTag = 'Coding' | 'Growth' | 'Calm' | 'Confidence' | 'Devotion' | 'Joy' | 'Fulfilment';
+export type MindDistortionTag =
+  | 'Catastrophizing'
+  | 'Mind-reading'
+  | 'All-or-nothing'
+  | 'Fortune-telling'
+  | 'Labeling';
+
+export interface MindEntry {
+  id: string;
+  type: MindEntryType;
+  text: string;
+  reframedText?: string | null;
+  distortionTag?: MindDistortionTag | null;
+  status: MindEntryStatus;
+  linkedTaskId?: string | null;
+  valueTag?: MindValueTag | null;
+  pinned?: boolean;
+  reviewDate?: string | null;
+  date: string;
+  createdAt?: string;
+  resolvedAt?: string | null;
+}
+
+export interface MindSummary {
+  focusMinutes: number;
+  tasksCompleted: number;
+  workouts: number;
+  learnings: number;
+  streakDays: number;
+  captured: number;
+  converted: number;
+  reframed: number;
+  released: number;
+  moodScore: number | null;
+}
+
+export interface MindEntryPayload {
+  text: string;
+  type?: MindEntryType;
+  valueTag?: MindValueTag | null;
+  pinned?: boolean;
+  date?: string;
+}
+
+export interface MindStatusPayload {
+  status: MindEntryStatus;
+  reviewDate?: string;
+  reframedText?: string;
+  distortionTag?: MindDistortionTag | null;
+  pinned?: boolean;
+}
+
+export async function fetchMindEntries(type?: MindEntryType, status?: MindEntryStatus): Promise<ApiEnvelope<MindEntry[]>> {
+  const params = new URLSearchParams();
+  if (type) params.append('type', type);
+  if (status) params.append('status', status);
+  const query = params.toString() ? `?${params.toString()}` : '';
+  const response = await fetch(`${API_BASE_URL}/mind/entries${query}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch mind entries');
+  }
+  return response.json();
+}
+
+export async function fetchMindSummary(date?: string): Promise<ApiEnvelope<MindSummary>> {
+  const query = date ? `?date=${date}` : '';
+  const response = await fetch(`${API_BASE_URL}/mind/summary${query}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch mind summary');
+  }
+  return response.json();
+}
+
+export async function createMindEntry(payload: MindEntryPayload): Promise<ApiEnvelope<MindEntry>> {
+  const response = await fetch(`${API_BASE_URL}/mind/entries`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to create mind entry');
+  }
+  return response.json();
+}
+
+export async function updateMindEntry(id: string, payload: MindEntryPayload): Promise<ApiEnvelope<MindEntry>> {
+  const response = await fetch(`${API_BASE_URL}/mind/entries/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to update mind entry');
+  }
+  return response.json();
+}
+
+export async function updateMindStatus(id: string, payload: MindStatusPayload): Promise<ApiEnvelope<MindEntry>> {
+  const response = await fetch(`${API_BASE_URL}/mind/entries/${id}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to update mind entry status');
+  }
+  return response.json();
+}
+
+export async function convertMindEntry(id: string): Promise<ApiEnvelope<MindEntry>> {
+  const response = await fetch(`${API_BASE_URL}/mind/entries/${id}/convert`, {
+    method: 'POST',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to convert mind entry to a task');
+  }
+  return response.json();
+}
+
+export async function deleteMindEntry(id: string): Promise<ApiEnvelope<null>> {
+  const response = await fetch(`${API_BASE_URL}/mind/entries/${id}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to delete mind entry');
+  }
+  return response.json();
+}
+
+export async function saveMindMood(date: string, moodScore: number, moodNote?: string): Promise<ApiEnvelope<DailyLog>> {
+  const response = await fetch(`${API_BASE_URL}/mind/mood?date=${date}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ moodScore, moodNote }),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to save mood');
+  }
+  return response.json();
+}
