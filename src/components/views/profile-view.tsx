@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { 
+import {
   X, Clock, Pencil, LogOut, Mail, Globe, Bell,
   Activity, Target, Plus, Calendar, RefreshCw
 } from 'lucide-react';
-import { 
-  getUserProfile, 
-  updateUserProfile, 
+import {
+  getUserProfile,
+  updateUserProfile,
   fetchGoogleSyncStatus,
   fetchGoogleAuthUrl,
   disconnectGoogleCalendar,
@@ -122,7 +122,7 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
           setActivityLevel(data.activityLevel || 'SEDENTARY');
           setFitnessGoal(data.fitnessGoal || 'MAINTAIN_WEIGHT');
           setMedicalConditions(data.medicalConditions || []);
-          
+
           localStorage.setItem('avatarUrl', data.avatarUrl || 'luffy');
           localStorage.setItem('displayName', data.displayName || '');
           window.dispatchEvent(new Event('profile-updated'));
@@ -320,391 +320,373 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
           <TopChip />
 
           <div className="profile-container">
-
-
             {loading ? (
-              <div className="profile-content-layout">
-                {/* Skeleton Porsche Card layout */}
-                <div className="profile-porsche-card">
-                  <div className="profile-porsche-card-split">
-                    {/* Left Panel Skeleton */}
-                    <div className="profile-porsche-identity-section">
-                      <div className="profile-porsche-img-container">
-                        <div className="skeleton-avatar skeleton-pulse"></div>
-                      </div>
-                      <div className="profile-porsche-badges">
-                        <div className="skeleton-pill skeleton-pulse"></div>
-                        <div className="skeleton-pill skeleton-pulse"></div>
-                        <div className="skeleton-pill skeleton-pulse"></div>
-                      </div>
-                      <div className="profile-porsche-content">
+              <div className="profile-shell-card">
+                <div className="profile-shell-split">
+                  {/* Left identity rail skeleton */}
+                  <div className="profile-identity">
+                    <div className="identity-header">
+                      <div className="skeleton-avatar skeleton-pulse"></div>
+                      <div className="identity-titles">
                         <div className="skeleton-name skeleton-pulse"></div>
-                        <div className="skeleton-title skeleton-pulse"></div>
-                        <div className="skeleton-text skeleton-pulse"></div>
+                        <div className="skeleton-role skeleton-pulse"></div>
                         <div className="skeleton-email skeleton-pulse"></div>
                       </div>
-                      <div className="profile-left-embedded-stats">
-                        <div className="embedded-biometrics">
-                          <div className="skeleton-biometric-row skeleton-pulse"></div>
-                          <div className="skeleton-biometric-row skeleton-pulse"></div>
-                          <div className="skeleton-biometric-row skeleton-pulse"></div>
-                          <div className="skeleton-biometric-row skeleton-pulse"></div>
-                        </div>
-                        <div className="embedded-conditions">
-                          <div className="skeleton-section-title skeleton-pulse"></div>
-                          <div className="skeleton-conditions-list">
-                            <div className="skeleton-condition-pill skeleton-pulse"></div>
-                            <div className="skeleton-condition-pill skeleton-pulse"></div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="profile-porsche-footer">
-                        <div className="skeleton-footer-text skeleton-pulse"></div>
-                        <div className="skeleton-footer-buttons">
-                          <div className="skeleton-button skeleton-pulse"></div>
-                          <div className="skeleton-button skeleton-pulse"></div>
-                        </div>
+                    </div>
+                    <div className="identity-badges">
+                      <div className="skeleton-pill skeleton-pulse"></div>
+                      <div className="skeleton-pill skeleton-pulse"></div>
+                      <div className="skeleton-pill skeleton-pulse"></div>
+                    </div>
+                    <div className="identity-section">
+                      <div className="skeleton-section-title skeleton-pulse"></div>
+                      <div className="identity-biometrics">
+                        <div className="skeleton-bio-tile skeleton-pulse"></div>
+                        <div className="skeleton-bio-tile skeleton-pulse"></div>
+                        <div className="skeleton-bio-tile skeleton-pulse"></div>
+                        <div className="skeleton-bio-tile skeleton-pulse"></div>
                       </div>
                     </div>
-
-                    {/* Right Panel Skeleton */}
-                    <div className="profile-porsche-health-section">
-                      <div className="profile-quotes-header">
-                        <div className="skeleton-section-sub skeleton-pulse"></div>
-                        <div className="skeleton-section-title skeleton-pulse"></div>
+                    <div className="identity-section">
+                      <div className="skeleton-section-title skeleton-pulse"></div>
+                      <div className="identity-conditions">
+                        <div className="skeleton-condition-pill skeleton-pulse"></div>
+                        <div className="skeleton-condition-pill skeleton-pulse"></div>
                       </div>
-                      <div className="profile-bento-grid">
-                        <div className="profile-health-card skeleton-card">
-                          <div className="skeleton-card-header skeleton-pulse"></div>
-                          <div className="status-metrics-wrapper">
-                            <div className="skeleton-circle skeleton-pulse"></div>
-                            <div className="skeleton-stats skeleton-pulse"></div>
-                          </div>
-                        </div>
-                        <div className="profile-health-card skeleton-card">
-                          <div className="skeleton-card-header skeleton-pulse"></div>
-                          <div className="nutrition-target-main">
-                            <div className="skeleton-nutrition-val skeleton-pulse"></div>
-                          </div>
-                          <div className="nutrition-macros-grid">
-                            <div className="skeleton-macro-item skeleton-pulse"></div>
-                            <div className="skeleton-macro-item skeleton-pulse"></div>
-                            <div className="skeleton-macro-item skeleton-pulse"></div>
-                          </div>
-                        </div>
+                    </div>
+                    <div className="identity-spacer"></div>
+                    <div className="identity-footer">
+                      <div className="skeleton-footer-text skeleton-pulse"></div>
+                      <div className="skeleton-footer-buttons">
+                        <div className="skeleton-button skeleton-pulse"></div>
+                        <div className="skeleton-button skeleton-pulse"></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right metrics skeleton */}
+                  <div className="profile-metrics">
+                    <div className="metrics-header">
+                      <div className="skeleton-section-sub skeleton-pulse"></div>
+                      <div className="skeleton-section-title skeleton-pulse"></div>
+                    </div>
+                    <div className="metrics-grid">
+                      <div className="metric-card skeleton-card">
+                        <div className="skeleton-card-header skeleton-pulse"></div>
+                        <div className="skeleton-circle skeleton-pulse"></div>
+                      </div>
+                      <div className="metric-card skeleton-card">
+                        <div className="skeleton-card-header skeleton-pulse"></div>
+                        <div className="skeleton-stats skeleton-pulse"></div>
+                      </div>
+                      <div className="metric-card card-sync skeleton-card-wide">
+                        <div className="skeleton-card-header skeleton-pulse"></div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="profile-content-layout">
-                {/* Unified Porsche Card containing both Identity and Health Stats */}
-                <div className="profile-porsche-card">
-                  <div className="profile-porsche-card-split">
-                    
-                    {/* Left Panel: Identity & Actions */}
-                    <div className="profile-porsche-identity-section">
-                      {/* Card Image Cover Header */}
-                      <div className="profile-porsche-img-container">
-                        <div className="profile-avatar-wrapper-rel">
-                          <img
-                            src={getAvatarImage(avatarUrl)}
-                            alt="Profile Banner"
-                            className="profile-porsche-img"
-                          />
-                          <button
-                            type="button"
-                            className="profile-avatar-notif-btn"
-                            onClick={() => setIsOpen(true)}
-                            aria-label="Open notifications"
-                          >
-                            <Bell size={14} />
-                            {unreadCount > 0 && (
-                              <span className="profile-avatar-notif-badge">{unreadCount}</span>
-                            )}
-                          </button>
-                        </div>
-                      </div>
+              <div className="profile-shell-card">
+                <div className="profile-shell-split">
 
-                      {/* Attributes Badges Row */}
-                      <div className="profile-porsche-badges">
-                        <div className="profile-porsche-pill">
-                          <span className={`profile-porsche-dot status-${(status || 'Online').toLowerCase().replace(/\s+/g, '-')}`}></span>
-                          <span>{status || 'Online'}</span>
-                        </div>
-                        <div className="profile-porsche-pill">
-                          <Globe size={12} strokeWidth={2.5} />
-                          <span>{timezone || 'GMT+5:30'}</span>
-                        </div>
-                        <div className="profile-porsche-pill">
-                          <Clock size={12} strokeWidth={2.5} />
-                          <span>{workingHours || '10 AM - 6 PM'}</span>
-                        </div>
+                  {/* ── Left: Identity Rail ── */}
+                  <aside className="profile-identity">
+                    <div className="identity-header">
+                      <div className="identity-avatar-wrap">
+                        <img
+                          src={getAvatarImage(avatarUrl)}
+                          alt={displayName || 'Profile avatar'}
+                          className="identity-avatar"
+                        />
+                        <button
+                          type="button"
+                          className="identity-notif-btn"
+                          onClick={() => setIsOpen(true)}
+                          aria-label="Open notifications"
+                        >
+                          <Bell size={13} />
+                          {unreadCount > 0 && (
+                            <span className="identity-notif-badge">{unreadCount}</span>
+                          )}
+                        </button>
                       </div>
-
-                      {/* Main Information Block */}
-                      <div className="profile-porsche-content">
-                        <h2 className="profile-porsche-name">{displayName || 'Your Name'}</h2>
-                        <h3 className="profile-porsche-title">{title || 'Intern'}</h3>
-                        <p className="profile-porsche-description">
-                          {bio || 'Ready to learn, design, and develop premium dashboard systems.'}
-                        </p>
+                      <div className="identity-titles">
+                        <h2 className="identity-name">{displayName || 'Your Name'}</h2>
+                        <h3 className="identity-role">{title || 'Intern'}</h3>
                         {email && (
-                          <a href={`mailto:${email}`} className="profile-porsche-email-link">
-                            <Mail size={13} />
+                          <a href={`mailto:${email}`} className="identity-email">
+                            <Mail size={12} />
                             <span>{email}</span>
                           </a>
                         )}
                       </div>
+                    </div>
 
-                      {/* Embedded Biometrics & Conditions to fill empty space */}
-                      <div className="profile-left-embedded-stats">
-                        <div className="embedded-biometrics">
-                          <div className="embedded-stat-row">
-                            <span className="lbl">Age</span>
-                            <span className="val">
-                              {profile?.physicalMetrics?.age ?? '—'} <span className="unit">yrs</span>
-                            </span>
-                          </div>
-                          <div className="embedded-stat-row">
-                            <span className="lbl">Gender</span>
-                            <span className="val capitalize">
-                              {profile?.physicalMetrics?.gender?.toLowerCase() ?? '—'}
-                            </span>
-                          </div>
-                          <div className="embedded-stat-row">
-                            <span className="lbl">Height</span>
-                            <span className="val">
-                              {profile?.physicalMetrics?.height ?? '—'} <span className="unit">cm</span>
-                            </span>
-                          </div>
-                          <div className="embedded-stat-row">
-                            <span className="lbl">Weight</span>
-                            <span className="val">
-                              {profile?.physicalMetrics?.weight ?? '—'} <span className="unit">kg</span>
-                            </span>
-                          </div>
+                    <div className="identity-badges">
+                      <span className="identity-pill">
+                        <span className={`identity-dot status-${(status || 'Online').toLowerCase().replace(/\s+/g, '-')}`}></span>
+                        <span>{status || 'Online'}</span>
+                      </span>
+                      <span className="identity-pill">
+                        <Globe size={11} strokeWidth={2.5} />
+                        <span>{timezone || 'GMT+5:30'}</span>
+                      </span>
+                      <span className="identity-pill">
+                        <Clock size={11} strokeWidth={2.5} />
+                        <span>{workingHours || '10 AM - 6 PM'}</span>
+                      </span>
+                    </div>
+
+                    {bio && <p className="identity-bio">{bio}</p>}
+
+                    <div className="identity-section">
+                      <h4 className="identity-section-title">Biometrics</h4>
+                      <div className="identity-biometrics">
+                        <div className="bio-tile">
+                          <span className="lbl">Age</span>
+                          <span className="val">
+                            {profile?.physicalMetrics?.age ?? '—'} <span className="unit">yrs</span>
+                          </span>
                         </div>
-
-                        <div className="embedded-conditions">
-                          <h4 className="embedded-section-title">Conditions & Flags</h4>
-                          {profile?.medicalConditions && profile.medicalConditions.length > 0 ? (
-                            <div className="medical-pills-list">
-                              {profile.medicalConditions.map((condition, idx) => (
-                                <span key={idx} className="medical-pill">
-                                  {condition}
-                                </span>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="no-conditions-text">No conditions flagged</div>
-                          )}
+                        <div className="bio-tile">
+                          <span className="lbl">Gender</span>
+                          <span className="val capitalize">
+                            {profile?.physicalMetrics?.gender?.toLowerCase() ?? '—'}
+                          </span>
                         </div>
-                      </div>
-
-                      {/* Actions & Timestamps Footer */}
-                      <div className="profile-porsche-footer">
-                        <span className="profile-porsche-last-updated">
-                          {formatLastUpdated(profile?.updatedAt || profile?.createdAt)}
-                        </span>
-                        <div className="profile-porsche-actions">
-                          <button
-                            type="button"
-                            className="profile-porsche-logout-btn"
-                            onClick={handleLogout}
-                          >
-                            <LogOut size={14} />
-                            <span>Log Out</span>
-                          </button>
-                          <button
-                            type="button"
-                            className="profile-porsche-edit-btn"
-                            onClick={() => setIsEditing(true)}
-                          >
-                            <Pencil size={14} />
-                            <span>Edit Profile</span>
-                          </button>
+                        <div className="bio-tile">
+                          <span className="lbl">Height</span>
+                          <span className="val">
+                            {profile?.physicalMetrics?.height ?? '—'} <span className="unit">cm</span>
+                          </span>
+                        </div>
+                        <div className="bio-tile">
+                          <span className="lbl">Weight</span>
+                          <span className="val">
+                            {profile?.physicalMetrics?.weight ?? '—'} <span className="unit">kg</span>
+                          </span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Right Panel: Health & Performance Bento Grid */}
-                    <div className="profile-porsche-health-section">
-                      <div className="profile-quotes-header">
-                        <p>Health & Performance</p>
-                        <h2>Calculated Targets & Metrics</h2>
-                      </div>
-                      
-                      <div className="profile-bento-grid">
-                        {/* Card B: The Metric Ring / Status */}
-                        <div className="profile-health-card card-status">
-                          <div className="card-header-icon">
-                            <Activity className="text-gray-500" size={16} style={{ color: '#4b5563' }} />
-                            <span className="card-tag">BMI & BMR Status</span>
-                          </div>
-                          <div className="status-metrics-wrapper">
-                            <div className="bmi-circle-container">
-                              <div className="bmi-circle">
-                                <span className="bmi-number">{profile?.bmi ?? '—'}</span>
-                                <span className="bmi-label">BMI</span>
-                              </div>
-                              <div className="bmi-status-indicator">
-                                <span className={`bmi-badge status-${getBmiStatusClass(profile?.bmi)}`}>
-                                  {getBmiStatus(profile?.bmi)}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="tdee-container">
-                              <div className="tdee-block">
-                                <span className="tdee-label">TDEE</span>
-                                <span className="tdee-value">
-                                  {profile?.tdee ? Math.round(profile.tdee).toLocaleString() : '—'} <span className="unit">kcal</span>
-                                </span>
-                              </div>
-                              <div className="bmr-block">
-                                <span className="bmr-label">BMR</span>
-                                <span className="bmr-value">
-                                  {profile?.bmr ? Math.round(profile.bmr).toLocaleString() : '—'} <span className="unit">kcal</span>
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Card C: Daily Nutrition Targets */}
-                        <div className="profile-health-card card-nutrition-targets">
-                          <div className="card-header-icon">
-                            <Target className="text-[#4b5563]" size={16} />
-                            <span className="card-tag">Nutrition Targets</span>
-                          </div>
-                          <div className="nutrition-target-main">
-                            <span className="nutr-kcal-val">
-                              {profile?.dynamicTargets?.calculatedCalories ? Math.round(profile.dynamicTargets.calculatedCalories).toLocaleString() : '—'} <span className="unit">kcal</span>
+                    <div className="identity-section">
+                      <h4 className="identity-section-title">Conditions & Flags</h4>
+                      {profile?.medicalConditions && profile.medicalConditions.length > 0 ? (
+                        <div className="identity-conditions">
+                          {profile.medicalConditions.map((condition, idx) => (
+                            <span key={idx} className="condition-pill">
+                              {condition}
                             </span>
-                            <span className="nutr-kcal-lbl">Target Calorie Intake</span>
-                          </div>
-                          {(() => {
-                            const calcCal = profile?.dynamicTargets?.calculatedCalories || 0;
-                            const calcProt = profile?.dynamicTargets?.calculatedProtein || 0;
-                            const calcCarb = profile?.dynamicTargets?.calculatedCarbs || 0;
-                            const calcFat = profile?.dynamicTargets?.calculatedFat || 0;
-
-                            const protPct = calcCal > 0 ? Math.round((calcProt * 4 / calcCal) * 100) : 0;
-                            const carbPct = calcCal > 0 ? Math.round((calcCarb * 4 / calcCal) * 100) : 0;
-                            const fatPct = calcCal > 0 ? Math.max(0, 100 - protPct - carbPct) : 0;
-
-                            return (
-                              <div className="nutrition-macros-grid">
-                                <div className="macro-bar-item protein">
-                                  <div className="macro-info">
-                                    <span className="macro-name">Protein</span>
-                                    <span className="macro-gram">
-                                      {calcProt ?? '—'}g <span className="pct-label">({protPct}%)</span>
-                                    </span>
-                                  </div>
-                                  <div className="macro-progress-track">
-                                    <div className="macro-progress-fill" style={{ width: `${protPct}%` }}></div>
-                                  </div>
-                                </div>
-                                <div className="macro-bar-item carbs">
-                                  <div className="macro-info">
-                                    <span className="macro-name">Carbs</span>
-                                    <span className="macro-gram">
-                                      {calcCarb ?? '—'}g <span className="pct-label">({carbPct}%)</span>
-                                    </span>
-                                  </div>
-                                  <div className="macro-progress-track">
-                                    <div className="macro-progress-fill" style={{ width: `${carbPct}%` }}></div>
-                                  </div>
-                                </div>
-                                <div className="macro-bar-item fat">
-                                  <div className="macro-info">
-                                    <span className="macro-name">Fats</span>
-                                    <span className="macro-gram">
-                                      {calcFat ?? '—'}g <span className="pct-label">({fatPct}%)</span>
-                                    </span>
-                                  </div>
-                                  <div className="macro-progress-track">
-                                    <div className="macro-progress-fill" style={{ width: `${fatPct}%` }}></div>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })()}
+                          ))}
                         </div>
+                      ) : (
+                        <span className="identity-empty">No conditions flagged</span>
+                      )}
+                    </div>
 
-                        {/* Card D: Google Calendar Integration */}
-                        <div className="profile-health-card card-google-sync">
-                          <div className="card-header-icon">
-                            <Calendar className="text-gray-500" size={16} style={{ color: '#4b5563' }} />
-                            <span className="card-tag">Google Calendar Sync</span>
+                    <div className="identity-spacer"></div>
+
+                    <div className="identity-footer">
+                      <span className="identity-updated">
+                        {formatLastUpdated(profile?.updatedAt || profile?.createdAt)}
+                      </span>
+                      <div className="identity-actions">
+                        <button
+                          type="button"
+                          className="identity-logout-btn"
+                          onClick={handleLogout}
+                        >
+                          <LogOut size={13} />
+                          <span>Log Out</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="identity-edit-btn"
+                          onClick={() => setIsEditing(true)}
+                        >
+                          <Pencil size={13} />
+                          <span>Edit Profile</span>
+                        </button>
+                      </div>
+                    </div>
+                  </aside>
+
+                  {/* ── Right: Health & Performance Bento ── */}
+                  <section className="profile-metrics">
+                    <header className="metrics-header">
+                      <p>Health & Performance</p>
+                      <h2>Calculated Targets & Metrics</h2>
+                    </header>
+
+                    <div className="metrics-grid">
+                      {/* BMI & Energy card */}
+                      <div className="metric-card card-status">
+                        <div className="metric-card-head">
+                          <Activity size={15} />
+                          <span>BMI & BMR Status</span>
+                        </div>
+                        <div className="status-body">
+                          <div className="bmi-ring-wrap">
+                            <div className={`bmi-ring status-${getBmiStatusClass(profile?.bmi)}`}>
+                              <span className="bmi-number">{profile?.bmi ?? '—'}</span>
+                              <span className="bmi-caption">BMI</span>
+                            </div>
+                            <span className={`bmi-badge status-${getBmiStatusClass(profile?.bmi)}`}>
+                              {getBmiStatus(profile?.bmi)}
+                            </span>
                           </div>
-                          
-                          <div className="google-sync-card-content">
-                            {syncStatus?.connected ? (
-                              <div className="connected-status-wrapper">
-                                <div className="status-indicator-badge connected">
-                                  <span className="dot"></span>
-                                  <span>Sync Active</span>
-                                </div>
-                                <div className="connection-info">
-                                  <span className="info-label">Account</span>
-                                  <span className="info-value truncate-email" title={syncStatus.email}>{syncStatus.email}</span>
-                                </div>
-                                <div className="connection-info">
-                                  <span className="info-label">Last Synced</span>
-                                  <span className="info-value">
-                                    {syncStatus.accounts?.[0]?.lastSyncedAt && syncStatus.accounts[0].lastSyncedAt !== ''
-                                      ? new Date(syncStatus.accounts[0].lastSyncedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit' }) 
-                                      : 'Waiting for Sync'}
+                          <div className="energy-stats">
+                            <div className="energy-row">
+                              <span className="lbl">TDEE</span>
+                              <span className="val">
+                                {profile?.tdee ? Math.round(profile.tdee).toLocaleString() : '—'} <span className="unit">kcal</span>
+                              </span>
+                            </div>
+                            <div className="energy-row">
+                              <span className="lbl">BMR</span>
+                              <span className="val">
+                                {profile?.bmr ? Math.round(profile.bmr).toLocaleString() : '—'} <span className="unit">kcal</span>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Nutrition targets card */}
+                      <div className="metric-card card-nutrition">
+                        <div className="metric-card-head">
+                          <Target size={15} />
+                          <span>Nutrition Targets</span>
+                        </div>
+                        <div className="nutrition-kcal">
+                          <span className="kcal-val">
+                            {profile?.dynamicTargets?.calculatedCalories ? Math.round(profile.dynamicTargets.calculatedCalories).toLocaleString() : '—'} <span className="unit">kcal</span>
+                          </span>
+                          <span className="kcal-lbl">Target Calorie Intake</span>
+                        </div>
+                        {(() => {
+                          const calcCal = profile?.dynamicTargets?.calculatedCalories || 0;
+                          const calcProt = profile?.dynamicTargets?.calculatedProtein || 0;
+                          const calcCarb = profile?.dynamicTargets?.calculatedCarbs || 0;
+                          const calcFat = profile?.dynamicTargets?.calculatedFat || 0;
+
+                          const protPct = calcCal > 0 ? Math.round((calcProt * 4 / calcCal) * 100) : 0;
+                          const carbPct = calcCal > 0 ? Math.round((calcCarb * 4 / calcCal) * 100) : 0;
+                          const fatPct = calcCal > 0 ? Math.max(0, 100 - protPct - carbPct) : 0;
+
+                          return (
+                            <div className="nutrition-macros-grid">
+                              <div className="macro-bar-item protein">
+                                <div className="macro-info">
+                                  <span className="macro-name">Protein</span>
+                                  <span className="macro-gram">
+                                    {calcProt ?? '—'}g <span className="pct-label">({protPct}%)</span>
                                   </span>
                                 </div>
-                                <div className="google-sync-actions">
-                                  <button 
-                                    className="sync-btn-now" 
-                                    onClick={handleSyncNow}
-                                    disabled={syncLoading}
-                                  >
-                                    <RefreshCw size={12} className={syncLoading ? 'animate-spin' : ''} style={{ marginRight: '6px' }} />
-                                    <span>{syncLoading ? 'Syncing...' : 'Sync Now'}</span>
-                                  </button>
-                                  <button 
-                                    className="sync-btn-disconnect" 
-                                    onClick={handleDisconnectGoogle}
-                                  >
-                                    Disconnect
-                                  </button>
+                                <div className="macro-progress-track">
+                                  <div className="macro-progress-fill" style={{ width: `${protPct}%` }}></div>
                                 </div>
                               </div>
-                            ) : (
-                              <div className="disconnected-status-wrapper">
-                                <div className="status-indicator-badge disconnected">
-                                  <span className="dot"></span>
-                                  <span>Not Connected</span>
+                              <div className="macro-bar-item carbs">
+                                <div className="macro-info">
+                                  <span className="macro-name">Carbs</span>
+                                  <span className="macro-gram">
+                                    {calcCarb ?? '—'}g <span className="pct-label">({carbPct}%)</span>
+                                  </span>
                                 </div>
-                                <p className="sync-description">
-                                  Synchronize your calendar events and dashboard tasks bidirectionally in real-time.
-                                </p>
-                                <button 
-                                  className="sync-btn-connect" 
-                                  onClick={handleConnectGoogle}
-                                  disabled={authUrlLoading}
-                                >
-                                  {authUrlLoading ? 'Redirecting...' : 'Link Calendar'}
-                                </button>
+                                <div className="macro-progress-track">
+                                  <div className="macro-progress-fill" style={{ width: `${carbPct}%` }}></div>
+                                </div>
                               </div>
-                            )}
-                          </div>
-                        </div>
+                              <div className="macro-bar-item fat">
+                                <div className="macro-info">
+                                  <span className="macro-name">Fats</span>
+                                  <span className="macro-gram">
+                                    {calcFat ?? '—'}g <span className="pct-label">({fatPct}%)</span>
+                                  </span>
+                                </div>
+                                <div className="macro-progress-track">
+                                  <div className="macro-progress-fill" style={{ width: `${fatPct}%` }}></div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
 
+                      {/* Google Calendar sync — horizontal strip */}
+                      <div className="metric-card card-sync">
+                        <div className="metric-card-head">
+                          <Calendar size={15} />
+                          <span>Google Calendar Sync</span>
+                        </div>
+                        {syncStatus?.connected ? (
+                          <div className="sync-body">
+                            <div className="sync-info">
+                              <div className="sync-badge connected">
+                                <span className="dot"></span>
+                                <span>Sync Active</span>
+                              </div>
+                              <div className="sync-meta">
+                                <span className="sync-meta-item">
+                                  <span className="lbl">Account</span>
+                                  <span className="val truncate-email" title={syncStatus.email}>{syncStatus.email}</span>
+                                </span>
+                                <span className="sync-meta-item">
+                                  <span className="lbl">Last Synced</span>
+                                  <span className="val">
+                                    {syncStatus.accounts?.[0]?.lastSyncedAt && syncStatus.accounts[0].lastSyncedAt !== ''
+                                      ? new Date(syncStatus.accounts[0].lastSyncedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+                                      : 'Waiting for Sync'}
+                                  </span>
+                                </span>
+                              </div>
+                            </div>
+                            <div className="sync-actions">
+                              <button
+                                className="sync-btn-now"
+                                onClick={handleSyncNow}
+                                disabled={syncLoading}
+                              >
+                                <RefreshCw size={12} className={syncLoading ? 'animate-spin' : ''} />
+                                <span>{syncLoading ? 'Syncing...' : 'Sync Now'}</span>
+                              </button>
+                              <button
+                                className="sync-btn-disconnect"
+                                onClick={handleDisconnectGoogle}
+                              >
+                                Disconnect
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="sync-body">
+                            <div className="sync-info">
+                              <div className="sync-badge disconnected">
+                                <span className="dot"></span>
+                                <span>Not Connected</span>
+                              </div>
+                              <p className="sync-copy">
+                                Synchronize your calendar events and dashboard tasks bidirectionally in real-time.
+                              </p>
+                            </div>
+                            <div className="sync-actions">
+                              <button
+                                className="sync-btn-connect"
+                                onClick={handleConnectGoogle}
+                                disabled={authUrlLoading}
+                              >
+                                {authUrlLoading ? 'Redirecting...' : 'Link Calendar'}
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-                    
-                  </div>
-                </div>
+                  </section>
 
-                {/* Removed bottom notifications card */}
+                </div>
               </div>
             )}
           </div>
@@ -726,14 +708,14 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                 <X size={20} />
               </button>
             </div>
-            
+
             <form onSubmit={handleSave}>
               <div className="profile-modal-body">
                 <div className="profile-modal-tabs-content">
                   {/* Left Column: General Fields */}
                   <div className="modal-form-section">
                     <h3 className="section-title">Identity & Account</h3>
-                    
+
                     <div className="profile-input-group">
                       <label htmlFor="displayName">Full name</label>
                       <input
@@ -833,7 +815,7 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                   {/* Right Column: Health Biometrics & Goals */}
                   <div className="modal-form-section">
                     <h3 className="section-title">Health Biometrics & Target Engine</h3>
-                    
+
                     <div className="profile-input-row-split">
                       <div className="profile-input-group">
                         <label htmlFor="age">Age (years)</label>
@@ -941,7 +923,7 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                             );
                           })}
                         </div>
-                        
+
                         <div className="custom-condition-add">
                           <input
                             type="text"

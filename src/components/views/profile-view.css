@@ -1,124 +1,40 @@
 /* ═══════════════════════════════════════════════════════ */
-/* Profile View — Porsche 911 inspired redesign           */
+/* Profile View — single-viewport glass profile card       */
 /* ═══════════════════════════════════════════════════════ */
 
 .profile-container {
   position: absolute;
-  inset: 110px 58px 24px 206px;
+  inset: 110px 58px 32px 206px;
   z-index: 2;
-  overflow-y: auto;
-  padding: 20px 24px;
-  color: #101312;
-  overscroll-behavior: contain;
-  box-sizing: border-box;
-  scrollbar-width: thin;
-}
-
-/* ─── Header ─── */
-.profile-header {
   display: flex;
-  height: 56px;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 8px 0 2px;
-  margin-bottom: 32px;
-}
-
-.profile-header p,
-.profile-header h1 {
-  margin: 0;
-}
-
-.profile-header p {
-  color: rgba(23, 28, 25, 0.54);
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-}
-
-.profile-header h1 {
-  margin-top: 4px;
-  font-size: 24px;
-  font-weight: 500;
-  letter-spacing: -0.04em;
   color: #101312;
-}
-
-/* ─── Profile Card Shell — Porsche Inspired ─── */
-.profile-porsche-card {
-  border: 8px solid #ffffff;
-  border-radius: 26px;
-  background: #eaebed;
-  box-shadow: 
-    0 20px 48px rgba(0, 0, 0, 0.09),
-    0 4px 14px rgba(0, 0, 0, 0.04);
-  width: 100%;
-  max-width: none;
-  display: flex;
-  flex-direction: column;
   box-sizing: border-box;
-  margin: 0;
-  animation: cardFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   overflow: hidden;
 }
 
-/* Unified Porsche Card Split Container */
-.profile-porsche-card-split {
+/* ─── Unified glass shell ─── */
+.profile-shell-card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.06),
+    inset 0 1px 1px rgba(255, 255, 255, 0.6);
+  overflow: hidden;
+  animation: cardFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.profile-shell-split {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: row;
-  width: 100%;
-}
-
-.profile-porsche-identity-section {
-  flex: 0 0 410px;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-  border-right: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.profile-porsche-health-section {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  box-sizing: border-box;
-  padding: 24px;
-  background: rgba(255, 255, 255, 0.12); /* Frosted contrast highlight */
-}
-
-@media (max-width: 1024px) {
-  .profile-porsche-card-split {
-    flex-direction: column;
-  }
-  
-  .profile-porsche-identity-section {
-    flex: none;
-    width: 100%;
-    border-right: none;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  }
-  
-  .profile-porsche-health-section {
-    width: 100%;
-    padding: 24px 16px;
-  }
-}
-
-/* Edit Mode Card is slightly wider to hold input form grid nicely */
-.profile-porsche-card-edit {
-  max-width: none;
-  max-height: none;
-  display: flex;
-  flex-direction: column;
-}
-
-.profile-porsche-card-edit form {
-  display: flex;
-  flex-direction: column;
-  flex: none;
-  overflow: visible;
 }
 
 @keyframes cardFadeIn {
@@ -132,41 +48,160 @@
   }
 }
 
-/* Image Cover Header */
-.profile-porsche-img-container {
-  width: 100%;
-  height: 140px;
+/* ═══════════════════════════════════════════════════════ */
+/* LEFT — IDENTITY RAIL                                    */
+/* ═══════════════════════════════════════════════════════ */
+
+.profile-identity {
+  flex: 0 0 340px;
+  min-height: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
+  flex-direction: column;
+  gap: 16px;
+  padding: 26px 24px 20px 26px;
+  box-sizing: border-box;
+  border-right: 1px solid rgba(16, 19, 18, 0.07);
+  overflow-y: auto;
+  scrollbar-width: none;
 }
 
-.profile-porsche-img {
-  width: 110px;
-  height: 110px;
+.identity-spacer {
+  flex: 1;
+  min-height: 8px;
+}
+
+/* Avatar + name header */
+.identity-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.identity-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.identity-avatar {
+  width: 84px;
+  height: 84px;
   border-radius: 50%;
-  border: 5px solid #ffffff;
+  border: 3px solid rgba(255, 255, 255, 0.9);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
   object-fit: cover;
   object-position: center;
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  display: block;
 }
 
-.profile-porsche-img-container:hover .profile-porsche-img {
-  transform: scale(1.05);
+.identity-notif-btn {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid rgba(16, 19, 18, 0.08);
+  color: #101312;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 0;
+  z-index: 5;
 }
 
-/* Attributes Badges Row */
-.profile-porsche-badges {
+.identity-notif-btn:hover {
+  transform: scale(1.08);
+  background: #f4f6f4;
+}
+
+.identity-notif-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #202321;
+  color: #eaff28;
+  font-size: 8.5px;
+  font-weight: 750;
+  min-width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #ffffff;
+  padding: 0 2px;
+  box-sizing: border-box;
+}
+
+.identity-titles {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.identity-name {
+  font-size: 21px;
+  font-weight: 700;
+  color: #101312;
+  letter-spacing: -0.02em;
+  margin: 0;
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.identity-role {
+  font-size: 11px;
+  font-weight: 700;
+  color: #526057;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 4px 0 0 0;
+  line-height: 1.2;
+}
+
+.identity-email {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+  font-size: 11.5px;
+  color: #526057;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+  min-width: 0;
+}
+
+.identity-email span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.identity-email:hover {
+  color: #101312;
+}
+
+.identity-email svg {
+  flex-shrink: 0;
+  color: #7d8a82;
+}
+
+/* Badge pills row */
+.identity-badges {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  padding: 18px 24px 8px 24px;
 }
 
-.profile-porsche-pill {
-  background: #ffffff;
+.identity-pill {
+  background: rgba(255, 255, 255, 0.72);
   border-radius: 9999px;
   padding: 4px 10px;
   display: inline-flex;
@@ -174,1375 +209,433 @@
   gap: 5px;
   font-size: 10.5px;
   font-weight: 600;
-  color: #4b5563;
-  border: 1px solid rgba(0, 0, 0, 0.04);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  color: #3c4741;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
-.profile-porsche-pill:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-  color: #111827;
+.identity-pill svg {
+  color: #526057;
 }
 
-.profile-porsche-dot {
+.identity-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #10b981;
+  background: #6aa88a;
 }
 
-.profile-porsche-dot.status-online {
-  background: #10b981;
+.identity-dot.status-online { background: #6aa88a; }
+.identity-dot.status-offline { background: #9aa39d; }
+.identity-dot.status-away { background: #d9a441; }
+.identity-dot.status-do-not-disturb { background: #f16977; }
+
+/* Bio copy */
+.identity-bio {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #526057;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.profile-porsche-dot.status-offline {
-  background: #9ca3af;
-}
-
-.profile-porsche-dot.status-away {
-  background: #f59e0b;
-}
-
-.profile-porsche-dot.status-do-not-disturb {
-  background: #ef4444;
-}
-
-.profile-porsche-pill svg {
-  color: #1c1d1f;
-}
-
-/* Main Content Typography */
-.profile-porsche-content {
-  padding: 12px 24px 28px 24px;
+/* Sections */
+.identity-section {
   display: flex;
   flex-direction: column;
-}
-
-.profile-porsche-name {
-  font-size: 28px;
-  font-weight: 700;
-  color: #0d0e10;
-  letter-spacing: -0.01em;
-  margin: 0;
-  line-height: 1.1;
-  text-transform: uppercase;
-}
-
-.profile-porsche-title {
-  font-size: 38px;
-  font-weight: 700;
-  color: #8c8d90;
-  text-transform: uppercase;
-  letter-spacing: -0.04em;
-  margin: 2px 0 0 0;
-  line-height: 0.95;
-}
-
-.profile-porsche-description {
-  font-size: 13.5px;
-  line-height: 1.55;
-  color: #55575c;
-  margin: 14px 0 0 0;
-  letter-spacing: -0.01em;
-}
-
-.profile-porsche-email-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 14px;
-  font-size: 12.5px;
-  color: #4b5563;
-  text-decoration: none;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  width: fit-content;
-}
-
-.profile-porsche-email-link:hover {
-  color: #111827;
-  transform: translateX(2px);
-}
-
-.profile-porsche-email-link svg {
-  color: #7c7e85;
-}
-
-/* Footer Section inside Card */
-.profile-porsche-footer {
-  padding: 16px 20px;
-  background: transparent;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px dashed rgba(0, 0, 0, 0.08);
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.profile-porsche-last-updated {
-  font-size: 10.5px;
-  color: #7c7e85;
-  font-weight: 550;
-  text-align: left;
-}
-
-.profile-porsche-actions {
-  display: flex;
   gap: 8px;
-  justify-content: flex-end;
-  align-items: center;
-  flex: none;
 }
 
-.profile-porsche-logout-btn {
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  color: #1c1d1f;
-  padding: 6px 12px;
-  border-radius: 10px;
-  font-size: 11.5px;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex: none;
-  white-space: nowrap;
-}
-
-.profile-porsche-logout-btn:hover {
-  background: #000000;
-  color: #ffffff;
-  border-color: #000000;
-  transform: translateY(-1px);
-}
-
-.profile-porsche-edit-btn {
-  background: #1c1d1f;
-  color: #ffffff;
-  padding: 6px 12px;
-  border-radius: 10px;
-  font-size: 11.5px;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  flex: none;
-  white-space: nowrap;
-}
-
-.profile-porsche-edit-btn:hover {
-  background: #000000;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
-}
-
-/* ═══════════════════════════════════════════════════════ */
-/* EDIT MODE FORM STYLING                                 */
-/* ═══════════════════════════════════════════════════════ */
-
-.profile-card-header {
-  padding: 24px 28px 20px 28px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.profile-card-header h2 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #18181b;
+.identity-section-title {
+  font-size: 9.5px;
+  font-weight: 750;
+  color: rgba(23, 28, 25, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
   margin: 0;
-  letter-spacing: -0.01em;
 }
 
-.profile-close-btn {
+.identity-biometrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.bio-tile {
+  background: rgba(255, 255, 255, 0.66);
+  border-radius: 14px;
+  padding: 9px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
   display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: transparent;
-  border: none;
-  color: #71717a;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  flex-direction: column;
+  gap: 3px;
 }
 
-.profile-close-btn:hover {
-  background: rgba(0, 0, 0, 0.04);
-  color: #18181b;
+.bio-tile .lbl {
+  font-size: 9.5px;
+  font-weight: 650;
+  color: #7d8a82;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
-.profile-card-body {
+.bio-tile .val {
+  font-size: 14px;
+  font-weight: 700;
+  color: #101312;
+}
+
+.bio-tile .val.capitalize {
+  text-transform: capitalize;
+}
+
+.bio-tile .val .unit {
+  font-size: 10px;
+  font-weight: 500;
+  color: #7d8a82;
+}
+
+.identity-conditions {
   display: flex;
-  gap: 20px;
-  padding: 20px;
-  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
-.profile-porsche-card-edit .profile-card-body {
-  overflow-y: visible;
-  flex: none;
+.condition-pill {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 4px 11px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #3c4741;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
-.profile-form-panel {
-  flex: 1.25;
+.identity-empty {
+  font-size: 11.5px;
+  color: #8b968f;
+  font-style: italic;
+}
+
+/* Footer pinned to bottom */
+.identity-footer {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(16, 19, 18, 0.1);
 }
 
-.profile-dashed-divider {
-  width: 1px;
-  border-left: 1px dashed rgba(0, 0, 0, 0.1);
-  margin: 0 4px;
-}
-
-.profile-preview-panel {
-  flex: 0.95;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 6px;
-  position: relative;
-}
-
-.preview-label {
+.identity-updated {
   font-size: 10px;
-  font-weight: 600;
-  color: #8c8d90;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-bottom: 12px;
+  color: #7d8a82;
+  font-weight: 550;
 }
 
-.preview-avatar-wrapper {
-  position: relative;
-  width: 80px;
-  height: 80px;
-  margin-bottom: 12px;
-}
-
-.preview-avatar {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 4px solid #ffffff;
-  background: #ffffff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-.avatar-edit-overlay {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+.identity-actions {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: #71717a;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  outline: none;
-  padding: 0;
-}
-
-.avatar-edit-overlay:hover {
-  background: #f4f4f5;
-  color: #18181b;
-  transform: scale(1.08);
-}
-
-/* Avatar Picker Popover */
-.avatar-picker-popover {
-  position: absolute;
-  top: 112px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.15);
-  border-radius: 16px;
-  padding: 14px;
-  z-index: 100;
-  width: 220px;
-  animation: popoverIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes popoverIn {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-}
-
-.avatar-picker-title {
-  font-size: 11px;
-  font-weight: 600;
-  color: #71717a;
-  margin-bottom: 10px;
-  display: block;
-  text-align: center;
-}
-
-.avatar-picker-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
   gap: 8px;
 }
 
-.avatar-picker-option {
-  position: relative;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  outline: none;
-  border-radius: 50%;
-  transition: transform 0.2s ease;
-}
-
-.avatar-picker-option:hover {
-  transform: scale(1.1);
-}
-
-.avatar-picker-option img {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid transparent;
-  transition: all 0.2s ease;
-}
-
-.avatar-picker-option.selected img {
-  border-color: #18181b;
-}
-
-.avatar-picker-check {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  background: #18181b;
-  color: #ffffff;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  display: flex;
+.identity-logout-btn,
+.identity-edit-btn {
+  flex: 1;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #ffffff;
-}
-
-.preview-name {
-  font-size: 16px;
-  font-weight: 600;
-  color: #18181b;
-  margin: 0 0 2px 0;
-  text-align: center;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-transform: uppercase;
-}
-
-.preview-title {
-  font-size: 13px;
-  font-weight: 400;
-  color: #71717a;
-  margin: 0 0 8px 0;
-  text-align: center;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Form inputs styling */
-.profile-input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  width: 100%;
-}
-
-.profile-input-group label {
-  font-size: 12px;
-  font-weight: 500;
-  color: #71717a;
-}
-
-.profile-input-group input,
-.profile-input-group select,
-.profile-textarea {
-  width: 100%;
+  gap: 5px;
   padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: #ffffff;
-  font-size: 13px;
-  font-weight: 500;
-  color: #18181b;
-  outline: none;
-  box-sizing: border-box;
-  transition: all 0.2s ease;
+  border-radius: 12px;
+  font-size: 11.5px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
   font-family: inherit;
 }
 
-.profile-textarea {
-  resize: none;
-  line-height: 1.45;
-  height: 52px;
+.identity-logout-btn {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(16, 19, 18, 0.1);
+  color: #101312;
 }
 
-.profile-input-group input:focus,
-.profile-input-group select:focus,
-.profile-textarea:focus {
-  border-color: #18181b;
-  box-shadow: 0 0 0 2px rgba(24, 24, 27, 0.05);
-}
-
-.profile-input-row-split {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.profile-select-wrapper {
-  position: relative;
-  width: 100%;
-}
-
-.profile-select-wrapper select {
-  appearance: none;
-  -webkit-appearance: none;
-  padding-right: 36px;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 14px;
-}
-
-.profile-input-with-icon {
-  position: relative;
-  width: 100%;
-}
-
-.profile-input-with-icon input {
-  padding-right: 36px;
-}
-
-.input-icon-right {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #71717a;
-  pointer-events: none;
-}
-
-/* Edit Card Footer */
-.profile-card-footer {
-  padding: 20px 28px;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.profile-footer-buttons {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
-}
-
-.profile-cancel-btn {
+.identity-logout-btn:hover {
   background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  color: #18181b;
-  padding: 10px 18px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  outline: none;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
 }
 
-.profile-cancel-btn:hover {
-  background: #f4f4f5;
-}
-
-.profile-submit-btn {
-  background: #18181b;
-  border: none;
+.identity-edit-btn {
+  background: #202321;
+  border: 1px solid #202321;
   color: #ffffff;
-  padding: 10px 20px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  outline: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
 }
 
-.profile-submit-btn:hover {
+.identity-edit-btn:hover {
   background: #000000;
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-}
-
-.profile-submit-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Skeleton Loading styles */
-.skeleton-pulse {
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 4px;
-  animation: skeletonPulse 1.5s ease-in-out infinite;
-}
-
-@keyframes skeletonPulse {
-  0% {
-    opacity: 0.65;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.65;
-  }
-}
-
-.skeleton-avatar {
-  width: 110px;
-  height: 110px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.05);
-  border: 5px solid #ffffff;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.03);
-}
-
-.skeleton-pill {
-  width: 75px;
-  height: 22px;
-  border-radius: 9999px;
-}
-
-.skeleton-name {
-  width: 160px;
-  height: 28px;
-  margin-bottom: 8px;
-}
-
-.skeleton-title {
-  width: 220px;
-  height: 36px;
-  margin-bottom: 12px;
-}
-
-.skeleton-text {
-  width: 100%;
-  height: 48px;
-  margin-bottom: 12px;
-}
-
-.skeleton-email {
-  width: 180px;
-  height: 16px;
-}
-
-.skeleton-biometric-row {
-  width: 100%;
-  height: 52px;
-  border-radius: 12px;
-}
-
-.skeleton-section-title {
-  width: 120px;
-  height: 12px;
-  margin-bottom: 8px;
-}
-
-.skeleton-conditions-list {
-  display: flex;
-  gap: 6px;
-}
-
-.skeleton-condition-pill {
-  width: 64px;
-  height: 20px;
-  border-radius: 9999px;
-}
-
-.skeleton-footer-text {
-  width: 130px;
-  height: 14px;
-}
-
-.skeleton-footer-buttons {
-  display: flex;
-  gap: 8px;
-}
-
-.skeleton-button {
-  width: 80px;
-  height: 28px;
-  border-radius: 10px;
-}
-
-.skeleton-section-sub {
-  width: 140px;
-  height: 12px;
-  margin-bottom: 8px;
-}
-
-.skeleton-card {
-  height: 180px;
-  justify-content: space-between;
-}
-
-.skeleton-card-header {
-  width: 120px;
-  height: 16px;
-}
-
-.skeleton-circle {
-  width: 84px;
-  height: 84px;
-  border-radius: 50%;
-}
-
-.skeleton-stats {
-  width: 120px;
-  height: 60px;
-}
-
-.skeleton-nutrition-val {
-  width: 150px;
-  height: 32px;
-}
-
-.skeleton-macro-item {
-  width: 100%;
-  height: 32px;
-  border-radius: 6px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.16);
 }
 
 /* ═══════════════════════════════════════════════════════ */
-/* NOTIFICATIONS CARD REDESIGN                            */
+/* RIGHT — HEALTH & PERFORMANCE BENTO                      */
 /* ═══════════════════════════════════════════════════════ */
 
-.profile-notifications-option-card {
-  margin: 20px auto 0 auto;
-  background: #eaebed;
-  border: 6px solid #ffffff;
-  border-radius: 20px;
-  box-shadow: 
-    0 12px 32px rgba(0, 0, 0, 0.05),
-    0 2px 8px rgba(0, 0, 0, 0.02);
-  width: 100%;
-  max-width: 440px;
-  padding: 16px 24px;
+.profile-metrics {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 14px;
+  padding: 26px 26px 20px 26px;
   box-sizing: border-box;
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  text-align: left;
-  color: inherit;
-  animation: cardFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  background: rgba(255, 255, 255, 0.14);
+  overflow-y: auto;
+  scrollbar-width: none;
 }
 
-.profile-notifications-option-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 
-    0 16px 36px rgba(0, 0, 0, 0.08),
-    0 4px 12px rgba(0, 0, 0, 0.04);
-}
-
-.profile-notif-option-content {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.profile-notif-icon-wrapper {
-  position: relative;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #18181b;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-}
-
-.profile-notifications-option-card:hover .profile-notif-icon-wrapper {
-  background: #1c1d1f;
-  color: #ffffff;
-  transform: scale(1.05);
-}
-
-.profile-notif-badge {
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  background: #16a34a;
-  color: white;
-  font-size: 9px;
-  font-weight: 700;
-  min-width: 14px;
-  height: 14px;
-  border-radius: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 3px;
-  border: 1.5px solid white;
-}
-
-.profile-notif-text h3 {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: #18181b;
-}
-
-.profile-notif-text p {
-  margin: 2px 0 0;
-  font-size: 12px;
-  color: #52525b;
-}
-
-.profile-notif-chevron {
-  color: #a1a1aa;
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s ease;
-}
-
-.profile-notifications-option-card:hover .profile-notif-chevron {
-  transform: translateX(4px);
-  color: #18181b;
-}
-
-/* ─── Single-Column Desktop Layout ─── */
-.profile-content-layout {
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-  align-items: stretch;
-  justify-content: flex-start;
-  margin-top: 0;
-  width: 100%;
-}
-
-.profile-left-col {
-  width: 100%;
-  flex: none;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  position: static;
-}
-
-.profile-left-col .profile-porsche-card {
-  margin: 0;
-  width: 100%;
-  max-width: none;
-}
-
-.profile-left-col .profile-notifications-option-card {
-  margin: 0;
-  width: 100%;
-  max-width: none;
-}
-
-.profile-left-quotes {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-  width: 100%;
-  max-width: none;
-}
-
-.profile-right-col {
-  flex: none;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  max-width: none;
-}
-
-.profile-quotes-header {
-  margin-bottom: 4px;
-}
-
-.profile-quotes-header p {
+.metrics-header p {
   color: rgba(23, 28, 25, 0.54);
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 9.5px;
+  font-weight: 750;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   margin: 0;
 }
 
-.profile-quotes-header h2 {
-  margin-top: 4px;
-  margin-bottom: 0;
-  font-size: 20px;
-  font-weight: 600;
+.metrics-header h2 {
+  margin: 4px 0 0 0;
+  font-size: 19px;
+  font-weight: 650;
   letter-spacing: -0.03em;
   color: #101312;
 }
 
-.profile-quotes-grid {
+.metrics-grid {
+  flex: 1;
+  min-height: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 16px;
-  width: 100%;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 14px;
 }
 
-.profile-quote-card {
-  width: 100%;
-  background: #eaebed;
-  border: 6px solid #ffffff;
-  border-radius: 20px;
-  box-shadow: 
-    0 12px 32px rgba(0, 0, 0, 0.05),
-    0 2px 8px rgba(0, 0, 0, 0.02);
-  overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.profile-quote-card:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 
-    0 20px 40px rgba(0, 0, 0, 0.08),
-    0 6px 16px rgba(0, 0, 0, 0.04);
-}
-
-.profile-quote-card img {
-  width: 100%;
-  height: auto;
-  display: block;
-  mix-blend-mode: multiply;
-  opacity: 0.9;
-  transition: opacity 0.3s ease;
-}
-
-.profile-quote-card:hover img {
-  opacity: 1;
-}
-
-
-
-/* ═══════════════════════════════════════════════════════ */
-/* RESPONSIVE — Tablet                                    */
-/* ═══════════════════════════════════════════════════════ */
-
-@media (max-width: 1024px) {
-  .profile-container {
-    inset: 110px 32px 24px 100px;
-    padding: 20px 16px;
-  }
-  .profile-content-layout {
-    gap: 24px;
-  }
-}
-
-/* ═══════════════════════════════════════════════════════ */
-/* RESPONSIVE — Mobile                                    */
-/* ═══════════════════════════════════════════════════════ */
-
-@media (max-width: 768px) {
-  .profile-container {
-    position: relative;
-    inset: auto;
-    width: 100%;
-    height: auto;
-    padding: 24px 16px calc(110px + env(safe-area-inset-bottom, 0px)) 16px;
-    margin-top: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background: transparent;
-    box-shadow: none;
-    border-radius: 0;
-    overflow: visible;
-    overscroll-behavior: auto;
-  }
-
-  .profile-content-layout {
-    flex-direction: column;
-    align-items: center;
-    gap: 32px;
-  }
-
-  .profile-left-col {
-    flex: none;
-    width: 100%;
-    max-width: 440px;
-    align-items: center;
-    position: static;
-  }
-
-  .profile-left-col .profile-porsche-card {
-    margin: 0 auto;
-  }
-
-  .profile-left-col .profile-notifications-option-card {
-    margin: 0 auto;
-  }
-
-  .profile-left-quotes {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .profile-right-col {
-    width: 100%;
-    max-width: 440px;
-    align-items: center;
-  }
-
-  .profile-quotes-header {
-    text-align: center;
-    margin-bottom: 16px;
-  }
-
-  .profile-quotes-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .profile-quote-card {
-    max-width: 100%;
-  }
-
-  /* Route header — mobile sizing */
-  .profile-header {
-    width: 100%;
-    flex-direction: column;
-    text-align: center;
-    gap: 14px;
-    margin-bottom: 24px;
-    padding: 0;
-  }
-
-  .profile-header h1 {
-    font-size: 20px;
-    letter-spacing: -0.03em;
-    white-space: normal;
-    margin-top: 4px;
-  }
-
-  .profile-header p {
-    font-size: 10px;
-    line-height: 1.35;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    font-weight: 700;
-  }
-
-  .profile-porsche-card,
-  .profile-notifications-option-card {
-    max-width: 100%;
-  }
-
-  .profile-porsche-img-container {
-    height: 140px;
-  }
-
-  .profile-porsche-img-container .profile-porsche-img {
-    width: 96px;
-    height: 96px;
-    border-width: 4px;
-  }
-
-  /* Edit mode mobile */
-  .profile-porsche-card-edit {
-    max-width: 100%;
-  }
-
-  .profile-card-body {
-    flex-direction: column;
-    gap: 16px;
-    padding: 16px;
-  }
-
-  .profile-dashed-divider {
-    display: none;
-  }
-
-  .profile-preview-panel {
-    order: -1;
-    border-bottom: 1px dashed rgba(0, 0, 0, 0.08);
-    padding-bottom: 12px;
-    margin-bottom: 8px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 16px;
-    width: 100%;
-    padding-left: 8px;
-  }
-
-  .preview-label {
-    display: none;
-  }
-
-  .preview-avatar-wrapper {
-    width: 64px;
-    height: 64px;
-    margin-bottom: 0;
-    flex-shrink: 0;
-  }
-
-  .preview-avatar {
-    border-width: 2px;
-  }
-
-  .preview-name {
-    font-size: 15px;
-    text-align: left;
-    margin: 0;
-  }
-
-  .preview-title {
-    font-size: 12px;
-    text-align: left;
-    margin: 0;
-  }
-
-  .profile-form-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .profile-porsche-footer {
-    flex-direction: column;
-    gap: 16px;
-    align-items: center;
-    padding: 20px;
-  }
-
-  .profile-porsche-footer .profile-porsche-actions {
-    width: 100%;
-    display: flex;
-    gap: 12px;
-  }
-
-  .profile-porsche-logout-btn,
-  .profile-porsche-edit-btn {
-    flex: 1;
-    text-align: center;
-    justify-content: center;
-    padding: 10px 16px;
-  }
-
-  .profile-card-footer {
-    flex-direction: column;
-    gap: 16px;
-    align-items: center;
-    padding: 20px;
-  }
-
-  .profile-card-footer .profile-footer-buttons {
-    width: 100%;
-    display: flex;
-    gap: 12px;
-  }
-
-  .profile-cancel-btn,
-  .profile-submit-btn {
-    flex: 1;
-    text-align: center;
-    justify-content: center;
-    padding: 10px 16px;
-  }
-}
-
-/* ═══════════════════════════════════════════════════════ */
-/* BENTO HEALTH GRID LAYOUT                               */
-/* ═══════════════════════════════════════════════════════ */
-
-.profile-bento-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-@media (max-width: 768px) {
-  .profile-bento-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-}
-
-.profile-health-card {
-  background: #eaebed;
-  border: 6px solid #ffffff;
-  border-radius: 20px;
-  box-shadow: 
-    0 12px 32px rgba(0, 0, 0, 0.05),
-    0 2px 8px rgba(0, 0, 0, 0.02);
-  padding: 24px;
+.metric-card {
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 22px;
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.04),
+    inset 0 1px 1px rgba(255, 255, 255, 0.55);
+  padding: 18px 20px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
   box-sizing: border-box;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  min-height: 0;
 }
 
-/* Hover state has no translateY pop-up effect */
+.card-sync {
+  grid-column: 1 / -1;
+}
 
-.card-header-icon {
+.metric-card-head {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
 }
 
-.card-header-icon svg {
-  color: #4b5563; /* Subtle neutral icon coloring */
+.metric-card-head svg {
+  color: #526057;
 }
 
-.card-tag {
-  font-size: 11px;
-  font-weight: 700;
+.metric-card-head span {
+  font-size: 10px;
+  font-weight: 750;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #71717a;
+  color: #526057;
 }
 
-/* Biometrics overview widget */
-.biometrics-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.biometrics-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 10px 14px;
-  background: #ffffff;
-  border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.03);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.01);
-}
-
-.biometrics-label {
-  font-size: 11px;
-  color: #71717a;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-}
-
-.biometrics-value {
-  font-size: 16px;
-  font-weight: 600;
-  color: #18181b;
-}
-
-.biometrics-value .unit {
-  font-size: 11px;
-  color: #a1a1aa;
-  font-weight: 400;
-}
-
-/* BMI status circle & TDEE status widget */
-.status-metrics-wrapper {
+/* ── BMI & energy card ── */
+.status-body {
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: 20px;
-  justify-content: space-around;
-  height: 100%;
+  justify-content: space-evenly;
+  gap: 16px;
+  min-height: 0;
 }
 
-.bmi-circle-container {
+.bmi-ring-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
 }
 
-.bmi-circle {
-  width: 84px;
-  height: 84px;
+.bmi-ring {
+  width: 92px;
+  height: 92px;
   border-radius: 50%;
-  border: 4px solid #3b82f6; /* Premium active blue ring */
+  border: 5px solid #9aa39d;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #ffffff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  box-sizing: border-box;
 }
+
+.bmi-ring.status-normal { border-color: #6aa88a; }
+.bmi-ring.status-overweight { border-color: #d9a441; }
+.bmi-ring.status-underweight { border-color: #7d9bc1; }
+.bmi-ring.status-obese { border-color: #cf7a7a; }
 
 .bmi-number {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 750;
-  color: #2c3e50;
+  color: #101312;
   letter-spacing: -0.02em;
+  line-height: 1;
 }
 
-.bmi-label {
-  font-size: 10px;
+.bmi-caption {
+  font-size: 9px;
   font-weight: 700;
-  color: #7f8c8d;
+  color: #7d8a82;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
+  margin-top: 3px;
 }
 
 .bmi-badge {
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 9.5px;
+  font-weight: 750;
   padding: 3px 10px;
   border-radius: 9999px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .bmi-badge.status-normal {
-  background: rgba(16, 185, 129, 0.12);
-  color: #065f46;
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: rgba(106, 168, 138, 0.14);
+  color: #33604a;
+  border: 1px solid rgba(106, 168, 138, 0.25);
 }
 
 .bmi-badge.status-overweight {
-  background: rgba(245, 158, 11, 0.12);
-  color: #92400e;
-  border: 1px solid rgba(245, 158, 11, 0.25);
+  background: rgba(217, 164, 65, 0.14);
+  color: #7d5a17;
+  border: 1px solid rgba(217, 164, 65, 0.28);
 }
 
 .bmi-badge.status-underweight {
-  background: rgba(59, 130, 246, 0.12);
-  color: #1e40af;
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: rgba(125, 155, 193, 0.14);
+  color: #3a5578;
+  border: 1px solid rgba(125, 155, 193, 0.25);
 }
 
 .bmi-badge.status-obese {
-  background: rgba(239, 68, 68, 0.12);
-  color: #991b1b;
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  background: rgba(207, 122, 122, 0.14);
+  color: #7a3535;
+  border: 1px solid rgba(207, 122, 122, 0.25);
 }
 
-.tdee-container {
+.bmi-badge.status-none {
+  background: rgba(16, 19, 18, 0.06);
+  color: #526057;
+  border: 1px solid rgba(16, 19, 18, 0.08);
+}
+
+.energy-stats {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
-.tdee-block, .bmr-block {
+.energy-row {
+  background: rgba(255, 255, 255, 0.66);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 14px;
+  padding: 8px 14px;
   display: flex;
   flex-direction: column;
+  gap: 2px;
+  min-width: 110px;
 }
 
-.tdee-label, .bmr-label {
-  font-size: 10px;
-  font-weight: 700;
-  color: #71717a;
-  text-transform: uppercase;
-}
-
-.tdee-value {
-  font-size: 18px;
+.energy-row .lbl {
+  font-size: 9px;
   font-weight: 750;
-  color: #18181b;
+  color: #7d8a82;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
-.bmr-value {
-  font-size: 14px;
-  font-weight: 600;
-  color: #4b5563;
+.energy-row .val {
+  font-size: 17px;
+  font-weight: 750;
+  color: #101312;
+  letter-spacing: -0.01em;
 }
 
-.tdee-value .unit, .bmr-value .unit {
-  font-size: 11px;
-  color: #71717a;
-  font-weight: 400;
+.energy-row .val .unit {
+  font-size: 10px;
+  font-weight: 500;
+  color: #7d8a82;
 }
 
-/* Daily Nutrition Targets macro display */
-.nutrition-target-main {
+/* ── Nutrition targets card ── */
+.nutrition-kcal {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.04);
-  padding: 12px;
-  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  padding: 10px 12px;
+  border-radius: 16px;
   text-align: center;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.01);
 }
 
-.nutr-kcal-val {
-  font-size: 24px;
+.kcal-val {
+  font-size: 23px;
   font-weight: 800;
-  color: #1c1d1f;
+  color: #101312;
+  letter-spacing: -0.02em;
 }
 
-.nutr-kcal-lbl {
-  font-size: 10px;
-  font-weight: 700;
-  color: #7c7e85;
+.kcal-val .unit {
+  font-size: 12px;
+  font-weight: 550;
+  color: #7d8a82;
+}
+
+.kcal-lbl {
+  font-size: 9px;
+  font-weight: 750;
+  color: #7d8a82;
   text-transform: uppercase;
   margin-top: 2px;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
 }
 
 .nutrition-macros-grid {
+  flex: 1;
   display: flex;
   flex-direction: column;
+  justify-content: space-evenly;
   gap: 8px;
+  min-height: 0;
 }
 
 .macro-bar-item {
@@ -1558,20 +651,20 @@
 }
 
 .macro-name {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
-  color: #4b5563;
+  color: #3c4741;
 }
 
 .macro-gram {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
-  color: #1f2937;
+  color: #101312;
 }
 
 .macro-gram .pct-label {
   font-size: 10px;
-  color: #71717a;
+  color: #7d8a82;
   font-weight: 500;
   margin-left: 3px;
 }
@@ -1579,10 +672,10 @@
 .macro-progress-track {
   height: 6px;
   width: 100%;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.8);
   border-radius: 3px;
   overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(16, 19, 18, 0.03);
 }
 
 .macro-progress-fill {
@@ -1590,45 +683,414 @@
   border-radius: 3px;
 }
 
-.protein .macro-progress-fill { background: #f37272; } /* Premium coral rose */
-.carbs .macro-progress-fill { background: #5fa8d3; }   /* Premium ocean/sky blue */
-.fat .macro-progress-fill { background: #e9c46a; }     /* Premium warm honey gold */
+.protein .macro-progress-fill { background: #e08b8b; } /* desaturated coral */
+.carbs .macro-progress-fill { background: #7fa8c9; }   /* desaturated sky */
+.fat .macro-progress-fill { background: #dcc27a; }     /* desaturated honey */
 
-/* Conditions / medical flags */
-.medical-conditions-container {
+/* ── Google Calendar sync strip ── */
+.sync-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.sync-info {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 8px;
-  height: 100%;
-  justify-content: center;
+  min-width: 0;
 }
 
-.medical-pills-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.medical-pill {
+.sync-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   font-size: 11.5px;
-  font-weight: 600;
+  font-weight: 650;
   padding: 5px 12px;
   border-radius: 9999px;
-  background: #ffffff;
-  color: #374151;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.01);
+  white-space: nowrap;
 }
 
-.no-conditions-text {
-  font-size: 13px;
-  color: #9ca3af;
-  font-style: italic;
-  text-align: center;
+.sync-badge .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.sync-badge.connected {
+  background: rgba(106, 168, 138, 0.14);
+  color: #33604a;
+}
+
+.sync-badge.connected .dot {
+  background-color: #6aa88a;
+}
+
+.sync-badge.disconnected {
+  background: rgba(16, 19, 18, 0.06);
+  color: #526057;
+}
+
+.sync-badge.disconnected .dot {
+  background-color: #8b968f;
+}
+
+.sync-copy {
+  font-size: 11.5px;
+  color: #526057;
+  line-height: 1.45;
+  margin: 0;
+  max-width: 290px;
+}
+
+.sync-meta {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.sync-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sync-meta-item .lbl {
+  font-size: 9px;
+  font-weight: 750;
+  color: #7d8a82;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.sync-meta-item .val {
+  font-size: 12px;
+  font-weight: 650;
+  color: #101312;
+}
+
+.truncate-email {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sync-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.sync-btn-connect,
+.sync-btn-now,
+.sync-btn-disconnect {
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 650;
+  height: 34px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border: none;
+  box-sizing: border-box;
+  padding: 0 16px;
+  white-space: nowrap;
+}
+
+.sync-btn-connect {
+  background: #202321;
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
+.sync-btn-connect:hover:not(:disabled) {
+  background: #000000;
+  transform: translateY(-1px);
+}
+
+.sync-btn-connect:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.sync-btn-now {
+  background: rgba(255, 255, 255, 0.85);
+  color: #101312;
+  border: 1px solid rgba(16, 19, 18, 0.08);
+}
+
+.sync-btn-now:hover:not(:disabled) {
+  background: #ffffff;
+  transform: translateY(-1px);
+}
+
+.sync-btn-now:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.sync-btn-disconnect {
+  background: rgba(241, 105, 119, 0.1);
+  color: #b3424e;
+}
+
+.sync-btn-disconnect:hover {
+  background: rgba(241, 105, 119, 0.18);
+  transform: translateY(-1px);
+}
+
+.animate-spin {
+  animation: spinIcon 1s linear infinite;
+}
+
+@keyframes spinIcon {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* ═══════════════════════════════════════════════════════ */
-/* EDIT PROFILE DIALOG MODAL                              */
+/* SKELETON LOADING                                        */
+/* ═══════════════════════════════════════════════════════ */
+
+.skeleton-pulse {
+  background: rgba(16, 19, 18, 0.06);
+  border-radius: 6px;
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes skeletonPulse {
+  0% { opacity: 0.65; }
+  50% { opacity: 1; }
+  100% { opacity: 0.65; }
+}
+
+.skeleton-avatar {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.skeleton-name {
+  width: 150px;
+  height: 20px;
+  margin-bottom: 6px;
+}
+
+.skeleton-role {
+  width: 90px;
+  height: 12px;
+  margin-bottom: 8px;
+}
+
+.skeleton-email {
+  width: 170px;
+  height: 12px;
+}
+
+.skeleton-pill {
+  width: 75px;
+  height: 22px;
+  border-radius: 9999px;
+}
+
+.skeleton-bio-tile {
+  height: 52px;
+  border-radius: 14px;
+}
+
+.skeleton-section-title {
+  width: 110px;
+  height: 10px;
+}
+
+.skeleton-section-sub {
+  width: 140px;
+  height: 10px;
+  margin-bottom: 8px;
+}
+
+.skeleton-condition-pill {
+  width: 64px;
+  height: 22px;
+  border-radius: 9999px;
+}
+
+.skeleton-footer-text {
+  width: 130px;
+  height: 12px;
+}
+
+.skeleton-footer-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.skeleton-button {
+  flex: 1;
+  height: 32px;
+  border-radius: 12px;
+}
+
+.skeleton-card {
+  justify-content: space-between;
+}
+
+.skeleton-card-wide {
+  min-height: 90px;
+}
+
+.skeleton-card-header {
+  width: 130px;
+  height: 14px;
+}
+
+.skeleton-circle {
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  margin: auto;
+}
+
+.skeleton-stats {
+  width: 100%;
+  height: 90px;
+  margin: auto 0;
+}
+
+/* ═══════════════════════════════════════════════════════ */
+/* RESPONSIVE — Tablet                                     */
+/* ═══════════════════════════════════════════════════════ */
+
+@media (max-width: 1024px) {
+  .profile-container {
+    inset: 110px 32px 24px 100px;
+    overflow-y: auto;
+  }
+
+  .profile-shell-card {
+    min-height: 100%;
+    height: auto;
+  }
+
+  .profile-shell-split {
+    flex-direction: column;
+  }
+
+  .profile-identity {
+    flex: none;
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid rgba(16, 19, 18, 0.07);
+    overflow: visible;
+  }
+
+  .profile-metrics {
+    width: 100%;
+    overflow: visible;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════ */
+/* RESPONSIVE — Mobile                                     */
+/* ═══════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .profile-container {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: auto;
+    padding: 16px 16px calc(110px + env(safe-area-inset-bottom, 0px)) 16px;
+    display: block;
+    overflow: visible;
+    box-sizing: border-box;
+  }
+
+  .profile-shell-card {
+    height: auto;
+    min-height: 0;
+  }
+
+  .profile-identity {
+    padding: 22px 18px 18px 18px;
+  }
+
+  .identity-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+
+  .identity-titles {
+    align-items: center;
+  }
+
+  .identity-badges {
+    justify-content: center;
+  }
+
+  .identity-bio {
+    text-align: center;
+  }
+
+  .identity-footer {
+    align-items: center;
+  }
+
+  .identity-actions {
+    width: 100%;
+  }
+
+  .profile-metrics {
+    padding: 22px 18px 18px 18px;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+  }
+
+  .card-sync {
+    grid-column: auto;
+  }
+
+  .status-body {
+    justify-content: space-around;
+  }
+
+  .sync-body {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sync-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .sync-actions {
+    width: 100%;
+  }
+
+  .sync-actions button {
+    flex: 1;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════ */
+/* EDIT PROFILE DIALOG MODAL                               */
 /* ═══════════════════════════════════════════════════════ */
 
 .profile-modal-overlay {
@@ -1645,10 +1107,12 @@
 }
 
 .profile-modal-card {
-  background: #eaebed;
-  border: 8px solid #ffffff;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 26px;
-  box-shadow: 
+  box-shadow:
     0 24px 64px rgba(0, 0, 0, 0.15),
     0 8px 24px rgba(0, 0, 0, 0.08);
   width: 100%;
@@ -1695,7 +1159,7 @@
 .profile-modal-header h2 {
   font-size: 20px;
   font-weight: 650;
-  color: #111827;
+  color: #101312;
   margin: 0;
   letter-spacing: -0.02em;
 }
@@ -1716,7 +1180,7 @@
 
 .profile-modal-close-btn:hover {
   background: rgba(0, 0, 0, 0.04);
-  color: #111827;
+  color: #101312;
 }
 
 .profile-modal-body {
@@ -1742,7 +1206,6 @@
   }
   .profile-modal-card {
     max-height: 95vh;
-    border-width: 4px;
   }
   .profile-modal-overlay {
     padding: 12px;
@@ -1773,78 +1236,90 @@
   padding-bottom: 8px;
 }
 
-.profile-modal-avatar-section {
+/* Form inputs styling */
+.profile-input-group {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 4px;
   width: 100%;
 }
 
-.h-divider {
+.profile-input-group label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #71717a;
+}
+
+.profile-input-group input,
+.profile-input-group select,
+.profile-textarea {
   width: 100%;
-  height: 1px;
-  border-top: 1px dashed rgba(0, 0, 0, 0.1);
-  margin: 4px 0;
-}
-
-.avatar-picker-row {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.avatar-scroll-list {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding: 4px 2px;
-  scrollbar-width: thin;
-}
-
-.avatar-picker-pill {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 20px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   background: #ffffff;
-  border: 2px solid transparent;
-  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: #101312;
+  outline: none;
+  box-sizing: border-box;
   transition: all 0.2s ease;
-  flex-shrink: 0;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: #4b5563;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  font-family: inherit;
 }
 
-.avatar-picker-pill:hover {
-  background: #f3f4f6;
+.profile-textarea {
+  resize: none;
+  line-height: 1.45;
+  height: 52px;
 }
 
-.avatar-picker-pill.selected {
-  background: #111827;
-  color: #ffffff;
-  border-color: #111827;
+.profile-input-group input:focus,
+.profile-input-group select:focus,
+.profile-textarea:focus {
+  border-color: #101312;
+  box-shadow: 0 0 0 2px rgba(16, 19, 18, 0.05);
 }
 
-.avatar-img-thumb {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  object-fit: cover;
+.profile-input-row-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 }
 
-.profile-modal-footer {
-  padding: 16px 24px;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: transparent;
+.profile-select-wrapper {
+  position: relative;
+  width: 100%;
 }
 
-/* Medical selector pills style */
+.profile-select-wrapper select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 36px;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
+}
+
+.profile-input-with-icon {
+  position: relative;
+  width: 100%;
+}
+
+.profile-input-with-icon input {
+  padding-right: 36px;
+}
+
+.input-icon-right {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #71717a;
+  pointer-events: none;
+}
+
+/* Medical selector pills */
 .medical-conditions-selector {
   display: flex;
   flex-direction: column;
@@ -1875,9 +1350,9 @@
 }
 
 .medical-pill-select.selected {
-  background: #111827;
+  background: #202321;
   color: #ffffff;
-  border-color: #111827;
+  border-color: #202321;
 }
 
 .custom-condition-add {
@@ -1910,285 +1385,142 @@
   background: #1f2937;
 }
 
-/* Left panel embedded stats styles */
-.profile-left-embedded-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  padding: 0 24px 24px 24px;
-  box-sizing: border-box;
-}
-
-.embedded-biometrics {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-.embedded-stat-row {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 10px 14px;
-  border: 1px solid rgba(0, 0, 0, 0.04);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.embedded-stat-row .lbl {
-  font-size: 10px;
-  font-weight: 600;
-  color: #71717a;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.embedded-stat-row .val {
-  font-size: 13px;
-  font-weight: 700;
-  color: #1c1d1f;
-}
-
-.embedded-stat-row .val .unit {
-  font-size: 10px;
-  font-weight: 500;
-  color: #71717a;
-}
-
-.embedded-conditions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.embedded-section-title {
-  font-size: 10px;
-  font-weight: 700;
-  color: #71717a;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin: 0 0 4px 0;
-}
-
-/* Force vertical stacking on the right bento grid to align with left panel height */
-.profile-porsche-health-section .profile-bento-grid {
-  grid-template-columns: 1fr;
-  gap: 20px;
-}
-
-@media (max-width: 768px) {
-  /* On mobile, stack layout naturally */
-  .profile-left-embedded-stats {
-    padding: 0 16px 20px 16px;
-  }
-  
-  .embedded-biometrics {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-/* Avatar Relative Wrapper and Absolute Notification Indicator */
-.profile-avatar-wrapper-rel {
-  position: relative;
-  display: inline-block;
-}
-
-.profile-avatar-notif-btn {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  color: #1c1d1f;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  padding: 0;
-  z-index: 10;
-}
-
-.profile-avatar-notif-btn:hover {
-  background: #f4f4f5;
-  transform: scale(1.06);
-  color: #000000;
-}
-
-.profile-avatar-notif-badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  background: #10b981; /* Emerald green badge */
-  color: #ffffff;
-  font-size: 8.5px;
-  font-weight: 750;
-  min-width: 15px;
-  height: 15px;
-  border-radius: 9999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1.5px solid #ffffff;
-  padding: 0 2px;
-  box-sizing: border-box;
-}
-
-/* Google Calendar Sync Bento Card */
-.card-google-sync {
-  background: #eaebed;
-  min-height: 240px;
-}
-
-.google-sync-card-content {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  justify-content: space-between;
-  flex-grow: 1;
-}
-
-.connected-status-wrapper, .disconnected-status-wrapper {
+/* Avatar picker row */
+.profile-modal-avatar-section {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  height: 100%;
-  justify-content: space-between;
-  flex-grow: 1;
-}
-
-.status-indicator-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 6px 12px;
-  border-radius: 12px;
-  width: fit-content;
-}
-
-.status-indicator-badge.connected {
-  background: rgba(16, 185, 129, 0.1);
-  color: #059669;
-}
-
-.status-indicator-badge.connected .dot {
-  width: 8px;
-  height: 8px;
-  background-color: #10b981;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-.status-indicator-badge.disconnected {
-  background: rgba(107, 114, 128, 0.1);
-  color: #4b5563;
-}
-
-.status-indicator-badge.disconnected .dot {
-  width: 8px;
-  height: 8px;
-  background-color: #6b7280;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-.sync-description {
-  font-size: 13px;
-  color: #4b5563;
-  line-height: 1.5;
-  margin: 0;
-}
-
-.connection-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 13px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.connection-info .info-label {
-  color: #6b7280;
-  font-weight: 500;
-}
-
-.connection-info .info-value {
-  color: #1c1d1f;
-  font-weight: 600;
-}
-
-.truncate-email {
-  max-width: 160px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.google-sync-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.sync-btn-connect, .sync-btn-now, .sync-btn-disconnect {
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 650;
-  height: 38px;
-  border-radius: 12px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  border: none;
-  box-sizing: border-box;
-  padding: 0 16px;
-}
-
-.sync-btn-connect {
-  background: #1c1d1f;
-  color: #ffffff;
   width: 100%;
 }
 
-.sync-btn-connect:hover {
+.h-divider {
+  width: 100%;
+  height: 1px;
+  border-top: 1px dashed rgba(0, 0, 0, 0.1);
+  margin: 4px 0;
+}
+
+.avatar-picker-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.preview-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #8c8d90;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.avatar-scroll-list {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 2px;
+  scrollbar-width: thin;
+}
+
+.avatar-picker-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: #ffffff;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #4b5563;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.avatar-picker-pill:hover {
+  background: #f3f4f6;
+}
+
+.avatar-picker-pill.selected {
+  background: #202321;
+  color: #ffffff;
+  border-color: #202321;
+}
+
+.avatar-img-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Modal footer */
+.profile-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent;
+}
+
+.profile-last-updated {
+  font-size: 10.5px;
+  color: #7c7e85;
+  font-weight: 550;
+}
+
+.profile-footer-buttons {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-cancel-btn {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: #101312;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.profile-cancel-btn:hover {
+  background: #f4f4f5;
+}
+
+.profile-submit-btn {
+  background: #202321;
+  border: none;
+  color: #ffffff;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.profile-submit-btn:hover {
   background: #000000;
   transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
-.sync-btn-now {
-  background: #ffffff;
-  color: #1c1d1f;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-}
-
-.sync-btn-now:hover:not(:disabled) {
-  background: #f4f4f5;
-  transform: translateY(-1px);
-}
-
-.sync-btn-now:disabled {
+.profile-submit-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
-
-.sync-btn-disconnect {
-  background: rgba(239, 68, 68, 0.08);
-  color: #dc2626;
-}
-
-.sync-btn-disconnect:hover {
-  background: rgba(239, 68, 68, 0.15);
-  transform: translateY(-1px);
-}
-
