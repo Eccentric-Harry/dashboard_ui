@@ -193,7 +193,7 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
     try {
       await disconnectGoogleCalendar();
       toast.success('Disconnected from Google Calendar');
-      setSyncStatus({ connected: false });
+      setSyncStatus({ connected: false, accounts: [] });
     } catch (err) {
       toast.error('Failed to disconnect from Google Calendar');
     }
@@ -655,8 +655,8 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                                 <div className="connection-info">
                                   <span className="info-label">Last Synced</span>
                                   <span className="info-value">
-                                    {syncStatus.lastSyncedAt 
-                                      ? new Date(syncStatus.lastSyncedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit' }) 
+                                    {syncStatus.accounts?.[0]?.lastSyncedAt && syncStatus.accounts[0].lastSyncedAt !== ''
+                                      ? new Date(syncStatus.accounts[0].lastSyncedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit' }) 
                                       : 'Waiting for Sync'}
                                   </span>
                                 </div>

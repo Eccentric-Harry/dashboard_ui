@@ -91,6 +91,7 @@ function hueForCategory(category?: string) {
   return Math.abs(hash) % 360
 }
 
+/*
 const MOCK_USERS = [
   { name: 'John Doe', avatar: getAvatarImage('luffy') },
   { name: 'Sarah Connor', avatar: getAvatarImage('avatar1') },
@@ -99,6 +100,7 @@ const MOCK_USERS = [
   { name: 'Bruce Wayne', avatar: '' },
   { name: 'Clark Kent', avatar: '' },
 ]
+*/
 
 function getInitials(name: string) {
   const parts = name.trim().split(/\s+/)
@@ -158,6 +160,7 @@ function getEventClassification(item: CalendarItem): 'BIRTHDAY' | 'DEADLINE' | '
   return 'DEFAULT'
 }
 
+/*
 function getMockAttendeesForItem(item: CalendarItem) {
   const isMeeting = getEventClassification(item) === 'MEETING'
   if (!isMeeting) return []
@@ -171,6 +174,7 @@ function getMockAttendeesForItem(item: CalendarItem) {
   }
   return attendeesList
 }
+*/
 
 function overrideLightColors(colorStr: string, category?: string) {
   const upper = colorStr.toUpperCase()
