@@ -23,6 +23,50 @@ let calendarItems = [...dummyCalendarItems];
 const financeLogs = [...dummyFinanceLogs];
 let lendingRecords = [...dummyLendingRecords];
 
+// ── Mind tab (guest, in-memory) ────────────────────────────────────────────
+interface GuestMindEntry {
+  id: string;
+  type: string;
+  text: string;
+  reframedText?: string | null;
+  distortionTag?: string | null;
+  status: string;
+  linkedTaskId?: string | null;
+  valueTag?: string | null;
+  pinned?: boolean;
+  reviewDate?: string | null;
+  date: string;
+  createdAt: string;
+  resolvedAt?: string | null;
+}
+
+// Local-date formatting (mirrors mindIsoDate) so "today" and date math stay consistent
+// regardless of timezone — using toISOString() here would shift the date and mis-resurface parked worries.
+const guestIso = (d: Date = new Date()) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+const guestToday = guestIso();
+const guestAddDays = (iso: string, days: number) => {
+  const d = new Date(`${iso}T00:00:00`);
+  d.setDate(d.getDate() + days);
+  return guestIso(d);
+};
+
+let mindEntries: GuestMindEntry[] = [
+  { id: 'mg-1', type: 'THOUGHT', text: "I'll never be good enough for a senior role.", status: 'OPEN', date: guestToday, createdAt: new Date().toISOString() },
+  { id: 'mg-2', type: 'THOUGHT', text: 'Everyone at standup could tell I was nervous.', status: 'OPEN', date: guestToday, createdAt: new Date().toISOString() },
+  { id: 'mg-3', type: 'THOUGHT', text: 'What if the calendar sync breaks in production?', status: 'CONVERTED', linkedTaskId: 'demo-task-1', date: guestToday, createdAt: new Date().toISOString(), resolvedAt: new Date().toISOString() },
+  { id: 'mg-4', type: 'THOUGHT', text: 'I wasted the whole weekend.', reframedText: 'I rested — and rest is part of the work. I still logged two learnings.', distortionTag: 'All-or-nothing', status: 'RESOLVED', date: guestToday, createdAt: new Date().toISOString(), resolvedAt: new Date().toISOString() },
+  { id: 'mg-5', type: 'THOUGHT', text: 'Am I falling behind my peers?', status: 'PARKED', reviewDate: guestAddDays(guestToday, 3), date: guestToday, createdAt: new Date().toISOString() },
+  { id: 'mg-6', type: 'THOUGHT', text: 'Did I say something wrong in that review comment?', status: 'PARKED', reviewDate: guestAddDays(guestToday, 1), date: guestToday, createdAt: new Date().toISOString() },
+  { id: 'mg-7', type: 'WIN', text: 'Fixed the recurrence bug everyone was avoiding.', status: 'OPEN', pinned: true, date: guestToday, createdAt: new Date().toISOString() },
+  { id: 'mg-8', type: 'WIN', text: 'Ran 5k without stopping.', status: 'OPEN', date: guestToday, createdAt: new Date().toISOString() },
+  { id: 'mg-9', type: 'GRATITUDE', text: 'A teammate covered for me without being asked.', status: 'OPEN', date: guestToday, createdAt: new Date().toISOString() },
+];
+
 export function enableGuestInterceptor() {
   window.fetch = async (...args) => {
     const urlStr = typeof args[0] === 'string' ? args[0] : args[0] instanceof URL ? args[0].href : args[0].url;
@@ -38,6 +82,117 @@ export function enableGuestInterceptor() {
         headers: { 'Content-Type': 'application/json' },
       }));
     };
+
+    // ── Mind tab ──────────────────────────────────────────────────────────
+    if (urlStr.includes('/api/v1/mind/')) {
+      const method = (args[1]?.method || 'GET').toUpperCase();
+      const bodyOf = () => JSON.parse(typeof args[1]?.body === 'string' ? args[1].body : '{}');
+
+      if (urlStr.includes('/mind/mood')) {
+        const body = bodyOf();
+        return respondWith({ data: { moodScore: body.moodScore, moodNote: body.moodNote } });
+      }
+
+      if (urlStr.includes('/mind/summary')) {
+        const thoughts = mindEntries.filter(e => e.type === 'THOUGHT');
+        return respondWith({
+          data: {
+            focusMinutes: 312,
+            tasksCompleted: 18,
+            workouts: 4,
+            learnings: 6,
+            streakDays: 6,
+            captured: thoughts.length,
+            converted: thoughts.filter(e => e.status === 'CONVERTED').length,
+            reframed: thoughts.filter(e => e.reframedText).length,
+            released: thoughts.filter(e => e.status === 'RELEASED').length,
+            moodScore: null,
+          },
+        });
+      }
+
+      const convertMatch = urlStr.match(/\/mind\/entries\/([^/?]+)\/convert/);
+      if (convertMatch) {
+        const entry = mindEntries.find(e => e.id === convertMatch[1]);
+        if (entry) {
+          entry.status = 'CONVERTED';
+          entry.linkedTaskId = `task-guest-${Date.now()}`;
+          entry.resolvedAt = new Date().toISOString();
+        }
+        return respondWith({ data: entry ?? null });
+      }
+
+      const statusMatch = urlStr.match(/\/mind\/entries\/([^/?]+)\/status/);
+      if (statusMatch) {
+        const entry = mindEntries.find(e => e.id === statusMatch[1]);
+        const body = bodyOf();
+        if (entry) {
+          entry.status = body.status;
+          if (body.status === 'PARKED') entry.reviewDate = body.reviewDate ?? null;
+          if (body.status === 'OPEN') { entry.reviewDate = null; entry.resolvedAt = null; }
+          if (body.status === 'RESOLVED') {
+            if (body.reframedText != null) entry.reframedText = body.reframedText;
+            if (body.distortionTag != null) entry.distortionTag = body.distortionTag;
+            entry.resolvedAt = new Date().toISOString();
+          }
+          if (body.status === 'RELEASED') entry.resolvedAt = new Date().toISOString();
+          if (body.pinned != null) entry.pinned = body.pinned;
+        }
+        return respondWith({ data: entry ?? null });
+      }
+
+      const entryMatch = urlStr.match(/\/mind\/entries\/([^/?]+)(?:\?|$)/);
+      if (entryMatch) {
+        const id = entryMatch[1];
+        if (method === 'DELETE') {
+          mindEntries = mindEntries.filter(e => e.id !== id);
+          return respondWith({ data: null });
+        }
+        if (method === 'PUT') {
+          const body = bodyOf();
+          const entry = mindEntries.find(e => e.id === id);
+          if (entry) {
+            entry.text = body.text ?? entry.text;
+            if (body.type) entry.type = body.type;
+            if (body.valueTag !== undefined) entry.valueTag = body.valueTag;
+            if (body.pinned !== undefined) entry.pinned = body.pinned;
+          }
+          return respondWith({ data: entry ?? null });
+        }
+      }
+
+      if (urlStr.includes('/mind/entries')) {
+        if (method === 'POST') {
+          const body = bodyOf();
+          const entry: GuestMindEntry = {
+            id: `mind-guest-${Date.now()}`,
+            type: (body.type || 'THOUGHT').toUpperCase(),
+            text: (body.text || '').trim(),
+            status: 'OPEN',
+            valueTag: body.valueTag ?? null,
+            pinned: body.pinned ?? false,
+            date: body.date || guestToday,
+            createdAt: new Date().toISOString(),
+          };
+          mindEntries.unshift(entry);
+          return respondWith({ data: entry });
+        }
+
+        // GET — resurface any parked worry whose review date has arrived.
+        mindEntries.forEach(e => {
+          if (e.status === 'PARKED' && e.reviewDate && e.reviewDate <= guestToday) {
+            e.status = 'OPEN';
+            e.reviewDate = null;
+          }
+        });
+        const typeParam = urlObj.searchParams.get('type');
+        const statusParam = urlObj.searchParams.get('status');
+        let result = [...mindEntries];
+        if (typeParam) result = result.filter(e => e.type === typeParam);
+        if (statusParam) result = result.filter(e => e.status === statusParam);
+        return respondWith({ data: result });
+      }
+    }
 
     // GitHub API intercept
     if (urlStr.includes('api.github.com/users/Eccentric-Harry/repos')) {
