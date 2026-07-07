@@ -37,6 +37,8 @@ import {
   Loader2,
   Maximize2,
   Minimize2,
+  MoreHorizontal,
+  Palette,
   Pencil,
   Plus,
   Search,
@@ -506,6 +508,9 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     }
     return true
   })
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false)
+  const [colorEditModalOpen, setColorEditModalOpen] = useState(false)
+  const [colorEditDraft, setColorEditDraft] = useState<Record<string, string>>({})
   const [isFullView, setIsFullView] = useState(false)
 
   const canvasContainerRef = useRef<HTMLDivElement | null>(null)
@@ -1654,14 +1659,57 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
 
           {/* Filters Collapsible Accordion */}
           <div className="calendar-filter-card">
-            <button
-              type="button"
-              className="filter-header-btn"
-              onClick={() => setFiltersOpen(!filtersOpen)}
-            >
-              <span>Filters</span>
-              <ChevronDown size={14} className={`accordion-chevron ${filtersOpen ? 'open' : ''}`} />
-            </button>
+            <div className="filter-header-row">
+              <button
+                type="button"
+                className="filter-header-btn"
+                onClick={() => setFiltersOpen(!filtersOpen)}
+              >
+                <span>Filters</span>
+                <ChevronDown size={14} className={`accordion-chevron ${filtersOpen ? 'open' : ''}`} />
+              </button>
+              <div className="filter-menu-anchor">
+                <button
+                  type="button"
+                  className="filter-three-dot"
+                  onClick={(e) => { e.stopPropagation(); setFilterMenuOpen(!filterMenuOpen) }}
+                  title="Filter options"
+                >
+                  <MoreHorizontal size={14} />
+                </button>
+                {filterMenuOpen && (
+                  <>
+                    <div className="filter-menu-backdrop" onClick={() => setFilterMenuOpen(false)} />
+                    <div className="filter-menu-dropdown">
+                      <button
+                        type="button"
+                        className="filter-menu-item"
+                        onClick={() => {
+                          setFiltersOpen(!filtersOpen)
+                          setFilterMenuOpen(false)
+                        }}
+                      >
+                        {filtersOpen ? 'Hide filters' : 'Show filters'}
+                      </button>
+                      <button
+                        type="button"
+                        className="filter-menu-item"
+                        onClick={() => {
+                          const draft: Record<string, string> = {}
+                          actualCategories.forEach((cat) => { draft[cat] = colorForCategory(cat) })
+                          setColorEditDraft(draft)
+                          setColorEditModalOpen(true)
+                          setFilterMenuOpen(false)
+                        }}
+                      >
+                        <Palette size={11} />
+                        Edit colors
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
             {filtersOpen && (
               <div className="filter-list">
                 {actualCategories.map((cat) => {
@@ -1683,16 +1731,6 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                         />
                         <span className="checkbox-custom" style={{ '--checkbox-color': color } as React.CSSProperties} />
                         <span className="checkbox-label">{cat}</span>
-                      </label>
-                      <label className="category-color-swatch" title={`Change color for ${cat}`} style={{ background: color }}>
-                        <input
-                          type="color"
-                          value={color}
-                          onChange={(e) => {
-                            setCustomCategoryColor(cat, e.target.value)
-                            setUncheckedCategories([...uncheckedCategories]) // force re-render
-                          }}
-                        />
                       </label>
                     </div>
                   )
@@ -1821,6 +1859,79 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
             onCancel={() => setDeleteTarget(null)}
           />
         ),
+        document.body
+      )}
+
+      {/* Color Edit Modal */}
+      {colorEditModalOpen && createPortal(
+        <div className="calendar-modal-backdrop" onClick={() => setColorEditModalOpen(false)}>
+          <div className="color-edit-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="color-edit-modal-header">
+              <Palette size={15} />
+              <span>Edit category colors</span>
+              <button type="button" className="color-edit-close" onClick={() => setColorEditModalOpen(false)}>
+                <X size={14} />
+              </button>
+            </div>
+            <div className="color-edit-list">
+              {actualCategories.map((cat) => (
+                <div key={cat} className="color-edit-row">
+                  <span
+                    className="color-edit-dot"
+                    style={{ background: colorEditDraft[cat] ?? colorForCategory(cat) }}
+                  />
+                  <span className="color-edit-label">{cat}</span>
+                  <label
+                    className="color-edit-swatch"
+                    style={{ background: colorEditDraft[cat] ?? colorForCategory(cat) }}
+                    title={`Pick color for ${cat}`}
+                  >
+                    <input
+                      type="color"
+                      value={colorEditDraft[cat] ?? colorForCategory(cat)}
+                      onChange={(e) => {
+                        setColorEditDraft((prev) => ({ ...prev, [cat]: e.target.value }))
+                      }}
+                    />
+                  </label>
+                </div>
+              ))}
+            </div>
+            <div className="color-edit-footer">
+              <button
+                type="button"
+                className="color-edit-reset"
+                onClick={() => {
+                  actualCategories.forEach((cat) => {
+                    // Remove custom override so defaults are restored
+                    const normalized = cat.trim().toLowerCase()
+                    delete _customCategoryColors[normalized]
+                  })
+                  try { localStorage.setItem(CUSTOM_COLORS_KEY, JSON.stringify(_customCategoryColors)) } catch {}
+                  const fresh: Record<string, string> = {}
+                  actualCategories.forEach((cat) => { fresh[cat] = colorForCategory(cat) })
+                  setColorEditDraft(fresh)
+                  setUncheckedCategories([...uncheckedCategories])
+                }}
+              >
+                Reset all
+              </button>
+              <button
+                type="button"
+                className="color-edit-apply"
+                onClick={() => {
+                  Object.entries(colorEditDraft).forEach(([cat, color]) => {
+                    setCustomCategoryColor(cat, color)
+                  })
+                  setColorEditModalOpen(false)
+                  setUncheckedCategories([...uncheckedCategories])
+                }}
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        </div>,
         document.body
       )}
 
