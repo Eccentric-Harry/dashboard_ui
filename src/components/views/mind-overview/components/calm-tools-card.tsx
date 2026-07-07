@@ -17,11 +17,21 @@ const GROUNDING_STEPS = [
   { icon: Coffee, count: 1, prompt: 'thing you can taste' },
 ] as const
 
-function BreatheCard() {
+type BreatheCardProps = {
+  onCycleComplete: (cycles: number) => void
+}
+
+function BreatheCard({ onCycleComplete }: BreatheCardProps) {
   const [running, setRunning] = useState(false)
   const [phaseIndex, setPhaseIndex] = useState(0)
   const [secondsLeft, setSecondsLeft] = useState<number>(BREATH_PHASES[0].seconds)
   const [cycles, setCycles] = useState(0)
+
+  useEffect(() => {
+    if (cycles > 0) {
+      onCycleComplete(cycles)
+    }
+  }, [cycles, onCycleComplete])
 
   useEffect(() => {
     if (!running) return

@@ -1383,7 +1383,7 @@ export interface ApiEnvelope<T> {
   meta: ApiMeta;
 }
 
-export type MindEntryType = 'THOUGHT' | 'WIN' | 'GRATITUDE' | 'AFFIRMATION' | 'REFLECTION' | 'INTENTION';
+export type MindEntryType = 'THOUGHT' | 'WIN' | 'GRATITUDE' | 'AFFIRMATION' | 'REFLECTION' | 'INTENTION' | 'BREATH';
 export type MindEntryStatus = 'OPEN' | 'RESOLVED' | 'PARKED' | 'RELEASED' | 'CONVERTED';
 export type MindValueTag = 'Coding' | 'Growth' | 'Calm' | 'Confidence' | 'Devotion' | 'Joy' | 'Fulfilment';
 export type MindDistortionTag =

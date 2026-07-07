@@ -541,6 +541,9 @@
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
 }
 
@@ -558,6 +561,82 @@
   background: rgba(62, 107, 84, 0.16);
   border-color: rgba(62, 107, 84, 0.32);
   color: #2e5442;
+}
+
+.mind-tag-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(26, 31, 29, 0.08);
+  color: #526057;
+  font-size: 10px;
+  line-height: 1;
+  margin-left: 2px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.mind-tag-delete:hover {
+  background: rgba(241, 105, 119, 0.20);
+  color: #b0525e;
+}
+
+.mind-tag--add {
+  border: 1px dashed rgba(148, 156, 60, 0.55);
+  background: transparent;
+  color: #6d7331;
+}
+
+.mind-tag--add:hover {
+  background: rgba(148, 156, 60, 0.08);
+  border-color: rgba(148, 156, 60, 0.8);
+}
+
+.mind-tag-form {
+  display: inline-flex;
+  margin: 0;
+}
+
+.mind-tag-input-field {
+  padding: 5px 10px;
+  border: 1px solid rgba(148, 156, 60, 0.5);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  color: #101312;
+  width: 90px;
+  outline: none;
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+.mind-tag-input-field:focus {
+  border-color: #949c3c;
+  box-shadow: 0 0 0 2px rgba(148, 156, 60, 0.2);
+}
+
+.mind-saving-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9px;
+  font-weight: 700;
+  color: #727a28;
+  background: rgba(148, 156, 60, 0.1);
+  padding: 3px 8px;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mind-saving-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #949c3c;
 }
 
 .mind-affirmation {
@@ -1418,16 +1497,74 @@
   .mind-header {
     flex-direction: column;
     align-items: stretch;
-    gap: 12px;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .mind-header-greeting {
+    padding-right: 64px; /* Ensure greeting text doesn't overlap absolute mobile-profile-trigger */
   }
 
   .mind-header-greeting strong {
-    font-size: 22px;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+    color: #1a2f26;
+  }
+
+  .mind-header-sub {
+    font-family: 'Outfit', -apple-system, sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    margin-top: 4px;
   }
 
   .mind-header-actions {
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .mind-mood {
+    grid-column: span 2;
+    width: 100%;
+    justify-content: center;
     gap: 8px;
+    padding: 6px 14px;
+  }
+
+  .mind-face-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .mind-face {
+    width: 24px;
+    height: 24px;
+  }
+
+  .mind-streak-chip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 38px;
+    width: 100%;
+    font-size: 11.5px;
+    padding: 0;
+  }
+
+  .mind-sos-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 38px;
+    width: 100%;
+    font-size: 11px;
+    padding: 0;
+    letter-spacing: 0.05em;
   }
 
   .mind-grid {

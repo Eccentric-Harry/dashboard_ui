@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import toast from 'react-hot-toast'
-import type { MindDistortionTag, MindEntry, MindSummary, MindValueTag } from './mind-types'
-import { AFFIRMATIONS, buildSeedEntries, mindAddDays, mindIsoDate } from './mind-types'
+import type { MindDistortionTag, MindEntry, MindSummary } from './mind-types'
+import { AFFIRMATIONS, buildSeedEntries, mindAddDays, mindIsoDate, MIND_VALUE_TAGS } from './mind-types'
 import {
   convertMindEntry,
   createMindEntry,
+  updateMindEntry,
   fetchMindEntries,
   fetchMindSummary,
   saveMindMood,
@@ -29,16 +30,35 @@ function tempId(): string {
 }
 
 function MindOverviewDashboard() {
-  // The redesigned header has no date navigation — the Mind tab is always "today".
   const [selectedDate] = useState(() => mindIsoDate())
   const [entries, setEntries] = useState<MindEntry[]>([])
   const [summary, setSummary] = useState<MindSummary | null>(null)
   const [releasingIds, setReleasingIds] = useState<ReadonlySet<string>>(new Set())
   const [mood, setMood] = useState<number | null>(null)
   const [sosOpen, setSosOpen] = useState(false)
-  const [intention, setIntention] = useState('Finish the calendar sync fix, calmly.')
-  const [valueTag, setValueTag] = useState<MindValueTag | null>('Calm')
   const [affirmationIndex, setAffirmationIndex] = useState(0)
+
+  // Anchor persistence state
+  const [intention, setIntention] = useState('')
+  const [valueTag, setValueTag] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const saveTimeoutRef = useRef<number | null>(null)
+
+  // Custom tags list (with localStorage fallback)
+  const [availableTags, setAvailableTags] = useState<string[]>(() => {
+    const saved = localStorage.getItem('custom_mind_tags')
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed)) {
+          return Array.from(new Set([...MIND_VALUE_TAGS, ...parsed]))
+        }
+      } catch (e) {
+        console.error('Failed to parse custom tags', e)
+      }
+    }
+    return [...MIND_VALUE_TAGS]
+  })
 
   const load = useCallback(async () => {
     try {
@@ -46,13 +66,35 @@ function MindOverviewDashboard() {
         fetchMindEntries(),
         fetchMindSummary(selectedDate),
       ])
-      setEntries(entriesRes.data ?? [])
+      const fetched = entriesRes.data ?? []
+      setEntries(fetched)
       setSummary(summaryRes.data ?? null)
       setMood(summaryRes.data?.moodScore ?? null)
+
+      // Sync intention from backend
+      const anchor = fetched.find((e) => e.type === 'INTENTION' && e.date === selectedDate)
+      if (anchor) {
+        setIntention(anchor.text)
+        setValueTag(anchor.valueTag || null)
+      } else {
+        setIntention('')
+        setValueTag(null)
+      }
     } catch {
       // Never leave the tab blank in dev / offline — fall back to local seeds.
-      setEntries(buildSeedEntries(selectedDate))
+      const seeds = buildSeedEntries(selectedDate)
+      setEntries(seeds)
       setSummary(null)
+
+      // Sync intention from seeds
+      const anchor = seeds.find((e) => e.type === 'INTENTION' && e.date === selectedDate)
+      if (anchor) {
+        setIntention(anchor.text)
+        setValueTag(anchor.valueTag || null)
+      } else {
+        setIntention('')
+        setValueTag(null)
+      }
     }
   }, [selectedDate])
 
@@ -60,6 +102,15 @@ function MindOverviewDashboard() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load()
   }, [load])
+
+  // Clear timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        window.clearTimeout(saveTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const refreshSummary = useCallback(async () => {
     try {
@@ -69,6 +120,103 @@ function MindOverviewDashboard() {
       /* keep the last-known summary */
     }
   }, [selectedDate])
+
+  const saveIntention = useCallback(async (text: string, tag: string | null) => {
+    setSaving(true)
+    try {
+      const existing = entries.find((e) => e.type === 'INTENTION' && e.date === selectedDate)
+      if (existing) {
+        const res = await updateMindEntry(existing.id, {
+          text: text.trim(),
+          type: 'INTENTION',
+          valueTag: tag as any,
+          date: selectedDate
+        })
+        setEntries((prev) => prev.map((e) => (e.id === existing.id ? res.data : e)))
+      } else {
+        const res = await createMindEntry({
+          text: text.trim(),
+          type: 'INTENTION',
+          valueTag: tag as any,
+          date: selectedDate
+        })
+        setEntries((prev) => [...prev, res.data])
+      }
+    } catch (err) {
+      console.error('Failed to save today\'s anchor', err)
+      toast.error('Failed to save intention.')
+    } finally {
+      setSaving(false)
+    }
+  }, [entries, selectedDate])
+
+  const handleValueTagChange = useCallback((newTag: string | null) => {
+    setValueTag(newTag)
+    void saveIntention(intention, newTag)
+  }, [intention, saveIntention])
+
+  const handleIntentionChange = useCallback((newText: string) => {
+    setIntention(newText)
+    if (saveTimeoutRef.current) {
+      window.clearTimeout(saveTimeoutRef.current)
+    }
+    saveTimeoutRef.current = window.setTimeout(() => {
+      void saveIntention(newText, valueTag)
+    }, 800)
+  }, [valueTag, saveIntention])
+
+  const handleAddTag = useCallback((newTag: string) => {
+    const trimmed = newTag.trim()
+    if (!trimmed) return
+    setAvailableTags((prev) => {
+      if (prev.includes(trimmed)) return prev
+      const next = [...prev, trimmed]
+      const customTagsOnly = next.filter((t) => !MIND_VALUE_TAGS.includes(t as any))
+      localStorage.setItem('custom_mind_tags', JSON.stringify(customTagsOnly))
+      return next
+    })
+  }, [])
+
+  const handleRemoveTag = useCallback((tagToRemove: string) => {
+    if (MIND_VALUE_TAGS.includes(tagToRemove as any)) return
+    setAvailableTags((prev) => {
+      const next = prev.filter((t) => t !== tagToRemove)
+      const customTagsOnly = next.filter((t) => !MIND_VALUE_TAGS.includes(t as any))
+      localStorage.setItem('custom_mind_tags', JSON.stringify(customTagsOnly))
+      return next
+    })
+    if (valueTag === tagToRemove) {
+      setValueTag(null)
+      void saveIntention(intention, null)
+    }
+  }, [valueTag, intention, saveIntention])
+
+  // Log breathing cycles to database and update streak in real-time
+  const handleBreatheLogged = useCallback(async (currentCycles: number) => {
+    const todayBreathEntry = entries.find((e) => e.type === 'BREATH' && e.date === selectedDate)
+    const text = `Breathed for ${currentCycles} ${currentCycles === 1 ? 'cycle' : 'cycles'}`
+    try {
+      if (todayBreathEntry) {
+        const res = await updateMindEntry(todayBreathEntry.id, {
+          text,
+          type: 'BREATH',
+          date: selectedDate
+        })
+        setEntries((prev) => prev.map((e) => (e.id === todayBreathEntry.id ? res.data : e)))
+      } else {
+        const res = await createMindEntry({
+          text,
+          type: 'BREATH',
+          date: selectedDate
+        })
+        setEntries((prev) => [...prev, res.data])
+        toast.success('Mindful breathing logged! Streak updated 🔥')
+      }
+      void refreshSummary()
+    } catch (err) {
+      console.error('Failed to log breathe cycle', err)
+    }
+  }, [entries, selectedDate, refreshSummary])
 
   const patchEntry = useCallback((id: string, patch: Partial<MindEntry>) => {
     setEntries((prev) => prev.map((entry) => (entry.id === id ? { ...entry, ...patch } : entry)))
@@ -270,15 +418,19 @@ function MindOverviewDashboard() {
       />
 
       <div className="mind-grid">
-        <BreatheCard />
+        <BreatheCard onCycleComplete={handleBreatheLogged} />
 
         <GroundingCard />
 
         <TodaysAnchorCard
           intention={intention}
-          onIntentionChange={setIntention}
+          onIntentionChange={handleIntentionChange}
           valueTag={valueTag}
-          onValueTagChange={setValueTag}
+          onValueTagChange={handleValueTagChange}
+          availableTags={availableTags}
+          onAddTag={handleAddTag}
+          onRemoveTag={handleRemoveTag}
+          saving={saving}
           affirmation={AFFIRMATIONS[affirmationIndex]}
           onNextAffirmation={() => setAffirmationIndex((i) => (i + 1) % AFFIRMATIONS.length)}
         />
