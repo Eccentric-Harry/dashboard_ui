@@ -51,11 +51,14 @@ import {
   createCalendarItem,
   deleteCalendarItem,
   fetchCalendarItemsForRange,
+  fetchGoogleSyncStatus,
+  pushLocalEventsToGoogle,
   toggleCalendarItem,
   toggleCancelCalendarItem,
+  triggerGoogleSync,
   updateCalendarItem,
 } from '../../../lib/api'
-import type { CalendarItem, CalendarItemPayload, CalendarItemType, CalendarRecurrence } from '../../../lib/api'
+import type { CalendarItem, CalendarItemPayload, CalendarItemType, CalendarRecurrence, GoogleSyncStatus } from '../../../lib/api'
 import { ConfirmDialog } from '../../ui/confirm-dialog'
 import { MiniMonth } from '../../ui/mini-month'
 import { getRoutineIconDetails } from './routine-icon-helper'
@@ -550,6 +553,9 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   }, [viewType, selectedDate, loading, items])
 
   const [profileAvatar, setProfileAvatar] = useState(() => getAvatarImage(localStorage.getItem('avatarUrl') || 'luffy'))
+  const [googleSyncStatus, setGoogleSyncStatus] = useState<GoogleSyncStatus | null>(null)
+  const [googlePushing, setGooglePushing] = useState(false)
+  const [googleSyncing, setGoogleSyncing] = useState(false)
 
   useEffect(() => {
     const handleProfileUpdate = () => {
@@ -675,6 +681,39 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
       window.removeEventListener('calendar-updated', handleCalendarUpdate)
     }
   }, [loadItems, loadUpcomingItem])
+
+  useEffect(() => {
+    fetchGoogleSyncStatus()
+      .then((res) => setGoogleSyncStatus(res.data))
+      .catch(() => setGoogleSyncStatus(null))
+  }, [])
+
+  const handleGooglePushLocal = async () => {
+    setGooglePushing(true)
+    try {
+      const res = await pushLocalEventsToGoogle()
+      const pushed = res.data?.pushed ?? 0
+      toast.success(`Pushed ${pushed} event${pushed === 1 ? '' : 's'} to Google Calendar`)
+    } catch (err) {
+      toast.error((err as Error).message ?? 'Failed to push events')
+    } finally {
+      setGooglePushing(false)
+    }
+  }
+
+  const handleGooglePullSync = async () => {
+    setGoogleSyncing(true)
+    try {
+      await triggerGoogleSync()
+      toast.success('Google Calendar sync triggered')
+      const res = await fetchGoogleSyncStatus()
+      setGoogleSyncStatus(res.data)
+    } catch (err) {
+      toast.error('Sync failed')
+    } finally {
+      setGoogleSyncing(false)
+    }
+  }
 
   const actualCategories = useMemo(() => {
     const cats = new Set<string>()
@@ -1555,6 +1594,37 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
               </div>
             )}
           </div>
+
+          {/* Google Calendar Sync Card */}
+          {googleSyncStatus?.connected && (
+            <div className="calendar-google-sync-card">
+              <div className="google-sync-header">
+                <span className="google-sync-dot" />
+                <span className="google-sync-label">Google Calendar</span>
+              </div>
+              <p className="google-sync-email">{googleSyncStatus.email}</p>
+              <div className="google-sync-actions">
+                <button
+                  type="button"
+                  className="google-sync-btn"
+                  disabled={googleSyncing}
+                  onClick={handleGooglePullSync}
+                  title="Pull latest events from Google Calendar"
+                >
+                  {googleSyncing ? <Loader2 size={11} className="spin-icon" /> : '↓'} Pull
+                </button>
+                <button
+                  type="button"
+                  className="google-sync-btn google-sync-btn--push"
+                  disabled={googlePushing}
+                  onClick={handleGooglePushLocal}
+                  title="Push local-only events to Google Calendar"
+                >
+                  {googlePushing ? <Loader2 size={11} className="spin-icon" /> : '↑'} Push
+                </button>
+              </div>
+            </div>
+          )}
 
         </aside>
 

@@ -2294,6 +2294,96 @@
   display: block;
 }
 
+/* Google Calendar Sync Card */
+.calendar-google-sync-card {
+  background: rgba(255, 255, 255, 0.52);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 14px;
+  padding: 10px 12px;
+  margin-top: 8px;
+}
+
+.google-sync-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.google-sync-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #34a853;
+  flex-shrink: 0;
+}
+
+.google-sync-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #101312;
+  letter-spacing: 0.01em;
+}
+
+.google-sync-email {
+  font-size: 10px;
+  color: #526057;
+  margin: 0 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.google-sync-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.google-sync-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 5px 0;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  font-weight: 500;
+  color: #526057;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.google-sync-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.95);
+  color: #101312;
+}
+
+.google-sync-btn--push {
+  background: rgba(234, 255, 40, 0.3);
+  border-color: rgba(234, 255, 40, 0.5);
+  color: #3a3d00;
+}
+
+.google-sync-btn--push:hover:not(:disabled) {
+  background: rgba(234, 255, 40, 0.55);
+}
+
+.google-sync-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spin-icon {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* Right Panel Main Stage Layout */
 .calendar-main-stage {
   display: flex;

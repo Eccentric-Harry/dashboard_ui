@@ -17,7 +17,7 @@ import {
   Wallet,
   GraduationCap,
   Terminal,
-  Brain,
+  Sparkles,
 } from 'lucide-react'
 
 export type AppPath = '/home' | '/finance' | '/nutrition' | '/learnings' | '/workouts' | '/calendar' | '/prompts' | '/tasks' | '/people' | '/profile' | '/mind'
@@ -57,7 +57,7 @@ export const navItems: DashboardNavItem[] = [
   { label: 'Workouts', icon: Dumbbell, to: '/workouts' },
   { label: 'Prompts', icon: Terminal, to: '/prompts', mobileHidden: true },
   { label: 'Tasks', icon: CheckSquare, to: '/tasks' },
-  { label: 'Mind', icon: Brain, to: '/mind' },
+  { label: 'Mind Space', icon: Sparkles, to: '/mind' },
 
   { label: 'Adjust', icon: SlidersHorizontal, muted: true },
   { label: 'People', icon: Users, to: '/people' },

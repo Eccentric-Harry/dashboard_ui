@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Anchor, RefreshCw } from 'lucide-react'
+import { Anchor, RefreshCw, Pencil, Check } from 'lucide-react'
 import { cn } from '../../../../lib/utils'
 import { MIND_VALUE_TAGS } from '../mind-types'
 
@@ -28,22 +28,38 @@ function TodaysAnchorCard({
   affirmation,
   onNextAffirmation,
 }: TodaysAnchorCardProps) {
-  const [isAdding, setIsAdding] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [draft, setDraft] = useState('')
+  const [isPickingTag, setIsPickingTag] = useState(false)
+  const [isAddingTag, setIsAddingTag] = useState(false)
   const [newTagText, setNewTagText] = useState('')
+
+  const startEditing = () => {
+    setDraft(intention)
+    setIsEditing(true)
+    setIsPickingTag(false)
+  }
+
+  const finishEditing = () => {
+    onIntentionChange(draft.trim())
+    setIsEditing(false)
+  }
 
   const submitTag = () => {
     const val = newTagText.trim()
     if (val) {
       onAddTag(val)
-      onValueTagChange(val) // Auto-select the newly added tag
+      onValueTagChange(val)
       setNewTagText('')
     }
-    setIsAdding(false)
+    setIsAddingTag(false)
+    setIsPickingTag(false)
   }
 
   return (
     <section className="mind-card mind-card--anchor mind-tint-butter" aria-label="Today's anchor">
       <Anchor className="mind-card-watermark" size={104} strokeWidth={1.3} aria-hidden="true" />
+
       <div className="mind-card-head">
         <span className="mind-card-icon">
           <Anchor size={16} />
@@ -62,79 +78,154 @@ function TodaysAnchorCard({
         </div>
       </div>
 
-      <input
-        type="text"
-        className="mind-anchor-input"
-        value={intention}
-        onChange={(e) => onIntentionChange(e.target.value)}
-        placeholder="What matters today?"
-      />
-
-      <div className="mind-anchor-values" role="group" aria-label="Value focus">
-        {availableTags.map((tag) => {
-          const isDefault = MIND_VALUE_TAGS.includes(tag as any)
-          return (
-            <button
-              key={tag}
-              type="button"
-              className={cn('mind-tag mind-tag--value', valueTag === tag && 'is-active')}
-              aria-pressed={valueTag === tag}
-              onClick={() => onValueTagChange(valueTag === tag ? null : tag)}
-            >
-              {tag}
-              {!isDefault && (
-                <span
-                  className="mind-tag-delete"
-                  role="button"
-                  aria-label={`Delete custom tag ${tag}`}
-                  onClick={(e) => {
-                    e.stopPropagation() // Don't trigger tag selection
-                    onRemoveTag(tag)
-                  }}
-                >
-                  &times;
-                </span>
-              )}
-            </button>
-          )
-        })}
-
-        {isAdding ? (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              submitTag()
+      {/* Intention: quote display (click to edit) or inline edit mode */}
+      {isEditing ? (
+        <div className="mind-anchor-edit-row">
+          <input
+            type="text"
+            className="mind-anchor-input"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="What matters today?"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') finishEditing()
+              if (e.key === 'Escape') setIsEditing(false)
             }}
-            className="mind-tag-form"
+          />
+          <button type="button" className="mind-solid-btn" onClick={finishEditing}>
+            <Check size={12} />
+            Done
+          </button>
+        </div>
+      ) : (
+        <div
+          className="mind-anchor-display"
+          role="button"
+          tabIndex={0}
+          onClick={startEditing}
+          onKeyDown={(e) => e.key === 'Enter' && startEditing()}
+          aria-label={intention ? `Intention: ${intention}. Click to edit.` : 'Set your intention for today'}
+        >
+          {intention ? (
+            <p className="mind-anchor-quote">"{intention}"</p>
+          ) : (
+            <p className={cn('mind-anchor-quote', 'mind-anchor-quote--empty')}>What matters today?</p>
+          )}
+          <button
+            type="button"
+            className="mind-anchor-edit-btn"
+            onClick={(e) => { e.stopPropagation(); startEditing() }}
+            aria-label="Edit intention"
+            tabIndex={-1}
           >
-            <input
-              type="text"
-              className="mind-tag-input-field"
-              value={newTagText}
-              onChange={(e) => setNewTagText(e.target.value)}
-              placeholder="Tag name..."
-              maxLength={15}
-              autoFocus
-              onBlur={() => {
-                // Short timeout to allow clicking and submitting, or submit on blur
-                setTimeout(submitTag, 150)
-              }}
-            />
-          </form>
+            <Pencil size={11} />
+          </button>
+        </div>
+      )}
+
+      {/* Focus tag: show only the active one (or a "Set focus" prompt) */}
+      <div className="mind-anchor-tag-area">
+        {valueTag ? (
+          <>
+            <span className="mind-anchor-active-tag">
+              <span aria-hidden="true">●</span>
+              {valueTag}
+              <button
+                type="button"
+                className="mind-anchor-tag-clear"
+                onClick={() => { onValueTagChange(null); setIsPickingTag(false) }}
+                aria-label={`Clear focus: ${valueTag}`}
+              >
+                ×
+              </button>
+            </span>
+            <button
+              type="button"
+              className="mind-anchor-tag-change-btn"
+              onClick={() => setIsPickingTag((p) => !p)}
+              aria-expanded={isPickingTag}
+            >
+              {isPickingTag ? 'close' : 'change ▾'}
+            </button>
+          </>
         ) : (
           <button
             type="button"
-            className="mind-tag mind-tag--add"
-            onClick={() => setIsAdding(true)}
-            aria-label="Add custom tag"
+            className="mind-anchor-set-focus-btn"
+            onClick={() => setIsPickingTag((p) => !p)}
+            aria-expanded={isPickingTag}
           >
-            + Tag
+            {isPickingTag ? '▲ close' : '+ Set focus'}
           </button>
         )}
       </div>
 
+      {/* Tag picker — inline, only when isPickingTag */}
+      {isPickingTag && (
+        <div className="mind-anchor-tag-picker" role="group" aria-label="Choose focus tag">
+          {availableTags.map((tag) => {
+            const isDefault = MIND_VALUE_TAGS.includes(tag as any)
+            return (
+              <button
+                key={tag}
+                type="button"
+                className={cn('mind-tag mind-tag--value', valueTag === tag && 'is-active')}
+                aria-pressed={valueTag === tag}
+                onClick={() => {
+                  onValueTagChange(valueTag === tag ? null : tag)
+                  setIsPickingTag(false)
+                }}
+              >
+                {tag}
+                {!isDefault && (
+                  <span
+                    className="mind-tag-delete"
+                    role="button"
+                    aria-label={`Delete custom tag ${tag}`}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onRemoveTag(tag)
+                    }}
+                  >
+                    &times;
+                  </span>
+                )}
+              </button>
+            )
+          })}
+          {isAddingTag ? (
+            <form
+              onSubmit={(e) => { e.preventDefault(); submitTag() }}
+              className="mind-tag-form"
+            >
+              <input
+                type="text"
+                className="mind-tag-input-field"
+                value={newTagText}
+                onChange={(e) => setNewTagText(e.target.value)}
+                placeholder="Tag name..."
+                maxLength={15}
+                autoFocus
+                onBlur={() => setTimeout(submitTag, 150)}
+              />
+            </form>
+          ) : (
+            <button
+              type="button"
+              className="mind-tag mind-tag--add"
+              onClick={() => setIsAddingTag(true)}
+              aria-label="Add custom tag"
+            >
+              + Tag
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Affirmation */}
       <div className="mind-affirmation">
-        <p className="mind-affirmation-text">“{affirmation}”</p>
+        <p className="mind-affirmation-text">"{affirmation}"</p>
         <button type="button" className="mind-ghost-btn" onClick={onNextAffirmation} aria-label="Another affirmation">
           <RefreshCw size={12} />
         </button>

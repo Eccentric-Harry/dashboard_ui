@@ -1365,6 +1365,17 @@ export async function triggerGoogleSync(): Promise<{ data: { status: string } }>
   return response.json();
 }
 
+export async function pushLocalEventsToGoogle(): Promise<{ data: { status: string; pushed: number } }> {
+  const response = await fetch(`${API_BASE_URL}/google-calendar/push-local`, {
+    method: 'POST',
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error((body?.data?.error) ?? 'Failed to push local events to Google Calendar');
+  }
+  return response.json();
+}
+
 
 
 
