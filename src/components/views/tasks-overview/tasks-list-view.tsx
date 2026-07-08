@@ -60,11 +60,22 @@ interface TasksListViewProps {
   onToggle: (task: DailyTask) => void
 }
 
+const COMPLETED_PREVIEW_COUNT = 3
+
 export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: TasksListViewProps) {
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({})
+  const [completedExpanded, setCompletedExpanded] = useState<Record<string, boolean>>({})
 
   const toggleCategory = (category: string) => {
     setCollapsedCategories((prev) => ({
+      ...prev,
+      [category]: !prev[category]
+    }))
+  }
+
+  const toggleCompleted = (category: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setCompletedExpanded((prev) => ({
       ...prev,
       [category]: !prev[category]
     }))
@@ -139,6 +150,91 @@ export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: Tasks
         const completedCount = categoryTasks.filter((t) => t.completed).length
         const totalCount = categoryTasks.length
 
+        const pendingTasks = categoryTasks.filter((t) => !t.completed)
+        const completedTasks = categoryTasks.filter((t) => t.completed)
+        const allDone = pendingTasks.length === 0
+        const isCompletedExpanded = !!completedExpanded[category]
+
+        // If all tasks are done, show first 3 as preview; otherwise show all pending + collapsible completed
+        const visiblePending = allDone ? [] : pendingTasks
+        const previewCompleted = allDone
+          ? completedTasks.slice(0, COMPLETED_PREVIEW_COUNT)
+          : (isCompletedExpanded ? completedTasks : [])
+        const hiddenCompletedCount = allDone
+          ? completedTasks.length - COMPLETED_PREVIEW_COUNT
+          : completedTasks.length
+
+        const renderTask = (task: DailyTask) => {
+          const isOverdueTask = isOverdue(task)
+          const isSelected = selectedTask?.id === task.id
+          return (
+            <div
+              key={task.id}
+              className={`tasks-list-card ${task.completed ? 'is-completed' : ''} ${isSelected ? 'is-selected' : ''}`}
+              onClick={() => onSelect(task)}
+            >
+              <button
+                type="button"
+                className={`task-list-check ${task.completed ? 'checked' : ''}`}
+                onClick={(e) => { e.stopPropagation(); onToggle(task) }}
+                aria-label={task.completed ? 'Mark incomplete' : 'Mark complete'}
+              >
+                {task.completed && <Check size={11} strokeWidth={3} />}
+              </button>
+
+              <div className="task-list-body">
+                <div className="task-list-title">{task.title}</div>
+                <div className="task-list-meta" style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+                  <span className="k-tag dept" style={{ background: categoryInfo.bg, color: categoryInfo.text }}>
+                    <span className="dot" style={{ background: categoryInfo.dot, width: 6, height: 6, borderRadius: '50%', display: 'inline-block' }} />
+                    {category}
+                  </span>
+
+                  {task.tags && task.tags.length > 0 && task.tags.map((tag) => (
+                    <span key={tag} className="k-tag id">
+                      <span className="at">#</span>
+                      {tag}
+                    </span>
+                  ))}
+
+                  {task.date && (
+                    <span className={`k-tag sla ${task.completed ? 'sla-done' : ''}`}>
+                      <span className="flag">⚑</span>
+                      {task.date.slice(5).replace('-', '/')}
+                    </span>
+                  )}
+
+                  {task.scheduledTime && !task.completed && (
+                    <span className="k-tag time">
+                      <Clock size={10} style={{ marginRight: 2 }} />
+                      {task.scheduledTime}
+                    </span>
+                  )}
+
+                  {isOverdueTask && (
+                    <span className="k-tag sla" style={{ background: 'rgba(212, 71, 82, 0.1)', color: '#d44752' }}>
+                      Overdue
+                    </span>
+                  )}
+
+                  {task.completed && (
+                    <span className="k-tag sla sla-done" style={{ background: '#d1fae5', color: '#047857' }}>
+                      <Check size={10} />
+                      Done
+                    </span>
+                  )}
+
+                  {task.createdAt && (
+                    <span className="k-tag id" style={{ background: 'rgba(16,19,18,0.03)', color: 'rgba(16,19,18,0.35)', fontSize: 9 }}>
+                      Created {new Date(task.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )
+        }
+
         return (
           <div key={category} className="tasks-accordion-group">
             <div
@@ -161,77 +257,36 @@ export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: Tasks
             </div>
 
             <div className={`tasks-accordion-content ${isCollapsed ? 'is-collapsed' : ''}`}>
-              {categoryTasks.map((task) => {
-                const isOverdueTask = isOverdue(task)
-                const isSelected = selectedTask?.id === task.id
+              {visiblePending.map(renderTask)}
+              {previewCompleted.map(renderTask)}
 
-                return (
-                  <div
-                    key={task.id}
-                    className={`tasks-list-card ${task.completed ? 'is-completed' : ''} ${isSelected ? 'is-selected' : ''}`}
-                    onClick={() => onSelect(task)}
-                  >
-                    <button
-                      type="button"
-                      className={`task-list-check ${task.completed ? 'checked' : ''}`}
-                      onClick={(e) => { e.stopPropagation(); onToggle(task) }}
-                      aria-label={task.completed ? 'Mark incomplete' : 'Mark complete'}
-                    >
-                      {task.completed && <Check size={11} strokeWidth={3} />}
-                    </button>
+              {/* Toggle for completed tasks */}
+              {allDone && hiddenCompletedCount > 0 && (
+                <button
+                  type="button"
+                  className="tasks-completed-toggle"
+                  onClick={(e) => toggleCompleted(category, e)}
+                >
+                  <ChevronDown size={12} className={isCompletedExpanded ? 'rotate-180' : ''} style={{ transition: 'transform 0.2s' }} />
+                  {isCompletedExpanded
+                    ? `Hide ${hiddenCompletedCount} completed`
+                    : `Show ${hiddenCompletedCount} more completed`}
+                </button>
+              )}
+              {allDone && isCompletedExpanded && completedTasks.slice(COMPLETED_PREVIEW_COUNT).map(renderTask)}
 
-                    <div className="task-list-body">
-                      <div className="task-list-title">{task.title}</div>
-                      <div className="task-list-meta" style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
-                        <span className="k-tag dept" style={{ background: categoryInfo.bg, color: categoryInfo.text }}>
-                          <span className="dot" style={{ background: categoryInfo.dot, width: 6, height: 6, borderRadius: '50%', display: 'inline-block' }} />
-                          {category}
-                        </span>
-
-                        {task.tags && task.tags.length > 0 && task.tags.map((tag) => (
-                          <span key={tag} className="k-tag id">
-                            <span className="at">#</span>
-                            {tag}
-                          </span>
-                        ))}
-
-                        {task.date && (
-                          <span className={`k-tag sla ${task.completed ? 'sla-done' : ''}`}>
-                            <span className="flag">⚑</span>
-                            {task.date.slice(5).replace('-', '/')}
-                          </span>
-                        )}
-
-                        {task.scheduledTime && !task.completed && (
-                          <span className="k-tag time">
-                            <Clock size={10} style={{ marginRight: 2 }} />
-                            {task.scheduledTime}
-                          </span>
-                        )}
-
-                        {isOverdueTask && (
-                          <span className="k-tag sla" style={{ background: 'rgba(212, 71, 82, 0.1)', color: '#d44752' }}>
-                            Overdue
-                          </span>
-                        )}
-
-                        {task.completed && (
-                          <span className="k-tag sla sla-done" style={{ background: '#d1fae5', color: '#047857' }}>
-                            <Check size={10} />
-                            Done
-                          </span>
-                        )}
-
-                        {task.createdAt && (
-                          <span className="k-tag id" style={{ background: 'rgba(16,19,18,0.03)', color: 'rgba(16,19,18,0.35)', fontSize: 9 }}>
-                            Created {new Date(task.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
+              {!allDone && completedTasks.length > 0 && (
+                <button
+                  type="button"
+                  className="tasks-completed-toggle"
+                  onClick={(e) => toggleCompleted(category, e)}
+                >
+                  <ChevronDown size={12} className={isCompletedExpanded ? 'rotate-180' : ''} style={{ transition: 'transform 0.2s' }} />
+                  {isCompletedExpanded
+                    ? `Hide ${completedTasks.length} completed`
+                    : `${completedTasks.length} completed`}
+                </button>
+              )}
             </div>
           </div>
         )
