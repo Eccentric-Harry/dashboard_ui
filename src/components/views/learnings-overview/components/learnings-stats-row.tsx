@@ -1,4 +1,4 @@
-import { BookOpen, CheckSquare, GraduationCap, Target } from 'lucide-react'
+import { BookOpen, Flame, GraduationCap, Target } from 'lucide-react'
 import type { LearningsSummary } from '../../../../lib/api'
 
 interface LearningsStatsRowProps {
@@ -24,13 +24,13 @@ export function LearningsStatsRow({ summary, loading }: LearningsStatsRowProps) 
       tone: 'learnings' as const,
     },
     {
-      label: 'Tasks',
+      label: 'Streak',
       value: loading ? (
-        <span className="skeleton-rect skeleton-shimmer" style={{ width: '50px', height: '22px', display: 'inline-block', verticalAlign: 'middle', borderRadius: '4px' }} />
-      ) : `${stats?.totalTasksCompleted ?? 0}/${stats?.totalTasksCount ?? 0}`,
-      hint: 'done',
-      icon: CheckSquare,
-      tone: 'tasks' as const,
+        <span className="skeleton-rect skeleton-shimmer" style={{ width: '40px', height: '22px', display: 'inline-block', verticalAlign: 'middle', borderRadius: '4px' }} />
+      ) : String(stats?.streakDays ?? 0),
+      hint: 'day run',
+      icon: Flame,
+      tone: 'streak' as const,
     },
     {
       label: 'Pursuits',
@@ -39,7 +39,7 @@ export function LearningsStatsRow({ summary, loading }: LearningsStatsRowProps) 
       ) : String(stats?.totalPursuitsCount ?? 0),
       hint: 'active',
       icon: GraduationCap,
-      tone: 'streak' as const,
+      tone: 'pursuits' as const,
     },
     {
       label: 'This week',
@@ -59,13 +59,15 @@ export function LearningsStatsRow({ summary, loading }: LearningsStatsRowProps) 
         return (
           <div key={item.label} className={`learnings-stat-card learnings-stat-card--${item.tone}`}>
             <div className={`learnings-stat-icon learnings-stat-icon--${item.tone}`}>
-              <Icon size={15} strokeWidth={2.2} />
+              <Icon size={16} strokeWidth={2.2} />
             </div>
-            <p>{item.label}</p>
-            <strong>
-              {item.value}
-              <small>{item.hint}</small>
-            </strong>
+            <div className="learnings-stat-body">
+              <p>{item.label}</p>
+              <strong>
+                {item.value}
+                <small>{item.hint}</small>
+              </strong>
+            </div>
             {item.tone === 'week' && !loading && last7Days.length > 0 && (
               <div className="learnings-weekly-dots">
                 {last7Days.map((day, idx) => {

@@ -14,16 +14,15 @@ const CustomChartTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload as { name: string; value: number; color?: string }
     return (
-      <div 
-        className="learnings-chart-tooltip" 
-        style={{ 
-          background: '#ffffff', 
+      <div
+        style={{
+          background: '#ffffff',
           border: '1px solid rgba(0, 0, 0, 0.08)',
-          padding: '10px 14px', 
-          borderRadius: '14px', 
+          padding: '10px 14px',
+          borderRadius: '14px',
           boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
           zIndex: 9999,
-          position: 'relative'
+          position: 'relative',
         }}
       >
         <p style={{ fontWeight: 700, margin: 0, color: '#101312', fontSize: '11px' }}>{data.name}</p>
@@ -117,217 +116,154 @@ export function CategoryBreakdownCard({ refreshKey }: CategoryBreakdownCardProps
   }, [selectedCategory, learnings])
 
   return (
-    <section className="learnings-card learnings-category-card flex flex-col h-full">
-      <p className="learnings-card-eyebrow text-xs uppercase tracking-wider text-gray-400 font-bold">DISTRIBUTION</p>
-      <h3 className="learnings-card-title text-lg font-bold text-gray-900 flex items-center gap-1.5 mb-4">
-        <PieIcon size={16} className="text-[#1a7a4a]" />
+    <section className="learnings-card lo-cat-card">
+      <p className="learnings-card-eyebrow">Distribution</p>
+      <h3 className="learnings-card-title">
+        <PieIcon size={15} style={{ display: 'inline', marginRight: 6, verticalAlign: -2, color: '#1a7a4a' }} />
         Learning Categories
       </h3>
 
       {loading ? (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch mt-2">
-          {/* Column 1: Doughnut Chart Skeleton */}
-          <div className="lg:col-span-4 relative flex items-center justify-center min-h-[220px]">
-            {/* Shimmering circle representing the pie chart ring */}
-            <div className="skeleton-circle skeleton-shimmer" style={{ width: 140, height: 140, border: '16px solid rgba(23, 28, 25, 0.04)', background: 'transparent' }} />
-            {/* Center Text Skeleton */}
-            <div 
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                textAlign: 'center',
-                pointerEvents: 'none'
-              }}
-            >
-              <span className="skeleton-rect skeleton-shimmer" style={{ width: 40, height: 10, margin: '0 auto 4px' }} />
-              <span className="skeleton-rect skeleton-shimmer" style={{ width: 25, height: 20, margin: '0 auto' }} />
-            </div>
+        <div className="lo-cat-layout">
+          <div className="lo-cat-donut">
+            <div className="skeleton-circle skeleton-shimmer" style={{ width: 116, height: 116, border: '14px solid rgba(23, 28, 25, 0.04)', background: 'transparent' }} />
           </div>
-
-          {/* Column 2: Legends list Skeleton */}
-          <div className="lg:col-span-4 flex flex-col justify-center">
-            <div className="flex flex-col gap-2.5">
-              {Array.from({ length: 4 }).map((_, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center gap-3 p-2.5 rounded-xl border border-transparent bg-white/30"
-                >
-                  <div className="w-7 h-7 rounded-lg skeleton-rect skeleton-shimmer" />
-                  <div className="min-w-0 flex-1">
-                    <span className="skeleton-rect skeleton-shimmer mb-1.5" style={{ width: idx % 2 === 0 ? '55%' : '45%', height: 11 }} />
-                    <span className="skeleton-rect skeleton-shimmer" style={{ width: '70%', height: 8 }} />
-                  </div>
+          <div className="lo-cat-legend">
+            {Array.from({ length: 3 }).map((_, idx) => (
+              <div key={idx} className="lo-cat-row" style={{ pointerEvents: 'none' }}>
+                <div className="skeleton-rect skeleton-shimmer" style={{ width: 26, height: 26, borderRadius: 8 }} />
+                <div style={{ flex: 1 }}>
+                  <span className="skeleton-rect skeleton-shimmer" style={{ width: idx % 2 === 0 ? '55%' : '40%', height: 10, marginBottom: 6, display: 'block' }} />
+                  <span className="skeleton-rect skeleton-shimmer" style={{ width: '85%', height: 5, display: 'block' }} />
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Column 3: Linked learnings section Skeleton */}
-          <div className="lg:col-span-4 border-t lg:border-t-0 lg:border-l border-gray-100 pt-6 lg:pt-0 lg:pl-6 flex flex-col justify-center">
-            <div className="flex flex-col items-center justify-center flex-1 text-center py-6 px-4 bg-gray-50/20 rounded-2xl border border-dashed border-gray-200/50">
-              <span className="skeleton-circle skeleton-shimmer mb-2.5" style={{ width: 24, height: 24 }} />
-              <span className="skeleton-rect skeleton-shimmer mb-1.5" style={{ width: 80, height: 10 }} />
-              <span className="skeleton-rect skeleton-shimmer" style={{ width: 140, height: 8 }} />
-            </div>
+              </div>
+            ))}
           </div>
         </div>
       ) : categories.length === 0 ? (
-        <p className="learnings-empty py-12 text-center text-xs text-gray-400 italic">
+        <p className="learnings-empty" style={{ marginTop: 16 }}>
           No category distribution found.
         </p>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch mt-2">
-          {/* Column 1: Doughnut Chart */}
-          <div className="lg:col-span-4 relative flex items-center justify-center min-h-[220px]">
-            <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius="60%"
-                  outerRadius="80%"
-                  dataKey="value"
-                  nameKey="name"
-                  onMouseEnter={onPieEnter}
-                  onMouseLeave={onPieLeave}
-                  onClick={onPieClick}
-                  stroke="none"
-                  isAnimationActive={false}
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={entry.color}
-                      fillOpacity={
-                        selectedCategory === entry.name
-                          ? 1
-                          : selectedCategory
-                            ? 0.3
-                            : activeIndex === -1 || activeIndex === index
-                              ? 1
-                              : 0.5
-                      }
-                      style={{ cursor: 'pointer', outline: 'none', transition: 'fill-opacity 0.2s ease' }}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomChartTooltip />} offset={15} />
-              </PieChart>
-            </ResponsiveContainer>
-
-            {/* Center Text */}
-            <div 
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                textAlign: 'center',
-                pointerEvents: 'none'
-              }}
-            >
-              <span className="block text-[10px] text-gray-400 font-bold uppercase tracking-wider truncate max-w-[120px]">
-                {centerIndex !== -1 ? categories[centerIndex].name : 'Total'}
-              </span>
-              <span className="block text-2xl font-extrabold text-gray-900 mt-0.5">
-                {centerIndex !== -1 ? categories[centerIndex].count : totalLogs}
-              </span>
+        <>
+          <div className="lo-cat-layout">
+            {/* Donut */}
+            <div className="lo-cat-donut">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                <PieChart>
+                  <Pie
+                    data={chartData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius="66%"
+                    outerRadius="88%"
+                    dataKey="value"
+                    nameKey="name"
+                    paddingAngle={chartData.length > 1 ? 3 : 0}
+                    cornerRadius={5}
+                    onMouseEnter={onPieEnter}
+                    onMouseLeave={onPieLeave}
+                    onClick={onPieClick}
+                    stroke="none"
+                    isAnimationActive={false}
+                  >
+                    {chartData.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={entry.color}
+                        fillOpacity={
+                          selectedCategory === entry.name
+                            ? 1
+                            : selectedCategory
+                              ? 0.28
+                              : activeIndex === -1 || activeIndex === index
+                                ? 1
+                                : 0.45
+                        }
+                        style={{ cursor: 'pointer', outline: 'none', transition: 'fill-opacity 0.2s ease' }}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomChartTooltip />} offset={15} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="lo-cat-donut-center">
+                <span className="lo-cat-donut-label">
+                  {centerIndex !== -1 ? categories[centerIndex].name : 'Total'}
+                </span>
+                <span className="lo-cat-donut-value">
+                  {centerIndex !== -1 ? categories[centerIndex].count : totalLogs}
+                </span>
+              </div>
             </div>
-          </div>
 
-          {/* Column 2: Legends list (Interactive Grid) */}
-          <div className="lg:col-span-4 flex flex-col justify-center">
-            <div className="flex flex-col gap-2.5">
+            {/* Legend with proportion bars */}
+            <div className="lo-cat-legend">
               {categories.map((cat) => {
                 const color = getConsistentColor(cat.name)
                 const Icon = getIconForCategory(cat.name)
                 const percentage = totalLogs > 0 ? Math.round((cat.count / totalLogs) * 100) : 0
                 const isSelected = selectedCategory === cat.name
+                const isDimmed = !!selectedCategory && !isSelected
 
                 return (
-                  <div
+                  <button
                     key={cat.name}
+                    type="button"
                     onClick={() => handleCategorySelect(cat.name)}
-                    className={`flex items-center gap-3 p-2.5 rounded-xl border cursor-pointer transition-all duration-200 ${
-                      isSelected
-                        ? 'bg-gray-50 border-gray-200 shadow-sm'
-                        : 'border-transparent hover:bg-gray-50/50 bg-white/30'
-                    }`}
-                    style={{
-                      opacity: selectedCategory && !isSelected ? 0.5 : 1
-                    }}
+                    className={`lo-cat-row ${isSelected ? 'is-selected' : ''}`}
+                    style={{ opacity: isDimmed ? 0.45 : 1 }}
                   >
-                    <div
-                      className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                      style={{
-                        backgroundColor: `${color}12`,
-                        color: color,
-                      }}
-                    >
-                      <Icon size={14} strokeWidth={2.5} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <span className="block text-xs font-semibold text-gray-800 truncate capitalize">
-                        {cat.name}
+                    <span className="lo-cat-row-icon" style={{ backgroundColor: `${color}14`, color }}>
+                      <Icon size={13} strokeWidth={2.4} />
+                    </span>
+                    <span className="lo-cat-row-body">
+                      <span className="lo-cat-row-head">
+                        <span className="lo-cat-row-name">{cat.name}</span>
+                        <span className="lo-cat-row-count">
+                          {cat.count} <em>· {percentage}%</em>
+                        </span>
                       </span>
-                      <span className="block text-[10px] text-gray-400 font-medium font-mono">
-                        {cat.count} logs ({percentage}%)
+                      <span className="lo-cat-row-track">
+                        <span className="lo-cat-row-fill" style={{ width: `${percentage}%`, background: color }} />
                       </span>
-                    </div>
-                  </div>
+                    </span>
+                  </button>
                 )
               })}
             </div>
           </div>
 
-          {/* Column 3: Linked learnings section */}
-          <div className="lg:col-span-4 border-t lg:border-t-0 lg:border-l border-gray-100 pt-6 lg:pt-0 lg:pl-6 flex flex-col justify-center">
-            {selectedCategory ? (
-              <div className="flex flex-col h-full justify-between">
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider truncate">
-                    Linked in "{selectedCategory}" ({linkedLearnings.length})
-                  </span>
-                  <button
-                    onClick={() => setSelectedCategory(null)}
-                    className="w-5 h-5 rounded-full bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center text-neutral-600 transition-colors"
-                    title="Clear selection"
-                  >
-                    <X size={10} />
-                  </button>
-                </div>
-                
-                <div className="flex flex-col gap-2.5 max-h-[180px] overflow-y-auto pr-1">
-                  {linkedLearnings.map((log) => (
-                    <div 
-                      key={log.id} 
-                      className="p-3 rounded-2xl bg-white/40 border border-gray-100/80 hover:border-gray-200/50 hover:bg-white/80 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.01)]"
-                    >
-                      <div className="flex justify-between items-start mb-1 gap-2">
-                        <h4 className="text-xs font-bold text-gray-900 leading-snug">{log.title}</h4>
-                        <span className="text-[9px] text-gray-400 font-mono shrink-0 font-bold">{log.date}</span>
-                      </div>
-                      {log.description && (
-                        <p className="text-[10.5px] text-gray-500 leading-relaxed break-words whitespace-pre-wrap line-clamp-3">
-                          {log.description}
-                        </p>
-                      )}
+          {/* Linked learnings — appears only when a category is selected */}
+          {selectedCategory && (
+            <div className="lo-cat-linked">
+              <div className="lo-cat-linked-head">
+                <span>
+                  Linked in “{selectedCategory}” ({linkedLearnings.length})
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedCategory(null)}
+                  className="lo-cat-linked-clear"
+                  title="Clear selection"
+                >
+                  <X size={10} />
+                </button>
+              </div>
+              <div className="lo-cat-linked-list">
+                {linkedLearnings.map((log) => (
+                  <div key={log.id} className="lo-cat-linked-item">
+                    <div className="lo-cat-linked-item-head">
+                      <h4>{log.title}</h4>
+                      <span>{log.date}</span>
                     </div>
-                  ))}
-                </div>
+                    {log.description && <p>{log.description}</p>}
+                  </div>
+                ))}
               </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center flex-1 text-center py-6 px-4 bg-gray-50/20 rounded-2xl border border-dashed border-gray-200/50">
-                <PieIcon className="text-gray-300 mb-2" size={24} />
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Inspect Category</span>
-                <p className="text-[10.5px] text-gray-400/80 mt-1 max-w-[200px] leading-normal">Click a doughnut slice or category button to inspect linked learnings.</p>
-              </div>
-            )}
-          </div>
-        </div>
+            </div>
+          )}
+        </>
       )}
     </section>
   )

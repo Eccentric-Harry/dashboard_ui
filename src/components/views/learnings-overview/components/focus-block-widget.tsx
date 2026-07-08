@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { Play, Pause, Minimize2 } from 'lucide-react'
+import { Play, Pause, Minimize2, Timer } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useFocus } from '../../../../contexts/FocusContext'
 
@@ -163,13 +163,13 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
 
   return (
     <>
-      <div className={`learnings-card rounded-3xl p-8 transition-all duration-300 ${isRunning ? 'focus-active-pulse' : ''}`}>
+      <div className={`learnings-card rounded-3xl p-6 flex flex-col transition-all duration-300 ${isRunning ? 'focus-active-pulse' : ''}`}>
         {/* Row 1: Header & Expand Toggle */}
         <div className="flex items-start justify-between">
           <div>
             <p className="text-xs font-semibold tracking-wider text-gray-400">FOCUS SESSION</p>
             <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-lg">🔥</span>
+              <Timer size={18} className="text-[#1a7a4a]" strokeWidth={2} />
               <h3 className="text-lg font-bold text-black">Deep Work Focus</h3>
             </div>
           </div>
@@ -243,7 +243,7 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
                 <button
                   key={d}
                   onClick={() => { setDuration(d); setEditCustom(false) }}
-                  className={`px-5 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  className={`px-4 py-1.5 rounded-full text-[13px] font-medium transition-all ${
                     duration === d && !editCustom
                       ? 'focus-liquid-btn'
                       : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200/60'
@@ -270,7 +270,7 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
                 <button
                   type="button"
                   onClick={() => setEditCustom(true)}
-                  className="px-5 py-1.5 rounded-full text-sm font-medium bg-white text-gray-600 hover:bg-gray-50 border border-gray-200/60 transition-all"
+                  className="px-4 py-1.5 rounded-full text-[13px] font-medium bg-white text-gray-600 hover:bg-gray-50 border border-gray-200/60 transition-all"
                 >
                   + Custom
                 </button>
@@ -279,9 +279,9 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
           </div>
         )}
 
-        {/* Row 4: Main Timer Display */}
-        <div className="my-6 text-center">
-          <span className="text-7xl font-light font-mono text-gray-800 tracking-tight tabular-nums slashed-zero leading-none">
+        {/* Row 4: Main Timer Display — flex-1 centers it in remaining space */}
+        <div className="flex-1 flex items-center justify-center py-5 text-center min-h-[96px]">
+          <span className="text-6xl font-light font-mono text-gray-800 tracking-tight tabular-nums slashed-zero leading-none">
             {timerDisplay}
           </span>
         </div>

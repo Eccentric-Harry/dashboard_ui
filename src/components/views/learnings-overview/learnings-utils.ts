@@ -90,23 +90,26 @@ export function getIconForCategory(category: string) {
   return BookOpen // Fallback for custom categories
 }
 
+// Desaturated pastel-earth palette — matches the sage/pine design system.
+// No saturated neons (see CLAUDE.md design rules).
 export function getConsistentColor(category: string) {
   const cat = category.toLowerCase().trim()
-  if (cat.includes('computer science') || cat.includes('cs')) return '#6366f1'
-  if (cat.includes('development') || cat.includes('coding')) return '#2563eb'
-  if (cat.includes('architecture') || cat.includes('system')) return '#8b5cf6'
-  if (cat.includes('frontend') || cat.includes('ui')) return '#0ea5e9'
-  if (cat.includes('backend') || cat.includes('server')) return '#f97316'
-  if (cat.includes('git') || cat.includes('github')) return '#64748b'
-  if (cat.includes('ai') || cat.includes('ml')) return '#4f46e5'
-  if (cat.includes('personal')) return '#f43f5e'
+  if (cat.includes('computer science') || cat.includes('cs')) return '#5b6ba8'      // dusty indigo
+  if (cat.includes('development') || cat.includes('coding')) return '#1a7a4a'      // pine green
+  if (cat.includes('architecture') || cat.includes('system')) return '#7d6ba0'     // muted violet
+  if (cat.includes('frontend') || cat.includes('ui')) return '#4e7d94'             // dusty steel
+  if (cat.includes('backend') || cat.includes('server')) return '#a1714b'          // clay
+  if (cat.includes('git') || cat.includes('github')) return '#64748b'              // slate
+  if (cat.includes('ai') || cat.includes('ml')) return '#6a6fa5'                   // muted periwinkle
+  if (cat.includes('foundation')) return '#b06a77'                                 // dusty rose
+  if (cat.includes('personal')) return '#b06a77'                                   // dusty rose
 
-  // Custom hash color for unknown custom categories!
+  // Consistent hash color for custom categories — same muted family
   let hash = 0
   for (let i = 0; i < category.length; i++) {
     hash = category.charCodeAt(i) + ((hash << 5) - hash)
   }
-  const colors = ['#0ea5e9', '#3b82f6', '#ef4444', '#f43f5e', '#ec4899', '#a855f7', '#d946ef', '#f97316']
+  const colors = ['#4e7d94', '#5b6ba8', '#748a5e', '#b06a77', '#8a6b96', '#4a7862', '#a1714b', '#64748b']
   return colors[Math.abs(hash) % colors.length]
 }
 
