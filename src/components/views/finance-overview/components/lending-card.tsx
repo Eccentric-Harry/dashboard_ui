@@ -19,6 +19,7 @@ export function LendingCard({ refreshKey, onEditClick, onDeleteClick, onRefreshT
   const [records, setRecords] = useState<LendingRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [processingId, setProcessingId] = useState<string | null>(null)
+  const [isEditMode, setIsEditMode] = useState(false)
 
 
   // Pagination State
@@ -151,6 +152,29 @@ export function LendingCard({ refreshKey, onEditClick, onDeleteClick, onRefreshT
           <strong style={{ color: totalPendingVal > 0 ? '#8b5cf6' : 'inherit' }}>
             {totalPendingFormatted}
           </strong>
+          <button 
+            className={`finance-transaction-action-btn ${isEditMode ? 'active' : ''}`}
+            onClick={() => setIsEditMode(!isEditMode)}
+            aria-label="Toggle edit mode"
+            type="button"
+            style={{ 
+              background: isEditMode ? 'rgba(20, 24, 22, 0.06)' : 'transparent', 
+              padding: '0', 
+              borderRadius: '8px',
+              width: '32px',
+              height: '32px',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              minWidth: '32px',
+              minHeight: '32px',
+              border: 'none',
+              boxShadow: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            <Pencil size={14} strokeWidth={2.5} />
+          </button>
         </div>
       </div>
 
@@ -194,22 +218,26 @@ export function LendingCard({ refreshKey, onEditClick, onDeleteClick, onRefreshT
                 </strong>
 
                 <div className="lending-actions">
-                  <button
-                    type="button"
-                    onClick={() => onEditClick(item)}
-                    title="Edit entry"
-                    className="lending-row-action-btn edit"
-                  >
-                    <Pencil size={12} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onDeleteClick(item)}
-                    title="Delete entry"
-                    className="lending-row-action-btn delete"
-                  >
-                    <Trash2 size={12} />
-                  </button>
+                  {isEditMode && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => onEditClick(item)}
+                        title="Edit entry"
+                        className="lending-row-action-btn edit"
+                      >
+                        <Pencil size={12} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onDeleteClick(item)}
+                        title="Delete entry"
+                        className="lending-row-action-btn delete"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </>
+                  )}
                   <button
                     className={`pay-button ${isPaid ? 'success' : ''}`}
                     onClick={() => !isProcessing && handleToggleStatus(item)}
