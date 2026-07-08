@@ -46,6 +46,21 @@ const PRESET_CONDITIONS = [
   "Low Carb"
 ];
 
+const ACTIVITY_LABELS: Record<string, string> = {
+  SEDENTARY: 'Sedentary',
+  LIGHTLY_ACTIVE: 'Lightly Active',
+  MODERATELY_ACTIVE: 'Moderately Active',
+  ACTIVE: 'Active',
+  VERY_ACTIVE: 'Very Active',
+  EXTRA_ACTIVE: 'Extra Active',
+};
+
+const GOAL_LABELS: Record<string, { label: string; delta: string }> = {
+  LOSE_WEIGHT: { label: 'Lose Weight', delta: '−500 kcal/day' },
+  MAINTAIN_WEIGHT: { label: 'Maintain', delta: 'TDEE balance' },
+  GAIN_MUSCLE: { label: 'Gain Muscle', delta: '+300 kcal/day' },
+};
+
 function getBmiStatus(bmi?: number): string {
   if (!bmi || bmi <= 0) return '—';
   if (bmi < 18.5) return 'Underweight';
@@ -471,6 +486,25 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                     </div>
 
                     <div className="identity-section">
+                      <h4 className="identity-section-title">Fitness Profile</h4>
+                      <div className="identity-biometrics">
+                        <div className="bio-tile">
+                          <span className="lbl">Activity</span>
+                          <span className="val">
+                            {ACTIVITY_LABELS[profile?.activityLevel ?? ''] ?? '—'}
+                          </span>
+                        </div>
+                        <div className="bio-tile">
+                          <span className="lbl">Goal</span>
+                          <span className="val">
+                            {GOAL_LABELS[profile?.fitnessGoal ?? '']?.label ?? '—'}{' '}
+                            <span className="unit">{GOAL_LABELS[profile?.fitnessGoal ?? '']?.delta ?? ''}</span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="identity-section">
                       <h4 className="identity-section-title">Conditions & Flags</h4>
                       {profile?.medicalConditions && profile.medicalConditions.length > 0 ? (
                         <div className="identity-conditions">
@@ -551,6 +585,36 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                             </div>
                           </div>
                         </div>
+                        {(() => {
+                          const bmi = profile?.bmi;
+                          if (!bmi || bmi <= 0) return null;
+                          const pct = Math.min(100, Math.max(0, ((bmi - 14) / (40 - 14)) * 100));
+                          const heightCm = profile?.physicalMetrics?.height;
+                          const hM = heightCm ? heightCm / 100 : 0;
+                          const idealLow = hM ? Math.round(18.5 * hM * hM) : 0;
+                          const idealHigh = hM ? Math.round(24.9 * hM * hM) : 0;
+                          return (
+                            <div className="bmi-gauge">
+                              <div className="bmi-gauge-track">
+                                <span className="bmi-gauge-zone zone-under" />
+                                <span className="bmi-gauge-zone zone-normal" />
+                                <span className="bmi-gauge-zone zone-over" />
+                                <span className="bmi-gauge-zone zone-obese" />
+                                <span className="bmi-gauge-marker" style={{ left: `${pct}%` }} />
+                              </div>
+                              <div className="bmi-gauge-labels">
+                                <span>18.5</span>
+                                <span>25</span>
+                                <span>30</span>
+                              </div>
+                              {idealLow > 0 && (
+                                <p className="bmi-gauge-hint">
+                                  Healthy weight range for your height: <strong>{idealLow}–{idealHigh} kg</strong>
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
 
                       {/* Nutrition targets card */}
@@ -576,6 +640,12 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                           const fatPct = calcCal > 0 ? Math.max(0, 100 - protPct - carbPct) : 0;
 
                           return (
+                            <>
+                              <div className="macro-split-bar" aria-hidden="true">
+                                <span className="split protein" style={{ width: `${protPct}%` }} />
+                                <span className="split carbs" style={{ width: `${carbPct}%` }} />
+                                <span className="split fat" style={{ width: `${fatPct}%` }} />
+                              </div>
                             <div className="nutrition-macros-grid">
                               <div className="macro-bar-item protein">
                                 <div className="macro-info">
@@ -611,6 +681,7 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                                 </div>
                               </div>
                             </div>
+                            </>
                           );
                         })()}
                       </div>

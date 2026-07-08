@@ -595,6 +595,68 @@
   color: #7d8a82;
 }
 
+/* ── BMI scale gauge ── */
+.bmi-gauge {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 14px;
+}
+
+.bmi-gauge-track {
+  position: relative;
+  display: flex;
+  height: 7px;
+  border-radius: 4px;
+  overflow: visible;
+  gap: 2px;
+}
+
+.bmi-gauge-zone {
+  height: 100%;
+  border-radius: 4px;
+}
+
+.bmi-gauge-zone.zone-under  { flex: 4.5;  background: rgba(125, 155, 193, 0.45); }
+.bmi-gauge-zone.zone-normal { flex: 6.5;  background: rgba(106, 168, 138, 0.55); }
+.bmi-gauge-zone.zone-over   { flex: 5;    background: rgba(217, 164, 65, 0.5); }
+.bmi-gauge-zone.zone-obese  { flex: 10;   background: rgba(207, 122, 122, 0.45); }
+
+.bmi-gauge-marker {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #101312;
+  border: 2.5px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+.bmi-gauge-labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 17%;
+  font-size: 8.5px;
+  font-weight: 650;
+  color: #7d8a82;
+}
+
+.bmi-gauge-hint {
+  margin: 3px 0 0;
+  font-size: 10.5px;
+  color: #526057;
+}
+
+.bmi-gauge-hint strong {
+  color: #101312;
+  font-weight: 700;
+}
+
 /* ── Nutrition targets card ── */
 .nutrition-kcal {
   display: flex;
@@ -628,6 +690,24 @@
   margin-top: 2px;
   letter-spacing: 0.06em;
 }
+
+.macro-split-bar {
+  display: flex;
+  height: 9px;
+  border-radius: 5px;
+  overflow: hidden;
+  gap: 2px;
+}
+
+.macro-split-bar .split {
+  height: 100%;
+  border-radius: 3px;
+  min-width: 4px;
+}
+
+.macro-split-bar .split.protein { background: #e08b8b; }
+.macro-split-bar .split.carbs   { background: #7fa8c9; }
+.macro-split-bar .split.fat     { background: #dcc27a; }
 
 .nutrition-macros-grid {
   flex: 1;
