@@ -7,17 +7,14 @@ import {
   Dumbbell,
   Home,
   Utensils,
-  MessageCircle,
-  Settings,
-  ShieldCheck,
-  SlidersHorizontal,
   Users,
   TrendingDown,
   TrendingUp,
   Wallet,
   GraduationCap,
   Terminal,
-  Sparkles,
+  Brain,
+  LogOut,
 } from 'lucide-react'
 
 export type AppPath = '/home' | '/finance' | '/nutrition' | '/learnings' | '/workouts' | '/calendar' | '/prompts' | '/tasks' | '/people' | '/profile' | '/mind'
@@ -57,17 +54,13 @@ export const navItems: DashboardNavItem[] = [
   { label: 'Workouts', icon: Dumbbell, to: '/workouts' },
   { label: 'Prompts', icon: Terminal, to: '/prompts', mobileHidden: true },
   { label: 'Tasks', icon: CheckSquare, to: '/tasks' },
-  { label: 'Mind Space', icon: Sparkles, to: '/mind' },
-
-  { label: 'Adjust', icon: SlidersHorizontal, muted: true },
+  { label: 'Mind Space', icon: Brain, to: '/mind' },
   { label: 'People', icon: Users, to: '/people' },
-  { label: 'Shield', icon: ShieldCheck, muted: true },
 ]
 
 export const railBottomItems: DashboardNavItem[] = [
-  { label: 'Settings', icon: Settings },
+  { label: 'Logout', icon: LogOut },
   { label: 'Notifications', icon: Bell },
-  { label: 'Messages', icon: MessageCircle, muted: true },
 ]
 
 export const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']

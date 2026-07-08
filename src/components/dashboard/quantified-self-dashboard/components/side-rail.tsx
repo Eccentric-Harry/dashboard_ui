@@ -79,7 +79,7 @@ function SideRail({ activePath, onNavigate }: DashboardStageProps) {
           const btnClassName = `${muted && !isNotifications ? 'muted' : ''} ${isNotifications && isOpen ? 'active' : ''} ${isNotifications ? 'rail-notifications-btn' : ''}`.trim() || undefined
           const handleBottomClick = isNotifications
             ? () => setIsOpen(!isOpen)
-            : (label === 'Settings' ? handleSettingsClick : undefined)
+            : (label === 'Logout' ? handleSettingsClick : undefined)
           
           return (
             <button

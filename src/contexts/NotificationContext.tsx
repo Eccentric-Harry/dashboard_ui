@@ -157,28 +157,11 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
-  // ---------------------------------------------------------------------------
-  // Persistent singleton Audio element + AudioContext
-  // These are created once on mount and "warmed up" on the very first user
-  // interaction (click / touchstart). Because iOS tracks unlock state per
-  // element / context instance, reusing the same objects lets timer-triggered
-  // playback succeed after the initial warm-up tap.
-  // ---------------------------------------------------------------------------
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const audioUnlockedRef = useRef(false);
 
-  // Create the singleton Audio element once on mount
+  // Create the AudioContext once on mount
   useEffect(() => {
-    try {
-      const audio = new Audio('/iphone-notification.mp3');
-      audio.preload = 'auto';
-      audioRef.current = audio;
-    } catch (e) {
-      console.warn('Failed to create persistent Audio element:', e);
-    }
-
-
     try {
       const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (AudioContextClass) {
@@ -189,45 +172,21 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
 
     return () => {
-      // Clean up on unmount
       if (audioCtxRef.current) {
         audioCtxRef.current.close().catch(() => { });
       }
     };
   }, []);
 
-  // ---------------------------------------------------------------------------
-  // iOS Autoplay Audio Unlocker
-  // On the very first user interaction we play a silent (volume=0) buffer and
-  // resume the AudioContext so that subsequent programmatic calls are allowed.
-  // We remove the listeners after the first unlock so they don't fire again.
-  // ---------------------------------------------------------------------------
+  // Unlock AudioContext on first user interaction (required by browsers)
   useEffect(() => {
     const unlockAudio = () => {
       if (audioUnlockedRef.current) return;
       audioUnlockedRef.current = true;
 
-      // 1. Warm up the persistent HTML5 Audio element (silent play/pause)
-      if (audioRef.current) {
-        const prevVolume = audioRef.current.volume;
-        audioRef.current.volume = 0;
-        audioRef.current.play()
-          .then(() => {
-            audioRef.current!.pause();
-            audioRef.current!.currentTime = 0;
-            audioRef.current!.volume = prevVolume > 0 ? prevVolume : 1.0;
-          })
-          .catch((err) => {
-            console.warn('HTML5 Audio unlock failed:', err);
-            audioRef.current!.volume = prevVolume > 0 ? prevVolume : 1.0;
-          });
-      }
-
-      // 2. Resume the persistent AudioContext
       if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
         audioCtxRef.current.resume()
           .then(() => {
-            // Play a completely silent single-sample buffer to warm up hardware path
             if (audioCtxRef.current) {
               const buffer = audioCtxRef.current.createBuffer(1, 1, 22050);
               const source = audioCtxRef.current.createBufferSource();
@@ -239,7 +198,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           .catch((err) => console.warn('AudioContext resume failed:', err));
       }
 
-      // Remove listeners — we only need to unlock once per session
       document.removeEventListener('click', unlockAudio);
       document.removeEventListener('touchstart', unlockAudio);
     };
@@ -393,36 +351,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // ---------------------------------------------------------------------------
-  // Primary sound player — reuses the persistent Audio element so iOS allows it
-  // ---------------------------------------------------------------------------
+  // Play synthesized chime — no custom audio files
   const playSound = useCallback(() => {
-    const audio = audioRef.current;
-    if (audio) {
-      // Reset to start in case a previous play is mid-way through
-      try {
-        audio.currentTime = 0;
-        audio.volume = 1.0;
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-          playPromise.catch((err) => {
-            console.warn('Persistent Audio play failed, falling back to synthesis:', err);
-            playSynthesizedSound();
-          });
-        }
-        return;
-      } catch (e) {
-        console.warn('Persistent Audio play threw, falling back to synthesis:', e);
-      }
-    }
-    // No persistent element — try a fresh Audio instance as a last resort
-    try {
-      const fallbackAudio = new Audio('/iphone-notification.mp3');
-      fallbackAudio.volume = 1.0;
-      fallbackAudio.play().catch(() => playSynthesizedSound());
-    } catch {
-      playSynthesizedSound();
-    }
+    playSynthesizedSound();
   }, [playSynthesizedSound]);
 
   const triggerAlert = useCallback((item: CalendarItem, message: string) => {
@@ -451,7 +382,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               icon: '/logo.png',
               tag: `dashboard-notification-${item.id}`,
               requireInteraction: true,
-              silent: true,
               actions: [
                 { action: 'snooze', title: 'Snooze 10m' },
                 { action: 'open', title: 'Open' }
@@ -463,7 +393,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           new Notification(item.title, {
             body: message,
             icon: '/logo.png',
-            silent: true,
           });
         }
       } catch (e) {
@@ -711,7 +640,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             new Notification('AI Meal Logged!', {
               body: `Added: ${res.data.description} (${res.data.calories} kcal)`,
               icon: '/logo.png',
-              silent: true,
             });
           } catch (e) {
             console.error('Desktop notification failed:', e);
@@ -750,7 +678,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             new Notification('AI Meal Scan Failed', {
               body: `Failed: ${parsedError}`,
               icon: '/logo.png',
-              silent: true,
             });
           } catch (e) {
             console.error('Desktop notification failed:', e);
