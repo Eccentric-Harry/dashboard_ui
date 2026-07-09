@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CalendarDays, Flame, Wheat, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useDashboard } from '../../../../contexts/DashboardContext'
-import { fetchFoodEntries } from '../../../../lib/api'
-import { getFoodIconDetails, sortFoodEntries } from './food-icon-helper'
-import { MealDetailsModal } from './meal-details-modal'
+import { sortFoodEntries } from './food-icon-helper'
+import { getFoodImage } from './food-image-helper'
+import { gradeFromEntry } from './meal-grade'
+import { getFoodHistory } from './food-history'
 
 const mealDotColors: Record<string, string> = {
   Breakfast: '#bd7a3c',
@@ -24,7 +25,8 @@ type FoodEntry = {
   date?: string
   loggedDate?: string
   createdAt?: string
-  
+  mealQuality?: string
+
   // Detailed nutrition payload
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   analysis_metadata?: Record<string, any>
@@ -35,14 +37,8 @@ type FoodEntry = {
   gaps_and_warnings?: string[]
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   technical_diagnostic?: Record<string, any>
-}
-
-type FoodEntriesResponse = {
-  data?: FoodEntry[] | {
-    entries?: FoodEntry[]
-    foodEntries?: FoodEntry[]
-  }
-  entries?: FoodEntry[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  recomposition_assessment?: Record<string, any>
 }
 
 const isoDate = (date: Date) => {
@@ -111,34 +107,6 @@ const normalizeEntryDate = (entry: FoodEntry, fallbackDate: string) => {
 
   return fallbackDate
 }
-
-const extractEntries = (response: unknown): FoodEntry[] => {
-  if (Array.isArray(response)) {
-    return response as FoodEntry[]
-  }
-
-  const payload = response as FoodEntriesResponse
-
-  if (Array.isArray(payload?.data)) {
-    return payload.data
-  }
-
-  if (!Array.isArray(payload?.data) && Array.isArray(payload?.data?.entries)) {
-    return payload.data.entries
-  }
-
-  if (!Array.isArray(payload?.data) && Array.isArray(payload?.data?.foodEntries)) {
-    return payload.data.foodEntries
-  }
-
-  if (Array.isArray(payload?.entries)) {
-    return payload.entries
-  }
-
-  return []
-}
-
-
 
 const entryKey = (entry: FoodEntry, fallbackDate: string) => {
   if (entry.id) {
@@ -215,9 +183,8 @@ function DailyLogCardInstance({ dateValue, entries, totalProtein, totalCalories,
           const mealType = entry.mealType || 'Snack'
           const proteinGrams = Number(entry.proteinGrams) || 0
           const calories = Number(entry.calories) || 0
-
-          const iconDetails = getFoodIconDetails(description, mealType)
-          const FoodIcon = iconDetails.icon
+          const foodImage = getFoodImage(description, mealType)
+          const grade = gradeFromEntry(entry)
 
           return (
             <div
@@ -226,14 +193,30 @@ function DailyLogCardInstance({ dateValue, entries, totalProtein, totalCalories,
               onClick={() => onSelectEntry(entry)}
               role="button"
               tabIndex={0}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelectEntry(entry) }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  onSelectEntry(entry)
+                }
+              }}
             >
-              <span className="ntr-meal-ic" style={{ background: iconDetails.bg }}>
-                <FoodIcon size={13} color={iconDetails.color} />
+              <span className="ntr-meal-thumb small" aria-hidden="true">
+                <img src={foodImage.src} alt="" loading="lazy" />
               </span>
               <div>
                 <b title={description}>{description}</b>
-                <small style={{ color: mealDotColors[mealType] || '#8b9187' }}>{mealType}</small>
+                <small style={{ color: mealDotColors[mealType] || '#8b9187' }}>
+                  {mealType}
+                  {grade && (
+                    <span
+                      className="ntr-grade-badge"
+                      style={{ backgroundColor: grade.bg, color: grade.ink, borderColor: grade.border }}
+                      title={`Meal quality: ${grade.label}`}
+                    >
+                      {grade.letter}
+                    </span>
+                  )}
+                </small>
               </div>
               <aside>
                 <strong>{proteinGrams}g</strong>
@@ -272,15 +255,16 @@ function DailyLogCardInstance({ dateValue, entries, totalProtein, totalCalories,
   )
 }
 
-function FoodLogCard() {
+interface FoodLogCardProps {
+  onSelectEntry?: (entry: FoodEntry) => void
+}
+
+function FoodLogCard({ onSelectEntry }: FoodLogCardProps) {
   const { data, isLoading } = useDashboard()
   
   const foodEntries = useMemo<FoodEntry[]>(() => data?.health?.foodEntries || [], [data?.health?.foodEntries])
   const logAnchorDate = data?.date || isoDate(new Date())
   const [historyEntries, setHistoryEntries] = useState<FoodEntry[]>([])
-  
-  // Selected entry for modal
-  const [selectedEntry, setSelectedEntry] = useState<FoodEntry | null>(null)
   
   // Pagination state for historical logs list
   const [currentHistoryPage, setCurrentHistoryPage] = useState(1)
@@ -288,10 +272,9 @@ function FoodLogCard() {
 
   const loadHistoryEntries = useCallback(async () => {
     try {
-      const response = await fetchFoodEntries(365)
-      const rangeEntries = extractEntries(response)
+      const rangeEntries = await getFoodHistory()
       const selectedDateEntries = foodEntries.map((entry) => ({ ...entry, date: entry.date || logAnchorDate }))
-      setHistoryEntries(mergeFoodEntries([...rangeEntries, ...selectedDateEntries], logAnchorDate))
+      setHistoryEntries(mergeFoodEntries([...selectedDateEntries, ...rangeEntries], logAnchorDate))
     } catch (error) {
       console.error('Failed to load 365 days food history', error)
       setHistoryEntries(foodEntries.map((entry) => ({ ...entry, date: entry.date || logAnchorDate })))
@@ -414,7 +397,7 @@ function FoodLogCard() {
             entries={entries}
             totalProtein={totalProtein}
             totalCalories={totalCalories}
-            onSelectEntry={setSelectedEntry}
+            onSelectEntry={onSelectEntry || (() => {})}
           />
         ))}
       </div>
@@ -444,12 +427,7 @@ function FoodLogCard() {
         </div>
       )}
 
-      {/* Meal Details Modal */}
-      <MealDetailsModal
-        open={!!selectedEntry}
-        onClose={() => setSelectedEntry(null)}
-        entry={selectedEntry}
-      />
+
     </section>
   )
 }

@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
-import { Beef, Flame, Pencil, Trash2, UtensilsCrossed } from 'lucide-react'
+import { ChevronRight, Pencil, Trash2, UtensilsCrossed } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { getFoodIconDetails, sortFoodEntries } from './food-icon-helper'
-import { MealDetailsModal } from './meal-details-modal'
+import { sortFoodEntries } from './food-icon-helper'
+import { getFoodImage } from './food-image-helper'
+import { gradeFromEntry } from './meal-grade'
 import { ArcGauge } from './arc-gauge'
 import { useDashboard } from '../../../../contexts/DashboardContext'
 import { deleteFoodEntry } from '../../../../lib/api'
@@ -20,9 +21,8 @@ const mealToneColors: Record<string, string> = {
 
 const goalTones: Record<string, string> = {
   protein: 'tone-lime',
-  calories: 'tone-apricot',
   carbs: 'tone-sky',
-  water: 'tone-sky',
+  fat: 'tone-apricot',
 }
 
 const PROTEIN_TARGET = 100
@@ -41,6 +41,9 @@ type FoodEntry = {
   mealType?: string
   proteinGrams?: number
   calories?: number
+  mealQuality?: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  recomposition_assessment?: Record<string, any>
 }
 
 const isoDate = (date: Date) => {
@@ -53,9 +56,10 @@ const isoDate = (date: Date) => {
 
 interface MacroBalanceCardProps {
   onEdit?: (food: FoodEntry) => void
+  onSelectEntry?: (entry: FoodEntry) => void
 }
 
-function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
+function MacroBalanceCard({ onEdit, onSelectEntry }: MacroBalanceCardProps) {
   const { data, isLoading, refetch } = useDashboard()
 
   const selectedDate = data?.date || isoDate(new Date())
@@ -64,7 +68,7 @@ function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
   const foodEntries = useMemo<FoodEntry[]>(() => sortFoodEntries(data?.health?.foodEntries || []), [data?.health?.foodEntries])
   const [isEditMode, setIsEditMode] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<FoodEntry | null>(null)
-  const [selectedEntry, setSelectedEntry] = useState<FoodEntry | null>(null)
+  const [activeMetric, setActiveMetric] = useState<'calories' | 'protein' | 'carbs' | 'fat'>('calories')
 
   if (isLoading) {
     return (
@@ -104,6 +108,44 @@ function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
   const caloriesProgress = Math.round((caloriesLogged / caloriesTarget) * 100) || 0
   const caloriesRemaining = Math.max(caloriesTarget - caloriesLogged, 0)
 
+  const carbsGoal = circularGoals.find((goal) => goal.label === 'Carbs')
+  const carbsLogged = carbsGoal?.value || 0
+  const carbsTarget = carbsGoal?.target || 252
+  const carbsProgress = Math.round((carbsLogged / carbsTarget) * 100) || 0
+
+  const fatGoal = circularGoals.find((goal) => goal.label === 'Fat')
+  const fatLogged = fatGoal?.value || 0
+  const fatTarget = fatGoal?.target || 59
+  const fatProgress = Math.round((fatLogged / fatTarget) * 100) || 0
+
+  const formatPlain = (n: number) => n.toLocaleString()
+  const formatGrams = (n: number) => `${n.toLocaleString()}g`
+  const metricMap = {
+    calories: { value: caloriesLogged, target: caloriesTarget, progress: caloriesProgress, format: formatPlain, centerSub: `of ${caloriesTarget.toLocaleString()} kcal` },
+    protein: { value: proteinLogged, target: proteinTarget, progress: proteinProgress, format: formatGrams, centerSub: `of ${proteinTarget}g protein` },
+    carbs: { value: carbsLogged, target: carbsTarget, progress: carbsProgress, format: formatGrams, centerSub: `of ${carbsTarget}g carbs` },
+    fat: { value: fatLogged, target: fatTarget, progress: fatProgress, format: formatGrams, centerSub: `of ${fatTarget}g fat` },
+  }
+  const activeGauge = metricMap[activeMetric]
+  const isOverBudget = activeMetric === 'calories' && caloriesLogged > caloriesTarget
+
+  // friendly status line under the gauge — the over-budget case must never
+  // read as broken ("0 kcal remaining")
+  let gaugeFoot: string
+  if (activeMetric === 'calories') {
+    if (caloriesLogged > caloriesTarget) {
+      gaugeFoot = `${(caloriesLogged - caloriesTarget).toLocaleString()} kcal over — tomorrow's a fresh start`
+    } else if (caloriesProgress >= 95) {
+      gaugeFoot = "You've hit your energy target 🎯"
+    } else {
+      gaugeFoot = `${caloriesRemaining.toLocaleString()} kcal remaining today`
+    }
+  } else if (activeGauge.value >= activeGauge.target) {
+    gaugeFoot = `${activeMetric.charAt(0).toUpperCase()}${activeMetric.slice(1)} goal reached 🎯`
+  } else {
+    gaugeFoot = `${(activeGauge.target - activeGauge.value).toLocaleString()}g of ${activeMetric} to go`
+  }
+
   const handleDeleteConfirm = async () => {
     if (!itemToDelete?.id) return
 
@@ -132,67 +174,48 @@ function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
         </span>
       </div>
 
-      <div className="ntr-gauge-panel">
-        <div style={{ position: 'relative' }}>
+      <div className={`ntr-gauge-panel${isOverBudget ? ' over' : ''}`}>
+        <div className="ntr-gauge-wrap">
           <ArcGauge
-            value={caloriesLogged}
-            target={caloriesTarget}
-            centerText={caloriesLogged.toLocaleString()}
-            centerSub={`of ${caloriesTarget.toLocaleString()} kcal`}
+            value={activeGauge.value}
+            target={activeGauge.target}
+            format={activeGauge.format}
+            centerSub={activeGauge.centerSub}
+            over={isOverBudget}
           />
-          <span className="ntr-gauge-badge">{caloriesProgress}%</span>
+          <span className={`ntr-gauge-badge${isOverBudget ? ' over' : ''}`}>{activeGauge.progress}%</span>
         </div>
-
-        <div className="ntr-gauge-stats">
-          <div className="ntr-stat-row">
-            <span><Beef size={15} /></span>
-            <div>
-              <header>
-                <p>Protein</p>
-                <strong>{proteinLogged}<em>/{proteinTarget}g</em></strong>
-              </header>
-              <div className="ntr-stat-bar" aria-hidden="true">
-                <i style={{ width: `${Math.min(proteinProgress, 100)}%` }} />
-              </div>
-            </div>
-          </div>
-
-          <div className="ntr-stat-row">
-            <span><Flame size={15} /></span>
-            <div>
-              <header>
-                <p>Calories</p>
-                <strong>{caloriesLogged.toLocaleString()}<em>/{caloriesTarget.toLocaleString()}</em></strong>
-              </header>
-              <div className="ntr-stat-bar" aria-hidden="true">
-                <i style={{ width: `${Math.min(caloriesProgress, 100)}%` }} />
-              </div>
-            </div>
-          </div>
-
-          <div className="ntr-stat-row">
-            <span><UtensilsCrossed size={15} /></span>
-            <div>
-              <header>
-                <p>Remaining</p>
-                <strong>{caloriesRemaining.toLocaleString()}<em> kcal</em></strong>
-              </header>
-            </div>
-          </div>
-        </div>
+        <p className="ntr-gauge-foot">{gaugeFoot}</p>
       </div>
 
       {circularGoals.length > 0 && (
         <div className="ntr-tiles" aria-label="Daily goals">
-          {circularGoals.map((goal) => (
-            <div key={goal.label} className={`ntr-tile ${goalTones[goal.label.toLowerCase()] || ''}`}>
-              <p>{goal.label}</p>
-              <strong>
-                {goal.value.toLocaleString()}
-                <em>/{goal.target.toLocaleString()}{goal.unit}</em>
-              </strong>
-            </div>
-          ))}
+          {circularGoals.filter((goal) => goal.label !== 'Calories').map((goal) => {
+            const metricKey = goal.label.toLowerCase() as 'protein' | 'carbs' | 'fat'
+            const isActive = activeMetric === metricKey
+            const fillPercent = Math.min(Math.round((goal.value / Math.max(goal.target, 1)) * 100), 100)
+            return (
+              <div
+                key={goal.label}
+                className={`ntr-tile ${goalTones[goal.label.toLowerCase()] || ''}${isActive ? ' ntr-tile-active' : ''}${metricKey === 'protein' ? ' priority' : ''}`}
+                onClick={() => setActiveMetric(isActive ? 'calories' : metricKey)}
+                style={{ cursor: 'pointer' }}
+                role="button"
+                tabIndex={0}
+                aria-pressed={isActive}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setActiveMetric(isActive ? 'calories' : metricKey) }}
+              >
+                <p>{goal.label}</p>
+                <strong>
+                  {goal.value.toLocaleString()}
+                  <em>/{goal.target.toLocaleString()}{goal.unit}</em>
+                </strong>
+                <span className="ntr-tile-bar" aria-hidden="true">
+                  <i style={{ width: `${fillPercent}%` }} />
+                </span>
+              </div>
+            )
+          })}
         </div>
       )}
 
@@ -214,7 +237,7 @@ function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
         </div>
 
         <div className="ntr-meals-list">
-          {foodEntries.length === 0 && <p>No food logged yet — add your first meal.</p>}
+          {foodEntries.length === 0 && <p>No meals logged yet — add your first 🍽️</p>}
 
           {foodEntries.map((entry, index) => {
             const id = entry.id
@@ -223,32 +246,52 @@ function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
             const proteinGrams = Number(entry.proteinGrams) || 0
             const calories = Number(entry.calories) || 0
             const tone = mealToneColors[mealType] || '#8b9187'
-
-            const iconDetails = getFoodIconDetails(description, mealType)
-            const FoodIcon = iconDetails.icon
+            const foodImage = getFoodImage(description, mealType)
+            const grade = gradeFromEntry(entry)
+            const clickable = !isEditMode && !!id
 
             return (
               <div
-                className={`ntr-meal-row${!isEditMode && id ? ' clickable' : ''}`}
+                className={`ntr-meal-row${clickable ? ' clickable' : ''}`}
                 key={id || `${description}-${index}`}
-                onClick={() => !isEditMode && id && setSelectedEntry(entry)}
+                onClick={() => clickable && onSelectEntry?.(entry)}
+                role={clickable ? 'button' : undefined}
+                tabIndex={clickable ? 0 : undefined}
+                onKeyDown={(e) => {
+                  if (clickable && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault()
+                    onSelectEntry?.(entry)
+                  }
+                }}
               >
-                <span className="ntr-meal-ic" aria-hidden="true" style={{ background: iconDetails.bg }}>
-                  <FoodIcon size={16} color={iconDetails.color} />
+                <span className="ntr-meal-thumb" aria-hidden="true">
+                  <img src={foodImage.src} alt="" loading="lazy" />
                 </span>
                 <div className="ntr-meal-info">
                   <b title={description}>{description}</b>
-                  <span
-                    className="ntr-meal-tag"
-                    style={{ backgroundColor: `${tone}14`, color: tone, border: `1px solid ${tone}2e` }}
-                  >
-                    {mealType}
+                  <span className="ntr-meal-tag-row">
+                    <span
+                      className="ntr-meal-tag"
+                      style={{ backgroundColor: `${tone}14`, color: tone, border: `1px solid ${tone}2e` }}
+                    >
+                      {mealType}
+                    </span>
+                    {grade && (
+                      <span
+                        className="ntr-grade-badge"
+                        style={{ backgroundColor: grade.bg, color: grade.ink, borderColor: grade.border }}
+                        title={`Meal quality: ${grade.label}`}
+                      >
+                        {grade.letter}
+                      </span>
+                    )}
                   </span>
                 </div>
                 <div className="ntr-meal-stats">
                   <strong>{proteinGrams}g</strong>
                   <small>{calories.toLocaleString()} kcal</small>
                 </div>
+                {clickable && <ChevronRight size={14} className="ntr-meal-go" aria-hidden="true" />}
                 {id && isEditMode ? (
                   <div className="ntr-meal-actions">
                     <button
@@ -286,11 +329,7 @@ function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
         onCancel={() => setItemToDelete(null)}
       />
 
-      <MealDetailsModal
-        open={!!selectedEntry}
-        onClose={() => setSelectedEntry(null)}
-        entry={selectedEntry}
-      />
+
     </section>
   )
 }

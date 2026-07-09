@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { CalendarCheck, ChevronDown, LoaderCircle, X, Plus } from 'lucide-react'
+import { CalendarCheck, ChevronDown, Flame, LoaderCircle, X, Plus } from 'lucide-react'
 import { useDashboard } from '../../../../contexts/DashboardContext'
 import { fetchFoodEntries } from '../../../../lib/api'
 import { isStandalone } from '../../../../lib/utils'
 import { MiniMonth } from '../../../ui/mini-month'
 import { getFoodIconDetails } from './food-icon-helper'
+import { computeLoggingStreak, getFoodHistory } from './food-history'
 
 type FoodEntry = {
   id?: string
@@ -57,6 +58,11 @@ const formatHeaderDate = (date: Date) =>
     day: 'numeric',
     year: 'numeric',
   })
+
+const splitHeaderDate = (date: Date) => ({
+  weekday: date.toLocaleDateString('en-US', { weekday: 'long' }),
+  rest: date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+})
 const isFutureDate = (date: Date) => isoDate(date) > isoDate(new Date())
 
 const extractEntries = (response: unknown): FoodEntry[] => {
@@ -105,6 +111,19 @@ function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
 
   const [activeNutritionDates, setActiveNutritionDates] = useState<Set<string>>(new Set())
   const [calendarRange, setCalendarRange] = useState<{ start: string; end: string } | null>(null)
+  const [streak, setStreak] = useState(0)
+
+  useEffect(() => {
+    let active = true
+    getFoodHistory()
+      .then((entries) => {
+        if (active) setStreak(computeLoggingStreak(entries))
+      })
+      .catch((err) => console.error('Failed to compute logging streak', err))
+    return () => {
+      active = false
+    }
+  }, [foodEntries])
 
   useEffect(() => {
     if (!calendarRange) return
@@ -166,16 +185,6 @@ function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
   }, [])
 
   const selectedDateObject = useMemo(() => parseIsoDate(selectedDate), [selectedDate])
-
-  // last 7 days ending today, for the header week strip
-  const weekDays = useMemo(() => {
-    const today = new Date()
-    return Array.from({ length: 7 }, (_, index) => {
-      const date = new Date(today)
-      date.setDate(today.getDate() - (6 - index))
-      return { date, iso: isoDate(date) }
-    })
-  }, [])
 
 
   const navigateToDate = (date: Date) => {
@@ -276,7 +285,9 @@ function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
           aria-haspopup="dialog"
           onClick={() => setIsCalendarOpen((isOpen) => !isOpen)}
         >
-          <span className="ntr-title">{formatHeaderDate(selectedDateObject)}</span>
+          <span className="ntr-title">
+            <em>{splitHeaderDate(selectedDateObject).weekday},</em> {splitHeaderDate(selectedDateObject).rest}
+          </span>
           <ChevronDown size={20} className="ntr-chevron" />
         </button>
 
@@ -376,20 +387,12 @@ function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
       </div>
 
       <div className="ntr-header-right">
-        <div className="ntr-week" role="group" aria-label="Pick a recent day">
-          {weekDays.map(({ date, iso }) => (
-            <button
-              key={iso}
-              type="button"
-              className={`ntr-week-day${iso === selectedDate ? ' active' : ''}`}
-              aria-pressed={iso === selectedDate}
-              onClick={() => navigateToDate(date)}
-            >
-              <i>{date.toLocaleDateString('en-US', { weekday: 'narrow' })}</i>
-              <b>{date.getDate()}</b>
-            </button>
-          ))}
-        </div>
+        {streak >= 2 && (
+          <span className="ntr-streak-pill" title={`${streak} consecutive days with meals logged`}>
+            <Flame size={13} strokeWidth={2.5} aria-hidden="true" />
+            {streak}-day streak
+          </span>
+        )}
 
         {onAddClick && (
           <button type="button" onClick={onAddClick} className="ntr-add-btn">
