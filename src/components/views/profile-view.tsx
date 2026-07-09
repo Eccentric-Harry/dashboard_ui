@@ -3,7 +3,7 @@ import {
   X, Clock, Pencil, LogOut, Mail, Globe, Bell,
   Activity, Target, Plus, Calendar, RefreshCw,
   Cake, PersonStanding, Ruler, Weight, Footprints,
-  HeartPulse, Sparkles
+  HeartPulse, CalendarDays
 } from 'lucide-react';
 import {
   getUserProfile,
@@ -512,9 +512,9 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                         <div className="fitness-row">
                           <span className="bio-tile-icon tint-honey"><Target size={13} strokeWidth={2.2} /></span>
                           <span className="lbl">Goal</span>
-                          <span className="val">
-                            {GOAL_LABELS[profile?.fitnessGoal ?? '']?.label ?? '—'}{' '}
-                            <span className="unit">{GOAL_LABELS[profile?.fitnessGoal ?? '']?.delta ?? ''}</span>
+                          <span className="val goal-val">
+                            <span className="goal-label">{GOAL_LABELS[profile?.fitnessGoal ?? '']?.label ?? '—'}</span>
+                            <span className="unit goal-delta">{GOAL_LABELS[profile?.fitnessGoal ?? '']?.delta ?? ''}</span>
                           </span>
                         </div>
                       </div>
@@ -540,7 +540,7 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
 
                     {profile?.createdAt && (
                       <div className="identity-since">
-                        <span className="bio-tile-icon tint-yellow"><Sparkles size={13} strokeWidth={2.2} /></span>
+                        <span className="bio-tile-icon tint-sky"><CalendarDays size={13} strokeWidth={2.2} /></span>
                         <div className="bio-tile-text">
                           <span className="lbl">Member Since</span>
                           <span className="val">
@@ -722,17 +722,19 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                           <span>Google Calendar Sync</span>
                         </div>
                         {syncStatus?.connected ? (
-                          <div className="sync-body">
+                          <div className="sync-body sync-connected-layout">
                             <div className="sync-info">
                               <div className="sync-badge connected">
                                 <span className="dot"></span>
                                 <span>Sync Active</span>
                               </div>
+                              <div className="sync-divider" />
                               <div className="sync-meta">
                                 <span className="sync-meta-item">
                                   <span className="lbl">Account</span>
                                   <span className="val truncate-email" title={syncStatus.email}>{syncStatus.email}</span>
                                 </span>
+                                <div className="sync-divider" />
                                 <span className="sync-meta-item">
                                   <span className="lbl">Last Synced</span>
                                   <span className="val">
@@ -755,13 +757,14 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                               <button
                                 className="sync-btn-disconnect"
                                 onClick={handleDisconnectGoogle}
+                                disabled={syncLoading}
                               >
                                 Disconnect
                               </button>
                             </div>
                           </div>
                         ) : (
-                          <div className="sync-body">
+                          <div className="sync-body sync-disconnected-layout">
                             <div className="sync-info">
                               <div className="sync-badge disconnected">
                                 <span className="dot"></span>
