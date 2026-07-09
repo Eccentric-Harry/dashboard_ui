@@ -16,7 +16,7 @@ const PROTEIN_TARGET = 100
 function CustomTooltip({ active, payload, label }: any) {
   if (active && payload && payload.length) {
     return (
-      <div style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', padding: '6px 10px', borderRadius: '8px', color: '#fff', fontSize: '12px', fontWeight: 600, boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)' }}>
+      <div style={{ background: '#171b15', padding: '6px 10px', borderRadius: '10px', color: '#cfe965', fontSize: '12px', fontWeight: 650, boxShadow: '0 6px 16px rgba(23, 27, 21, 0.2)' }}>
         <p style={{ margin: 0 }}>{`${label}: ${payload[0].value}g`}</p>
       </div>
     )
@@ -123,13 +123,13 @@ function ProteinTrendCard() {
 
   if (isLoading || displayTrend.length === 0) {
     return (
-      <section className="nutrition-card nutrition-trend-card" style={{ display: 'flex', flexDirection: 'column' }}>
-        <div className="nutrition-dark-head">
+      <section className="ntr-card ntr-trend">
+        <div className="ntr-card-head">
           <div>
-            <p>Weekly Protein Consistency</p>
+            <p className="ntr-eyebrow">Weekly Protein</p>
             <div className="skeleton-shimmer skeleton-rect" style={{ width: '85px', height: '22px', marginTop: '6px', borderRadius: '4px' }} />
           </div>
-          <span className="nutrition-days-pill">7 days</span>
+          <span className="ntr-pill">7 days</span>
         </div>
         <div style={{ flex: 1, width: '100%', minHeight: '130px', marginTop: '20px', display: 'flex', alignItems: 'flex-end', gap: '12px', opacity: 0.35, padding: '0 10px' }}>
           {Array.from({ length: 7 }).map((_, idx) => (
@@ -146,30 +146,30 @@ function ProteinTrendCard() {
   // Set minimum limit so the graph looks proportional
 
   return (
-    <section className="nutrition-card nutrition-trend-card" style={{ display: 'flex', flexDirection: 'column' }}>
-      <div className="nutrition-dark-head">
+    <section className="ntr-card ntr-trend">
+      <div className="ntr-card-head">
         <div>
-          <p>Weekly Protein Consistency</p>
+          <p className="ntr-eyebrow">Weekly Protein</p>
           <h2>{latestPoint.grams}g {latestPoint.dateStr === isoDate(new Date()) ? 'today' : ''}</h2>
         </div>
-        <span className="nutrition-days-pill">7 days</span>
+        <span className="ntr-pill">7 days</span>
       </div>
 
-      <div style={{ flex: 1, width: '100%', minHeight: 0, marginTop: '20px', marginLeft: '-15px', position: 'relative', zIndex: 1 }}>
+      <div className="ntr-trend-chart">
         {isMounted ? (
           <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
             <AreaChart data={displayTrend} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
               <defs>
                 <linearGradient id="colorGramsArea" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#4ade80" stopOpacity={0.4} />
-                  <stop offset="95%" stopColor="#059669" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#cfe965" stopOpacity={0.55} />
+                  <stop offset="95%" stopColor="#cfe965" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="colorGramsStroke" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#4ade80" />
-                  <stop offset="100%" stopColor="#10b981" />
+                  <stop offset="0%" stopColor="#b5d94c" />
+                  <stop offset="100%" stopColor="#8aa832" />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(20, 24, 22, 0.06)" />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(23, 27, 21, 0.06)" />
               <XAxis
                 dataKey="day"
                 axisLine={false}
@@ -179,16 +179,16 @@ function ProteinTrendCard() {
                 padding={{ left: 15, right: 15 }}
               />
               <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(20, 24, 22, 0.08)', strokeWidth: 1, strokeDasharray: '4 4' }} />
-              <ReferenceLine y={PROTEIN_TARGET} stroke="rgba(20, 24, 22, 0.12)" strokeDasharray="4 4" label={{ position: 'insideTopRight', value: `TARGET ${PROTEIN_TARGET}G`, fill: 'rgba(23, 28, 25, 0.48)', fontSize: 9, fontWeight: 800, letterSpacing: '0.05em' }} />
+              <ReferenceLine y={PROTEIN_TARGET} stroke="rgba(23, 27, 21, 0.14)" strokeDasharray="4 4" label={{ position: 'insideTopRight', value: `TARGET ${PROTEIN_TARGET}G`, fill: 'rgba(23, 27, 21, 0.42)', fontSize: 9, fontWeight: 800, letterSpacing: '0.05em' }} />
               <Area
                 type="monotone"
                 dataKey="grams"
                 stroke="url(#colorGramsStroke)"
-                strokeWidth={3.5}
+                strokeWidth={3}
                 fillOpacity={1}
                 fill="url(#colorGramsArea)"
-                activeDot={{ r: 6, fill: '#fff', stroke: '#4ade80', strokeWidth: 3 }}
-                dot={{ r: 4, fill: '#fff', stroke: '#10b981', strokeWidth: 2 }}
+                activeDot={{ r: 6, fill: '#fff', stroke: '#8aa832', strokeWidth: 3 }}
+                dot={{ r: 4, fill: '#fff', stroke: '#a3c545', strokeWidth: 2 }}
               />
             </AreaChart>
           </ResponsiveContainer>

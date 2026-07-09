@@ -167,14 +167,23 @@ function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
 
   const selectedDateObject = useMemo(() => parseIsoDate(selectedDate), [selectedDate])
 
+  // last 7 days ending today, for the header week strip
+  const weekDays = useMemo(() => {
+    const today = new Date()
+    return Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(today)
+      date.setDate(today.getDate() - (6 - index))
+      return { date, iso: isoDate(date) }
+    })
+  }, [])
 
-  const handleDateSelect = (date: Date) => {
+
+  const navigateToDate = (date: Date) => {
     if (isFutureDate(date)) {
       return
     }
 
     const dateValue = isoDate(date)
-    setPickedDate(dateValue)
     setSelectedDate(dateValue)
     setIsCalendarOpen(false)
 
@@ -191,6 +200,15 @@ function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
       }
       window.dispatchEvent(new PopStateEvent('popstate'))
     }
+  }
+
+  const handleDateSelect = (date: Date) => {
+    if (isFutureDate(date)) {
+      return
+    }
+
+    setPickedDate(isoDate(date))
+    navigateToDate(date)
   }
 
   const pickedDateObject = pickedDate ? parseIsoDate(pickedDate) : null
@@ -248,22 +266,18 @@ function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
   }, [data?.date, foodEntries, pickedDate])
   
   return (
-    <header className="nutrition-header">
+    <header className="ntr-header">
       <div className="nutrition-date-picker" ref={calendarRef}>
+        <p className="ntr-eyebrow">Nutrition Overview · {foodEntries.length} meals logged</p>
         <button
           type="button"
-          className="nutrition-date-trigger"
+          className="ntr-title-btn"
           aria-expanded={isCalendarOpen}
           aria-haspopup="dialog"
           onClick={() => setIsCalendarOpen((isOpen) => !isOpen)}
         >
-          <span>
-            <span className="nutrition-date-title-wrap">
-              <strong>{formatHeaderDate(selectedDateObject)}</strong>
-              <ChevronDown size={20} className="nutrition-date-chevron" />
-            </span>
-            <small>Nutrition Overview | {foodEntries.length} meals logged</small>
-          </span>
+          <span className="ntr-title">{formatHeaderDate(selectedDateObject)}</span>
+          <ChevronDown size={20} className="ntr-chevron" />
         </button>
 
         {isCalendarOpen && (
@@ -361,18 +375,31 @@ function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
         )}
       </div>
 
-      {onAddClick && (
-        <div className="nutrition-header-actions">
-          <button
-            type="button"
-            onClick={onAddClick}
-            className="nutrition-add-btn"
-          >
-            <Plus size={14} strokeWidth={3} />
-            <span>Add</span>
-          </button>
+      <div className="ntr-header-right">
+        <div className="ntr-week" role="group" aria-label="Pick a recent day">
+          {weekDays.map(({ date, iso }) => (
+            <button
+              key={iso}
+              type="button"
+              className={`ntr-week-day${iso === selectedDate ? ' active' : ''}`}
+              aria-pressed={iso === selectedDate}
+              onClick={() => navigateToDate(date)}
+            >
+              <i>{date.toLocaleDateString('en-US', { weekday: 'narrow' })}</i>
+              <b>{date.getDate()}</b>
+            </button>
+          ))}
         </div>
-      )}
+
+        {onAddClick && (
+          <button type="button" onClick={onAddClick} className="ntr-add-btn">
+            <span className="ntr-add-ic">
+              <Plus size={16} strokeWidth={2.75} />
+            </span>
+            Add meal
+          </button>
+        )}
+      </div>
     </header>
   )
 }

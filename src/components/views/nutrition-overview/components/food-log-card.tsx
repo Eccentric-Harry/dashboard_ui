@@ -6,13 +6,13 @@ import { getFoodIconDetails, sortFoodEntries } from './food-icon-helper'
 import { MealDetailsModal } from './meal-details-modal'
 
 const mealDotColors: Record<string, string> = {
-  Breakfast: '#f97316',
-  Lunch: '#059669',
-  Dinner: '#38bdf8',
-  Snack: '#a78bfa',
-  Midnight: '#6366f1',
-  'Post Workout': '#f87171',
-  'Mid-Morning': '#c2410c',
+  Breakfast: '#bd7a3c',
+  Lunch: '#4f8f63',
+  Dinner: '#5b8fb3',
+  Snack: '#8d7fb5',
+  Midnight: '#6f74a8',
+  'Post Workout': '#c06f6f',
+  'Mid-Morning': '#a5683a',
 }
 
 type FoodEntry = {
@@ -194,34 +194,19 @@ function DailyLogCardInstance({ dateValue, entries, totalProtein, totalCalories,
   }, [entries])
 
   return (
-    <article className="nutrition-daily-log-card">
-      <div className="nutrition-daily-log-card-head">
-        <div className="nutrition-daily-log-title">
-          <span>
-            <CalendarDays size={14} />
-          </span>
-          <div className="nutrition-daily-log-date-text">
-            <h3>{getFormattedDateHeader(dateValue).main}</h3>
-            <span className="nutrition-daily-log-day-sub">
-              {getFormattedDateHeader(dateValue).sub}
-            </span>
-          </div>
+    <article className="ntr-day-card">
+      <div className="ntr-day-head">
+        <div>
+          <h3>{getFormattedDateHeader(dateValue).main}</h3>
+          <p>{getFormattedDateHeader(dateValue).sub}</p>
         </div>
-        <div className="nutrition-daily-log-card-actions">
-          <strong><Wheat size={13} /> {totalProtein}g</strong>
-          <strong><Flame size={13} /> {totalCalories.toLocaleString()} kcal</strong>
+        <div className="ntr-day-totals">
+          <span><Wheat size={11} /> {totalProtein}g</span>
+          <span><Flame size={11} /> {totalCalories.toLocaleString()}</span>
         </div>
       </div>
 
-      <div className="nutrition-daily-log-columns" aria-hidden="true">
-        <span>Food</span>
-        <div className="nutrition-column-stats-header">
-          <span>Protein</span>
-          <span>Calories</span>
-        </div>
-      </div>
-
-      <div className="nutrition-daily-log-entries">
+      <div className="ntr-day-entries">
         {entries.length === 0 && <p>No food logged.</p>}
 
         {paginatedEntries.map((entry, index) => {
@@ -235,39 +220,25 @@ function DailyLogCardInstance({ dateValue, entries, totalProtein, totalCalories,
           const FoodIcon = iconDetails.icon
 
           return (
-            <div 
-              className="nutrition-daily-log-entry" 
+            <div
+              className="ntr-day-entry"
               key={id || `${dateValue}-${index}`}
               onClick={() => onSelectEntry(entry)}
               role="button"
               tabIndex={0}
-              style={{ cursor: 'pointer', transition: 'background-color 0.2s' }}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelectEntry(entry) }}
             >
-              <div className="nutrition-food-item">
-                <span style={{ background: iconDetails.bg }}>
-                  <FoodIcon size={13} color={iconDetails.color} />
-                </span>
-                <p className="nutrition-food-info">
-                  <b title={description}>{description}</b>
-                  <span 
-                    className="nutrition-meal-tag"
-                    style={{
-                      backgroundColor: `${mealDotColors[mealType] || '#94a3b8'}15`,
-                      color: mealDotColors[mealType] || '#94a3b8',
-                      border: `1px solid ${mealDotColors[mealType] || '#94a3b8'}30`
-                    }}
-                  >
-                    {mealType}
-                  </span>
-                </p>
+              <span className="ntr-meal-ic" style={{ background: iconDetails.bg }}>
+                <FoodIcon size={13} color={iconDetails.color} />
+              </span>
+              <div>
+                <b title={description}>{description}</b>
+                <small style={{ color: mealDotColors[mealType] || '#8b9187' }}>{mealType}</small>
               </div>
-              <div className="nutrition-food-stats">
-                <strong className="nutrition-food-protein">{proteinGrams}g</strong>
-                <strong className="nutrition-food-cal">
-                  {calories} <small className="kcal-unit">kcal</small>
-                </strong>
-              </div>
+              <aside>
+                <strong>{proteinGrams}g</strong>
+                <small>{calories.toLocaleString()} kcal</small>
+              </aside>
             </div>
           )
         })}
@@ -275,23 +246,21 @@ function DailyLogCardInstance({ dateValue, entries, totalProtein, totalCalories,
 
       {/* Mini Pagination controls for day entries */}
       {totalPages > 1 && (
-        <div className="nutrition-mini-pagination">
+        <div className="ntr-pgn mini">
           <button
             disabled={currentPage === 1}
             onClick={() => setCurrentPage((p) => p - 1)}
-            className="mini-pagination-btn"
             type="button"
             aria-label="Previous page of food entries"
           >
             <ChevronLeft size={12} />
           </button>
-          <span className="mini-pagination-info">
+          <span>
             {currentPage} of {totalPages}
           </span>
           <button
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage((p) => p + 1)}
-            className="mini-pagination-btn"
             type="button"
             aria-label="Next page of food entries"
           >
@@ -384,40 +353,35 @@ function FoodLogCard() {
 
   if (isLoading) {
     return (
-      <section className="nutrition-food-log-card" aria-label="Recent food logs loading">
-        <div className="nutrition-food-log-head">
-          <div className="nutrition-section-head compact">
-            <span className="nutrition-section-icon">
-              <CalendarDays size={15} />
-            </span>
-            <div>
-              <p>Food Log</p>
-              <h2>Recent Food Logs</h2>
-            </div>
+      <section className="ntr-card ntr-history" aria-label="Recent food logs loading">
+        <div className="ntr-card-head">
+          <div>
+            <p className="ntr-eyebrow">Food Log</p>
+            <h2>Recent Food Logs</h2>
           </div>
         </div>
 
-        <div className="nutrition-daily-log-grid">
+        <div className="ntr-day-grid">
           {Array.from({ length: 4 }).map((_, idx) => (
-            <article key={idx} className="nutrition-daily-log-card" style={{ pointerEvents: 'none' }}>
-              <div className="nutrition-daily-log-card-head" style={{ borderBottom: '1px solid rgba(20,24,22,0.04)', paddingBottom: '10px' }}>
-                <div className="nutrition-daily-log-title" style={{ width: '60%' }}>
-                  <div className="skeleton-shimmer skeleton-rect" style={{ width: '80px', height: '14px', borderRadius: '3px' }} />
-                  <div className="skeleton-shimmer skeleton-rect" style={{ width: '40px', height: '8px', marginTop: '6px', borderRadius: '2px' }} />
+            <article key={idx} className="ntr-day-card" style={{ pointerEvents: 'none' }}>
+              <div className="ntr-day-head">
+                <div style={{ width: '60%' }}>
+                  <div className="skeleton-shimmer skeleton-rect" style={{ width: '80px', height: '14px', borderRadius: '4px' }} />
+                  <div className="skeleton-shimmer skeleton-rect" style={{ width: '40px', height: '8px', marginTop: '6px', borderRadius: '3px' }} />
                 </div>
-                <div className="nutrition-daily-log-card-actions" style={{ display: 'flex', gap: '8px' }}>
-                  <div className="skeleton-shimmer skeleton-rect" style={{ width: '35px', height: '14px', borderRadius: '3px' }} />
-                  <div className="skeleton-shimmer skeleton-rect" style={{ width: '55px', height: '14px', borderRadius: '3px' }} />
+                <div className="ntr-day-totals">
+                  <div className="skeleton-shimmer skeleton-rect" style={{ width: '38px', height: '24px', borderRadius: '999px' }} />
+                  <div className="skeleton-shimmer skeleton-rect" style={{ width: '52px', height: '24px', borderRadius: '999px' }} />
                 </div>
               </div>
-              <div className="nutrition-daily-log-entries" style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div className="ntr-day-entries">
                 {Array.from({ length: 2 }).map((_, entryIdx) => (
-                  <div key={entryIdx} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <div className="skeleton-shimmer skeleton-circle" style={{ width: '18px', height: '18px' }} />
+                  <div key={entryIdx} className="ntr-skel-row" style={{ padding: '7px 9px' }}>
+                    <div className="skeleton-shimmer skeleton-circle" style={{ width: '24px', height: '24px' }} />
                     <div style={{ flex: 1 }}>
-                      <div className="skeleton-shimmer skeleton-rect" style={{ width: '70%', height: '10px', borderRadius: '2px' }} />
+                      <div className="skeleton-shimmer skeleton-rect" style={{ width: '70%', height: '10px', borderRadius: '3px' }} />
                     </div>
-                    <div className="skeleton-shimmer skeleton-rect" style={{ width: '30px', height: '10px', borderRadius: '2px' }} />
+                    <div className="skeleton-shimmer skeleton-rect" style={{ width: '30px', height: '10px', borderRadius: '3px' }} />
                   </div>
                 ))}
               </div>
@@ -429,21 +393,19 @@ function FoodLogCard() {
   }
 
   return (
-    <section className="nutrition-food-log-card" aria-label="Food log">
-      <div className="nutrition-food-log-head">
-        <div className="nutrition-section-head compact">
-          <span className="nutrition-section-icon">
-            <CalendarDays size={15} />
-          </span>
-          <div>
-            <p>Food Log</p>
-            <h2>Recent Food Logs</h2>
-          </div>
+    <section className="ntr-card ntr-history" aria-label="Food log">
+      <div className="ntr-card-head">
+        <div>
+          <p className="ntr-eyebrow">Food Log</p>
+          <h2>Recent Food Logs</h2>
         </div>
-        {/* REMOVED: 10 days div on top right as requested */}
+        <span className="ntr-pill">
+          <CalendarDays size={12} />
+          History
+        </span>
       </div>
 
-      <div className="nutrition-daily-log-grid">
+      <div className="ntr-day-grid">
         {/* Paginated Historical Food Logs (Yesterday and older) */}
         {paginatedHistoricalLogs.map(({ dateValue, entries, totalProtein, totalCalories }) => (
           <DailyLogCardInstance
@@ -459,27 +421,25 @@ function FoodLogCard() {
 
       {/* Primary pagination control for historical daily cards */}
       {totalHistoryPages > 1 && (
-        <div className="nutrition-pagination">
+        <div className="ntr-pgn">
           <button
             disabled={currentHistoryPage === 1}
             onClick={() => setCurrentHistoryPage((p) => p - 1)}
-            className="pagination-btn"
             type="button"
             aria-label="Previous page of daily history"
           >
-            <ChevronLeft size={16} />
+            <ChevronLeft size={14} />
           </button>
-          <span className="pagination-info">
+          <span>
             Page {currentHistoryPage} of {totalHistoryPages}
           </span>
           <button
             disabled={currentHistoryPage === totalHistoryPages}
             onClick={() => setCurrentHistoryPage((p) => p + 1)}
-            className="pagination-btn"
             type="button"
             aria-label="Next page of daily history"
           >
-            <ChevronRight size={16} />
+            <ChevronRight size={14} />
           </button>
         </div>
       )}

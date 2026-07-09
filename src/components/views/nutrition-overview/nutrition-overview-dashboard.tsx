@@ -8,6 +8,7 @@ import { useState } from "react"
 import { useDashboard } from "../../../contexts/DashboardContext"
 
 import "./nutrition-overview.css"
+import "./nutrition-redesign.css"
 
 function NutritionOverviewDashboard() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
@@ -22,11 +23,11 @@ function NutritionOverviewDashboard() {
   const selectedDate = data?.date || new Date().toISOString().split("T")[0]
 
   return (
-    <section className="nutrition-dashboard" aria-label="Nutrition overview dashboard">
+    <section className="nutrition-dashboard ntr" aria-label="Nutrition overview dashboard">
       <NutritionHeader
         onAddClick={() => setIsAddModalOpen(true)}
       />
-      <div className="nutrition-dashboard-grid">
+      <div className="ntr-grid">
         <MacroBalanceCard onEdit={(food) => {
           setEditingFood(food)
           setIsAddModalOpen(true)

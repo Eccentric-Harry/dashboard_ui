@@ -65,58 +65,48 @@ function HydrationCard() {
 
   if (loading) {
     return (
-      <section className="nutrition-card nutrition-hydration-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '20px 24px' }} aria-label="Daily hydration loading">
-        <div className="nutrition-card-head">
+      <section className="ntr-card ntr-hydro" aria-label="Daily hydration loading">
+        <div className="ntr-card-head">
           <div>
-            <p>Daily Hydration</p>
-            <h2 style={{ fontSize: '18px', paddingTop: '2px' }}>Water Intake</h2>
+            <p className="ntr-eyebrow">Daily Hydration</p>
+            <h2>Water Intake</h2>
           </div>
-          <div className="skeleton-shimmer skeleton-rect" style={{ width: '45px', height: '18px', borderRadius: '4px' }} />
+          <div className="skeleton-shimmer skeleton-rect" style={{ width: '52px', height: '26px', borderRadius: '999px' }} />
         </div>
 
-        <div className="nutrition-rings" style={{ marginTop: 'auto', marginBottom: 'auto', justifyContent: 'center', display: 'flex' }}>
-          <div style={{ width: '170px', height: '170px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div className="skeleton-shimmer skeleton-circle" style={{ width: '160px', height: '160px' }} />
-          </div>
+        <div className="ntr-hydro-ring">
+          <div className="skeleton-shimmer skeleton-circle" style={{ width: '160px', height: '160px' }} />
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
-          <div className="skeleton-shimmer skeleton-rect" style={{ width: '48px', height: '40px', borderRadius: '8px' }} />
-          <div className="skeleton-shimmer skeleton-rect" style={{ flex: 1, height: '40px', borderRadius: '8px' }} />
-          <div className="skeleton-shimmer skeleton-rect" style={{ flex: 1, height: '40px', borderRadius: '8px' }} />
+        <div className="ntr-hydro-btns">
+          <div className="skeleton-shimmer skeleton-rect" style={{ width: '48px', height: '42px', borderRadius: '999px' }} />
+          <div className="skeleton-shimmer skeleton-rect" style={{ flex: 1, height: '42px', borderRadius: '999px' }} />
+          <div className="skeleton-shimmer skeleton-rect" style={{ flex: 1, height: '42px', borderRadius: '999px' }} />
         </div>
       </section>
     )
   }
 
   return (
-    <section className="nutrition-card nutrition-hydration-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '20px 24px' }} aria-label="Daily hydration">
-      <div className="nutrition-card-head">
+    <section className="ntr-card ntr-hydro" aria-label="Daily hydration">
+      <div className="ntr-card-head">
         <div>
-          <p>Daily Hydration</p>
-          <h2 style={{ fontSize: '18px', paddingTop: '2px' }}>Water Intake</h2>
+          <p className="ntr-eyebrow">Daily Hydration</p>
+          <h2>Water Intake</h2>
         </div>
-        <span
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            background: isComplete ? '#101312' : undefined,
-            color: isComplete ? '#ffffff' : 'inherit',
-          }}
-        >
+        <span className={`ntr-pill${isComplete ? ' dark' : ''}`}>
           {isComplete ? <Check size={12} strokeWidth={3} /> : <Droplet size={12} strokeWidth={2.5} />}
           {progressPercent}%
         </span>
       </div>
 
-      <div className="nutrition-rings" style={{ marginTop: 'auto', marginBottom: 'auto', justifyContent: 'center', display: 'flex' }}>
-        <div style={{ width: '170px', height: '170px', display: 'flex' }}>
+      <div className="ntr-hydro-ring">
+        <div>
           <RingProgress
             label="Water Intake"
             value={logged}
             target={target}
-            color="#3b82f6"
+            color="#7fb2e5"
             unit="ml"
             active={false}
             centerTextOverride={`${(logged / 1000).toFixed(2)}L`}
@@ -125,34 +115,33 @@ function HydrationCard() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
+      <div className="ntr-hydro-btns">
         <button
           type="button"
-          className="nutrition-day-log-btn"
-          style={{ padding: '0 16px', height: '40px', justifyContent: 'center', flexShrink: 0 }}
+          className="ntr-soft-btn"
           onClick={() => handleAddWater(-250)}
           disabled={adding || logged < 250}
+          aria-label="Remove 250ml"
         >
-          <Minus size={16} />
+          <Minus size={15} />
         </button>
 
         {quickAmounts.map(({ amount, label, icon: Icon }) => (
           <button
             key={amount}
             type="button"
-            className="nutrition-day-log-btn"
-            style={{ flex: 1, padding: '0 10px', height: '40px', justifyContent: 'center' }}
+            className="ntr-soft-btn grow"
             onClick={() => handleAddWater(amount)}
             disabled={adding}
           >
-            <Icon size={16} />
+            <Icon size={15} />
             <span>{label}</span>
           </button>
         ))}
       </div>
 
       {error && (
-        <div className="hydration-error-toast">
+        <div className="ntr-error">
           <span>{error}</span>
           <button onClick={loadHydration} aria-label="Retry">
             <RefreshCw size={14} />

@@ -1,0 +1,1108 @@
+/* ══════════════════════════════════════════════════════════════════
+   Nutrition route redesign — "Nutrilens" design language
+   Scoped under .nutrition-dashboard.ntr so nothing leaks to other
+   routes or to the shared modals (which keep their original classes).
+   ══════════════════════════════════════════════════════════════════ */
+
+.nutrition-dashboard.ntr {
+  /* palette */
+  --ntr-ink: #171b15;
+  --ntr-ink-soft: #6b7165;
+  --ntr-ink-faint: #999e91;
+  --ntr-card: #ffffff;
+  --ntr-line: #eae9e0;
+  --ntr-lime: #cfe965;
+  --ntr-lime-deep: #8aa832;
+  --ntr-lime-soft: #eef6cf;
+  --ntr-cream: #f6f1e4;
+  --ntr-cream-deep: #b1935a;
+  --ntr-sky: #e2edf8;
+  --ntr-sky-deep: #5d87ad;
+  --ntr-apricot: #f9e9cf;
+  --ntr-apricot-deep: #bd8a44;
+  --ntr-radius: 26px;
+  --ntr-radius-sm: 16px;
+  --ntr-shadow: 0 1px 2px rgba(23, 27, 21, 0.03), 0 10px 30px rgba(23, 27, 21, 0.05);
+
+  color: var(--ntr-ink);
+}
+
+/* ── Header ─────────────────────────────────────────────────────── */
+
+.ntr-header {
+  position: relative;
+  z-index: 8;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 20px;
+  padding: 4px 4px 0 2px;
+}
+
+.ntr-eyebrow {
+  margin: 0 0 6px;
+  color: var(--ntr-ink-faint);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.ntr-title-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ntr-ink);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ntr-title-btn:focus {
+  outline: none;
+}
+
+.ntr-title-btn:focus-visible {
+  border-radius: 10px;
+  box-shadow: 0 0 0 3px rgba(138, 168, 50, 0.28);
+}
+
+.ntr-title {
+  font-size: 28px;
+  font-weight: 650;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.ntr-chevron {
+  flex-shrink: 0;
+  color: var(--ntr-ink-faint);
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.2s ease;
+}
+
+.ntr-title-btn:hover .ntr-chevron {
+  color: var(--ntr-ink);
+  transform: translateY(2px);
+}
+
+.ntr-header-right {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 7-day strip */
+.ntr-week {
+  display: flex;
+  gap: 4px;
+  padding: 5px;
+  border: 1px solid var(--ntr-line);
+  border-radius: 999px;
+  background: var(--ntr-card);
+  box-shadow: var(--ntr-shadow);
+}
+
+.ntr-week-day {
+  display: flex;
+  width: 40px;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 6px 0 7px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ntr-ink-soft);
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.ntr-week-day i {
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+}
+
+.ntr-week-day b {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ntr-week-day:hover {
+  background: var(--ntr-lime-soft);
+  color: var(--ntr-ink);
+}
+
+.ntr-week-day.active {
+  background: var(--ntr-ink);
+  color: #fff;
+}
+
+.ntr-week-day.active i {
+  color: var(--ntr-lime);
+  opacity: 1;
+}
+
+/* Dark pill CTA with lime icon chip (reference "Get Started" pattern) */
+.ntr-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 48px;
+  padding: 0 20px 0 6px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ntr-ink);
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(23, 27, 21, 0.22);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.ntr-add-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(23, 27, 21, 0.26);
+}
+
+.ntr-add-btn:active {
+  transform: translateY(0);
+}
+
+.ntr-add-ic {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--ntr-lime);
+  color: var(--ntr-ink);
+}
+
+/* ── Bento grid ─────────────────────────────────────────────────── */
+
+.ntr-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 18px;
+  align-items: stretch;
+  min-height: 0;
+}
+
+.ntr-card {
+  position: relative;
+  min-width: 0;
+  border: 1px solid var(--ntr-line);
+  border-radius: var(--ntr-radius);
+  background: var(--ntr-card);
+  box-shadow: var(--ntr-shadow);
+  transition: box-shadow 0.2s ease;
+}
+
+.ntr-card:hover {
+  box-shadow: 0 2px 4px rgba(23, 27, 21, 0.04), 0 18px 44px rgba(23, 27, 21, 0.08);
+}
+
+.ntr-hero {
+  display: flex;
+  flex-direction: column;
+  grid-column: 1 / span 7;
+  grid-row: 1 / span 2;
+  min-height: 0;
+  padding: 24px 26px;
+  container-type: inline-size;
+}
+
+.ntr-trend {
+  display: flex;
+  flex-direction: column;
+  grid-column: 8 / span 5;
+  grid-row: 1;
+  /* explicit height so Recharts' percentage-based ResponsiveContainer can resolve */
+  height: 300px;
+  padding: 22px 24px;
+}
+
+.ntr-hydro {
+  display: flex;
+  flex-direction: column;
+  grid-column: 8 / span 5;
+  grid-row: 2;
+  padding: 22px 24px;
+}
+
+.ntr-history {
+  grid-column: 1 / -1;
+  padding: 24px 26px;
+}
+
+/* shared card head */
+.ntr-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.ntr-card-head h2 {
+  margin: 5px 0 0;
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+}
+
+.ntr-pill {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 13px;
+  border-radius: 999px;
+  background: var(--ntr-cream);
+  color: var(--ntr-ink);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ntr-pill.dark {
+  background: var(--ntr-ink);
+  color: #fff;
+}
+
+.ntr-pill.lime {
+  background: var(--ntr-lime);
+  color: var(--ntr-ink);
+}
+
+/* ── Hero: lime gauge panel ─────────────────────────────────────── */
+
+.ntr-gauge-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px 26px;
+  align-items: center;
+  justify-items: center;
+  margin-top: 18px;
+  padding: 20px 24px 18px;
+  border-radius: 22px;
+  background: linear-gradient(160deg, #daf08a 0%, var(--ntr-lime) 58%, #c3e04f 100%);
+}
+
+.ntr-gauge-stats {
+  width: 100%;
+}
+
+/* side-by-side gauge + stats only when the hero card itself is wide */
+@container (min-width: 600px) {
+  .ntr-gauge-panel {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 4fr);
+    justify-items: stretch;
+    gap: 10px 26px;
+  }
+}
+
+.ntr-gauge {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.ntr-gauge svg {
+  width: min(100%, 240px);
+  height: auto;
+}
+
+.ntr-gauge .track {
+  fill: none;
+  stroke: rgba(23, 27, 21, 0.1);
+  stroke-width: 17;
+  stroke-linecap: round;
+}
+
+.ntr-gauge .value {
+  fill: none;
+  stroke: var(--ntr-ink);
+  stroke-width: 17;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ntr-gauge-center {
+  position: absolute;
+  inset: auto 0 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.ntr-gauge-center strong {
+  font-size: 38px;
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+.ntr-gauge-center small {
+  color: rgba(23, 27, 21, 0.62);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ntr-gauge-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(23, 27, 21, 0.9);
+  color: var(--ntr-lime);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.ntr-gauge-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+}
+
+.ntr-stat-row {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.ntr-stat-row header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0 8px;
+}
+
+.ntr-stat-row > span {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(23, 27, 21, 0.08);
+  color: var(--ntr-ink);
+}
+
+.ntr-stat-row > div {
+  min-width: 0;
+}
+
+.ntr-stat-row p {
+  margin: 0;
+  overflow: hidden;
+  color: rgba(23, 27, 21, 0.6);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ntr-stat-bar {
+  height: 4px;
+  margin-top: 6px;
+  border-radius: 999px;
+  background: rgba(23, 27, 21, 0.1);
+  overflow: hidden;
+}
+
+.ntr-stat-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--ntr-ink);
+}
+
+.ntr-stat-row strong {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.ntr-stat-row strong em {
+  color: rgba(23, 27, 21, 0.55);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+/* ── Hero: macro tiles ──────────────────────────────────────────── */
+
+.ntr-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.ntr-tile {
+  padding: 12px 14px;
+  border-radius: var(--ntr-radius-sm);
+  background: var(--ntr-cream);
+}
+
+.ntr-tile p {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--ntr-ink-soft);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ntr-tile p::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--tile-dot, var(--ntr-cream-deep));
+}
+
+.ntr-tile strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.ntr-tile strong em {
+  color: var(--ntr-ink-faint);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.ntr-tile.tone-lime {
+  background: var(--ntr-lime-soft);
+  --tile-dot: var(--ntr-lime-deep);
+}
+
+.ntr-tile.tone-sky {
+  background: var(--ntr-sky);
+  --tile-dot: var(--ntr-sky-deep);
+}
+
+.ntr-tile.tone-apricot {
+  background: var(--ntr-apricot);
+  --tile-dot: var(--ntr-apricot-deep);
+}
+
+/* ── Hero: today's meals list ───────────────────────────────────── */
+
+.ntr-meals {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  margin-top: 18px;
+}
+
+.ntr-meals-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 2px;
+}
+
+.ntr-meals-head h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.ntr-meals-head aside {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ntr-icon-btn {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid var(--ntr-line);
+  border-radius: 10px;
+  background: var(--ntr-card);
+  color: var(--ntr-ink-soft);
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.ntr-icon-btn:hover {
+  background: var(--ntr-cream);
+  color: var(--ntr-ink);
+}
+
+.ntr-icon-btn.active {
+  border-color: var(--ntr-ink);
+  background: var(--ntr-ink);
+  color: var(--ntr-lime);
+}
+
+.ntr-icon-btn.danger {
+  color: #b8564f;
+}
+
+.ntr-icon-btn.danger:hover {
+  background: #f8e7e4;
+  color: #a13c36;
+}
+
+.ntr-meals-list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+  margin-top: 10px;
+  padding-right: 4px;
+  overflow-y: auto;
+}
+
+.ntr-meals-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ntr-meals-list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(23, 27, 21, 0.14);
+}
+
+.ntr-meals-list > p {
+  margin: 14px 2px;
+  color: var(--ntr-ink-faint);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ntr-meal-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+
+.ntr-meal-row.clickable {
+  cursor: pointer;
+}
+
+.ntr-meal-row.clickable:hover {
+  border-color: var(--ntr-line);
+  background: #fbfaf5;
+}
+
+.ntr-meal-ic {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 13px;
+}
+
+.ntr-meal-info {
+  min-width: 0;
+}
+
+.ntr-meal-info b {
+  display: block;
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ntr-meal-tag {
+  display: inline-block;
+  margin-top: 3px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.ntr-meal-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  text-align: right;
+}
+
+.ntr-meal-stats strong {
+  color: var(--ntr-lime-deep);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.ntr-meal-stats small {
+  color: var(--ntr-ink-faint);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.ntr-meal-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ntr-meal-actions .ntr-icon-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+
+/* ── Trend card ─────────────────────────────────────────────────── */
+
+.ntr-trend-chart {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  margin-top: 14px;
+  margin-left: -12px;
+}
+
+/* ── Hydration card ─────────────────────────────────────────────── */
+
+.ntr-hydro-ring {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  margin: 6px 0;
+}
+
+.ntr-hydro-ring > div {
+  display: flex;
+  width: 178px;
+  height: 178px;
+}
+
+/* neutralise the glassmorphic ring tile inside redesigned cards */
+.nutrition-dashboard.ntr .nutrition-ring {
+  height: auto;
+  background: transparent;
+  box-shadow: none;
+}
+
+.nutrition-dashboard.ntr .nutrition-ring:hover,
+.nutrition-dashboard.ntr .nutrition-ring.active {
+  background: transparent;
+  box-shadow: none;
+}
+
+.nutrition-dashboard.ntr .nutrition-ring svg {
+  width: 168px;
+  height: 168px;
+  filter: none;
+}
+
+.nutrition-dashboard.ntr .nutrition-ring circle {
+  stroke-width: 9;
+}
+
+.nutrition-dashboard.ntr .nutrition-ring .track {
+  stroke: #eff1e9;
+}
+
+.nutrition-dashboard.ntr .nutrition-ring .value {
+  filter: none;
+}
+
+.nutrition-dashboard.ntr .nutrition-ring b {
+  font-size: 26px;
+  background: none;
+  -webkit-text-fill-color: currentcolor;
+  color: var(--ntr-ink);
+}
+
+.nutrition-dashboard.ntr .nutrition-ring em {
+  color: var(--ntr-ink-faint);
+  font-size: 10px;
+  letter-spacing: 0;
+}
+
+.ntr-hydro-btns {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.ntr-soft-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--ntr-line);
+  border-radius: 999px;
+  background: var(--ntr-card);
+  color: var(--ntr-ink);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.15s ease;
+}
+
+.ntr-soft-btn:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--ntr-lime);
+}
+
+.ntr-soft-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.ntr-soft-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.ntr-soft-btn.grow {
+  flex: 1;
+}
+
+/* ── History (recent food logs) ─────────────────────────────────── */
+
+.ntr-day-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.ntr-day-card {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 16px 12px;
+  border-radius: 20px;
+  background: var(--ntr-cream);
+}
+
+.ntr-day-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 12px;
+}
+
+.ntr-day-head h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.ntr-day-head p {
+  margin: 1px 0 0;
+  color: var(--ntr-ink-faint);
+  font-size: 10.5px;
+  font-weight: 650;
+}
+
+.ntr-day-totals {
+  display: flex;
+  flex-shrink: 0;
+  gap: 6px;
+}
+
+.ntr-day-totals span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--ntr-ink);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.ntr-day-entries {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ntr-day-entries > p {
+  margin: 8px 2px;
+  color: var(--ntr-ink-faint);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.ntr-day-entry {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 9px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.82);
+  cursor: pointer;
+  transition: background-color 0.18s ease;
+}
+
+.ntr-day-entry:hover {
+  background: #ffffff;
+}
+
+.ntr-day-entry .ntr-meal-ic {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+}
+
+.ntr-day-entry b {
+  display: block;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ntr-day-entry small {
+  display: block;
+  margin-top: 1px;
+  color: var(--ntr-ink-faint);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.ntr-day-entry aside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0;
+  text-align: right;
+}
+
+.ntr-day-entry aside strong {
+  color: var(--ntr-lime-deep);
+  font-size: 11.5px;
+  font-weight: 750;
+}
+
+.ntr-day-entry aside small {
+  margin: 0;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 10px;
+}
+
+/* pagination */
+.ntr-pgn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.ntr-pgn.mini {
+  margin-top: auto;
+  padding-top: 10px;
+}
+
+.ntr-pgn span {
+  color: var(--ntr-ink-soft);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ntr-pgn button {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 1px solid var(--ntr-line);
+  border-radius: 999px;
+  background: var(--ntr-card);
+  color: var(--ntr-ink);
+  cursor: pointer;
+  transition: background-color 0.18s ease;
+}
+
+.ntr-pgn button:hover:not(:disabled) {
+  background: var(--ntr-lime);
+  border-color: transparent;
+}
+
+.ntr-pgn button:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+/* error toast (hydration) */
+.ntr-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: #f8e7e4;
+  color: #a13c36;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.ntr-error button {
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* skeleton helpers reuse global .skeleton-shimmer */
+.ntr-skel-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────── */
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .ntr-hero {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+
+  .ntr-trend,
+  .ntr-hydro {
+    grid-column: span 6;
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .ntr-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    margin-bottom: 16px;
+    padding: 0;
+  }
+
+  .ntr-title {
+    font-size: 23px;
+    white-space: normal;
+  }
+
+  .ntr-header-right {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .ntr-week {
+    justify-content: space-between;
+  }
+
+  .ntr-week-day {
+    width: auto;
+    flex: 1;
+  }
+
+  .ntr-add-btn {
+    justify-content: center;
+    height: 50px;
+  }
+
+  .ntr-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .ntr-hero,
+  .ntr-trend,
+  .ntr-hydro,
+  .ntr-history {
+    width: 100%;
+    padding: 18px 16px;
+  }
+
+  .ntr-trend {
+    height: 280px;
+  }
+
+  .ntr-gauge-panel {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 18px 16px 16px;
+  }
+
+  .ntr-meals-list {
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .ntr-day-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
