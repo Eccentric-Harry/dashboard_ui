@@ -370,6 +370,7 @@ export interface FinancialTransaction {
   id: string;
   description: string;
   amount: number;
+  type: string; // "Income" | "Expense"
   timestamp: string;
 }
 

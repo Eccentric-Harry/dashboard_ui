@@ -644,10 +644,12 @@ export function enableGuestInterceptor() {
         financeLogs.push(log);
       }
 
+      const isIncome = String(body.type).toLowerCase() === 'income';
       const newTx = {
         id: `ftx-guest-${Date.now()}`,
         description: body.description,
         amount: body.amount,
+        type: isIncome ? 'Income' : 'Expense',
         timestamp: new Date().toISOString(),
       };
 
@@ -657,7 +659,7 @@ export function enableGuestInterceptor() {
       }
       log.transactions[category].push(newTx);
 
-      if (body.type === 'income') {
+      if (isIncome) {
         log.dailyTotals.totalIncome += body.amount;
       } else {
         log.dailyTotals.totalExpense += body.amount;

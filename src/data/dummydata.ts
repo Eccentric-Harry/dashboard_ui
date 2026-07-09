@@ -742,6 +742,7 @@ const generateFinanceLogs = (): DailyFinancialLog[] => {
         id: `ftx-${txIdCounter++}`,
         description: template.description,
         amount,
+        type: template.type === 'income' ? 'Income' : 'Expense',
         timestamp,
       };
 

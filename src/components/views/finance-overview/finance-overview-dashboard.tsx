@@ -169,7 +169,11 @@ function FinanceOverviewDashboard() {
       if (logMonthKey === selectedMonthKey) {
         Object.entries(log.transactions || {}).forEach(([category, txs]) => {
           txs.forEach(tx => {
-            const isIncome = category.toLowerCase().includes('income');
+            // Prefer the stored transaction type; fall back to the category-name
+            // heuristic only for legacy records saved before `type` was persisted.
+            const isIncome = tx.type
+              ? tx.type.toLowerCase() === 'income'
+              : category.toLowerCase().includes('income');
             allTxs.push({
               id: tx.id,
               merchant: tx.description,
