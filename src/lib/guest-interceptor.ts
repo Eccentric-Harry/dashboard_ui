@@ -23,6 +23,13 @@ let calendarItems = [...dummyCalendarItems];
 const financeLogs = [...dummyFinanceLogs];
 let lendingRecords = [...dummyLendingRecords];
 
+// Guest finance account ("Total Balance") — a running balance moved by transactions.
+const financeAccount = { balance: 2450800 };
+
+// Guest subscriptions (in-memory).
+interface GuestSubscription { id: string; name: string; cost: number; billingDate: string | null }
+let guestSubscriptions: GuestSubscription[] = [];
+
 // ── Mind tab (guest, in-memory) ────────────────────────────────────────────
 interface GuestMindEntry {
   id: string;
@@ -661,11 +668,48 @@ export function enableGuestInterceptor() {
 
       if (isIncome) {
         log.dailyTotals.totalIncome += body.amount;
+        financeAccount.balance += body.amount;
       } else {
         log.dailyTotals.totalExpense += body.amount;
+        financeAccount.balance -= body.amount;
       }
 
       return respondWith({ data: newTx });
+    }
+
+    // Finance: account / Total Balance
+    if (urlStr.includes('/api/v1/finance/account')) {
+      const method = (args[1]?.method || 'GET').toUpperCase();
+      if (method === 'PUT') {
+        const body = JSON.parse(typeof args[1]?.body === 'string' ? args[1].body : '{}');
+        if (typeof body.balance === 'number') {
+          financeAccount.balance = body.balance;
+        }
+        return respondWith({ data: { balance: financeAccount.balance } });
+      }
+      return respondWith({ data: { balance: financeAccount.balance } });
+    }
+
+    // Subscriptions CRUD
+    const subDeleteMatch = urlStr.match(/\/api\/v1\/subscriptions\/([^/]+)/);
+    if (subDeleteMatch && (args[1]?.method || '').toUpperCase() === 'DELETE') {
+      guestSubscriptions = guestSubscriptions.filter(s => s.id !== subDeleteMatch[1]);
+      return respondWith({ data: null });
+    }
+    if (urlStr.includes('/api/v1/subscriptions')) {
+      const method = (args[1]?.method || 'GET').toUpperCase();
+      if (method === 'POST') {
+        const body = JSON.parse(typeof args[1]?.body === 'string' ? args[1].body : '{}');
+        const newSub: GuestSubscription = {
+          id: `sub-guest-${Date.now()}`,
+          name: body.name,
+          cost: body.cost,
+          billingDate: body.billingDate || null,
+        };
+        guestSubscriptions.push(newSub);
+        return respondWith({ data: newSub });
+      }
+      return respondWith({ data: guestSubscriptions });
     }
 
     // Finance: slice repayments GET

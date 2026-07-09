@@ -45,30 +45,31 @@ export interface Subscription {
 }
 
 
+// Zeroed empty-state placeholders — real values are derived from the daily logs.
 export const financeMetrics: FinanceMetric[] = [
   {
     label: 'Monthly Savings',
-    value: '₹7,21,480',
+    value: '₹0',
     cents: '',
-    change: '+8.3%',
+    change: '',
     tone: 'positive',
     icon: PiggyBank,
   },
   {
     label: 'Monthly Income',
-    value: '₹5,53,600',
+    value: '₹0',
     cents: '',
-    change: '+7.1%',
+    change: '',
     tone: 'positive',
-    icon: ArrowUpRight,
+    icon: ArrowDownLeft,
   },
   {
     label: 'Monthly Expenses',
-    value: '₹8,50,000',
+    value: '₹0',
     cents: '',
-    change: '+3.6%',
+    change: '',
     tone: 'negative',
-    icon: ArrowDownLeft,
+    icon: ArrowUpRight,
   },
 ]
 
@@ -150,13 +151,6 @@ export const recentTransactions: Transaction[] = [
 
 export const subscriptions: Subscription[] = []
 
-
-export const totalBalance = {
-  label: 'Total Balance',
-  value: '₹24,50,800',
-  cents: '',
-  change: '+5.2%',
-}
 
 export const subscriptionSummary = {
   total: '₹1,652',

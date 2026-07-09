@@ -307,6 +307,27 @@ export async function fetchSubscriptions() {
   return response.json();
 }
 
+export async function addSubscription(data: { name: string; cost: number; billingDate?: string }) {
+  const response = await fetch(`${API_BASE_URL}/subscriptions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to add subscription');
+  }
+  return response.json();
+}
+
+export async function deleteSubscription(id: string) {
+  const response = await fetch(`${API_BASE_URL}/subscriptions/${id}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to delete subscription');
+  }
+}
+
 
 export async function fetchWorkoutsData() {
   const response = await fetch(`${API_BASE_URL}/workouts`);
@@ -422,6 +443,31 @@ export async function deleteTransaction(id: string) {
     throw new Error('Failed to delete transaction');
   }
   // Delete typically returns 204 No Content, so we don't try to parse JSON.
+}
+
+// ─── Finance Account (Total Balance) ─────────────────────────────────
+export interface FinanceAccount {
+  balance: number;
+}
+
+export async function fetchFinanceAccount(): Promise<{ data: FinanceAccount }> {
+  const response = await fetch(`${API_BASE_URL}/finance/account`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch finance account');
+  }
+  return response.json();
+}
+
+export async function updateFinanceBalance(balance: number): Promise<{ data: FinanceAccount }> {
+  const response = await fetch(`${API_BASE_URL}/finance/account/balance`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ balance }),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to update balance');
+  }
+  return response.json();
 }
 
 export interface RepaymentInstallment {

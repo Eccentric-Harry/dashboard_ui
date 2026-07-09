@@ -8,10 +8,11 @@ import { SubscriptionsCard } from './components/subscriptions-card'
 import { RepaymentScheduleCard } from './components/repayment-schedule-card'
 import { TransactionsCard } from './components/transactions-card'
 import { AddTransactionModal } from './components/add-transaction-modal'
+import { EditBalanceModal } from './components/edit-balance-modal'
 import { LendingCard } from './components/lending-card'
 import { ConfirmDialog } from '../../ui/confirm-dialog'
 import { financeMetrics as fallbackMetrics } from './data'
-import { fetchDailyFinanceLogs, deleteTransaction, deleteLendingRecord, type LendingRecord } from '../../../lib/api'
+import { fetchDailyFinanceLogs, fetchFinanceAccount, deleteTransaction, deleteLendingRecord, type LendingRecord } from '../../../lib/api'
 import type { DailyFinancialLog } from '../../../lib/api'
 import { 
   ArrowUpRight, ArrowDownLeft, PiggyBank
@@ -24,6 +25,8 @@ import './finance-overview.css'
 function FinanceOverviewDashboard() {
   const isGuest = localStorage.getItem('isGuest') === 'true'
   const [logs, setLogs] = useState<DailyFinancialLog[]>([])
+  const [balance, setBalance] = useState<number | null>(null)
+  const [isEditBalanceOpen, setIsEditBalanceOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
@@ -106,6 +109,9 @@ function FinanceOverviewDashboard() {
       console.error(err)
       setLoading(false)
     })
+    fetchFinanceAccount()
+      .then((res) => setBalance(res.data?.balance ?? 0))
+      .catch(err => console.error('Failed to fetch balance:', err))
   }
 
   useEffect(() => {
@@ -146,7 +152,7 @@ function FinanceOverviewDashboard() {
         cents: '',
         change: '', 
         tone: 'positive' as const,
-        icon: ArrowUpRight,
+        icon: ArrowDownLeft,
       },
       {
         label: 'Monthly Expenses',
@@ -154,7 +160,7 @@ function FinanceOverviewDashboard() {
         cents: '',
         change: '',
         tone: 'negative' as const,
-        icon: ArrowDownLeft,
+        icon: ArrowUpRight,
       },
     ]
   }, [logs, selectedMonthKey])
@@ -272,7 +278,11 @@ function FinanceOverviewDashboard() {
       />
       <div className={`finance-dashboard-grid${isGuest ? ' finance-dashboard-guest' : ''}`}>
         <div className="finance-stats-row">
-          <BalanceSummaryCard loading={loading} />
+          <BalanceSummaryCard
+            balance={balance}
+            loading={loading && balance === null}
+            onEdit={() => setIsEditBalanceOpen(true)}
+          />
           {metrics.map((metric) => (
             <MetricCard key={metric.label} metric={metric} loading={loading} />
           ))}
@@ -322,8 +332,15 @@ function FinanceOverviewDashboard() {
         onCancel={() => setDeleteLendingTarget(null)}
       />
 
-      <AddTransactionModal 
-        isOpen={isAddModalOpen || isLendingModalOpen || !!editingTransaction || !!editingLending} 
+      <EditBalanceModal
+        isOpen={isEditBalanceOpen}
+        currentBalance={balance ?? 0}
+        onClose={() => setIsEditBalanceOpen(false)}
+        onSuccess={(newBalance) => setBalance(newBalance)}
+      />
+
+      <AddTransactionModal
+        isOpen={isAddModalOpen || isLendingModalOpen || !!editingTransaction || !!editingLending}
         initialTab={isLendingModalOpen || !!editingLending ? 'Lending' : 'Transaction'}
         isEdit={!!editingTransaction || !!editingLending}
         initialTransactionData={editingTransaction}

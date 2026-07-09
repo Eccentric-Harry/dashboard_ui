@@ -1,8 +1,9 @@
-import { useState, useMemo, useEffect } from 'react'
-import { Check, Loader2 } from 'lucide-react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
+import { Check, Loader2, Plus, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { fetchSubscriptions, addTransaction } from '../../../../lib/api'
+import { fetchSubscriptions, addTransaction, deleteSubscription } from '../../../../lib/api'
 import type { SubscriptionDTO } from '../../../../lib/api'
+import { AddSubscriptionModal } from './add-subscription-modal'
 
 interface SubscriptionsCardProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -15,9 +16,11 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
   const [optimisticPaidIds, setOptimisticPaidIds] = useState<Set<string>>(new Set())
   const [apiSubscriptions, setApiSubscriptions] = useState<SubscriptionDTO[]>([])
   const [loading, setLoading] = useState(true)
+  const [isAddOpen, setIsAddOpen] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchSubscriptions()
+  const loadSubscriptions = useCallback(() => {
+    return fetchSubscriptions()
       .then((res) => {
         setApiSubscriptions(res.data || [])
         setLoading(false)
@@ -27,6 +30,24 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
         setLoading(false)
       })
   }, [])
+
+  useEffect(() => {
+    loadSubscriptions()
+  }, [loadSubscriptions])
+
+  const handleDelete = async (subscription: SubscriptionDTO) => {
+    setDeletingId(subscription.id)
+    try {
+      await deleteSubscription(subscription.id)
+      toast.success(`Removed ${subscription.name}`)
+      await loadSubscriptions()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      toast.error(error.message || `Failed to remove ${subscription.name}`)
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   const paidIds = useMemo(() => {
     const ids = new Set<string>()
@@ -268,8 +289,25 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
           <h2>Subscriptions</h2>
           <p>{apiSubscriptions.length} active renewals</p>
         </div>
-        <strong>₹{totalCost}</strong>
+        <div className="finance-sub-head-right">
+          <strong>₹{totalCost.toLocaleString('en-IN')}</strong>
+          <button
+            type="button"
+            className="finance-sub-add"
+            onClick={() => setIsAddOpen(true)}
+            aria-label="Add subscription"
+            title="Add subscription"
+          >
+            <Plus size={14} strokeWidth={2.6} />
+          </button>
+        </div>
       </div>
+      {apiSubscriptions.length === 0 ? (
+        <button type="button" className="finance-sub-empty" onClick={() => setIsAddOpen(true)}>
+          <Plus size={16} strokeWidth={2.2} />
+          <span>Add your first subscription</span>
+        </button>
+      ) : (
       <div className="finance-subscription-list">
         {apiSubscriptions.map((subscription) => {
           const isProcessing = processingId === subscription.name
@@ -288,7 +326,7 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
                 <b>{subscription.name}</b>
                 <small>{renewsText}</small>
               </p>
-              <strong className="subscription-price">₹{subscription.cost}</strong>
+              <strong className="subscription-price">₹{subscription.cost.toLocaleString('en-IN')}</strong>
               <button
                 className={`pay-button ${isPaid ? 'success' : ''}`}
                 onClick={() => !isPaid && !isProcessing && handlePay(subscription)}
@@ -302,10 +340,29 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
                   'Pay'
                 )}
               </button>
+              <button
+                type="button"
+                className="finance-sub-delete"
+                onClick={() => handleDelete(subscription)}
+                disabled={deletingId === subscription.id}
+                aria-label={`Remove ${subscription.name}`}
+                title="Remove subscription"
+              >
+                {deletingId === subscription.id
+                  ? <Loader2 size={12} className="animate-spin" />
+                  : <Trash2 size={12} strokeWidth={2} />}
+              </button>
             </div>
           )
         })}
       </div>
+      )}
+
+      <AddSubscriptionModal
+        isOpen={isAddOpen}
+        onClose={() => setIsAddOpen(false)}
+        onSuccess={loadSubscriptions}
+      />
     </section>
   )
 }

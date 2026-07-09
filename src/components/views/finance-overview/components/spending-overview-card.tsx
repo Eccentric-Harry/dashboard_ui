@@ -96,11 +96,17 @@ function SpendingOverviewCard({
     logs.forEach(log => {
       if (getMonthKey(log.date) === selectedMonthKey) {
         Object.entries(log.transactions || {}).forEach(([category, txs]) => {
-          const transactions = txs as Array<{ amount: number }>
-          // Ignore income categories
-          if (category.toLowerCase().includes('income') || category.toLowerCase().includes('salary')) return
+          const transactions = txs as Array<{ amount: number; type?: string }>
+          // Spending = expenses only. Prefer the stored transaction type; fall back to
+          // the category-name heuristic for legacy records without a type.
+          const expenses = transactions.filter(tx =>
+            tx.type
+              ? tx.type.toLowerCase() === 'expense'
+              : !(category.toLowerCase().includes('income') || category.toLowerCase().includes('salary'))
+          )
+          if (expenses.length === 0) return
 
-          const sum = transactions.reduce((acc, tx) => acc + tx.amount, 0)
+          const sum = expenses.reduce((acc, tx) => acc + tx.amount, 0)
           categoryTotals[category] = (categoryTotals[category] || 0) + sum
           totalSpent += sum
         })
