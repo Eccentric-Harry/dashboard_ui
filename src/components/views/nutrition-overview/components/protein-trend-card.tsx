@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { fetchNutritionSummary } from '../../../../lib/api'
 import { useDashboard } from '../../../../contexts/DashboardContext'
-import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip, ReferenceLine, CartesianGrid } from 'recharts'
+import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip, ReferenceLine } from 'recharts'
 
 type TrendPoint = {
   day: string
@@ -16,7 +16,7 @@ const PROTEIN_TARGET = 100
 function CustomTooltip({ active, payload, label }: any) {
   if (active && payload && payload.length) {
     return (
-      <div style={{ background: '#171b15', padding: '6px 10px', borderRadius: '10px', color: '#cfe965', fontSize: '12px', fontWeight: 650, boxShadow: '0 6px 16px rgba(23, 27, 21, 0.2)' }}>
+      <div style={{ background: '#171b15', padding: '6px 10px', borderRadius: '10px', color: '#a8f0b4', fontSize: '12px', fontWeight: 650, boxShadow: '0 6px 16px rgba(23, 27, 21, 0.2)' }}>
         <p style={{ margin: 0 }}>{`${label}: ${payload[0].value}g`}</p>
       </div>
     )
@@ -141,6 +141,22 @@ function ProteinTrendCard() {
   }
 
   const latestPoint = displayTrend[displayTrend.length - 1]
+  const avgGrams = Math.round(displayTrend.reduce((sum, point) => sum + point.grams, 0) / displayTrend.length)
+
+  // emphasise only the latest point — the line stays clean
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const renderEndDot = (props: any) => {
+    const { cx, cy, index } = props
+    if (index !== displayTrend.length - 1 || cx == null || cy == null) {
+      return <g key={`dot-${index}`} />
+    }
+    return (
+      <g key={`dot-${index}`}>
+        <circle cx={cx} cy={cy} r={9} fill="#cfe965" opacity={0.55} />
+        <circle cx={cx} cy={cy} r={4.5} fill="#171b15" stroke="#ffffff" strokeWidth={2} />
+      </g>
+    )
+  }
 
 
   // Set minimum limit so the graph looks proportional
@@ -152,43 +168,45 @@ function ProteinTrendCard() {
           <p className="ntr-eyebrow">Weekly Protein</p>
           <h2>{latestPoint.grams}g {latestPoint.dateStr === isoDate(new Date()) ? 'today' : ''}</h2>
         </div>
-        <span className="ntr-pill">7 days</span>
+        <div className="ntr-trend-pills">
+          <span className="ntr-pill lime">avg {avgGrams}g</span>
+          <span className="ntr-pill">7 days</span>
+        </div>
       </div>
 
       <div className="ntr-trend-chart">
         {isMounted ? (
           <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
-            <AreaChart data={displayTrend} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
+            <AreaChart data={displayTrend} margin={{ top: 18, right: 18, left: 6, bottom: 6 }}>
               <defs>
                 <linearGradient id="colorGramsArea" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#cfe965" stopOpacity={0.55} />
+                  <stop offset="5%" stopColor="#cfe965" stopOpacity={0.5} />
                   <stop offset="95%" stopColor="#cfe965" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="colorGramsStroke" x1="0" y1="0" x2="1" y2="0">
                   <stop offset="0%" stopColor="#b5d94c" />
-                  <stop offset="100%" stopColor="#8aa832" />
+                  <stop offset="100%" stopColor="#7e9c2c" />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(23, 27, 21, 0.06)" />
               <XAxis
                 dataKey="day"
                 axisLine={false}
                 tickLine={false}
                 interval={0}
-                tick={{ fill: 'rgba(23, 28, 25, 0.58)', fontSize: 11, fontWeight: 600 }}
-                padding={{ left: 15, right: 15 }}
+                tick={{ fill: 'rgba(23, 27, 21, 0.42)', fontSize: 10, fontWeight: 650 }}
+                padding={{ left: 14, right: 14 }}
               />
-              <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(20, 24, 22, 0.08)', strokeWidth: 1, strokeDasharray: '4 4' }} />
-              <ReferenceLine y={PROTEIN_TARGET} stroke="rgba(23, 27, 21, 0.14)" strokeDasharray="4 4" label={{ position: 'insideTopRight', value: `TARGET ${PROTEIN_TARGET}G`, fill: 'rgba(23, 27, 21, 0.42)', fontSize: 9, fontWeight: 800, letterSpacing: '0.05em' }} />
+              <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(23, 27, 21, 0.14)', strokeWidth: 1, strokeDasharray: '4 5' }} />
+              <ReferenceLine y={PROTEIN_TARGET} stroke="rgba(23, 27, 21, 0.16)" strokeDasharray="5 6" label={{ position: 'insideTopRight', value: `TARGET ${PROTEIN_TARGET}G`, fill: 'rgba(23, 27, 21, 0.38)', fontSize: 8.5, fontWeight: 800, letterSpacing: '0.06em' }} />
               <Area
-                type="monotone"
+                type="natural"
                 dataKey="grams"
                 stroke="url(#colorGramsStroke)"
-                strokeWidth={3}
+                strokeWidth={2.5}
                 fillOpacity={1}
                 fill="url(#colorGramsArea)"
-                activeDot={{ r: 6, fill: '#fff', stroke: '#8aa832', strokeWidth: 3 }}
-                dot={{ r: 4, fill: '#fff', stroke: '#a3c545', strokeWidth: 2 }}
+                activeDot={{ r: 5, fill: '#171b15', stroke: '#cfe965', strokeWidth: 3 }}
+                dot={renderEndDot}
               />
             </AreaChart>
           </ResponsiveContainer>
