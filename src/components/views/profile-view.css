@@ -267,15 +267,41 @@
 .bio-tile {
   background: rgba(255, 255, 255, 0.66);
   border-radius: 14px;
-  padding: 9px 12px;
+  padding: 9px 11px;
   border: 1px solid rgba(255, 255, 255, 0.6);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
   display: flex;
-  flex-direction: column;
-  gap: 3px;
+  align-items: center;
+  gap: 9px;
 }
 
-.bio-tile .lbl {
+.bio-tile-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* Pastel icon chips — same desaturated family as right-side macros */
+.bio-tile-icon {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bio-tile-icon.tint-coral  { background: rgba(224, 139, 139, 0.16); color: #a05656; }
+.bio-tile-icon.tint-sky    { background: rgba(127, 168, 201, 0.18); color: #3a5578; }
+.bio-tile-icon.tint-honey  { background: rgba(220, 194, 122, 0.22); color: #7d5a17; }
+.bio-tile-icon.tint-sage   { background: rgba(106, 168, 138, 0.16); color: #33604a; }
+.bio-tile-icon.tint-yellow { background: rgba(234, 255, 40, 0.35);  color: #101312; }
+
+.bio-tile .lbl,
+.fitness-row .lbl,
+.identity-since .lbl {
   font-size: 9.5px;
   font-weight: 650;
   color: #7d8a82;
@@ -283,20 +309,56 @@
   letter-spacing: 0.06em;
 }
 
-.bio-tile .val {
-  font-size: 14px;
+.bio-tile .val,
+.fitness-row .val,
+.identity-since .val {
+  font-size: 13.5px;
   font-weight: 700;
   color: #101312;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .bio-tile .val.capitalize {
   text-transform: capitalize;
 }
 
-.bio-tile .val .unit {
+.bio-tile .val .unit,
+.fitness-row .val .unit,
+.identity-since .val .unit {
   font-size: 10px;
   font-weight: 500;
   color: #7d8a82;
+}
+
+/* Fitness profile — full-width horizontal rows */
+.identity-fitness {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fitness-row {
+  background: rgba(255, 255, 255, 0.66);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  border-radius: 14px;
+  padding: 8px 11px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.fitness-row .lbl {
+  flex-shrink: 0;
+}
+
+.fitness-row .val {
+  margin-left: auto;
+  text-align: right;
+  min-width: 0;
 }
 
 .identity-conditions {
@@ -306,14 +368,34 @@
 }
 
 .condition-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 10.5px;
   font-weight: 600;
   padding: 4px 11px;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.72);
-  color: #3c4741;
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(241, 105, 119, 0.08);
+  color: #8a4550;
+  border: 1px solid rgba(241, 105, 119, 0.16);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.condition-pill svg {
+  color: #c26a75;
+  flex-shrink: 0;
+}
+
+/* Member-since accent tile — fills the bottom gap */
+.identity-since {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: linear-gradient(120deg, rgba(234, 255, 40, 0.14), rgba(255, 255, 255, 0.6));
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
 .identity-empty {

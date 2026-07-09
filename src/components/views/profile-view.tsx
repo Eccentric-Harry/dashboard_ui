@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import {
   X, Clock, Pencil, LogOut, Mail, Globe, Bell,
-  Activity, Target, Plus, Calendar, RefreshCw
+  Activity, Target, Plus, Calendar, RefreshCw,
+  Cake, PersonStanding, Ruler, Weight, Footprints,
+  HeartPulse, Sparkles
 } from 'lucide-react';
 import {
   getUserProfile,
@@ -459,42 +461,56 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                       <h4 className="identity-section-title">Biometrics</h4>
                       <div className="identity-biometrics">
                         <div className="bio-tile">
-                          <span className="lbl">Age</span>
-                          <span className="val">
-                            {profile?.physicalMetrics?.age ?? '—'} <span className="unit">yrs</span>
-                          </span>
+                          <span className="bio-tile-icon tint-honey"><Cake size={13} strokeWidth={2.2} /></span>
+                          <div className="bio-tile-text">
+                            <span className="lbl">Age</span>
+                            <span className="val">
+                              {profile?.physicalMetrics?.age ?? '—'} <span className="unit">yrs</span>
+                            </span>
+                          </div>
                         </div>
                         <div className="bio-tile">
-                          <span className="lbl">Gender</span>
-                          <span className="val capitalize">
-                            {profile?.physicalMetrics?.gender?.toLowerCase() ?? '—'}
-                          </span>
+                          <span className="bio-tile-icon tint-sky"><PersonStanding size={13} strokeWidth={2.2} /></span>
+                          <div className="bio-tile-text">
+                            <span className="lbl">Gender</span>
+                            <span className="val capitalize">
+                              {profile?.physicalMetrics?.gender?.toLowerCase() ?? '—'}
+                            </span>
+                          </div>
                         </div>
                         <div className="bio-tile">
-                          <span className="lbl">Height</span>
-                          <span className="val">
-                            {profile?.physicalMetrics?.height ?? '—'} <span className="unit">cm</span>
-                          </span>
+                          <span className="bio-tile-icon tint-sage"><Ruler size={13} strokeWidth={2.2} /></span>
+                          <div className="bio-tile-text">
+                            <span className="lbl">Height</span>
+                            <span className="val">
+                              {profile?.physicalMetrics?.height ?? '—'} <span className="unit">cm</span>
+                            </span>
+                          </div>
                         </div>
                         <div className="bio-tile">
-                          <span className="lbl">Weight</span>
-                          <span className="val">
-                            {profile?.physicalMetrics?.weight ?? '—'} <span className="unit">kg</span>
-                          </span>
+                          <span className="bio-tile-icon tint-coral"><Weight size={13} strokeWidth={2.2} /></span>
+                          <div className="bio-tile-text">
+                            <span className="lbl">Weight</span>
+                            <span className="val">
+                              {profile?.physicalMetrics?.weight ?? '—'} <span className="unit">kg</span>
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
 
                     <div className="identity-section">
                       <h4 className="identity-section-title">Fitness Profile</h4>
-                      <div className="identity-biometrics">
-                        <div className="bio-tile">
+                      <div className="identity-fitness">
+                        <div className="fitness-row">
+                          <span className="bio-tile-icon tint-sage"><Footprints size={13} strokeWidth={2.2} /></span>
                           <span className="lbl">Activity</span>
                           <span className="val">
                             {ACTIVITY_LABELS[profile?.activityLevel ?? ''] ?? '—'}
                           </span>
                         </div>
-                        <div className="bio-tile">
+                        <div className="fitness-row">
+                          <span className="bio-tile-icon tint-honey"><Target size={13} strokeWidth={2.2} /></span>
                           <span className="lbl">Goal</span>
                           <span className="val">
                             {GOAL_LABELS[profile?.fitnessGoal ?? '']?.label ?? '—'}{' '}
@@ -510,6 +526,7 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                         <div className="identity-conditions">
                           {profile.medicalConditions.map((condition, idx) => (
                             <span key={idx} className="condition-pill">
+                              <HeartPulse size={11} strokeWidth={2.4} />
                               {condition}
                             </span>
                           ))}
@@ -520,6 +537,18 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                     </div>
 
                     <div className="identity-spacer"></div>
+
+                    {profile?.createdAt && (
+                      <div className="identity-since">
+                        <span className="bio-tile-icon tint-yellow"><Sparkles size={13} strokeWidth={2.2} /></span>
+                        <div className="bio-tile-text">
+                          <span className="lbl">Member Since</span>
+                          <span className="val">
+                            {new Date(profile.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                          </span>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="identity-footer">
                       <span className="identity-updated">
