@@ -3,7 +3,7 @@ import {
   X, Clock, Pencil, LogOut, Mail, Globe, Bell,
   Activity, Target, Plus, Calendar, RefreshCw,
   Cake, PersonStanding, Ruler, Weight, Footprints,
-  HeartPulse, CalendarDays
+  HeartPulse, CalendarDays, Sparkle, Leaf, ShieldAlert
 } from 'lucide-react';
 import {
   getUserProfile,
@@ -47,6 +47,33 @@ const PRESET_CONDITIONS = [
   "Keto",
   "Low Carb"
 ];
+
+const getConditionIcon = (condition: string) => {
+  const norm = condition.toLowerCase().trim();
+  if (norm.includes('acne')) {
+    return <Sparkle size={11} strokeWidth={2.4} />;
+  }
+  if (norm.includes('hypertension') || norm.includes('heart') || norm.includes('blood pressure')) {
+    return <HeartPulse size={11} strokeWidth={2.4} />;
+  }
+  if (
+    norm.includes('vegetarian') ||
+    norm.includes('vegan') ||
+    norm.includes('gluten free') ||
+    norm.includes('leaf') ||
+    norm.includes('keto') ||
+    norm.includes('low carb')
+  ) {
+    return <Leaf size={11} strokeWidth={2.4} />;
+  }
+  if (norm.includes('allergy') || norm.includes('intolerance')) {
+    return <ShieldAlert size={11} strokeWidth={2.4} />;
+  }
+  if (norm.includes('diabetes') || norm.includes('insulin') || norm.includes('sugar')) {
+    return <Activity size={11} strokeWidth={2.4} />;
+  }
+  return <HeartPulse size={11} strokeWidth={2.4} />;
+};
 
 const ACTIVITY_LABELS: Record<string, string> = {
   SEDENTARY: 'Sedentary',
@@ -526,7 +553,7 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                         <div className="identity-conditions">
                           {profile.medicalConditions.map((condition, idx) => (
                             <span key={idx} className="condition-pill">
-                              <HeartPulse size={11} strokeWidth={2.4} />
+                              {getConditionIcon(condition)}
                               {condition}
                             </span>
                           ))}
@@ -722,67 +749,66 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                           <span>Google Calendar Sync</span>
                         </div>
                         {syncStatus?.connected ? (
-                          <div className="sync-body sync-connected-layout">
-                            <div className="sync-info">
+                          <div className="sync-card-content">
+                            <div className="sync-status-row">
                               <div className="sync-badge connected">
                                 <span className="dot"></span>
                                 <span>Sync Active</span>
                               </div>
+                              <div className="sync-actions">
+                                <button
+                                  className="sync-btn-now"
+                                  onClick={handleSyncNow}
+                                  disabled={syncLoading}
+                                >
+                                  <RefreshCw size={12} className={syncLoading ? 'animate-spin' : ''} />
+                                  <span>{syncLoading ? 'Syncing...' : 'Sync Now'}</span>
+                                </button>
+                                <button
+                                  className="sync-btn-disconnect"
+                                  onClick={handleDisconnectGoogle}
+                                  disabled={syncLoading}
+                                >
+                                  Disconnect
+                                </button>
+                              </div>
+                            </div>
+                            <div className="sync-details-panel">
+                              <div className="sync-detail-item">
+                                <span className="lbl">Account</span>
+                                <span className="val truncate-email" title={syncStatus.email}>{syncStatus.email}</span>
+                              </div>
                               <div className="sync-divider" />
-                              <div className="sync-meta">
-                                <span className="sync-meta-item">
-                                  <span className="lbl">Account</span>
-                                  <span className="val truncate-email" title={syncStatus.email}>{syncStatus.email}</span>
-                                </span>
-                                <div className="sync-divider" />
-                                <span className="sync-meta-item">
-                                  <span className="lbl">Last Synced</span>
-                                  <span className="val">
-                                    {syncStatus.accounts?.[0]?.lastSyncedAt && syncStatus.accounts[0].lastSyncedAt !== ''
-                                      ? new Date(syncStatus.accounts[0].lastSyncedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-                                      : 'Waiting for Sync'}
-                                  </span>
+                              <div className="sync-detail-item align-right">
+                                <span className="lbl">Last Synced</span>
+                                <span className="val">
+                                  {syncStatus.accounts?.[0]?.lastSyncedAt && syncStatus.accounts[0].lastSyncedAt !== ''
+                                    ? new Date(syncStatus.accounts[0].lastSyncedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+                                    : 'Waiting for Sync'}
                                 </span>
                               </div>
                             </div>
-                            <div className="sync-actions">
-                              <button
-                                className="sync-btn-now"
-                                onClick={handleSyncNow}
-                                disabled={syncLoading}
-                              >
-                                <RefreshCw size={12} className={syncLoading ? 'animate-spin' : ''} />
-                                <span>{syncLoading ? 'Syncing...' : 'Sync Now'}</span>
-                              </button>
-                              <button
-                                className="sync-btn-disconnect"
-                                onClick={handleDisconnectGoogle}
-                                disabled={syncLoading}
-                              >
-                                Disconnect
-                              </button>
-                            </div>
                           </div>
                         ) : (
-                          <div className="sync-body sync-disconnected-layout">
-                            <div className="sync-info">
+                          <div className="sync-card-content">
+                            <div className="sync-status-row">
                               <div className="sync-badge disconnected">
                                 <span className="dot"></span>
                                 <span>Not Connected</span>
                               </div>
-                              <p className="sync-copy">
-                                Synchronize your calendar events and dashboard tasks bidirectionally in real-time.
-                              </p>
+                              <div className="sync-actions">
+                                <button
+                                  className="sync-btn-connect"
+                                  onClick={handleConnectGoogle}
+                                  disabled={authUrlLoading}
+                                >
+                                  {authUrlLoading ? 'Redirecting...' : 'Link Calendar'}
+                                </button>
+                              </div>
                             </div>
-                            <div className="sync-actions">
-                              <button
-                                className="sync-btn-connect"
-                                onClick={handleConnectGoogle}
-                                disabled={authUrlLoading}
-                              >
-                                {authUrlLoading ? 'Redirecting...' : 'Link Calendar'}
-                              </button>
-                            </div>
+                            <p className="sync-copy">
+                              Synchronize your calendar events and dashboard tasks bidirectionally in real-time.
+                            </p>
                           </div>
                         )}
                       </div>
