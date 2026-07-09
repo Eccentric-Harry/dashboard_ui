@@ -19,14 +19,6 @@ type CircularGoal = {
   unit: string
 }
 
-const isoDate = (date: Date) => {
-  const year = date.getFullYear()
-  const month = `${date.getMonth() + 1}`.padStart(2, '0')
-  const day = `${date.getDate()}`.padStart(2, '0')
-
-  return `${year}-${month}-${day}`
-}
-
 function MacroBalanceCard() {
   const { data, isLoading } = useDashboard()
 
@@ -56,7 +48,6 @@ function MacroBalanceCard() {
   const caloriesLogged = Number(dailyFood.calories) || 0
   const caloriesTarget = dailyFood.calorieGoal || circularGoals.find((goal) => goal.label === 'Calories')?.target || CALORIE_TARGET
   const caloriesProgress = Math.round((caloriesLogged / caloriesTarget) * 100) || 0
-  const caloriesRemaining = Math.max(caloriesTarget - caloriesLogged, 0)
 
   const carbsGoal = circularGoals.find((goal) => goal.label === 'Carbs')
   const carbsLogged = carbsGoal?.value || 0
@@ -78,23 +69,6 @@ function MacroBalanceCard() {
   }
   const activeGauge = metricMap[activeMetric]
   const isOverBudget = activeMetric === 'calories' && caloriesLogged > caloriesTarget
-
-  // friendly status line under the gauge — the over-budget case must never
-  // read as broken ("0 kcal remaining")
-  let gaugeFoot: string
-  if (activeMetric === 'calories') {
-    if (caloriesLogged > caloriesTarget) {
-      gaugeFoot = `${(caloriesLogged - caloriesTarget).toLocaleString()} kcal over — tomorrow's a fresh start`
-    } else if (caloriesProgress >= 95) {
-      gaugeFoot = "You've hit your energy target 🎯"
-    } else {
-      gaugeFoot = `${caloriesRemaining.toLocaleString()} kcal remaining today`
-    }
-  } else if (activeGauge.value >= activeGauge.target) {
-    gaugeFoot = `${activeMetric.charAt(0).toUpperCase()}${activeMetric.slice(1)} goal reached 🎯`
-  } else {
-    gaugeFoot = `${(activeGauge.target - activeGauge.value).toLocaleString()}g of ${activeMetric} to go`
-  }
 
   return (
     <section className="ntr-card ntr-hero" aria-label="Daily nutrition summary">

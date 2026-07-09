@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { RefreshCw, Minus, GlassWater, Droplet, Milk, Check, Waves } from 'lucide-react'
+import { RefreshCw, Minus, GlassWater, Droplet, Milk, Check } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { fetchHydration, addWaterIntake } from '../../../../lib/api'
 import type { HydrationData } from '../../../../lib/api'
@@ -88,7 +88,6 @@ function HydrationCard() {
   const progressPercent = Math.round((logged / target) * 100)
   const fillPercent = Math.min(progressPercent, 100)
   const isComplete = logged >= target
-  const glasses = Math.floor(logged / 250)
   const currentQuote = HYDRATION_QUOTES[quoteIndex]
   const waterY = BOTTLE_BOTTOM - (fillPercent / 100) * BOTTLE_FILL_HEIGHT
 
