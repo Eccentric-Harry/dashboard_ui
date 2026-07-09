@@ -378,9 +378,10 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
           <X size={15} />
         </button>
 
-        <h2 style={{ fontSize: '22px', marginBottom: '16px' }}>
-          {isEdit ? 'Edit Food Entry' : 'Add Food Entry'}
-        </h2>
+        <div className="af-modal-header">
+          <h2>{isEdit ? 'Edit Food Entry' : 'Add Food Entry'}</h2>
+          <p>Log your meal and track your progress!</p>
+        </div>
 
         {/* ── Tab switcher (hidden while processing or showing AI results) */}
         {!isEdit && aiPhase === 'input' && (
@@ -421,12 +422,20 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
             </div>
 
             <div className="form-row-macros">
-              <div className="form-group">
-                <label>Meal</label>
-                <select value={mealType} onChange={(e) => setMealType(e.target.value)}>
-                  <option value="" disabled>Select Meal Type...</option>
-                  {MEAL_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label>Meal Type</label>
+                <div className="af-meal-toggles">
+                  {MEAL_TYPES.map(t => (
+                    <button
+                      key={t}
+                      type="button"
+                      className={`af-meal-toggle ${mealType === t ? 'active' : ''}`}
+                      onClick={() => setMealType(t)}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className="form-group">
                 <label>Date</label>
@@ -472,6 +481,17 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
             </div>
 
             {error && <p className="add-tx-error">{error}</p>}
+
+            <div className="af-live-macro-preview">
+              <div className="af-macro-preview-item">
+                <span className="af-macro-label">Calories</span>
+                <span className="af-macro-value">{calories || '0'} <em>kcal</em></span>
+              </div>
+              <div className="af-macro-preview-item">
+                <span className="af-macro-label">Protein</span>
+                <span className="af-macro-value">{proteinGrams || '0'} <em>g</em></span>
+              </div>
+            </div>
 
             <button type="submit" className="add-tx-submit af-submit-btn" disabled={loading} style={{ width: '100%', marginTop: '16px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {loading ? <Loader2 className="spinner" size={18} /> : 'Save Food'}

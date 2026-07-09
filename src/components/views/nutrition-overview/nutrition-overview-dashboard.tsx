@@ -3,6 +3,7 @@ import { ArrowLeft, Plus } from 'lucide-react'
 import { FoodLogCard } from './components/food-log-card'
 import { HydrationCard } from './components/hydration-card'
 import { MacroBalanceCard } from './components/macro-balance-card'
+import { TodaysMealsCard } from './components/todays-meals-card'
 import { NutritionHeader } from './components/nutrition-header'
 import { ProteinTrendCard } from './components/protein-trend-card'
 import { AddFoodModal } from './components/add-food-modal'
@@ -158,17 +159,18 @@ function NutritionOverviewDashboard() {
         <>
           <NutritionHeader onAddClick={openAdd} />
           <div className="ntr-grid">
-            <MacroBalanceCard
+            <MacroBalanceCard />
+            <ProteinTrendCard />
+            
+            <TodaysMealsCard
               onEdit={(food) => {
                 setEditingFood(food)
                 setIsAddModalOpen(true)
               }}
               onSelectEntry={openEntry}
             />
-            <div className="ntr-right-col">
-              <ProteinTrendCard />
-              <HydrationCard />
-            </div>
+            <HydrationCard />
+            
             <FoodLogCard onSelectEntry={openEntry} />
           </div>
 

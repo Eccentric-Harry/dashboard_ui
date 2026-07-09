@@ -232,7 +232,7 @@
   display: grid;
   grid-template-columns: repeat(12, 1fr);
   gap: 18px;
-  align-items: start;
+  align-items: stretch;
   min-height: 0;
 }
 
@@ -261,26 +261,28 @@
   container-type: inline-size;
 }
 
-.ntr-right-col {
-  display: flex;
-  flex-direction: column;
-  grid-column: 8 / span 5;
-  gap: 18px;
-  min-width: 0;
-}
-
 .ntr-trend {
   display: flex;
   flex-direction: column;
-  /* explicit height so Recharts' percentage-based ResponsiveContainer can resolve */
-  height: 300px;
+  justify-content: space-between;
+  grid-column: 8 / span 5;
   padding: 22px 24px;
   min-width: 0;
+}
+
+.ntr-meals-card {
+  display: flex;
+  flex-direction: column;
+  grid-column: 1 / span 7;
+  height: 350px;
+  min-height: 0;
 }
 
 .ntr-hydro {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
+  grid-column: 8 / span 5;
   padding: 22px 24px;
   min-width: 0;
 }
@@ -335,14 +337,22 @@
 
 .ntr-gauge-panel {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 16px 26px;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 24px;
   align-items: center;
   justify-items: center;
   margin-top: 18px;
   padding: 20px 24px 18px;
   border-radius: 22px;
   background: linear-gradient(160deg, #daf08a 0%, var(--ntr-lime) 58%, #c3e04f 100%);
+}
+
+.ntr-gauge-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
 }
 
 .ntr-gauge-wrap {
@@ -450,80 +460,82 @@
 
 /* ── Hero: macro tiles ──────────────────────────────────────────── */
 
-.ntr-tiles {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+.ntr-hero-macros {
+  display: flex;
+  flex-direction: column;
   gap: 10px;
-  margin-top: 12px;
+  width: 100%;
 }
 
-.ntr-tile {
+.ntr-macro-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.35);
+  transition: background-color 0.18s ease;
+  cursor: pointer;
+}
+
+.ntr-macro-row.active, .ntr-macro-row:hover {
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.ntr-macro-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
-  min-width: 0;
-  padding: 11px 12px;
-  border: 1.5px solid transparent;
-  border-radius: var(--ntr-radius-sm);
-  background: var(--ntr-cream);
 }
 
-.ntr-tile p {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.ntr-macro-header p {
   margin: 0;
-  overflow: hidden;
-  color: var(--ntr-ink);
   font-size: 11.5px;
   font-weight: 700;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  color: var(--ntr-ink);
 }
 
-.ntr-tile p::before {
-  content: '';
-  flex-shrink: 0;
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: var(--tile-dot, var(--ntr-cream-deep));
-}
-
-.ntr-tile strong {
-  flex-shrink: 0;
-  font-size: 13.5px;
+.ntr-macro-header strong {
+  font-size: 13px;
   font-weight: 750;
-  letter-spacing: -0.02em;
-  white-space: nowrap;
+  letter-spacing: -0.01em;
 }
 
-.ntr-tile strong em {
-  color: rgba(23, 27, 21, 0.45);
+.ntr-macro-header strong em {
   font-size: 10.5px;
   font-style: normal;
   font-weight: 700;
+  color: rgba(23, 27, 21, 0.5);
 }
 
-.ntr-tile.tone-lime {
-  background: var(--ntr-lime-soft);
-  --tile-dot: var(--ntr-lime-deep);
+.ntr-macro-bar {
+  display: block;
+  width: 100%;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(23, 27, 21, 0.1);
+  overflow: hidden;
 }
 
-.ntr-tile.tone-sky {
-  background: var(--ntr-sky);
-  --tile-dot: #6fa1cb;
+.ntr-macro-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--ntr-ink);
+  animation: ntrBarGrow 0.8s cubic-bezier(0.3, 0.8, 0.3, 1) both;
+  transform-origin: left center;
 }
 
-.ntr-tile.tone-apricot {
-  background: var(--ntr-apricot);
-  --tile-dot: #d99a4e;
+.ntr-macro-row.tone-lime .ntr-macro-bar i { background: var(--ntr-lime-deep); }
+.ntr-macro-row.tone-sky .ntr-macro-bar i { background: #6fa1cb; }
+.ntr-macro-row.tone-apricot .ntr-macro-bar i { background: #d99a4e; }
+
+.ntr-macro-row.priority .ntr-macro-header strong {
+  font-size: 14px;
 }
 
-/* tiles wrap their content so the fill bar can sit under the numbers */
-.ntr-tile {
-  flex-wrap: wrap;
+.ntr-macro-row.priority .ntr-macro-bar {
+  height: 6px;
 }
 
 .ntr-tile-bar {
@@ -891,23 +903,24 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  height: 42px;
-  padding: 0 14px;
-  border: 1px solid var(--ntr-line);
+  gap: 8px;
+  height: 46px;
+  padding: 0 18px;
+  border: none;
   border-radius: 999px;
-  background: var(--ntr-card);
+  background: #f1f5ec;
   color: var(--ntr-ink);
   font-family: inherit;
-  font-size: 12.5px;
-  font-weight: 650;
+  font-size: 13.5px;
+  font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.15s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
 }
 
 .ntr-soft-btn:hover:not(:disabled) {
-  border-color: transparent;
   background: var(--ntr-lime);
+  box-shadow: 0 4px 14px rgba(138, 168, 50, 0.2);
 }
 
 .ntr-soft-btn:active:not(:disabled) {
@@ -1385,7 +1398,7 @@
 .ntr-mobile-fab {
   display: none;
   position: fixed;
-  bottom: calc(env(safe-area-inset-bottom, 20px) + 70px);
+  bottom: calc(env(safe-area-inset-bottom, 20px) + 96px);
   right: 20px;
   z-index: 50;
   width: 56px;
@@ -1412,7 +1425,7 @@
     grid-template-rows: auto;
   }
 
-  .ntr-hero {
+  .ntr-hero, .ntr-meals-card {
     grid-column: 1 / -1;
     grid-row: auto;
   }
@@ -1464,26 +1477,29 @@
     gap: 14px;
   }
 
-  .ntr-right-col {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    width: 100%;
-  }
-
   .nutrition-dashboard.ntr {
     box-sizing: border-box;
     width: 100%;
     overflow-x: hidden;
   }
 
+  .ntr-gauge-panel {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
   .ntr-hero,
+  .ntr-meals-card,
   .ntr-trend,
   .ntr-hydro,
   .ntr-history {
     width: 100%;
     padding: 18px 16px;
     box-sizing: border-box;
+  }
+
+  .ntr-meals-card {
+    height: 420px;
   }
 
   .ntr-trend {
@@ -1497,7 +1513,7 @@
   }
 
   .ntr-meals-list {
-    overflow: visible;
+    overflow-y: auto;
     padding-right: 0;
   }
 
@@ -1552,4 +1568,80 @@
   .nutrition-dashboard.ntr .ntr-card:hover {
     transform: none;
   }
+}
+
+/* ── Add Food Modal Redesign ────────────────────────────────────── */
+.af-modal-header {
+  margin-bottom: 24px;
+  text-align: center;
+}
+.af-modal-header h2 {
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: var(--ntr-ink);
+}
+.af-modal-header p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ntr-ink-soft);
+}
+.af-meal-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.af-meal-toggle {
+  padding: 6px 12px;
+  border: 1px solid var(--ntr-line);
+  border-radius: 999px;
+  background: var(--ntr-card);
+  color: var(--ntr-ink-soft);
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.af-meal-toggle:hover {
+  background: var(--ntr-cream);
+}
+.af-meal-toggle.active {
+  background: var(--ntr-ink);
+  color: var(--ntr-lime);
+  border-color: var(--ntr-ink);
+}
+.af-live-macro-preview {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  padding: 16px;
+  margin-top: 24px;
+  border-radius: 16px;
+  background: linear-gradient(120deg, var(--ntr-lime-soft), #daf08a);
+  border: 1px solid rgba(207, 233, 101, 0.4);
+}
+.af-macro-preview-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.af-macro-label {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ntr-ink-soft);
+}
+.af-macro-value {
+  font-size: 24px;
+  font-weight: 750;
+  color: var(--ntr-ink);
+}
+.af-macro-value em {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ntr-ink-soft);
+  font-style: normal;
 }

@@ -17,13 +17,14 @@ const BOTTLE_FILL_HEIGHT = 130 // usable water column, bottom → shoulder
 const wavePath = (y: number) =>
   `M-60 ${y.toFixed(1)} q15 -5 30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0 V186 H-60 Z`
 
-const getFunText = (percent: number) => {
-  if (percent >= 100) return { text: 'Hydration hero!', emoji: '🎉' }
-  if (percent >= 75) return { text: 'Almost there!', emoji: '💪' }
-  if (percent >= 50) return { text: 'Great progress!', emoji: '🌊' }
-  if (percent >= 25) return { text: 'Keep sipping!', emoji: '💧' }
-  return { text: 'Start hydrating!', emoji: '🥤' }
-}
+const HYDRATION_QUOTES = [
+  "Water is the driving force of all nature.",
+  "Stay hydrated, stay sharp.",
+  "Your body is 60% water. Keep it that way!",
+  "Drink water like it's your job.",
+  "Sip by sip, you're getting closer to your goal.",
+  "A glass a day keeps the dehydration away.",
+]
 
 function HydrationCard() {
   const { data: dashboardData } = useDashboard()
@@ -48,10 +49,19 @@ function HydrationCard() {
     }
   }, [selectedDate])
 
+  const [quoteIndex, setQuoteIndex] = useState(0)
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadHydration()
   }, [loadHydration])
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setQuoteIndex((prev) => (prev + 1) % HYDRATION_QUOTES.length)
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [])
 
   const handleAddWater = async (amount: number, key: string) => {
     if (adding) return
@@ -79,7 +89,7 @@ function HydrationCard() {
   const fillPercent = Math.min(progressPercent, 100)
   const isComplete = logged >= target
   const glasses = Math.floor(logged / 250)
-  const funInfo = getFunText(progressPercent)
+  const currentQuote = HYDRATION_QUOTES[quoteIndex]
   const waterY = BOTTLE_BOTTOM - (fillPercent / 100) * BOTTLE_FILL_HEIGHT
 
   if (loading) {
@@ -174,17 +184,8 @@ function HydrationCard() {
         </div>
 
         <div className="ntr-hydro-meta">
-          <div className="ntr-hydro-glass-dots" aria-label={`${glasses} glasses of 250ml logged`}>
-            {Array.from({ length: 8 }).map((_, index) => (
-              <span key={index} className={index < Math.min(glasses, 8) ? 'filled' : ''} />
-            ))}
-          </div>
-          <div className="ntr-hydro-glasses">
-            <Waves size={14} />
-            <span>{glasses} glasses</span>
-          </div>
-          <p className="ntr-hydro-fun-text" key={funInfo.text}>
-            {funInfo.emoji} {funInfo.text}
+          <p className="ntr-hydro-fun-text" style={{ fontStyle: 'italic', color: 'var(--ntr-ink-soft)', transition: 'opacity 0.5s', textAlign: 'center', margin: '8px 0 0 0' }}>
+            "{currentQuote}"
           </p>
         </div>
       </div>

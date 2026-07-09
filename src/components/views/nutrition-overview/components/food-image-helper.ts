@@ -1,23 +1,24 @@
 // Vegetarian-only food imagery. Every asset in src/assets/food/ has been
 // visually verified to contain no meat, poultry, fish, or eggs — keep it
 // that way when adding new mappings (the user is strictly vegetarian).
-import southIndianPlatter from '../../../../assets/food/south_indian_platter.jpg'
-import idliBananaLeaf from '../../../../assets/food/idli_banana_leaf.jpg'
-import paneerCurry from '../../../../assets/food/paneer_curry.jpg'
-import vegCurryRice from '../../../../assets/food/veg_curry_rice.jpg'
-import indianThali from '../../../../assets/food/indian_thali.jpg'
-import oatsPorridge from '../../../../assets/food/oats_porridge.jpg'
-import muesliBowl from '../../../../assets/food/muesli_bowl.jpg'
-import pancakeStack from '../../../../assets/food/pancake_stack.jpg'
-import frenchToast from '../../../../assets/food/french_toast.jpg'
-import chocolateDark from '../../../../assets/food/chocolate_dark.jpg'
-import yogurtBerries from '../../../../assets/food/yogurt_berries.jpg'
-import berrySmoothie from '../../../../assets/food/berry_smoothie.jpg'
-import greenSmoothie from '../../../../assets/food/green_smoothie.jpg'
-import riceBowl from '../../../../assets/food/rice_bowl.jpg'
-import healthySalad from '../../../../assets/food/healthy_salad.jpg'
-import fruitBowl from '../../../../assets/food/fruit_bowl.jpg'
-import freshVegetables from '../../../../assets/food/fresh_vegetables.jpg'
+
+import southIndianPlatter from '../../../../assets/food/pastel/breakfast_platter_1783621638654.png'
+import idliBananaLeaf from '../../../../assets/food/pastel/buttermilk_1783622060985.png'
+import paneerCurry from '../../../../assets/food/pastel/paratha_1783622072239.png'
+import vegCurryRice from '../../../../assets/food/pastel/curry_rice_1783621652075.png'
+import indianThali from '../../../../assets/food/pastel/indian_thali_1783621675714.png'
+import oatsPorridge from '../../../../assets/food/pastel/oats_bowl_1783621691705.png'
+import muesliBowl from '../../../../assets/food/pastel/muesli_bowl_1783621766237.png'
+import pancakeStack from '../../../../assets/food/pastel/pancake_stack_1783621702337.png'
+import frenchToast from '../../../../assets/food/pastel/french_toast_1783621755953.png'
+import chocolateDark from '../../../../assets/food/pastel/chocolate_dark_1783621777444.png'
+import yogurtBerries from '../../../../assets/food/pastel/yogurt_berries_1783621885295.png'
+import berrySmoothie from '../../../../assets/food/pastel/berry_smoothie_1783621789127.png'
+import greenSmoothie from '../../../../assets/food/pastel/green_smoothie_1783621802355.png'
+import riceBowl from '../../../../assets/food/pastel/rice_bowl_1783621897512.png'
+import healthySalad from '../../../../assets/food/pastel/healthy_salad_1783621908365.png'
+import fruitBowl from '../../../../assets/food/pastel/fruit_bowl_1783621919134.png'
+import freshVegetables from '../../../../assets/food/pastel/fresh_vegetables_1783621931837.png'
 
 export type FoodImage = {
   src: string
