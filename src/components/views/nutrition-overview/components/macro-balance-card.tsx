@@ -1,23 +1,13 @@
-import { useMemo, useState, useRef, useCallback, useEffect } from 'react'
-import { Pencil, Trash2 } from 'lucide-react'
-import toast from 'react-hot-toast'
-import { getFoodIconDetails, sortFoodEntries } from './food-icon-helper'
-import { MealDetailsModal } from './meal-details-modal'
-
-const mealDotColors: Record<string, string> = {
-  Breakfast: '#f97316',
-  Lunch: '#059669',
-  Dinner: '#38bdf8',
-  Snack: '#a78bfa',
-  Midnight: '#6366f1',
-  'Post Workout': '#f87171',
-  'Mid-Morning': '#c2410c',
-}
-
-import { RingProgress } from './ring-progress'
+import { useMemo, useState } from 'react'
+import { UtensilsCrossed } from 'lucide-react'
+import { ArcGauge } from './arc-gauge'
 import { useDashboard } from '../../../../contexts/DashboardContext'
-import { deleteFoodEntry } from '../../../../lib/api'
-import { ConfirmDialog } from '../../../ui/confirm-dialog'
+
+const goalTones: Record<string, string> = {
+  protein: 'tone-lime',
+  carbs: 'tone-sky',
+  fat: 'tone-apricot',
+}
 
 const PROTEIN_TARGET = 100
 const CALORIE_TARGET = 2000
@@ -29,106 +19,26 @@ type CircularGoal = {
   unit: string
 }
 
-type FoodEntry = {
-  id?: string
-  description?: string
-  mealType?: string
-  proteinGrams?: number
-  calories?: number
-}
+function MacroBalanceCard() {
+  const { data, isLoading } = useDashboard()
 
-const isoDate = (date: Date) => {
-  const year = date.getFullYear()
-  const month = `${date.getMonth() + 1}`.padStart(2, '0')
-  const day = `${date.getDate()}`.padStart(2, '0')
-
-  return `${year}-${month}-${day}`
-}
-
-interface MacroBalanceCardProps {
-  onEdit?: (food: FoodEntry) => void
-}
-
-function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
-  const { data, isLoading, refetch } = useDashboard()
-  
-  const selectedDate = data?.date || isoDate(new Date())
   const dailyFood = data?.health?.dailyFood || { calories: 0, calorieGoal: CALORIE_TARGET }
   const circularGoals = useMemo<CircularGoal[]>(() => data?.health?.circularGoals || [], [data?.health?.circularGoals])
-  const foodEntries = useMemo<FoodEntry[]>(() => sortFoodEntries(data?.health?.foodEntries || []), [data?.health?.foodEntries])
-  const [selectedMacroId, setSelectedMacroId] = useState('protein')
-  const [isEditMode, setIsEditMode] = useState(false)
-  const [itemToDelete, setItemToDelete] = useState<FoodEntry | null>(null)
-  const [selectedEntry, setSelectedEntry] = useState<FoodEntry | null>(null)
-  const [isScrolling, setIsScrolling] = useState(false)
-  const listRef = useRef<HTMLDivElement>(null)
-  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const handleScrollStart = useCallback(() => {
-    setIsScrolling(true)
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current)
-    }
-  }, [])
-
-  const handleScrollEnd = useCallback(() => {
-    scrollTimeoutRef.current = setTimeout(() => {
-      setIsScrolling(false)
-    }, 300)
-  }, [])
-
-  useEffect(() => {
-    return () => {
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current)
-      }
-    }
-  }, [])
+  const foodEntries = useMemo(() => data?.health?.foodEntries || [], [data?.health?.foodEntries])
+  const [activeMetric, setActiveMetric] = useState<'calories' | 'protein' | 'carbs' | 'fat'>('calories')
 
   if (isLoading) {
     return (
-      <section className="nutrition-card nutrition-macro-card" aria-label="Daily nutrition summary loading">
-        <div className="nutrition-card-head">
+      <section className="ntr-card ntr-hero" aria-label="Daily nutrition summary loading">
+        <div className="ntr-card-head">
           <div>
-            <p>Daily Nutrition Summary</p>
-            <div className="skeleton-shimmer skeleton-rect" style={{ width: '200px', height: '18px', marginTop: '6px', borderRadius: '4px' }} />
+            <p className="ntr-eyebrow">Daily Nutrition</p>
+            <div className="skeleton-shimmer skeleton-rect" style={{ width: '210px', height: '22px', marginTop: '6px', borderRadius: '6px' }} />
           </div>
         </div>
-
-        <div className="nutrition-rings nutrition-rings-two" style={{ display: 'flex', gap: '24px', justifyContent: 'center', margin: '20px 0' }}>
-          {Array.from({ length: 2 }).map((_, idx) => (
-            <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-              <div className="skeleton-shimmer skeleton-circle" style={{ width: '76px', height: '76px' }} />
-              <div className="skeleton-shimmer skeleton-rect" style={{ width: '50px', height: '12px', borderRadius: '3px' }} />
-            </div>
-          ))}
-        </div>
-
-        <div className="nutrition-today-log">
-          <div className="nutrition-today-log-head">
-            <div>
-              <p>Daily Log</p>
-              <h3>Today's Food Log</h3>
-            </div>
-          </div>
-          <div className="nutrition-today-log-list" style={{ padding: '8px 0', display: 'flex', flexDirection: 'column', gap: '12px', overflow: 'hidden' }}>
-            {Array.from({ length: 3 }).map((_, idx) => (
-              <div key={idx} style={{ display: 'flex', gap: '12px', alignItems: 'center', padding: '8px 14px' }}>
-                <div className="skeleton-shimmer skeleton-circle" style={{ width: '28px', height: '28px' }} />
-                <div style={{ flex: 1 }}>
-                  <div className="skeleton-shimmer skeleton-rect" style={{ width: '60%', height: '12px', borderRadius: '3px' }} />
-                  <div className="skeleton-shimmer skeleton-rect" style={{ width: '30%', height: '8px', marginTop: '6px', borderRadius: '2px' }} />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                  <div className="skeleton-shimmer skeleton-rect" style={{ width: '35px', height: '12px', borderRadius: '3px' }} />
-                  <div className="skeleton-shimmer skeleton-rect" style={{ width: '45px', height: '8px', borderRadius: '2px' }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <div className="skeleton-shimmer skeleton-rect" style={{ height: '210px', marginTop: '18px', borderRadius: '22px' }} />
       </section>
-    );
+    )
   }
 
   const proteinGoal = circularGoals.find((goal) => goal.label === 'Protein')
@@ -137,248 +47,93 @@ function MacroBalanceCard({ onEdit }: MacroBalanceCardProps) {
   const proteinProgress = Math.round((proteinLogged / proteinTarget) * 100) || 0
   const caloriesLogged = Number(dailyFood.calories) || 0
   const caloriesTarget = dailyFood.calorieGoal || circularGoals.find((goal) => goal.label === 'Calories')?.target || CALORIE_TARGET
+  const caloriesProgress = Math.round((caloriesLogged / caloriesTarget) * 100) || 0
 
-  const progressRings = [
-    {
-      id: 'protein',
-      label: 'Protein',
-      logged: proteinLogged,
-      target: proteinTarget,
-      unit: 'g',
-      color: '#35b64b',
-    },
-    {
-      id: 'calories',
-      label: 'Total Calories',
-      logged: caloriesLogged,
-      target: caloriesTarget,
-      unit: ' kcal',
-      color: '#eab308',
-    },
-  ]
+  const carbsGoal = circularGoals.find((goal) => goal.label === 'Carbs')
+  const carbsLogged = carbsGoal?.value || 0
+  const carbsTarget = carbsGoal?.target || 252
+  const carbsProgress = Math.round((carbsLogged / carbsTarget) * 100) || 0
 
-  // Inline add/edit form has been moved to AddFoodModal
+  const fatGoal = circularGoals.find((goal) => goal.label === 'Fat')
+  const fatLogged = fatGoal?.value || 0
+  const fatTarget = fatGoal?.target || 59
+  const fatProgress = Math.round((fatLogged / fatTarget) * 100) || 0
 
-  const handleDeleteConfirm = async () => {
-    if (!itemToDelete?.id) return
-
-    try {
-      await deleteFoodEntry(selectedDate, itemToDelete.id)
-      toast.success('Food entry deleted')
-      await refetch()
-    } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : 'Failed to delete food entry')
-      console.error('Failed to delete', error)
-    } finally {
-      setItemToDelete(null)
-    }
+  const formatPlain = (n: number) => n.toLocaleString()
+  const formatGrams = (n: number) => `${n.toLocaleString()}g`
+  const metricMap = {
+    calories: { value: caloriesLogged, target: caloriesTarget, progress: caloriesProgress, format: formatPlain, centerSub: `of ${caloriesTarget.toLocaleString()} kcal` },
+    protein: { value: proteinLogged, target: proteinTarget, progress: proteinProgress, format: formatGrams, centerSub: `of ${proteinTarget}g protein` },
+    carbs: { value: carbsLogged, target: carbsTarget, progress: carbsProgress, format: formatGrams, centerSub: `of ${carbsTarget}g carbs` },
+    fat: { value: fatLogged, target: fatTarget, progress: fatProgress, format: formatGrams, centerSub: `of ${fatTarget}g fat` },
   }
+  const activeGauge = metricMap[activeMetric]
+  const isOverBudget = activeMetric === 'calories' && caloriesLogged > caloriesTarget
 
   return (
-    <section className="nutrition-card nutrition-macro-card">
-      <div className="nutrition-card-head">
+    <section className="ntr-card ntr-hero" aria-label="Daily nutrition summary">
+      <div className="ntr-card-head">
         <div>
-          <p>Daily Nutrition Summary</p>
-          <h2>{proteinProgress}% of daily protein logged</h2>
+          <p className="ntr-eyebrow">Daily Nutrition</p>
+          <h2>{proteinProgress}% of protein goal reached</h2>
         </div>
+        <span className="ntr-pill dark">
+          <UtensilsCrossed size={12} strokeWidth={2.5} />
+          {foodEntries.length} meals
+        </span>
       </div>
 
-      <div className="nutrition-rings nutrition-rings-two" aria-label="Daily nutrition progress rings">
-        {progressRings.map((macro) => (
-          <RingProgress
-            key={macro.id}
-            label={macro.label}
-            value={macro.logged}
-            target={macro.target}
-            unit={macro.unit}
-            color={macro.color}
-            active={macro.id === selectedMacroId}
-            onSelect={() => setSelectedMacroId(macro.id)}
-          />
-        ))}
-      </div>
-
-      <div className="nutrition-today-log">
-        <div className="nutrition-today-log-head">
-          <div>
-            <p>Daily Log</p>
-            <h3>Today's Food Log</h3>
-          </div>
-          <div className="nutrition-today-log-actions">
-            <button
-              type="button"
-              className={`nutrition-food-log-add-btn compact ${isEditMode ? 'active' : ''}`}
-              onClick={() => setIsEditMode(!isEditMode)}
-              title={isEditMode ? 'Finish Editing' : 'Edit Food Logs'}
-              aria-label="Toggle edit mode"
-              style={{
-                width: '32px',
-                height: '32px',
-                padding: '0',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                borderRadius: '8px',
-                background: isEditMode ? 'rgba(20, 24, 22, 0.06)' : 'transparent'
-              }}
-            >
-              <Pencil size={14} strokeWidth={2.5} />
-            </button>
+      <div className="ntr-gauge-panel">
+        <div className="ntr-gauge-left">
+          <div className="ntr-gauge-wrap">
+            <ArcGauge
+              value={activeGauge.value}
+              target={activeGauge.target}
+              format={activeGauge.format}
+              centerSub={activeGauge.centerSub}
+              over={isOverBudget}
+            />
+            <span className={`ntr-gauge-badge${isOverBudget ? ' over' : ''}`}>{activeGauge.progress}%</span>
           </div>
         </div>
 
-        <div
-          ref={listRef}
-          className={`nutrition-today-log-list${isScrolling ? ' scrolling' : ''}`}
-          onScroll={(e) => {
-            if (e.currentTarget.scrollTop === 0) {
-              handleScrollStart()
-            }
-            handleScrollEnd()
-          }}
-        >
-          {foodEntries.length === 0 && <p>No food logged.</p>}
-
-          {foodEntries.map((entry, index) => {
-            const id = entry.id
-            const description = entry.description || 'Food item'
-            const mealType = entry.mealType || 'Snack'
-            const proteinGrams = Number(entry.proteinGrams) || 0
-            const calories = Number(entry.calories) || 0
-
-            const iconDetails = getFoodIconDetails(description, mealType)
-            const FoodIcon = iconDetails.icon
-
-return (
-              <div 
-                className="nutrition-today-log-row" 
-                key={id || `${description}-${index}`} 
-                onClick={() => !isEditMode && id && setSelectedEntry(entry)}
-                style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: 'auto 1fr auto auto', 
-                  alignItems: 'center', 
-                  gap: '12px', 
-                  padding: `8px ${id && isEditMode ? '18px' : '14px'} 8px 14px`,
-                  cursor: !isEditMode && id ? 'pointer' : 'default',
-                  transition: 'background-color 0.2s',
-                  borderRadius: '12px'
-                }}
-                onMouseEnter={(e) => {
-                  if (!isEditMode && id) e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.4)'
-                }}
-                onMouseLeave={(e) => {
-                  if (!isEditMode && id) e.currentTarget.style.backgroundColor = 'transparent'
-                }}
-              >
-                <span aria-hidden="true" style={{ background: iconDetails.bg }}>
-                  <FoodIcon size={16} color={iconDetails.color} />
-                </span>
-                <div style={{ minWidth: 0 }}>
-                  <span title={description} style={{ display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 500, color: '#171c19' }}>{description}</span>
-                  <span
-                    className="nutrition-meal-tag"
-                    style={{
-                      backgroundColor: `${mealDotColors[mealType] || '#94a3b8'}15`,
-                      color: mealDotColors[mealType] || '#94a3b8',
-                      border: `1px solid ${mealDotColors[mealType] || '#94a3b8'}30`,
-                      fontSize: '10px',
-                      padding: '2px 8px',
-                      borderRadius: '9999px',
-                      fontWeight: 600,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.02em',
-                      display: 'inline-block',
-                      marginTop: '4px',
-                    }}
-                  >
-                    {mealType}
+        {circularGoals.length > 0 && (
+          <div className="ntr-hero-macros" aria-label="Daily goals">
+            {/* Custom order: Protein, Carbs, Fat */}
+            {['Protein', 'Carbs', 'Fat'].map((macroName) => {
+              const goal = circularGoals.find(g => g.label === macroName)
+              if (!goal) return null
+              const metricKey = goal.label.toLowerCase() as 'protein' | 'carbs' | 'fat'
+              const isActive = activeMetric === metricKey
+              const fillPercent = Math.min(Math.round((goal.value / Math.max(goal.target, 1)) * 100), 100)
+              
+              return (
+                <div
+                  key={goal.label}
+                  className={`ntr-macro-row ${goalTones[goal.label.toLowerCase()] || ''}${isActive ? ' active' : ''}${metricKey === 'protein' ? ' priority' : ''}`}
+                  onClick={() => setActiveMetric(isActive ? 'calories' : metricKey)}
+                  style={{ cursor: 'pointer' }}
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={isActive}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setActiveMetric(isActive ? 'calories' : metricKey) }}
+                >
+                  <div className="ntr-macro-header">
+                    <p>{goal.label}</p>
+                    <strong>
+                      {goal.value.toLocaleString()}
+                      <em>/{goal.target.toLocaleString()}{goal.unit}</em>
+                    </strong>
+                  </div>
+                  <span className="ntr-macro-bar" aria-hidden="true">
+                    <i style={{ width: `${fillPercent}%` }} />
                   </span>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px', textAlign: 'right' }}>
-                  <strong style={{ fontSize: '13px', color: '#26953a' }}>{proteinGrams}g</strong>
-                  <small style={{ color: 'rgba(23, 28, 25, 0.5)', fontSize: '11px' }}>{calories.toLocaleString()} kcal</small>
-                </div>
-                {id && isEditMode ? (
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <button
-                      type="button"
-                      onClick={() => { setIsEditMode(false); onEdit?.(entry); }}
-                      title="Edit entry"
-                      aria-label="Edit entry"
-                      style={{
-                        display: 'grid',
-                        width: '28px',
-                        height: '28px',
-                        placeItems: 'center',
-                        border: '0',
-                        borderRadius: '6px',
-                        background: 'rgba(23, 28, 25, 0.05)',
-                        color: 'rgba(23, 28, 25, 0.7)',
-                        cursor: 'pointer',
-                        transition: 'background 0.2s, color 0.2s',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(23, 28, 25, 0.1)'
-                        e.currentTarget.style.color = 'rgba(23, 28, 25, 0.9)'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(23, 28, 25, 0.05)'
-                        e.currentTarget.style.color = 'rgba(23, 28, 25, 0.7)'
-                      }}
-                    >
-                      <Pencil size={12} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setItemToDelete(entry)}
-                      title="Delete entry"
-                      aria-label="Delete entry"
-                      style={{
-                        display: 'grid',
-                        width: '28px',
-                        height: '28px',
-                        placeItems: 'center',
-                        border: '0',
-                        borderRadius: '6px',
-                        background: 'rgba(239, 68, 68, 0.08)',
-                        color: '#dc2626',
-                        cursor: 'pointer',
-                        transition: 'background 0.2s, color 0.2s',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'
-                        e.currentTarget.style.color = '#b91c1c'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)'
-                        e.currentTarget.style.color = '#dc2626'
-                      }}
-                    >
-                      <Trash2 size={12} />
-                    </button>
-                  </div>
-                ) : null}
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+        )}
       </div>
-
-      <ConfirmDialog
-        open={!!itemToDelete}
-        title="Delete Food Entry"
-        message={`Are you sure you want to delete "${itemToDelete?.description}"? This action cannot be undone.`}
-        confirmLabel="Delete"
-        onConfirm={handleDeleteConfirm}
-        onCancel={() => setItemToDelete(null)}
-      />
-
-      <MealDetailsModal
-        open={!!selectedEntry}
-        onClose={() => setSelectedEntry(null)}
-        entry={selectedEntry}
-      />
     </section>
   )
 }

@@ -23,6 +23,89 @@ let calendarItems = [...dummyCalendarItems];
 const financeLogs = [...dummyFinanceLogs];
 let lendingRecords = [...dummyLendingRecords];
 
+// ── Guest nutrition analysis fixtures ──────────────────────────────────────
+// Meal quality rotates through both formats the API can return (words and
+// letter grades) so the UI's grade normalization is exercised in guest mode.
+const GUEST_MEAL_QUALITIES = ['excellent', 'good', 'fair', 'A', 'B', 'C', 'poor'];
+
+// The first meal of each guest day carries a full AI-analysis payload so the
+// food-detail page (Items, glycaemic load, AI Insights) is demo-able as a guest.
+const guestRichAnalysis = (carbsGrams: number, fatGrams: number) => ({
+  total_summary: {
+    carbs_g: carbsGrams,
+    fats_g: fatGrams,
+    fiber_g: 6.5,
+    sugar_g: 9.2,
+    sodium_mg: 310,
+  },
+  meal_items: [
+    {
+      name: 'Rolled oats (cooked in milk)',
+      serving_size: '1 bowl (240 g)',
+      confidence: 'high',
+      calories: 220, protein: 9, carbs: 34, fat: 5, fiber: 4, sugar: 6, sodium: 105,
+      clinical_item_flags: ['PROTECTIVE: Beta-glucan fiber supports a stable glucose response'],
+    },
+    {
+      name: 'Mixed berries',
+      serving_size: '80 g',
+      confidence: 'high',
+      calories: 45, protein: 1, carbs: 10, fat: 0, fiber: 3, sugar: 7, sodium: 1,
+      clinical_item_flags: ['PROTECTIVE: Polyphenol-rich, low-glycaemic fruit'],
+    },
+    {
+      name: 'Honey drizzle',
+      serving_size: '1 tbsp (21 g)',
+      confidence: 'medium',
+      calories: 64, protein: 0, carbs: 17, fat: 0, fiber: 0, sugar: 17, sodium: 1,
+      clinical_item_flags: ['MODERATE_RISK: Free sugars — keep to one serving'],
+    },
+  ],
+  recomposition_assessment: {
+    meal_quality: 'good',
+    letter_grade: 'B',
+    overall_score: 78,
+    fitness_alignment:
+      'Protein-forward start that supports your recomposition target — pairing it with a scoop of whey or soy isolate would push the meal to the 30 g protein sweet spot.',
+    strengths: [
+      'High satiety-per-calorie ratio from oat beta-glucan',
+      'Morning protein spread supports muscle protein synthesis',
+    ],
+    concerns: ['Free sugar from honey uses up most of the day\'s added-sugar budget'],
+    improvements: [
+      'Swap honey for cinnamon to cut ~17 g of sugar',
+      'Add a scoop of whey or soy isolate to reach 30 g protein',
+    ],
+  },
+  acne_impact_assessment: {
+    medical_analysis: [
+      {
+        condition: 'Acne / dermal inflammation',
+        risk: 'moderate',
+        findings: ['Dairy (milk) can elevate IGF-1 signalling in acne-prone individuals'],
+        recommendations: ['Consider almond or oat milk during breakout weeks'],
+      },
+      {
+        condition: 'Insulin sensitivity',
+        risk: 'low',
+        findings: ['Low overall glycaemic load with fiber buffering'],
+        recommendations: [],
+      },
+    ],
+    glycaemic_assessment: {
+      total_meal_glycaemic_load: 14,
+      gl_classification: 'Medium (GL 10–19)',
+      insulin_impact_summary:
+        'Moderate insulin response expected; oat fiber and berry polyphenols blunt the post-prandial spike.',
+    },
+  },
+});
+
+const enrichGuestMeal = (meal: { carbsGrams: number; fatGrams: number }, mealIndex: number, dayIndex: number) => ({
+  mealQuality: GUEST_MEAL_QUALITIES[(dayIndex + mealIndex) % GUEST_MEAL_QUALITIES.length],
+  ...(mealIndex === 0 ? guestRichAnalysis(meal.carbsGrams, meal.fatGrams) : {}),
+});
+
 // Guest finance account ("Total Balance") — a running balance moved by transactions.
 const financeAccount = { balance: 2450800 };
 
@@ -249,12 +332,13 @@ export function enableGuestInterceptor() {
           { label: 'Carbs', value: dayData.dailyMetrics.macroBreakdown.carbs.logged, target: dayData.dailyMetrics.macroBreakdown.carbs.target, unit: 'g' },
           { label: 'Fat', value: dayData.dailyMetrics.macroBreakdown.fat.logged, target: dayData.dailyMetrics.macroBreakdown.fat.target, unit: 'g' }
         ],
-        foodEntries: dayData.additionalInfo.mealLogs.map(m => ({
+        foodEntries: dayData.additionalInfo.mealLogs.map((m, mIdx) => ({
           id: m.id,
           description: m.mealName,
           mealType: m.type,
           proteinGrams: m.proteinGrams,
-          calories: m.calories
+          calories: m.calories,
+          ...enrichGuestMeal(m, mIdx, dummyNutritionHistory.indexOf(dayData))
         })),
         deepAnalysis: dayData // Attached for deep UI components to consume
       };
@@ -299,14 +383,15 @@ export function enableGuestInterceptor() {
       const startDate = urlObj.searchParams.get('startDate');
       const endDate = urlObj.searchParams.get('endDate');
 
-      let entries = dummyNutritionHistory.flatMap(day =>
-        day.additionalInfo.mealLogs.map(m => ({
+      let entries = dummyNutritionHistory.flatMap((day, dayIdx) =>
+        day.additionalInfo.mealLogs.map((m, mIdx) => ({
           id: m.id,
           description: m.mealName,
           mealType: m.type,
           proteinGrams: m.proteinGrams,
           calories: m.calories,
-          date: day.date
+          date: day.date,
+          ...enrichGuestMeal(m, mIdx, dayIdx)
         }))
       );
 

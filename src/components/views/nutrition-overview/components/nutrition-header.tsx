@@ -57,6 +57,11 @@ const formatHeaderDate = (date: Date) =>
     day: 'numeric',
     year: 'numeric',
   })
+
+const splitHeaderDate = (date: Date) => ({
+  weekday: date.toLocaleDateString('en-US', { weekday: 'long' }),
+  rest: date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+})
 const isFutureDate = (date: Date) => isoDate(date) > isoDate(new Date())
 
 const extractEntries = (response: unknown): FoodEntry[] => {
@@ -168,13 +173,12 @@ function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
   const selectedDateObject = useMemo(() => parseIsoDate(selectedDate), [selectedDate])
 
 
-  const handleDateSelect = (date: Date) => {
+  const navigateToDate = (date: Date) => {
     if (isFutureDate(date)) {
       return
     }
 
     const dateValue = isoDate(date)
-    setPickedDate(dateValue)
     setSelectedDate(dateValue)
     setIsCalendarOpen(false)
 
@@ -191,6 +195,15 @@ function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
       }
       window.dispatchEvent(new PopStateEvent('popstate'))
     }
+  }
+
+  const handleDateSelect = (date: Date) => {
+    if (isFutureDate(date)) {
+      return
+    }
+
+    setPickedDate(isoDate(date))
+    navigateToDate(date)
   }
 
   const pickedDateObject = pickedDate ? parseIsoDate(pickedDate) : null
@@ -248,22 +261,20 @@ function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
   }, [data?.date, foodEntries, pickedDate])
   
   return (
-    <header className="nutrition-header">
+    <header className="ntr-header">
       <div className="nutrition-date-picker" ref={calendarRef}>
+        <p className="ntr-eyebrow">Nutrition Overview · {foodEntries.length} meals logged</p>
         <button
           type="button"
-          className="nutrition-date-trigger"
+          className="ntr-title-btn"
           aria-expanded={isCalendarOpen}
           aria-haspopup="dialog"
           onClick={() => setIsCalendarOpen((isOpen) => !isOpen)}
         >
-          <span>
-            <span className="nutrition-date-title-wrap">
-              <strong>{formatHeaderDate(selectedDateObject)}</strong>
-              <ChevronDown size={20} className="nutrition-date-chevron" />
-            </span>
-            <small>Nutrition Overview | {foodEntries.length} meals logged</small>
+          <span className="ntr-title">
+            <em>{splitHeaderDate(selectedDateObject).weekday},</em> {splitHeaderDate(selectedDateObject).rest}
           </span>
+          <ChevronDown size={20} className="ntr-chevron" />
         </button>
 
         {isCalendarOpen && (
@@ -361,18 +372,16 @@ function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
         )}
       </div>
 
-      {onAddClick && (
-        <div className="nutrition-header-actions">
-          <button
-            type="button"
-            onClick={onAddClick}
-            className="nutrition-add-btn"
-          >
-            <Plus size={14} strokeWidth={3} />
-            <span>Add</span>
+      <div className="ntr-header-right">
+        {onAddClick && (
+          <button type="button" onClick={onAddClick} className="ntr-add-btn">
+            <span className="ntr-add-ic">
+              <Plus size={16} strokeWidth={2.75} />
+            </span>
+            Add meal
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </header>
   )
 }
