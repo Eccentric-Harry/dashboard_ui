@@ -185,6 +185,7 @@ function DailyLogCardInstance({ dateValue, entries, totalProtein, totalCalories,
           const calories = Number(entry.calories) || 0
           const foodImage = getFoodImage(description, mealType)
           const grade = gradeFromEntry(entry)
+          const tone = mealDotColors[mealType] || '#8b9187'
 
           return (
             <div
@@ -200,13 +201,15 @@ function DailyLogCardInstance({ dateValue, entries, totalProtein, totalCalories,
                 }
               }}
             >
-              <span className="ntr-meal-thumb small" aria-hidden="true">
+              <span className="ntr-meal-thumb" aria-hidden="true">
                 <img src={foodImage.src} alt="" loading="lazy" />
               </span>
-              <div>
+              <div className="ntr-meal-info">
                 <b title={description}>{description}</b>
-                <small style={{ color: mealDotColors[mealType] || '#8b9187' }}>
-                  {mealType}
+                <div className="ntr-meal-tag-row">
+                  <span className="ntr-meal-tag" style={{ color: tone, borderColor: `${tone}40`, backgroundColor: `${tone}10` }}>
+                    {mealType}
+                  </span>
                   {grade && (
                     <span
                       className="ntr-grade-badge"
@@ -216,7 +219,7 @@ function DailyLogCardInstance({ dateValue, entries, totalProtein, totalCalories,
                       {grade.letter}
                     </span>
                   )}
-                </small>
+                </div>
               </div>
               <aside>
                 <strong>{proteinGrams}g</strong>

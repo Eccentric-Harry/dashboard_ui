@@ -985,9 +985,10 @@
 .ntr-day-card {
   display: flex;
   flex-direction: column;
-  padding: 16px 16px 12px;
+  padding: 16px;
   border-radius: 20px;
-  background: var(--ntr-cream);
+  border: 1px solid var(--ntr-line);
+  background: transparent;
 }
 
 .ntr-day-head {
@@ -996,6 +997,8 @@
   justify-content: space-between;
   gap: 10px;
   padding-bottom: 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--ntr-line);
 }
 
 .ntr-day-head h3 {
@@ -1025,7 +1028,7 @@
   height: 24px;
   padding: 0 9px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.75);
+  background: rgba(0, 0, 0, 0.04);
   color: var(--ntr-ink);
   font-size: 10.5px;
   font-weight: 700;
@@ -1049,16 +1052,18 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 9px;
-  padding: 7px 9px;
-  border-radius: 13px;
-  background: rgba(255, 255, 255, 0.82);
+  gap: 12px;
+  padding: 9px 12px;
+  border-radius: 16px;
+  border: 1px solid transparent;
+  background: transparent;
   cursor: pointer;
-  transition: background-color 0.18s ease;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
 }
 
 .ntr-day-entry:hover {
-  background: #ffffff;
+  border-color: var(--ntr-line);
+  background: #fbfaf5;
 }
 
 .ntr-day-entry .ntr-meal-ic {

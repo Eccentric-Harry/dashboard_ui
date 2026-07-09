@@ -4,7 +4,7 @@
 
 .profile-container {
   position: absolute;
-  inset: 110px 58px 32px 206px;
+  inset: 72px 58px 8px 206px;
   z-index: 2;
   display: flex;
   color: #101312;

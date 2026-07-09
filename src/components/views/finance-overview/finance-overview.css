@@ -1,6 +1,6 @@
 .finance-dashboard {
   position: absolute;
-  inset: 132px 58px 48px 206px;
+  inset: 72px 58px 8px 206px;
   z-index: 2;
   overflow-x: hidden;
   overflow-y: auto;

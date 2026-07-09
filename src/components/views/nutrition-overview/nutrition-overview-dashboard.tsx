@@ -134,56 +134,73 @@ function NutritionOverviewDashboard() {
 
   return (
     <section className="nutrition-dashboard ntr" aria-label="Nutrition overview dashboard">
-      {itemId ? (
-        <div className="ntr-detail-stage">
-          {detailEntry ? (
-            <MealDetailsModal
-              open
-              onClose={closeDetail}
-              entry={detailEntry}
-              onEdit={(entry) => {
-                setEditingFood(entry)
-                setIsAddModalOpen(true)
-              }}
-            />
-          ) : (
-            <div className="ntr-card ntr-detail-fallback">
-              <button type="button" className="ntr-icon-btn" onClick={closeDetail} aria-label="Back to nutrition overview">
-                <ArrowLeft size={16} />
-              </button>
-              <p>{isDetailLoading ? 'Loading meal details…' : 'Meal not found — it may have been deleted.'}</p>
-            </div>
-          )}
-        </div>
-      ) : (
-        <>
-          <NutritionHeader onAddClick={openAdd} />
-          <div className="ntr-grid">
-            <MacroBalanceCard />
-            <ProteinTrendCard />
-            
-            <TodaysMealsCard
-              onEdit={(food) => {
-                setEditingFood(food)
-                setIsAddModalOpen(true)
-              }}
-              onSelectEntry={openEntry}
-            />
-            <HydrationCard />
-            
-            <FoodLogCard onSelectEntry={openEntry} />
+      {itemId && (
+        <div
+          className="ntr-detail-overlay-wrapper"
+          style={{
+            position: 'sticky',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            zIndex: 100,
+            background: '#ffffff',
+            overflowY: 'auto',
+            overscrollBehavior: 'contain',
+            borderBottomLeftRadius: '28px',
+            borderBottomRightRadius: '28px'
+          }}
+        >
+          <div className="ntr-detail-stage" style={{ minHeight: '100%' }}>
+            {detailEntry ? (
+              <MealDetailsModal
+                open
+                onClose={closeDetail}
+                entry={detailEntry}
+                onEdit={(entry) => {
+                  setEditingFood(entry)
+                  setIsAddModalOpen(true)
+                }}
+              />
+            ) : (
+              <div className="ntr-card ntr-detail-fallback">
+                <button type="button" className="ntr-icon-btn" onClick={closeDetail} aria-label="Back to nutrition overview">
+                  <ArrowLeft size={16} />
+                </button>
+                <p>{isDetailLoading ? 'Loading meal details…' : 'Meal not found — it may have been deleted.'}</p>
+              </div>
+            )}
           </div>
-
-          {/* organic floating produce — save PNGs with transparency into
-              dashboard_ui/public/assets/decor/ (hidden automatically if absent) */}
-          <img src="/assets/decor/broccoli.png" alt="" aria-hidden="true" className="ntr-decor top-right" onError={hideDecor} />
-          <img src="/assets/decor/lettuce.png" alt="" aria-hidden="true" className="ntr-decor bottom-left" onError={hideDecor} />
-
-          <button type="button" className="ntr-mobile-fab" onClick={openAdd} aria-label="Add meal">
-            <Plus size={22} strokeWidth={2.5} />
-          </button>
-        </>
+        </div>
       )}
+
+      <div style={{ visibility: itemId ? 'hidden' : 'visible', pointerEvents: itemId ? 'none' : 'auto' }}>
+        <NutritionHeader onAddClick={openAdd} />
+        <div className="ntr-grid">
+          <MacroBalanceCard />
+          <ProteinTrendCard />
+
+          <TodaysMealsCard
+            onEdit={(food) => {
+              setEditingFood(food)
+              setIsAddModalOpen(true)
+            }}
+            onSelectEntry={openEntry}
+          />
+          <HydrationCard />
+
+          <FoodLogCard onSelectEntry={openEntry} />
+        </div>
+
+        {/* organic floating produce — save PNGs with transparency into
+              dashboard_ui/public/assets/decor/ (hidden automatically if absent) */}
+        <img src="/assets/decor/broccoli.png" alt="" aria-hidden="true" className="ntr-decor top-right" onError={hideDecor} />
+        <img src="/assets/decor/lettuce.png" alt="" aria-hidden="true" className="ntr-decor bottom-left" onError={hideDecor} />
+
+        <button type="button" className="ntr-mobile-fab" onClick={openAdd} aria-label="Add meal">
+          <Plus size={22} strokeWidth={2.5} />
+        </button>
+      </div>
 
       <AddFoodModal
         isOpen={isAddModalOpen}
@@ -197,13 +214,13 @@ function NutritionOverviewDashboard() {
         initialData={
           editingFood
             ? {
-                id: editingFood.id,
-                description: editingFood.description || '',
-                proteinGrams: Number(editingFood.proteinGrams) || 0,
-                calories: Number(editingFood.calories) || 0,
-                mealType: editingFood.mealType || 'Snack',
-                date: editingFood.date || selectedDate,
-              }
+              id: editingFood.id,
+              description: editingFood.description || '',
+              proteinGrams: Number(editingFood.proteinGrams) || 0,
+              calories: Number(editingFood.calories) || 0,
+              mealType: editingFood.mealType || 'Snack',
+              date: editingFood.date || selectedDate,
+            }
             : undefined
         }
       />

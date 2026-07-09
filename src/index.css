@@ -152,7 +152,7 @@ button {
 
 .route-view {
   position: absolute;
-  inset: 184px 104px 96px 206px;
+  inset: 72px 104px 8px 206px;
   display: grid;
   place-items: center;
 }
