@@ -135,22 +135,7 @@ function NutritionOverviewDashboard() {
   return (
     <section className="nutrition-dashboard ntr" aria-label="Nutrition overview dashboard">
       {itemId && (
-        <div
-          className="ntr-detail-overlay-wrapper"
-          style={{
-            position: 'sticky',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            zIndex: 100,
-            background: '#ffffff',
-            overflowY: 'auto',
-            overscrollBehavior: 'contain',
-            borderBottomLeftRadius: '28px',
-            borderBottomRightRadius: '28px'
-          }}
-        >
+        <div className="ntr-detail-overlay-wrapper">
           <div className="ntr-detail-stage" style={{ minHeight: '100%' }}>
             {detailEntry ? (
               <MealDetailsModal

@@ -3,6 +3,19 @@
    sliding up over it (Reference A, "Personal Meals" pattern).
    ══════════════════════════════════════════════════════════════════ */
 
+.ntr-detail-overlay-wrapper {
+  position: sticky;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: calc(100% + 72px);
+  z-index: 100;
+  background: #ffffff;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 28px;
+}
+
 .ntr-meal-detail-view {
   position: relative;
   display: flex;
@@ -718,6 +731,14 @@
 
 /* ── Responsive ──────────────────────────────────────────────────── */
 @media (max-width: 768px) {
+  .ntr-detail-overlay-wrapper {
+    position: fixed;
+    inset: 0;
+    height: 100vh;
+    height: 100dvh;
+    border-radius: 0;
+  }
+
   .ntr-detail-hero {
     height: 210px;
   }
