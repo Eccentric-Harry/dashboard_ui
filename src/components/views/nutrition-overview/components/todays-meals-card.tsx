@@ -106,9 +106,13 @@ function TodaysMealsCard({ onEdit, onSelectEntry }: TodaysMealsCardProps) {
       </div>
 
       <div className="ntr-meals-list" style={{ padding: '0 26px 24px' }}>
-        {foodEntries.length === 0 && <p>No meals logged yet — add your first 🍽️</p>}
-
-        {foodEntries.map((entry, index) => {
+        {foodEntries.length === 0 && (
+          <div className="ntr-meals-empty">
+            <div className="ntr-empty-icon">🍽️</div>
+            <p>No meals logged today</p>
+            <span>Track your food to see your daily progress and macros</span>
+          </div>
+        )}        {foodEntries.map((entry, index) => {
           const id = entry.id
           const description = entry.description || 'Food item'
           const mealType = entry.mealType || 'Snack'
