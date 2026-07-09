@@ -28,6 +28,7 @@ const STAGE_MESSAGES = [
   { stage: 'Finalising', label: 'Saving your meal log…', sub: 'Almost done' },
 ]
 
+//-- test--
 const MACRO_COLORS: Record<string, string> = {
   Calories: '#ffc45f',
   Protein:  '#35b64b',
