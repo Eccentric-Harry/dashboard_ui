@@ -8,7 +8,6 @@ import {
   addWaterIntake,
   createMindEntry,
   logSleep,
-  saveMindMood,
 } from '../../../lib/api'
 import type { AppPath } from '../../dashboard/quantified-self-dashboard/data'
 import { useFocus } from '../../../contexts/FocusContext'
@@ -93,15 +92,6 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
 
   const habitStrips = useMemo(() => buildHabitStrips(dayRecords, weekDates), [dayRecords, weekDates])
 
-  const bestStreak = useMemo(
-    () =>
-      habitStrips.reduce(
-        (best, strip) => (strip.streak > best.streak ? { streak: strip.streak, label: strip.label } : best),
-        { streak: 0, label: 'No active streak yet' },
-      ),
-    [habitStrips],
-  )
-
   const todayRecord = dayRecords[dayRecords.length - 1]
   const todayTasks = useMemo(
     () => (home.tasks.data ?? []).filter((t) => t.date === home.today),
@@ -123,21 +113,6 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
     countActiveDays(dayRecords) === 0 &&
     (home.sleep.data?.length ?? 0) === 0 &&
     (home.tasks.data?.length ?? 0) === 0
-
-  const handleMoodSelect = useCallback(
-    async (value: number) => {
-      const next = home.mind.data?.moodScore === value ? null : value
-      home.patchMind({ moodScore: next })
-      if (next != null) {
-        try {
-          await saveMindMood(home.today, next)
-        } catch {
-          /* mood is a soft signal; don't nag on failure */
-        }
-      }
-    },
-    [home],
-  )
 
   const handleAddWater = useCallback(async () => {
     try {
@@ -217,12 +192,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
     <div className="home-dashboard">
       <HomeHeader
         dateIso={home.today}
-        mood={home.mind.data?.moodScore ?? null}
-        onMoodSelect={(value) => void handleMoodSelect(value)}
-        streakDays={bestStreak.streak}
-        streakLabel={bestStreak.streak > 0 ? `${bestStreak.label}: ${bestStreak.streak} days` : bestStreak.label}
         onQuickAdd={handleQuickAdd}
-        onOpenSos={() => setSosOpen(true)}
       />
 
       {isFirstRun && (

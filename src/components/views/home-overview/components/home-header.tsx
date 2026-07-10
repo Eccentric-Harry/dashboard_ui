@@ -1,17 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { CheckSquare, Droplets, Flame, Lightbulb, LifeBuoy, MessageCircle, Plus, Trophy, Utensils } from 'lucide-react'
-import { cn } from '../../../../lib/utils'
+import { CheckSquare, Droplets, Lightbulb, MessageCircle, Plus, Trophy, Utensils } from 'lucide-react'
 import type { QuickCaptureMode } from './quick-capture-card'
-
-const MOOD_LABELS = ['Heavy', 'Low', 'Okay', 'Good', 'Light'] as const
-
-const MOUTHS: Record<number, string> = {
-  1: 'M10 21.5 Q15 16.5 20 21.5',
-  2: 'M10 20.5 Q15 18.2 20 20.5',
-  3: 'M10.5 20 L19.5 20',
-  4: 'M10 18 Q15 22.5 20 18',
-  5: 'M9.5 17 Q15 24.5 20.5 17',
-}
 
 // One line per day — deterministic, gentle, never a demand.
 const DAILY_LINES = [
@@ -24,29 +13,14 @@ const DAILY_LINES = [
   'Today only needs one good hour.',
 ]
 
-function MoodFace({ level }: { level: number }) {
-  return (
-    <svg viewBox="0 0 30 30" className="home-face" aria-hidden="true">
-      <circle cx="11" cy="12.5" r="1.7" className="home-face-eye" />
-      <circle cx="19" cy="12.5" r="1.7" className="home-face-eye" />
-      <path d={MOUTHS[level]} className="home-face-mouth" />
-    </svg>
-  )
-}
-
 export type QuickAddAction = QuickCaptureMode | 'meal' | 'water'
 
 type HomeHeaderProps = {
   dateIso: string
-  mood: number | null
-  onMoodSelect: (value: number) => void
-  streakDays: number
-  streakLabel: string
   onQuickAdd: (action: QuickAddAction) => void
-  onOpenSos: () => void
 }
 
-function HomeHeader({ dateIso, mood, onMoodSelect, streakDays, streakLabel, onQuickAdd, onOpenSos }: HomeHeaderProps) {
+function HomeHeader({ dateIso, onQuickAdd }: HomeHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
 
