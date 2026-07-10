@@ -945,7 +945,7 @@
 /* Watery button overrides for hydration card */
 .ntr-hydro-btns .ntr-soft-btn {
   background: rgba(42, 134, 255, 0.08);
-  color: #1e71dd;
+  color: var(--ntr-ink);
   box-shadow: none;
 }
 
