@@ -244,12 +244,6 @@
   border-radius: var(--ntr-radius);
   background: var(--ntr-card);
   box-shadow: var(--ntr-shadow);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-.ntr-card:hover {
-  box-shadow: 0 2px 4px rgba(23, 27, 21, 0.04), 0 18px 44px rgba(23, 27, 21, 0.08);
-  transform: translateY(-2px);
 }
 
 .ntr-hero {
@@ -647,15 +641,11 @@
   margin-top: 10px;
   padding-right: 4px;
   overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
 }
 
 .ntr-meals-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.ntr-meals-list::-webkit-scrollbar-thumb {
-  border-radius: 999px;
-  background: rgba(23, 27, 21, 0.14);
+  display: none; /* Chrome, Safari, Edge */
 }
 
 .ntr-meals-list > p {
