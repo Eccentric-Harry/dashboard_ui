@@ -15,6 +15,7 @@ import {
   Terminal,
   Brain,
   LogOut,
+  User,
 } from 'lucide-react'
 
 export type AppPath = '/home' | '/finance' | '/nutrition' | '/learnings' | '/workouts' | '/calendar' | '/prompts' | '/tasks' | '/people' | '/profile' | '/mind'
@@ -27,6 +28,7 @@ export interface DashboardNavItem {
   muted?: boolean
   bubble?: string
   mobileHidden?: boolean
+  desktopHidden?: boolean
 }
 
 export interface CostCardConfig {
@@ -43,6 +45,7 @@ export const dateTiles = [
   { value: '23', accent: true },
 ] as const
 
+// Desktop sidebar nav — original order, all routes accessible
 export const navItems: DashboardNavItem[] = [
   { label: 'Home', icon: Home, to: '/home' },
   { label: 'Learnings Map', icon: GraduationCap, to: '/learnings' },
@@ -54,6 +57,24 @@ export const navItems: DashboardNavItem[] = [
   { label: 'Tasks', icon: CheckSquare, to: '/tasks' },
   { label: 'Mind Space', icon: Brain, to: '/mind' },
   { label: 'People', icon: Users, to: '/people' },
+]
+
+// Mobile bottom dock — 5 items, Home centred at index 2
+export const mobileNavItems: DashboardNavItem[] = [
+  { label: 'Nutrition Overview', icon: Utensils, to: '/nutrition' },
+  { label: 'Calendar', icon: CalendarDays, to: '/calendar' },
+  { label: 'Home', icon: Home, to: '/home' },
+  { label: 'Finance Overview', icon: CircleDollarSign, to: '/finance' },
+  { label: 'Profile', icon: User, to: '/profile' },
+]
+
+// Routes moved off the mobile dock — shown as quick-access in the profile card
+export const profileShortcuts: DashboardNavItem[] = [
+  { label: 'Workouts', icon: Dumbbell, to: '/workouts' },
+  { label: 'People', icon: Users, to: '/people' },
+  { label: 'Learnings', icon: GraduationCap, to: '/learnings' },
+  { label: 'Mind', icon: Brain, to: '/mind' },
+  { label: 'Tasks', icon: CheckSquare, to: '/tasks' },
 ]
 
 export const railBottomItems: DashboardNavItem[] = [
