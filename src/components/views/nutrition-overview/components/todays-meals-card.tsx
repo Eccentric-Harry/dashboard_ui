@@ -45,6 +45,13 @@ function TodaysMealsCard({ onEdit, onSelectEntry }: TodaysMealsCardProps) {
   const { data, isLoading, refetch } = useDashboard()
   const selectedDate = data?.date || isoDate(new Date())
   const foodEntries = useMemo<FoodEntry[]>(() => sortFoodEntries(data?.health?.foodEntries || []), [data?.health?.foodEntries])
+
+  const totalCalories = useMemo(() => foodEntries.reduce((s, e) => s + (Number(e.calories) || 0), 0), [foodEntries])
+  const totalProtein = useMemo(() => foodEntries.reduce((s, e) => s + (Number(e.proteinGrams) || 0), 0), [foodEntries])
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const calorieGoal: number = (data as any)?.health?.dailyFood?.calorieGoal || 2000
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const proteinGoalTarget: number = (data as any)?.health?.dailyFood?.proteinGoalGrams || (data as any)?.health?.circularGoals?.find((g: { label?: string }) => g.label === 'Protein')?.target || 148
   const [isEditMode, setIsEditMode] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<FoodEntry | null>(null)
 
@@ -89,7 +96,7 @@ function TodaysMealsCard({ onEdit, onSelectEntry }: TodaysMealsCardProps) {
 
   return (
     <section className="ntr-card ntr-meals-card" aria-label="Today's meals">
-      <div className="ntr-meals-head" style={{ padding: '24px 26px 12px' }}>
+      <div className="ntr-meals-head" style={{ padding: '24px 26px 8px' }}>
         <h3>Today's Meals</h3>
         <aside>
           <button
@@ -104,6 +111,27 @@ function TodaysMealsCard({ onEdit, onSelectEntry }: TodaysMealsCardProps) {
           </button>
         </aside>
       </div>
+
+      {foodEntries.length > 0 && (
+        <div className="ntr-meals-accent-panel">
+          <div className="ntr-map-stat">
+            <strong>{Math.max(0, calorieGoal - totalCalories).toLocaleString()}</strong>
+            <span>kcal left</span>
+            <div className="ntr-map-bar"><i style={{ width: `${Math.min((totalCalories / calorieGoal) * 100, 100)}%`, background: 'var(--ntr-cream-deep)' }} /></div>
+          </div>
+          <div className="ntr-map-sep" />
+          <div className="ntr-map-stat">
+            <strong>{Math.round(totalProtein / foodEntries.length)}g</strong>
+            <span>avg / meal</span>
+            <div className="ntr-map-bar"><i style={{ width: `${Math.min((totalProtein / proteinGoalTarget) * 100, 100)}%`, background: 'var(--ntr-lime-deep)' }} /></div>
+          </div>
+          <div className="ntr-map-sep" />
+          <div className="ntr-map-stat">
+            <strong>{foodEntries.length}</strong>
+            <span>meals</span>
+          </div>
+        </div>
+      )}
 
       <div className="ntr-meals-list" style={{ padding: '0 26px 24px' }}>
         {foodEntries.length === 0 && (

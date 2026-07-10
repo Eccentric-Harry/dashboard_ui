@@ -141,7 +141,9 @@ function ProteinTrendCard() {
   }
 
   const latestPoint = displayTrend[displayTrend.length - 1]
-  const avgGrams = Math.round(displayTrend.reduce((sum, point) => sum + point.grams, 0) / displayTrend.length)
+  const weeklyTotal = displayTrend.reduce((sum, point) => sum + point.grams, 0)
+  const avgGrams = Math.round(weeklyTotal / displayTrend.length)
+  const daysOnTarget = displayTrend.filter(p => p.grams >= PROTEIN_TARGET).length
 
   // emphasise only the latest point — the line stays clean
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -164,13 +166,28 @@ function ProteinTrendCard() {
   return (
     <section className="ntr-card ntr-trend">
       <div className="ntr-card-head">
-        <div>
-          <p className="ntr-eyebrow">Weekly Protein</p>
-          <h2>{latestPoint.grams}g {latestPoint.dateStr === isoDate(new Date()) ? 'today' : ''}</h2>
+        <p className="ntr-eyebrow">Weekly Protein</p>
+        <span className="ntr-pill">7 days</span>
+      </div>
+
+      <div className="ntr-trend-accent-panel">
+        <div className="ntr-tap-big">
+          <strong>{weeklyTotal}g</strong>
+          <small>this week</small>
         </div>
-        <div className="ntr-trend-pills">
-          <span className="ntr-pill lime">avg {avgGrams}g</span>
-          <span className="ntr-pill">7 days</span>
+        <div className="ntr-tap-stats">
+          <div className="ntr-tap-stat">
+            <span>today</span>
+            <b>{latestPoint.grams}g</b>
+          </div>
+          <div className="ntr-tap-stat">
+            <span>daily avg</span>
+            <b>{avgGrams}g</b>
+          </div>
+          <div className="ntr-tap-stat">
+            <span>on track</span>
+            <b>{daysOnTarget}/7</b>
+          </div>
         </div>
       </div>
 

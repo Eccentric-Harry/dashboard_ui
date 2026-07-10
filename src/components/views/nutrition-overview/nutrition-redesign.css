@@ -1305,8 +1305,6 @@
   align-items: center;
   justify-content: center;
   gap: 20px;
-  margin: 6px 0;
-  padding: 8px 0;
 }
 
 .ntr-water-bottle {
@@ -1732,4 +1730,213 @@
   font-weight: 700;
   color: var(--ntr-ink-soft);
   font-style: normal;
+}
+
+/* ── Weekly Protein accent panel (lime) ─────────────────────────── */
+
+.ntr-trend-accent-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: linear-gradient(150deg, #daf08a 0%, var(--ntr-lime) 58%, #c3e04f 100%);
+}
+
+.ntr-tap-big {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ntr-tap-big strong {
+  display: block;
+  font-size: 38px;
+  font-weight: 750;
+  letter-spacing: -0.045em;
+  color: var(--ntr-ink);
+  line-height: 1;
+}
+
+.ntr-tap-big small {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(23, 27, 21, 0.52);
+}
+
+.ntr-tap-stats {
+  display: flex;
+  gap: 8px;
+}
+
+.ntr-tap-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 9px 11px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.44);
+}
+
+.ntr-tap-stat span {
+  font-size: 8.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: rgba(23, 27, 21, 0.52);
+}
+
+.ntr-tap-stat b {
+  font-size: 13.5px;
+  font-weight: 750;
+  color: var(--ntr-ink);
+  letter-spacing: -0.02em;
+}
+
+/* ── Today's Meals accent panel (warm cream → lime) ─────────────── */
+
+.ntr-meals-accent-panel {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: 0 26px 8px;
+  padding: 12px 18px;
+  border-radius: 18px;
+  background: linear-gradient(120deg, #f6f1e4 0%, #eef6cf 100%);
+}
+
+.ntr-map-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.ntr-map-stat strong {
+  font-size: 20px;
+  font-weight: 750;
+  letter-spacing: -0.035em;
+  color: var(--ntr-ink);
+  line-height: 1;
+}
+
+.ntr-map-stat span {
+  font-size: 8.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ntr-ink-faint);
+}
+
+.ntr-map-bar {
+  width: 52px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(23, 27, 21, 0.1);
+  overflow: hidden;
+  margin-top: 3px;
+}
+
+.ntr-map-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  animation: ntrBarGrow 0.8s cubic-bezier(0.3, 0.8, 0.3, 1) both;
+  transform-origin: left center;
+}
+
+.ntr-map-sep {
+  width: 1px;
+  height: 32px;
+  background: rgba(23, 27, 21, 0.1);
+  flex-shrink: 0;
+}
+
+/* ── Hydration bottle-wrap gets sky panel treatment ─────────────── */
+
+.ntr-hydro-bottle-wrap {
+  background: linear-gradient(160deg, #dbeffe 0%, #c4deff 70%, #cce9ff 100%);
+  border-radius: 20px;
+  padding: 14px 18px;
+  margin: 8px 0;
+}
+
+.ntr-hydro-stat-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.ntr-hydro-stat-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.52);
+  min-width: 72px;
+}
+
+.ntr-hydro-stat-tile strong {
+  font-size: 22px;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  color: var(--ntr-ink);
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ntr-hydro-stat-tile span {
+  font-size: 8.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(23, 27, 21, 0.52);
+}
+
+.ntr-hydro-stat-tile.complete strong {
+  color: var(--ntr-aqua-deep);
+}
+
+.ntr-hydro-stat-tile.complete span {
+  color: var(--ntr-aqua-deep);
+}
+
+/* Mobile adjustments for new panels */
+@media (max-width: 768px) {
+  .ntr-trend-accent-panel {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .ntr-tap-stats {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .ntr-meals-accent-panel {
+    margin: 0 16px 8px;
+  }
+
+  .ntr-hydro-bottle-wrap {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .ntr-hydro-stat-col {
+    flex-direction: row;
+    justify-content: center;
+    gap: 10px;
+  }
 }

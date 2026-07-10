@@ -17,15 +17,6 @@ const BOTTLE_FILL_HEIGHT = 130 // usable water column, bottom → shoulder
 const wavePath = (y: number) =>
   `M-60 ${y.toFixed(1)} q15 -5 30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0 V186 H-60 Z`
 
-const HYDRATION_QUOTES = [
-  "Water is the driving force of all nature.",
-  "Stay hydrated, stay sharp.",
-  "Your body is 60% water. Keep it that way!",
-  "Drink water like it's your job.",
-  "Sip by sip, you're getting closer to your goal.",
-  "A glass a day keeps the dehydration away.",
-]
-
 function HydrationCard() {
   const { data: dashboardData } = useDashboard()
   const selectedDate = dashboardData?.date || new Date().toISOString().split('T')[0]
@@ -49,19 +40,10 @@ function HydrationCard() {
     }
   }, [selectedDate])
 
-  const [quoteIndex, setQuoteIndex] = useState(0)
-
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadHydration()
   }, [loadHydration])
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setQuoteIndex((prev) => (prev + 1) % HYDRATION_QUOTES.length)
-    }, 5000)
-    return () => clearInterval(interval)
-  }, [])
 
   const handleAddWater = async (amount: number, key: string) => {
     if (adding) return
@@ -88,7 +70,8 @@ function HydrationCard() {
   const progressPercent = Math.round((logged / target) * 100)
   const fillPercent = Math.min(progressPercent, 100)
   const isComplete = logged >= target
-  const currentQuote = HYDRATION_QUOTES[quoteIndex]
+  const glassesCount = Math.floor(logged / 250)
+  const glassesToGo = Math.ceil(Math.max(0, target - logged) / 250)
   const waterY = BOTTLE_BOTTOM - (fillPercent / 100) * BOTTLE_FILL_HEIGHT
 
   if (loading) {
@@ -182,10 +165,24 @@ function HydrationCard() {
           </div>
         </div>
 
-        <div className="ntr-hydro-meta">
-          <p className="ntr-hydro-fun-text" style={{ fontStyle: 'italic', color: 'var(--ntr-ink-soft)', transition: 'opacity 0.5s', textAlign: 'center', margin: '8px 0 0 0' }}>
-            "{currentQuote}"
-          </p>
+        <div className="ntr-hydro-stat-col">
+          <div className="ntr-hydro-stat-tile">
+            <strong>{glassesCount}</strong>
+            <span>glasses</span>
+          </div>
+          <div className={`ntr-hydro-stat-tile${isComplete ? ' complete' : ''}`}>
+            {isComplete ? (
+              <>
+                <strong><Check size={18} strokeWidth={2.5} /></strong>
+                <span>goal met!</span>
+              </>
+            ) : (
+              <>
+                <strong>{glassesToGo}</strong>
+                <span>glasses to go</span>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
