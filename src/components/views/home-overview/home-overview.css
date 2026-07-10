@@ -1483,7 +1483,7 @@
   }
 
   .home-tile-action {
-    width: 100%;
+    width: auto;
     justify-content: center;
   }
 
