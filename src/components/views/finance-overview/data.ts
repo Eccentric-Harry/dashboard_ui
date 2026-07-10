@@ -18,6 +18,8 @@ export interface FinanceMetric {
   change: string
   tone: 'positive' | 'negative'
   icon: LucideIcon
+  subtitle?: string
+  subtitleTone?: 'positive' | 'warning' | 'negative'
 }
 
 export interface SpendingCategory {

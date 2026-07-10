@@ -146,6 +146,14 @@ function FinanceOverviewDashboard() {
     })
     
     const monthlySavings = Math.max(0, totalIncome - totalExpense)
+    const budget = monthlyBudget ?? 20000
+    const budgetRemaining = budget - totalExpense
+    const budgetSubtitle = budgetRemaining >= 0
+      ? `₹${Math.round(budgetRemaining).toLocaleString('en-IN')} left`
+      : `₹${Math.round(-budgetRemaining).toLocaleString('en-IN')} over`
+    const budgetSubtitleTone = budgetRemaining >= 0
+      ? (budgetRemaining < budget * 0.2 ? 'warning' as const : 'positive' as const)
+      : 'negative' as const
 
     return [
       {
@@ -158,11 +166,13 @@ function FinanceOverviewDashboard() {
       },
       {
         label: 'Monthly Budget',
-        value: `₹${(monthlyBudget ?? 20000).toLocaleString()}`,
+        value: `₹${budget.toLocaleString()}`,
         cents: '',
         change: '',
         tone: 'positive' as const,
         icon: Target,
+        subtitle: budgetSubtitle,
+        subtitleTone: budgetSubtitleTone,
       },
       {
         label: 'Monthly Expenses',
@@ -173,7 +183,7 @@ function FinanceOverviewDashboard() {
         icon: ArrowUpRight,
       },
     ]
-  }, [logs, selectedMonthKey])
+  }, [logs, selectedMonthKey, monthlyBudget])
 
   const recentTransactions = useMemo(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

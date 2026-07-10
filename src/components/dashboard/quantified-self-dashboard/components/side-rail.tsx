@@ -1,8 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { getAvatarImage } from '../../../../lib/avatar'
 import { type AppPath, navItems, mobileNavItems, railBottomItems } from '../data'
 import { useNotifications } from '../../../../contexts/NotificationContext'
 import { ConfirmDialog } from '../../../ui/confirm-dialog'
+
+// Module-level: survives component remounts on route changes
+let prevMobileIndex = -1
 
 type DashboardStageProps = {
   activePath: AppPath
@@ -14,7 +17,6 @@ function SideRail({ activePath, onNavigate }: DashboardStageProps) {
   const [avatar, setAvatar] = useState(() => localStorage.getItem('avatarUrl') || 'luffy')
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
   const [liquidClass, setLiquidClass] = useState('')
-  const prevMobileIndexRef = useRef(-1)
 
   useEffect(() => {
     const handleUpdate = () => {
@@ -29,22 +31,22 @@ function SideRail({ activePath, onNavigate }: DashboardStageProps) {
   const showActiveIndicator = rawActiveMobileIndex !== -1
   const activeMobileIndex = showActiveIndicator ? rawActiveMobileIndex : 0
 
-  // Liquid glass slide animation — detect direction and trigger class
+  // Liquid glass slide animation — module-level prev persists across remounts
   useEffect(() => {
     if (!showActiveIndicator) {
-      prevMobileIndexRef.current = -1
+      prevMobileIndex = -1
       return
     }
-    const prev = prevMobileIndexRef.current
+    const prev = prevMobileIndex
     const curr = activeMobileIndex
     if (prev !== -1 && prev !== curr) {
       const dir = curr > prev ? 'liquid-right' : 'liquid-left'
       setLiquidClass(dir)
       const t = setTimeout(() => setLiquidClass(''), 500)
-      prevMobileIndexRef.current = curr
+      prevMobileIndex = curr
       return () => clearTimeout(t)
     }
-    prevMobileIndexRef.current = curr
+    prevMobileIndex = curr
   }, [activeMobileIndex, showActiveIndicator])
 
   const mobileNavStyle = {

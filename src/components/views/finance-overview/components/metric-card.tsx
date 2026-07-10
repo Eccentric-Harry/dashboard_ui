@@ -30,7 +30,14 @@ function MetricCard({ metric, loading = false, onEdit }: MetricCardProps) {
       {loading ? (
         <div className="skeleton-shimmer skeleton-rect" style={{ width: '85px', height: '18px', marginTop: '6px', borderRadius: '4px' }} />
       ) : (
-        <strong>{metric.value}</strong>
+        <>
+          <strong>{metric.value}</strong>
+          {metric.subtitle && (
+            <span className={`finance-metric-subtitle finance-metric-subtitle--${metric.subtitleTone ?? 'positive'}`}>
+              {metric.subtitle}
+            </span>
+          )}
+        </>
       )}
     </section>
   )

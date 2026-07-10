@@ -65,7 +65,7 @@ export const mobileNavItems: DashboardNavItem[] = [
   { label: 'Calendar', icon: CalendarDays, to: '/calendar' },
   { label: 'Home', icon: Home, to: '/home' },
   { label: 'Finance Overview', icon: CircleDollarSign, to: '/finance' },
-  { label: 'Profile', icon: User, to: '/profile' },
+  { label: 'Tasks', icon: CheckSquare, to: '/tasks' },
 ]
 
 // Routes moved off the mobile dock — shown as quick-access in the profile card
@@ -74,7 +74,6 @@ export const profileShortcuts: DashboardNavItem[] = [
   { label: 'People', icon: Users, to: '/people' },
   { label: 'Learnings', icon: GraduationCap, to: '/learnings' },
   { label: 'Mind', icon: Brain, to: '/mind' },
-  { label: 'Tasks', icon: CheckSquare, to: '/tasks' },
 ]
 
 export const railBottomItems: DashboardNavItem[] = [
