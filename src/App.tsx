@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import toast, { Toaster, resolveValue } from 'react-hot-toast'
 import { Info, Check, AlertTriangle, AlertCircle, Loader2, X } from 'lucide-react'
 
-import { QuantifiedSelfDashboard } from './components/dashboard/quantified-self-dashboard'
+import { HomeOverview } from './components/views/home-view'
 import type { AppPath } from './components/dashboard/quantified-self-dashboard/data'
 import { FinanceOverview } from './components/views/finance-view'
 import { NutritionOverview } from './components/views/nutrition-view'
@@ -25,8 +25,6 @@ import { NotificationCenter } from './components/dashboard/quantified-self-dashb
 import { VisitorAuthPopup } from './components/auth/VisitorAuthPopup'
 import { enableGuestInterceptor } from './lib/guest-interceptor'
 
-const ENABLE_HOME_ROUTE = import.meta.env.VITE_ENABLE_HOME_ROUTE === 'true'
-
 const isGuest = localStorage.getItem('isGuest') === 'true';
 const authToken = localStorage.getItem('authToken');
 
@@ -37,7 +35,7 @@ if (isGuest) {
 
 function normalizePathname(pathname: string): AppPath {
   if (pathname === '/home') {
-    return ENABLE_HOME_ROUTE ? '/home' : '/nutrition'
+    return '/home'
   }
 
   if (pathname === '/calender') {
@@ -45,7 +43,7 @@ function normalizePathname(pathname: string): AppPath {
   }
 
   if (pathname === '/') {
-    return '/nutrition'
+    return '/home'
   }
 
   if (pathname === '/nutrition') {
@@ -88,7 +86,7 @@ function normalizePathname(pathname: string): AppPath {
     return '/mind'
   }
 
-  return '/nutrition'
+  return '/home'
 }
 
 function MobileProfileTrigger({ onNavigate, activePath }: { onNavigate: (path: AppPath) => void; activePath: AppPath }) {
@@ -298,7 +296,7 @@ function App() {
   } else if (pathname === '/mind') {
     content = <MindOverview activePath={pathname} onNavigate={navigateTo} />
   } else {
-    content = <QuantifiedSelfDashboard activePath={pathname} onNavigate={navigateTo} />
+    content = <HomeOverview activePath={pathname} onNavigate={navigateTo} />
   }
 
   const currentDate = searchParams.get('date') || undefined;
