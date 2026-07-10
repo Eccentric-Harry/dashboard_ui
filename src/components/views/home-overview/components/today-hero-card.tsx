@@ -20,13 +20,13 @@ type TodayHeroCardProps = {
   onNavigate: (path: AppPath, search?: string) => void
 }
 
-function MiniRing({ value, target, label }: { value: number; target: number; label: string }) {
+function MiniRing({ value, target, label, className }: { value: number; target: number; label: string; className?: string }) {
   const radius = 26
   const circumference = 2 * Math.PI * radius
   const ratio = target > 0 ? Math.min(value / target, 1) : 0
   return (
     <div
-      className={cn('home-mini-ring', ratio > 0 && 'has-progress')}
+      className={cn('home-mini-ring', ratio > 0 && 'has-progress', className)}
       style={{ '--ring-offset': circumference - ratio * circumference, '--ring-circ': circumference } as CSSProperties}
     >
       <svg viewBox="0 0 64 64" aria-hidden="true">
@@ -154,15 +154,16 @@ function TodayHeroCard({
           <span className="home-tile-eyebrow">
             <Droplets size={12} /> Water
           </span>
-          <b className="home-tile-big">
-            {waterMl} <em>/ {waterTarget} ml</em>
-          </b>
-          <span className="home-water-bar" aria-hidden="true">
-            <i style={{ width: `${Math.min((waterMl / Math.max(waterTarget, 1)) * 100, 100)}%` }} />
-          </span>
-          <button type="button" className="home-tile-action" onClick={onAddWater}>
-            <Plus size={12} /> 250ml
-          </button>
+          <div className="home-hero-fuel">
+            <MiniRing value={waterMl} target={waterTarget} label="ml" className="home-mini-ring--water" />
+            <div className="home-hero-fuel-meta">
+              <b>{waterMl.toLocaleString()}</b>
+              <small>of {waterTarget.toLocaleString()} ml</small>
+              <button type="button" className="home-tile-action" onClick={onAddWater}>
+                <Plus size={12} /> 250ml
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="home-hero-tile home-hero-tile--static">

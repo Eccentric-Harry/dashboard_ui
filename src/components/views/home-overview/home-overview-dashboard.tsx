@@ -1,6 +1,6 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
-import { CheckSquare, Moon, Utensils } from 'lucide-react'
+import { CheckSquare, Droplets, Lightbulb, MessageCircle, Moon, Plus, Trophy, Utensils } from 'lucide-react'
 import type { SleepEntryPayload } from '../../../lib/api'
 import {
   addLearning,
@@ -43,6 +43,22 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
   const { session: focusSession } = useFocus()
   const [sosOpen, setSosOpen] = useState(false)
   const [captureRequest, setCaptureRequest] = useState<{ mode: QuickCaptureMode; nonce: number } | null>(null)
+  const [fabOpen, setFabOpen] = useState(false)
+  const fabRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (!fabOpen) return
+    const handlePointer = (e: MouseEvent) => {
+      if (fabRef.current && !fabRef.current.contains(e.target as Node)) setFabOpen(false)
+    }
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setFabOpen(false) }
+    document.addEventListener('mousedown', handlePointer)
+    document.addEventListener('keydown', handleKey)
+    return () => {
+      document.removeEventListener('mousedown', handlePointer)
+      document.removeEventListener('keydown', handleKey)
+    }
+  }, [fabOpen])
 
   const weekDates = useMemo(() => lastNDates(INSIGHT_WINDOW_DAYS, home.today), [home.today])
   const windowDates = useMemo(() => lastNDates(HOME_WINDOW_DAYS, home.today), [home.today])
@@ -194,6 +210,43 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
         dateIso={home.today}
         onQuickAdd={handleQuickAdd}
       />
+
+      {/* Mobile FAB — fixed bottom-right, hidden on desktop via CSS */}
+      {fabOpen && <div className="home-fab-overlay" onClick={() => setFabOpen(false)} aria-hidden="true" />}
+      {fabOpen && (
+        <div className="home-fab-actions" role="menu">
+          {([
+            ['task', CheckSquare, 'Task'],
+            ['meal', Utensils, 'Meal'],
+            ['water', Droplets, 'Water +250ml'],
+            ['win', Trophy, 'Win'],
+            ['thought', MessageCircle, 'Thought'],
+            ['learning', Lightbulb, 'Learning'],
+          ] as const).map(([action, Icon, label]) => (
+            <button
+              key={action}
+              type="button"
+              role="menuitem"
+              className="home-fab-action"
+              onClick={() => { setFabOpen(false); handleQuickAdd(action) }}
+            >
+              <Icon size={15} /> {label}
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="home-fab" ref={fabRef}>
+        <button
+          type="button"
+          className={`home-fab-btn${fabOpen ? ' is-open' : ''}`}
+          aria-haspopup="menu"
+          aria-expanded={fabOpen}
+          aria-label="Quick add"
+          onClick={() => setFabOpen((o) => !o)}
+        >
+          <Plus size={20} />
+        </button>
+      </div>
 
       {isFirstRun && (
         <section className="home-card home-card--welcome" aria-label="Welcome">

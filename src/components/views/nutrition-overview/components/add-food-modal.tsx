@@ -424,18 +424,10 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
             <div className="form-row-macros">
               <div className="form-group" style={{ flex: 1 }}>
                 <label>Meal Type</label>
-                <div className="af-meal-toggles">
-                  {MEAL_TYPES.map(t => (
-                    <button
-                      key={t}
-                      type="button"
-                      className={`af-meal-toggle ${mealType === t ? 'active' : ''}`}
-                      onClick={() => setMealType(t)}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
+                <select value={mealType} onChange={e => setMealType(e.target.value)}>
+                  <option value="" disabled>Select…</option>
+                  {MEAL_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
               </div>
               <div className="form-group">
                 <label>Date</label>

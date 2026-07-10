@@ -76,11 +76,6 @@ function SleepCard({ loading, failed, entries, today, onLog, onRetry }: SleepCar
       <Moon className="home-card-glyph" aria-hidden="true" />
       <header className="home-card-head">
         <span className="home-card-eyebrow">Sleep</span>
-        {!formOpen && (
-          <button type="button" className="home-btn-primary" onClick={() => setFormOpen(true)}>
-            <Plus size={13} /> Log sleep
-          </button>
-        )}
       </header>
 
       {loading ? (
