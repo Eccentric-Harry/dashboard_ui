@@ -8,7 +8,7 @@ import paneerCurry from '../../../../assets/food/pastel/paratha_1783622072239.pn
 import vegCurryRice from '../../../../assets/food/pastel/curry_rice_1783621652075.png'
 import indianThali from '../../../../assets/food/pastel/indian_thali_1783621675714.png'
 import oatsPorridge from '../../../../assets/food/pastel/oats_bowl_1783621691705.png'
-import muesliBowl from '../../../../assets/food/pastel/muesli_bowl_1783621766237.png'
+
 import pancakeStack from '../../../../assets/food/pastel/pancake_stack_1783621702337.png'
 import frenchToast from '../../../../assets/food/pastel/french_toast_1783621755953.png'
 import chocolateDark from '../../../../assets/food/pastel/chocolate_dark_1783621777444.png'
