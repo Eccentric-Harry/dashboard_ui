@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Moon, Plus } from 'lucide-react'
+import { Moon } from 'lucide-react'
 import type { SleepEntry, SleepEntryPayload } from '../../../../lib/api'
 import { cn } from '../../../../lib/utils'
 import {

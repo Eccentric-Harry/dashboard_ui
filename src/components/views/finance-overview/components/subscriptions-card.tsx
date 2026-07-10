@@ -142,6 +142,15 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
         boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
       }
     }
+    if (s.includes('claude') || s.includes('anthropic')) {
+      return {
+        background: '#fff0eb',
+        color: '#d97757',
+        border: 'none',
+        borderRadius: '10px',
+        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
+      }
+    }
     return {
       background: '#f5f2ff',
       color: '#8b5cf6',
@@ -214,6 +223,16 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
         <svg viewBox="0 0 24 24" width="18" height="18" style={{ display: 'block' }}>
           <rect x="2" y="2" width="20" height="20" rx="3" fill="#111111" />
           <path d="M8 7v10M8 7l4 5.5L16 7v10" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        </svg>
+      )
+    }
+    if (s.includes('claude') || s.includes('anthropic')) {
+      return (
+        <svg viewBox="0 0 46 46" width="18" height="18" style={{ display: 'block' }} fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M32.73 6h-5.324L38.666 40h5.324L32.73 6Z" fill="#d97757"/>
+          <path d="M20.575 6h-5.324L26.51 40h5.325L20.575 6Z" fill="#d97757"/>
+          <path d="M2 29.804h21.095v-5H2v5Z" fill="#d97757"/>
+          <path d="M14.153 16.196h21.095v-5H14.153v5Z" fill="#d97757"/>
         </svg>
       )
     }
