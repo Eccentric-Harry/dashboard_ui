@@ -10,7 +10,7 @@ type TrendPoint = {
   target: number
 }
 
-const PROTEIN_TARGET = 100
+const FALLBACK_PROTEIN_TARGET = 100
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function CustomTooltip({ active, payload, label }: any) {
@@ -62,6 +62,13 @@ function ProteinTrendCard() {
     return proteinGoal?.value || 0
   }, [data?.health?.circularGoals])
 
+  const proteinTarget = useMemo(() => {
+    const circularGoals = data?.health?.circularGoals || []
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const proteinGoal = (circularGoals as any[]).find((g) => g.label === 'Protein')
+    return Number(proteinGoal?.target) || FALLBACK_PROTEIN_TARGET
+  }, [data?.health?.circularGoals])
+
   useEffect(() => {
     let cancelled = false
 
@@ -83,7 +90,7 @@ function ProteinTrendCard() {
                 day: dayName,
                 dateStr,
                 grams: summary.dailyProtein[dateStr],
-                target: PROTEIN_TARGET
+                target: FALLBACK_PROTEIN_TARGET
               }
             })
 
@@ -93,11 +100,19 @@ function ProteinTrendCard() {
             day: parseIsoDate(selectedDate).toLocaleDateString('en-US', { weekday: 'short' }),
             dateStr: selectedDate,
             grams: todayProtein,
-            target: PROTEIN_TARGET
+            target: FALLBACK_PROTEIN_TARGET
           }])
         }
       } catch (err) {
         console.error("Failed to load trend", err)
+        if (!cancelled) {
+          setTrendData([{
+            day: parseIsoDate(selectedDate).toLocaleDateString('en-US', { weekday: 'short' }),
+            dateStr: selectedDate,
+            grams: todayProtein,
+            target: FALLBACK_PROTEIN_TARGET
+          }])
+        }
       } finally {
         if (!cancelled) setIsLoading(false)
       }
@@ -143,7 +158,7 @@ function ProteinTrendCard() {
   const latestPoint = displayTrend[displayTrend.length - 1]
   const weeklyTotal = displayTrend.reduce((sum, point) => sum + point.grams, 0)
   const avgGrams = Math.round(weeklyTotal / displayTrend.length)
-  const daysOnTarget = displayTrend.filter(p => p.grams >= PROTEIN_TARGET).length
+  const daysOnTarget = displayTrend.filter(p => p.grams >= proteinTarget).length
 
   // emphasise only the latest point — the line stays clean
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -186,7 +201,7 @@ function ProteinTrendCard() {
           </div>
           <div className="ntr-tap-stat">
             <span>on track</span>
-            <b>{daysOnTarget}/7</b>
+            <b>{daysOnTarget}/{displayTrend.length}</b>
           </div>
         </div>
       </div>
@@ -214,7 +229,7 @@ function ProteinTrendCard() {
                 padding={{ left: 14, right: 14 }}
               />
               <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(23, 27, 21, 0.14)', strokeWidth: 1, strokeDasharray: '4 5' }} />
-              <ReferenceLine y={PROTEIN_TARGET} stroke="rgba(23, 27, 21, 0.16)" strokeDasharray="5 6" label={{ position: 'insideTopRight', value: `TARGET ${PROTEIN_TARGET}G`, fill: 'rgba(23, 27, 21, 0.38)', fontSize: 8.5, fontWeight: 800, letterSpacing: '0.06em' }} />
+              <ReferenceLine y={proteinTarget} stroke="rgba(23, 27, 21, 0.16)" strokeDasharray="5 6" label={{ position: 'insideTopRight', value: `TARGET ${proteinTarget}G`, fill: 'rgba(23, 27, 21, 0.38)', fontSize: 8.5, fontWeight: 800, letterSpacing: '0.06em' }} />
               <Area
                 type="natural"
                 dataKey="grams"

@@ -1913,22 +1913,90 @@
   color: var(--ntr-aqua-deep);
 }
 
-/* Mobile adjustments for new panels */
+/* Mobile adjustments for new panels + compact hero */
 @media (max-width: 768px) {
-  .ntr-trend-accent-panel {
-    flex-wrap: wrap;
-    gap: 10px;
+  /* ── Hero: smaller arc gauge ── */
+  .ntr-gauge svg {
+    width: min(100%, 140px);
   }
 
-  .ntr-tap-stats {
-    flex-wrap: wrap;
+  .ntr-gauge-center strong {
+    font-size: 27px;
+  }
+
+  /* ── Hero: horizontal macro chips instead of tall stacked bars ── */
+  .ntr-hero-macros {
+    flex-direction: row;
     gap: 6px;
   }
 
+  .ntr-macro-row {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 8px;
+    gap: 4px;
+  }
+
+  .ntr-macro-row.priority .ntr-macro-bar {
+    height: 5px;
+  }
+
+  .ntr-macro-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+  }
+
+  .ntr-macro-header p {
+    font-size: 9.5px;
+  }
+
+  .ntr-macro-header strong {
+    font-size: 12px;
+  }
+
+  /* Hide "/160g" target on compact chips — the bar shows progress */
+  .ntr-macro-header strong em {
+    display: none;
+  }
+
+  /* ── Trend: taller card so chart has room below the accent panel ── */
+  .ntr-trend {
+    height: 390px;
+  }
+
+  .ntr-trend-chart {
+    min-height: 140px;
+  }
+
+  /* Accent panel: stay single row, tighter tiles */
+  .ntr-trend-accent-panel {
+    gap: 8px;
+    padding: 12px 14px;
+  }
+
+  .ntr-tap-big strong {
+    font-size: 28px;
+  }
+
+  .ntr-tap-stat {
+    padding: 6px 8px;
+  }
+
+  .ntr-tap-stat b {
+    font-size: 12px;
+  }
+
+  .ntr-tap-stat span {
+    font-size: 7.5px;
+  }
+
+  /* ── Meals accent panel margin ── */
   .ntr-meals-accent-panel {
     margin: 0 16px 8px;
   }
 
+  /* ── Hydration panel: column → bottle on top, tiles in a row below ── */
   .ntr-hydro-bottle-wrap {
     flex-direction: column;
     gap: 10px;
