@@ -942,6 +942,23 @@
   margin-top: auto;
 }
 
+/* Watery button overrides for hydration card */
+.ntr-hydro-btns .ntr-soft-btn {
+  background: rgba(42, 134, 255, 0.08);
+  color: #1e71dd;
+  box-shadow: none;
+}
+
+.ntr-hydro-btns .ntr-soft-btn:hover:not(:disabled) {
+  background: rgba(42, 134, 255, 0.15);
+  box-shadow: 0 4px 14px rgba(42, 134, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.ntr-hydro-btns .ntr-soft-btn:active:not(:disabled) {
+  transform: scale(0.96) translateY(0);
+}
+
 .ntr-soft-btn {
   display: inline-flex;
   align-items: center;
