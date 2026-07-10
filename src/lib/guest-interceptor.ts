@@ -145,6 +145,72 @@ const guestAddDays = (iso: string, days: number) => {
   return guestIso(d);
 };
 
+// ── Home route (guest, in-memory) ──────────────────────────────────────────
+// Six seeded nights (today left unlogged so "Add last night" is demo-able).
+// Sleep, focus, and mood are deliberately correlated so the insights digest
+// has real patterns to find in guest mode.
+interface GuestSleepEntry {
+  id: string;
+  date: string;
+  bedtime: string;
+  wakeTime: string;
+  durationMinutes: number;
+  quality?: number | null;
+  note?: string | null;
+  source: string;
+}
+
+const guestSleepDuration = (bedtime: string, wakeTime: string): number => {
+  const [bh, bm] = String(bedtime || '23:00').split(':').map(Number);
+  const [wh, wm] = String(wakeTime || '07:00').split(':').map(Number);
+  let minutes = wh * 60 + wm - (bh * 60 + bm);
+  if (minutes <= 0) minutes += 24 * 60;
+  return minutes;
+};
+
+const guestSleepSeed: Array<[number, string, string, number]> = [
+  [-6, '23:45', '07:15', 4],
+  [-5, '01:30', '07:00', 2],
+  [-4, '23:15', '06:45', 4],
+  [-3, '00:45', '06:30', 3],
+  [-2, '23:30', '07:20', 5],
+  [-1, '01:15', '07:45', 3],
+];
+
+let guestSleepEntries: GuestSleepEntry[] = guestSleepSeed.map(([offset, bedtime, wakeTime, quality], i) => ({
+  id: `sleep-guest-seed-${i}`,
+  date: guestAddDays(guestToday, offset),
+  bedtime,
+  wakeTime,
+  durationMinutes: guestSleepDuration(bedtime, wakeTime),
+  quality,
+  note: null,
+  source: 'manual',
+}));
+
+const guestMoodSeed: Array<[number, number]> = [[-6, 4], [-5, 2], [-4, 4], [-3, 3], [-2, 5], [-1, 3]];
+const guestMoodLogs = guestMoodSeed.map(([offset, moodScore]) => ({
+  id: `daily-log-guest-${offset}`,
+  date: guestAddDays(guestToday, offset),
+  moodScore,
+  moodNote: null,
+}));
+
+const guestFocusSeed: Array<[number, number, number]> = [
+  [-6, 120, 3],
+  [-5, 35, 1],
+  [-4, 95, 2],
+  [-3, 45, 1],
+  [-2, 140, 3],
+  [-1, 60, 2],
+  [0, 25, 1],
+];
+const guestFocusHistory = guestFocusSeed.map(([offset, totalMinutes, sessions]) => ({
+  date: guestAddDays(guestToday, offset),
+  totalMinutes,
+  sessions,
+}));
+
 let mindEntries: GuestMindEntry[] = [
   { id: 'mg-1', type: 'THOUGHT', text: "I'll never be good enough for a senior role.", status: 'OPEN', date: guestToday, createdAt: new Date().toISOString() },
   { id: 'mg-2', type: 'THOUGHT', text: 'Everyone at standup could tell I was nervous.', status: 'OPEN', date: guestToday, createdAt: new Date().toISOString() },
@@ -358,13 +424,28 @@ export function enableGuestInterceptor() {
       return respondWith({ data: dummyWorkoutsData });
     }
     
-    // Nutrition: Protein trend summary (used by ProteinTrendCard via fetchNutritionSummary)
+    // Nutrition: trend summary (ProteinTrendCard + Home hero via fetchNutritionSummary)
     if (urlStr.includes('/api/v1/dashboard/nutrition-summary')) {
       const dailyProtein: Record<string, number> = {};
+      const dailyCalories: Record<string, number> = {};
       dummyNutritionHistory.forEach(day => {
         dailyProtein[day.date] = day.dailyMetrics.macroBreakdown.protein.logged;
+        dailyCalories[day.date] = day.dailyMetrics.caloriesConsumed;
       });
-      return respondWith({ data: { dailyProtein } });
+      const summaryDate = urlObj.searchParams.get('date') || guestToday;
+      const summaryDay = dummyNutritionHistory.find(d => d.date === summaryDate) || dummyNutritionHistory[dummyNutritionHistory.length - 1];
+      return respondWith({
+        data: {
+          date: summaryDate,
+          dailyProtein,
+          dailyCalories,
+          mealTypeBreakdown: {},
+          todayTotalCalories: summaryDay.dailyMetrics.caloriesConsumed,
+          todayTotalProtein: summaryDay.dailyMetrics.macroBreakdown.protein.logged,
+          calorieGoal: summaryDay.dailyMetrics.calorieGoal,
+          proteinGoal: summaryDay.dailyMetrics.macroBreakdown.protein.target,
+        },
+      });
     }
 
     // Health: Food entries (used by FoodLogCard, MacroBalanceCard, NutritionHeader via fetchFoodEntries)
@@ -441,6 +522,73 @@ export function enableGuestInterceptor() {
           progress: Math.min(100, Math.round((totalMl / 4000) * 100))
         }
       });
+    }
+
+    // Finance: month spending summary (Home rollup + insights via fetchSpendingSummary)
+    if (urlStr.includes('/api/v1/dashboard/spending-summary')) {
+      const month = urlObj.searchParams.get('month') || guestToday.slice(0, 7);
+      const monthLogs = dummyFinanceLogs.filter(l => l.date.startsWith(month));
+      const totalSpent = monthLogs.reduce((sum, l) => sum + (l.dailyTotals?.totalExpense || 0), 0) || 12450;
+      const monthlyBudget = 20000;
+      return respondWith({
+        data: {
+          month,
+          totalSpent,
+          monthlyBudget,
+          budgetRemaining: monthlyBudget - totalSpent,
+          budgetUtilization: (totalSpent / monthlyBudget) * 100,
+          categoryBreakdown: {},
+        },
+      });
+    }
+
+    // ── Home route: sleep, mood range, focus history ─────────────────────
+    if (urlStr.includes('/api/v1/sleep')) {
+      const method = (args[1]?.method || 'GET').toUpperCase();
+      const bodyOf = () => JSON.parse(typeof args[1]?.body === 'string' ? args[1].body : '{}');
+
+      if (method === 'POST' || method === 'PUT') {
+        const body = bodyOf();
+        const duration = guestSleepDuration(body.bedtime, body.wakeTime);
+        const existing = guestSleepEntries.find(e => e.date === body.date);
+        if (existing) {
+          Object.assign(existing, body, { durationMinutes: duration, source: body.source || 'manual' });
+          return respondWith({ data: existing });
+        }
+        const entry = {
+          id: `sleep-guest-${Date.now()}`,
+          date: body.date,
+          bedtime: body.bedtime,
+          wakeTime: body.wakeTime,
+          durationMinutes: duration,
+          quality: body.quality ?? null,
+          note: body.note ?? null,
+          source: body.source || 'manual',
+        };
+        guestSleepEntries.push(entry);
+        guestSleepEntries.sort((a, b) => a.date.localeCompare(b.date));
+        return respondWith({ data: entry });
+      }
+      if (method === 'DELETE') {
+        const idMatch = urlStr.match(/\/sleep\/([^/?]+)/);
+        guestSleepEntries = guestSleepEntries.filter(e => e.id !== idMatch?.[1]);
+        return respondWith({ data: null });
+      }
+      const start = urlObj.searchParams.get('startDate') || '0000-01-01';
+      const end = urlObj.searchParams.get('endDate') || '9999-12-31';
+      return respondWith({ data: guestSleepEntries.filter(e => e.date >= start && e.date <= end) });
+    }
+
+    if (urlStr.includes('/api/v1/daily-log/range')) {
+      const start = urlObj.searchParams.get('startDate') || '0000-01-01';
+      const end = urlObj.searchParams.get('endDate') || '9999-12-31';
+      return respondWith({ data: guestMoodLogs.filter(m => m.date >= start && m.date <= end) });
+    }
+
+    if (urlStr.includes('/api/v1/focus/history')) {
+      const start = urlObj.searchParams.get('startDate') || '0000-01-01';
+      const end = urlObj.searchParams.get('endDate') || '9999-12-31';
+      return respondWith({ data: guestFocusHistory.filter(f => f.date >= start && f.date <= end) });
     }
 
     // Learnings: logs (used by LearningsLogCard, CategoryBreakdownCard, LearningsHeader, CalendarSelectorCard)

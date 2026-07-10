@@ -905,6 +905,102 @@ export interface DailyLog {
   date?: string;
   newLearnings?: string[];
   moodRating?: string;
+  moodScore?: number | null;
+  moodNote?: string | null;
+}
+
+export async function fetchDailyLogRange(startDate: string, endDate: string): Promise<ApiEnvelope<DailyLog[]>> {
+  const response = await fetch(`${API_BASE_URL}/daily-log/range?startDate=${startDate}&endDate=${endDate}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch daily logs in range');
+  }
+  return response.json();
+}
+
+// ─── Sleep API ────────────────────────────────────────────────────────
+// Mirrors the `sleep_logs` collection + SleepController. One entry per night,
+// keyed by the wake-up date. TODO: wearable sync will populate source: 'wearable'.
+
+export type SleepSource = 'manual' | 'wearable';
+
+export interface SleepEntry {
+  id: string;
+  date: string; // wake-up date, YYYY-MM-DD
+  bedtime: string; // HH:mm
+  wakeTime: string; // HH:mm
+  durationMinutes: number;
+  quality?: number | null; // 1–5
+  note?: string | null;
+  source: SleepSource;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface SleepEntryPayload {
+  date: string;
+  bedtime: string;
+  wakeTime: string;
+  quality?: number | null;
+  note?: string;
+  source?: SleepSource;
+}
+
+export async function fetchSleepEntries(startDate: string, endDate: string): Promise<ApiEnvelope<SleepEntry[]>> {
+  const response = await fetch(`${API_BASE_URL}/sleep?startDate=${startDate}&endDate=${endDate}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch sleep entries');
+  }
+  return response.json();
+}
+
+export async function logSleep(payload: SleepEntryPayload): Promise<ApiEnvelope<SleepEntry>> {
+  const response = await fetch(`${API_BASE_URL}/sleep`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to log sleep');
+  }
+  return response.json();
+}
+
+export async function updateSleepEntry(id: string, payload: SleepEntryPayload): Promise<ApiEnvelope<SleepEntry>> {
+  const response = await fetch(`${API_BASE_URL}/sleep/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to update sleep entry');
+  }
+  return response.json();
+}
+
+export async function deleteSleepEntry(id: string): Promise<ApiEnvelope<null>> {
+  const response = await fetch(`${API_BASE_URL}/sleep/${id}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to delete sleep entry');
+  }
+  return response.json();
+}
+
+// ─── Focus history (per-day completed minutes) ───────────────────────
+
+export interface FocusDaySummary {
+  date: string; // YYYY-MM-DD
+  totalMinutes: number;
+  sessions: number;
+}
+
+export async function fetchFocusHistory(startDate: string, endDate: string): Promise<ApiEnvelope<FocusDaySummary[]>> {
+  const response = await fetch(`${API_BASE_URL}/focus/history?startDate=${startDate}&endDate=${endDate}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch focus history');
+  }
+  return response.json();
 }
 
 // ─── Web Push Notification API ────────────────────────────────────────
