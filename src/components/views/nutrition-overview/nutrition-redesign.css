@@ -642,7 +642,7 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 6px;
+  gap: 0;
   min-height: 0;
   margin-top: 10px;
   padding-right: 4px;
@@ -707,10 +707,15 @@
   grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 12px;
-  padding: 9px 12px;
-  border: 1px solid transparent;
-  border-radius: 16px;
-  transition: background-color 0.18s ease, border-color 0.18s ease;
+  padding: 12px 6px;
+  border: none;
+  border-bottom: 1.5px solid var(--ntr-line);
+  border-radius: 0;
+  transition: background-color 0.18s ease, border-radius 0.18s ease;
+}
+
+.ntr-meal-row:last-child {
+  border-bottom: none;
 }
 
 .ntr-meal-row.clickable {
@@ -718,8 +723,9 @@
 }
 
 .ntr-meal-row.clickable:hover {
-  border-color: var(--ntr-line);
-  background: #fbfaf5;
+  border-bottom-color: transparent;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 12px;
 }
 
 .ntr-meal-ic {
