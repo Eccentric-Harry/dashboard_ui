@@ -1429,7 +1429,9 @@
   }
 
   .home-header-greeting {
-    padding-right: 64px; /* keep clear of the absolute mobile-profile-trigger */
+    align-items: center;
+    text-align: center;
+    padding-right: 0;
   }
 
   .home-header-greeting strong {

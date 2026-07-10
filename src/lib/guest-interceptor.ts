@@ -107,7 +107,7 @@ const enrichGuestMeal = (meal: { carbsGrams: number; fatGrams: number }, mealInd
 });
 
 // Guest finance account ("Total Balance") — a running balance moved by transactions.
-const financeAccount = { balance: 2450800 };
+const financeAccount: { balance: number; monthlyBudget: number } = { balance: 2450800, monthlyBudget: 20000 };
 
 // Guest subscriptions (in-memory).
 interface GuestSubscription { id: string; name: string; cost: number; billingDate: string | null }
@@ -911,6 +911,17 @@ export function enableGuestInterceptor() {
     }
 
     // Finance: account / Total Balance
+    if (urlStr.includes('/api/v1/finance/budget')) {
+      const method = (args[1]?.method || 'GET').toUpperCase();
+      if (method === 'PUT') {
+        const body = JSON.parse(typeof args[1]?.body === 'string' ? args[1].body : '{}');
+        if (typeof body.monthlyBudget === 'number') {
+          financeAccount.monthlyBudget = body.monthlyBudget;
+        }
+      }
+      return respondWith({ data: { balance: financeAccount.balance, monthlyBudget: financeAccount.monthlyBudget ?? 20000 } });
+    }
+
     if (urlStr.includes('/api/v1/finance/account')) {
       const method = (args[1]?.method || 'GET').toUpperCase();
       if (method === 'PUT') {
@@ -918,9 +929,9 @@ export function enableGuestInterceptor() {
         if (typeof body.balance === 'number') {
           financeAccount.balance = body.balance;
         }
-        return respondWith({ data: { balance: financeAccount.balance } });
+        return respondWith({ data: { balance: financeAccount.balance, monthlyBudget: financeAccount.monthlyBudget ?? 20000 } });
       }
-      return respondWith({ data: { balance: financeAccount.balance } });
+      return respondWith({ data: { balance: financeAccount.balance, monthlyBudget: financeAccount.monthlyBudget ?? 20000 } });
     }
 
     // Subscriptions CRUD

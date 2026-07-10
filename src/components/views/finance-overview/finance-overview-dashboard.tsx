@@ -9,13 +9,15 @@ import { RepaymentScheduleCard } from './components/repayment-schedule-card'
 import { TransactionsCard } from './components/transactions-card'
 import { AddTransactionModal } from './components/add-transaction-modal'
 import { EditBalanceModal } from './components/edit-balance-modal'
+import { EditBudgetModal } from './components/edit-budget-modal'
 import { LendingCard } from './components/lending-card'
 import { ConfirmDialog } from '../../ui/confirm-dialog'
 import { financeMetrics as fallbackMetrics } from './data'
 import { fetchDailyFinanceLogs, fetchFinanceAccount, deleteTransaction, deleteLendingRecord, type LendingRecord } from '../../../lib/api'
+import { fetchFinanceBudget } from '../../../lib/api'
 import type { DailyFinancialLog } from '../../../lib/api'
-import { 
-  ArrowUpRight, ArrowDownLeft, PiggyBank
+import {
+  ArrowUpRight, PiggyBank, Target
 } from 'lucide-react'
 import { getIconForCategory } from './utils'
 
@@ -26,7 +28,9 @@ function FinanceOverviewDashboard() {
   const isGuest = localStorage.getItem('isGuest') === 'true'
   const [logs, setLogs] = useState<DailyFinancialLog[]>([])
   const [balance, setBalance] = useState<number | null>(null)
+  const [monthlyBudget, setMonthlyBudget] = useState<number | null>(null)
   const [isEditBalanceOpen, setIsEditBalanceOpen] = useState(false)
+  const [isEditBudgetOpen, setIsEditBudgetOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
@@ -110,8 +114,14 @@ function FinanceOverviewDashboard() {
       setLoading(false)
     })
     fetchFinanceAccount()
-      .then((res) => setBalance(res.data?.balance ?? 0))
+      .then((res) => {
+        setBalance(res.data?.balance ?? 0)
+        setMonthlyBudget(res.data?.monthlyBudget ?? 20000)
+      })
       .catch(err => console.error('Failed to fetch balance:', err))
+    fetchFinanceBudget()
+      .then((res) => setMonthlyBudget(res.data?.monthlyBudget ?? 20000))
+      .catch(() => { /* non-critical */ })
   }
 
   useEffect(() => {
@@ -147,12 +157,12 @@ function FinanceOverviewDashboard() {
         icon: PiggyBank,
       },
       {
-        label: 'Monthly Income',
-        value: `₹${totalIncome.toLocaleString()}`,
+        label: 'Monthly Budget',
+        value: `₹${(monthlyBudget ?? 20000).toLocaleString()}`,
         cents: '',
-        change: '', 
+        change: '',
         tone: 'positive' as const,
-        icon: ArrowDownLeft,
+        icon: Target,
       },
       {
         label: 'Monthly Expenses',
@@ -284,7 +294,12 @@ function FinanceOverviewDashboard() {
             onEdit={() => setIsEditBalanceOpen(true)}
           />
           {metrics.map((metric) => (
-            <MetricCard key={metric.label} metric={metric} loading={loading} />
+            <MetricCard
+              key={metric.label}
+              metric={metric}
+              loading={loading}
+              onEdit={metric.label === 'Monthly Budget' ? () => setIsEditBudgetOpen(true) : undefined}
+            />
           ))}
         </div>
         <SpendingOverviewCard 
@@ -337,6 +352,13 @@ function FinanceOverviewDashboard() {
         currentBalance={balance ?? 0}
         onClose={() => setIsEditBalanceOpen(false)}
         onSuccess={(newBalance) => setBalance(newBalance)}
+      />
+
+      <EditBudgetModal
+        isOpen={isEditBudgetOpen}
+        currentBudget={monthlyBudget ?? 20000}
+        onClose={() => setIsEditBudgetOpen(false)}
+        onSuccess={(newBudget) => setMonthlyBudget(newBudget)}
       />
 
       <AddTransactionModal

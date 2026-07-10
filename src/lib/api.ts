@@ -448,6 +448,7 @@ export async function deleteTransaction(id: string) {
 // ─── Finance Account (Total Balance) ─────────────────────────────────
 export interface FinanceAccount {
   balance: number;
+  monthlyBudget: number;
 }
 
 export async function fetchFinanceAccount(): Promise<{ data: FinanceAccount }> {
@@ -466,6 +467,26 @@ export async function updateFinanceBalance(balance: number): Promise<{ data: Fin
   });
   if (!response.ok) {
     throw new Error('Failed to update balance');
+  }
+  return response.json();
+}
+
+export async function fetchFinanceBudget(): Promise<{ data: FinanceAccount }> {
+  const response = await fetch(`${API_BASE_URL}/finance/budget`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch budget');
+  }
+  return response.json();
+}
+
+export async function updateFinanceBudget(monthlyBudget: number): Promise<{ data: FinanceAccount }> {
+  const response = await fetch(`${API_BASE_URL}/finance/budget`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ monthlyBudget }),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to update budget');
   }
   return response.json();
 }

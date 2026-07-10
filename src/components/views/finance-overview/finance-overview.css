@@ -453,6 +453,40 @@
   color: #101312;
 }
 
+/* ── Balance card: monthly budget row ──────────────────────────────── */
+.finance-balance-budget-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  color: rgba(23, 28, 25, 0.52);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.finance-budget-edit-btn {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  background: transparent;
+  color: #526057;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease, background 0.2s ease;
+}
+
+.finance-balance-card:hover .finance-budget-edit-btn,
+.finance-budget-edit-btn:focus-visible {
+  opacity: 1;
+}
+
+.finance-budget-edit-btn:hover {
+  background: rgba(16, 19, 18, 0.08);
+  color: #101312;
+}
+
 /* ── Subscriptions: add / delete / empty ───────────────────────────── */
 .finance-sub-head-right {
   display: flex;
@@ -1823,13 +1857,18 @@
   }
 
   .form-row {
+    display: grid;
     grid-template-columns: 1fr;
     gap: 16px;
+    width: 100%;
   }
 
   .add-tx-category-date-row {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 10px;
+    width: 100%;
+    align-items: start;
   }
 
   .add-tx-category-date-row input,
@@ -1851,6 +1890,10 @@
   .add-tx-form input,
   .add-tx-form select {
     min-height: 44px;
+  }
+
+  .add-tx-form {
+    padding-bottom: 96px;
   }
 }
 
