@@ -391,19 +391,27 @@ function FoodLogCard({ onSelectEntry }: FoodLogCardProps) {
         </span>
       </div>
 
-      <div className="ntr-day-grid">
-        {/* Paginated Historical Food Logs (Yesterday and older) */}
-        {paginatedHistoricalLogs.map(({ dateValue, entries, totalProtein, totalCalories }) => (
-          <DailyLogCardInstance
-            key={dateValue}
-            dateValue={dateValue}
-            entries={entries}
-            totalProtein={totalProtein}
-            totalCalories={totalCalories}
-            onSelectEntry={onSelectEntry || (() => {})}
-          />
-        ))}
-      </div>
+      {paginatedHistoricalLogs.length === 0 ? (
+        <div className="ntr-empty-state" style={{ marginTop: '20px', padding: '40px 20px', textAlign: 'center', background: 'var(--ntr-cream)', borderRadius: '20px' }}>
+          <div style={{ fontSize: '32px', marginBottom: '12px', opacity: 0.8 }}>🍽️</div>
+          <h3 style={{ margin: '0 0 6px 0', fontSize: '15px', color: 'var(--ntr-ink)' }}>No food logs found</h3>
+          <p style={{ margin: 0, fontSize: '13px', color: 'var(--ntr-ink-soft)' }}>Your recent meal history will appear here once you start tracking.</p>
+        </div>
+      ) : (
+        <div className="ntr-day-grid">
+          {/* Paginated Historical Food Logs (Yesterday and older) */}
+          {paginatedHistoricalLogs.map(({ dateValue, entries, totalProtein, totalCalories }) => (
+            <DailyLogCardInstance
+              key={dateValue}
+              dateValue={dateValue}
+              entries={entries}
+              totalProtein={totalProtein}
+              totalCalories={totalCalories}
+              onSelectEntry={onSelectEntry || (() => {})}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Primary pagination control for historical daily cards */}
       {totalHistoryPages > 1 && (
