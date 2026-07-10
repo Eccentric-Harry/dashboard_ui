@@ -134,19 +134,19 @@ function HydrationCard() {
                 <path d={BOTTLE_PATH} />
               </clipPath>
               <linearGradient id="ntrWaterGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#8fd6c5" />
-                <stop offset="100%" stopColor="#3d9e8c" />
+                <stop offset="0%" stopColor="#7ac1ff" />
+                <stop offset="100%" stopColor="#2a86ff" />
               </linearGradient>
             </defs>
 
             {/* Flask silhouette */}
-            <path d={BOTTLE_PATH} fill="rgba(222, 240, 235, 0.5)" stroke="#c2ddd4" strokeWidth="2" />
+            <path d={BOTTLE_PATH} fill="rgba(230, 242, 255, 0.5)" stroke="#a8d1ff" strokeWidth="2" />
 
             {/* Water with layered animated waves + bubbles */}
             <g clipPath="url(#ntrBottleClip)">
               {fillPercent > 0 && (
                 <>
-                  <path d={wavePath(waterY + 4)} fill="#79c4b2" opacity="0.45" className="ntr-wave ntr-wave-back" />
+                  <path d={wavePath(waterY + 4)} fill="#5b9cf5" opacity="0.45" className="ntr-wave ntr-wave-back" />
                   <path d={wavePath(waterY)} fill="url(#ntrWaterGrad)" className="ntr-wave ntr-wave-front" />
                 </>
               )}
