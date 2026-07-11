@@ -102,7 +102,7 @@ function HomeHeader({ dateIso, onQuickAdd }: HomeHeaderProps) {
                 <Lightbulb size={14} /> Learning
               </button>
               <button type="button" role="menuitem" onClick={() => pick('sleep')}>
-                <Moon size={14} /> Sleep
+                <Moon size={14} /> Log Sleep
               </button>
             </div>
           )}

@@ -43,8 +43,8 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
   const { session: focusSession } = useFocus()
   const [sosOpen, setSosOpen] = useState(false)
   const [captureRequest, setCaptureRequest] = useState<{ mode: QuickCaptureMode; nonce: number } | null>(null)
-  const [sleepOpenRequest, setSleepOpenRequest] = useState(0)
   const [fabOpen, setFabOpen] = useState(false)
+  const [sleepFormNonce, setSleepFormNonce] = useState(0)
   const fabRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -156,7 +156,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
         return
       }
       if (action === 'sleep') {
-        setSleepOpenRequest((n) => n + 1)
+        setSleepFormNonce((n) => n + 1)
         document.querySelector('.home-card--sleep')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
         return
       }
@@ -228,7 +228,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
             ['win', Trophy, 'Win'],
             ['thought', MessageCircle, 'Thought'],
             ['learning', Lightbulb, 'Learning'],
-            ['sleep', Moon, 'Sleep'],
+            ['sleep', Moon, 'Log Sleep'],
           ] as const).map(([action, Icon, label]) => (
             <button
               key={action}
@@ -293,9 +293,9 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           failed={home.sleep.failed}
           entries={home.sleep.data}
           today={home.today}
+          openFormNonce={sleepFormNonce}
           onLog={handleLogSleep}
           onRetry={() => void home.reloadSleep()}
-          openRequest={sleepOpenRequest}
         />
 
         <InsightsCard

@@ -17,9 +17,9 @@ type SleepCardProps = {
   failed: boolean
   entries: SleepEntry[] | null
   today: string
+  openFormNonce?: number
   onLog: (payload: SleepEntryPayload) => Promise<void>
   onRetry: () => void
-  openRequest?: number
 }
 
 function qualityClass(quality?: number | null): string {
@@ -27,12 +27,12 @@ function qualityClass(quality?: number | null): string {
   return `q-${quality}`
 }
 
-function SleepCard({ loading, failed, entries, today, onLog, onRetry, openRequest }: SleepCardProps) {
+function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRetry }: SleepCardProps) {
   const [formOpen, setFormOpen] = useState(false)
 
   useEffect(() => {
-    if (openRequest) setFormOpen(true)
-  }, [openRequest])
+    if (openFormNonce) setFormOpen(true)
+  }, [openFormNonce])
   const [bedtime, setBedtime] = useState('23:30')
   const [wakeTime, setWakeTime] = useState('07:00')
   const [quality, setQuality] = useState<number>(3)

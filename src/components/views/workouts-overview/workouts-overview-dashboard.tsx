@@ -8,7 +8,6 @@ import {
   StravaEmbedCard,
   AddActivityModal,
   UpdateEmbedModal,
-  LogSleepModal
 } from './components'
 import { fetchStravaActivities, fetchStravaActivityStats } from '../../../lib/api'
 import type { StravaActivity, StravaActivityStats } from '../../../lib/api'
@@ -24,7 +23,6 @@ function WorkoutsOverviewDashboard() {
   const [loading, setLoading] = useState(true)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEmbedModalOpen, setIsEmbedModalOpen] = useState(false)
-  const [isSleepModalOpen, setIsSleepModalOpen] = useState(false)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [editingActivity, setEditingActivity] = useState<any>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -49,7 +47,7 @@ function WorkoutsOverviewDashboard() {
 
   return (
     <section className="workouts-dashboard" aria-label="Workouts overview dashboard">
-      <WorkoutsHeader onAddClick={() => setIsAddModalOpen(true)} onLogSleepClick={() => setIsSleepModalOpen(true)} />
+      <WorkoutsHeader onAddClick={() => setIsAddModalOpen(true)} />
       <div className="workouts-dashboard-grid">
         <div className="workouts-stats-row">
           <StatCard
@@ -113,12 +111,6 @@ function WorkoutsOverviewDashboard() {
         onClose={() => setIsEmbedModalOpen(false)}
         onSuccess={refreshData}
         currentEmbed={stats?.recentEmbeds?.[0]}
-      />
-
-      <LogSleepModal
-        isOpen={isSleepModalOpen}
-        onClose={() => setIsSleepModalOpen(false)}
-        onSuccess={refreshData}
       />
 
       <ConfirmDialog
