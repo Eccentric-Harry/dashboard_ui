@@ -43,6 +43,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
   const { session: focusSession } = useFocus()
   const [sosOpen, setSosOpen] = useState(false)
   const [captureRequest, setCaptureRequest] = useState<{ mode: QuickCaptureMode; nonce: number } | null>(null)
+  const [sleepOpenRequest, setSleepOpenRequest] = useState(0)
   const [fabOpen, setFabOpen] = useState(false)
   const fabRef = useRef<HTMLDivElement | null>(null)
 
@@ -154,6 +155,11 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
         onNavigate('/nutrition')
         return
       }
+      if (action === 'sleep') {
+        setSleepOpenRequest((n) => n + 1)
+        document.querySelector('.home-card--sleep')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        return
+      }
       setCaptureRequest((prev) => ({ mode: action, nonce: (prev?.nonce ?? 0) + 1 }))
       document.querySelector('.home-card--capture')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     },
@@ -222,6 +228,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
             ['win', Trophy, 'Win'],
             ['thought', MessageCircle, 'Thought'],
             ['learning', Lightbulb, 'Learning'],
+            ['sleep', Moon, 'Sleep'],
           ] as const).map(([action, Icon, label]) => (
             <button
               key={action}
@@ -288,6 +295,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           today={home.today}
           onLog={handleLogSleep}
           onRetry={() => void home.reloadSleep()}
+          openRequest={sleepOpenRequest}
         />
 
         <InsightsCard

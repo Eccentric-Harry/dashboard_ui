@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { CheckSquare, Droplets, Lightbulb, MessageCircle, Plus, Trophy, Utensils } from 'lucide-react'
+import { CheckSquare, Droplets, Lightbulb, MessageCircle, Moon, Plus, Trophy, Utensils } from 'lucide-react'
 import type { QuickCaptureMode } from './quick-capture-card'
 
 // One line per day — deterministic, gentle, never a demand.
@@ -13,7 +13,7 @@ const DAILY_LINES = [
   'Today only needs one good hour.',
 ]
 
-export type QuickAddAction = QuickCaptureMode | 'meal' | 'water'
+export type QuickAddAction = QuickCaptureMode | 'meal' | 'water' | 'sleep'
 
 type HomeHeaderProps = {
   dateIso: string
@@ -100,6 +100,9 @@ function HomeHeader({ dateIso, onQuickAdd }: HomeHeaderProps) {
               </button>
               <button type="button" role="menuitem" onClick={() => pick('learning')}>
                 <Lightbulb size={14} /> Learning
+              </button>
+              <button type="button" role="menuitem" onClick={() => pick('sleep')}>
+                <Moon size={14} /> Sleep
               </button>
             </div>
           )}

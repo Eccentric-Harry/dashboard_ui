@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Moon } from 'lucide-react'
 import type { SleepEntry, SleepEntryPayload } from '../../../../lib/api'
 import { cn } from '../../../../lib/utils'
@@ -19,6 +19,7 @@ type SleepCardProps = {
   today: string
   onLog: (payload: SleepEntryPayload) => Promise<void>
   onRetry: () => void
+  openRequest?: number
 }
 
 function qualityClass(quality?: number | null): string {
@@ -26,8 +27,12 @@ function qualityClass(quality?: number | null): string {
   return `q-${quality}`
 }
 
-function SleepCard({ loading, failed, entries, today, onLog, onRetry }: SleepCardProps) {
+function SleepCard({ loading, failed, entries, today, onLog, onRetry, openRequest }: SleepCardProps) {
   const [formOpen, setFormOpen] = useState(false)
+
+  useEffect(() => {
+    if (openRequest) setFormOpen(true)
+  }, [openRequest])
   const [bedtime, setBedtime] = useState('23:30')
   const [wakeTime, setWakeTime] = useState('07:00')
   const [quality, setQuality] = useState<number>(3)
