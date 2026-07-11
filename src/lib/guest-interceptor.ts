@@ -573,6 +573,37 @@ export function enableGuestInterceptor() {
       return respondWith({ data: entries });
     }
 
+    // Health: Hydration range (used by the nutrition insights engine via fetchHydrationRange)
+    if (urlStr.includes('/api/v1/health/hydration/range')) {
+      const overrides: Record<string, number> = JSON.parse(localStorage.getItem('guest_hydration_overrides') || '{}');
+      const daysParam = urlObj.searchParams.get('days');
+      const startDate = urlObj.searchParams.get('startDate');
+      const endDate = urlObj.searchParams.get('endDate');
+
+      let history = dummyNutritionHistory;
+      if (startDate) {
+        history = history.filter((d) => d.date >= startDate && (!endDate || d.date <= endDate));
+      } else if (daysParam) {
+        const n = parseInt(daysParam, 10);
+        if (!isNaN(n)) history = history.slice(-n);
+      } else {
+        history = history.slice(-14);
+      }
+
+      const records = history.map((day) => {
+        const baseMl = day.additionalInfo.hydrationLogs.reduce((sum, log) => sum + log.amountOunces * 29.5735, 0);
+        const totalMl = Math.max(0, baseMl + (overrides[day.date] || 0));
+        return {
+          date: day.date,
+          waterIntakeMl: Math.round(totalMl),
+          targetMl: 4000,
+          progress: Math.min(100, Math.round((totalMl / 4000) * 100)),
+        };
+      });
+
+      return respondWith({ data: records });
+    }
+
     // Health: Hydration (used by HydrationCard via fetchHydration)
     if (urlStr.includes('/api/v1/health/hydration')) {
       const method = (args[1]?.method || 'GET').toUpperCase();

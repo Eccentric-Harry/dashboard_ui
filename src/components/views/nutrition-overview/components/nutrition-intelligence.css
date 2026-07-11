@@ -59,10 +59,7 @@
 }
 
 .nutrition-dashboard.ntr .ntr-intel-grid > .ntr-intel-heatmap,
-.nutrition-dashboard.ntr .ntr-intel-grid > .ntr-intel-board {
-  grid-column: auto;
-}
-
+.nutrition-dashboard.ntr .ntr-intel-grid > .ntr-intel-board,
 .nutrition-dashboard.ntr .ntr-intel-grid > .ntr-intel-list {
   grid-column: 1 / -1;
 }
@@ -173,29 +170,12 @@
 .nutrition-dashboard.ntr .ntr-intel-tooltip {
   padding: 6px 10px;
   border-radius: 10px;
-  background: #171b15;
-  color: #a8f0b4;
+  border: 1px solid var(--ntr-line);
+  background: var(--ntr-card);
+  color: var(--ntr-ink);
   font-size: 12px;
   font-weight: 650;
-  box-shadow: 0 6px 16px rgba(23, 27, 21, 0.2);
-}
-
-.nutrition-dashboard.ntr .ntr-intel-cta {
-  align-self: flex-start;
-  padding: 7px 14px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--ntr-ink);
-  color: #f2f5ec;
-  font-size: 11px;
-  font-weight: 750;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.nutrition-dashboard.ntr .ntr-intel-cta:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 18px rgba(23, 27, 21, 0.18);
+  box-shadow: 0 6px 16px rgba(23, 27, 21, 0.12);
 }
 
 /* ── Side stack: ring + weeks ── */
@@ -213,6 +193,16 @@
 .nutrition-dashboard.ntr .ntr-intel-board,
 .nutrition-dashboard.ntr .ntr-intel-list {
   padding: 16px 18px;
+}
+
+.nutrition-dashboard.ntr .ntr-intel-list-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+  .nutrition-dashboard.ntr .ntr-intel-list-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .nutrition-dashboard.ntr .ntr-intel-ring-body {
@@ -340,7 +330,7 @@
   color: var(--ntr-ink-soft);
 }
 
-/* ── Adherence heatmap (aligned matrix) ── */
+/* ── Adherence bars (calories vs protein, each with a target line) ── */
 
 .nutrition-dashboard.ntr .ntr-intel-heat-head {
   display: flex;
@@ -350,96 +340,49 @@
   gap: 8px;
 }
 
-.nutrition-dashboard.ntr .ntr-intel-heat-matrix {
+.nutrition-dashboard.ntr .ntr-intel-bars {
   display: grid;
-  grid-template-columns: minmax(96px, auto) repeat(var(--heat-days, 14), minmax(12px, 1fr)) auto;
-  align-items: center;
-  gap: 7px 5px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
   margin-top: 14px;
 }
 
-.nutrition-dashboard.ntr .ntr-heat-dow {
-  text-align: center;
-  font-size: 8.5px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  color: var(--ntr-ink-faint);
-  text-transform: uppercase;
+@media (max-width: 700px) {
+  .nutrition-dashboard.ntr .ntr-intel-bars {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
-.nutrition-dashboard.ntr .ntr-heat-dow.is-today {
-  color: var(--ntr-ink);
+.nutrition-dashboard.ntr .ntr-intel-bar-panel {
+  min-width: 0;
 }
 
-.nutrition-dashboard.ntr .ntr-heat-label {
+.nutrition-dashboard.ntr .ntr-intel-bar-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.nutrition-dashboard.ntr .ntr-intel-bar-panel-label {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding-right: 8px;
-}
-
-.nutrition-dashboard.ntr .ntr-heat-label i {
-  display: grid;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 9px;
-  background: var(--ntr-lime-soft);
-  color: #55712a;
-}
-
-.nutrition-dashboard.ntr .ntr-heat-label span {
-  display: flex;
-  flex-direction: column;
-}
-
-.nutrition-dashboard.ntr .ntr-heat-label b {
-  font-size: 12px;
+  gap: 5px;
+  font-size: 11.5px;
   font-weight: 750;
   color: var(--ntr-ink);
 }
 
-.nutrition-dashboard.ntr .ntr-heat-label small {
+.nutrition-dashboard.ntr .ntr-intel-bar-panel-label small {
+  margin-left: 3px;
   font-size: 9px;
   font-weight: 600;
   color: var(--ntr-ink-soft);
 }
 
-.nutrition-dashboard.ntr .ntr-heat-tile {
-  display: block;
-  width: 100%;
-  aspect-ratio: 1;
-  max-width: 24px;
-  margin: 0 auto;
-  border-radius: 7px;
-  transition: transform 0.15s ease;
-}
-
-.nutrition-dashboard.ntr .ntr-heat-tile:hover {
-  transform: scale(1.18);
-}
-
-.nutrition-dashboard.ntr .ntr-heat-tile.hit,
-.nutrition-dashboard.ntr .ntr-intel-heat-legend i.hit {
-  background: linear-gradient(150deg, #96c283, #6b9a5d);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.45), 0 1px 2px rgba(78, 111, 66, 0.25);
-}
-
-.nutrition-dashboard.ntr .ntr-heat-tile.miss,
-.nutrition-dashboard.ntr .ntr-intel-heat-legend i.miss {
-  background: linear-gradient(150deg, rgba(228, 160, 68, 0.5), rgba(217, 119, 6, 0.32));
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4);
-}
-
-.nutrition-dashboard.ntr .ntr-heat-tile.empty,
-.nutrition-dashboard.ntr .ntr-intel-heat-legend i.empty {
-  background: transparent;
-  box-shadow: inset 0 0 0 1.5px rgba(23, 27, 21, 0.13);
-}
-
-.nutrition-dashboard.ntr .ntr-heat-tile.is-today {
-  outline: 2px solid rgba(23, 27, 21, 0.35);
-  outline-offset: 1.5px;
+.nutrition-dashboard.ntr .ntr-intel-bar-chart {
+  height: 128px;
 }
 
 .nutrition-dashboard.ntr .ntr-heat-score {
@@ -471,6 +414,19 @@
   border-radius: 4px;
 }
 
+.nutrition-dashboard.ntr .ntr-intel-heat-legend i.calories {
+  background: #e0954c;
+}
+
+.nutrition-dashboard.ntr .ntr-intel-heat-legend i.protein {
+  background: #7e9c2c;
+}
+
+.nutrition-dashboard.ntr .ntr-intel-heat-legend i.target {
+  border-radius: 0;
+  background: repeating-linear-gradient(90deg, rgba(23, 27, 21, 0.5) 0 4px, transparent 4px 7px);
+}
+
 .nutrition-dashboard.ntr .ntr-intel-heat-legend span {
   display: inline-flex;
   align-items: center;
@@ -480,17 +436,11 @@
   color: var(--ntr-ink-soft);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .nutrition-dashboard.ntr .ntr-heat-tile {
-    transition: none;
-  }
-}
-
 /* ── Leaderboard ── */
 
 .nutrition-dashboard.ntr .ntr-intel-board-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 9px;
   margin: 12px 0 0;
   padding: 0;
@@ -607,16 +557,7 @@
     font-size: 34px;
   }
 
-  .nutrition-dashboard.ntr .ntr-intel-heat-matrix {
-    grid-template-columns: minmax(64px, auto) repeat(var(--heat-days, 14), minmax(7px, 1fr)) auto;
-    gap: 7px 3px;
-  }
-
-  .nutrition-dashboard.ntr .ntr-heat-label i {
-    display: none;
-  }
-
-  .nutrition-dashboard.ntr .ntr-heat-label small {
+  .nutrition-dashboard.ntr .ntr-intel-bar-panel-label small {
     display: none;
   }
 

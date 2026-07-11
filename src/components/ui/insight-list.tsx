@@ -10,6 +10,7 @@ import {
   CalendarCheck,
   ChevronDown,
   Clock,
+  Droplet,
   Flame,
   HandCoins,
   Nut,
@@ -44,6 +45,7 @@ const ICONS: Record<InsightIcon, LucideIcon> = {
   trophy: Trophy,
   log: PencilLine,
   income: Banknote,
+  hydration: Droplet,
 }
 
 const SENTIMENT_LABEL: Record<Insight['sentiment'], string> = {

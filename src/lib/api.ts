@@ -355,6 +355,20 @@ export async function fetchHydration(date?: string) {
   return response.json();
 }
 
+/** One hydration record per day over the window — powers the hydration insight rule. */
+export async function fetchHydrationRange(days?: number, startDate?: string, endDate?: string) {
+  const params = new URLSearchParams();
+  if (startDate) params.append('startDate', startDate);
+  if (endDate) params.append('endDate', endDate);
+  if (!startDate && days) params.append('days', days.toString());
+  const query = params.toString() ? `?${params.toString()}` : '';
+  const response = await fetch(`${API_BASE_URL}/health/hydration/range${query}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch hydration range');
+  }
+  return response.json();
+}
+
 export async function addWaterIntake(amount: number, date?: string) {
   const params = new URLSearchParams();
   params.append('amount', amount.toString());

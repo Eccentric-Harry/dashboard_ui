@@ -3,13 +3,14 @@
 // heatmap, protein-efficiency leaderboard, and the Patterns-style insight
 // rows. All math lives in lib/insights; this file only fetches and renders.
 
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Flame, Leaf, Nut, RefreshCw } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Flame, Leaf, RefreshCw } from 'lucide-react'
 import { cn } from '../../../../lib/utils'
 import {
   Area,
   AreaChart,
+  Bar,
+  BarChart,
   Cell,
   Pie,
   PieChart,
@@ -17,8 +18,9 @@ import {
   ResponsiveContainer,
   Tooltip,
   XAxis,
+  YAxis,
 } from 'recharts'
-import { fetchFoodEntries, fetchNutritionSummary, getUserProfile } from '../../../../lib/api'
+import { fetchFoodEntries, fetchHydrationRange, fetchNutritionSummary, getUserProfile } from '../../../../lib/api'
 import type { UserProfile } from '../../../../lib/api'
 import type { Insight } from '../../../../lib/insights/engine'
 import { isoDate, shortDay } from '../../../../lib/insights/engine'
@@ -32,7 +34,7 @@ import {
   proteinLeaderboard,
   weekComparison,
 } from '../../../../lib/insights/nutrition'
-import type { FoodEntryLike, NutritionEngineInput } from '../../../../lib/insights/nutrition'
+import type { AdherenceDay, FoodEntryLike, HydrationDayLike, NutritionEngineInput } from '../../../../lib/insights/nutrition'
 import { useCountUp } from '../../../../hooks/use-count-up'
 import { InsightList } from '../../../ui/insight-list'
 import './nutrition-intelligence.css'
@@ -50,6 +52,16 @@ const extractEntries = (response: unknown): FoodEntryLike[] => {
   if (payload?.data && Array.isArray(payload.data.foodEntries)) return payload.data.foodEntries
   if (Array.isArray(payload?.entries)) return payload.entries
   return []
+}
+
+const extractHydration = (response: unknown): HydrationDayLike[] => {
+  const payload = response as { data?: { date: string; waterIntakeMl?: number; targetMl?: number }[] }
+  if (!Array.isArray(payload?.data)) return []
+  return payload.data.map((d) => ({
+    date: d.date,
+    waterIntakeMl: d.waterIntakeMl ?? 0,
+    targetMl: d.targetMl ?? 0,
+  }))
 }
 
 interface GoalFallback {
@@ -70,6 +82,7 @@ function NutritionIntelligence() {
   const [entries, setEntries] = useState<FoodEntryLike[] | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [goalFallback, setGoalFallback] = useState<GoalFallback>({})
+  const [hydration, setHydration] = useState<HydrationDayLike[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [failed, setFailed] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
@@ -83,10 +96,11 @@ function NutritionIntelligence() {
   const load = useCallback(async () => {
     setLoading(true)
     setFailed(false)
-    const [entriesRes, profileRes, summaryRes] = await Promise.allSettled([
+    const [entriesRes, profileRes, summaryRes, hydrationRes] = await Promise.allSettled([
       fetchFoodEntries(WINDOW_DAYS),
       getUserProfile(),
       fetchNutritionSummary(today),
+      fetchHydrationRange(WINDOW_DAYS),
     ])
     if (entriesRes.status === 'fulfilled') {
       setEntries(extractEntries(entriesRes.value))
@@ -101,6 +115,8 @@ function NutritionIntelligence() {
       const summary = (summaryRes.value as { data?: GoalFallback })?.data
       setGoalFallback({ proteinGoal: summary?.proteinGoal, calorieGoal: summary?.calorieGoal })
     }
+    // Hydration is a nice-to-have for the insights list — never blocks the section.
+    setHydration(hydrationRes.status === 'fulfilled' ? extractHydration(hydrationRes.value) : null)
     setLoading(false)
   }, [today])
 
@@ -126,8 +142,9 @@ function NutritionIntelligence() {
         null,
       tdee: profile?.tdee ?? null,
       fitnessGoal: profile?.fitnessGoal ?? null,
+      hydration,
     }
-  }, [entries, profile, goalFallback, today])
+  }, [entries, profile, goalFallback, hydration, today])
 
   // Memoized on the data window — recomputes only when data changes or on ↻.
   const derived = useMemo(() => {
@@ -138,7 +155,7 @@ function NutritionIntelligence() {
       split: macroSplit(input),
       adherence: adherenceDays(input, 14),
       weeks: weekComparison(input),
-      leaderboard: proteinLeaderboard(input, 3),
+      leaderboard: proteinLeaderboard(input, 6),
       loggedLast7: loggedDayCount(input, 7),
     }
   }, [input])
@@ -305,15 +322,6 @@ function NutritionIntelligence() {
                 </ResponsiveContainer>
               )}
             </div>
-            {!onTrack && leaderboard.length > 0 && (
-              <button
-                type="button"
-                className="ntr-intel-cta"
-                onClick={() => leaderboardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-              >
-                See high-protein foods you already eat →
-              </button>
-            )}
           </article>
         )}
 
@@ -393,33 +401,24 @@ function NutritionIntelligence() {
           )}
         </div>
 
-        {/* ── Adherence heatmap ── */}
+        {/* ── Adherence bars ── */}
         <article className="ntr-card ntr-intel-heatmap">
           <div className="ntr-intel-heat-head">
             <p className="ntr-eyebrow">Goal adherence · last 14 days</p>
             <div className="ntr-intel-heat-legend">
-              <span><i className="hit" /> hit</span>
-              <span><i className="miss" /> missed</span>
-              <span><i className="empty" /> not logged</span>
+              <span><i className="calories" /> calories</span>
+              <span><i className="protein" /> protein</span>
+              <span><i className="target" /> target</span>
             </div>
           </div>
-          <AdherenceMatrix
-            today={today}
-            rows={[
-              {
-                label: 'Calories',
-                hint: 'at/under target',
-                icon: Flame,
-                cells: adherence.map((d) => ({ date: d.date, hit: d.calorieHit, logged: d.logged })),
-              },
-              {
-                label: 'Protein',
-                hint: 'at/over goal',
-                icon: Nut,
-                cells: adherence.map((d) => ({ date: d.date, hit: d.proteinHit, logged: d.logged })),
-              },
-            ]}
-          />
+          {isMounted && (
+            <AdherenceBars
+              days={adherence}
+              today={today}
+              calorieTarget={input.calorieTarget}
+              proteinGoal={input.proteinGoal}
+            />
+          )}
         </article>
 
         {/* ── Protein efficiency leaderboard ── */}
@@ -448,7 +447,7 @@ function NutritionIntelligence() {
         {listInsights.length > 0 && (
           <article className="ntr-card ntr-intel-list">
             <p className="ntr-eyebrow">Patterns</p>
-            <InsightList insights={listInsights} onAction={handleAction} />
+            <InsightList insights={listInsights} onAction={handleAction} className="ntr-intel-list-grid" />
           </article>
         )}
       </div>
@@ -508,67 +507,148 @@ function WeekDelta({
   )
 }
 
-interface HeatCell {
-  date: string
-  hit: boolean | null
-  logged: boolean
-}
-
-interface HeatRowSpec {
-  label: string
-  hint: string
-  icon: LucideIcon
-  cells: HeatCell[]
-}
-
-/** Aligned day-by-metric matrix: weekday header, tinted tiles, per-row score. */
-function AdherenceMatrix({ rows, today }: { rows: HeatRowSpec[]; today: string }) {
-  const days = rows[0]?.cells ?? []
-  if (days.length === 0) return null
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const CALORIE_TOOLTIP = ({ active, payload }: any) => {
+  if (!active || !payload?.length) return null
+  const d = payload[0].payload as AdherenceDay
   return (
-    <div
-      className="ntr-intel-heat-matrix"
-      style={{ '--heat-days': days.length } as React.CSSProperties}
-      role="img"
-      aria-label="Daily goal adherence for calories and protein"
-    >
-      <span className="ntr-heat-corner" aria-hidden="true" />
-      {days.map((cell) => (
-        <span key={cell.date} className={cn('ntr-heat-dow', cell.date === today && 'is-today')}>
-          {shortDay(cell.date)[0]}
-        </span>
-      ))}
-      <span className="ntr-heat-corner" aria-hidden="true" />
-      {rows.map((row) => {
-        const scored = row.cells.filter((c) => c.hit != null)
-        const hits = scored.filter((c) => c.hit).length
-        const RowIcon = row.icon
-        return (
-          <Fragment key={row.label}>
-            <span className="ntr-heat-label">
-              <i><RowIcon size={12} /></i>
-              <span>
-                <b>{row.label}</b>
-                <small>{row.hint}</small>
-              </span>
-            </span>
-            {row.cells.map((cell) => (
-              <i
-                key={cell.date}
-                className={cn(
-                  'ntr-heat-tile',
-                  cell.hit == null ? 'empty' : cell.hit ? 'hit' : 'miss',
-                  cell.date === today && 'is-today',
-                )}
-                title={`${cell.date}: ${cell.hit == null ? (cell.logged ? 'no target set' : 'not logged') : cell.hit ? 'goal hit' : 'missed'}`}
+    <div className="ntr-intel-tooltip">
+      {d.logged ? `${Math.round(d.calories)} kcal` : 'not logged'}
+      {d.calorieTarget ? ` · target ${d.calorieTarget}` : ''}
+    </div>
+  )
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const PROTEIN_TOOLTIP = ({ active, payload }: any) => {
+  if (!active || !payload?.length) return null
+  const d = payload[0].payload as AdherenceDay
+  return (
+    <div className="ntr-intel-tooltip">
+      {d.logged ? `${Math.round(d.protein)}g protein` : 'not logged'}
+      {d.proteinGoal ? ` · goal ${d.proteinGoal}g` : ''}
+    </div>
+  )
+}
+
+/** Two stacked bar panels sharing the day axis: calories vs its target, protein vs its goal. */
+function AdherenceBars({
+  days,
+  today,
+  calorieTarget,
+  proteinGoal,
+}: {
+  days: AdherenceDay[]
+  today: string
+  calorieTarget: number | null
+  proteinGoal: number | null
+}) {
+  if (days.length === 0) return null
+  const calorieScored = days.filter((d) => d.calorieHit != null)
+  const calorieHits = calorieScored.filter((d) => d.calorieHit).length
+  const proteinScored = days.filter((d) => d.proteinHit != null)
+  const proteinHits = proteinScored.filter((d) => d.proteinHit).length
+
+  return (
+    <div className="ntr-intel-bars">
+      <div className="ntr-intel-bar-panel">
+        <div className="ntr-intel-bar-panel-head">
+          <span className="ntr-intel-bar-panel-label"><Flame size={11} /> Calories <small>at/under target</small></span>
+          <span className={cn('ntr-heat-score', calorieScored.length > 0 && calorieHits >= calorieScored.length / 2 && 'is-good')}>
+            {calorieScored.length > 0 ? `${calorieHits}/${calorieScored.length}` : '—'}
+          </span>
+        </div>
+        <div className="ntr-intel-bar-chart">
+          <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
+            <BarChart data={days} margin={{ top: 10, right: 8, left: 8, bottom: 0 }} barCategoryGap="28%">
+              <XAxis dataKey="date" hide />
+              <YAxis
+                hide
+                domain={[0, (max: number) => Math.max(max, calorieTarget ?? 0) * 1.15]}
               />
-            ))}
-            <span className={cn('ntr-heat-score', scored.length > 0 && hits >= scored.length / 2 && 'is-good')}>
-              {scored.length > 0 ? `${hits}/${scored.length}` : '—'}
-            </span>
-          </Fragment>
-        )
-      })}
+              <Tooltip content={<CALORIE_TOOLTIP />} cursor={{ fill: 'rgba(23, 27, 21, 0.05)' }} />
+              {calorieTarget && (
+                <ReferenceLine
+                  y={calorieTarget}
+                  stroke="rgba(23, 27, 21, 0.32)"
+                  strokeDasharray="5 5"
+                  label={{
+                    position: 'insideTopRight',
+                    value: `TARGET ${calorieTarget}`,
+                    fill: 'rgba(23, 27, 21, 0.5)',
+                    fontSize: 8.5,
+                    fontWeight: 800,
+                    letterSpacing: '0.06em',
+                  }}
+                />
+              )}
+              <Bar dataKey="calories" radius={[4, 4, 0, 0]} isAnimationActive={false}>
+                {days.map((d) => (
+                  <Cell
+                    key={d.date}
+                    fill={!d.logged ? 'rgba(23, 27, 21, 0.08)' : d.calorieHit === false ? 'rgba(224, 149, 76, 0.42)' : '#e0954c'}
+                    stroke={d.date === today ? 'rgba(23, 27, 21, 0.4)' : 'none'}
+                    strokeWidth={d.date === today ? 1.5 : 0}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className="ntr-intel-bar-panel">
+        <div className="ntr-intel-bar-panel-head">
+          <span className="ntr-intel-bar-panel-label"><Leaf size={11} /> Protein <small>at/over goal</small></span>
+          <span className={cn('ntr-heat-score', proteinScored.length > 0 && proteinHits >= proteinScored.length / 2 && 'is-good')}>
+            {proteinScored.length > 0 ? `${proteinHits}/${proteinScored.length}` : '—'}
+          </span>
+        </div>
+        <div className="ntr-intel-bar-chart">
+          <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
+            <BarChart data={days} margin={{ top: 10, right: 8, left: 8, bottom: 0 }} barCategoryGap="28%">
+              <XAxis
+                dataKey="date"
+                axisLine={false}
+                tickLine={false}
+                interval={1}
+                tickFormatter={(v: string) => shortDay(v)[0]}
+                tick={{ fill: 'rgba(23, 27, 21, 0.45)', fontSize: 9, fontWeight: 650 }}
+              />
+              <YAxis
+                hide
+                domain={[0, (max: number) => Math.max(max, proteinGoal ?? 0) * 1.15]}
+              />
+              <Tooltip content={<PROTEIN_TOOLTIP />} cursor={{ fill: 'rgba(23, 27, 21, 0.05)' }} />
+              {proteinGoal && (
+                <ReferenceLine
+                  y={proteinGoal}
+                  stroke="rgba(23, 27, 21, 0.32)"
+                  strokeDasharray="5 5"
+                  label={{
+                    position: 'insideTopRight',
+                    value: `GOAL ${proteinGoal}G`,
+                    fill: 'rgba(23, 27, 21, 0.5)',
+                    fontSize: 8.5,
+                    fontWeight: 800,
+                    letterSpacing: '0.06em',
+                  }}
+                />
+              )}
+              <Bar dataKey="protein" radius={[4, 4, 0, 0]} isAnimationActive={false}>
+                {days.map((d) => (
+                  <Cell
+                    key={d.date}
+                    fill={!d.logged ? 'rgba(23, 27, 21, 0.08)' : d.proteinHit === false ? 'rgba(126, 156, 44, 0.38)' : '#7e9c2c'}
+                    stroke={d.date === today ? 'rgba(23, 27, 21, 0.4)' : 'none'}
+                    strokeWidth={d.date === today ? 1.5 : 0}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
     </div>
   )
 }

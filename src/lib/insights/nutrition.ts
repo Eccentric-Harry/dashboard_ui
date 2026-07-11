@@ -2,9 +2,6 @@
 // history the routes already fetch (or the 7-day nutrition summary on Home);
 // output is threshold-gated `Insight[]` plus typed payloads for the
 // Nutrition Intelligence charts. All math lives here — UI only renders.
-//
-// TODO(seam): hydration adherence needs a ranged hydration endpoint
-// (GET /health/hydration is single-day); add a rule here once one exists.
 
 import type { Insight, InsightConfidence } from './engine'
 import {
@@ -47,6 +44,13 @@ export interface NutritionDay {
   logged: boolean
 }
 
+/** The subset of a hydration record the engine reads (see HydrationRecordDTO / api.ts). */
+export interface HydrationDayLike {
+  date: string
+  waterIntakeMl: number
+  targetMl: number
+}
+
 export interface NutritionEngineInput {
   today: string
   /** Ascending day series; build with buildNutritionDays or nutritionDaysFromSummary. */
@@ -55,6 +59,8 @@ export interface NutritionEngineInput {
   calorieTarget: number | null
   tdee: number | null
   fitnessGoal: 'LOSE_WEIGHT' | 'MAINTAIN_WEIGHT' | 'GAIN_MUSCLE' | null
+  /** Ascending, same window as `days`; null when the range fetch failed or hasn't loaded. */
+  hydration?: HydrationDayLike[] | null
 }
 
 const num = (v: unknown): number | null => {
@@ -180,17 +186,25 @@ export function macroSplit(input: NutritionEngineInput): MacroSplit | null {
 export interface AdherenceDay {
   date: string
   logged: boolean
+  calories: number
+  calorieTarget: number | null
   calorieHit: boolean | null
+  protein: number
+  proteinGoal: number | null
   proteinHit: boolean | null
 }
 
-/** Goal-hit vs missed per day for the heatmap. Calorie "hit" = at/under target (loss goal). */
+/** Goal-hit vs missed (and the raw values behind it) per day for the adherence chart. Calorie "hit" = at/under target (loss goal). */
 export function adherenceDays(input: NutritionEngineInput, windowDays = 14): AdherenceDay[] {
   return input.days.slice(-windowDays).map((d) => ({
     date: d.date,
     logged: d.logged,
+    calories: d.calories,
+    calorieTarget: input.calorieTarget,
     calorieHit:
       d.logged && input.calorieTarget ? d.calories <= input.calorieTarget : null,
+    protein: d.protein,
+    proteinGoal: input.proteinGoal,
     proteinHit: d.logged && input.proteinGoal ? d.protein >= input.proteinGoal : null,
   }))
 }
@@ -604,6 +618,68 @@ function winRule(input: NutritionEngineInput): Insight | null {
   return null
 }
 
+function hydrationAdherenceRule(input: NutritionEngineInput): Insight | null {
+  const hydration = input.hydration
+  if (!hydration || hydration.length === 0) return null
+  const last7 = hydration.slice(-7)
+  const logged7 = last7.filter((d) => d.waterIntakeMl > 0)
+  if (logged7.length < 3) return null
+
+  const goal = Math.round(mean(logged7.map((d) => d.targetMl).filter((t) => t > 0))) || 4000
+  const hitDays = logged7.filter((d) => d.targetMl > 0 && d.waterIntakeMl >= d.targetMl).length
+  const avgMl = Math.round(mean(logged7.map((d) => d.waterIntakeMl)))
+  const avgL = Math.round((avgMl / 1000) * 10) / 10
+  const goalL = Math.round((goal / 1000) * 10) / 10
+  const pctOfGoal = Math.round((avgMl / goal) * 100)
+  const effect = Math.min(1, Math.abs(1 - avgMl / goal))
+  const sampleWindow = `based on ${logged7.length} of 7 days`
+  const detail = `7-day avg ${avgL}L vs ${goalL}L target; hit the target ${hitDays} of ${logged7.length} logged days.`
+
+  if (hitDays >= Math.ceil(logged7.length * 0.7)) {
+    return {
+      id: 'ntr-hydration',
+      domain: 'nutrition',
+      kind: 'trend',
+      sentiment: 'positive',
+      icon: 'hydration',
+      title: `Hydration is on track — you hit your ${goalL}L target ${hitDays} of the last ${logged7.length} logged days.`,
+      detail,
+      metric: { value: avgL, unit: 'L' },
+      sampleWindow,
+      confidence: confidenceFrom(logged7.length, Math.max(effect, 0.15)),
+      effect: Math.max(effect, 0.12),
+    }
+  }
+  if (pctOfGoal < 60) {
+    return {
+      id: 'ntr-hydration',
+      domain: 'nutrition',
+      kind: 'trend',
+      sentiment: 'watch',
+      icon: 'hydration',
+      title: `Water intake is running low — averaging ${avgL}L, about ${pctOfGoal}% of your ${goalL}L target.`,
+      detail,
+      metric: { value: avgL, unit: 'L', delta: Math.round((avgL - goalL) * 10) / 10, deltaDir: 'down' },
+      sampleWindow,
+      confidence: confidenceFrom(logged7.length, effect),
+      effect: Math.max(effect, 0.2),
+    }
+  }
+  return {
+    id: 'ntr-hydration',
+    domain: 'nutrition',
+    kind: 'trend',
+    sentiment: 'neutral',
+    icon: 'hydration',
+    title: `Averaging ${avgL}L water a day — ${pctOfGoal}% of your ${goalL}L target, hit ${hitDays} of ${logged7.length} logged days.`,
+    detail,
+    metric: { value: avgL, unit: 'L' },
+    sampleWindow,
+    confidence: confidenceFrom(logged7.length, effect),
+    effect: effect * 0.6,
+  }
+}
+
 /** All nutrition insights that pass their thresholds, ranked. */
 export function nutritionInsights(input: NutritionEngineInput): Insight[] {
   const insights = [
@@ -614,6 +690,7 @@ export function nutritionInsights(input: NutritionEngineInput): Insight[] {
     loggingConsistencyRule(input),
     weekdayWeekendRule(input),
     proteinEfficiencyRule(input),
+    hydrationAdherenceRule(input),
     winRule(input),
   ].filter((i): i is Insight => i != null)
   return rankInsights(insights)

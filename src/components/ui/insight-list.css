@@ -24,10 +24,10 @@
   gap: 12px;
   padding: 13px 14px;
   border-radius: 18px;
-  border: 1px solid rgba(23, 28, 25, 0.06);
+  border: 1px solid rgba(23, 28, 25, 0.1);
   background:
-    linear-gradient(150deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.55));
-  box-shadow: 0 1px 2px rgba(23, 27, 21, 0.03);
+    linear-gradient(150deg, rgba(23, 28, 25, 0.045), rgba(23, 28, 25, 0.015));
+  box-shadow: 0 1px 3px rgba(23, 27, 21, 0.06);
   overflow: hidden;
   animation: ins-row-in 0.35s ease both;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -35,7 +35,7 @@
 
 .ins-row:hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 22px rgba(23, 27, 21, 0.07);
+  box-shadow: 0 8px 22px rgba(23, 27, 21, 0.1);
 }
 
 /* soft sentiment wash along the left edge */

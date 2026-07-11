@@ -45,6 +45,7 @@ export type InsightIcon =
   | 'trophy'
   | 'log'
   | 'income'
+  | 'hydration'
 
 export interface InsightMetric {
   value: number
