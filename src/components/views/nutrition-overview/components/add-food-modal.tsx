@@ -603,7 +603,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
 
                 {aiError && <AiErrorCard code={aiErrorCode} message={aiError} onRetry={() => { setAiError(''); setAiErrorCode(null) }} />}
 
-                <button type="submit" className="add-tx-submit af-submit-btn" disabled={!aiCanSubmit || !isNotificationsEnabled} id="ai-analyze-submit-btn">
+                <button type="submit" className="add-tx-submit af-submit-btn" disabled={!aiCanSubmit} id="ai-analyze-submit-btn">
                   <Scan size={15} />
                   Analyse with AI
                 </button>
