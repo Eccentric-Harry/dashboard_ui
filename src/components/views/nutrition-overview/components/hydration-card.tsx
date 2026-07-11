@@ -89,7 +89,6 @@ function HydrationCard() {
   const progressPercent = Math.round((logged / target) * 100)
   const isComplete = logged >= target
   const totalGlasses = Math.max(1, Math.ceil(target / GLASS_ML))
-  const glassesCount = Math.min(totalGlasses, Math.floor(logged / GLASS_ML))
   const overMl = Math.max(0, logged - target)
   const remainingL = Math.max(0, target - logged) / 1000
   const pace = getPace(logged, target, isComplete, selectedDate)
