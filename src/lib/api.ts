@@ -1701,3 +1701,42 @@ export async function saveMindMood(date: string, moodScore: number, moodNote?: s
   }
   return response.json();
 }
+
+export interface SleepLog {
+  id?: string;
+  date: string;
+  bedTime: string;
+  wakeTime: string;
+  durationMinutes: number;
+  notes?: string;
+  createdAt?: string;
+}
+
+export async function addSleepLog(data: {
+  date: string;
+  bedTime: string;
+  wakeTime: string;
+  durationMinutes: number;
+  notes?: string;
+}): Promise<ApiEnvelope<SleepLog>> {
+  const response = await fetch(`${API_BASE_URL}/health/sleep`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to log sleep');
+  }
+  return response.json();
+}
+
+export async function fetchSleepLogs(days?: number): Promise<ApiEnvelope<SleepLog[]>> {
+  const params = new URLSearchParams();
+  if (days) params.append('days', days.toString());
+  const query = params.toString() ? `?${params.toString()}` : '';
+  const response = await fetch(`${API_BASE_URL}/health/sleep${query}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch sleep logs');
+  }
+  return response.json();
+}
