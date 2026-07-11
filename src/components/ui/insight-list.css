@@ -1,12 +1,13 @@
-/* Shared insight rows for the Intelligence sections. Modern card treatment:
-   sentiment-tinted icon squares + tag, metric chip, optional sparkline,
-   hover lift. Color semantics: red = urgent/over-budget only, amber = watch,
-   green = positive, grey/ink = neutral. AA contrast on the off-white cards. */
+/* Shared insight rows for the Intelligence sections. Glass cards with a
+   colored accent spine + gradient icon badge per sentiment, so the list
+   scans by color as well as text. Color semantics: red = urgent/over-budget
+   only, amber = watch, green = positive, indigo = neutral. AA contrast on
+   the off-white cards. Reads as one system across Nutrition and Finance. */
 
 .ins-list {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 10px;
+  gap: 11px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -21,38 +22,33 @@
 .ins-row {
   position: relative;
   display: flex;
-  gap: 12px;
-  padding: 13px 14px;
-  border-radius: 18px;
-  border: 1px solid rgba(23, 28, 25, 0.1);
-  background:
-    linear-gradient(150deg, rgba(23, 28, 25, 0.045), rgba(23, 28, 25, 0.015));
-  box-shadow: 0 1px 3px rgba(23, 27, 21, 0.06);
+  gap: 13px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(23, 28, 25, 0.07);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.55));
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: 0 1px 2px rgba(23, 27, 21, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.6);
   overflow: hidden;
-  animation: ins-row-in 0.35s ease both;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  animation: ins-row-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease, border-color 0.22s ease;
 }
 
 .ins-row:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 22px rgba(23, 27, 21, 0.1);
+  transform: translateY(-2px);
+  border-color: var(--ins-edge, rgba(23, 28, 25, 0.14));
+  box-shadow: 0 10px 26px -6px var(--ins-glow, rgba(23, 27, 21, 0.14)), inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
-/* soft sentiment wash along the left edge */
-.ins-row::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 110px;
-  pointer-events: none;
-  background: linear-gradient(90deg, var(--ins-wash, transparent), transparent);
-  opacity: 0.6;
+.ins-row:hover .ins-row-icon {
+  transform: scale(1.06) rotate(-3deg);
 }
 
 @keyframes ins-row-in {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(7px);
   }
   to {
     opacity: 1;
@@ -65,55 +61,64 @@
     animation: none;
     transition: none;
   }
+
+  .ins-row:hover .ins-row-icon {
+    transform: none;
+  }
 }
 
 .ins-row-icon {
   position: relative;
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
   margin-top: 2px;
-  border-radius: 12px;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+  border-radius: 13px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55), 0 3px 8px -3px rgba(23, 27, 21, 0.18);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .ins-row--positive {
-  --ins-wash: rgba(62, 107, 84, 0.08);
+  --ins-edge: rgba(62, 107, 84, 0.22);
+  --ins-glow: rgba(62, 107, 84, 0.16);
 }
 
 .ins-row--positive .ins-row-icon {
-  background: linear-gradient(150deg, rgba(62, 107, 84, 0.2), rgba(62, 107, 84, 0.1));
-  color: #2e5243;
+  background: linear-gradient(150deg, #dcefe3, #b8dcc6);
+  color: #275a3f;
 }
 
 .ins-row--neutral {
-  --ins-wash: rgba(82, 96, 87, 0.07);
+  --ins-edge: rgba(87, 95, 189, 0.22);
+  --ins-glow: rgba(87, 95, 189, 0.16);
 }
 
 .ins-row--neutral .ins-row-icon {
-  background: linear-gradient(150deg, rgba(82, 96, 87, 0.16), rgba(82, 96, 87, 0.08));
-  color: #414a44;
+  background: linear-gradient(150deg, #e3e5f9, #c5c9f0);
+  color: #40449a;
 }
 
 /* "Watch" is calm amber — never red */
 .ins-row--watch {
-  --ins-wash: rgba(217, 119, 6, 0.08);
+  --ins-edge: rgba(184, 122, 12, 0.24);
+  --ins-glow: rgba(184, 122, 12, 0.16);
 }
 
 .ins-row--watch .ins-row-icon {
-  background: linear-gradient(150deg, rgba(217, 119, 6, 0.19), rgba(217, 119, 6, 0.09));
+  background: linear-gradient(150deg, #fbe8c8, #f3cf8e);
   color: #8a5009;
 }
 
 /* Urgent = over-budget/destructive findings only */
 .ins-row--urgent {
-  --ins-wash: rgba(216, 53, 66, 0.08);
+  --ins-edge: rgba(209, 63, 76, 0.24);
+  --ins-glow: rgba(209, 63, 76, 0.16);
 }
 
 .ins-row--urgent .ins-row-icon {
-  background: linear-gradient(150deg, rgba(216, 53, 66, 0.17), rgba(216, 53, 66, 0.08));
+  background: linear-gradient(150deg, #fbdadd, #f3b3ba);
   color: #a02832;
 }
 
@@ -134,31 +139,32 @@
 }
 
 .ins-row-tag {
-  padding: 2px 8px;
+  padding: 3px 9px;
   border-radius: 999px;
   font-size: 8.5px;
   font-weight: 800;
   letter-spacing: 0.09em;
   text-transform: uppercase;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
 }
 
 .ins-row--positive .ins-row-tag {
-  background: rgba(62, 107, 84, 0.13);
-  color: #2e5243;
+  background: linear-gradient(135deg, rgba(79, 138, 109, 0.22), rgba(79, 138, 109, 0.1));
+  color: #275a3f;
 }
 
 .ins-row--neutral .ins-row-tag {
-  background: rgba(82, 96, 87, 0.11);
-  color: #414a44;
+  background: linear-gradient(135deg, rgba(111, 121, 201, 0.22), rgba(111, 121, 201, 0.1));
+  color: #40449a;
 }
 
 .ins-row--watch .ins-row-tag {
-  background: rgba(217, 119, 6, 0.13);
+  background: linear-gradient(135deg, rgba(217, 142, 31, 0.24), rgba(217, 142, 31, 0.11));
   color: #8a5009;
 }
 
 .ins-row--urgent .ins-row-tag {
-  background: rgba(216, 53, 66, 0.11);
+  background: linear-gradient(135deg, rgba(217, 78, 91, 0.22), rgba(217, 78, 91, 0.1));
   color: #a02832;
 }
 
@@ -170,22 +176,25 @@
 
 .ins-row-spark polyline {
   stroke: currentColor;
-  opacity: 0.55;
+  opacity: 0.7;
+  filter: drop-shadow(0 1px 1px rgba(23, 27, 21, 0.12));
 }
 
-.ins-row--positive .ins-row-spark { color: #33594a; }
-.ins-row--neutral .ins-row-spark { color: #4a544e; }
-.ins-row--watch .ins-row-spark { color: #9a5a10; }
-.ins-row--urgent .ins-row-spark { color: #b02a35; }
+.ins-row--positive .ins-row-spark { color: #4f8a6d; }
+.ins-row--neutral .ins-row-spark { color: #6f79c9; }
+.ins-row--watch .ins-row-spark { color: #d98e1f; }
+.ins-row--urgent .ins-row-spark { color: #d94e5b; }
 
 .ins-row-metric {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   margin-left: auto;
-  padding: 2px 9px;
+  padding: 3px 10px;
   border-radius: 999px;
-  background: rgba(23, 28, 25, 0.05);
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.9), 0 1px 3px rgba(23, 27, 21, 0.06);
+  border: 1px solid rgba(23, 28, 25, 0.05);
 }
 
 .ins-row-metric b {
@@ -239,18 +248,20 @@
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  padding: 2px 4px;
+  padding: 3px 8px;
   border: 0;
-  border-radius: 6px;
-  background: transparent;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.5);
   color: #33594a;
   font-size: 10px;
   font-weight: 800;
   cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .ins-row-why:hover {
-  background: rgba(62, 107, 84, 0.1);
+  background: rgba(255, 255, 255, 0.85);
+  transform: translateY(-1px);
 }
 
 .ins-row-why svg {
@@ -264,14 +275,15 @@
 .ins-row-action {
   display: inline-flex;
   align-items: center;
-  padding: 3px 10px;
+  padding: 3px 11px;
   border: 0;
   border-radius: 999px;
-  background: #1d2420;
+  background: linear-gradient(135deg, #262e28, #121613);
   color: #eef2ea;
   font-size: 10px;
   font-weight: 700;
   cursor: pointer;
+  box-shadow: 0 2px 6px rgba(23, 27, 21, 0.18);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -281,11 +293,13 @@
 }
 
 .ins-row-detail {
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: rgba(26, 31, 29, 0.05);
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(23, 28, 25, 0.05);
   color: rgba(23, 28, 25, 0.78);
   font-size: 11px;
   line-height: 1.5;
   font-variant-numeric: tabular-nums;
+  animation: ins-row-in 0.2s ease both;
 }
