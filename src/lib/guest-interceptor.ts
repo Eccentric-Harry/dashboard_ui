@@ -350,6 +350,89 @@ export function enableGuestInterceptor() {
       }
     }
 
+    // User Profile API intercept
+    if (urlStr.includes('/api/v1/users/profile')) {
+      const method = (args[1]?.method || 'GET').toUpperCase();
+      
+      let profile = JSON.parse(localStorage.getItem('guest_user_profile') || 'null');
+      if (!profile) {
+        profile = {
+          id: 'guest-user',
+          displayName: 'Guest User',
+          avatarUrl: 'luffy',
+          email: 'guest@example.com',
+          bio: 'Exploring the dashboard in guest mode.',
+          timezone: 'GMT-8',
+          workingHours: '10 AM - 6 PM',
+          title: 'Guest Explorer',
+          status: 'Online',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          physicalMetrics: {
+            age: 28,
+            gender: 'MALE',
+            height: 180,
+            weight: 75,
+          },
+          activityLevel: 'MODERATELY_ACTIVE',
+          fitnessGoal: 'MAINTAIN_WEIGHT',
+          medicalConditions: ['Vegetarian'],
+          bmi: 23.1,
+          bmr: 1750,
+          tdee: 2700,
+          dynamicTargets: {
+            calculatedCalories: 2700,
+            calculatedProtein: 150,
+            calculatedCarbs: 335,
+            calculatedFat: 85,
+          }
+        };
+        localStorage.setItem('guest_user_profile', JSON.stringify(profile));
+      }
+
+      if (method === 'PUT') {
+        const body = JSON.parse(typeof args[1]?.body === 'string' ? args[1].body : '{}');
+        profile = { ...profile, ...body, updatedAt: new Date().toISOString() };
+        
+        if (body.physicalMetrics) {
+           const height = body.physicalMetrics.height || profile.physicalMetrics.height;
+           const weight = body.physicalMetrics.weight || profile.physicalMetrics.weight;
+           if (height && weight) {
+              profile.bmi = parseFloat((weight / ((height / 100) * (height / 100))).toFixed(1));
+           }
+        }
+        localStorage.setItem('guest_user_profile', JSON.stringify(profile));
+      }
+
+      return respondWith({ data: profile });
+    }
+
+    // Google Calendar API intercept
+    if (urlStr.includes('/api/v1/google-calendar/auth/status')) {
+      return respondWith({
+        data: {
+          connected: false,
+          accounts: []
+        }
+      });
+    }
+
+    if (urlStr.includes('/api/v1/google-calendar/auth/url')) {
+      return respondWith({
+        data: {
+          url: 'https://accounts.google.com/o/oauth2/v2/auth?dummy'
+        }
+      });
+    }
+
+    if (urlStr.includes('/api/v1/google-calendar/auth/disconnect')) {
+      return respondWith({ data: { status: 'disconnected' } });
+    }
+
+    if (urlStr.includes('/api/v1/google-calendar/sync')) {
+      return respondWith({ data: { status: 'synced' } });
+    }
+
     // GitHub API intercept
     if (urlStr.includes('api.github.com/users/Eccentric-Harry/repos')) {
       return respondWith(dummyGithubRepos);
