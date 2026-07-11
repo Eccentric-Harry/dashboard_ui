@@ -136,10 +136,6 @@ function HydrationCard() {
           </strong>
           <small>of {(target / 1000).toFixed(1)}L</small>
         </div>
-        <span className="ntr-hydro-glass-chip">
-          <GlassWater size={13} strokeWidth={2.5} />
-          <b>{glassesCount}</b>/{totalGlasses} glasses
-        </span>
       </div>
 
       <div className="ntr-hydro-segments" role="group" aria-label="Water logged, one segment per 250ml glass">
