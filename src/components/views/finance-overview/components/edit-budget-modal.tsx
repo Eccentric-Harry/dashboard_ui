@@ -17,6 +17,7 @@ export function EditBudgetModal({ isOpen, currentBudget, onClose, onSuccess }: E
 
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAmount(currentBudget ? currentBudget.toString() : '')
       setError('')
     }

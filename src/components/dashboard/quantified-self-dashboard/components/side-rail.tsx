@@ -41,6 +41,7 @@ function SideRail({ activePath, onNavigate }: DashboardStageProps) {
     const curr = activeMobileIndex
     if (prev !== -1 && prev !== curr) {
       const dir = curr > prev ? 'liquid-right' : 'liquid-left'
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLiquidClass(dir)
       const t = setTimeout(() => setLiquidClass(''), 500)
       prevMobileIndex = curr

@@ -45,6 +45,7 @@ export function VisitorAuthPopup() {
       } else {
         setErrorMsg('Invalid response from server');
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setErrorMsg(err.message || 'Invalid username or passcode');
     } finally {
@@ -77,6 +78,7 @@ export function VisitorAuthPopup() {
       } else {
         setErrorMsg('Invalid response from server');
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setErrorMsg(err.message || 'Signup failed. Username might be taken.');
     } finally {

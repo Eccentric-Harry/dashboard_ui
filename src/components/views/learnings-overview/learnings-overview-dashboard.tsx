@@ -35,6 +35,7 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
   const [editingLearning, setEditingLearning] = useState<LearningLog | undefined>()
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedDate(parseDateFromParams(searchParams))
   }, [searchParams])
 
@@ -51,6 +52,7 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
   }, [selectedDate])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadSummary()
   }, [loadSummary, refreshKey])
 

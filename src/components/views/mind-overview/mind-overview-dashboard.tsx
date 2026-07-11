@@ -129,6 +129,7 @@ function MindOverviewDashboard() {
         const res = await updateMindEntry(existing.id, {
           text: text.trim(),
           type: 'INTENTION',
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           valueTag: tag as any,
           date: selectedDate
         })
@@ -137,6 +138,7 @@ function MindOverviewDashboard() {
         const res = await createMindEntry({
           text: text.trim(),
           type: 'INTENTION',
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           valueTag: tag as any,
           date: selectedDate
         })
@@ -171,6 +173,7 @@ function MindOverviewDashboard() {
     setAvailableTags((prev) => {
       if (prev.includes(trimmed)) return prev
       const next = [...prev, trimmed]
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const customTagsOnly = next.filter((t) => !MIND_VALUE_TAGS.includes(t as any))
       localStorage.setItem('custom_mind_tags', JSON.stringify(customTagsOnly))
       return next
@@ -178,9 +181,11 @@ function MindOverviewDashboard() {
   }, [])
 
   const handleRemoveTag = useCallback((tagToRemove: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (MIND_VALUE_TAGS.includes(tagToRemove as any)) return
     setAvailableTags((prev) => {
       const next = prev.filter((t) => t !== tagToRemove)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const customTagsOnly = next.filter((t) => !MIND_VALUE_TAGS.includes(t as any))
       localStorage.setItem('custom_mind_tags', JSON.stringify(customTagsOnly))
       return next

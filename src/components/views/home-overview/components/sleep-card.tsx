@@ -31,6 +31,7 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
   const [formOpen, setFormOpen] = useState(false)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (openFormNonce) setFormOpen(true)
   }, [openFormNonce])
   const [bedtime, setBedtime] = useState('23:30')

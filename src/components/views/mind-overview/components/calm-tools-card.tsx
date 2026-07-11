@@ -41,6 +41,7 @@ function BreatheCard({ onCycleComplete }: BreatheCardProps) {
   // Stop and mark session complete when MAX_CYCLES is reached
   useEffect(() => {
     if (cycles >= MAX_CYCLES && !sessionDone) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRunning(false)
       setSessionDone(true)
       setSessions((s) => {

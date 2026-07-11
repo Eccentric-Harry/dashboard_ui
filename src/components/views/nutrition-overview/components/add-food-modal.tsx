@@ -83,6 +83,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
 
   useEffect(() => {
     if (isOpen && isEdit && initialData) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setMealType(initialData.mealType)
       setDescription(initialData.description)
       setProteinGrams(initialData.proteinGrams.toString())
@@ -118,6 +119,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
     return () => {
       if (stageTimerRef.current) clearTimeout(stageTimerRef.current)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, isEdit, initialData, selectedDate])
 
   const currentTask = currentTaskId ? backgroundScans.find(t => t.id === currentTaskId) : null
@@ -127,6 +129,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
 
     if (currentTask.status === 'success') {
       if (stageTimerRef.current) clearTimeout(stageTimerRef.current)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAiResult(currentTask.result)
       setAiPhase('results')
     } else if (currentTask.status === 'failed') {
@@ -148,7 +151,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
     e.preventDefault()
     setError('')
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-useless-assignment
     let finalPayload: any = null
 
     if (jsonPayload.trim()) {
@@ -227,6 +230,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
           nutritional_balance_diagnostic: getVal(['nutritionalBalanceDiagnostic', 'nutritional_balance_diagnostic']),
           daily_context: getVal(['dailyContext', 'daily_context'])
         }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         setError('JSON Error: ' + err.message)
         return

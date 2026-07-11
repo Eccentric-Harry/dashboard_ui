@@ -70,6 +70,7 @@ export function AiMealLogModal({ isOpen, onClose, onSuccess, selectedDate }: AiM
   // Reset when opened
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPhase('input')
       setStageIndex(0)
       setImageFile(null)

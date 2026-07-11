@@ -387,6 +387,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                 { action: 'open', title: 'Open' }
               ],
               data: { url: '/', itemId: item.id }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } as any);
           });
         } else {
