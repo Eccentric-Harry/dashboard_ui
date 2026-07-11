@@ -236,6 +236,11 @@
   min-height: 0;
 }
 
+/* Recent food logs, re-homed below the Intelligence section */
+.ntr-grid--history {
+  margin-top: 22px;
+}
+
 .ntr-card {
   position: relative;
   box-sizing: border-box;
@@ -868,20 +873,6 @@
 
 /* ── Hydration card ─────────────────────────────────────────────── */
 
-.ntr-hydro-ring {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  justify-content: center;
-  margin: 6px 0;
-}
-
-.ntr-hydro-ring > div {
-  display: flex;
-  width: 178px;
-  height: 178px;
-}
-
 /* neutralise the glassmorphic ring tile inside redesigned cards */
 .nutrition-dashboard.ntr .nutrition-ring {
   height: auto;
@@ -934,14 +925,14 @@
 
 /* Watery button overrides for hydration card */
 .ntr-hydro-btns .ntr-soft-btn {
-  background: rgba(42, 134, 255, 0.08);
+  background: rgba(93, 135, 173, 0.1);
   color: var(--ntr-ink);
   box-shadow: none;
 }
 
 .ntr-hydro-btns .ntr-soft-btn:hover:not(:disabled) {
-  background: rgba(42, 134, 255, 0.15);
-  box-shadow: 0 4px 14px rgba(42, 134, 255, 0.2);
+  background: rgba(93, 135, 173, 0.18);
+  box-shadow: 0 4px 14px rgba(93, 135, 173, 0.22);
   transform: translateY(-1px);
 }
 
@@ -1287,138 +1278,154 @@
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* ── Playful Hydration Bottle ──────────────────────────────────── */
+/* ── Hydration: segmented glass tracker ────────────────────────── */
 
-.ntr-hydro-bottle-wrap {
+.ntr-hydro-hero {
   display: flex;
-  flex: 1;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
 }
 
-.ntr-water-bottle {
-  position: relative;
+.ntr-hydro-figure {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 120px;
-  height: 180px;
-  flex-shrink: 0;
-}
-
-.ntr-bottle-svg {
-  width: 100%;
-  height: 100%;
-}
-
-.ntr-wave {
-  will-change: transform;
-}
-
-.ntr-wave-front {
-  animation: ntrWaveSlide 3.2s linear infinite;
-}
-
-.ntr-wave-back {
-  animation: ntrWaveSlide 5.2s linear infinite reverse;
-}
-
-@keyframes ntrWaveSlide {
-  from { transform: translateX(0); }
-  to { transform: translateX(-60px); }
-}
-
-.ntr-bubble {
-  fill: rgba(255, 255, 255, 0.65);
-  animation: ntrBubbleRise 3s ease-in infinite;
-}
-
-.ntr-bubble.b2 {
-  animation-duration: 3.8s;
-  animation-delay: 0.9s;
-}
-
-.ntr-bubble.b3 {
-  animation-duration: 3.3s;
-  animation-delay: 1.8s;
-}
-
-@keyframes ntrBubbleRise {
-  0% { transform: translateY(0); opacity: 0; }
-  15% { opacity: 0.8; }
-  85% { opacity: 0.5; }
-  100% { transform: translateY(-72px); opacity: 0; }
-}
-
-.ntr-hydro-glass-dots {
-  display: flex;
-  gap: 5px;
-}
-
-.ntr-hydro-glass-dots span {
-  width: 11px;
-  height: 11px;
-  border-radius: 999px;
-  background: var(--ntr-aqua-soft);
-  transition: background-color 0.25s ease, transform 0.25s ease;
-}
-
-.ntr-hydro-glass-dots span.filled {
-  background: var(--ntr-aqua);
-  transform: scale(1.08);
-}
-
-.ntr-bottle-center {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  padding-top: 14px;
-}
-
-.ntr-bottle-center strong {
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--ntr-ink);
-  text-shadow: 0 1px 2px rgba(255,255,255,0.8);
-}
-
-.ntr-bottle-center small {
-  font-size: 9.5px;
-  font-weight: 650;
-  color: var(--ntr-ink-soft);
-}
-
-.ntr-hydro-meta {
-  display: flex;
-  flex-direction: column;
+  align-items: baseline;
   gap: 8px;
   min-width: 0;
 }
 
-.ntr-hydro-glasses {
+.ntr-hydro-figure strong {
+  font-size: 40px;
+  font-weight: 750;
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+  color: var(--ntr-ink);
+}
+
+.ntr-hydro-figure strong em {
+  margin-left: 2px;
+  font-style: normal;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--ntr-ink-faint);
+}
+
+.ntr-hydro-figure small {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--ntr-ink-soft);
+}
+
+.ntr-hydro-glass-chip {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: var(--ntr-sky);
+  color: var(--ntr-sky-deep);
+  font-size: 11.5px;
+  font-weight: 650;
+}
+
+.ntr-hydro-glass-chip b {
+  font-weight: 800;
+}
+
+.ntr-hydro-segments {
+  display: flex;
+  gap: 4px;
+  height: 64px;
+  margin-top: 16px;
+}
+
+/* extra breathing room between liter groups (4 glasses = 1L) */
+.ntr-hydro-cell:nth-child(4n + 1):not(:first-child) {
+  margin-left: 5px;
+}
+
+.ntr-hydro-cell {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: var(--ntr-sky);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.ntr-hydro-cell:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.ntr-hydro-cell:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(93, 135, 173, 0.35);
+}
+
+.ntr-hydro-cell:disabled {
+  cursor: default;
+}
+
+.ntr-hydro-cell-fill {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: block;
+  background: linear-gradient(180deg, #aecde9 0%, #7ba3c8 100%);
+  transition: height 0.45s cubic-bezier(0.3, 0.8, 0.3, 1);
+}
+
+.ntr-hydro-cell.full .ntr-hydro-cell-fill {
+  background: linear-gradient(180deg, #9fc3e4 0%, #6f9ac2 100%);
+}
+
+.ntr-hydro-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+  font-size: 12px;
+}
+
+.ntr-hydro-pace {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: rgba(61, 158, 140, 0.12);
-  color: var(--ntr-aqua-deep);
-  font-size: 12px;
   font-weight: 700;
+  animation: ntrFadeUp 0.4s ease-out;
 }
 
-.ntr-hydro-fun-text {
-  margin: 0;
-  font-size: 13px;
-  font-weight: 650;
+.ntr-hydro-pace i {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: currentcolor;
+}
+
+.ntr-hydro-pace.good,
+.ntr-hydro-pace.done {
+  color: var(--ntr-aqua-deep);
+}
+
+.ntr-hydro-pace.warn {
+  color: var(--ntr-apricot-deep);
+}
+
+.ntr-hydro-pace.muted {
+  color: var(--ntr-ink-faint);
+}
+
+.ntr-hydro-remaining {
+  font-weight: 700;
   color: var(--ntr-ink-soft);
-  animation: ntrFadeUp 0.4s ease-out;
 }
 
 @keyframes ntrFadeUp {
@@ -1615,18 +1622,12 @@
     display: none;
   }
 
-  .ntr-hydro-bottle-wrap {
-    flex-direction: column;
-    gap: 10px;
+  .ntr-hydro-figure strong {
+    font-size: 34px;
   }
 
-  .ntr-water-bottle {
-    width: 100px;
-    height: 150px;
-  }
-
-  .ntr-bottle-center strong {
-    font-size: 18px;
+  .ntr-hydro-segments {
+    height: 52px;
   }
 }
 
@@ -1848,61 +1849,6 @@
   flex-shrink: 0;
 }
 
-/* ── Hydration bottle-wrap gets sky panel treatment ─────────────── */
-
-.ntr-hydro-bottle-wrap {
-  background: linear-gradient(160deg, #dbeffe 0%, #c4deff 70%, #cce9ff 100%);
-  border-radius: 20px;
-  padding: 14px 18px;
-  margin: 8px 0;
-}
-
-.ntr-hydro-stat-col {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 10px;
-  min-width: 0;
-}
-
-.ntr-hydro-stat-tile {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 10px 14px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.52);
-  min-width: 72px;
-}
-
-.ntr-hydro-stat-tile strong {
-  font-size: 22px;
-  font-weight: 750;
-  letter-spacing: -0.03em;
-  color: var(--ntr-ink);
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.ntr-hydro-stat-tile span {
-  font-size: 8.5px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(23, 27, 21, 0.52);
-}
-
-.ntr-hydro-stat-tile.complete strong {
-  color: var(--ntr-aqua-deep);
-}
-
-.ntr-hydro-stat-tile.complete span {
-  color: var(--ntr-aqua-deep);
-}
-
 /* Mobile adjustments for new panels + compact hero */
 @media (max-width: 768px) {
   /* ── Hero: smaller arc gauge ── */
@@ -1986,15 +1932,4 @@
     margin: 0 16px 8px;
   }
 
-  /* ── Hydration panel: column → bottle on top, tiles in a row below ── */
-  .ntr-hydro-bottle-wrap {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .ntr-hydro-stat-col {
-    flex-direction: row;
-    justify-content: center;
-    gap: 10px;
-  }
 }

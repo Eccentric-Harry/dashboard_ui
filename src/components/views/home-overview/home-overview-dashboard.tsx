@@ -22,7 +22,10 @@ import { buildHabitStrips } from './habit-strips'
 import { QuickCaptureCard } from './components/quick-capture-card'
 import type { QuickCaptureMode } from './components/quick-capture-card'
 import { WeekRollupCard } from './components/week-rollup-card'
-import { buildDayRecords, countActiveDays, generateInsights, INSIGHT_WINDOW_DAYS } from './insights-engine'
+import { buildDayRecords, countActiveDays, fromEngineInsight, generateInsights, INSIGHT_WINDOW_DAYS } from './insights-engine'
+import { promoteForHome } from '../../../lib/insights/engine'
+import { buildBurndown, financeInsights } from '../../../lib/insights/finance'
+import { nutritionDaysFromSummary, nutritionInsights } from '../../../lib/insights/nutrition'
 import { lastNDates, WATER_QUICK_ADD_ML } from './home-types'
 import { HOME_WINDOW_DAYS, useHomeData } from './use-home-data'
 import './home-overview.css'
@@ -96,15 +99,65 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
     [dayRecords, weekDates],
   )
 
+  // Shared-engine finance input; also powers the "safe/day" rollup stat.
+  const financeInput = useMemo(
+    () =>
+      home.spending.data
+        ? {
+            today: home.today,
+            monthKey: home.today.slice(0, 7),
+            logs: home.finance.data ?? [],
+            monthlyBudget: home.spending.data.monthlyBudget ?? null,
+            monthTotalSpentOverride: home.spending.data.totalSpent ?? null,
+          }
+        : null,
+    [home.spending.data, home.finance.data, home.today],
+  )
+
+  // Top finance/nutrition findings from the shared engine — only urgent or
+  // high-confidence ones bubble up to Home (max 2), keeping the feed curated.
+  const promotedInsights = useMemo(() => {
+    const domainInsights = []
+    if (home.nutrition.data) {
+      domainInsights.push(
+        ...nutritionInsights({
+          today: home.today,
+          days: nutritionDaysFromSummary(
+            home.nutrition.data.dailyCalories ?? {},
+            home.nutrition.data.dailyProtein ?? {},
+          ),
+          proteinGoal: home.nutrition.data.proteinGoal ?? null,
+          calorieTarget: home.nutrition.data.calorieGoal ?? null,
+          tdee: null,
+          fitnessGoal: null,
+        }),
+      )
+    }
+    if (financeInput) {
+      domainInsights.push(...financeInsights(financeInput))
+    }
+    return promoteForHome(domainInsights, 2).map(fromEngineInsight)
+  }, [home.nutrition.data, financeInput, home.today])
+
+  const safePerDay = useMemo(() => {
+    if (!financeInput) return null
+    const burndown = buildBurndown(financeInput)
+    return burndown?.isCurrentMonth ? Math.round(burndown.safePerDay) : null
+  }, [financeInput])
+
   const insights = useMemo(
     () =>
-      generateInsights(weekRecords, {
-        proteinGoal: home.nutrition.data?.proteinGoal ?? null,
-        spending: home.spending.data,
-        workoutStreakWeeks: home.workoutStats.data?.currentStreakWeeks ?? 0,
-        learningStreakDays: home.learnings.data?.stats?.streakDays ?? 0,
-      }),
-    [weekRecords, home.nutrition.data, home.spending.data, home.workoutStats.data, home.learnings.data],
+      generateInsights(
+        weekRecords,
+        {
+          proteinGoal: home.nutrition.data?.proteinGoal ?? null,
+          spending: home.spending.data,
+          workoutStreakWeeks: home.workoutStats.data?.currentStreakWeeks ?? 0,
+          learningStreakDays: home.learnings.data?.stats?.streakDays ?? 0,
+        },
+        promotedInsights,
+      ),
+    [weekRecords, home.nutrition.data, home.spending.data, home.workoutStats.data, home.learnings.data, promotedInsights],
   )
 
   const habitStrips = useMemo(() => buildHabitStrips(dayRecords, weekDates), [dayRecords, weekDates])
@@ -303,6 +356,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           insights={insights}
           activeDays={countActiveDays(weekRecords)}
           onRefresh={() => void home.refetch()}
+          onNavigate={onNavigate}
         />
 
         <MomentumCard loading={home.loading} strips={habitStrips} weekDates={weekDates} />
@@ -315,6 +369,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           nutrition={home.nutrition.data}
           spending={home.spending.data}
           avgSleepMinutes={avgSleepMinutes}
+          safePerDay={safePerDay}
         />
       </div>
 

@@ -6,16 +6,35 @@ import type { HydrationData } from '../../../../lib/api'
 import { useDashboard } from '../../../../contexts/DashboardContext'
 
 const TARGET_ML = 4000
+const GLASS_ML = 250
+// pace window: hydration expected linearly between 07:00 and 23:00
+const PACE_START_MIN = 7 * 60
+const PACE_END_MIN = 23 * 60
 
-// Flask geometry (viewBox 0 0 120 186): neck → shoulders → rounded body
-const BOTTLE_PATH =
-  'M47 10 H73 V26 C73 33 96 37 96 52 V160 A16 16 0 0 1 80 176 H40 A16 16 0 0 1 24 160 V52 C24 37 47 33 47 26 Z'
-const BOTTLE_BOTTOM = 174
-const BOTTLE_FILL_HEIGHT = 130 // usable water column, bottom → shoulder
+type PaceTone = 'good' | 'warn' | 'done' | 'muted'
 
-// seamless wave surface: 60px period, shifted -60px per animation loop
-const wavePath = (y: number) =>
-  `M-60 ${y.toFixed(1)} q15 -5 30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0 V186 H-60 Z`
+function getPace(
+  logged: number,
+  target: number,
+  isComplete: boolean,
+  selectedDate: string,
+): { tone: PaceTone; label: string } {
+  const todayStr = new Date().toISOString().split('T')[0]
+  if (isComplete) return { tone: 'done', label: 'Goal met' }
+  if (selectedDate === todayStr) {
+    const now = new Date()
+    const mins = now.getHours() * 60 + now.getMinutes()
+    const frac = Math.min(1, Math.max(0, (mins - PACE_START_MIN) / (PACE_END_MIN - PACE_START_MIN)))
+    const diffGlasses = Math.round((logged - target * frac) / GLASS_ML)
+    if (diffGlasses > 0) return { tone: 'good', label: `${diffGlasses} glass${diffGlasses > 1 ? 'es' : ''} ahead of pace` }
+    if (diffGlasses === 0) return { tone: 'good', label: 'On pace' }
+    return { tone: 'warn', label: `${-diffGlasses} glass${diffGlasses < -1 ? 'es' : ''} behind pace` }
+  }
+  if (selectedDate < todayStr) {
+    return { tone: 'muted', label: `Ended at ${Math.round((logged / target) * 100)}%` }
+  }
+  return { tone: 'muted', label: 'Upcoming day' }
+}
 
 function HydrationCard() {
   const { data: dashboardData } = useDashboard()
@@ -46,13 +65,13 @@ function HydrationCard() {
   }, [loadHydration])
 
   const handleAddWater = async (amount: number, key: string) => {
-    if (adding) return
+    if (adding || amount === 0) return
     setBounceBtn(key)
     setTimeout(() => setBounceBtn(null), 400)
     try {
       setAdding(true)
       await addWaterIntake(amount, selectedDate)
-      toast.success(`Logged ${Math.abs(amount)}ml of water`)
+      toast.success(`${amount > 0 ? 'Logged' : 'Removed'} ${Math.abs(amount)}ml of water`)
       const response = await fetchHydration(selectedDate)
       setData(response.data)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -68,11 +87,12 @@ function HydrationCard() {
   const logged = data?.waterIntakeMl ?? 0
   const target = data?.targetMl ?? TARGET_ML
   const progressPercent = Math.round((logged / target) * 100)
-  const fillPercent = Math.min(progressPercent, 100)
   const isComplete = logged >= target
-  const glassesCount = Math.floor(logged / 250)
-  const glassesToGo = Math.ceil(Math.max(0, target - logged) / 250)
-  const waterY = BOTTLE_BOTTOM - (fillPercent / 100) * BOTTLE_FILL_HEIGHT
+  const totalGlasses = Math.max(1, Math.ceil(target / GLASS_ML))
+  const glassesCount = Math.min(totalGlasses, Math.floor(logged / GLASS_ML))
+  const overMl = Math.max(0, logged - target)
+  const remainingL = Math.max(0, target - logged) / 1000
+  const pace = getPace(logged, target, isComplete, selectedDate)
 
   if (loading) {
     return (
@@ -84,9 +104,8 @@ function HydrationCard() {
           </div>
           <div className="skeleton-shimmer skeleton-rect" style={{ width: '52px', height: '26px', borderRadius: '999px' }} />
         </div>
-        <div className="ntr-hydro-bottle-wrap">
-          <div className="skeleton-shimmer skeleton-rect" style={{ width: '120px', height: '160px', borderRadius: '16px', margin: '0 auto' }} />
-        </div>
+        <div className="skeleton-shimmer skeleton-rect" style={{ width: '150px', height: '40px', borderRadius: '12px', marginTop: '14px' }} />
+        <div className="skeleton-shimmer skeleton-rect" style={{ width: '100%', height: '64px', borderRadius: '10px', marginTop: '16px' }} />
         <div className="ntr-hydro-btns">
           <div className="skeleton-shimmer skeleton-rect" style={{ width: '48px', height: '42px', borderRadius: '999px' }} />
           <div className="skeleton-shimmer skeleton-rect" style={{ flex: 1, height: '42px', borderRadius: '999px' }} />
@@ -109,89 +128,58 @@ function HydrationCard() {
         </span>
       </div>
 
-      <div className="ntr-hydro-bottle-wrap">
-        <div className="ntr-water-bottle">
-          <svg viewBox="0 0 120 186" className="ntr-bottle-svg" aria-hidden="true">
-            <defs>
-              <clipPath id="ntrBottleClip">
-                <path d={BOTTLE_PATH} />
-              </clipPath>
-              <linearGradient id="ntrWaterGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#7ac1ff" />
-                <stop offset="100%" stopColor="#2a86ff" />
-              </linearGradient>
-            </defs>
-
-            {/* Flask silhouette */}
-            <path d={BOTTLE_PATH} fill="rgba(230, 242, 255, 0.5)" stroke="#a8d1ff" strokeWidth="2" />
-
-            {/* Water with layered animated waves + bubbles */}
-            <g clipPath="url(#ntrBottleClip)">
-              {fillPercent > 0 && (
-                <>
-                  <path d={wavePath(waterY + 4)} fill="#5b9cf5" opacity="0.45" className="ntr-wave ntr-wave-back" />
-                  <path d={wavePath(waterY)} fill="url(#ntrWaterGrad)" className="ntr-wave ntr-wave-front" />
-                </>
-              )}
-              {fillPercent >= 20 && fillPercent < 100 && (
-                <>
-                  <circle className="ntr-bubble b1" cx="46" cy="164" r="3" />
-                  <circle className="ntr-bubble b2" cx="62" cy="168" r="2.2" />
-                  <circle className="ntr-bubble b3" cx="77" cy="162" r="2.6" />
-                </>
-              )}
-            </g>
-
-            {/* Level ticks */}
-            {[25, 50, 75].map((percent) => (
-              <line
-                key={percent}
-                x1="86"
-                x2="93"
-                y1={BOTTLE_BOTTOM - (percent / 100) * BOTTLE_FILL_HEIGHT}
-                y2={BOTTLE_BOTTOM - (percent / 100) * BOTTLE_FILL_HEIGHT}
-                stroke="rgba(23, 27, 21, 0.18)"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            ))}
-
-            {/* Cap */}
-            <rect x="44" y="4" width="32" height="10" rx="5" fill="#171b15" opacity="0.88" />
-          </svg>
-          <div className="ntr-bottle-center">
-            <strong>{(logged / 1000).toFixed(1)}L</strong>
-            <small>{logged.toLocaleString()}/{target.toLocaleString()}ml</small>
-          </div>
+      <div className="ntr-hydro-hero">
+        <div className="ntr-hydro-figure">
+          <strong>
+            {(logged / 1000).toFixed(1)}
+            <em>L</em>
+          </strong>
+          <small>of {(target / 1000).toFixed(1)}L</small>
         </div>
+        <span className="ntr-hydro-glass-chip">
+          <GlassWater size={13} strokeWidth={2.5} />
+          <b>{glassesCount}</b>/{totalGlasses} glasses
+        </span>
+      </div>
 
-        <div className="ntr-hydro-stat-col">
-          <div className="ntr-hydro-stat-tile">
-            <strong>{glassesCount}</strong>
-            <span>glasses</span>
-          </div>
-          <div className={`ntr-hydro-stat-tile${isComplete ? ' complete' : ''}`}>
-            {isComplete ? (
-              <>
-                <strong><Check size={18} strokeWidth={2.5} /></strong>
-                <span>goal met!</span>
-              </>
-            ) : (
-              <>
-                <strong>{glassesToGo}</strong>
-                <span>glasses to go</span>
-              </>
-            )}
-          </div>
-        </div>
+      <div className="ntr-hydro-segments" role="group" aria-label="Water logged, one segment per 250ml glass">
+        {Array.from({ length: totalGlasses }, (_, i) => {
+          const fill = Math.max(0, Math.min(1, (logged - i * GLASS_ML) / GLASS_ML))
+          const levelMl = (i + 1) * GLASS_ML
+          return (
+            <button
+              key={i}
+              type="button"
+              className={`ntr-hydro-cell${fill >= 1 ? ' full' : ''}`}
+              onClick={() => handleAddWater(levelMl - logged, 'cell')}
+              disabled={adding}
+              title={`Set to ${levelMl.toLocaleString()}ml`}
+              aria-label={`Set water intake to ${levelMl}ml`}
+            >
+              <span className="ntr-hydro-cell-fill" style={{ height: `${fill * 100}%` }} />
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="ntr-hydro-meta-row">
+        <span className={`ntr-hydro-pace ${pace.tone}`}>
+          <i aria-hidden="true" />
+          {pace.label}
+        </span>
+        {isComplete ? (
+          overMl > 0 && <span className="ntr-hydro-remaining">+{(overMl / 1000).toFixed(1)}L extra</span>
+        ) : (
+          <span className="ntr-hydro-remaining">{remainingL.toFixed(1)}L to go</span>
+        )}
       </div>
 
       <div className="ntr-hydro-btns">
         <button
           type="button"
           className={`ntr-soft-btn${bounceBtn === 'minus' ? ' ntr-hydro-btn-bounce' : ''}`}
-          onClick={() => handleAddWater(-250, 'minus')}
-          disabled={adding || logged < 250}
+          onClick={() => handleAddWater(-GLASS_ML, 'minus')}
+          disabled={adding || logged < GLASS_ML}
           aria-label="Remove 250ml"
         >
           <Minus size={15} />

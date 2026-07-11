@@ -1,0 +1,291 @@
+/* Shared insight rows for the Intelligence sections. Modern card treatment:
+   sentiment-tinted icon squares + tag, metric chip, optional sparkline,
+   hover lift. Color semantics: red = urgent/over-budget only, amber = watch,
+   green = positive, grey/ink = neutral. AA contrast on the off-white cards. */
+
+.ins-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Hosts can opt into a two-column flow (wide finance section) */
+.ins-list--columns {
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  align-items: start;
+}
+
+.ins-row {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  padding: 13px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(23, 28, 25, 0.06);
+  background:
+    linear-gradient(150deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.55));
+  box-shadow: 0 1px 2px rgba(23, 27, 21, 0.03);
+  overflow: hidden;
+  animation: ins-row-in 0.35s ease both;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ins-row:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(23, 27, 21, 0.07);
+}
+
+/* soft sentiment wash along the left edge */
+.ins-row::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 110px;
+  pointer-events: none;
+  background: linear-gradient(90deg, var(--ins-wash, transparent), transparent);
+  opacity: 0.6;
+}
+
+@keyframes ins-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ins-row {
+    animation: none;
+    transition: none;
+  }
+}
+
+.ins-row-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  margin-top: 2px;
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+}
+
+.ins-row--positive {
+  --ins-wash: rgba(62, 107, 84, 0.08);
+}
+
+.ins-row--positive .ins-row-icon {
+  background: linear-gradient(150deg, rgba(62, 107, 84, 0.2), rgba(62, 107, 84, 0.1));
+  color: #2e5243;
+}
+
+.ins-row--neutral {
+  --ins-wash: rgba(82, 96, 87, 0.07);
+}
+
+.ins-row--neutral .ins-row-icon {
+  background: linear-gradient(150deg, rgba(82, 96, 87, 0.16), rgba(82, 96, 87, 0.08));
+  color: #414a44;
+}
+
+/* "Watch" is calm amber — never red */
+.ins-row--watch {
+  --ins-wash: rgba(217, 119, 6, 0.08);
+}
+
+.ins-row--watch .ins-row-icon {
+  background: linear-gradient(150deg, rgba(217, 119, 6, 0.19), rgba(217, 119, 6, 0.09));
+  color: #8a5009;
+}
+
+/* Urgent = over-budget/destructive findings only */
+.ins-row--urgent {
+  --ins-wash: rgba(216, 53, 66, 0.08);
+}
+
+.ins-row--urgent .ins-row-icon {
+  background: linear-gradient(150deg, rgba(216, 53, 66, 0.17), rgba(216, 53, 66, 0.08));
+  color: #a02832;
+}
+
+.ins-row-body {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.ins-row-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 18px;
+}
+
+.ins-row-tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.ins-row--positive .ins-row-tag {
+  background: rgba(62, 107, 84, 0.13);
+  color: #2e5243;
+}
+
+.ins-row--neutral .ins-row-tag {
+  background: rgba(82, 96, 87, 0.11);
+  color: #414a44;
+}
+
+.ins-row--watch .ins-row-tag {
+  background: rgba(217, 119, 6, 0.13);
+  color: #8a5009;
+}
+
+.ins-row--urgent .ins-row-tag {
+  background: rgba(216, 53, 66, 0.11);
+  color: #a02832;
+}
+
+.ins-row-spark {
+  width: 64px;
+  height: 22px;
+  margin-left: 2px;
+}
+
+.ins-row-spark polyline {
+  stroke: currentColor;
+  opacity: 0.55;
+}
+
+.ins-row--positive .ins-row-spark { color: #33594a; }
+.ins-row--neutral .ins-row-spark { color: #4a544e; }
+.ins-row--watch .ins-row-spark { color: #9a5a10; }
+.ins-row--urgent .ins-row-spark { color: #b02a35; }
+
+.ins-row-metric {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgba(23, 28, 25, 0.05);
+}
+
+.ins-row-metric b {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #171d19;
+  font-variant-numeric: tabular-nums;
+}
+
+.ins-row-metric b em {
+  margin-left: 2px;
+  font-style: normal;
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(23, 28, 25, 0.6);
+}
+
+.ins-row-metric i {
+  display: inline-flex;
+}
+
+.ins-row-metric i.dir-up {
+  color: #8a5009;
+}
+
+.ins-row-metric i.dir-down {
+  color: #2e5f4b;
+}
+
+.ins-row-body p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: #1d2621;
+}
+
+.ins-row-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ins-row-meta small {
+  color: rgba(23, 28, 25, 0.66);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.ins-row-why {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #33594a;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.ins-row-why:hover {
+  background: rgba(62, 107, 84, 0.1);
+}
+
+.ins-row-why svg {
+  transition: transform 0.25s ease;
+}
+
+.ins-row-why svg.is-flipped {
+  transform: rotate(180deg);
+}
+
+.ins-row-action {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: #1d2420;
+  color: #eef2ea;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ins-row-action:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(23, 27, 21, 0.22);
+}
+
+.ins-row-detail {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(26, 31, 29, 0.05);
+  color: rgba(23, 28, 25, 0.78);
+  font-size: 11px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}

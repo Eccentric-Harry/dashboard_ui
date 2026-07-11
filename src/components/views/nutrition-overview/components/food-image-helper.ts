@@ -38,6 +38,25 @@ import garlicNaan from '../../../../assets/food/pastel/garlic_naan_1783663086551
 import alooGobi from '../../../../assets/food/pastel/aloo_gobi_1783663097684.png'
 import dalMakhani from '../../../../assets/food/pastel/dal_makhani_1783663165767.png'
 import mixedNuts from '../../../../assets/food/pastel/mixed_nuts_1783663175675.png'
+
+// Third batch (specific logs)
+import meduVada from '../../../../assets/food/pastel/medu_vada_1783750678490.png'
+import alooParatha from '../../../../assets/food/pastel/aloo_paratha_1783750702152.png'
+import rotiSabzi from '../../../../assets/food/pastel/roti_sabzi_1783750726806.png'
+import lemonRice from '../../../../assets/food/pastel/lemon_rice_1783750746370.png'
+import lobiaMasala from '../../../../assets/food/pastel/lobia_masala_1783750769841.png'
+import curdRice from '../../../../assets/food/pastel/curd_rice_1783750796521.png'
+import rawJackfruit from '../../../../assets/food/pastel/raw_jackfruit_1783750823231.png'
+import maggiNoodles from '../../../../assets/food/pastel/maggi_noodles_1783750851125.png'
+import matkaChaas from '../../../../assets/food/pastel/matka_chaas_1783750898050.png'
+import popcornBowl from '../../../../assets/food/pastel/popcorn_1783750924279.png'
+import uttapamDish from '../../../../assets/food/pastel/uttapam_1783750952204.png'
+import iceCreamBowl from '../../../../assets/food/pastel/ice_cream_1783750986396.png'
+import greenPeasSnack from '../../../../assets/food/pastel/green_peas_1783751014463.png'
+import blackCoffeeMug from '../../../../assets/food/pastel/black_coffee_1783751047479.png'
+import cookiesPlate from '../../../../assets/food/pastel/cookies_1783751076940.png'
+import spriteGlass from '../../../../assets/food/pastel/sprite_glass_1783751129701.png'
+import bhindiSabzi from '../../../../assets/food/pastel/bhindi_sabzi_1783751173982.png'
 export type FoodImage = {
   src: string
   alt: string
@@ -48,6 +67,25 @@ type FoodImageRule = FoodImage & { pattern: RegExp }
 // Ordered — first match wins. More specific dishes come before broad
 // categories (e.g. "curry" before "rice" so combo plates get the curry shot).
 const RULES: FoodImageRule[] = [
+  // Third batch mappings
+  { pattern: /medu vada|vada/i, src: meduVada, alt: 'Medu vada with chutney' },
+  { pattern: /aloo paratha|paratha/i, src: alooParatha, alt: 'Aloo paratha' },
+  { pattern: /lemon rice/i, src: lemonRice, alt: 'Lemon rice' },
+  { pattern: /lobia/i, src: lobiaMasala, alt: 'Lobia masala (black-eyed peas)' },
+  { pattern: /curd rice/i, src: curdRice, alt: 'Curd rice' },
+  { pattern: /jackfruit/i, src: rawJackfruit, alt: 'Jackfruit curry' },
+  { pattern: /maggi|noodles/i, src: maggiNoodles, alt: 'Maggi noodles' },
+  { pattern: /chaas|buttermilk/i, src: matkaChaas, alt: 'Spiced buttermilk (chaas)' },
+  { pattern: /popcorn/i, src: popcornBowl, alt: 'Popcorn' },
+  { pattern: /uttapam/i, src: uttapamDish, alt: 'Uttapam' },
+  { pattern: /ice cream|icecream/i, src: iceCreamBowl, alt: 'Ice cream' },
+  { pattern: /green peas/i, src: greenPeasSnack, alt: 'Fried green peas' },
+  { pattern: /black coffee|coffee/i, src: blackCoffeeMug, alt: 'Black coffee' },
+  { pattern: /cooki|biscuit|bourbon/i, src: cookiesPlate, alt: 'Cookies' },
+  { pattern: /sprite|soda|soft drink/i, src: spriteGlass, alt: 'Sprite glass' },
+  { pattern: /bhindi|okra/i, src: bhindiSabzi, alt: 'Bhindi (okra) fry' },
+  { pattern: /roti.*sabzi|roti.*curry|roti/i, src: rotiSabzi, alt: 'Roti with curry' },
+
   // Newly generated mappings
   { pattern: /palak paneer|spinach curry|saag paneer/i, src: palakPaneer, alt: 'Palak paneer' },
   { pattern: /dosa|masala dosa/i, src: masalaDosa, alt: 'Masala dosa with chutney' },

@@ -11,6 +11,7 @@ import { AddTransactionModal } from './components/add-transaction-modal'
 import { EditBalanceModal } from './components/edit-balance-modal'
 import { EditBudgetModal } from './components/edit-budget-modal'
 import { LendingCard } from './components/lending-card'
+import { FinanceIntelligence } from './components/finance-intelligence'
 import { ConfirmDialog } from '../../ui/confirm-dialog'
 import { financeMetrics as fallbackMetrics } from './data'
 import { fetchDailyFinanceLogs, fetchFinanceAccount, deleteTransaction, deleteLendingRecord, type LendingRecord } from '../../../lib/api'
@@ -312,7 +313,15 @@ function FinanceOverviewDashboard() {
             />
           ))}
         </div>
-        <SpendingOverviewCard 
+        <FinanceIntelligence
+          logs={logs}
+          monthlyBudget={monthlyBudget}
+          selectedMonthKey={selectedMonthKey}
+          onMonthChange={setSelectedMonthKey}
+          loading={loading}
+          refreshKey={lendingRefreshKey}
+        />
+        <SpendingOverviewCard
           logs={logs} 
           selectedCategory={selectedCategory} 
           onCategorySelect={setSelectedCategory} 

@@ -8,6 +8,7 @@ import { NutritionHeader } from './components/nutrition-header'
 import { ProteinTrendCard } from './components/protein-trend-card'
 import { AddFoodModal } from './components/add-food-modal'
 import { MealDetailsModal } from './components/meal-details-modal'
+import { NutritionIntelligence } from './components/nutrition-intelligence'
 import { useDashboard } from '../../../contexts/DashboardContext'
 import { fetchFoodEntries } from '../../../lib/api'
 
@@ -173,7 +174,12 @@ function NutritionOverviewDashboard() {
             onSelectEntry={openEntry}
           />
           <HydrationCard />
+        </div>
 
+        <NutritionIntelligence />
+
+        {/* Recent food logs live below the intelligence layer */}
+        <div className="ntr-grid ntr-grid--history">
           <FoodLogCard onSelectEntry={openEntry} />
         </div>
 

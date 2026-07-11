@@ -31,9 +31,10 @@ type InsightsCardProps = {
   insights: HomeInsight[]
   activeDays: number
   onRefresh: () => void
+  onNavigate?: (pathname: '/nutrition' | '/finance') => void
 }
 
-function InsightsCard({ loading, insights, activeDays, onRefresh }: InsightsCardProps) {
+function InsightsCard({ loading, insights, activeDays, onRefresh, onNavigate }: InsightsCardProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   return (
@@ -78,7 +79,7 @@ function InsightsCard({ loading, insights, activeDays, onRefresh }: InsightsCard
                 <div className="home-insight-body">
                   <p>{insight.text}</p>
                   <div className="home-insight-meta">
-                    <small>based on {insight.sampleDays} days</small>
+                    <small>{insight.sampleWindow ?? `based on ${insight.sampleDays} days`}</small>
                     <button
                       type="button"
                       className="home-insight-why"
@@ -87,6 +88,15 @@ function InsightsCard({ loading, insights, activeDays, onRefresh }: InsightsCard
                     >
                       Why? <ChevronDown size={11} className={cn(expanded && 'is-flipped')} />
                     </button>
+                    {insight.action && onNavigate && (
+                      <button
+                        type="button"
+                        className="home-insight-link"
+                        onClick={() => onNavigate(insight.action!.route as '/nutrition' | '/finance')}
+                      >
+                        {insight.action.label} →
+                      </button>
+                    )}
                   </div>
                   {expanded && <small className="home-insight-detail">{insight.detail}</small>}
                 </div>

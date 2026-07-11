@@ -10,6 +10,8 @@ type WeekRollupCardProps = {
   nutrition: NutritionSummary | null
   spending: SpendingSummary | null
   avgSleepMinutes: number | null
+  /** Engine-computed budget-left ÷ days-left, current month only. */
+  safePerDay: number | null
 }
 
 type RollupStat = {
@@ -20,7 +22,7 @@ type RollupStat = {
   watch?: boolean
 }
 
-function WeekRollupCard({ loading, mind, nutrition, spending, avgSleepMinutes }: WeekRollupCardProps) {
+function WeekRollupCard({ loading, mind, nutrition, spending, avgSleepMinutes, safePerDay }: WeekRollupCardProps) {
   const mealsLoggedDays = nutrition
     ? Object.values(nutrition.dailyCalories).filter((kcal) => kcal > 0).length
     : 0
@@ -72,6 +74,13 @@ function WeekRollupCard({ loading, mind, nutrition, spending, avgSleepMinutes }:
       label: 'of month budget',
       isZero: budgetUtilization == null,
       watch: budgetUtilization != null && budgetUtilization > 100,
+    },
+    {
+      id: 'safe-spend',
+      value: safePerDay != null ? `₹${safePerDay.toLocaleString('en-IN')}` : '—',
+      label: 'safe to spend/day',
+      isZero: safePerDay == null,
+      watch: safePerDay != null && safePerDay === 0,
     },
   ]
 

@@ -11,6 +11,7 @@ import type {
   SleepEntry,
   StravaActivity,
 } from '../../../lib/api'
+import type { Insight } from '../../../lib/insights/engine'
 import type { NutritionSummary, SpendingSummary } from './home-types'
 import { formatMinutes, lastNDates, shortDayLabel, SLEEP_TARGET_MINUTES } from './home-types'
 
@@ -21,7 +22,7 @@ const MIN_PAIRED_DAYS = 5
 const MIN_BUCKET_DAYS = 2
 const MAX_VISIBLE_INSIGHTS = 4
 
-export type InsightSentiment = 'positive' | 'neutral' | 'watch'
+export type InsightSentiment = 'positive' | 'neutral' | 'watch' | 'urgent'
 
 export type InsightDomain =
   | 'sleep'
@@ -39,9 +40,31 @@ export interface HomeInsight {
   /** The underlying numbers, shown by the "Why?" expand. */
   detail: string
   sampleDays: number
+  /** Overrides the default "based on N days" meta when set (promoted insights). */
+  sampleWindow?: string
   sentiment: InsightSentiment
   /** Normalized |effect size| used only for ranking. */
   effect: number
+  /** Deep-link into the owning route (promoted domain insights only). */
+  action?: { label: string; route: string }
+}
+
+/** Adapt a shared-engine insight (finance/nutrition) into the Home feed shape. */
+export function fromEngineInsight(insight: Insight): HomeInsight {
+  return {
+    id: insight.id,
+    domain: insight.domain === 'finance' ? 'finance' : 'nutrition',
+    text: insight.title,
+    detail: insight.detail,
+    sampleDays: 0,
+    sampleWindow: insight.sampleWindow,
+    sentiment: insight.sentiment,
+    effect: insight.effect,
+    action: {
+      label: 'See full breakdown',
+      route: insight.domain === 'finance' ? '/finance' : '/nutrition',
+    },
+  }
 }
 
 export interface DayRecord {
@@ -154,8 +177,23 @@ interface InsightContext {
   learningStreakDays: number
 }
 
-export function generateInsights(records: DayRecord[], ctx: InsightContext): HomeInsight[] {
-  const insights: HomeInsight[] = []
+const SENTIMENT_RANK: Record<InsightSentiment, number> = {
+  urgent: 3,
+  watch: 2,
+  positive: 1,
+  neutral: 0,
+}
+
+/**
+ * Cross-domain correlation insights plus up to two `promoted` finance/nutrition
+ * findings from the shared engine. Capped at 4, guaranteeing ≥1 positive.
+ */
+export function generateInsights(
+  records: DayRecord[],
+  ctx: InsightContext,
+  promoted: HomeInsight[] = [],
+): HomeInsight[] {
+  const insights: HomeInsight[] = [...promoted]
 
   const push = (insight: HomeInsight | null) => {
     if (insight) insights.push(insight)
@@ -167,14 +205,19 @@ export function generateInsights(records: DayRecord[], ctx: InsightContext): Hom
   push(overdueVsFocus(records))
   push(proteinVsFocus(records, ctx.proteinGoal))
 
-  insights.sort((a, b) => b.effect - a.effect)
+  insights.sort(
+    (a, b) => SENTIMENT_RANK[b.sentiment] - SENTIMENT_RANK[a.sentiment] || b.effect - a.effect,
+  )
 
   const positive = bestPositive(records, ctx)
   let visible = insights.slice(0, MAX_VISIBLE_INSIGHTS)
-  if (positive && !visible.some((i) => i.sentiment === 'positive')) {
-    visible = [...visible.slice(0, MAX_VISIBLE_INSIGHTS - 1), positive]
+  if (!visible.some((i) => i.sentiment === 'positive')) {
+    const rankedPositive = insights.find((i) => i.sentiment === 'positive') ?? positive
+    if (rankedPositive) {
+      visible = [...visible.slice(0, MAX_VISIBLE_INSIGHTS - 1), rankedPositive]
+    }
   }
-  return visible
+  return visible.slice(0, MAX_VISIBLE_INSIGHTS)
 }
 
 /** Days that carry at least one loggable signal — powers the "n of 7" hint. */

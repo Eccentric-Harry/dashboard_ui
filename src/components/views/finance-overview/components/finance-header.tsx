@@ -143,15 +143,25 @@ function FinanceHeader({ onAddClick, logs, selectedDate, onDateChange }: Finance
     }
   }
 
-  const selectedDateTransactionsCount = useMemo(() => {
-    const log = logs.find((l) => l.id === selectedDate || l.date.startsWith(selectedDate))
-    if (!log) return 0
-    let count = 0
-    Object.values(log.transactions || {}).forEach((txs) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      count += (txs as any[]).length
+  // Data-truth: the cards below show the selected *month*, so the header
+  // reports that month's transaction count (plus the selected day's, when
+  // it has any) instead of a misleading day-scoped "0 transactions logged".
+  const transactionCounts = useMemo(() => {
+    const monthKey = selectedDate.slice(0, 7)
+    let month = 0
+    let day = 0
+    logs.forEach((log) => {
+      const logDate = log.date.split('T')[0]
+      if (!logDate.startsWith(monthKey)) return
+      let count = 0
+      Object.values(log.transactions || {}).forEach((txs) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        count += (txs as any[]).length
+      })
+      month += count
+      if (logDate === selectedDate) day = count
     })
-    return count
+    return { month, day }
   }, [logs, selectedDate])
 
   const pickedDateObject = pickedDate ? parseIsoDate(pickedDate) : null
@@ -212,7 +222,11 @@ function FinanceHeader({ onAddClick, logs, selectedDate, onDateChange }: Finance
               <strong>{formatHeaderDate(selectedDateObject)}</strong>
               <ChevronDown size={20} className="finance-date-chevron" />
             </span>
-            <small>Finance Overview | {selectedDateTransactionsCount} transactions logged</small>
+            <small>
+              Finance Overview | {transactionCounts.month} transaction{transactionCounts.month === 1 ? '' : 's'} in{' '}
+              {selectedDateObject.toLocaleDateString('en-US', { month: 'long' })}
+              {transactionCounts.day > 0 ? ` · ${transactionCounts.day} on this day` : ''}
+            </small>
           </span>
         </button>
 
