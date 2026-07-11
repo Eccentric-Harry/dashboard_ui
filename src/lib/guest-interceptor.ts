@@ -125,6 +125,7 @@ interface GuestMindEntry {
   valueTag?: string | null;
   pinned?: boolean;
   reviewDate?: string | null;
+  wasParked?: boolean;
   date: string;
   createdAt: string;
   resolvedAt?: string | null;
@@ -216,8 +217,8 @@ let mindEntries: GuestMindEntry[] = [
   { id: 'mg-2', type: 'THOUGHT', text: 'Everyone at standup could tell I was nervous.', status: 'OPEN', date: guestToday, createdAt: new Date().toISOString() },
   { id: 'mg-3', type: 'THOUGHT', text: 'What if the calendar sync breaks in production?', status: 'CONVERTED', linkedTaskId: 'demo-task-1', date: guestToday, createdAt: new Date().toISOString(), resolvedAt: new Date().toISOString() },
   { id: 'mg-4', type: 'THOUGHT', text: 'I wasted the whole weekend.', reframedText: 'I rested — and rest is part of the work. I still logged two learnings.', distortionTag: 'All-or-nothing', status: 'RESOLVED', date: guestToday, createdAt: new Date().toISOString(), resolvedAt: new Date().toISOString() },
-  { id: 'mg-5', type: 'THOUGHT', text: 'Am I falling behind my peers?', status: 'PARKED', reviewDate: guestAddDays(guestToday, 3), date: guestToday, createdAt: new Date().toISOString() },
-  { id: 'mg-6', type: 'THOUGHT', text: 'Did I say something wrong in that review comment?', status: 'PARKED', reviewDate: guestAddDays(guestToday, 1), date: guestToday, createdAt: new Date().toISOString() },
+  { id: 'mg-5', type: 'THOUGHT', text: 'Am I falling behind my peers?', status: 'PARKED', reviewDate: guestAddDays(guestToday, 3), wasParked: true, date: guestToday, createdAt: new Date().toISOString() },
+  { id: 'mg-6', type: 'THOUGHT', text: 'Did I say something wrong in that review comment?', status: 'PARKED', reviewDate: guestAddDays(guestToday, 1), wasParked: true, date: guestToday, createdAt: new Date().toISOString() },
   { id: 'mg-7', type: 'WIN', text: 'Fixed the recurrence bug everyone was avoiding.', status: 'OPEN', pinned: true, date: guestToday, createdAt: new Date().toISOString() },
   { id: 'mg-8', type: 'WIN', text: 'Ran 5k without stopping.', status: 'OPEN', date: guestToday, createdAt: new Date().toISOString() },
   { id: 'mg-9', type: 'GRATITUDE', text: 'A teammate covered for me without being asked.', status: 'OPEN', date: guestToday, createdAt: new Date().toISOString() },
@@ -284,7 +285,10 @@ export function enableGuestInterceptor() {
         const body = bodyOf();
         if (entry) {
           entry.status = body.status;
-          if (body.status === 'PARKED') entry.reviewDate = body.reviewDate ?? null;
+          if (body.status === 'PARKED') {
+            entry.reviewDate = body.reviewDate ?? null;
+            entry.wasParked = true;
+          }
           if (body.status === 'OPEN') { entry.reviewDate = null; entry.resolvedAt = null; }
           if (body.status === 'RESOLVED') {
             if (body.reframedText != null) entry.reframedText = body.reframedText;

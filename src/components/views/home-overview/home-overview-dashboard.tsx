@@ -22,12 +22,14 @@ import { buildHabitStrips } from './habit-strips'
 import { QuickCaptureCard } from './components/quick-capture-card'
 import type { QuickCaptureMode } from './components/quick-capture-card'
 import { WeekRollupCard } from './components/week-rollup-card'
-import { buildDayRecords, countActiveDays, fromEngineInsight, generateInsights, INSIGHT_WINDOW_DAYS } from './insights-engine'
+import { buildDayRecords, countActiveDays, generateInsights, INSIGHT_WINDOW_DAYS } from './insights-engine'
 import { promoteForHome } from '../../../lib/insights/engine'
 import { buildBurndown, financeInsights } from '../../../lib/insights/finance'
+import { buildMindDays, mindInsights } from '../../../lib/insights/mind'
 import { nutritionDaysFromSummary, nutritionInsights } from '../../../lib/insights/nutrition'
 import { lastNDates, WATER_QUICK_ADD_ML } from './home-types'
 import { HOME_WINDOW_DAYS, useHomeData } from './use-home-data'
+import '../nutrition-overview/nutrition-redesign.css'
 import './home-overview.css'
 
 const CAPTURE_TOASTS: Record<QuickCaptureMode, string> = {
@@ -80,6 +82,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
         nutrition: home.nutrition.data,
         finance: home.finance.data,
         learnings: home.learnings.data,
+        mindEntries: home.mindEntries.data,
       }),
     [
       windowDates,
@@ -91,11 +94,18 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
       home.nutrition.data,
       home.finance.data,
       home.learnings.data,
+      home.mindEntries.data,
     ],
   )
 
   const weekRecords = useMemo(
     () => dayRecords.filter((r) => weekDates.includes(r.date)),
+    [dayRecords, weekDates],
+  )
+
+  // Days 8–14 back — the rollup's week-over-week baseline.
+  const prevWeekRecords = useMemo(
+    () => dayRecords.filter((r) => !weekDates.includes(r.date)),
     [dayRecords, weekDates],
   )
 
@@ -136,8 +146,17 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
     if (financeInput) {
       domainInsights.push(...financeInsights(financeInput))
     }
-    return promoteForHome(domainInsights, 2).map(fromEngineInsight)
-  }, [home.nutrition.data, financeInput, home.today])
+    if (home.mindEntries.data) {
+      domainInsights.push(
+        ...mindInsights({
+          today: home.today,
+          days: buildMindDays(home.mindEntries.data, home.today, 30),
+          windowDays: 30,
+        }),
+      )
+    }
+    return promoteForHome(domainInsights, 2)
+  }, [home.nutrition.data, financeInput, home.mindEntries.data, home.today])
 
   const safePerDay = useMemo(() => {
     if (!financeInput) return null
@@ -160,7 +179,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
     [weekRecords, home.nutrition.data, home.spending.data, home.workoutStats.data, home.learnings.data, promotedInsights],
   )
 
-  const habitStrips = useMemo(() => buildHabitStrips(dayRecords, weekDates), [dayRecords, weekDates])
+  const habitStrips = useMemo(() => buildHabitStrips(dayRecords, windowDates), [dayRecords, windowDates])
 
   const todayRecord = dayRecords[dayRecords.length - 1]
   const todayTasks = useMemo(
@@ -171,12 +190,6 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
     () => (home.tasks.data ?? []).filter((t) => t.date && t.date < home.today && !t.completed).length,
     [home.tasks.data, home.today],
   )
-
-  const avgSleepMinutes = useMemo(() => {
-    const nights = weekRecords.filter((r) => r.sleepMinutes != null)
-    if (nights.length === 0) return null
-    return Math.round(nights.reduce((sum, r) => sum + (r.sleepMinutes as number), 0) / nights.length)
-  }, [weekRecords])
 
   const isFirstRun =
     !home.loading &&
@@ -326,21 +339,23 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
         </section>
       )}
 
-      <TodayHeroCard
-        loading={home.loading}
-        nutrition={home.nutrition.data}
-        calendarItems={home.calendarToday.data}
-        todayTasks={todayTasks}
-        overdueCount={overdueCount}
-        hydration={home.hydration.data}
-        focusMinutesToday={todayRecord?.focusMinutes ?? 0}
-        focusRunning={focusSession?.status === 'RUNNING'}
-        onAddWater={() => void handleAddWater()}
-        onStartFocus={() => onNavigate('/learnings')}
-        onNavigate={onNavigate}
-      />
-
       <div className="home-grid">
+        <TodayHeroCard
+          loading={home.loading}
+          nutrition={home.nutrition.data}
+          calendarItems={home.calendarToday.data}
+          todayTasks={todayTasks}
+          overdueCount={overdueCount}
+          hydration={home.hydration.data}
+          focusMinutesToday={todayRecord?.focusMinutes ?? 0}
+          focusRunning={focusSession?.status === 'RUNNING'}
+          onAddWater={() => void handleAddWater()}
+          onStartFocus={() => onNavigate('/learnings')}
+          onNavigate={onNavigate}
+        />
+
+        <QuickCaptureCard onCapture={handleCapture} focusRequest={captureRequest} />
+
         <SleepCard
           loading={home.loading}
           failed={home.sleep.failed}
@@ -359,16 +374,14 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           onNavigate={onNavigate}
         />
 
-        <MomentumCard loading={home.loading} strips={habitStrips} weekDates={weekDates} />
-
-        <QuickCaptureCard onCapture={handleCapture} focusRequest={captureRequest} />
+        <MomentumCard loading={home.loading} strips={habitStrips} weekDates={windowDates} />
 
         <WeekRollupCard
           loading={home.loading}
-          mind={home.mind.data}
+          weekRecords={weekRecords}
+          prevWeekRecords={prevWeekRecords}
           nutrition={home.nutrition.data}
           spending={home.spending.data}
-          avgSleepMinutes={avgSleepMinutes}
           safePerDay={safePerDay}
         />
       </div>

@@ -1,49 +1,26 @@
-import { useState } from 'react'
-import {
-  Brain,
-  CheckSquare,
-  ChevronDown,
-  CircleDollarSign,
-  Dumbbell,
-  Moon,
-  RefreshCw,
-  Sparkles,
-  Timer,
-  Utensils,
-} from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
-import { cn } from '../../../../lib/utils'
-import type { HomeInsight, InsightDomain } from '../insights-engine'
+import { RefreshCw, Sparkles } from 'lucide-react'
+import type { Insight } from '../../../../lib/insights/engine'
+import { InsightList } from '../../../ui/insight-list'
 import { INSIGHT_WINDOW_DAYS } from '../insights-engine'
 
-const DOMAIN_ICONS: Record<InsightDomain, LucideIcon> = {
-  sleep: Moon,
-  focus: Timer,
-  mood: Brain,
-  tasks: CheckSquare,
-  nutrition: Utensils,
-  finance: CircleDollarSign,
-  workout: Dumbbell,
-}
+type ActionRoute = '/nutrition' | '/finance' | '/mind' | '/tasks'
 
 type InsightsCardProps = {
   loading: boolean
-  insights: HomeInsight[]
+  insights: Insight[]
   activeDays: number
   onRefresh: () => void
-  onNavigate?: (pathname: '/nutrition' | '/finance') => void
+  onNavigate?: (pathname: ActionRoute) => void
 }
 
 function InsightsCard({ loading, insights, activeDays, onRefresh, onNavigate }: InsightsCardProps) {
-  const [expandedId, setExpandedId] = useState<string | null>(null)
-
   return (
     <section className="home-card home-card--insights" aria-label="Patterns this week">
       <Sparkles className="home-card-glyph" aria-hidden="true" />
       <header className="home-card-head">
         <div>
           <span className="home-card-eyebrow">Patterns</span>
-          <h2 className="home-card-title">This week</h2>
+          <h2 className="home-card-title">What stands out</h2>
         </div>
         <button type="button" className="home-btn-quiet" onClick={onRefresh} aria-label="Refresh insights">
           <RefreshCw size={13} />
@@ -67,43 +44,10 @@ function InsightsCard({ loading, insights, activeDays, onRefresh, onNavigate }: 
           </span>
         </div>
       ) : (
-        <ul className="home-insights-list">
-          {insights.map((insight) => {
-            const Icon = DOMAIN_ICONS[insight.domain]
-            const expanded = expandedId === insight.id
-            return (
-              <li key={insight.id} className={cn('home-insight', `home-insight--${insight.sentiment}`)}>
-                <span className="home-insight-icon">
-                  <Icon size={14} />
-                </span>
-                <div className="home-insight-body">
-                  <p>{insight.text}</p>
-                  <div className="home-insight-meta">
-                    <small>{insight.sampleWindow ?? `based on ${insight.sampleDays} days`}</small>
-                    <button
-                      type="button"
-                      className="home-insight-why"
-                      aria-expanded={expanded}
-                      onClick={() => setExpandedId(expanded ? null : insight.id)}
-                    >
-                      Why? <ChevronDown size={11} className={cn(expanded && 'is-flipped')} />
-                    </button>
-                    {insight.action && onNavigate && (
-                      <button
-                        type="button"
-                        className="home-insight-link"
-                        onClick={() => onNavigate(insight.action!.route as '/nutrition' | '/finance')}
-                      >
-                        {insight.action.label} →
-                      </button>
-                    )}
-                  </div>
-                  {expanded && <small className="home-insight-detail">{insight.detail}</small>}
-                </div>
-              </li>
-            )
-          })}
-        </ul>
+        <InsightList
+          insights={insights}
+          onAction={(insight: Insight) => onNavigate?.(insight.action!.route as ActionRoute)}
+        />
       )}
     </section>
   )

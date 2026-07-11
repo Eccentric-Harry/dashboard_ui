@@ -1,0 +1,203 @@
+/* Mind Intelligence — scoped under .mind-dashboard .mind-card--intelligence.
+   Reads as the "data" register (like Nutrition/Finance Intelligence) rather
+   than the joyful-pastel emotional-support register used by Breathe/Ground/
+   Gratitude, so no tint class — plain glass, chart-dense. Reuses the shared
+   .ins-list rows for the narrative "Patterns worth knowing" section. */
+
+.mind-dashboard .mind-intel-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.mind-dashboard .mind-intel-block {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mind-dashboard .mind-intel-eyebrow {
+  margin: 0;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #526057;
+}
+
+/* ---------- Triage composition bar ---------- */
+
+.mind-dashboard .mind-intel-composition {
+  grid-column: span 2;
+}
+
+.mind-dashboard .mind-intel-bar {
+  display: flex;
+  width: 100%;
+  height: 12px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(16, 19, 18, 0.06);
+}
+
+.mind-dashboard .mind-intel-bar-seg {
+  min-width: 3px;
+}
+
+.mind-dashboard .mind-intel-bar-seg.is-converted,
+.mind-dashboard .mind-intel-legend-item i.is-converted {
+  background: #414a78;
+}
+.mind-dashboard .mind-intel-bar-seg.is-reframed,
+.mind-dashboard .mind-intel-legend-item i.is-reframed {
+  background: #2e5442;
+}
+.mind-dashboard .mind-intel-bar-seg.is-parked,
+.mind-dashboard .mind-intel-legend-item i.is-parked {
+  background: #3d576a;
+}
+.mind-dashboard .mind-intel-bar-seg.is-released,
+.mind-dashboard .mind-intel-legend-item i.is-released {
+  background: #7d4f30;
+}
+.mind-dashboard .mind-intel-bar-seg.is-open,
+.mind-dashboard .mind-intel-legend-item i.is-open {
+  background: rgba(16, 19, 18, 0.22);
+}
+
+.mind-dashboard .mind-intel-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+}
+
+.mind-dashboard .mind-intel-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  color: #526057;
+}
+
+.mind-dashboard .mind-intel-legend-item b {
+  color: #101312;
+  font-weight: 700;
+}
+
+.mind-dashboard .mind-intel-legend-item i {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  font-style: normal;
+}
+
+/* ---------- Capture trend chart ---------- */
+
+.mind-dashboard .mind-intel-trend {
+  grid-column: span 2;
+}
+
+.mind-dashboard .mind-intel-chart {
+  height: 64px;
+}
+
+.mind-dashboard .mind-intel-tooltip {
+  padding: 5px 9px;
+  border-radius: 8px;
+  background: rgba(16, 19, 18, 0.88);
+  color: #f4f6f2;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ---------- Distortion chips ---------- */
+
+.mind-dashboard .mind-intel-distortions {
+  grid-column: span 2;
+}
+
+.mind-dashboard .mind-intel-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mind-dashboard .mind-intel-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(16, 19, 18, 0.05);
+  border: 1px solid rgba(16, 19, 18, 0.08);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #526057;
+}
+
+.mind-dashboard .mind-intel-chip b {
+  color: #101312;
+  font-weight: 700;
+}
+
+/* ---------- Time-of-day strip ---------- */
+
+.mind-dashboard .mind-intel-timing {
+  grid-column: span 2;
+}
+
+.mind-dashboard .mind-intel-timing-strip {
+  display: flex;
+  gap: 6px;
+}
+
+.mind-dashboard .mind-intel-timing-seg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 6px;
+  border-radius: 14px;
+  background: rgba(16, 19, 18, 0.05);
+  text-align: center;
+}
+
+.mind-dashboard .mind-intel-timing-seg span {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #526057;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mind-dashboard .mind-intel-timing-seg b {
+  font-size: 13px;
+  font-weight: 700;
+  color: #101312;
+}
+
+/* ---------- Patterns list ---------- */
+
+.mind-dashboard .mind-intel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (max-width: 900px) {
+  .mind-dashboard .mind-intel-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .mind-dashboard .mind-intel-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

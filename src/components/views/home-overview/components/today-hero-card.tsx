@@ -1,10 +1,11 @@
-import type { CSSProperties } from 'react'
-import { CalendarClock, CheckSquare, Droplets, Flame as FocusFlame, Plus, Timer } from 'lucide-react'
+import { CalendarClock, CheckSquare, Droplets, Flame as FocusFlame, Utensils } from 'lucide-react'
 import type { CalendarItem, DailyTask, HydrationData } from '../../../../lib/api'
 import type { AppPath } from '../../../dashboard/quantified-self-dashboard/data'
 import { cn } from '../../../../lib/utils'
+import { useCountUp } from '../../../../hooks/use-count-up'
+import { ArcGauge } from '../../nutrition-overview/components/arc-gauge'
 import type { NutritionSummary } from '../home-types'
-import { formatMinutes, formatTimeLabel } from '../home-types'
+import { formatMinutes, formatTimeLabel, FOCUS_TARGET_MINUTES } from '../home-types'
 
 type TodayHeroCardProps = {
   loading: boolean
@@ -20,22 +21,55 @@ type TodayHeroCardProps = {
   onNavigate: (path: AppPath, search?: string) => void
 }
 
-function MiniRing({ value, target, label, className }: { value: number; target: number; label: string; className?: string }) {
-  const radius = 26
-  const circumference = 2 * Math.PI * radius
-  const ratio = target > 0 ? Math.min(value / target, 1) : 0
+/** One stacked loop bar — the Nutrition macro-row component re-aimed at a daily loop. */
+function HeroLoopRow({
+  accent,
+  icon,
+  label,
+  value,
+  target,
+  display,
+  sub,
+  onClick,
+  badge,
+}: {
+  accent: 'tasks' | 'water' | 'fuel'
+  icon: React.ReactNode
+  label: string
+  value: number
+  target: number
+  display: string
+  sub?: string
+  onClick: () => void
+  badge?: React.ReactNode
+}) {
+  const animated = useCountUp(value)
+  const ratio = target > 0 ? Math.min(animated / target, 1) : 0
   return (
     <div
-      className={cn('home-mini-ring', ratio > 0 && 'has-progress', className)}
-      style={{ '--ring-offset': circumference - ratio * circumference, '--ring-circ': circumference } as CSSProperties}
+      className={cn('ntr-macro-row', `home-loop--${accent}`)}
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onClick()
+        }
+      }}
     >
-      <svg viewBox="0 0 64 64" aria-hidden="true">
-        <circle cx="32" cy="32" r={radius} className="track" />
-        <circle cx="32" cy="32" r={radius} className="value" strokeDasharray={circumference} />
-      </svg>
-      <span className="home-mini-ring-center">
-        <b>{target > 0 ? Math.round((value / target) * 100) : 0}%</b>
-        <small>{label}</small>
+      <div className="ntr-macro-header">
+        <p>
+          {icon} {label}
+          {badge}
+        </p>
+        <strong>
+          {display}
+          {sub && <em> {sub}</em>}
+        </strong>
+      </div>
+      <span className="ntr-macro-bar" aria-hidden="true">
+        <i style={{ width: `${ratio * 100}%` }} />
       </span>
     </div>
   )
@@ -57,14 +91,21 @@ function TodayHeroCard({
   if (loading) {
     return (
       <section className="home-card home-card--hero" aria-label="Today at a glance">
-        <div className="home-hero-row">
-          {Array.from({ length: 5 }, (_, i) => (
-            <div key={i} className="home-hero-tile is-skeleton">
-              <span className="home-skel home-skel--dot" />
-              <span className="home-skel home-skel--line" />
-              <span className="home-skel home-skel--line short" />
-            </div>
-          ))}
+        <div className="ntr-card-head home-hero-head">
+          <div>
+            <p className="ntr-eyebrow">Today</p>
+            <span className="home-skel home-skel--title" style={{ width: 260, marginTop: 6 }} />
+          </div>
+        </div>
+        <div className="home-hero-panel is-skeleton">
+          <div className="home-hero-gauge-col">
+            <span className="home-skel" style={{ width: 190, height: 190, borderRadius: '50%' }} />
+          </div>
+          <div className="ntr-hero-macros">
+            {Array.from({ length: 3 }, (_, i) => (
+              <span key={i} className="home-skel" style={{ height: 58, borderRadius: 16 }} />
+            ))}
+          </div>
         </div>
       </section>
     )
@@ -85,96 +126,97 @@ function TodayHeroCard({
 
   const calories = nutrition?.todayTotalCalories ?? 0
   const calorieGoal = nutrition?.calorieGoal ?? 0
-  const protein = nutrition?.todayTotalProtein ?? 0
-  const proteinGoal = nutrition?.proteinGoal ?? 0
-  const proteinRatio = proteinGoal > 0 ? Math.min(protein / proteinGoal, 1) : 0
+
+  const focusPct = Math.round((focusMinutesToday / FOCUS_TARGET_MINUTES) * 100)
 
   return (
     <section className="home-card home-card--hero" aria-label="Today at a glance">
-      <div className="home-hero-row">
-        <button type="button" className="home-hero-tile" onClick={() => onNavigate('/nutrition')}>
-          <span className="home-tile-eyebrow">Fuel</span>
-          {nutrition ? (
-            <div className="home-hero-fuel">
-              <MiniRing value={calories} target={calorieGoal} label="kcal" />
-              <div className="home-hero-fuel-meta">
-                <b>{calories.toLocaleString()}</b>
-                <small>of {calorieGoal.toLocaleString()} kcal</small>
-                <span className="home-protein-bar" aria-label={`Protein ${protein} of ${proteinGoal} grams`}>
-                  <i style={{ width: `${proteinRatio * 100}%` }} />
-                </span>
-                <small>
-                  {protein}g / {proteinGoal}g protein
-                </small>
-              </div>
-            </div>
-          ) : (
-            <p className="home-tile-empty">Log your first meal to light this up.</p>
-          )}
-        </button>
-
-        <button type="button" className="home-hero-tile" onClick={() => onNavigate('/calendar')}>
-          <span className="home-tile-eyebrow">
-            <CalendarClock size={12} /> Next up
+      <div className="ntr-card-head home-hero-head">
+        <div>
+          <p className="ntr-eyebrow">Today · Focus loop</p>
+          <h2>{focusPct}% of focus goal reached</h2>
+        </div>
+        {focusRunning ? (
+          <span className="ntr-pill dark home-pill-live">
+            <i className="home-live-dot" aria-hidden="true" />
+            Session running
           </span>
-          {nextEvent ? (
-            <>
-              <b className="home-tile-big home-tile-big--truncate">{nextEvent.title}</b>
-              <small className="home-tile-sub">
-                {formatTimeLabel(nextEvent.startTime)}
-                {nextEvent.endTime ? ` – ${formatTimeLabel(nextEvent.endTime)}` : ''}
-              </small>
-            </>
-          ) : (
-            <p className="home-tile-empty">Nothing scheduled — open space.</p>
-          )}
-        </button>
-
-        <button type="button" className="home-hero-tile" onClick={() => onNavigate('/tasks')}>
-          <span className="home-tile-eyebrow">
-            <CheckSquare size={12} /> Tasks
+        ) : (
+          <span className="ntr-pill dark">
+            <CheckSquare size={12} strokeWidth={2.5} />
+            {tasksDone} of {tasksTotal || '—'} tasks
           </span>
-          {tasksTotal > 0 ? (
-            <b className="home-tile-big">
-              {tasksDone} <em>of {tasksTotal} today</em>
-            </b>
-          ) : (
-            <p className="home-tile-empty">A clear list. Add one if something's looming.</p>
-          )}
-          {overdueCount > 0 ? (
-            <span className="home-overdue-chip">
-              {overdueCount} overdue
-            </span>
-          ) : (
-            tasksTotal > 0 && <small className="home-tile-sub home-tile-sub--calm">on track</small>
-          )}
-        </button>
+        )}
+      </div>
 
-        <div className="home-hero-tile home-hero-tile--static">
-          <span className="home-tile-eyebrow">
-            <Droplets size={12} /> Water
-          </span>
-          <div className="home-hero-fuel">
-            <MiniRing value={waterMl} target={waterTarget} label="ml" className="home-mini-ring--water" />
-            <div className="home-hero-fuel-meta">
-              <b>{waterMl.toLocaleString()}</b>
-              <small>of {waterTarget.toLocaleString()} ml</small>
-              <button type="button" className="home-tile-action" onClick={onAddWater}>
-                <Plus size={12} /> 250ml
-              </button>
-            </div>
+      <div className="home-hero-panel">
+        <div className="home-hero-gauge-col">
+          <div className={cn('ntr-gauge-wrap', focusRunning && 'is-live')}>
+            <ArcGauge
+              value={focusMinutesToday}
+              target={FOCUS_TARGET_MINUTES}
+              format={(v) => formatMinutes(v)}
+              centerSub={`of ${formatMinutes(FOCUS_TARGET_MINUTES)} focus`}
+            />
+            <span className="ntr-gauge-badge">{focusPct}%</span>
           </div>
+          <button type="button" className="home-hero-focus-btn" onClick={onStartFocus}>
+            <FocusFlame size={12} />
+            {focusRunning ? 'Session running' : 'Start focus'}
+          </button>
         </div>
 
-        <div className="home-hero-tile home-hero-tile--static">
-          <span className="home-tile-eyebrow">
-            <Timer size={12} /> Focus
-          </span>
-          <b className="home-tile-big">
-            {focusMinutesToday > 0 ? formatMinutes(focusMinutesToday) : '0m'} <em>today</em>
-          </b>
-          <button type="button" className="home-tile-action home-tile-action--dark" onClick={onStartFocus}>
-            <FocusFlame size={12} /> {focusRunning ? 'Session running' : 'Start focus'}
+        <div className="ntr-hero-macros">
+          <HeroLoopRow
+            accent="tasks"
+            icon={<CheckSquare size={11} strokeWidth={2.5} />}
+            label="Tasks"
+            value={tasksDone}
+            target={Math.max(tasksTotal, 1)}
+            display={tasksTotal > 0 ? `${tasksDone}` : 'Clear list'}
+            sub={tasksTotal > 0 ? `/${tasksTotal} done` : undefined}
+            onClick={() => onNavigate('/tasks')}
+            badge={overdueCount > 0 ? <span className="home-overdue-chip">{overdueCount} overdue</span> : undefined}
+          />
+          <HeroLoopRow
+            accent="water"
+            icon={<Droplets size={11} strokeWidth={2.5} />}
+            label="Water"
+            value={waterMl}
+            target={waterTarget}
+            display={waterMl.toLocaleString()}
+            sub={`/${waterTarget.toLocaleString()}ml · tap +250`}
+            onClick={onAddWater}
+          />
+          <HeroLoopRow
+            accent="fuel"
+            icon={<Utensils size={11} strokeWidth={2.5} />}
+            label="Fuel"
+            value={calories}
+            target={calorieGoal}
+            display={calorieGoal > 0 ? calories.toLocaleString() : 'Log a meal'}
+            sub={calorieGoal > 0 ? `/${calorieGoal.toLocaleString()} kcal` : undefined}
+            onClick={() => onNavigate('/nutrition')}
+          />
+
+          <button type="button" className="home-hero-next" onClick={() => onNavigate('/calendar')}>
+            <span className="home-hero-next-ic">
+              <CalendarClock size={13} />
+            </span>
+            {nextEvent ? (
+              <>
+                <b>Next up · {nextEvent.title}</b>
+                <small>
+                  {formatTimeLabel(nextEvent.startTime)}
+                  {nextEvent.endTime ? ` – ${formatTimeLabel(nextEvent.endTime)}` : ''}
+                </small>
+              </>
+            ) : (
+              <>
+                <b>Nothing scheduled</b>
+                <small>open space ahead</small>
+              </>
+            )}
           </button>
         </div>
       </div>

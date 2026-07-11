@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { CheckSquare, Lightbulb, MessageCircle, PenLine, Send, Trophy } from 'lucide-react'
+import { CheckSquare, MessageCircle, PenLine, Send, Trophy } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '../../../../lib/utils'
 
@@ -9,7 +9,6 @@ const MODES: { id: QuickCaptureMode; label: string; icon: LucideIcon; placeholde
   { id: 'task', label: 'Task', icon: CheckSquare, placeholder: 'What needs doing?', hint: 'Goes to today’s tasks' },
   { id: 'thought', label: 'Thought', icon: MessageCircle, placeholder: 'What’s on your mind?', hint: 'Goes to your Mind inbox' },
   { id: 'win', label: 'Win', icon: Trophy, placeholder: 'What went well?', hint: 'Filed in your evidence locker' },
-  { id: 'learning', label: 'Learning', icon: Lightbulb, placeholder: 'What did you learn?', hint: 'Added to today’s learnings' },
 ]
 
 type QuickCaptureCardProps = {
@@ -63,13 +62,13 @@ function QuickCaptureCard({ onCapture, focusRequest }: QuickCaptureCardProps) {
             type="button"
             role="tab"
             aria-selected={mode === id}
-            className={cn('home-capture-mode', mode === id && 'is-active')}
+            className={cn('home-capture-mode', `home-capture-mode--${id}`, mode === id && 'is-active')}
             onClick={() => {
               setMode(id)
               inputRef.current?.focus()
             }}
           >
-            <Icon size={13} />
+            <Icon size={13} strokeWidth={2.4} />
             {label}
           </button>
         ))}
@@ -89,12 +88,12 @@ function QuickCaptureCard({ onCapture, focusRequest }: QuickCaptureCardProps) {
         />
         <button
           type="button"
-          className="home-btn-primary"
+          className="home-capture-send"
           disabled={!text.trim() || saving}
           onClick={() => void submit()}
           aria-label={`Capture ${active.label}`}
         >
-          <Send size={13} />
+          <Send size={15} strokeWidth={2.2} />
         </button>
       </div>
       <small className="home-capture-hint">{active.hint}</small>

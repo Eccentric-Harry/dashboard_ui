@@ -7,7 +7,7 @@
 // UI components never do math: they render `Insight[]` plus the typed chart
 // payloads exported by ./nutrition and ./finance.
 
-export type InsightDomain = 'finance' | 'nutrition' | 'cross'
+export type InsightDomain = 'finance' | 'nutrition' | 'mind' | 'cross'
 
 export type InsightKind =
   | 'trend'
@@ -46,6 +46,11 @@ export type InsightIcon =
   | 'log'
   | 'income'
   | 'hydration'
+  | 'thought'
+  | 'sleep'
+  | 'focus'
+  | 'tasks'
+  | 'mood'
 
 export interface InsightMetric {
   value: number

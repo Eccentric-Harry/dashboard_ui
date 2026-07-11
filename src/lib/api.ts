@@ -1593,6 +1593,8 @@ export interface MindEntry {
   valueTag?: MindValueTag | null;
   pinned?: boolean;
   reviewDate?: string | null;
+  /** True once this entry has ever been PARKED — unlike reviewDate, this never clears on resurface. */
+  wasParked?: boolean;
   date: string;
   createdAt?: string;
   resolvedAt?: string | null;

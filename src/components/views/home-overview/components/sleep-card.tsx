@@ -1,16 +1,25 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Moon } from 'lucide-react'
+import { Moon, Plus, Sunrise, Trophy, Waves } from 'lucide-react'
+import { Bar, BarChart, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { SleepEntry, SleepEntryPayload } from '../../../../lib/api'
 import { cn } from '../../../../lib/utils'
 import {
   formatMinutes,
   lastNDates,
+  shortDayLabel,
   SLEEP_TARGET_HOURS,
   SLEEP_TARGET_MINUTES,
   weekdayLetter,
 } from '../home-types'
 
 const QUALITY_LABELS = ['Rough', 'Poor', 'Okay', 'Good', 'Great'] as const
+
+/* Periwinkle bar fills — deeper as the night gets closer to target,
+   so the chart itself reads "how good was the week" at a glance. */
+const BAR_ON_TARGET = '#6b74cb'
+const BAR_UNDER = '#a9b0e8'
+const BAR_LAST_NIGHT = '#4d56ae'
+const BAR_MISSING = 'rgba(35, 38, 77, 0.1)'
 
 type SleepCardProps = {
   loading: boolean
@@ -22,13 +31,66 @@ type SleepCardProps = {
   onRetry: () => void
 }
 
+type SleepPoint = {
+  day: string
+  date: string
+  minutes: number | null
+  /** What the bar plots: real minutes, or 0 (+minPointSize stub) when unlogged. */
+  plotted: number
+  quality: number | null
+  bedtime: string | null
+  wakeTime: string | null
+}
+
 function qualityClass(quality?: number | null): string {
   if (!quality) return 'q-none'
   return `q-${quality}`
 }
 
+/** Mean of "HH:MM" clock times around an anchor hour, so 23:50 and 00:20
+    average to ~00:05 instead of noon. Anchor 18:00 suits bedtimes; 0:00 wakes. */
+function avgClockTime(times: string[], anchorHour: number): string | null {
+  const offsets = times
+    .map((t) => {
+      const [h, m] = t.split(':').map(Number)
+      if (Number.isNaN(h) || Number.isNaN(m)) return null
+      return (h * 60 + m - anchorHour * 60 + 1440) % 1440
+    })
+    .filter((v): v is number => v != null)
+  if (offsets.length === 0) return null
+  const mean = offsets.reduce((sum, v) => sum + v, 0) / offsets.length
+  const minutes = (Math.round(mean) + anchorHour * 60) % 1440
+  return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function SleepTooltip({ active, payload }: any) {
+  if (!active || !payload?.length) return null
+  const point = payload[0].payload as SleepPoint
+  if (point.minutes == null) {
+    return <div className="home-sleep-tooltip">{point.day}: not logged</div>
+  }
+  return (
+    <div className="home-sleep-tooltip">
+      {point.day}: {formatMinutes(point.minutes)}
+      {point.quality ? ` · ${QUALITY_LABELS[point.quality - 1]}` : ''}
+      {point.bedtime && point.wakeTime && (
+        <small>
+          {point.bedtime} → {point.wakeTime}
+        </small>
+      )}
+    </div>
+  )
+}
+
 function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRetry }: SleepCardProps) {
   const [formOpen, setFormOpen] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsMounted(true)
+  }, [])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -46,7 +108,10 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
   const lastNight = byDate.get(today) ?? null
   const latest = lastNight ?? (entries && entries.length > 0 ? entries[entries.length - 1] : null)
 
-  const loggedThisWeek = week.map((d) => byDate.get(d)).filter((e): e is SleepEntry => Boolean(e))
+  const loggedThisWeek = useMemo(
+    () => week.map((d) => byDate.get(d)).filter((e): e is SleepEntry => Boolean(e)),
+    [week, byDate],
+  )
   const avgMinutes =
     loggedThisWeek.length > 0
       ? Math.round(loggedThisWeek.reduce((sum, e) => sum + e.durationMinutes, 0) / loggedThisWeek.length)
@@ -56,7 +121,49 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
       ? loggedThisWeek.reduce((sum, e) => sum + (SLEEP_TARGET_MINUTES - e.durationMinutes), 0)
       : null
 
-  const maxBar = Math.max(SLEEP_TARGET_MINUTES, ...loggedThisWeek.map((e) => e.durationMinutes), 1)
+  const series = useMemo<SleepPoint[]>(
+    () =>
+      week.map((date) => {
+        const entry = byDate.get(date)
+        return {
+          day: weekdayLetter(date),
+          date,
+          minutes: entry?.durationMinutes ?? null,
+          plotted: entry?.durationMinutes ?? 0,
+          quality: entry?.quality ?? null,
+          bedtime: entry?.bedtime ?? null,
+          wakeTime: entry?.wakeTime ?? null,
+        }
+      }),
+    [week, byDate],
+  )
+
+  // Derived "night facts" — need at least two nights before they say anything.
+  const facts = useMemo(() => {
+    if (loggedThisWeek.length < 2) return null
+    const avgBed = avgClockTime(
+      loggedThisWeek.map((e) => e.bedtime).filter((t): t is string => Boolean(t)),
+      18,
+    )
+    const avgWake = avgClockTime(
+      loggedThisWeek.map((e) => e.wakeTime).filter((t): t is string => Boolean(t)),
+      0,
+    )
+    const best = loggedThisWeek.reduce((a, b) => (b.durationMinutes > a.durationMinutes ? b : a))
+    const mean = loggedThisWeek.reduce((sum, e) => sum + e.durationMinutes, 0) / loggedThisWeek.length
+    const variance =
+      loggedThisWeek.reduce((sum, e) => sum + (e.durationMinutes - mean) ** 2, 0) / loggedThisWeek.length
+    const swing = Math.round(Math.sqrt(variance))
+    return { avgBed, avgWake, best, swing }
+  }, [loggedThisWeek])
+
+  const chartMax = Math.max(SLEEP_TARGET_MINUTES, ...loggedThisWeek.map((e) => e.durationMinutes)) + 60
+
+  const barFill = (point: SleepPoint): string => {
+    if (point.minutes == null) return BAR_MISSING
+    if (point.date === today) return BAR_LAST_NIGHT
+    return point.minutes >= SLEEP_TARGET_MINUTES ? BAR_ON_TARGET : BAR_UNDER
+  }
 
   const submit = async () => {
     if (saving) return
@@ -81,7 +188,20 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
     <section className="home-card home-card--sleep" aria-label="Sleep">
       <Moon className="home-card-glyph" aria-hidden="true" />
       <header className="home-card-head">
-        <span className="home-card-eyebrow">Sleep</span>
+        <div>
+          <span className="home-card-eyebrow">Sleep</span>
+          <h2 className="home-card-title">Last night</h2>
+        </div>
+        {!loading && !failed && (
+          <button
+            type="button"
+            className="home-btn-quiet"
+            onClick={() => setFormOpen((open) => !open)}
+            aria-expanded={formOpen}
+          >
+            <Plus size={13} /> {lastNight ? 'Update night' : 'Log night'}
+          </button>
+        )}
       </header>
 
       {loading ? (
@@ -99,17 +219,39 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
       ) : (
         <>
           {latest ? (
-            <div className="home-sleep-lastnight">
-              <b>{formatMinutes(latest.durationMinutes)}</b>
+            <div className="home-sleep-accent">
+              <div className="ntr-tap-big">
+                <strong>{formatMinutes(latest.durationMinutes)}</strong>
+                <small>
+                  {latest.date === today ? 'last night' : `latest · ${latest.date}`}
+                  {' · '}
+                  {latest.bedtime} → {latest.wakeTime}
+                </small>
+              </div>
               <span
                 className={cn('home-sleep-quality-dot', qualityClass(latest.quality))}
                 title={latest.quality ? `Quality: ${QUALITY_LABELS[latest.quality - 1]}` : 'Quality not set'}
               />
-              <small>
-                {latest.date === today ? 'last night' : `latest · ${latest.date}`}
-                {' · '}
-                {latest.bedtime} → {latest.wakeTime}
-              </small>
+              <div className="ntr-tap-stats">
+                <div className="ntr-tap-stat">
+                  <span>avg week</span>
+                  <b>{avgMinutes != null ? formatMinutes(avgMinutes) : '—'}</b>
+                </div>
+                <div className="ntr-tap-stat">
+                  <span>vs {SLEEP_TARGET_HOURS}h</span>
+                  <b className={cn(debtMinutes != null && debtMinutes > 0 && 'is-watch')}>
+                    {debtMinutes == null
+                      ? '—'
+                      : debtMinutes > 0
+                        ? `−${formatMinutes(debtMinutes)}`
+                        : `+${formatMinutes(Math.abs(debtMinutes))}`}
+                  </b>
+                </div>
+                <div className="ntr-tap-stat">
+                  <span>logged</span>
+                  <b>{loggedThisWeek.length}/7</b>
+                </div>
+              </div>
             </div>
           ) : (
             !formOpen && (
@@ -173,48 +315,78 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
           )}
 
           {(entries?.length ?? 0) > 0 && (
-            <>
-              <div className="home-sleep-chart" role="img" aria-label="Sleep duration for the last 7 nights">
-                <span
-                  className="home-sleep-target-line"
-                  style={{ bottom: `${(SLEEP_TARGET_MINUTES / maxBar) * 100}%` }}
-                  data-label={`${SLEEP_TARGET_HOURS}h`}
-                />
-                {week.map((date) => {
-                  const entry = byDate.get(date)
-                  return (
-                    <div key={date} className="home-sleep-col">
-                      <div
-                        className={cn('home-sleep-bar', entry && qualityClass(entry.quality), !entry && 'is-empty')}
-                        style={{ height: entry ? `${(entry.durationMinutes / maxBar) * 100}%` : undefined }}
-                        title={entry ? `${date}: ${formatMinutes(entry.durationMinutes)}` : `${date}: not logged`}
-                      />
-                      <small>{weekdayLetter(date)}</small>
-                    </div>
-                  )
-                })}
-              </div>
-              <footer className="home-sleep-stats">
-                <span>
-                  <b>{avgMinutes != null ? formatMinutes(avgMinutes) : '—'}</b>
-                  <small>avg this week</small>
-                </span>
-                <span>
-                  <b className={cn(debtMinutes != null && debtMinutes > 0 && 'is-watch')}>
-                    {debtMinutes == null
-                      ? '—'
-                      : debtMinutes > 0
-                        ? `−${formatMinutes(debtMinutes)}`
-                        : `+${formatMinutes(Math.abs(debtMinutes))}`}
-                  </b>
-                  <small>vs {SLEEP_TARGET_HOURS}h target</small>
-                </span>
-                <span>
-                  <b>{loggedThisWeek.length}/7</b>
-                  <small>nights logged</small>
-                </span>
-              </footer>
-            </>
+            <div className="home-sleep-chart" role="img" aria-label="Sleep duration bars for the last 7 nights">
+              {isMounted && (
+                <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
+                  <BarChart data={series} margin={{ top: 16, right: 14, left: 14, bottom: 0 }} barCategoryGap="28%">
+                    <XAxis
+                      dataKey="day"
+                      axisLine={false}
+                      tickLine={false}
+                      interval={0}
+                      tick={{ fill: 'rgba(23, 27, 21, 0.42)', fontSize: 10, fontWeight: 650 }}
+                    />
+                    <YAxis hide domain={[0, chartMax]} />
+                    <Tooltip content={<SleepTooltip />} cursor={{ fill: 'rgba(35, 38, 77, 0.05)' }} />
+                    <ReferenceLine
+                      y={SLEEP_TARGET_MINUTES}
+                      stroke="rgba(35, 38, 77, 0.3)"
+                      strokeDasharray="5 6"
+                      label={{
+                        position: 'insideTopRight',
+                        value: `TARGET ${SLEEP_TARGET_HOURS}H`,
+                        fill: 'rgba(35, 38, 77, 0.45)',
+                        fontSize: 8.5,
+                        fontWeight: 800,
+                        letterSpacing: '0.06em',
+                      }}
+                    />
+                    <Bar
+                      dataKey="plotted"
+                      radius={[8, 8, 3, 3]}
+                      maxBarSize={30}
+                      minPointSize={4}
+                      isAnimationActive={isMounted && !window.matchMedia('(prefers-reduced-motion: reduce)').matches}
+                    >
+                      {series.map((point) => (
+                        <Cell key={point.date} fill={barFill(point)} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          )}
+
+          {facts && (
+            <div className="home-sleep-facts">
+              <span className="home-sleep-fact">
+                <small>
+                  <Moon size={11} strokeWidth={2.5} /> avg bedtime
+                </small>
+                <b>{facts.avgBed ?? '—'}</b>
+              </span>
+              <span className="home-sleep-fact">
+                <small>
+                  <Sunrise size={11} strokeWidth={2.5} /> avg wake
+                </small>
+                <b>{facts.avgWake ?? '—'}</b>
+              </span>
+              <span className="home-sleep-fact">
+                <small>
+                  <Trophy size={11} strokeWidth={2.5} /> best night
+                </small>
+                <b>
+                  {shortDayLabel(facts.best.date)} · {formatMinutes(facts.best.durationMinutes)}
+                </b>
+              </span>
+              <span className="home-sleep-fact">
+                <small>
+                  <Waves size={11} strokeWidth={2.5} /> consistency
+                </small>
+                <b className={cn(facts.swing > 60 && 'is-watch')}>±{formatMinutes(facts.swing)}</b>
+              </span>
+            </div>
           )}
         </>
       )}

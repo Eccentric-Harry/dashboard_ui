@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import { Flame } from 'lucide-react'
 import { cn } from '../../../../lib/utils'
 import type { HabitStrip } from '../habit-strips'
@@ -43,21 +44,28 @@ function MomentumCard({ loading, strips, weekDates }: MomentumCardProps) {
             </div>
             <span />
           </div>
-          {strips.map((strip) => {
+          {strips.map((strip, rowIndex) => {
             const Icon = strip.icon
             return (
-              <div key={strip.id} className="home-habit-row">
+              <div key={strip.id} className={cn('home-habit-row', `home-habit--${strip.id}`)}>
                 <span className="home-habit-label">
-                  <Icon size={13} />
+                  <i className="home-habit-chip" aria-hidden="true">
+                    <Icon size={13} strokeWidth={2.4} />
+                  </i>
                   {strip.label}
                 </span>
                 <div className="home-habit-dots">
                   {strip.days.map((active, index) => (
-                    <i key={weekDates[index]} className={cn('home-habit-dot', active && 'is-active')} />
+                    <i
+                      key={weekDates[index]}
+                      className={cn('home-habit-cell', active && 'is-active')}
+                      style={{ '--cell-delay': `${(rowIndex * 7 + index) * 22}ms` } as CSSProperties}
+                      title={`${weekDates[index]}${active ? '' : ' — not logged'}`}
+                    />
                   ))}
                 </div>
                 <span className={cn('home-habit-streak', strip.streak > 0 && 'is-lit')}>
-                  <Flame size={11} />
+                  <Flame size={11} strokeWidth={2.4} fill={strip.streak > 0 ? 'currentColor' : 'none'} />
                   {strip.streak}
                   {strip.streakUnit ?? 'd'}
                 </span>

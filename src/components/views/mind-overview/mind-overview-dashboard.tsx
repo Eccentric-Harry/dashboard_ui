@@ -13,6 +13,7 @@ import {
 } from '../../../lib/api'
 import { MindHeader } from './components/mind-header'
 import { MindInboxCard } from './components/mind-inbox-card'
+import { MindIntelligenceCard } from './components/mind-intelligence'
 import { TodaysAnchorCard } from './components/todays-anchor-card'
 import { EvidenceLockerCard } from './components/evidence-locker-card'
 import { WorryParkingCard } from './components/worry-parking-card'
@@ -268,7 +269,7 @@ function MindOverviewDashboard() {
   const handlePark = useCallback(
     async (id: string, days: number) => {
       const reviewDate = mindAddDays(selectedDate, days)
-      patchEntry(id, { status: 'PARKED', reviewDate })
+      patchEntry(id, { status: 'PARKED', reviewDate, wasParked: true })
       toast.success('Parked. It will come back when you said — not before.')
       try {
         await updateMindStatus(id, { status: 'PARKED', reviewDate })
@@ -453,6 +454,8 @@ function MindOverviewDashboard() {
         />
 
         <EvidenceLockerCard wins={wins} autoEvidence={summary} onAddWin={handleAddWin} />
+
+        <MindIntelligenceCard entries={thoughts} />
 
         <WorryParkingCard parked={parked} onBringBack={handleBringBack} onRelease={handleRelease} />
 

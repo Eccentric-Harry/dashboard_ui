@@ -7,6 +7,7 @@ import type {
   FocusDaySummary,
   HydrationData,
   LearningsSummary,
+  MindEntry,
   MindSummary,
   SleepEntry,
   StravaActivity,
@@ -19,6 +20,7 @@ import {
   fetchFocusHistory,
   fetchHydration,
   fetchLearningsSummary,
+  fetchMindEntries,
   fetchMindSummary,
   fetchNutritionSummary,
   fetchSleepEntries,
@@ -67,6 +69,7 @@ export interface HomeData {
   workoutStats: Slice<StravaActivityStats>
   learnings: Slice<LearningsSummary>
   mind: Slice<MindSummary>
+  mindEntries: Slice<MindEntry[]>
   spending: Slice<SpendingSummary>
   finance: Slice<DailyFinancialLog[]>
   refetch: () => Promise<void>
@@ -97,6 +100,7 @@ export function useHomeData(): HomeData {
   const [workoutStats, setWorkoutStats] = useState<Slice<StravaActivityStats>>(emptySlice)
   const [learnings, setLearnings] = useState<Slice<LearningsSummary>>(emptySlice)
   const [mind, setMind] = useState<Slice<MindSummary>>(emptySlice)
+  const [mindEntries, setMindEntries] = useState<Slice<MindEntry[]>>(emptySlice)
   const [spending, setSpending] = useState<Slice<SpendingSummary>>(emptySlice)
   const [finance, setFinance] = useState<Slice<DailyFinancialLog[]>>(emptySlice)
 
@@ -121,6 +125,7 @@ export function useHomeData(): HomeData {
       settle(fetchStravaActivityStats(), (r) => r.data as StravaActivityStats, setWorkoutStats),
       settle(fetchLearningsSummary(today), (r) => r.data as LearningsSummary, setLearnings),
       settle(fetchMindSummary(today), (r) => r.data, setMind),
+      settle(fetchMindEntries('THOUGHT'), (r) => r.data as MindEntry[], setMindEntries),
       settle(fetchSpendingSummary(today.slice(0, 7)), (r) => r.data as SpendingSummary, setSpending),
       settle(fetchDailyFinanceLogs(HOME_WINDOW_DAYS), (r) => r.data as DailyFinancialLog[], setFinance),
     ])
@@ -162,6 +167,7 @@ export function useHomeData(): HomeData {
     workoutStats,
     learnings,
     mind,
+    mindEntries,
     spending,
     finance,
     refetch,

@@ -28,9 +28,8 @@ function HomeHeader({ dateIso, onQuickAdd }: HomeHeaderProps) {
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
   const name = (localStorage.getItem('displayName') || 'friend').split(' ')[0]
   const date = new Date(`${dateIso}T00:00:00`)
-  const eyebrow = `${date
-    .toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-    .toUpperCase()} · YOUR DAY AT A GLANCE`
+  const weekday = date.toLocaleDateString('en-US', { weekday: 'long' })
+  const monthDay = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
   const dayOfYear = Math.floor(
     (date.getTime() - new Date(date.getFullYear(), 0, 0).getTime()) / 86400000,
   )
@@ -62,7 +61,10 @@ function HomeHeader({ dateIso, onQuickAdd }: HomeHeaderProps) {
   return (
     <header className="home-header">
       <div className="home-header-greeting">
-        <span className="home-header-eyebrow">{eyebrow}</span>
+        <span className="home-header-eyebrow">Your day at a glance</span>
+        <span className="home-header-date">
+          <em>{weekday},</em> {monthDay}
+        </span>
         <strong>
           {greeting}, {name}
         </strong>
@@ -73,12 +75,14 @@ function HomeHeader({ dateIso, onQuickAdd }: HomeHeaderProps) {
         <div className="home-quick-add" ref={menuRef}>
           <button
             type="button"
-            className="home-quick-add-btn"
+            className="ntr-add-btn home-quick-add-btn"
             aria-haspopup="menu"
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((open) => !open)}
           >
-            <Plus size={14} />
+            <span className="ntr-add-ic">
+              <Plus size={16} strokeWidth={2.75} />
+            </span>
             Quick add
           </button>
           {menuOpen && (

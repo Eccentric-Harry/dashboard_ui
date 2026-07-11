@@ -28,6 +28,9 @@ export interface SpendingSummary {
 export const SLEEP_TARGET_HOURS = 7.5
 export const SLEEP_TARGET_MINUTES = SLEEP_TARGET_HOURS * 60
 
+// TODO: make the daily focus target user-editable from Profile; hardcoded for now.
+export const FOCUS_TARGET_MINUTES = 120
+
 export const WATER_QUICK_ADD_ML = 250
 
 export function isoDate(date: Date = new Date()): string {

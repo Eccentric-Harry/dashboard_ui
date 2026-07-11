@@ -10,6 +10,23 @@
    - #eaff28    = accent for genuinely positive highlights only */
 
 .home-dashboard {
+  /* Home borrows Nutrition's --ntr-* design tokens (nutrition-redesign.css,
+     imported by home-overview-dashboard.tsx) for its reused primitives
+     (ArcGauge, .ntr-macro-row, .ntr-pill, .ntr-card) — same radius/shadow/
+     ink, but the lime accent becomes Home's lavender/periwinkle signature
+     hue (the sleep-card family). */
+  --ntr-ink: #171b15;
+  --ntr-ink-soft: #6b7165;
+  --ntr-card: #ffffff;
+  --ntr-line: #eae9e0;
+  --ntr-lime: #bcc3f2;
+  --ntr-lime-deep: #4d56ae;
+  --ntr-lime-soft: #e9ebfb;
+  --ntr-radius: 26px;
+  --ntr-shadow: 0 1px 2px rgba(23, 27, 21, 0.03), 0 10px 30px rgba(23, 27, 21, 0.05);
+  /* Content cap — hero/grid otherwise sprawl on wide monitors. */
+  --home-max: 1104px;
+
   position: absolute;
   inset: 72px 58px 8px 206px;
   z-index: 2;
@@ -44,7 +61,8 @@
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
-  margin-bottom: 18px;
+  max-width: var(--home-max);
+  margin: 0 auto 18px;
   padding: 0 8px 0 2px;
 }
 
@@ -62,8 +80,23 @@
   letter-spacing: 0.11em;
 }
 
+/* Date restyled to the Nutrition title treatment — italic serif weekday */
+.home-header-date {
+  margin-top: 6px;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: rgba(23, 33, 28, 0.78);
+}
+
+.home-header-date em {
+  font-style: italic;
+  font-weight: 550;
+}
+
 .home-header-greeting strong {
-  margin-top: 7px;
+  margin-top: 4px;
   font-family: 'Playfair Display', Georgia, serif;
   font-size: 30px;
   font-weight: 600;
@@ -173,31 +206,11 @@
   font-weight: 800;
 }
 
-/* Quick add */
+/* Quick add — reuses the Nutrition "Add meal" pill (.ntr-add-btn) verbatim;
+   the circle-plus icon picks up Home's amber via the --ntr-lime override. */
 
 .home-quick-add {
   position: relative;
-}
-
-.home-quick-add-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 15px;
-  border-radius: 999px;
-  background: #202321;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  cursor: pointer;
-  box-shadow: 0 14px 26px rgba(20, 23, 22, 0.16);
-  transition: transform 0.25s ease, box-shadow 0.3s ease;
-}
-
-.home-quick-add-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 18px 30px rgba(20, 23, 22, 0.22);
 }
 
 .home-quick-add-menu {
@@ -277,6 +290,13 @@
   flex-direction: column;
   gap: 14px;
   animation: home-card-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease;
+}
+
+/* Cards lift slightly on hover — calm, evening-dashboard subtle */
+.home-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 28px 58px rgba(45, 60, 48, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.78);
 }
 
 @keyframes home-card-in {
@@ -391,261 +411,231 @@
   background: rgba(255, 255, 255, 0.85);
 }
 
-/* ---------- Hero row ---------- */
+/* ---------- Hero — "Today" ----------
+   Transplanted from the Nutrition route's Daily Nutrition hero: same card
+   head (eyebrow + serif headline + dark pill), same ArcGauge, same stacked
+   macro-bar rows — Home's lavender/periwinkle signature hue in place of
+   Nutrition's lime. See the --ntr-* overrides at the top of this file. */
 
 .home-card--hero {
-  margin-bottom: 16px;
-  padding: 16px;
+  grid-column: span 4;
+  padding: 22px 24px 16px;
+  gap: 0;
 }
 
-.home-hero-row {
+.home-hero-head {
+  margin-bottom: 16px;
+}
+
+.home-hero-head .ntr-eyebrow {
+  margin: 0 0 2px;
+}
+
+/* Live pill — soft lavender dot breathing inside the dark pill */
+.home-pill-live .home-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ntr-lime);
+  animation: home-live-blink 1.8s ease-in-out infinite;
+}
+
+@keyframes home-live-blink {
+  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(188, 195, 242, 0.6); }
+  50% { opacity: 0.75; transform: scale(0.82); box-shadow: 0 0 0 4px rgba(188, 195, 242, 0); }
+}
+
+.home-hero-panel {
+  position: relative;
   display: grid;
-  grid-template-columns: 1.45fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: minmax(180px, 200px) minmax(0, 1fr);
+  gap: 20px 28px;
+  align-items: center;
+  padding: 22px 26px 20px;
+  border-radius: 22px;
+  background: linear-gradient(160deg, #e6f0ff 0%, #cce0ff 52%, #99c2ff 100%);
+  overflow: hidden;
+}
+
+.home-hero-panel.is-skeleton {
+  background: linear-gradient(160deg, rgba(230, 240, 255, 0.55), rgba(153, 194, 255, 0.32));
+}
+
+/* soft moon-glow motif in the panel corner — Home's answer to the leaf/moon */
+.home-hero-panel::after {
+  content: '';
+  position: absolute;
+  right: -34px;
+  bottom: -46px;
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.4), transparent 68%);
+  pointer-events: none;
+}
+
+.home-hero-gauge-col {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 10px;
 }
 
-.home-hero-tile {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  min-width: 0;
-  padding: 14px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.5);
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.22s ease, transform 0.25s ease, box-shadow 0.25s ease;
+.home-card--hero .ntr-gauge svg {
+  width: min(100%, 208px);
 }
 
-.home-hero-tile:not(.home-hero-tile--static):hover {
-  background: rgba(255, 255, 255, 0.78);
-  transform: translateY(-2px);
-  box-shadow: 0 14px 28px rgba(45, 60, 48, 0.1);
+/* "2h 25m" runs wider than "1,900" — ease the center type down a notch */
+.home-card--hero .ntr-gauge-center strong {
+  font-size: 31px;
+  letter-spacing: -0.04em;
 }
 
-.home-hero-tile--static {
-  cursor: default;
+/* Gentle ambient pulse behind the gauge while a focus session is running */
+.ntr-gauge-wrap.is-live::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.6), transparent 66%);
+  animation: home-gauge-pulse 2.4s ease-in-out infinite;
 }
 
-.home-tile-eyebrow {
+@keyframes home-gauge-pulse {
+  0%, 100% { transform: scale(0.94); opacity: 0.5; }
+  50% { transform: scale(1.05); opacity: 1; }
+}
+
+.home-hero-focus-btn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  color: rgba(23, 28, 25, 0.64);
-  font-size: 9px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-}
-
-.home-tile-big {
-  font-size: 19px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: #17211c;
-  line-height: 1.15;
-}
-
-.home-tile-big em {
-  font-style: normal;
-  font-size: 12px;
-  font-weight: 600;
-  color: rgba(23, 28, 25, 0.66);
-}
-
-.home-tile-big--truncate {
-  display: block;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 15px;
-}
-
-.home-tile-sub {
-  color: rgba(23, 28, 25, 0.66);
+  gap: 6px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(23, 27, 21, 0.92);
+  color: #fff;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 750;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(23, 27, 21, 0.22);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.home-tile-sub--calm {
-  color: #33594a;
+.home-hero-focus-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(23, 27, 21, 0.28);
 }
 
-.home-tile-empty {
-  margin: 0;
-  color: rgba(23, 28, 25, 0.66);
-  font-size: 12px;
-  line-height: 1.45;
+.home-hero-focus-btn svg {
+  color: var(--ntr-lime);
 }
+
+.home-card--hero .ntr-hero-macros {
+  position: relative;
+  z-index: 1;
+}
+
+.home-card--hero .ntr-macro-row {
+  cursor: pointer;
+}
+
+.home-card--hero .ntr-macro-header p {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Domain accents on the three loop bars: tasks = home periwinkle,
+   water = sky, fuel = nutrition's green (its "room" color) */
+.home-loop--tasks .ntr-macro-bar i { background: #5560bb; }
+.home-loop--water .ntr-macro-bar i { background: #5d87ad; }
+.home-loop--fuel .ntr-macro-bar i { background: #7e9c2c; }
+
+.home-loop--tasks .ntr-macro-header p svg { color: #414a9e; }
+.home-loop--water .ntr-macro-header p svg { color: #46708f; }
+.home-loop--fuel .ntr-macro-header p svg { color: #63801f; }
 
 /* Overdue is the loudest thing in the hero — and the only red */
 .home-overdue-chip {
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
+  margin-left: 4px;
+  padding: 3px 9px;
   border-radius: 999px;
   background: #c03546;
   color: #fff;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
-.home-tile-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 6px 12px;
-  border: 1px solid rgba(26, 31, 29, 0.16);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.7);
-  color: #23302a;
-  font-size: 10px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: background 0.2s ease, transform 0.2s ease;
-}
-
-.home-tile-action:hover {
-  background: #fff;
-  transform: translateY(-1px);
-}
-
-.home-tile-action--dark {
-  border: 0;
-  background: #202321;
-  color: #fff;
-}
-
-.home-tile-action--dark:hover {
-  background: #2c302d;
-}
-
-/* Fuel tile */
-
-.home-hero-fuel {
+/* Next-up chip — meal-row language: icon disc + title + time */
+.home-hero-next {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-width: 0;
-}
-
-.home-hero-fuel-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-}
-
-.home-hero-fuel-meta b {
-  font-size: 19px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: #17211c;
-}
-
-.home-hero-fuel-meta small {
-  color: rgba(23, 28, 25, 0.66);
-  font-size: 10px;
-  font-weight: 600;
-}
-
-.home-protein-bar,
-.home-water-bar {
-  display: block;
-  width: 100%;
-  min-width: 88px;
-  height: 5px;
-  border-radius: 999px;
-  background: rgba(26, 31, 29, 0.1);
-  overflow: hidden;
-}
-
-.home-protein-bar i,
-.home-water-bar i {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-  background: #7ea88f;
-  transition: width 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.home-water-bar i {
-  background: #8fb6c9;
-}
-
-.home-mini-ring {
-  position: relative;
-  width: 64px;
-  height: 64px;
-  flex: 0 0 64px;
-}
-
-.home-mini-ring svg {
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
-}
-
-.home-mini-ring .track {
-  fill: none;
-  stroke: rgba(26, 31, 29, 0.1);
-  stroke-width: 7;
-}
-
-.home-mini-ring .value {
-  fill: none;
-  stroke: #9db892; /* neutral grey-green only once there IS progress */
-  stroke-width: 7;
-  stroke-linecap: round;
-  stroke-dashoffset: var(--ring-circ);
-  transition: stroke-dashoffset 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.home-mini-ring.has-progress .value {
-  stroke-dashoffset: var(--ring-offset);
-}
-
-.home-mini-ring--water .value {
-  stroke: #7bafd4;
-}
-
-.home-mini-ring--water.has-progress .value {
-  stroke: #7bafd4;
-}
-
-.home-mini-ring-center {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-}
-
-.home-mini-ring-center b {
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-
-.home-mini-ring-center small {
-  color: rgba(23, 28, 25, 0.66);
-  font-size: 8px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-/* Hero skeleton tiles */
-.home-hero-tile.is-skeleton {
   gap: 10px;
-  cursor: default;
+  width: 100%;
+  margin-top: 2px;
+  padding: 9px 14px 9px 9px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(23, 27, 21, 0.9);
+  color: #fff;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.home-hero-next:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(23, 27, 21, 0.24);
+}
+
+.home-hero-next-ic {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  border-radius: 50%;
+  background: var(--ntr-lime);
+  color: var(--ntr-ink);
+}
+
+.home-hero-next b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.home-hero-next small {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 10.5px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 700px) {
+  .home-hero-panel {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .home-card--hero {
+    padding: 18px 16px 14px;
+  }
 }
 
 /* ---------- Grid ---------- */
@@ -654,40 +644,64 @@
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 16px;
+  max-width: var(--home-max);
+  margin-inline: auto;
 }
 
 .home-card--sleep { grid-column: span 3; }
 .home-card--insights { grid-column: span 3; }
-.home-card--momentum { grid-column: span 3; }
-.home-card--capture { grid-column: span 3; }
+.home-card--momentum { grid-column: span 6; }
+.home-card--capture { grid-column: span 2; }
 .home-card--rollup { grid-column: span 6; }
 
-/* ---------- Sleep card ---------- */
+/* ---------- Sleep card ----------
+   The second hero. Reuses the Nutrition trend card's accent-panel + stat-chip
+   pattern (.ntr-tap-big / .ntr-tap-stats), tinted night-indigo. The 7-night
+   chart is a bar graph (quality-aware fills, target line, faint stubs for
+   unlogged nights); it flex-grows so the card never looks empty when the
+   neighbouring Patterns card runs taller. A "night facts" strip pins to the
+   card bottom with derived bedtime/wake/consistency reads. */
 
-.home-sleep-lastnight {
+.home-sleep-accent {
   display: flex;
-  align-items: baseline;
-  gap: 9px;
+  align-items: center;
+  justify-content: space-between;
   flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: linear-gradient(150deg, #e9ebfb 0%, #d9dcf7 58%, #c9cdf1 100%);
 }
 
-.home-sleep-lastnight b {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 32px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: #17211c;
+.home-sleep-accent .ntr-tap-big strong {
+  font-size: 34px;
+  color: #23264d;
 }
 
-.home-sleep-lastnight small {
-  color: rgba(23, 28, 25, 0.66);
-  font-size: 11px;
-  font-weight: 600;
+.home-sleep-accent .ntr-tap-big small {
+  color: rgba(35, 38, 77, 0.6);
+  letter-spacing: 0.06em;
+}
+
+.home-sleep-accent .ntr-tap-stat {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.home-sleep-accent .ntr-tap-stat span {
+  color: rgba(35, 38, 77, 0.55);
+}
+
+.home-sleep-accent .ntr-tap-stat b {
+  color: #23264d;
+}
+
+.home-sleep-accent .ntr-tap-stat b.is-watch {
+  color: #9a5a10;
 }
 
 .home-sleep-quality-dot {
-  width: 11px;
-  height: 11px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   border: 1px solid rgba(26, 31, 29, 0.18);
   align-self: center;
@@ -702,95 +716,78 @@
 .q-5 { background: #ecf5a3; }
 
 .home-sleep-chart {
-  position: relative;
-  display: flex;
-  align-items: flex-end;
+  /* Grows into whatever height the grid row hands the card, so a taller
+     Patterns neighbour stretches the chart instead of leaving dead space. */
+  flex: 1 1 auto;
+  min-height: 150px;
+  margin: 0 -6px;
+}
+
+.home-sleep-tooltip {
+  padding: 7px 11px;
+  border-radius: 10px;
+  background: #171b15;
+  color: #cdd2f5;
+  font-size: 11.5px;
+  font-weight: 650;
+  line-height: 1.5;
+  box-shadow: 0 6px 16px rgba(23, 27, 21, 0.2);
+}
+
+.home-sleep-tooltip small {
+  display: block;
+  color: rgba(205, 210, 245, 0.66);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+/* Night facts — derived reads pinned under the chart */
+
+.home-sleep-facts {
+  /* 2×2 on the half-width card, one row when the card spans full width */
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 8px;
-  height: 96px;
-  padding: 0 2px;
 }
 
-.home-sleep-col {
-  position: relative;
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 5px;
-  height: 100%;
-}
-
-.home-sleep-col small {
-  color: rgba(23, 28, 25, 0.66);
-  font-size: 9px;
-  font-weight: 700;
-}
-
-.home-sleep-bar {
-  width: 100%;
-  max-width: 26px;
-  min-height: 4px;
-  border-radius: 8px 8px 4px 4px;
-  border: 1px solid rgba(26, 31, 29, 0.08);
-  transition: height 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.home-sleep-bar.is-empty {
-  height: 4px;
-  background: rgba(26, 31, 29, 0.1);
-  border: 0;
-}
-
-.home-sleep-target-line {
-  position: absolute;
-  left: 0;
-  right: 0;
-  z-index: 1;
-  height: 0;
-  border-top: 1.5px dashed rgba(38, 56, 46, 0.42);
-  pointer-events: none;
-}
-
-.home-sleep-target-line::after {
-  content: attr(data-label);
-  position: absolute;
-  right: 0;
-  top: -14px;
-  color: rgba(23, 28, 25, 0.66);
-  font-size: 9px;
-  font-weight: 700;
-}
-
-.home-sleep-stats {
-  display: flex;
-  gap: 22px;
-  padding-top: 4px;
-  border-top: 1px solid rgba(26, 31, 29, 0.08);
-}
-
-.home-sleep-stats span {
+.home-sleep-fact {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding-top: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(86, 95, 184, 0.07);
 }
 
-.home-sleep-stats b {
-  font-size: 15px;
-  font-weight: 700;
+.home-sleep-fact small {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: rgba(35, 38, 77, 0.6);
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.home-sleep-fact small svg {
+  flex-shrink: 0;
+  color: #565fb8;
+}
+
+.home-sleep-fact b {
+  color: #23264d;
+  font-size: 13.5px;
+  font-weight: 750;
   letter-spacing: -0.01em;
-  color: #17211c;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.home-sleep-stats b.is-watch {
+.home-sleep-fact b.is-watch {
   color: #9a5a10;
-}
-
-.home-sleep-stats small {
-  color: rgba(23, 28, 25, 0.66);
-  font-size: 10px;
-  font-weight: 600;
 }
 
 /* Sleep form */
@@ -882,136 +879,10 @@
   gap: 8px;
 }
 
-/* ---------- Insights ---------- */
-
-.home-insights-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.home-insight {
-  display: flex;
-  gap: 10px;
-  padding: 11px 12px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  background: rgba(255, 255, 255, 0.5);
-}
-
-.home-insight-icon {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  flex: 0 0 28px;
-  border-radius: 9px;
-}
-
-.home-insight--positive .home-insight-icon {
-  background: rgba(62, 107, 84, 0.14);
-  color: #33594a;
-}
-
-.home-insight--neutral .home-insight-icon {
-  background: rgba(82, 96, 87, 0.12);
-  color: #4a544e;
-}
-
-/* "Watch" is calm amber — never red */
-.home-insight--watch .home-insight-icon {
-  background: rgba(217, 119, 6, 0.13);
-  color: #9a5a10;
-}
-
-/* Urgent = over-budget/destructive findings only (promoted from Finance) */
-.home-insight--urgent .home-insight-icon {
-  background: rgba(216, 53, 66, 0.12);
-  color: #b02a35;
-}
-
-.home-insight-body {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.home-insight-body p {
-  margin: 0;
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: #1d2621;
-}
-
-.home-insight-meta {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.home-insight-meta small {
-  color: rgba(23, 28, 25, 0.66);
-  font-size: 10px;
-  font-weight: 600;
-}
-
-.home-insight-why {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 2px 4px;
-  border-radius: 6px;
-  background: transparent;
-  color: #33594a;
-  font-size: 10px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.home-insight-why:hover {
-  background: rgba(62, 107, 84, 0.1);
-}
-
-.home-insight-why svg {
-  transition: transform 0.25s ease;
-}
-
-.home-insight-why svg.is-flipped {
-  transform: rotate(180deg);
-}
-
-/* Deep-link into the owning route for promoted finance/nutrition insights */
-.home-insight-link {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border: 0;
-  border-radius: 999px;
-  background: rgba(23, 28, 25, 0.07);
-  color: #1d2621;
-  font-size: 10px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.home-insight-link:hover {
-  background: rgba(23, 28, 25, 0.12);
-}
-
-.home-insight-detail {
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: rgba(26, 31, 29, 0.05);
-  color: rgba(23, 28, 25, 0.74);
-  font-size: 11px;
-  line-height: 1.5;
-  font-variant-numeric: tabular-nums;
-}
+/* ---------- Insights ----------
+   Rows render through the shared <InsightList> (ui/insight-list.css):
+   sentiment icon-chips, WIN/INSIGHT/WATCH tags, metric pills, sparklines —
+   the exact dressing the Nutrition/Finance Intelligence sections use. */
 
 .home-progress-hint {
   color: rgba(23, 28, 25, 0.66);
@@ -1036,125 +907,181 @@
   background: #9db892;
 }
 
-/* ---------- Momentum ---------- */
+/* ---------- Momentum ----------
+   Heat-cells instead of the old flat grey dots: filled cells carry a
+   per-habit gradient (the Nutrition water-fill / macro-bar color language),
+   empty cells are faint outlines. Streak flames light up amber. */
 
 .home-habit-grid {
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 10px;
 }
 
 .home-habit-row {
   display: grid;
-  grid-template-columns: minmax(96px, 1fr) auto minmax(46px, auto);
+  grid-template-columns: minmax(110px, 1fr) auto minmax(50px, auto);
   align-items: center;
   gap: 12px;
 }
 
 .home-habit-row--legend {
-  margin-bottom: -4px;
+  margin-bottom: -5px;
 }
 
 .home-habit-row--legend small {
   display: inline-grid;
   place-items: center;
-  width: 16px;
-  color: rgba(23, 28, 25, 0.6);
+  width: 18px;
+  color: rgba(23, 28, 25, 0.55);
   font-size: 8px;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .home-habit-label {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   color: #2b352f;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 650;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.home-habit-label svg {
-  flex: 0 0 auto;
-  color: rgba(23, 28, 25, 0.6);
+/* Small colored icon chip per habit — same vocabulary as the insight rows */
+.home-habit-chip {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  border-radius: 9px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
 }
+
+.home-habit--learning .home-habit-chip { background: linear-gradient(150deg, #ddeaf6, #c3d9ec); color: #3e6a8e; }
+.home-habit--tasks .home-habit-chip { background: linear-gradient(150deg, #dcefe3, #b8dcc6); color: #275a3f; }
+.home-habit--workout .home-habit-chip { background: linear-gradient(150deg, #fbe8c8, #f3cf8e); color: #8a5009; }
+.home-habit--mood .home-habit-chip { background: linear-gradient(150deg, #e3e5f9, #c5c9f0); color: #40449a; }
+.home-habit--sleep .home-habit-chip { background: linear-gradient(150deg, #d9dcf7, #b9bfec); color: #33377c; }
 
 .home-habit-dots {
   display: flex;
   gap: 6px;
 }
 
-.home-habit-dot {
-  width: 16px;
-  height: 16px;
+/* Heat cell: gradient fill when active, faint outline when empty */
+.home-habit-cell {
+  width: 18px;
+  height: 18px;
   border-radius: 6px;
-  background: rgba(26, 31, 29, 0.08);
-  transition: background 0.3s ease, transform 0.3s ease;
+  border: 1px solid rgba(26, 31, 29, 0.14);
+  background: transparent;
+  animation: home-cell-in 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: var(--cell-delay, 0ms);
+  transition: transform 0.2s ease;
 }
 
-.home-habit-dot.is-active {
-  background: #7ea88f;
+.home-habit-cell:hover {
+  transform: scale(1.18);
 }
+
+@keyframes home-cell-in {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.home-habit-cell.is-active {
+  border: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 2px 5px -2px rgba(23, 27, 21, 0.3);
+}
+
+.home-habit--learning .home-habit-cell.is-active { background: linear-gradient(150deg, #8fb8da, #5d87ad); }
+.home-habit--tasks .home-habit-cell.is-active { background: linear-gradient(150deg, #9cc4a9, #5f8a6e); }
+.home-habit--workout .home-habit-cell.is-active { background: linear-gradient(150deg, #ecc07a, #cf9032); }
+.home-habit--mood .home-habit-cell.is-active { background: linear-gradient(150deg, #a6ace5, #767ec9); }
+.home-habit--sleep .home-habit-cell.is-active { background: linear-gradient(150deg, #8189d4, #565fb8); }
 
 .home-habit-streak {
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 3px;
-  color: rgba(23, 28, 25, 0.6);
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: rgba(23, 28, 25, 0.45);
   font-size: 11px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
 
+/* A lit flame is a small amber celebration */
 .home-habit-streak.is-lit {
-  color: #33594a;
+  background: linear-gradient(135deg, rgba(255, 207, 115, 0.4), rgba(244, 176, 74, 0.22));
+  color: #8a5c09;
 }
 
-/* ---------- Quick capture ---------- */
+/* ---------- Quick capture ----------
+   Mode picker restyled as the Nutrition segmented control (.ntr-week
+   pattern): one white pill container, active segment flips to dark ink
+   with an amber icon. Send is a round accent circle. */
 
 .home-capture-modes {
   display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
+  gap: 4px;
+  align-self: stretch;
+  max-width: 100%;
+  padding: 5px;
+  border: 1px solid rgba(26, 31, 29, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.6);
+  overflow-x: auto;
 }
 
 .home-capture-mode {
   display: inline-flex;
+  flex: 1;
+  justify-content: center;
   align-items: center;
   gap: 6px;
-  padding: 7px 12px;
-  border: 1px solid rgba(26, 31, 29, 0.12);
+  padding: 7px 13px;
+  border: 0;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.5);
-  color: #2b352f;
+  background: transparent;
+  color: #4a544e;
   font-size: 11px;
   font-weight: 700;
+  white-space: nowrap;
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: background 0.18s ease, color 0.18s ease;
 }
 
 .home-capture-mode:hover {
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--ntr-lime-soft);
+  color: #17211c;
 }
 
 .home-capture-mode.is-active {
-  border-color: #202321;
   background: #202321;
   color: #fff;
 }
 
+.home-capture-mode.is-active svg {
+  color: var(--ntr-lime);
+}
+
 .home-capture-input-row {
   display: flex;
+  align-items: center;
   gap: 8px;
 }
 
 .home-capture-input-row input {
   flex: 1;
   min-width: 0;
-  padding: 11px 15px;
+  padding: 12px 16px;
   border: 1px solid rgba(26, 31, 29, 0.14);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.75);
@@ -1167,13 +1094,38 @@
 }
 
 .home-capture-input-row input:focus-visible {
-  outline: 2px solid rgba(62, 107, 84, 0.4);
+  outline: 2px solid rgba(86, 95, 184, 0.5);
   outline-offset: 1px;
 }
 
-.home-capture-input-row .home-btn-primary {
-  border-radius: 999px;
-  padding: 0 16px;
+/* Round send button — the Nutrition soft-button, circled */
+.home-capture-send {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border: 0;
+  border-radius: 50%;
+  background: #202321;
+  color: var(--ntr-lime);
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(23, 27, 21, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.home-capture-send:hover:not(:disabled) {
+  transform: translateY(-1px) scale(1.04);
+  box-shadow: 0 12px 24px rgba(23, 27, 21, 0.26);
+}
+
+.home-capture-send:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.home-capture-send:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .home-capture-hint {
@@ -1182,54 +1134,154 @@
   font-weight: 600;
 }
 
-/* ---------- Week rollup ---------- */
+/* ---------- Week rollup ----------
+   The Nutrition "This week vs last" tile pattern (.ntr-intel-week-delta):
+   compact tinted tiles — icon chip, big number, week-over-week delta,
+   caps label — one accent per life domain. Safe-to-spend rides in the
+   head as a lavender highlight chip. */
 
 .home-card--rollup {
   padding-bottom: 18px;
 }
 
-.home-rollup-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 34px;
-}
-
-.home-rollup-stat {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.home-rollup-stat b {
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+.home-safe-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 8px 14px;
+  border: 1px solid rgba(86, 95, 184, 0.26);
+  border-radius: 999px;
+  background: linear-gradient(120deg, var(--ntr-lime-soft), var(--ntr-lime));
   color: #17211c;
+  box-shadow: var(--ntr-shadow);
+}
+
+.home-safe-chip svg {
+  align-self: center;
+  color: #414a9e;
+}
+
+.home-safe-chip b {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
 }
 
-.home-rollup-stat small {
-  color: rgba(23, 28, 25, 0.66);
-  font-size: 10px;
-  font-weight: 600;
+.home-safe-chip small {
+  color: rgba(23, 27, 21, 0.62);
+  font-size: 9px;
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
 
+.home-safe-chip.is-watch {
+  border-color: rgba(154, 90, 16, 0.4);
+  background: linear-gradient(120deg, #fbe8c8, #f3cf8e);
+}
+
+.home-rollup-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(114px, 1fr));
+  gap: 10px;
+}
+
+.home-rollup-mobile-only {
+  display: none;
+}
+
+.home-rollup-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 13px 14px 12px;
+  border-radius: 16px;
+  background: rgba(23, 27, 21, 0.035);
+  transition: background 0.2s ease;
+}
+
+.home-rollup-tile:hover {
+  background: rgba(23, 27, 21, 0.055);
+}
+
+/* Small colored icon chip — same vocabulary as the momentum rows */
+.home-rollup-ic {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-bottom: 6px;
+  border-radius: 8px;
+  background: var(--rollup-tint, rgba(23, 27, 21, 0.06));
+  color: var(--rollup-accent, #526057);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+}
+
+.home-rollup-tile b {
+  font-size: 19px;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  color: #17211c;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Week-over-week delta line — nutrition's tone language */
+.home-rollup-delta {
+  font-size: 9.5px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-rollup-delta.tone-good { color: #2e5f4b; }
+.home-rollup-delta.tone-watch { color: #8a5009; }
+.home-rollup-delta.tone-flat { color: rgba(23, 28, 25, 0.45); }
+
+.home-rollup-tile small {
+  margin-top: 1px;
+  color: rgba(23, 28, 25, 0.66);
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-rollup--focus { --rollup-accent: #4d56ae; --rollup-tint: #e3e5f9; }
+.home-rollup--tasks { --rollup-accent: #275a3f; --rollup-tint: #dcefe3; }
+.home-rollup--workouts { --rollup-accent: #8a5009; --rollup-tint: #fbe8c8; }
+.home-rollup--learnings { --rollup-accent: #3e6a8e; --rollup-tint: #ddeaf6; }
+.home-rollup--meals { --rollup-accent: #63801f; --rollup-tint: #ebf2d2; }
+.home-rollup--sleep { --rollup-accent: #33377c; --rollup-tint: #d9dcf7; }
+.home-rollup--spend { --rollup-accent: #2c7264; --rollup-tint: #d8ece7; }
+
 /* Zeros stay grey and quiet — never green, never alarming */
-.home-rollup-stat.is-quiet b {
+.home-rollup-tile.is-quiet b {
   color: rgba(23, 28, 25, 0.42);
 }
 
-.home-rollup-stat.is-watch b {
+.home-rollup-tile.is-quiet .home-rollup-ic {
+  background: rgba(23, 27, 21, 0.05);
+  color: rgba(23, 28, 25, 0.4);
+}
+
+.home-rollup-tile.is-watch b {
   color: #9a5a10;
 }
 
 /* ---------- Welcome (first run) ---------- */
 
 .home-card--welcome {
-  margin-bottom: 16px;
-  background: linear-gradient(135deg, rgba(236, 245, 163, 0.5), rgba(250, 252, 247, 0.72) 55%);
+  max-width: var(--home-max);
+  margin: 0 auto 16px;
+  background: linear-gradient(135deg, rgba(213, 218, 247, 0.6), rgba(250, 252, 247, 0.72) 55%);
 }
 
 .home-card--welcome h2 {
@@ -1298,16 +1350,21 @@
 .home-skel--chart { width: 100%; height: 96px; border-radius: 14px; }
 .home-skel--dot { width: 28px; height: 28px; border-radius: 9px; }
 .home-skel--stat { width: 72px; height: 38px; border-radius: 10px; }
+.home-skel--tile { width: 100%; height: 86px; border-radius: 16px; }
 
 /* ---------- Motion & responsiveness ---------- */
 
 @media (prefers-reduced-motion: reduce) {
-  .home-card {
-    animation: none;
+  .home-card,
+  .home-skel,
+  .home-habit-cell,
+  .home-pill-live .home-live-dot,
+  .ntr-gauge-wrap.is-live::before {
+    animation: none !important;
   }
 
-  .home-skel {
-    animation: none;
+  .home-card:hover {
+    transform: none;
   }
 
   .home-dashboard * {
@@ -1320,14 +1377,7 @@
     inset: 72px 32px 8px 180px;
   }
 
-  .home-hero-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .home-hero-tile:first-child {
-    grid-column: span 2;
-  }
-
+  .home-card--hero,
   .home-card--sleep,
   .home-card--insights,
   .home-card--momentum,
@@ -1493,41 +1543,28 @@
     grid-column: span 2;
   }
 
-  .home-hero-row {
+  .home-hero-panel {
+    padding: 20px;
     grid-template-columns: 1fr;
+    justify-items: center;
   }
 
-  .home-hero-tile:first-child {
-    grid-column: span 1;
-  }
-
-  /* Center-align all hero tiles on mobile */
-  .home-hero-tile {
-    align-items: center;
-    text-align: center;
-  }
-
-  .home-tile-action {
-    width: auto;
-    justify-content: center;
-  }
-
-  .home-hero-fuel {
-    justify-content: center;
-  }
-
-  .home-water-bar {
+  /* Allow Nutrition's mobile row layout, but wrap the Next button below */
+  .home-card--hero .ntr-hero-macros {
+    flex-wrap: wrap;
     width: 100%;
   }
 
-  .home-protein-bar {
-    width: 100%;
+  .home-card--hero .home-hero-next {
+    flex: 0 0 100%;
+    margin-top: 4px;
   }
 
   .home-grid {
     grid-template-columns: 1fr;
   }
 
+  .home-card--hero,
   .home-card--sleep,
   .home-card--insights,
   .home-card--momentum,
@@ -1536,7 +1573,30 @@
     grid-column: span 1;
   }
 
-  .home-rollup-row {
-    gap: 12px 24px;
+  .home-rollup-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .home-card--rollup .home-card-head {
+    flex-wrap: wrap;
+  }
+
+  .home-sleep-accent {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .home-capture-modes {
+    align-self: stretch;
+  }
+
+  /* On mobile, only show the last 7 days of the 14-day momentum chart */
+  .home-habit-dots small:nth-child(-n+7),
+  .home-habit-dots i:nth-child(-n+7) {
+    display: none;
+  }
+
+  .home-rollup-mobile-only {
+    display: flex;
   }
 }

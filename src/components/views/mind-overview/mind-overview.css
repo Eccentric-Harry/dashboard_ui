@@ -216,6 +216,7 @@
 .mind-card--anchor { grid-column: span 2; }
 .mind-card--inbox { grid-column: span 4; }
 .mind-card--evidence { grid-column: span 2; }
+.mind-card--intelligence { grid-column: span 6; }
 .mind-card--parking { grid-column: span 3; }
 .mind-card--gratitude { grid-column: span 3; }
 
@@ -1793,6 +1794,7 @@
   .mind-card--anchor,
   .mind-card--inbox,
   .mind-card--evidence,
+  .mind-card--intelligence,
   .mind-card--parking,
   .mind-card--gratitude {
     grid-column: auto;
