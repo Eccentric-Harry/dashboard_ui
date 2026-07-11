@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
-import { Check, Loader2, Plus, Trash2 } from 'lucide-react'
+import { Check, Loader2, Pencil, Plus, Trash2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { fetchSubscriptions, addTransaction, deleteSubscription } from '../../../../lib/api'
 import type { SubscriptionDTO } from '../../../../lib/api'
@@ -18,6 +18,7 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
   const [loading, setLoading] = useState(true)
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [isEditing, setIsEditing] = useState(false)
 
   const loadSubscriptions = useCallback(() => {
     return fetchSubscriptions()
@@ -313,6 +314,15 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
           <button
             type="button"
             className="finance-sub-add"
+            onClick={() => setIsEditing(v => !v)}
+            aria-label={isEditing ? 'Done editing' : 'Edit subscriptions'}
+            title={isEditing ? 'Done' : 'Edit'}
+          >
+            {isEditing ? <X size={14} strokeWidth={2.6} /> : <Pencil size={13} strokeWidth={2.4} />}
+          </button>
+          <button
+            type="button"
+            className="finance-sub-add"
             onClick={() => setIsAddOpen(true)}
             aria-label="Add subscription"
             title="Add subscription"
@@ -359,18 +369,20 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
                   'Pay'
                 )}
               </button>
-              <button
-                type="button"
-                className="finance-sub-delete"
-                onClick={() => handleDelete(subscription)}
-                disabled={deletingId === subscription.id}
-                aria-label={`Remove ${subscription.name}`}
-                title="Remove subscription"
-              >
-                {deletingId === subscription.id
-                  ? <Loader2 size={12} className="animate-spin" />
-                  : <Trash2 size={12} strokeWidth={2} />}
-              </button>
+              {isEditing && (
+                <button
+                  type="button"
+                  className="finance-sub-delete"
+                  onClick={() => handleDelete(subscription)}
+                  disabled={deletingId === subscription.id}
+                  aria-label={`Remove ${subscription.name}`}
+                  title="Remove subscription"
+                >
+                  {deletingId === subscription.id
+                    ? <Loader2 size={12} className="animate-spin" />
+                    : <Trash2 size={12} strokeWidth={2} />}
+                </button>
+              )}
             </div>
           )
         })}
