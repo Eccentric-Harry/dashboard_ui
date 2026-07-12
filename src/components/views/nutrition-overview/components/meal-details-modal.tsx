@@ -7,7 +7,7 @@ import {
   Lightbulb,
   Check,
   Flame,
-  Beef,
+  Bean,
   Wheat,
   Droplets,
   Pencil,
@@ -114,7 +114,7 @@ export function MealDetailsModal({ open, onClose, entry, onEdit }: MealDetailsMo
 
   const macroChips = [
     { icon: Flame, label: 'Kcal', value: Math.round(totalCalories).toLocaleString(), tone: 'kcal' },
-    { icon: Beef, label: 'Protein', value: `${Math.round(totalProtein)}g`, tone: 'protein' },
+    { icon: Bean, label: 'Protein', value: `${Math.round(totalProtein)}g`, tone: 'protein' },
     { icon: Wheat, label: 'Carbs', value: `${Math.round(totalCarbs)}g`, tone: 'carbs' },
     { icon: Droplets, label: 'Fats', value: `${Math.round(totalFat)}g`, tone: 'fat' },
   ]

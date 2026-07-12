@@ -5,6 +5,8 @@ import type { DayRecord } from './insights-engine'
 export interface HabitStrip {
   id: string
   label: string
+  /** Phone-width label — the icon carries the rest of the meaning. */
+  shortLabel: string
   icon: LucideIcon
   /** Oldest → newest, one flag per day of the visible week. */
   days: boolean[]
@@ -39,10 +41,10 @@ export function buildHabitStrips(records: DayRecord[], weekDates: string[]): Hab
   const sleep = flags((r) => r.sleepMinutes != null)
 
   return [
-    { id: 'learning', label: 'Learning', icon: GraduationCap, days: learning.week, streak: computeStreak(learning.all) },
-    { id: 'tasks', label: 'Tasks done', icon: CheckSquare, days: tasks.week, streak: computeStreak(tasks.all) },
-    { id: 'workout', label: 'Workout', icon: Activity, days: workout.week, streak: computeStreak(workout.all) },
-    { id: 'mood', label: 'Mood check-in', icon: Brain, days: mood.week, streak: computeStreak(mood.all) },
-    { id: 'sleep', label: 'Sleep logged', icon: Moon, days: sleep.week, streak: computeStreak(sleep.all) },
+    { id: 'learning', label: 'Learning', shortLabel: 'Learning', icon: GraduationCap, days: learning.week, streak: computeStreak(learning.all) },
+    { id: 'tasks', label: 'Tasks done', shortLabel: 'Tasks', icon: CheckSquare, days: tasks.week, streak: computeStreak(tasks.all) },
+    { id: 'workout', label: 'Workout', shortLabel: 'Workout', icon: Activity, days: workout.week, streak: computeStreak(workout.all) },
+    { id: 'mood', label: 'Mood check-in', shortLabel: 'Mood', icon: Brain, days: mood.week, streak: computeStreak(mood.all) },
+    { id: 'sleep', label: 'Sleep logged', shortLabel: 'Sleep', icon: Moon, days: sleep.week, streak: computeStreak(sleep.all) },
   ]
 }

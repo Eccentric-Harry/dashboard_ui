@@ -1,4 +1,4 @@
-import { Beef, CalendarCheck, CheckSquare, Dumbbell, Flame, Lightbulb, Moon, Utensils, Wallet } from 'lucide-react'
+import { Bean, CalendarCheck, CheckSquare, Dumbbell, Flame, Lightbulb, Moon, Utensils, Wallet } from 'lucide-react'
 import { cn } from '../../../../lib/utils'
 import type { DayRecord } from '../insights-engine'
 import type { NutritionSummary, SpendingSummary } from '../home-types'
@@ -151,7 +151,7 @@ function WeekRollupCard({
     },
     {
       id: 'protein',
-      icon: <Beef size={13} strokeWidth={2.4} />,
+      icon: <Bean size={13} strokeWidth={2.4} />,
       value: proteinPct != null ? `${proteinPct}%` : '—',
       label: 'protein goal',
       isZero: proteinPct == null || proteinPct === 0,

@@ -11,16 +11,41 @@ const MODES: { id: QuickCaptureMode; label: string; icon: LucideIcon; placeholde
   { id: 'win', label: 'Win', icon: Trophy, placeholder: 'What went well?', hint: 'Filed in your evidence locker' },
 ]
 
+// Same face vocabulary as the Mind route's check-in strip — one meaning app-wide.
+const MOOD_LABELS = ['Heavy', 'Low', 'Okay', 'Good', 'Light'] as const
+
+const MOUTHS: Record<number, string> = {
+  1: 'M10 21.5 Q15 16.5 20 21.5',
+  2: 'M10 20.5 Q15 18.2 20 20.5',
+  3: 'M10.5 20 L19.5 20',
+  4: 'M10 18 Q15 22.5 20 18',
+  5: 'M9.5 17 Q15 24.5 20.5 17',
+}
+
+function MoodFace({ level }: { level: number }) {
+  return (
+    <svg viewBox="0 0 30 30" className="home-face" aria-hidden="true">
+      <circle cx="11" cy="12.5" r="1.7" className="home-face-eye" />
+      <circle cx="19" cy="12.5" r="1.7" className="home-face-eye" />
+      <path d={MOUTHS[level]} className="home-face-mouth" />
+    </svg>
+  )
+}
+
 type QuickCaptureCardProps = {
   onCapture: (mode: QuickCaptureMode, text: string) => Promise<void>
   /** Bumps when the header quick-add wants to preselect a mode and focus the input. */
   focusRequest: { mode: QuickCaptureMode; nonce: number } | null
+  /** Today's saved mood (1–5) from the daily log, if any. */
+  moodScore: number | null
+  onMood: (score: number) => Promise<void>
 }
 
-function QuickCaptureCard({ onCapture, focusRequest }: QuickCaptureCardProps) {
+function QuickCaptureCard({ onCapture, focusRequest, moodScore, onMood }: QuickCaptureCardProps) {
   const [mode, setMode] = useState<QuickCaptureMode>('task')
   const [text, setText] = useState('')
   const [saving, setSaving] = useState(false)
+  const [localMood, setLocalMood] = useState<number | null>(null)
   const inputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
@@ -31,6 +56,7 @@ function QuickCaptureCard({ onCapture, focusRequest }: QuickCaptureCardProps) {
   }, [focusRequest])
 
   const active = MODES.find((m) => m.id === mode) ?? MODES[0]
+  const shownMood = localMood ?? moodScore
 
   const submit = async () => {
     const trimmed = text.trim()
@@ -43,6 +69,11 @@ function QuickCaptureCard({ onCapture, focusRequest }: QuickCaptureCardProps) {
     } finally {
       setSaving(false)
     }
+  }
+
+  const pickMood = (value: number) => {
+    setLocalMood(value)
+    onMood(value).catch(() => setLocalMood(null))
   }
 
   return (
@@ -97,6 +128,30 @@ function QuickCaptureCard({ onCapture, focusRequest }: QuickCaptureCardProps) {
         </button>
       </div>
       <small className="home-capture-hint">{active.hint}</small>
+
+      <div className="home-capture-mood">
+        <div className="home-capture-mood-text">
+          <span className="home-card-eyebrow">Mood check-in</span>
+          <p>{shownMood ? `Today feels ${MOOD_LABELS[shownMood - 1].toLowerCase()}.` : 'How’s the head today?'}</p>
+        </div>
+        <div className="home-capture-mood-faces" role="group" aria-label="Mood check-in">
+          {MOOD_LABELS.map((label, index) => {
+            const value = index + 1
+            return (
+              <button
+                key={label}
+                type="button"
+                aria-label={`Mood: ${label}`}
+                aria-pressed={shownMood === value}
+                className={cn('home-face-btn', `home-face-btn--${value}`, shownMood === value && 'is-active')}
+                onClick={() => pickMood(value)}
+              >
+                <MoodFace level={value} />
+              </button>
+            )
+          })}
+        </div>
+      </div>
     </section>
   )
 }

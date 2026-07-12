@@ -411,11 +411,12 @@
   background: rgba(255, 255, 255, 0.85);
 }
 
-/* ---------- Hero — "Today" ----------
-   Transplanted from the Nutrition route's Daily Nutrition hero: same card
-   head (eyebrow + serif headline + dark pill), same ArcGauge, same stacked
-   macro-bar rows — Home's lavender/periwinkle signature hue in place of
-   Nutrition's lime. See the --ntr-* overrides at the top of this file. */
+/* ---------- Hero — "Today's loop" ----------
+   The Nutrition hero grammar (eyebrow + serif headline + dark pill, ArcGauge,
+   stacked macro-bar rows) re-aimed at a cross-domain day score. The gauge
+   holds the composite "day loop" %, four rows carry focus/tasks/water/fuel,
+   and a full-width agenda strip closes the panel. Home's lavender signature
+   replaces Nutrition's lime via the --ntr-* overrides at the top of this file. */
 
 .home-card--hero {
   grid-column: span 4;
@@ -448,17 +449,19 @@
 .home-hero-panel {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(180px, 200px) minmax(0, 1fr);
-  gap: 20px 28px;
+  grid-template-columns: minmax(180px, 210px) minmax(0, 1fr);
+  gap: 16px 28px;
   align-items: center;
-  padding: 22px 26px 20px;
+  padding: 20px 22px 18px;
   border-radius: 22px;
-  background: linear-gradient(160deg, #e6f0ff 0%, #cce0ff 52%, #99c2ff 100%);
+  /* warm porcelain — calmer than the old periwinkle; domain accents and
+     the dark ink arc carry the color instead of the panel itself */
+  background: linear-gradient(160deg, #f7f3e8 0%, #efe7d4 55%, #e5dabd 100%);
   overflow: hidden;
 }
 
 .home-hero-panel.is-skeleton {
-  background: linear-gradient(160deg, rgba(230, 240, 255, 0.55), rgba(153, 194, 255, 0.32));
+  background: linear-gradient(160deg, rgba(247, 243, 232, 0.7), rgba(229, 218, 189, 0.4));
 }
 
 /* soft moon-glow motif in the panel corner — Home's answer to the leaf/moon */
@@ -535,101 +538,211 @@
   color: var(--ntr-lime);
 }
 
+/* Four loop tiles in a 2×2 grid — the Nutrition mobile-chip grammar
+   (label up top, value below, bar underneath) at every width. */
 .home-card--hero .ntr-hero-macros {
   position: relative;
   z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .home-card--hero .ntr-macro-row {
   cursor: pointer;
+  padding: 11px 14px 12px;
+  gap: 7px;
+  background: rgba(255, 255, 255, 0.5);
+  transition: background-color 0.18s ease, transform 0.15s ease;
+}
+
+.home-card--hero .ntr-macro-row:hover {
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.home-card--hero .ntr-macro-header {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+
+.home-card--hero .ntr-macro-header strong {
+  font-size: 14px;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.home-card--hero .ntr-macro-header strong em {
+  font-size: 10px;
+}
+
+/* Tactile press — every loop row responds to the tap */
+.home-card--hero .ntr-macro-row:active {
+  transform: scale(0.985);
 }
 
 .home-card--hero .ntr-macro-header p {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-width: 0;
+  font-size: 10.5px;
 }
 
-/* Domain accents on the three loop bars: tasks = home periwinkle,
-   water = sky, fuel = nutrition's green (its "room" color) */
-.home-loop--tasks .ntr-macro-bar i { background: #5560bb; }
+/* Domain accents on the four loop bars: focus = home periwinkle,
+   tasks = the app-wide task green (momentum/rollup use the same),
+   water = sky, fuel = nutrition's olive (its "room" color) */
+.home-loop--focus .ntr-macro-bar i { background: #5560bb; }
+.home-loop--tasks .ntr-macro-bar i { background: #5f8a6e; }
 .home-loop--water .ntr-macro-bar i { background: #5d87ad; }
 .home-loop--fuel .ntr-macro-bar i { background: #7e9c2c; }
 
-.home-loop--tasks .ntr-macro-header p svg { color: #414a9e; }
+.home-loop--focus .ntr-macro-header p svg { color: #414a9e; }
+.home-loop--tasks .ntr-macro-header p svg { color: #2e5f4b; }
 .home-loop--water .ntr-macro-header p svg { color: #46708f; }
 .home-loop--fuel .ntr-macro-header p svg { color: #63801f; }
 
 /* Overdue is the loudest thing in the hero — and the only red */
-.home-overdue-chip {
+/* Tiny affordance chip on the water tile */
+.home-tap-chip {
   display: inline-flex;
   align-items: center;
-  margin-left: 4px;
-  padding: 3px 9px;
+  flex-shrink: 0;
+  padding: 2px 7px;
   border-radius: 999px;
-  background: #c03546;
-  color: #fff;
-  font-size: 9px;
+  background: rgba(93, 135, 173, 0.16);
+  color: #38607f;
+  font-size: 8.5px;
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
-/* Next-up chip — meal-row language: icon disc + title + time */
-.home-hero-next {
+.home-overdue-chip {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: 2px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #c03546;
+  color: #fff;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Up-next agenda strip — spans the full panel width. The title owns its
+   own line (time rides above it in small caps), so long event names
+   ellipsize gracefully instead of crushing the time label. */
+.home-next-strip {
+  grid-column: 1 / -1;
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
-  margin-top: 2px;
-  padding: 9px 14px 9px 9px;
+  min-width: 0;
+  padding: 10px 16px 10px 10px;
   border: 0;
-  border-radius: 999px;
-  background: rgba(23, 27, 21, 0.9);
-  color: #fff;
-  font-size: 12px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--ntr-ink);
   text-align: left;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.home-hero-next:hover {
+.home-next-strip:hover {
+  background: rgba(255, 255, 255, 0.78);
   transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(23, 27, 21, 0.24);
+  box-shadow: 0 10px 22px rgba(52, 58, 122, 0.14);
 }
 
-.home-hero-next-ic {
+.home-next-ic {
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
-  flex: 0 0 28px;
-  border-radius: 50%;
-  background: var(--ntr-lime);
-  color: var(--ntr-ink);
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 12px;
+  background: rgba(23, 27, 21, 0.9);
+  color: var(--ntr-lime);
 }
 
-.home-hero-next b {
+.home-next-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1px;
   min-width: 0;
+}
+
+.home-next-text small {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 11.5px;
-  font-weight: 700;
+  color: rgba(23, 27, 21, 0.55);
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
 }
 
-.home-hero-next small {
-  margin-left: auto;
+.home-next-text b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.home-next-more {
   flex-shrink: 0;
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 10.5px;
-  font-weight: 650;
-  font-variant-numeric: tabular-nums;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(23, 27, 21, 0.08);
+  color: #514a38;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.home-next-go {
+  flex-shrink: 0;
+  color: rgba(23, 27, 21, 0.45);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.home-next-strip:hover .home-next-go {
+  color: #171b15;
+  transform: translateX(3px);
+}
+
+.home-next-strip-skel {
+  grid-column: 1 / -1;
+  height: 54px;
+  border-radius: 18px;
+}
+
+/* Phone widths: the time label beats the later-count chip for space */
+@media (max-width: 480px) {
+  .home-next-more {
+    display: none;
+  }
 }
 
 @media (max-width: 700px) {
   .home-hero-panel {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     justify-items: center;
   }
 
@@ -942,12 +1055,22 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
   color: #2b352f;
   font-size: 12px;
   font-weight: 650;
-  white-space: nowrap;
+}
+
+.home-habit-label em {
+  font-style: normal;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-habit-name--short {
+  display: none;
 }
 
 /* Small colored icon chip per habit — same vocabulary as the insight rows */
@@ -1134,6 +1257,42 @@
   font-weight: 600;
 }
 
+/* Mood check-in — pins to the capture card's footer, filling what used to
+   be dead space. Faces reuse the Mind route's check-in language via the
+   .home-face-* classes defined in the header section above. */
+.home-capture-mood {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(26, 31, 29, 0.16);
+}
+
+.home-capture-mood-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.home-capture-mood-text p {
+  margin: 0;
+  color: #2b352f;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 13.5px;
+  font-style: italic;
+  font-weight: 600;
+}
+
+.home-capture-mood-faces {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 /* ---------- Week rollup ----------
    The Nutrition "This week vs last" tile pattern (.ntr-intel-week-delta):
    compact tinted tiles — icon chip, big number, week-over-week delta,
@@ -1144,21 +1303,25 @@
   padding-bottom: 18px;
 }
 
+/* Ghost chip — hairline border, tinted icon disc, no fill */
 .home-safe-chip {
   display: inline-flex;
-  align-items: baseline;
-  gap: 7px;
-  padding: 8px 14px;
-  border: 1px solid rgba(86, 95, 184, 0.26);
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px 5px 6px;
+  border: 1px solid rgba(26, 31, 29, 0.12);
   border-radius: 999px;
-  background: linear-gradient(120deg, var(--ntr-lime-soft), var(--ntr-lime));
+  background: transparent;
   color: #17211c;
-  box-shadow: var(--ntr-shadow);
 }
 
 .home-safe-chip svg {
-  align-self: center;
-  color: #414a9e;
+  box-sizing: content-box;
+  flex-shrink: 0;
+  padding: 6px;
+  border-radius: 50%;
+  background: #d8ece7;
+  color: #2c7264;
 }
 
 .home-safe-chip b {
@@ -1169,7 +1332,7 @@
 }
 
 .home-safe-chip small {
-  color: rgba(23, 27, 21, 0.62);
+  color: rgba(23, 28, 25, 0.58);
   font-size: 9px;
   font-weight: 800;
   text-transform: uppercase;
@@ -1177,8 +1340,16 @@
 }
 
 .home-safe-chip.is-watch {
-  border-color: rgba(154, 90, 16, 0.4);
-  background: linear-gradient(120deg, #fbe8c8, #f3cf8e);
+  border-color: rgba(154, 90, 16, 0.35);
+}
+
+.home-safe-chip.is-watch svg {
+  background: #fbe8c8;
+  color: #8a5009;
+}
+
+.home-safe-chip.is-watch b {
+  color: #9a5a10;
 }
 
 .home-rollup-grid {
@@ -1187,7 +1358,8 @@
   gap: 10px;
 }
 
-.home-rollup-mobile-only {
+/* double class so the later .home-rollup-tile display:flex can't win */
+.home-rollup-tile.home-rollup-mobile-only {
   display: none;
 }
 
@@ -1376,7 +1548,11 @@
   .home-dashboard {
     inset: 72px 32px 8px 180px;
   }
+}
 
+/* iPads in landscape keep the desktop hero+capture pairing; only true
+   portrait/tablet widths stack to full-width cards. */
+@media (max-width: 1024px) {
   .home-card--hero,
   .home-card--sleep,
   .home-card--insights,
@@ -1544,20 +1720,61 @@
   }
 
   .home-hero-panel {
-    padding: 20px;
-    grid-template-columns: 1fr;
-    justify-items: center;
+    padding: 16px 12px 12px;
+    gap: 14px;
+    /* minmax(0,…) so a long nowrap event title can't inflate the track */
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: stretch;
   }
 
-  /* Allow Nutrition's mobile row layout, but wrap the Next button below */
+  .home-hero-gauge-col {
+    justify-self: center;
+  }
+
+  .home-card--hero .ntr-gauge svg {
+    width: min(100%, 158px);
+  }
+
+  .home-card--hero .ntr-gauge-center strong {
+    font-size: 26px;
+  }
+
+  /* The 2×2 tile grid holds on phones too — just tighter. Also undo
+     nutrition-redesign's mobile flex flip so the grid rules win. */
   .home-card--hero .ntr-hero-macros {
-    flex-wrap: wrap;
     width: 100%;
+    gap: 7px;
   }
 
-  .home-card--hero .home-hero-next {
-    flex: 0 0 100%;
-    margin-top: 4px;
+  .home-card--hero .ntr-macro-row {
+    flex: none;
+    padding: 9px 11px 10px;
+  }
+
+  .home-card--hero .ntr-macro-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .home-card--hero .ntr-macro-header strong {
+    font-size: 13px;
+  }
+
+  /* Nutrition hides "/target" on its mobile chips; keep ours visible */
+  .home-card--hero .ntr-macro-header strong em {
+    display: inline;
+  }
+
+  .home-next-strip {
+    padding: 9px 12px 9px 8px;
+    gap: 10px;
+  }
+
+  .home-next-ic {
+    width: 30px;
+    height: 30px;
+    flex-basis: 30px;
+    border-radius: 10px;
   }
 
   .home-grid {
@@ -1596,7 +1813,63 @@
     display: none;
   }
 
-  .home-rollup-mobile-only {
+  /* Tighten the momentum grid so label + 7 cells + streak fit 360px */
+  .home-habit-row {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 8px;
+  }
+
+  .home-habit-label {
+    gap: 6px;
+    font-size: 11.5px;
+  }
+
+  .home-habit-name--full {
+    display: none;
+  }
+
+  .home-habit-name--short {
+    display: block;
+  }
+
+  .home-habit-chip {
+    width: 22px;
+    height: 22px;
+    flex-basis: 22px;
+  }
+
+  .home-habit-dots {
+    gap: 4px;
+  }
+
+  .home-habit-cell {
+    width: 14px;
+    height: 14px;
+  }
+
+  .home-habit-row--legend small {
+    width: 14px;
+  }
+
+  .home-habit-streak {
+    font-size: 10.5px;
+    padding: 3px 5px;
+  }
+
+  .home-safe-chip {
+    max-width: 100%;
+  }
+
+  .home-capture-mood {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .home-capture-mood-text {
+    align-items: center;
+  }
+
+  .home-rollup-tile.home-rollup-mobile-only {
     display: flex;
   }
 }

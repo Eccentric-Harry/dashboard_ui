@@ -36,7 +36,7 @@ const mealTemplates = [
   { name: "Whey Protein Shake", type: "Post-Workout", baseCal: 200, basePro: 30, baseCarb: 15, baseFat: 2, time: "05:30 PM" },
   { name: "Chocolate Milk & Banana", type: "Post-Workout", baseCal: 250, basePro: 18, baseCarb: 38, baseFat: 5, time: "06:00 PM" },
   { name: "Grilled Salmon with Asparagus", type: "Dinner", baseCal: 550, basePro: 45, baseCarb: 25, baseFat: 28, time: "07:30 PM" },
-  { name: "Lean Beef Stir-fry with Rice", type: "Dinner", baseCal: 600, basePro: 42, baseCarb: 58, baseFat: 20, time: "08:00 PM" },
+  { name: "Paneer Stir-fry with Rice", type: "Dinner", baseCal: 600, basePro: 42, baseCarb: 58, baseFat: 20, time: "08:00 PM" },
   { name: "Tofu & Vegetable Curry", type: "Dinner", baseCal: 480, basePro: 30, baseCarb: 52, baseFat: 20, time: "07:00 PM" },
   { name: "Apple with Almond Butter", type: "Snack", baseCal: 180, basePro: 5, baseCarb: 20, baseFat: 10, time: "10:30 AM" },
   { name: "Hard-boiled Eggs", type: "Snack", baseCal: 140, basePro: 12, baseCarb: 1, baseFat: 10, time: "03:30 PM" },

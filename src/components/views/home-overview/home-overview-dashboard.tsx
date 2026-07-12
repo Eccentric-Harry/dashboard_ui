@@ -8,6 +8,7 @@ import {
   addWaterIntake,
   createMindEntry,
   logSleep,
+  saveMindMood,
 } from '../../../lib/api'
 import type { AppPath } from '../../dashboard/quantified-self-dashboard/data'
 import { useFocus } from '../../../contexts/FocusContext'
@@ -191,6 +192,11 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
     [home.tasks.data, home.today],
   )
 
+  const todayMood = useMemo(
+    () => (home.moods.data ?? []).find((log) => log.date === home.today)?.moodScore ?? null,
+    [home.moods.data, home.today],
+  )
+
   const isFirstRun =
     !home.loading &&
     countActiveDays(dayRecords) === 0 &&
@@ -257,6 +263,20 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
       } catch {
         toast.error('Could not save that — try again.')
         throw new Error('capture failed')
+      }
+    },
+    [home],
+  )
+
+  const handleMood = useCallback(
+    async (score: number) => {
+      try {
+        await saveMindMood(home.today, score)
+        toast.success('Noted. Thanks for checking in.')
+        void home.refetch()
+      } catch {
+        toast.error('Could not save mood — try again.')
+        throw new Error('mood save failed')
       }
     },
     [home],
@@ -354,7 +374,12 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           onNavigate={onNavigate}
         />
 
-        <QuickCaptureCard onCapture={handleCapture} focusRequest={captureRequest} />
+        <QuickCaptureCard
+          onCapture={handleCapture}
+          focusRequest={captureRequest}
+          moodScore={todayMood}
+          onMood={handleMood}
+        />
 
         <SleepCard
           loading={home.loading}

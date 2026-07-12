@@ -1,4 +1,4 @@
-import { CalendarClock, CheckSquare, Droplets, Flame as FocusFlame, Utensils } from 'lucide-react'
+import { ArrowRight, CalendarClock, CheckSquare, Droplets, Flame as FocusFlame, Utensils } from 'lucide-react'
 import type { CalendarItem, DailyTask, HydrationData } from '../../../../lib/api'
 import type { AppPath } from '../../../dashboard/quantified-self-dashboard/data'
 import { cn } from '../../../../lib/utils'
@@ -21,6 +21,16 @@ type TodayHeroCardProps = {
   onNavigate: (path: AppPath, search?: string) => void
 }
 
+/** Serif headline per score band — progress phrased as a story, never a shortfall. */
+function loopPhrase(score: number, hour: number): string {
+  if (score <= 0) return hour < 12 ? 'The day is wide open' : 'Still time to make a mark'
+  if (score < 25) return 'First marks on the page'
+  if (score < 50) return 'Momentum is building'
+  if (score < 75) return 'Past the halfway mark'
+  if (score < 100) return 'Closing the loop'
+  return 'Loop closed. Take a bow.'
+}
+
 /** One stacked loop bar — the Nutrition macro-row component re-aimed at a daily loop. */
 function HeroLoopRow({
   accent,
@@ -33,7 +43,7 @@ function HeroLoopRow({
   onClick,
   badge,
 }: {
-  accent: 'tasks' | 'water' | 'fuel'
+  accent: 'focus' | 'tasks' | 'water' | 'fuel'
   icon: React.ReactNode
   label: string
   value: number
@@ -50,6 +60,7 @@ function HeroLoopRow({
       className={cn('ntr-macro-row', `home-loop--${accent}`)}
       role="button"
       tabIndex={0}
+      aria-label={`${label}: ${display}${sub ? ` ${sub}` : ''}`}
       onClick={onClick}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -102,21 +113,24 @@ function TodayHeroCard({
             <span className="home-skel" style={{ width: 190, height: 190, borderRadius: '50%' }} />
           </div>
           <div className="ntr-hero-macros">
-            {Array.from({ length: 3 }, (_, i) => (
-              <span key={i} className="home-skel" style={{ height: 58, borderRadius: 16 }} />
+            {Array.from({ length: 4 }, (_, i) => (
+              <span key={i} className="home-skel" style={{ height: 54, borderRadius: 16 }} />
             ))}
           </div>
+          <span className="home-skel home-next-strip-skel" />
         </div>
       </section>
     )
   }
 
-  // Next upcoming, non-cancelled item with a start time still ahead of now.
+  // Upcoming, non-cancelled items with a start time still ahead of now.
   const now = new Date()
   const nowHm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-  const nextEvent = (calendarItems ?? [])
+  const upcoming = (calendarItems ?? [])
     .filter((item) => !item.cancelled && !item.completed && item.startTime && item.startTime >= nowHm)
-    .sort((a, b) => (a.startTime ?? '').localeCompare(b.startTime ?? ''))[0]
+    .sort((a, b) => (a.startTime ?? '').localeCompare(b.startTime ?? ''))
+  const nextEvent = upcoming[0]
+  const laterCount = Math.max(upcoming.length - 1, 0)
 
   const tasksDone = (todayTasks ?? []).filter((t) => t.completed).length
   const tasksTotal = (todayTasks ?? []).length
@@ -127,14 +141,21 @@ function TodayHeroCard({
   const calories = nutrition?.todayTotalCalories ?? 0
   const calorieGoal = nutrition?.calorieGoal ?? 0
 
-  const focusPct = Math.round((focusMinutesToday / FOCUS_TARGET_MINUTES) * 100)
+  // Composite "day loop": mean of each active domain's progress ratio.
+  // Domains without a target today (no tasks, no calorie goal) sit out
+  // instead of dragging the score to zero.
+  const ratios: number[] = [Math.min(focusMinutesToday / FOCUS_TARGET_MINUTES, 1)]
+  if (tasksTotal > 0) ratios.push(Math.min(tasksDone / tasksTotal, 1))
+  ratios.push(Math.min(waterMl / Math.max(waterTarget, 1), 1))
+  if (calorieGoal > 0) ratios.push(Math.min(calories / calorieGoal, 1))
+  const dayScore = Math.round((ratios.reduce((sum, r) => sum + r, 0) / ratios.length) * 100)
 
   return (
     <section className="home-card home-card--hero" aria-label="Today at a glance">
       <div className="ntr-card-head home-hero-head">
         <div>
-          <p className="ntr-eyebrow">Today · Focus loop</p>
-          <h2>{focusPct}% of focus goal reached</h2>
+          <p className="ntr-eyebrow">Today · Day loop</p>
+          <h2>{loopPhrase(dayScore, now.getHours())}</h2>
         </div>
         {focusRunning ? (
           <span className="ntr-pill dark home-pill-live">
@@ -153,12 +174,17 @@ function TodayHeroCard({
         <div className="home-hero-gauge-col">
           <div className={cn('ntr-gauge-wrap', focusRunning && 'is-live')}>
             <ArcGauge
-              value={focusMinutesToday}
-              target={FOCUS_TARGET_MINUTES}
-              format={(v) => formatMinutes(v)}
-              centerSub={`of ${formatMinutes(FOCUS_TARGET_MINUTES)} focus`}
+              value={dayScore}
+              target={100}
+              format={(v) => `${v}%`}
+              centerSub="of today's loop"
             />
-            <span className="ntr-gauge-badge">{focusPct}%</span>
+            {focusMinutesToday > 0 && (
+              <span className="ntr-gauge-badge">
+                <FocusFlame size={9} strokeWidth={2.6} />
+                {formatMinutes(focusMinutesToday)}
+              </span>
+            )}
           </div>
           <button type="button" className="home-hero-focus-btn" onClick={onStartFocus}>
             <FocusFlame size={12} />
@@ -167,6 +193,16 @@ function TodayHeroCard({
         </div>
 
         <div className="ntr-hero-macros">
+          <HeroLoopRow
+            accent="focus"
+            icon={<FocusFlame size={11} strokeWidth={2.5} />}
+            label="Focus"
+            value={focusMinutesToday}
+            target={FOCUS_TARGET_MINUTES}
+            display={formatMinutes(focusMinutesToday)}
+            sub={`/${formatMinutes(FOCUS_TARGET_MINUTES)}${focusRunning ? ' · live' : ''}`}
+            onClick={onStartFocus}
+          />
           <HeroLoopRow
             accent="tasks"
             icon={<CheckSquare size={11} strokeWidth={2.5} />}
@@ -185,8 +221,9 @@ function TodayHeroCard({
             value={waterMl}
             target={waterTarget}
             display={waterMl.toLocaleString()}
-            sub={`/${waterTarget.toLocaleString()}ml · tap +250`}
+            sub={`/${waterTarget.toLocaleString()}ml`}
             onClick={onAddWater}
+            badge={<span className="home-tap-chip">tap +250</span>}
           />
           <HeroLoopRow
             accent="fuel"
@@ -198,27 +235,33 @@ function TodayHeroCard({
             sub={calorieGoal > 0 ? `/${calorieGoal.toLocaleString()} kcal` : undefined}
             onClick={() => onNavigate('/nutrition')}
           />
+        </div>
 
-          <button type="button" className="home-hero-next" onClick={() => onNavigate('/calendar')}>
-            <span className="home-hero-next-ic">
-              <CalendarClock size={13} />
-            </span>
+        {/* Full-width agenda strip — title gets its own line so long event
+            names ellipsize instead of crushing the time label. */}
+        <button type="button" className="home-next-strip" onClick={() => onNavigate('/calendar')}>
+          <span className="home-next-ic" aria-hidden="true">
+            <CalendarClock size={14} />
+          </span>
+          <span className="home-next-text">
             {nextEvent ? (
               <>
-                <b>Next up · {nextEvent.title}</b>
                 <small>
-                  {formatTimeLabel(nextEvent.startTime)}
+                  Up next · {formatTimeLabel(nextEvent.startTime)}
                   {nextEvent.endTime ? ` – ${formatTimeLabel(nextEvent.endTime)}` : ''}
                 </small>
+                <b>{nextEvent.title}</b>
               </>
             ) : (
               <>
-                <b>Nothing scheduled</b>
-                <small>open space ahead</small>
+                <small>Today's runway</small>
+                <b>Nothing scheduled — open space ahead</b>
               </>
             )}
-          </button>
-        </div>
+          </span>
+          {laterCount > 0 && <span className="home-next-more">+{laterCount} later</span>}
+          <ArrowRight className="home-next-go" size={15} aria-hidden="true" />
+        </button>
       </div>
     </section>
   )

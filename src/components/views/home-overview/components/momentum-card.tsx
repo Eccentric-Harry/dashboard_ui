@@ -52,7 +52,10 @@ function MomentumCard({ loading, strips, weekDates }: MomentumCardProps) {
                   <i className="home-habit-chip" aria-hidden="true">
                     <Icon size={13} strokeWidth={2.4} />
                   </i>
-                  {strip.label}
+                  {/* own elements so text-overflow can actually ellipsize;
+                      CSS swaps full/short at phone widths */}
+                  <em className="home-habit-name--full">{strip.label}</em>
+                  <em className="home-habit-name--short">{strip.shortLabel}</em>
                 </span>
                 <div className="home-habit-dots">
                   {strip.days.map((active, index) => (
