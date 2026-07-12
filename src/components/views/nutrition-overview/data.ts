@@ -2,7 +2,6 @@ import type { LucideIcon } from 'lucide-react'
 import {
   Apple,
   Bean,
-  Bean,
   CupSoda,
   Drumstick,
   Egg,
