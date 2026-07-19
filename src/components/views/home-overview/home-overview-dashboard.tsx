@@ -12,7 +12,6 @@ import {
 } from '../../../lib/api'
 import type { AppPath } from '../../dashboard/quantified-self-dashboard/data'
 import { useFocus } from '../../../contexts/FocusContext'
-import { SosOverlay } from '../mind-overview/components/sos-overlay'
 import { HomeHeader } from './components/home-header'
 import type { QuickAddAction } from './components/home-header'
 import { ConfettiBurst } from './components/confetti-burst'
@@ -48,7 +47,6 @@ type HomeOverviewDashboardProps = {
 function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
   const home = useHomeData()
   const { session: focusSession } = useFocus()
-  const [sosOpen, setSosOpen] = useState(false)
   const [captureRequest, setCaptureRequest] = useState<{ mode: QuickCaptureMode; nonce: number } | null>(null)
   const [fabOpen, setFabOpen] = useState(false)
   const [sleepFormNonce, setSleepFormNonce] = useState(0)
@@ -319,7 +317,6 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
         dateIso={home.today}
         onQuickAdd={handleQuickAdd}
         streak={bestStreak}
-        onSos={() => setSosOpen(true)}
       />
 
       {/* Mobile FAB — fixed bottom-right, hidden on desktop via CSS */}
@@ -430,8 +427,6 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           safePerDay={safePerDay}
         />
       </div>
-
-      <SosOverlay open={sosOpen} onClose={() => setSosOpen(false)} />
     </div>
   )
 }

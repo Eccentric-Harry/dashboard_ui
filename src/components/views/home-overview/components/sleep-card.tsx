@@ -96,6 +96,7 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (openFormNonce) setFormOpen(true)
   }, [openFormNonce])
+  const [date, setDate] = useState(today)
   const [bedtime, setBedtime] = useState('23:30')
   const [wakeTime, setWakeTime] = useState('07:00')
   const [quality, setQuality] = useState<number>(3)
@@ -104,6 +105,26 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
 
   const week = useMemo(() => lastNDates(7, today), [today])
   const byDate = useMemo(() => new Map((entries ?? []).map((e) => [e.date, e])), [entries])
+
+  // Fresh open always starts on today; picking a different date re-syncs
+  // the fields below to whatever (if anything) is already logged for it.
+  useEffect(() => {
+    if (formOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDate(today)
+    }
+  }, [formOpen, today])
+
+  useEffect(() => {
+    if (!formOpen) return
+    const existing = byDate.get(date)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setBedtime(existing?.bedtime ?? '23:30')
+    setWakeTime(existing?.wakeTime ?? '07:00')
+    setQuality(existing?.quality ?? 3)
+    setNote(existing?.note ?? '')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formOpen, date])
 
   const lastNight = byDate.get(today) ?? null
   const latest = lastNight ?? (entries && entries.length > 0 ? entries[entries.length - 1] : null)
@@ -170,7 +191,7 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
     setSaving(true)
     try {
       await onLog({
-        date: today,
+        date,
         bedtime,
         wakeTime,
         quality,
@@ -268,6 +289,15 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
             <div className="home-sleep-form">
               <div className="home-sleep-form-row">
                 <label>
+                  <span>Night of</span>
+                  <input
+                    type="date"
+                    value={date}
+                    max={today}
+                    onChange={(e) => setDate(e.target.value)}
+                  />
+                </label>
+                <label>
                   <span>Bedtime</span>
                   <input type="time" value={bedtime} onChange={(e) => setBedtime(e.target.value)} />
                 </label>
@@ -308,7 +338,7 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
                   Cancel
                 </button>
                 <button type="button" className="home-btn-primary" disabled={saving} onClick={() => void submit()}>
-                  {saving ? 'Saving…' : lastNight ? 'Update night' : 'Save night'}
+                  {saving ? 'Saving…' : byDate.get(date) ? 'Update night' : 'Save night'}
                 </button>
               </div>
             </div>

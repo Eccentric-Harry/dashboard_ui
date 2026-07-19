@@ -292,10 +292,6 @@
   transform: translateY(-1px);
 }
 
-.home-sos-button:active {
-  transform: scale(0.95);
-}
-
 /* ---------- Cards ---------- */
 
 .home-card {
@@ -1009,7 +1005,8 @@
   letter-spacing: 0.08em;
 }
 
-.home-sleep-form-row input[type='time'] {
+.home-sleep-form-row input[type='time'],
+.home-sleep-form-row input[type='date'] {
   padding: 7px 10px;
   border: 1px solid rgba(26, 31, 29, 0.14);
   border-radius: 10px;
