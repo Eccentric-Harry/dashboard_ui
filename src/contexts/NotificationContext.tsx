@@ -636,7 +636,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           return updated;
         });
 
-        if (Notification.permission === 'granted') {
+        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
           try {
             new Notification('AI Meal Logged!', {
               body: `Added: ${res.data.description} (${res.data.calories} kcal)`,
@@ -674,7 +674,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           return updated;
         });
 
-        if (Notification.permission === 'granted') {
+        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
           try {
             new Notification('AI Meal Scan Failed', {
               body: `Failed: ${parsedError}`,

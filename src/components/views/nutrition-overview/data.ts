@@ -3,8 +3,6 @@ import {
   Apple,
   Bean,
   CupSoda,
-  Drumstick,
-  Egg,
   GlassWater,
   Milk,
   Pill,
@@ -113,9 +111,9 @@ export const proteinTrend: ProteinTrendPoint[] = [
 ]
 
 export const proteinSources: ProteinSource[] = [
-  { name: 'Chicken Breast', type: 'Complete', grams: 54, percentage: 38, icon: Drumstick, color: '#35b64b' },
+  { name: 'Soya Chunks', type: 'Complete', grams: 54, percentage: 38, icon: Bean, color: '#35b64b' },
   { name: 'Greek Yogurt', type: 'Complete', grams: 28, percentage: 20, icon: Milk, color: '#d9ff8a' },
-  { name: 'Eggs', type: 'Complete', grams: 22, percentage: 15, icon: Egg, color: '#f4ffe0' },
+  { name: 'Paneer', type: 'Complete', grams: 22, percentage: 15, icon: Milk, color: '#f4ffe0' },
   { name: 'Lentils', type: 'Incomplete', grams: 24, percentage: 17, icon: Bean, color: '#9dc8a6' },
   { name: 'Whole Wheat', type: 'Incomplete', grams: 14, percentage: 10, icon: Wheat, color: '#d8e2cd' },
 ]
@@ -125,7 +123,7 @@ export const quickLogShortcuts: QuickLogShortcut[] = [
   { label: 'Protein Shake', amount: '32 g protein', calories: '180 kcal', icon: CupSoda, tone: '#35b64b' },
   { label: 'Protein Bar', amount: '21 g protein', calories: '230 kcal', icon: Sandwich, tone: '#ffc45f' },
   { label: 'Creatine', amount: '5 g', calories: '0 kcal', icon: Pill, tone: '#f4ffe0' },
-  { label: 'Lean Bean', amount: '26 g protein', calories: '240 kcal', icon: Bean, tone: '#ffb0a4' },
+  { label: 'Tofu Bowl', amount: '26 g protein', calories: '240 kcal', icon: Bean, tone: '#ffb0a4' },
   { label: 'Fruit Bowl', amount: '48 g carbs', calories: '210 kcal', icon: Apple, tone: '#9df7a5' },
   { label: 'Salad Bowl', amount: '12 g fiber', calories: '160 kcal', icon: Salad, tone: '#36bd49' },
 ]
@@ -137,11 +135,11 @@ export const nutritionStatus = {
 }
 
 export const foodLogs: FoodLog[] = [
-  { id: 'fl-1', food: 'Chicken Breast', meal: 'Lunch', protein: 54, calories: 285, icon: Drumstick, iconColor: '#35b64b' },
+  { id: 'fl-1', food: 'Soya Chunks', meal: 'Lunch', protein: 54, calories: 285, icon: Bean, iconColor: '#35b64b' },
   { id: 'fl-2', food: 'Greek Yogurt', meal: 'Breakfast', protein: 17, calories: 100, icon: Milk, iconColor: '#d9ff8a' },
-  { id: 'fl-3', food: 'Whole Eggs (2)', meal: 'Breakfast', protein: 12, calories: 148, icon: Egg, iconColor: '#ffc45f' },
+  { id: 'fl-3', food: 'Paneer Bhurji', meal: 'Breakfast', protein: 12, calories: 148, icon: Milk, iconColor: '#ffc45f' },
   { id: 'fl-4', food: 'Protein Shake', meal: 'Post-Workout', protein: 32, calories: 180, icon: CupSoda, iconColor: '#76e4ff' },
-  { id: 'fl-5', food: 'Lean Bean', meal: 'Dinner', protein: 26, calories: 240, icon: Bean, iconColor: '#ffb0a4' },
+  { id: 'fl-5', food: 'Tofu Bowl', meal: 'Dinner', protein: 26, calories: 240, icon: Bean, iconColor: '#ffb0a4' },
   { id: 'fl-6', food: 'Lentil Soup', meal: 'Dinner', protein: 18, calories: 230, icon: Bean, iconColor: '#9dc8a6' },
   { id: 'fl-7', food: 'Protein Bar', meal: 'Snack', protein: 21, calories: 230, icon: Sandwich, iconColor: '#ffc45f' },
   { id: 'fl-8', food: 'Fruit Bowl', meal: 'Breakfast', protein: 2, calories: 210, icon: Apple, iconColor: '#9df7a5' },

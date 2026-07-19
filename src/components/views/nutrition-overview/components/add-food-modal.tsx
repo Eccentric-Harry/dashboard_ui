@@ -502,14 +502,14 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
             {aiPhase === 'input' && (
               <form onSubmit={handleAiSubmit} className="add-tx-form" style={{ gap: 0, flex: 1, overflowY: 'auto', paddingRight: '6px' }}>
                 <p style={{ fontSize: '13px', color: 'rgba(16,19,18,0.5)', margin: '0 0 16px', lineHeight: 1.5 }}>
-                  Upload a photo or describe your meal — Gemini identifies every item and calculates full clinical nutrition.
+                  Upload a photo or describe your meal — AI identifies every item and calculates full clinical nutrition.
                 </p>
 
                 {!isNotificationsEnabled && (
                   <div className="af-compact-alert">
                     <Bell size={16} className="af-compact-alert-icon" />
                     <span className="af-compact-alert-text">
-                      Enable push alerts to close this modal while Gemini analyses (takes 1-2 mins).
+                      Enable push alerts to close this modal while AI analyses (takes 1-2 mins).
                     </span>
                     <button type="button" onClick={toggleDesktopNotifications} className="af-compact-alert-btn">
                       Enable
@@ -632,6 +632,9 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                     <h3 className="af-hub-title">{STAGE_MESSAGES[stageIndex].label}</h3>
                     <p className="af-hub-subtitle">{STAGE_MESSAGES[stageIndex].sub}</p>
                   </div>
+                  <div className="af-progress-track" role="progressbar" aria-valuenow={stageIndex + 1} aria-valuemin={1} aria-valuemax={STAGE_MESSAGES.length}>
+                    <div className="af-progress-fill" style={{ width: `${((stageIndex + 1) / STAGE_MESSAGES.length) * 100}%` }} />
+                  </div>
                   <div className="af-loading-checklist">
                     <div className="af-check-item completed">
                       <span className="af-check-dot" />
@@ -639,7 +642,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                     </div>
                     <div className={`af-check-item ${stageIndex >= 1 ? 'completed' : 'active'}`}>
                       <span className="af-check-dot" />
-                      <span>Gemini: Identifying food items</span>
+                      <span>Identifying food items</span>
                     </div>
                     <div className={`af-check-item ${stageIndex >= 2 ? 'completed' : stageIndex === 1 ? 'active' : 'pending'}`}>
                       <span className="af-check-dot" />
@@ -647,7 +650,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                     </div>
                   </div>
                   <p className="af-processing-background-hint">
-                    Gemini AI analysis takes 1 to 2 minutes. You may safely close this modal or leave the page; we will notify you once your meal log is ready!
+                    AI analysis usually takes 1 to 2 minutes. You may safely close this modal or leave the page; we will notify you once your meal log is ready!
                   </p>
                   
                   <button
@@ -941,7 +944,7 @@ function AiErrorCard({ code, message, onRetry }: { code: number | null; message:
     if (is503) return {
       icon: <Wifi size={18} />,
       title: 'AI Service Busy',
-      body: 'Gemini is experiencing high demand right now. This is temporary.',
+      body: 'The AI provider is experiencing high demand right now. This is temporary.',
       hint: 'Try again in a few seconds — it usually clears up quickly.',
     }
     if (is429) return {
