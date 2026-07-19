@@ -18,8 +18,7 @@ import { ConfettiBurst } from './components/confetti-burst'
 import { TodayHeroCard } from './components/today-hero-card'
 import { SleepCard } from './components/sleep-card'
 import { InsightsCard } from './components/insights-card'
-import { MomentumCard } from './components/momentum-card'
-import { buildHabitStrips } from './habit-strips'
+import { TrendsCard } from './components/trends-card'
 import { QuickCaptureCard } from './components/quick-capture-card'
 import type { QuickCaptureMode } from './components/quick-capture-card'
 import { WeekRollupCard } from './components/week-rollup-card'
@@ -189,12 +188,6 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
     [weekRecords, home.nutrition.data, home.spending.data, home.workoutStats.data, home.learnings.data, promotedInsights],
   )
 
-  const habitStrips = useMemo(() => buildHabitStrips(dayRecords, windowDates), [dayRecords, windowDates])
-  const bestStreak = useMemo(
-    () => habitStrips.reduce((max, strip) => Math.max(max, strip.streak), 0),
-    [habitStrips],
-  )
-
   const todayRecord = dayRecords[dayRecords.length - 1]
   const todayTasks = useMemo(
     () => (home.tasks.data ?? []).filter((t) => t.date === home.today),
@@ -320,11 +313,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
   return (
     <div className="home-dashboard">
       <ConfettiBurst trigger={confettiTrigger} />
-      <HomeHeader
-        dateIso={home.today}
-        onQuickAdd={handleQuickAdd}
-        streak={bestStreak}
-      />
+      <HomeHeader dateIso={home.today} onQuickAdd={handleQuickAdd} />
 
       {/* Mobile FAB — fixed bottom-right, hidden on desktop via CSS */}
       {fabOpen && <div className="home-fab-overlay" onClick={() => setFabOpen(false)} aria-hidden="true" />}
@@ -423,7 +412,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           onNavigate={onNavigate}
         />
 
-        <MomentumCard loading={home.loading} strips={habitStrips} weekDates={windowDates} />
+        <TrendsCard loading={home.loading} records={dayRecords} />
 
         <WeekRollupCard
           loading={home.loading}

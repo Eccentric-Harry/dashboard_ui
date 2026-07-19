@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { ArrowRight, CalendarClock, CheckSquare, Droplets, Flame as FocusFlame, Utensils } from 'lucide-react'
+import { AlertTriangle, ArrowRight, CalendarClock, CheckSquare, Droplets, Flame as FocusFlame, Utensils } from 'lucide-react'
 import type { CalendarItem, DailyTask, HydrationData } from '../../../../lib/api'
 import type { AppPath } from '../../../dashboard/quantified-self-dashboard/data'
 import { cn } from '../../../../lib/utils'
@@ -178,10 +178,20 @@ function TodayHeroCard({
             <i className="home-live-dot" aria-hidden="true" />
             Session running
           </span>
+        ) : overdueCount > 0 ? (
+          <span className="ntr-pill dark home-pill-urgent">
+            <AlertTriangle size={12} strokeWidth={2.5} />
+            {overdueCount} overdue
+          </span>
+        ) : nextEvent ? (
+          <span className="ntr-pill dark">
+            <CalendarClock size={12} strokeWidth={2.5} />
+            Next · {formatTimeLabel(nextEvent.startTime)}
+          </span>
         ) : (
           <span className="ntr-pill dark">
             <CheckSquare size={12} strokeWidth={2.5} />
-            {tasksDone} of {tasksTotal || '—'} tasks
+            All caught up
           </span>
         )}
       </div>

@@ -205,25 +205,6 @@
   margin-left: 4px;
 }
 
-.home-streak-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 9px 13px;
-  border: 1px solid rgba(226, 181, 62, 0.32);
-  border-radius: 999px;
-  background: linear-gradient(135deg, rgba(255, 207, 115, 0.34), rgba(244, 176, 74, 0.18));
-  backdrop-filter: blur(18px);
-  color: #8a5c09;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.home-streak-chip-flame {
-  animation: home-flame-pulse 1.7s ease-in-out infinite;
-  transform-origin: 50% 88%;
-}
-
 /* Quick add — reuses the Nutrition "Add meal" pill (.ntr-add-btn) verbatim;
    the circle-plus icon picks up Home's amber via the --ntr-lime override. */
 
@@ -474,6 +455,11 @@
 @keyframes home-live-blink {
   0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(188, 195, 242, 0.6); }
   50% { opacity: 0.75; transform: scale(0.82); box-shadow: 0 0 0 4px rgba(188, 195, 242, 0); }
+}
+
+/* Overdue status pill — same red as .home-overdue-chip, promoted to the header */
+.home-pill-urgent {
+  background: #c03546;
 }
 
 .home-hero-panel {
@@ -831,7 +817,7 @@
 
 .home-card--sleep { grid-column: span 3; }
 .home-card--insights { grid-column: span 3; }
-.home-card--momentum { grid-column: span 6; }
+.home-card--trends { grid-column: span 6; }
 .home-card--capture { grid-column: span 2; }
 .home-card--rollup { grid-column: span 6; }
 
@@ -1093,141 +1079,160 @@
   background: #9db892;
 }
 
-/* ---------- Momentum ----------
-   Heat-cells instead of the old flat grey dots: filled cells carry a
-   per-habit gradient (the Nutrition water-fill / macro-bar color language),
-   empty cells are faint outlines. Streak flames light up amber. */
+/* ---------- Trends ----------
+   Full-width trajectory strip: one area-sparkline tile per daily vital, over
+   the shared 14-day window. Reuses the rollup tile's tint/accent vocabulary;
+   a small pill reads the recent-half vs earlier-half direction. */
 
-.home-habit-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.home-habit-row {
+.home-trend-grid {
   display: grid;
-  grid-template-columns: minmax(110px, 1fr) auto minmax(50px, auto);
-  align-items: center;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 12px;
 }
 
-.home-habit-row--legend {
-  margin-bottom: -5px;
+.home-trend-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  min-width: 0;
+  padding: 15px 16px 14px;
+  border-radius: 18px;
+  background: rgba(23, 27, 21, 0.035);
+  transition: background 0.2s ease;
 }
 
-.home-habit-row--legend small {
-  display: inline-grid;
-  place-items: center;
-  width: 18px;
-  color: rgba(23, 28, 25, 0.55);
-  font-size: 8px;
-  font-weight: 800;
+.home-trend-tile:hover {
+  background: rgba(23, 27, 21, 0.055);
 }
 
-.home-habit-label {
-  display: inline-flex;
+.home-trend-head {
+  display: flex;
   align-items: center;
-  gap: 8px;
-  min-width: 0;
-  color: #2b352f;
-  font-size: 12px;
-  font-weight: 650;
+  gap: 9px;
 }
 
-.home-habit-label em {
-  font-style: normal;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.home-habit-name--short {
-  display: none;
-}
-
-/* Small colored icon chip per habit — same vocabulary as the insight rows */
-.home-habit-chip {
+/* Small colored icon chip — same vocabulary as the rollup tiles */
+.home-trend-ic {
   display: grid;
   place-items: center;
   width: 26px;
   height: 26px;
   flex: 0 0 26px;
   border-radius: 9px;
+  background: var(--trend-tint, rgba(23, 27, 21, 0.06));
+  color: var(--trend-accent, #526057);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
 }
 
-.home-habit--learning .home-habit-chip { background: linear-gradient(150deg, #ddeaf6, #c3d9ec); color: #3e6a8e; }
-.home-habit--tasks .home-habit-chip { background: linear-gradient(150deg, #dcefe3, #b8dcc6); color: #275a3f; }
-.home-habit--workout .home-habit-chip { background: linear-gradient(150deg, #fbe8c8, #f3cf8e); color: #8a5009; }
-.home-habit--mood .home-habit-chip { background: linear-gradient(150deg, #e3e5f9, #c5c9f0); color: #40449a; }
-.home-habit--sleep .home-habit-chip { background: linear-gradient(150deg, #d9dcf7, #b9bfec); color: #33377c; }
+.home-trend-label {
+  flex-shrink: 0;
+  color: #2b352f;
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+}
 
-.home-habit-dots {
+.home-trend-value-row {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
 }
 
-/* Heat cell: gradient fill when active, faint outline when empty */
-.home-habit-cell {
-  width: 18px;
-  height: 18px;
-  border-radius: 6px;
-  border: 1px solid rgba(26, 31, 29, 0.14);
-  background: transparent;
-  animation: home-cell-in 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  animation-delay: var(--cell-delay, 0ms);
-  transition: transform 0.2s ease;
-}
-
-.home-habit-cell:hover {
-  transform: scale(1.18);
-}
-
-@keyframes home-cell-in {
-  from { opacity: 0; transform: scale(0.6); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-.home-habit-cell.is-active {
-  border: 0;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 2px 5px -2px rgba(23, 27, 21, 0.3);
-}
-
-.home-habit--learning .home-habit-cell.is-active { background: linear-gradient(150deg, #8fb8da, #5d87ad); }
-.home-habit--tasks .home-habit-cell.is-active { background: linear-gradient(150deg, #9cc4a9, #5f8a6e); }
-.home-habit--workout .home-habit-cell.is-active { background: linear-gradient(150deg, #ecc07a, #cf9032); }
-.home-habit--mood .home-habit-cell.is-active { background: linear-gradient(150deg, #a6ace5, #767ec9); }
-.home-habit--sleep .home-habit-cell.is-active { background: linear-gradient(150deg, #8189d4, #565fb8); }
-
-.home-habit-streak {
+/* Direction pill — nutrition/rollup tone language */
+.home-trend-pill {
   display: inline-flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 4px;
+  gap: 3px;
+  flex: 0 0 auto;
   padding: 3px 8px;
   border-radius: 999px;
-  color: rgba(23, 28, 25, 0.45);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-/* A lit flame is a small amber celebration */
-.home-habit-streak.is-lit {
-  background: linear-gradient(135deg, rgba(255, 207, 115, 0.4), rgba(244, 176, 74, 0.22));
-  color: #8a5c09;
+.home-trend-pill b {
+  font-size: 8px;
+  line-height: 1;
 }
 
-.home-habit-streak.is-lit svg {
-  animation: home-flame-pulse 1.7s ease-in-out infinite;
-  transform-origin: 50% 88%;
+.home-trend-pill.tone-good { background: rgba(46, 95, 75, 0.12); color: #2e5f4b; }
+.home-trend-pill.tone-watch { background: rgba(138, 80, 9, 0.12); color: #8a5009; }
+.home-trend-pill.tone-flat { background: rgba(23, 28, 25, 0.06); color: rgba(23, 28, 25, 0.5); }
+
+.home-trend-spark {
+  display: block;
+  width: 100%;
+  height: 34px;
+  overflow: visible;
 }
 
-@keyframes home-flame-pulse {
-  0%, 100% { transform: scale(1) rotate(-4deg); }
-  50% { transform: scale(1.16) rotate(4deg); }
+.home-trend-area {
+  stroke: none;
+  fill: var(--trend-accent, #526057);
+  opacity: 0.13;
 }
+
+.home-trend-line {
+  fill: none;
+  stroke: var(--trend-accent, #526057);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.home-trend-dot {
+  fill: var(--trend-accent, #526057);
+  stroke: #fafcf7;
+  stroke-width: 1.4;
+}
+
+/* Placeholder baseline for a vital with too little data to draw a line */
+.home-trend-spark-empty {
+  height: 34px;
+  border-radius: 8px;
+  background:
+    linear-gradient(to right, transparent, transparent) center / 100% 1px no-repeat,
+    repeating-linear-gradient(90deg, rgba(23, 28, 25, 0.14) 0 5px, transparent 5px 10px) center / 100% 1.5px no-repeat;
+}
+
+.home-trend-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.home-trend-value {
+  font-size: 20px;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  color: #17211c;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.home-trend-sub {
+  color: rgba(23, 28, 25, 0.62);
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+/* Zero-signal vitals stay grey and quiet — never alarming */
+.home-trend-tile.is-quiet .home-trend-value { color: rgba(23, 28, 25, 0.42); }
+.home-trend-tile.is-quiet .home-trend-ic {
+  background: rgba(23, 27, 21, 0.05);
+  color: rgba(23, 28, 25, 0.4);
+}
+
+.home-trend--sleep { --trend-accent: #33377c; --trend-tint: #d9dcf7; }
+.home-trend--focus { --trend-accent: #4d56ae; --trend-tint: #e3e5f9; }
+.home-trend--mood { --trend-accent: #6f66b0; --trend-tint: #e7e5f6; }
+.home-trend--tasks { --trend-accent: #2f6b4b; --trend-tint: #dcefe3; }
 
 /* ---------- Quick capture ----------
    Mode picker restyled as the Nutrition segmented control (.ntr-week
@@ -1454,11 +1459,13 @@
 .home-rollup-tile {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 2px;
   min-width: 0;
   padding: 13px 14px 12px;
   border-radius: 16px;
   background: rgba(23, 27, 21, 0.035);
+  text-align: center;
   transition: background 0.2s ease;
 }
 
@@ -1466,7 +1473,7 @@
   background: rgba(23, 27, 21, 0.055);
 }
 
-/* Small colored icon chip — same vocabulary as the momentum rows */
+/* Small colored icon chip — same vocabulary as the trend tiles */
 .home-rollup-ic {
   display: grid;
   place-items: center;
@@ -1647,11 +1654,8 @@
 @media (prefers-reduced-motion: reduce) {
   .home-card,
   .home-skel,
-  .home-habit-cell,
   .home-pill-live .home-live-dot,
   .ntr-gauge-wrap.is-live::before,
-  .home-habit-streak.is-lit svg,
-  .home-streak-chip-flame,
   .home-hero-panel.is-complete,
   .home-hero-panel.is-complete::before,
   .home-confetti-piece {
@@ -1679,7 +1683,7 @@
   .home-card--hero,
   .home-card--sleep,
   .home-card--insights,
-  .home-card--momentum,
+  .home-card--trends,
   .home-card--capture {
     grid-column: span 6;
   }
@@ -1832,7 +1836,6 @@
     padding: 6px 14px;
   }
 
-  .home-streak-chip,
   .home-sos-button {
     justify-content: center;
     width: 100%;
@@ -1904,7 +1907,7 @@
   .home-card--hero,
   .home-card--sleep,
   .home-card--insights,
-  .home-card--momentum,
+  .home-card--trends,
   .home-card--capture,
   .home-card--rollup {
     grid-column: span 1;
@@ -1927,53 +1930,9 @@
     align-self: stretch;
   }
 
-  /* On mobile, only show the last 7 days of the 14-day momentum chart */
-  .home-habit-dots small:nth-child(-n+7),
-  .home-habit-dots i:nth-child(-n+7) {
-    display: none;
-  }
-
-  /* Tighten the momentum grid so label + 7 cells + streak fit 360px */
-  .home-habit-row {
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    gap: 8px;
-  }
-
-  .home-habit-label {
-    gap: 6px;
-    font-size: 11.5px;
-  }
-
-  .home-habit-name--full {
-    display: none;
-  }
-
-  .home-habit-name--short {
-    display: block;
-  }
-
-  .home-habit-chip {
-    width: 22px;
-    height: 22px;
-    flex-basis: 22px;
-  }
-
-  .home-habit-dots {
-    gap: 4px;
-  }
-
-  .home-habit-cell {
-    width: 14px;
-    height: 14px;
-  }
-
-  .home-habit-row--legend small {
-    width: 14px;
-  }
-
-  .home-habit-streak {
-    font-size: 10.5px;
-    padding: 3px 5px;
+  /* Two trend tiles per row on phones — keeps sparklines legible */
+  .home-trend-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .home-safe-chip {
