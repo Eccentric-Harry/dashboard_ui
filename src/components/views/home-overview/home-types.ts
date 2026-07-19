@@ -67,6 +67,18 @@ export function shortDayLabel(iso: string): string {
   return new Date(`${iso}T00:00:00`).toLocaleDateString('en-US', { weekday: 'short' })
 }
 
+/** ISO timestamp → "2m ago" / "3h ago" / "5d ago". */
+export function formatRelativeTime(iso: string): string {
+  const then = new Date(iso).getTime()
+  if (Number.isNaN(then)) return ''
+  const minutes = Math.max(0, Math.floor((Date.now() - then) / 60000))
+  if (minutes < 1) return 'just now'
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  return `${Math.floor(hours / 24)}d ago`
+}
+
 /** "12:30" (24h) → "12:30 PM" per the calendar view's convention. */
 export function formatTimeLabel(time?: string): string {
   if (!time) return ''

@@ -1350,6 +1350,80 @@
   font-weight: 600;
 }
 
+/* Recently captured — fills the leftover space above the mood footer with
+   the last few things that actually went through this card's Task/Thought/
+   Win tabs, instead of leaving it empty. */
+.home-capture-recent {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+  padding-top: 2px;
+}
+
+.home-capture-recent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-capture-recent-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  border-radius: 12px;
+  background: rgba(23, 27, 21, 0.035);
+}
+
+.home-capture-recent-ic {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  border-radius: 7px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+}
+
+.home-capture-recent-item--task .home-capture-recent-ic { background: linear-gradient(150deg, #dcefe3, #b8dcc6); color: #275a3f; }
+.home-capture-recent-item--thought .home-capture-recent-ic { background: linear-gradient(150deg, #ddeaf6, #c3d9ec); color: #3e6a8e; }
+.home-capture-recent-item--win .home-capture-recent-ic { background: linear-gradient(150deg, #fbe8c8, #f3cf8e); color: #8a5009; }
+
+.home-capture-recent-text {
+  flex: 1;
+  min-width: 0;
+  color: #2b352f;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-capture-recent-time {
+  flex: 0 0 auto;
+  color: rgba(23, 28, 25, 0.48);
+  font-size: 9.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.home-capture-recent-empty {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  color: rgba(23, 28, 25, 0.5);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
 /* Mood check-in — pins to the capture card's footer, filling what used to
    be dead space. Faces reuse the Mind route's check-in language via the
    .home-face-* classes defined in the header section above. */

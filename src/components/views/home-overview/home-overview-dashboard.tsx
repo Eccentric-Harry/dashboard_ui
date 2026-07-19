@@ -20,7 +20,7 @@ import { SleepCard } from './components/sleep-card'
 import { InsightsCard } from './components/insights-card'
 import { TrendsCard } from './components/trends-card'
 import { QuickCaptureCard } from './components/quick-capture-card'
-import type { QuickCaptureMode } from './components/quick-capture-card'
+import type { QuickCaptureMode, RecentCapture } from './components/quick-capture-card'
 import { WeekRollupCard } from './components/week-rollup-card'
 import { buildDayRecords, countActiveDays, generateInsights, INSIGHT_WINDOW_DAYS } from './insights-engine'
 import { promoteForHome } from '../../../lib/insights/engine'
@@ -202,6 +202,26 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
     () => (home.moods.data ?? []).find((log) => log.date === home.today)?.moodScore ?? null,
     [home.moods.data, home.today],
   )
+
+  // Newest-first feed of what actually went through the Task/Thought/Win
+  // capture grid today — fills the card's leftover footer space instead of
+  // leaving it dead air.
+  const recentCaptures = useMemo<RecentCapture[]>(() => {
+    const fromTasks = todayTasks
+      .filter((t) => t.createdAt)
+      .map((t) => ({ id: `task-${t.id}`, mode: 'task' as const, text: t.title, at: t.createdAt as string }))
+    const fromMind = (home.mindEntries.data ?? [])
+      .filter((e) => (e.type === 'THOUGHT' || e.type === 'WIN') && e.date === home.today && e.createdAt)
+      .map((e) => ({
+        id: `mind-${e.id}`,
+        mode: (e.type === 'WIN' ? 'win' : 'thought') as 'win' | 'thought',
+        text: e.text,
+        at: e.createdAt as string,
+      }))
+    return [...fromTasks, ...fromMind]
+      .sort((a, b) => b.at.localeCompare(a.at))
+      .slice(0, 4)
+  }, [todayTasks, home.mindEntries.data, home.today])
 
   const isFirstRun =
     !home.loading &&
@@ -392,6 +412,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           focusRequest={captureRequest}
           moodScore={todayMood}
           onMood={handleMood}
+          recentCaptures={recentCaptures}
         />
 
         <SleepCard

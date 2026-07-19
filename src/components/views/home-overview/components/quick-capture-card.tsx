@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { CheckSquare, MessageCircle, PenLine, Send, Trophy } from 'lucide-react'
+import { CheckSquare, Inbox, MessageCircle, PenLine, Send, Trophy } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '../../../../lib/utils'
+import { formatRelativeTime } from '../home-types'
 
 export type QuickCaptureMode = 'task' | 'thought' | 'win' | 'learning'
 
@@ -10,6 +11,20 @@ const MODES: { id: QuickCaptureMode; label: string; icon: LucideIcon; placeholde
   { id: 'thought', label: 'Thought', icon: MessageCircle, placeholder: 'What’s on your mind?', hint: 'Goes to your Mind inbox' },
   { id: 'win', label: 'Win', icon: Trophy, placeholder: 'What went well?', hint: 'Filed in your evidence locker' },
 ]
+
+const MODE_ICON: Record<'task' | 'thought' | 'win', LucideIcon> = {
+  task: CheckSquare,
+  thought: MessageCircle,
+  win: Trophy,
+}
+
+export type RecentCapture = {
+  id: string
+  mode: 'task' | 'thought' | 'win'
+  text: string
+  /** ISO timestamp — drives the "Xm ago" label and the sort order. */
+  at: string
+}
 
 // Same face vocabulary as the Mind route's check-in strip — one meaning app-wide.
 const MOOD_LABELS = ['Heavy', 'Low', 'Okay', 'Good', 'Light'] as const
@@ -39,9 +54,11 @@ type QuickCaptureCardProps = {
   /** Today's saved mood (1–5) from the daily log, if any. */
   moodScore: number | null
   onMood: (score: number) => Promise<void>
+  /** Latest task/thought/win entries, newest first — fills the card's footer space. */
+  recentCaptures: RecentCapture[]
 }
 
-function QuickCaptureCard({ onCapture, focusRequest, moodScore, onMood }: QuickCaptureCardProps) {
+function QuickCaptureCard({ onCapture, focusRequest, moodScore, onMood, recentCaptures }: QuickCaptureCardProps) {
   const [mode, setMode] = useState<QuickCaptureMode>('task')
   const [text, setText] = useState('')
   const [saving, setSaving] = useState(false)
@@ -128,6 +145,31 @@ function QuickCaptureCard({ onCapture, focusRequest, moodScore, onMood }: QuickC
         </button>
       </div>
       <small className="home-capture-hint">{active.hint}</small>
+
+      <div className="home-capture-recent">
+        <span className="home-card-eyebrow">Recently captured</span>
+        {recentCaptures.length > 0 ? (
+          <ul className="home-capture-recent-list">
+            {recentCaptures.map((item) => {
+              const Icon = MODE_ICON[item.mode]
+              return (
+                <li key={item.id} className={cn('home-capture-recent-item', `home-capture-recent-item--${item.mode}`)}>
+                  <span className="home-capture-recent-ic" aria-hidden="true">
+                    <Icon size={12} strokeWidth={2.4} />
+                  </span>
+                  <span className="home-capture-recent-text">{item.text}</span>
+                  <span className="home-capture-recent-time">{formatRelativeTime(item.at)}</span>
+                </li>
+              )
+            })}
+          </ul>
+        ) : (
+          <p className="home-capture-recent-empty">
+            <Inbox size={13} strokeWidth={2.2} aria-hidden="true" />
+            Nothing captured yet today.
+          </p>
+        )}
+      </div>
 
       <div className="home-capture-mood">
         <div className="home-capture-mood-text">
