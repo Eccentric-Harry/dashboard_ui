@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { X, Loader2, ClipboardCheck, Camera, CheckCircle, AlertTriangle, RotateCcw, Upload, Wifi, Bell, Scan, Shield, TrendingUp, Sparkles } from 'lucide-react'
+import { X, Loader2, ClipboardCheck, ClipboardPaste, Camera, CheckCircle, AlertTriangle, RotateCcw, Upload, Wifi, Bell, Scan, Shield, TrendingUp, Sparkles } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
 import { addFoodEntry, updateFoodEntry, type MealAnalysisApiResponse, type ClinicalFlag, type IngredientBreakdown } from '../../../../lib/api'
 import { useNotifications } from '../../../../contexts/NotificationContext'
+import { normalizeMealGrade } from './meal-grade'
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -23,6 +24,111 @@ const MACRO_COLORS: Record<string, string> = {
   Carbs:    '#3b82f6',
   Fat:      '#ef4444',
   Sodium:   '#8b5cf6',
+}
+
+// ─── AI JSON payload parsing ──────────────────────────────────────────────
+// The paste flow accepts the NutriLog JSON (camelCase or snake_case keys).
+// Scalars autofill the visible form fields — the form is the source of
+// truth on submit, so user edits always win over the raw payload. The rich
+// analysis blocks pass through to the backend keyed exactly as
+// FoodEntryRequest binds them (@JsonProperty snake_case).
+
+interface ParsedMealJson {
+  description?: string
+  calories?: number
+  proteinGrams?: number
+  mealType?: string
+  date?: string
+  grade?: string
+  itemCount: number
+  rich: Record<string, unknown>
+}
+
+type JsonParseResult = { ok: true; parsed: ParsedMealJson } | { ok: false; error: string }
+
+function canonicalMealType(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined
+  const clean = value.trim().toLowerCase()
+  return MEAL_TYPES.find(t => t.toLowerCase() === clean)
+}
+
+function parseMealJson(text: string): JsonParseResult {
+  let raw: unknown
+  try {
+    raw = JSON.parse(text)
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Invalid JSON' }
+  }
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return { ok: false, error: 'Expected a JSON object with meal fields' }
+  }
+  const obj = raw as Record<string, unknown>
+  const pick = (keys: string[]): unknown => {
+    for (const k of keys) if (k in obj) return obj[k]
+    return undefined
+  }
+
+  let timestamp = pick(['timestamp', 'createdAt'])
+  if (timestamp && typeof timestamp === 'object' && '$date' in (timestamp as Record<string, unknown>)) {
+    timestamp = (timestamp as Record<string, unknown>)['$date']
+  }
+
+  const totals = pick(['totalSummary', 'total_summary'])
+  const totalsObj = totals && typeof totals === 'object' ? (totals as Record<string, unknown>) : {}
+  const toInt = (v: unknown): number | undefined => {
+    if (v === null || v === undefined || v === '') return undefined
+    const n = parseFloat(String(v))
+    return Number.isFinite(n) && n >= 0 ? Math.round(n) : undefined
+  }
+
+  const dateRaw = pick(['date', 'dateString', 'date_string'])
+  const gradeRaw = pick(['mealQuality', 'meal_quality', 'letterGrade', 'letter_grade'])
+  const recomposition = pick(['recompositionAssessment', 'recomposition_assessment'])
+  const recompositionGrade =
+    recomposition && typeof recomposition === 'object'
+      ? (recomposition as Record<string, unknown>).letter_grade
+      : undefined
+  const grade =
+    typeof gradeRaw === 'string' ? gradeRaw
+    : typeof recompositionGrade === 'string' ? recompositionGrade
+    : undefined
+  const items = pick(['mealItems', 'meal_items'])
+  const descriptionRaw = pick(['description', 'mealLabel', 'meal_label'])
+
+  return {
+    ok: true,
+    parsed: {
+      description: typeof descriptionRaw === 'string' && descriptionRaw.trim() ? descriptionRaw.trim() : undefined,
+      calories: toInt(pick(['calories', 'calories_kcal', 'totalCalories']) ?? totalsObj.calories_kcal),
+      proteinGrams: toInt(pick(['proteinGrams', 'protein_grams', 'protein', 'totalProteinGrams']) ?? totalsObj.protein_g),
+      mealType: canonicalMealType(pick(['mealType', 'meal_type', 'meal'])),
+      date: typeof dateRaw === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateRaw) ? dateRaw : undefined,
+      grade,
+      itemCount: Array.isArray(items) ? items.length : 0,
+      rich: {
+        timestamp: timestamp ?? null,
+        mealQuality: grade ?? null,
+        meal_quality: grade ?? null,
+        notes: pick(['notes']) ?? null,
+        recipe_category: pick(['recipeCategory', 'recipe_category']) ?? null,
+        serving: pick(['serving']) ?? null,
+        serving_notes: pick(['servingNotes', 'serving_notes']) ?? null,
+        source_notes: pick(['sourceNotes', 'source_notes']) ?? null,
+        import_key: pick(['importKey', 'import_key']) ?? null,
+        analysis_metadata: pick(['analysisMetadata', 'analysis_metadata']) ?? null,
+        meal_items: items ?? null,
+        total_summary: totals ?? null,
+        gaps_and_warnings: pick(['gapsAndWarnings', 'gaps_and_warnings']) ?? null,
+        technical_diagnostic: pick(['technicalDiagnostic', 'technical_diagnostic']) ?? null,
+        acne_impact_assessment: pick(['acneImpactAssessment', 'acne_impact_assessment']) ?? null,
+        health_analysis: pick(['healthAnalysis', 'health_analysis']) ?? null,
+        recomposition_assessment: recomposition ?? null,
+        satiety_and_energy_profile: pick(['satietyAndEnergyProfile', 'satiety_and_energy_profile']) ?? null,
+        nutritional_balance_diagnostic: pick(['nutritionalBalanceDiagnostic', 'nutritional_balance_diagnostic']) ?? null,
+        daily_context: pick(['dailyContext', 'daily_context']) ?? null,
+      },
+    },
+  }
 }
 
 // ─── Props ────────────────────────────────────────────────────────────────
@@ -60,9 +166,8 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
   const [proteinGrams, setProteinGrams] = useState('')
   const [calories, setCalories] = useState('')
   const [date, setDate] = useState(selectedDate)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [richPayload, setRichPayload] = useState<any>(null)
   const [jsonPayload, setJsonPayload] = useState('')
+  const [jsonPreview, setJsonPreview] = useState<JsonParseResult | null>(null)
 
   // AI tab state
   const [aiPhase, setAiPhase] = useState<Phase>('input')
@@ -89,8 +194,8 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       setProteinGrams(initialData.proteinGrams.toString())
       setCalories(initialData.calories.toString())
       setDate(initialData.date)
-      setRichPayload(null)
       setJsonPayload('')
+      setJsonPreview(null)
       setActiveTab('manual')
       setCurrentTaskId(null)
     } else if (isOpen && !isEdit) {
@@ -99,8 +204,8 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       setProteinGrams('')
       setCalories('')
       setDate(selectedDate)
-      setRichPayload(null)
       setJsonPayload('')
+      setJsonPreview(null)
       setActiveTab('manual')
       // Reset AI state
       setAiPhase('input')
@@ -146,126 +251,93 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
 
   const isNotificationsEnabled = desktopEnabled && typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted'
 
+  // ── JSON paste handling ───────────────────────────────────────────────
+  const applyJsonText = (text: string) => {
+    setJsonPayload(text)
+    const trimmed = text.trim()
+    if (!trimmed) {
+      setJsonPreview(null)
+      return
+    }
+    const result = parseMealJson(trimmed)
+    setJsonPreview(result)
+    if (result.ok) {
+      // Autofill the visible fields so the user can review/override
+      const p = result.parsed
+      if (p.description) setDescription(p.description)
+      if (p.calories !== undefined) setCalories(String(p.calories))
+      if (p.proteinGrams !== undefined) setProteinGrams(String(p.proteinGrams))
+      if (p.mealType) setMealType(p.mealType)
+      if (p.date) setDate(p.date)
+    }
+  }
+
+  const handlePasteFromClipboard = async () => {
+    try {
+      const text = await navigator.clipboard.readText()
+      if (!text.trim()) {
+        toast.error('Clipboard is empty')
+        return
+      }
+      applyJsonText(text)
+    } catch {
+      toast.error('Clipboard unavailable — paste directly into the field instead')
+    }
+  }
+
   // ── Manual form submit ────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-useless-assignment
-    let finalPayload: any = null
-
-    if (jsonPayload.trim()) {
-      try {
-        const parsed = JSON.parse(jsonPayload)
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const getVal = (keys: string[], fallback: any = null) => {
-          for (const k of keys) {
-            if (parsed && typeof parsed === 'object' && k in parsed) {
-              return parsed[k]
-            }
-          }
-          return fallback
-        }
-
-        // Normalize timestamp
-        let parsedTimestamp = getVal(['timestamp', 'createdAt'])
-        if (parsedTimestamp && typeof parsedTimestamp === 'object' && '$date' in parsedTimestamp) {
-          parsedTimestamp = parsedTimestamp['$date']
-        }
-
-        const parsedDate = getVal(['date', 'dateString', 'date_string'], date)
-        const parsedMealType = getVal(['mealType', 'meal_type', 'meal'], mealType)
-        const parsedDescription = getVal(['description', 'mealLabel', 'meal_label'], description)
-
-        const parsedCalories = getVal(['calories', 'calories_kcal', 'totalCalories'])
-        const parsedProtein = getVal(['proteinGrams', 'protein_grams', 'protein', 'totalProteinGrams'])
-
-        const numCalories = parsedCalories !== null && parsedCalories !== undefined
-          ? Math.round(parseFloat(parsedCalories))
-          : (calories ? Math.round(parseFloat(calories)) : null)
-        const numProtein = parsedProtein !== null && parsedProtein !== undefined
-          ? Math.round(parseFloat(parsedProtein))
-          : (proteinGrams ? Math.round(parseFloat(proteinGrams)) : null)
-
-        if (!parsedDescription) {
-          throw new Error('Description is required (not found in JSON or inputs)')
-        }
-        if (numCalories === null || isNaN(numCalories) || numCalories < 0) {
-          throw new Error('Calories is required and must be non-negative (not found in JSON or inputs)')
-        }
-        if (numProtein === null || isNaN(numProtein) || numProtein < 0) {
-          throw new Error('Protein is required and must be non-negative (not found in JSON or inputs)')
-        }
-        if (!parsedMealType) {
-          throw new Error('Meal Type is required (not found in JSON or inputs)')
-        }
-        if (!parsedDate) {
-          throw new Error('Date is required (not found in JSON or inputs)')
-        }
-
-        finalPayload = {
-          description: parsedDescription,
-          calories: numCalories,
-          proteinGrams: numProtein,
-          mealType: parsedMealType,
-          date: parsedDate,
-          timestamp: parsedTimestamp,
-          mealQuality: getVal(['mealQuality', 'meal_quality', 'letterGrade', 'letter_grade']),
-          notes: getVal(['notes']),
-          recipeCategory: getVal(['recipeCategory', 'recipe_category']),
-          serving: getVal(['serving']),
-          servingNotes: getVal(['servingNotes', 'serving_notes']),
-          sourceNotes: getVal(['sourceNotes', 'source_notes']),
-          importKey: getVal(['importKey', 'import_key']),
-          analysis_metadata: getVal(['analysisMetadata', 'analysis_metadata']),
-          meal_items: getVal(['mealItems', 'meal_items']),
-          total_summary: getVal(['totalSummary', 'total_summary']),
-          gaps_and_warnings: getVal(['gapsAndWarnings', 'gaps_and_warnings']),
-          technical_diagnostic: getVal(['technicalDiagnostic', 'technical_diagnostic']),
-          acne_impact_assessment: getVal(['acneImpactAssessment', 'acne_impact_assessment']),
-          health_analysis: getVal(['healthAnalysis', 'health_analysis']),
-          recomposition_assessment: getVal(['recompositionAssessment', 'recomposition_assessment']),
-          satiety_and_energy_profile: getVal(['satietyAndEnergyProfile', 'satiety_and_energy_profile']),
-          nutritional_balance_diagnostic: getVal(['nutritionalBalanceDiagnostic', 'nutritional_balance_diagnostic']),
-          daily_context: getVal(['dailyContext', 'daily_context'])
-        }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (err: any) {
-        setError('JSON Error: ' + err.message)
+    const trimmedJson = jsonPayload.trim()
+    let parsed: ParsedMealJson | null = null
+    if (trimmedJson) {
+      const result = parseMealJson(trimmedJson)
+      if (!result.ok) {
+        setError('JSON Error: ' + result.error)
         return
       }
-    } else {
-      if (!description || !calories || !proteinGrams || !date || !mealType) {
-        setError('Please fill in all fields including Meal Type')
-        return
-      }
-      const numCalories = Math.round(parseFloat(calories))
-      const numProtein = Math.round(parseFloat(proteinGrams))
-      if (isNaN(numCalories) || numCalories < 0 || isNaN(numProtein) || numProtein < 0) {
-        setError('Macros must be 0 or greater')
-        return
-      }
-      finalPayload = {
-        description,
-        calories: numCalories,
-        proteinGrams: numProtein,
-        mealType,
-        date
-      }
-      if (richPayload) {
-        finalPayload.analysis_metadata = richPayload.analysis_metadata
-        finalPayload.meal_items = richPayload.meal_items
-        finalPayload.total_summary = richPayload.total_summary
-        finalPayload.gaps_and_warnings = richPayload.gaps_and_warnings
-        finalPayload.technical_diagnostic = richPayload.technical_diagnostic
-        finalPayload.acne_impact_assessment = richPayload.acne_impact_assessment
-        finalPayload.health_analysis = richPayload.health_analysis
-        finalPayload.recomposition_assessment = richPayload.recomposition_assessment
-        finalPayload.satiety_and_energy_profile = richPayload.satiety_and_energy_profile
-        finalPayload.nutritional_balance_diagnostic = richPayload.nutritional_balance_diagnostic
-        finalPayload.daily_context = richPayload.daily_context
-      }
+      parsed = result.parsed
+    }
+
+    // The form fields are the source of truth — pasting JSON autofills
+    // them, so anything the user edits afterwards wins over the payload.
+    const finalDescription = description.trim() || parsed?.description || ''
+    const finalMealType = mealType || parsed?.mealType || ''
+    const finalDate = date || parsed?.date || ''
+    const numCalories = calories.trim() ? Math.round(parseFloat(calories)) : parsed?.calories ?? NaN
+    const numProtein = proteinGrams.trim() ? Math.round(parseFloat(proteinGrams)) : parsed?.proteinGrams ?? NaN
+
+    if (!finalDescription) {
+      setError('Food name is required')
+      return
+    }
+    if (!Number.isFinite(numCalories) || numCalories < 0) {
+      setError('Calories is required and must be 0 or greater')
+      return
+    }
+    if (!Number.isFinite(numProtein) || numProtein < 0) {
+      setError('Protein is required and must be 0 or greater')
+      return
+    }
+    if (!finalMealType) {
+      setError('Please select a meal type')
+      return
+    }
+    if (!finalDate) {
+      setError('Date is required')
+      return
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const finalPayload: any = {
+      ...(parsed ? parsed.rich : {}),
+      description: finalDescription,
+      calories: numCalories,
+      proteinGrams: numProtein,
+      mealType: finalMealType,
+      date: finalDate,
     }
 
     setLoading(true)
@@ -414,6 +486,41 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
         {/* ═══════════════ MANUAL TAB ═══════════════ */}
         {activeTab === 'manual' && (
           <form onSubmit={handleSubmit} className="add-tx-form" style={{ flex: 1, overflowY: 'auto', paddingRight: '6px' }}>
+            {/* JSON import first — the primary flow when logging via an external AI */}
+            <div className="form-group">
+              <div className="af-json-head">
+                <label>Import from AI (paste JSON)</label>
+                <button
+                  type="button"
+                  className="af-json-paste-btn"
+                  onClick={handlePasteFromClipboard}
+                  id="af-json-paste-btn"
+                >
+                  <ClipboardPaste size={12} />
+                  Paste from clipboard
+                </button>
+              </div>
+              <textarea
+                className="json-textarea"
+                placeholder='{&#10;  "description": "Lemon Rice",&#10;  "calories": 472,&#10;  "proteinGrams": 10,&#10;  "mealType": "Lunch",&#10;  "mealItems": [ ... ],&#10;  "totalSummary": { ... }&#10;}'
+                value={jsonPayload}
+                onChange={(e) => applyJsonText(e.target.value)}
+                aria-label="AI meal JSON payload"
+              />
+              {jsonPreview && (
+                jsonPreview.ok ? (
+                  <JsonPreviewStrip parsed={jsonPreview.parsed} />
+                ) : (
+                  <div className="af-json-preview error" role="alert">
+                    <AlertTriangle size={13} />
+                    <span>{jsonPreview.error}</span>
+                  </div>
+                )
+              )}
+            </div>
+
+            <div className="af-or-divider"><span>or enter manually</span></div>
+
             <div className="form-group">
               <label>Food Name</label>
               <input
@@ -421,7 +528,6 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                 placeholder="e.g. Paneer Sandwich, Salad..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                autoFocus
               />
             </div>
 
@@ -456,26 +562,6 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
               </div>
             </div>
 
-            <div className="form-separator" style={{ margin: '16px 0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ flex: 1, height: '1px', background: 'rgba(20, 24, 22, 0.1)' }} />
-              <span style={{ padding: '0 12px', fontSize: '11px', color: 'rgba(16, 19, 18, 0.4)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>OR</span>
-              <div style={{ flex: 1, height: '1px', background: 'rgba(20, 24, 22, 0.1)' }} />
-            </div>
-
-            <div className="form-group">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <label style={{ margin: 0 }}>Paste AI JSON Payload</label>
-                <span className="import-hint" style={{ fontSize: '10px' }}>Paste raw meal log JSON response generated by AI</span>
-              </div>
-              <textarea
-                className="json-textarea"
-                placeholder='{&#10;  "description": "Lemon Rice",&#10;  "calories": 472,&#10;  "proteinGrams": 10,&#10;  "mealItems": [ ... ],&#10;  "totalSummary": { ... },&#10;  "acneImpactAssessment": { ... }&#10;}'
-                value={jsonPayload}
-                onChange={(e) => setJsonPayload(e.target.value)}
-                style={{ height: '120px', minHeight: '120px', resize: 'vertical' }}
-              />
-            </div>
-
             {error && <p className="add-tx-error">{error}</p>}
 
             <div className="af-live-macro-preview">
@@ -489,8 +575,8 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
               </div>
             </div>
 
-            <button type="submit" className="add-tx-submit af-submit-btn" disabled={loading} style={{ width: '100%', marginTop: '16px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {loading ? <Loader2 className="spinner" size={18} /> : 'Save Food'}
+            <button type="submit" className="add-tx-submit af-submit-btn" disabled={loading}>
+              {loading ? <Loader2 className="spinner" size={18} /> : <><CheckCircle size={16} />Save Food</>}
             </button>
           </form>
         )}
@@ -601,7 +687,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                   </div>
                   <div className="form-group">
                     <label>Date</label>
-                    <input type="date" value={aiDate} onChange={e => setAiDate(e.target.value)} className="form-input" />
+                    <input type="date" value={aiDate} onChange={e => setAiDate(e.target.value)} />
                   </div>
                 </div>
 
@@ -793,6 +879,28 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
 }
 
 // ─── Sub-components ────────────────────────────────────────────────────────
+
+function JsonPreviewStrip({ parsed }: { parsed: ParsedMealJson }) {
+  const grade = normalizeMealGrade(parsed.grade)
+  return (
+    <div className="af-json-preview" role="status">
+      <CheckCircle size={13} />
+      <span>
+        Parsed <strong>{parsed.description || 'meal'}</strong>
+        {' · '}{parsed.calories ?? '?'} kcal · {parsed.proteinGrams ?? '?'}g protein
+        {parsed.itemCount > 0 && <> · {parsed.itemCount} item{parsed.itemCount === 1 ? '' : 's'}</>}
+        {grade && (
+          <span
+            className="af-json-grade"
+            style={{ backgroundColor: grade.bg, color: grade.ink, borderColor: grade.border }}
+          >
+            Grade {grade.letter}
+          </span>
+        )}
+      </span>
+    </div>
+  )
+}
 
 function QualityBadge({ score }: { score: MealAnalysisApiResponse['analysis']['meal_score'] }) {
   const grade = score.letter_grade || 'C'

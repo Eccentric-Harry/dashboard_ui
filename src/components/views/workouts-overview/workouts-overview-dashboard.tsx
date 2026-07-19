@@ -45,6 +45,13 @@ function WorkoutsOverviewDashboard() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { refreshData() }, [refreshData])
 
+  // Bottom-dock quick-add bubble opens the same "add activity" modal
+  useEffect(() => {
+    const handler = () => setIsAddModalOpen(true)
+    window.addEventListener('mobile-quick-add', handler)
+    return () => window.removeEventListener('mobile-quick-add', handler)
+  }, [])
+
   return (
     <section className="workouts-dashboard" aria-label="Workouts overview dashboard">
       <WorkoutsHeader onAddClick={() => setIsAddModalOpen(true)} />

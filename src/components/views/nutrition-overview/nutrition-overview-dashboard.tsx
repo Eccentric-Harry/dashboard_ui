@@ -128,6 +128,14 @@ function NutritionOverviewDashboard() {
   }
 
   const openAdd = () => setIsAddModalOpen(true)
+
+  // Bottom-dock quick-add bubble opens the same "add meal" modal
+  useEffect(() => {
+    const handler = () => setIsAddModalOpen(true)
+    window.addEventListener('mobile-quick-add', handler)
+    return () => window.removeEventListener('mobile-quick-add', handler)
+  }, [])
+
   const selectedDate = data?.date || new Date().toISOString().split('T')[0]
   const hideDecor = (event: React.SyntheticEvent<HTMLImageElement>) => {
     event.currentTarget.style.display = 'none'

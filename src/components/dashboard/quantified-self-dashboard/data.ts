@@ -44,7 +44,7 @@ export const dateTiles = [
   { value: '23', accent: true },
 ] as const
 
-// Desktop sidebar nav — original order, all routes accessible
+// Desktop sidebar nav — same list also powers the mobile scrollable dock
 export const navItems: DashboardNavItem[] = [
   { label: 'Home', icon: Home, to: '/home' },
   { label: 'Learnings Map', icon: GraduationCap, to: '/learnings' },
@@ -52,27 +52,10 @@ export const navItems: DashboardNavItem[] = [
   { label: 'Calendar', icon: CalendarDays, to: '/calendar' },
   { label: 'Finance Overview', icon: CircleDollarSign, to: '/finance' },
   { label: 'Workouts', icon: Dumbbell, to: '/workouts' },
-  { label: 'Prompts', icon: Terminal, to: '/prompts', mobileHidden: true },
+  { label: 'Prompts', icon: Terminal, to: '/prompts' },
   { label: 'Tasks', icon: CheckSquare, to: '/tasks' },
   { label: 'Mind Space', icon: Brain, to: '/mind' },
   { label: 'People', icon: Users, to: '/people' },
-]
-
-// Mobile bottom dock — 5 items, Home centred at index 2
-export const mobileNavItems: DashboardNavItem[] = [
-  { label: 'Nutrition Overview', icon: Utensils, to: '/nutrition' },
-  { label: 'Calendar', icon: CalendarDays, to: '/calendar' },
-  { label: 'Home', icon: Home, to: '/home' },
-  { label: 'Finance Overview', icon: CircleDollarSign, to: '/finance' },
-  { label: 'Tasks', icon: CheckSquare, to: '/tasks' },
-]
-
-// Routes moved off the mobile dock — shown as quick-access in the profile card
-export const profileShortcuts: DashboardNavItem[] = [
-  { label: 'Workouts', icon: Dumbbell, to: '/workouts' },
-  { label: 'People', icon: Users, to: '/people' },
-  { label: 'Learnings', icon: GraduationCap, to: '/learnings' },
-  { label: 'Mind', icon: Brain, to: '/mind' },
 ]
 
 export const railBottomItems: DashboardNavItem[] = [

@@ -58,6 +58,13 @@ function FinanceOverviewDashboard() {
     return stored ? stored === 'true' : false;
   });
 
+  // Bottom-dock quick-add bubble opens the same "add transaction" modal
+  useEffect(() => {
+    const handler = () => setIsAddModalOpen(true)
+    window.addEventListener('mobile-quick-add', handler)
+    return () => window.removeEventListener('mobile-quick-add', handler)
+  }, [])
+
   useEffect(() => {
     const handleVisibilityChange = (e: Event) => {
       const customEvent = e as CustomEvent;

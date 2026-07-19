@@ -55,6 +55,13 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
 
   const fireConfetti = useCallback(() => setConfettiTrigger((n) => n + 1), [])
 
+  // Bottom-dock quick-add bubble opens the same expandable FAB menu
+  useEffect(() => {
+    const handler = () => setFabOpen(true)
+    window.addEventListener('mobile-quick-add', handler)
+    return () => window.removeEventListener('mobile-quick-add', handler)
+  }, [])
+
   useEffect(() => {
     if (!fabOpen) return
     const handlePointer = (e: MouseEvent) => {

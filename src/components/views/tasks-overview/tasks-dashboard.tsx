@@ -66,7 +66,13 @@ export function TasksDashboard(_props: TasksDashboardProps) {
   const [customCategory, setCustomCategory] = useState('')
   const [modalFormNotes, setModalFormNotes] = useState('')
 
-  
+  // Bottom-dock quick-add bubble opens the same "new task" modal
+  useEffect(() => {
+    const handler = () => setModalMode((curr) => curr ?? 'add')
+    window.addEventListener('mobile-quick-add', handler)
+    return () => window.removeEventListener('mobile-quick-add', handler)
+  }, [])
+
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 15

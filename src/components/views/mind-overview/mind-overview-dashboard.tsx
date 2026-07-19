@@ -45,6 +45,13 @@ function MindOverviewDashboard() {
   const [saving, setSaving] = useState(false)
   const saveTimeoutRef = useRef<number | null>(null)
 
+  // Bottom-dock quick-add bubble — Mind has no dedicated add flow yet
+  useEffect(() => {
+    const handler = () => toast('Quick add for Mind is coming soon')
+    window.addEventListener('mobile-quick-add', handler)
+    return () => window.removeEventListener('mobile-quick-add', handler)
+  }, [])
+
   // Custom tags list (with localStorage fallback)
   const [availableTags, setAvailableTags] = useState<string[]>(() => {
     const saved = localStorage.getItem('custom_mind_tags')

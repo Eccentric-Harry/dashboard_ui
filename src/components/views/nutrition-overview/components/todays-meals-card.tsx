@@ -73,12 +73,12 @@ function TodaysMealsCard({ onEdit, onSelectEntry }: TodaysMealsCardProps) {
   if (isLoading) {
     return (
       <section className="ntr-card ntr-meals-card" aria-label="Today's meals loading">
-        <div className="ntr-card-head" style={{ padding: '24px 26px 0' }}>
+        <div className="ntr-card-head ntr-meals-head-loading">
           <div>
             <div className="skeleton-shimmer skeleton-rect" style={{ width: '130px', height: '16px', borderRadius: '5px' }} />
           </div>
         </div>
-        <div className="ntr-meals-list" style={{ padding: '0 26px 24px' }}>
+        <div className="ntr-meals-list">
           {Array.from({ length: 3 }).map((_, idx) => (
             <div key={idx} className="ntr-skel-row" style={{ marginTop: '16px' }}>
               <div className="skeleton-shimmer skeleton-circle" style={{ width: '38px', height: '38px' }} />
@@ -96,7 +96,7 @@ function TodaysMealsCard({ onEdit, onSelectEntry }: TodaysMealsCardProps) {
 
   return (
     <section className="ntr-card ntr-meals-card" aria-label="Today's meals">
-      <div className="ntr-meals-head" style={{ padding: '24px 26px 8px' }}>
+      <div className="ntr-meals-head">
         <h3>Today's Meals</h3>
         <aside>
           <button
@@ -133,7 +133,7 @@ function TodaysMealsCard({ onEdit, onSelectEntry }: TodaysMealsCardProps) {
         </div>
       )}
 
-      <div className="ntr-meals-list" style={{ padding: '0 26px 24px' }}>
+      <div className="ntr-meals-list">
         {foodEntries.length === 0 && (
           <div className="ntr-meals-empty">
             <div className="ntr-empty-icon">🍽️</div>

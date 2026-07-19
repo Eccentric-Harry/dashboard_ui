@@ -2830,11 +2830,13 @@
 /* JSON Textarea Styles */
 .json-textarea {
   width: 100%;
-  height: 220px !important;
+  height: 148px !important;
+  min-height: 110px;
+  resize: vertical;
   font-family: 'SF Mono', 'Fira Code', monospace !important;
   font-size: 11px !important;
   line-height: 1.6 !important;
-  padding: 16px !important;
+  padding: 14px 16px !important;
   background: rgba(18, 32, 23, 0.03) !important;
   border: 1px dashed rgba(20, 24, 22, 0.15) !important;
   transition: all 0.2s !important;
@@ -2851,6 +2853,83 @@
   font-size: 11px;
   color: rgba(16, 19, 18, 0.5);
   line-height: 1.5;
+}
+
+/* JSON import header row: label + paste-from-clipboard button */
+.af-json-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.af-json-head label {
+  margin: 0;
+}
+
+.af-json-paste-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 11px;
+  border-radius: 8px;
+  border: 1px solid rgba(16, 19, 18, 0.12);
+  background: rgba(16, 19, 18, 0.04);
+  color: rgba(16, 19, 18, 0.65);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.14s, border-color 0.14s, color 0.14s;
+}
+
+.af-json-paste-btn:hover {
+  background: rgba(16, 19, 18, 0.08);
+  border-color: rgba(16, 19, 18, 0.2);
+  color: #101312;
+}
+
+/* Live parse feedback under the JSON textarea */
+.af-json-preview {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-top: 8px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: rgba(53, 182, 75, 0.06);
+  border: 1px solid rgba(53, 182, 75, 0.16);
+  color: #1a5e28;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.af-json-preview svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.af-json-preview.error {
+  background: rgba(241, 105, 119, 0.06);
+  border-color: rgba(241, 105, 119, 0.22);
+  color: #a02c2c;
+  word-break: break-word;
+}
+
+.af-json-grade {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 7px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  vertical-align: middle;
 }
 
 
@@ -2895,9 +2974,11 @@
 .af-upload-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   padding: 8px 18px;
   height: 38px;
+  min-width: 112px;
   border-radius: 10px;
   border: 1px solid rgba(16, 19, 18, 0.12);
   background: #101312;
@@ -3036,11 +3117,15 @@
   box-shadow: 0 0 0 3px rgba(53, 182, 75, 0.08);
 }
 
-/* AI submit button — green tint on the shared add-tx-submit style */
+/* Primary submit button — shared by the manual Save and AI Analyse actions
+   so both render at an identical full-width 48px size. */
 .af-submit-btn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
+  width: 100%;
+  height: 48px;
   background: #101312 !important;
   color: #ffffff !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;

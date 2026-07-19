@@ -18,7 +18,6 @@ import {
 import { SideRail } from '../dashboard/quantified-self-dashboard/components/side-rail';
 import { TopChip } from '../dashboard/quantified-self-dashboard/components/top-chip';
 import type { AppPath } from '../dashboard/quantified-self-dashboard/data';
-import { profileShortcuts } from '../dashboard/quantified-self-dashboard/data';
 import toast from 'react-hot-toast';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { ConfirmDialog } from '../ui/confirm-dialog';
@@ -492,22 +491,6 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                     </div>
 
                     {bio && <p className="identity-bio">{bio}</p>}
-
-                    {/* Mobile-only quick-nav shortcuts (routes moved off the bottom dock) */}
-                    <div className="profile-shortcuts-dock">
-                      {profileShortcuts.map(({ label, icon: Icon, to }) => (
-                        <button
-                          key={label}
-                          type="button"
-                          className={`shortcut-btn${activePath === to ? ' shortcut-btn--active' : ''}`}
-                          onClick={() => to && onNavigate(to)}
-                          aria-label={label}
-                        >
-                          <Icon size={17} strokeWidth={2} />
-                          <span>{label}</span>
-                        </button>
-                      ))}
-                    </div>
 
                     <div className="identity-section">
                       <h4 className="identity-section-title">Biometrics</h4>

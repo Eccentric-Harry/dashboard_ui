@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import toast from 'react-hot-toast'
 import {
   BadgeCheck,
   Coffee,
@@ -253,6 +254,13 @@ function PeopleOverview({ activePath, onNavigate }: PeopleOverviewProps) {
 
 function PeopleDashboard() {
   const [selectedInteraction, setSelectedInteraction] = useState<SeniorInteraction | null>(null)
+
+  // Bottom-dock quick-add bubble — People has no add-entry flow yet (dummy)
+  useEffect(() => {
+    const handler = () => toast('Adding people entries is coming soon')
+    window.addEventListener('mobile-quick-add', handler)
+    return () => window.removeEventListener('mobile-quick-add', handler)
+  }, [])
 
   useEffect(() => {
     if (!selectedInteraction) {

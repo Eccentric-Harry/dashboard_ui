@@ -57,6 +57,13 @@ function PromptsOverviewDashboard() {
     setIsEditing(true)
   }
 
+  // Bottom-dock quick-add bubble opens the same "new prompt" editor
+  useEffect(() => {
+    const handler = () => handleCreateNew()
+    window.addEventListener('mobile-quick-add', handler)
+    return () => window.removeEventListener('mobile-quick-add', handler)
+  }, [])
+
   const handleEdit = (prompt: Prompt) => {
     setSelectedPrompt(prompt)
     setEditTitle(prompt.title)

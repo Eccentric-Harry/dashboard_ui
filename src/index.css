@@ -328,7 +328,8 @@ button {
   margin-top: 18px;
 }
 
-.rail-nav-mobile {
+.rail-nav-mobile,
+.rail-mobile-dock {
   display: none;
 }
 
@@ -1280,7 +1281,7 @@ button {
     height: auto;
   }
 
-  /* --- Side Rail: Convert to fixed bottom tab bar --- */
+  /* --- Side Rail: Convert to fixed bottom dock (two floating islands, Google-Photos style) --- */
   .side-rail {
     position: fixed;
     left: 16px;
@@ -1292,20 +1293,16 @@ button {
     max-width: 440px;
     margin: 0 auto;
     height: 64px;
+    display: flex;
     flex-direction: row;
-    justify-content: space-evenly;
     align-items: center;
     gap: 0;
-    border-radius: 40px;
-    padding: 0 8px;
-    background: rgba(255, 255, 255, 0.75);
-    box-shadow:
-      0 12px 40px rgba(0, 0, 0, 0.12),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.3),
-      inset 0 1px 2px rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(40px) saturate(200%);
-    -webkit-backdrop-filter: blur(40px) saturate(200%);
-    border: 0.5px solid rgba(255, 255, 255, 0.4);
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: 0;
   }
 
   .side-rail .rail-avatar-btn {
@@ -1317,66 +1314,63 @@ button {
     display: none !important;
   }
 
-  /* Mobile dock nav */
+  /* Wrapper: left scrollable nav island + right quick-add island */
+  .rail-mobile-dock {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    height: 64px;
+  }
+
+  /* Left island — horizontally scrollable route dock */
   .rail-nav-mobile {
     position: relative;
-    display: grid;
-    grid-template-columns: repeat(var(--visible-count), minmax(0, 1fr));
-    gap: 0;
-    justify-content: stretch;
-    width: 100%;
-    margin-top: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 2px;
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 64px;
+    padding: 0 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-behavior: smooth;
+    border-radius: 40px;
+    background: rgba(255, 255, 255, 0.75);
+    box-shadow:
+      0 12px 40px rgba(0, 0, 0, 0.12),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.3),
+      inset 0 1px 2px rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(40px) saturate(200%);
+    -webkit-backdrop-filter: blur(40px) saturate(200%);
+    border: 0.5px solid rgba(255, 255, 255, 0.4);
   }
 
-  /* Liquid glass sliding indicator */
-  .rail-nav-mobile::before {
-    position: absolute;
-    top: 50%;
-    left: calc((100% / var(--visible-count)) * var(--active-index) + ((100% / var(--visible-count)) - 48px) / 2);
-    width: 48px;
-    height: 48px;
-    transform: translateY(-50%);
-    content: '';
-    border: 0.5px solid rgba(255, 255, 255, 0.82);
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.58);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-    pointer-events: none;
-    transition: left 420ms cubic-bezier(0.16, 1, 0.3, 1), opacity 260ms ease;
-    opacity: var(--indicator-opacity, 1);
-    transform-origin: center center;
-  }
-
-  /* Liquid morph keyframe — stretches then snaps back like mercury */
-  @keyframes liquid-morph {
-    0%   { transform: translateY(-50%) scaleX(1) scaleY(1); }
-    28%  { transform: translateY(-50%) scaleX(1.65) scaleY(0.82); }
-    58%  { transform: translateY(-50%) scaleX(1.1) scaleY(0.97); }
-    100% { transform: translateY(-50%) scaleX(1) scaleY(1); }
-  }
-
-  .rail-nav-mobile.liquid-right::before,
-  .rail-nav-mobile.liquid-left::before {
-    animation: liquid-morph 480ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  .rail-nav-mobile::-webkit-scrollbar {
+    display: none;
   }
 
   .side-rail button {
     z-index: 1;
-    justify-self: center;
+    flex: 0 0 auto;
     width: 48px;
     height: 48px;
     border-radius: 50%;
     color: rgba(26, 31, 29, 0.6);
     background: transparent;
-    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s ease;
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s ease, background 0.2s ease;
   }
 
   .side-rail button.active {
     color: #111514;
-    background: transparent;
-    transform: translateY(-2px);
-    box-shadow: none;
-    border: 0;
+    background: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    border: 0.5px solid rgba(255, 255, 255, 0.7);
   }
 
   .side-rail button.muted {
@@ -1387,11 +1381,48 @@ button {
     display: none;
   }
 
+  /* Right island — small circular quick-add bubble, common across all routes */
+  .rail-add-fab {
+    flex: 0 0 auto;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #101312;
+    background: rgba(255, 255, 255, 0.75);
+    box-shadow:
+      0 12px 40px rgba(0, 0, 0, 0.12),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.3),
+      inset 0 1px 2px rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(40px) saturate(200%);
+    -webkit-backdrop-filter: blur(40px) saturate(200%);
+    border: 0.5px solid rgba(255, 255, 255, 0.4);
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .rail-add-fab:active {
+    transform: scale(0.92);
+  }
+
   .rail-bottom {
     display: none;
   }
 
   .mobile-hidden {
+    display: none !important;
+  }
+
+  /* Superseded by the shared quick-add bubble in the bottom dock */
+  .home-fab,
+  .ntr-mobile-fab,
+  .learnings-fab-container,
+  .finance-add-btn,
+  .workouts-add-btn,
+  .calendar-mobile-fab,
+  .prompts-add-btn,
+  .tasks-view-header-row.mobile-only .tasks-add-btn-primary {
     display: none !important;
   }
 

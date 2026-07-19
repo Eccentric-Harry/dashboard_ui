@@ -588,7 +588,11 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 0 2px;
+  padding: 24px 26px 8px;
+}
+
+.ntr-meals-head-loading {
+  padding: 24px 26px 0;
 }
 
 .ntr-meals-head h3 {
@@ -644,8 +648,9 @@
   gap: 0;
   min-height: 0;
   margin-top: 10px;
-  padding-right: 4px;
+  padding: 0 26px 24px;
   overflow-y: auto;
+
   scrollbar-width: none; /* Firefox */
 }
 
@@ -1572,7 +1577,6 @@
   }
 
   .ntr-hero,
-  .ntr-meals-card,
   .ntr-trend,
   .ntr-hydro,
   .ntr-history {
@@ -1597,7 +1601,15 @@
 
   .ntr-meals-list {
     overflow-y: auto;
-    padding-right: 0;
+    padding: 0 16px 24px;
+  }
+
+  .ntr-meals-head {
+    padding: 24px 16px 8px;
+  }
+
+  .ntr-meals-head-loading {
+    padding: 24px 16px 0;
   }
 
   .ntr-day-grid {

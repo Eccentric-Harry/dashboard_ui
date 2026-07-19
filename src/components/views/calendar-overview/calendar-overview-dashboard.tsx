@@ -492,6 +492,13 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   const [modal, setModal] = useState<ModalState>({ open: false })
   const [deleteTarget, setDeleteTarget] = useState<CalendarItem | null>(null)
 
+  // Bottom-dock quick-add bubble opens the same "add routine" modal
+  useEffect(() => {
+    const handler = () => setModal((curr) => (curr.open ? curr : { open: true, date: selectedDate }))
+    window.addEventListener('mobile-quick-add', handler)
+    return () => window.removeEventListener('mobile-quick-add', handler)
+  }, [selectedDate])
+
   const [viewType, setViewType] = useState<'daily' | 'weekly' | 'monthly'>(() => {
     if (typeof window !== 'undefined' && window.innerWidth <= 820) {
       return 'daily'

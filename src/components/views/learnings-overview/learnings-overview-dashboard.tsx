@@ -34,6 +34,16 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
   const [entryModalOpen, setEntryModalOpen] = useState(false)
   const [editingLearning, setEditingLearning] = useState<LearningLog | undefined>()
 
+  // Bottom-dock quick-add bubble opens the same "add entry" modal
+  useEffect(() => {
+    const handler = () => {
+      setEditingLearning(undefined)
+      setEntryModalOpen(true)
+    }
+    window.addEventListener('mobile-quick-add', handler)
+    return () => window.removeEventListener('mobile-quick-add', handler)
+  }, [])
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedDate(parseDateFromParams(searchParams))

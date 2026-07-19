@@ -1,11 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { Plus } from 'lucide-react'
 import { getAvatarImage } from '../../../../lib/avatar'
-import { type AppPath, navItems, mobileNavItems, railBottomItems } from '../data'
+import { type AppPath, navItems, railBottomItems } from '../data'
 import { useNotifications } from '../../../../contexts/NotificationContext'
 import { ConfirmDialog } from '../../../ui/confirm-dialog'
-
-// Module-level: survives component remounts on route changes
-let prevMobileIndex = -1
 
 type DashboardStageProps = {
   activePath: AppPath
@@ -16,7 +14,7 @@ function SideRail({ activePath, onNavigate }: DashboardStageProps) {
   const { unreadCount, isOpen, setIsOpen } = useNotifications()
   const [avatar, setAvatar] = useState(() => localStorage.getItem('avatarUrl') || 'luffy')
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
-  const [liquidClass, setLiquidClass] = useState('')
+  const activeMobileBtnRef = useRef<HTMLButtonElement | null>(null)
 
   useEffect(() => {
     const handleUpdate = () => {
@@ -26,35 +24,14 @@ function SideRail({ activePath, onNavigate }: DashboardStageProps) {
     return () => window.removeEventListener('profile-updated', handleUpdate)
   }, [])
 
-  // Mobile dock — active index from the separate mobileNavItems array
-  const rawActiveMobileIndex = mobileNavItems.findIndex((item) => item.to === activePath)
-  const showActiveIndicator = rawActiveMobileIndex !== -1
-  const activeMobileIndex = showActiveIndicator ? rawActiveMobileIndex : 0
-
-  // Liquid glass slide animation — module-level prev persists across remounts
+  // Keep the active route icon in view as the scrollable dock's selection changes
   useEffect(() => {
-    if (!showActiveIndicator) {
-      prevMobileIndex = -1
-      return
-    }
-    const prev = prevMobileIndex
-    const curr = activeMobileIndex
-    if (prev !== -1 && prev !== curr) {
-      const dir = curr > prev ? 'liquid-right' : 'liquid-left'
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setLiquidClass(dir)
-      const t = setTimeout(() => setLiquidClass(''), 500)
-      prevMobileIndex = curr
-      return () => clearTimeout(t)
-    }
-    prevMobileIndex = curr
-  }, [activeMobileIndex, showActiveIndicator])
+    activeMobileBtnRef.current?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+  }, [activePath])
 
-  const mobileNavStyle = {
-    '--active-index': activeMobileIndex,
-    '--visible-count': mobileNavItems.length,
-    '--indicator-opacity': showActiveIndicator ? 1 : 0,
-  } as React.CSSProperties
+  const handleQuickAddClick = () => {
+    window.dispatchEvent(new CustomEvent('mobile-quick-add', { detail: { path: activePath } }))
+  }
 
   const handleSettingsClick = () => {
     setShowLogoutDialog(true)
@@ -99,29 +76,39 @@ function SideRail({ activePath, onNavigate }: DashboardStageProps) {
         })}
       </nav>
 
-      {/* Mobile bottom dock — 5 items, Home centred, with liquid slide indicator */}
-      <nav
-        className={`rail-nav-mobile${liquidClass ? ` ${liquidClass}` : ''}`}
-        style={mobileNavStyle}
-      >
-        {mobileNavItems.map((item) => {
-          const { label, icon: Icon, to } = item
-          const isActive = to && activePath === to
-          return (
-            <button
-              key={label}
-              type="button"
-              aria-label={label}
-              title={label}
-              aria-current={isActive ? 'page' : undefined}
-              className={isActive ? 'active' : undefined}
-              onClick={to ? () => onNavigate(to) : undefined}
-            >
-              <Icon size={16} strokeWidth={2} />
-            </button>
-          )
-        })}
-      </nav>
+      {/* Mobile bottom dock — scrollable route island + fixed quick-add island */}
+      <div className="rail-mobile-dock">
+        <nav className="rail-nav-mobile">
+          {navItems.map((item) => {
+            const { label, icon: Icon, to } = item
+            const isActive = to && activePath === to
+            return (
+              <button
+                key={label}
+                ref={isActive ? activeMobileBtnRef : undefined}
+                type="button"
+                aria-label={label}
+                title={label}
+                aria-current={isActive ? 'page' : undefined}
+                className={isActive ? 'active' : undefined}
+                onClick={to ? () => onNavigate(to) : undefined}
+              >
+                <Icon size={16} strokeWidth={2} />
+              </button>
+            )
+          })}
+        </nav>
+
+        <button
+          type="button"
+          className="rail-add-fab"
+          aria-label="Quick add"
+          title="Quick add"
+          onClick={handleQuickAddClick}
+        >
+          <Plus size={22} strokeWidth={2.5} />
+        </button>
+      </div>
 
       <div className="rail-bottom">
         {railBottomItems.map(({ label, icon: Icon, muted }) => {

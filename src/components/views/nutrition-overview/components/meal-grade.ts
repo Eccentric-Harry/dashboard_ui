@@ -68,11 +68,15 @@ export function gradeFromEntry(entry: {
   )
 }
 
-// ── Clinical item flags (HIGH_RISK / MODERATE_RISK / PROTECTIVE) ──────
-// These are the only place warm red appears in the grade system.
+// ── Clinical item flags ───────────────────────────────────────────────
+// Flags arrive as enum-ish strings from the AI ("HIGH_SUGAR",
+// "ANTIINFLAMMATORY"), sometimes with a ":detail" suffix. Each known flag
+// maps to a severity + human label; substring matching alone is wrong
+// because HIGH_PROTEIN and HIGH_FIBER are positives, and fruit sugar is a
+// caution, not a danger. Red is reserved for genuinely risky flags.
 
 export type ClinicalFlagTone = {
-  kind: 'high' | 'moderate' | 'protective'
+  kind: 'high' | 'moderate' | 'info' | 'protective'
   label: string
   detail: string
   ink: string
@@ -80,20 +84,62 @@ export type ClinicalFlagTone = {
   border: string
 }
 
+const TONES: Record<ClinicalFlagTone['kind'], Pick<ClinicalFlagTone, 'ink' | 'bg' | 'border'>> = {
+  high: { ink: '#a02c2c', bg: '#fbe3e0', border: '#f2c5bf' },
+  moderate: { ink: '#96660f', bg: '#faeed3', border: '#f0ddab' },
+  info: { ink: '#6b7165', bg: '#f2f1ea', border: '#e3e2d8' },
+  protective: { ink: '#1e7a33', bg: '#e0f4e3', border: '#bde5c3' },
+}
+
+const FLAG_REGISTRY: Record<string, { kind: ClinicalFlagTone['kind']; label: string }> = {
+  // Red — genuinely risky regardless of context
+  HIGH_TRANS_FAT: { kind: 'high', label: 'Trans fat' },
+  ULTRA_PROCESSED: { kind: 'high', label: 'Ultra-processed' },
+  HIGH_SODIUM: { kind: 'high', label: 'High sodium' },
+  HIGH_SAT_FAT: { kind: 'high', label: 'High saturated fat' },
+  // Amber — context-dependent cautions
+  HIGH_CHOLESTEROL: { kind: 'moderate', label: 'High cholesterol' },
+  HIGH_GI: { kind: 'moderate', label: 'High GI' },
+  HIGH_GL: { kind: 'moderate', label: 'High glycaemic load' },
+  HIGH_SUGAR: { kind: 'moderate', label: 'High sugar' },
+  FREE_SUGAR: { kind: 'moderate', label: 'Added sugar' },
+  HIGH_OMEGA6: { kind: 'moderate', label: 'High omega-6' },
+  LOW_FIBER: { kind: 'moderate', label: 'Low fiber' },
+  ACNE_TRIGGER: { kind: 'moderate', label: 'Acne trigger' },
+  // Neutral — informational, not a warning
+  INTRINSIC_SUGAR: { kind: 'info', label: 'Natural fruit sugar' },
+  // Green — positives
+  HIGH_PROTEIN: { kind: 'protective', label: 'High protein' },
+  HIGH_FIBER: { kind: 'protective', label: 'High fiber' },
+  ANTIINFLAMMATORY: { kind: 'protective', label: 'Anti-inflammatory' },
+  ANTI_INFLAMMATORY: { kind: 'protective', label: 'Anti-inflammatory' },
+  WHOLE_FOOD: { kind: 'protective', label: 'Whole food' },
+  FERMENTED: { kind: 'protective', label: 'Fermented' },
+  PROBIOTIC: { kind: 'protective', label: 'Probiotic' },
+  NUTRIENT_DENSE: { kind: 'protective', label: 'Nutrient dense' },
+}
+
 export function parseClinicalFlag(flag?: string | null): ClinicalFlagTone | null {
   if (!flag) return null
   const [head, ...rest] = flag.split(':')
   const detail = rest.join(':').trim()
-  const key = head.trim().toUpperCase()
+  const key = head.trim().toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '')
 
+  const known = FLAG_REGISTRY[key]
+  if (known) {
+    return { kind: known.kind, label: known.label, detail, ...TONES[known.kind] }
+  }
+
+  // Fallback heuristic — also handles bare risk words ("high"/"medium"/"low")
+  // passed by the health-context badges.
   if (key.includes('HIGH')) {
-    return { kind: 'high', label: 'High risk', detail, ink: '#a02c2c', bg: '#fbe3e0', border: '#f2c5bf' }
+    return { kind: 'high', label: 'High risk', detail, ...TONES.high }
   }
   if (key.includes('MODERATE') || key.includes('MEDIUM')) {
-    return { kind: 'moderate', label: 'Moderate', detail, ink: '#96660f', bg: '#faeed3', border: '#f0ddab' }
+    return { kind: 'moderate', label: 'Moderate', detail, ...TONES.moderate }
   }
   if (key.includes('PROTECTIVE') || key.includes('LOW')) {
-    return { kind: 'protective', label: 'Protective', detail, ink: '#1e7a33', bg: '#e0f4e3', border: '#bde5c3' }
+    return { kind: 'protective', label: 'Protective', detail, ...TONES.protective }
   }
-  return { kind: 'moderate', label: head.trim(), detail, ink: '#6b7165', bg: '#f2f1ea', border: '#e3e2d8' }
+  return { kind: 'info', label: head.trim(), detail, ...TONES.info }
 }
