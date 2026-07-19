@@ -12,9 +12,9 @@ import {
 } from '../../../lib/api'
 import type { AppPath } from '../../dashboard/quantified-self-dashboard/data'
 import { useFocus } from '../../../contexts/FocusContext'
-import { SosOverlay } from '../mind-overview/components/sos-overlay'
 import { HomeHeader } from './components/home-header'
 import type { QuickAddAction } from './components/home-header'
+import { ConfettiBurst } from './components/confetti-burst'
 import { TodayHeroCard } from './components/today-hero-card'
 import { SleepCard } from './components/sleep-card'
 import { InsightsCard } from './components/insights-card'
@@ -47,11 +47,13 @@ type HomeOverviewDashboardProps = {
 function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
   const home = useHomeData()
   const { session: focusSession } = useFocus()
-  const [sosOpen, setSosOpen] = useState(false)
   const [captureRequest, setCaptureRequest] = useState<{ mode: QuickCaptureMode; nonce: number } | null>(null)
   const [fabOpen, setFabOpen] = useState(false)
   const [sleepFormNonce, setSleepFormNonce] = useState(0)
+  const [confettiTrigger, setConfettiTrigger] = useState(0)
   const fabRef = useRef<HTMLDivElement | null>(null)
+
+  const fireConfetti = useCallback(() => setConfettiTrigger((n) => n + 1), [])
 
   useEffect(() => {
     if (!fabOpen) return
@@ -181,6 +183,10 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
   )
 
   const habitStrips = useMemo(() => buildHabitStrips(dayRecords, windowDates), [dayRecords, windowDates])
+  const bestStreak = useMemo(
+    () => habitStrips.reduce((max, strip) => Math.max(max, strip.streak), 0),
+    [habitStrips],
+  )
 
   const todayRecord = dayRecords[dayRecords.length - 1]
   const todayTasks = useMemo(
@@ -204,6 +210,8 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
     (home.tasks.data?.length ?? 0) === 0
 
   const handleAddWater = useCallback(async () => {
+    const before = home.hydration.data?.waterIntakeMl ?? 0
+    const target = home.hydration.data?.targetMl ?? 3000
     try {
       const res = await addWaterIntake(WATER_QUICK_ADD_ML, home.today)
       if (res?.data) {
@@ -211,11 +219,17 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
       } else {
         await home.reloadHydration()
       }
-      toast.success(`+${WATER_QUICK_ADD_ML}ml logged.`)
+      const after = res?.data?.waterIntakeMl ?? before + WATER_QUICK_ADD_ML
+      if (before < target && after >= target) {
+        fireConfetti()
+        toast.success('Hydration goal hit — nice work. 💧')
+      } else {
+        toast.success(`+${WATER_QUICK_ADD_ML}ml logged.`)
+      }
     } catch {
       toast.error('Could not log water — try again.')
     }
-  }, [home])
+  }, [home, fireConfetti])
 
   const handleQuickAdd = useCallback(
     (action: QuickAddAction) => {
@@ -298,9 +312,11 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
 
   return (
     <div className="home-dashboard">
+      <ConfettiBurst trigger={confettiTrigger} />
       <HomeHeader
         dateIso={home.today}
         onQuickAdd={handleQuickAdd}
+        streak={bestStreak}
       />
 
       {/* Mobile FAB — fixed bottom-right, hidden on desktop via CSS */}
@@ -372,6 +388,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           onAddWater={() => void handleAddWater()}
           onStartFocus={() => onNavigate('/learnings')}
           onNavigate={onNavigate}
+          onCelebrate={fireConfetti}
         />
 
         <QuickCaptureCard
@@ -410,8 +427,6 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           safePerDay={safePerDay}
         />
       </div>
-
-      <SosOverlay open={sosOpen} onClose={() => setSosOpen(false)} />
     </div>
   )
 }

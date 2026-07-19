@@ -36,6 +36,14 @@
   color: #101312;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
+  /* Ambient depth — three soft pastel washes, low-opacity so the glass
+     cards still read as the primary surface. Same hues as the sleep
+     accent (lavender) and accent yellow, just diluted. */
+  background:
+    radial-gradient(720px circle at 94% -8%, rgba(234, 255, 40, 0.09), transparent 58%),
+    radial-gradient(820px circle at -8% 20%, rgba(188, 195, 242, 0.16), transparent 56%),
+    radial-gradient(640px circle at 46% 118%, rgba(158, 205, 178, 0.12), transparent 60%);
+  background-attachment: fixed;
 }
 
 .home-dashboard::-webkit-scrollbar {
@@ -156,6 +164,10 @@
   transform: scale(1.14) rotate(-8deg);
 }
 
+.home-face-btn:active {
+  transform: scale(0.92) rotate(-4deg);
+}
+
 .home-face-btn.is-active {
   transform: scale(1.18);
   border-color: rgba(26, 31, 29, 0.24);
@@ -198,12 +210,18 @@
   align-items: center;
   gap: 5px;
   padding: 9px 13px;
-  border: 1px solid rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(226, 181, 62, 0.32);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.45);
-  color: #33594a;
+  background: linear-gradient(135deg, rgba(255, 207, 115, 0.34), rgba(244, 176, 74, 0.18));
+  backdrop-filter: blur(18px);
+  color: #8a5c09;
   font-size: 12px;
   font-weight: 800;
+}
+
+.home-streak-chip-flame {
+  animation: home-flame-pulse 1.7s ease-in-out infinite;
+  transform-origin: 50% 88%;
 }
 
 /* Quick add — reuses the Nutrition "Add meal" pill (.ntr-add-btn) verbatim;
@@ -368,6 +386,8 @@
 
 /* Buttons */
 
+/* Chunky "physical" press — a flat bottom edge that compresses when tapped,
+   instead of just a hover lift. Applied to every primary CTA in Home. */
 .home-btn-primary {
   display: inline-flex;
   align-items: center;
@@ -379,12 +399,18 @@
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
-  transition: transform 0.22s ease, box-shadow 0.25s ease, opacity 0.2s ease;
+  box-shadow: 0 3px 0 0 rgba(0, 0, 0, 0.32), 0 8px 18px rgba(20, 23, 22, 0.18);
+  transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.14s ease, opacity 0.2s ease;
 }
 
 .home-btn-primary:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 12px 22px rgba(20, 23, 22, 0.2);
+  box-shadow: 0 4px 0 0 rgba(0, 0, 0, 0.32), 0 12px 22px rgba(20, 23, 22, 0.22);
+}
+
+.home-btn-primary:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.32), 0 4px 10px rgba(20, 23, 22, 0.16);
 }
 
 .home-btn-primary:disabled {
@@ -404,11 +430,15 @@
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .home-btn-quiet:hover {
   background: rgba(255, 255, 255, 0.85);
+}
+
+.home-btn-quiet:active {
+  transform: scale(0.96);
 }
 
 /* ---------- Hero — "Today's loop" ----------
@@ -462,6 +492,35 @@
 
 .home-hero-panel.is-skeleton {
   background: linear-gradient(160deg, rgba(247, 243, 232, 0.7), rgba(229, 218, 189, 0.4));
+}
+
+/* Loop closed for the day — a slow gold sheen sweeps the panel once,
+   pairing with the confetti burst fired from the celebration effect. */
+.home-hero-panel.is-complete {
+  animation: home-hero-complete-glow 2.4s ease-out 1;
+}
+
+.home-hero-panel.is-complete::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.55) 48%, transparent 66%);
+  background-size: 220% 100%;
+  background-position: 130% 0;
+  animation: home-hero-sheen 1.6s ease-out 1;
+  pointer-events: none;
+}
+
+@keyframes home-hero-complete-glow {
+  0% { box-shadow: 0 0 0 0 rgba(234, 255, 40, 0); }
+  30% { box-shadow: 0 0 0 8px rgba(234, 255, 40, 0.16); }
+  100% { box-shadow: 0 0 0 0 rgba(234, 255, 40, 0); }
+}
+
+@keyframes home-hero-sheen {
+  from { background-position: 130% 0; }
+  to { background-position: -30% 0; }
 }
 
 /* soft moon-glow motif in the panel corner — Home's answer to the leaf/moon */
@@ -525,13 +584,18 @@
   font-weight: 750;
   letter-spacing: 0.01em;
   cursor: pointer;
-  box-shadow: 0 8px 18px rgba(23, 27, 21, 0.22);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 3px 0 0 rgba(0, 0, 0, 0.34), 0 8px 18px rgba(23, 27, 21, 0.22);
+  transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.14s ease;
 }
 
 .home-hero-focus-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 12px 24px rgba(23, 27, 21, 0.28);
+  box-shadow: 0 4px 0 0 rgba(0, 0, 0, 0.34), 0 12px 24px rgba(23, 27, 21, 0.28);
+}
+
+.home-hero-focus-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.34), 0 4px 10px rgba(23, 27, 21, 0.2);
 }
 
 .home-hero-focus-btn svg {
@@ -553,7 +617,7 @@
   padding: 11px 14px 12px;
   gap: 7px;
   background: rgba(255, 255, 255, 0.5);
-  transition: background-color 0.18s ease, transform 0.15s ease;
+  transition: background-color 0.18s ease, transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .home-card--hero .ntr-macro-row:hover {
@@ -581,7 +645,7 @@
 
 /* Tactile press — every loop row responds to the tap */
 .home-card--hero .ntr-macro-row:active {
-  transform: scale(0.985);
+  transform: scale(0.955);
 }
 
 .home-card--hero .ntr-macro-header p {
@@ -663,6 +727,10 @@
   background: rgba(255, 255, 255, 0.78);
   transform: translateY(-1px);
   box-shadow: 0 10px 22px rgba(52, 58, 122, 0.14);
+}
+
+.home-next-strip:active {
+  transform: translateY(0) scale(0.985);
 }
 
 .home-next-ic {
@@ -937,7 +1005,8 @@
   letter-spacing: 0.08em;
 }
 
-.home-sleep-form-row input[type='time'] {
+.home-sleep-form-row input[type='time'],
+.home-sleep-form-row input[type='date'] {
   padding: 7px 10px;
   border: 1px solid rgba(26, 31, 29, 0.14);
   border-radius: 10px;
@@ -966,6 +1035,10 @@
 
 .home-quality-btn:hover {
   transform: scale(1.15);
+}
+
+.home-quality-btn:active {
+  transform: scale(0.9);
 }
 
 .home-quality-btn.is-active {
@@ -1146,6 +1219,16 @@
   color: #8a5c09;
 }
 
+.home-habit-streak.is-lit svg {
+  animation: home-flame-pulse 1.7s ease-in-out infinite;
+  transform-origin: 50% 88%;
+}
+
+@keyframes home-flame-pulse {
+  0%, 100% { transform: scale(1) rotate(-4deg); }
+  50% { transform: scale(1.16) rotate(4deg); }
+}
+
 /* ---------- Quick capture ----------
    Mode picker restyled as the Nutrition segmented control (.ntr-week
    pattern): one white pill container, active segment flips to dark ink
@@ -1178,12 +1261,16 @@
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
-  transition: background 0.18s ease, color 0.18s ease;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .home-capture-mode:hover {
   background: var(--ntr-lime-soft);
   color: #17211c;
+}
+
+.home-capture-mode:active {
+  transform: scale(0.95);
 }
 
 .home-capture-mode.is-active {
@@ -1233,17 +1320,18 @@
   background: #202321;
   color: var(--ntr-lime);
   cursor: pointer;
-  box-shadow: 0 8px 18px rgba(23, 27, 21, 0.2);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  box-shadow: 0 3px 0 0 rgba(0, 0, 0, 0.3), 0 8px 18px rgba(23, 27, 21, 0.2);
+  transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.14s ease, opacity 0.2s ease;
 }
 
 .home-capture-send:hover:not(:disabled) {
   transform: translateY(-1px) scale(1.04);
-  box-shadow: 0 12px 24px rgba(23, 27, 21, 0.26);
+  box-shadow: 0 4px 0 0 rgba(0, 0, 0, 0.3), 0 12px 24px rgba(23, 27, 21, 0.26);
 }
 
 .home-capture-send:active:not(:disabled) {
-  transform: scale(0.94);
+  transform: translateY(2px) scale(0.94);
+  box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.3), 0 4px 10px rgba(23, 27, 21, 0.18);
 }
 
 .home-capture-send:disabled {
@@ -1496,6 +1584,36 @@
   transform: translateY(-1px);
 }
 
+/* ---------- Confetti ----------
+   Fired on goal-complete moments (hydration goal, day loop hitting 100%).
+   DOM pieces, not canvas — cheap enough for a once-in-a-while burst. */
+
+.home-confetti {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.home-confetti-piece {
+  position: absolute;
+  top: -12px;
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
+  opacity: 0;
+  animation-name: home-confetti-fall;
+  animation-timing-function: cubic-bezier(0.2, 0.6, 0.4, 1);
+  animation-fill-mode: forwards;
+}
+
+@keyframes home-confetti-fall {
+  0% { opacity: 0; transform: translate3d(0, -20px, 0) rotate(0deg); }
+  10% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(var(--drift), 100vh, 0) rotate(var(--rotate)); }
+}
+
 /* ---------- Skeletons ---------- */
 
 .home-skel {
@@ -1531,7 +1649,12 @@
   .home-skel,
   .home-habit-cell,
   .home-pill-live .home-live-dot,
-  .ntr-gauge-wrap.is-live::before {
+  .ntr-gauge-wrap.is-live::before,
+  .home-habit-streak.is-lit svg,
+  .home-streak-chip-flame,
+  .home-hero-panel.is-complete,
+  .home-hero-panel.is-complete::before,
+  .home-confetti-piece {
     animation: none !important;
   }
 
@@ -1713,9 +1836,6 @@
   .home-sos-button {
     justify-content: center;
     width: 100%;
-  }
-
-  .home-sos-button {
     grid-column: span 2;
   }
 
