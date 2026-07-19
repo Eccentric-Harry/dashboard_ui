@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { ArrowRight, CalendarClock, CheckSquare, Droplets, Flame as FocusFlame, Utensils } from 'lucide-react'
 import type { CalendarItem, DailyTask, HydrationData } from '../../../../lib/api'
 import type { AppPath } from '../../../dashboard/quantified-self-dashboard/data'
@@ -19,6 +20,8 @@ type TodayHeroCardProps = {
   onAddWater: () => void
   onStartFocus: () => void
   onNavigate: (path: AppPath, search?: string) => void
+  /** Fires once when today's loop first reaches 100%. */
+  onCelebrate?: () => void
 }
 
 /** Serif headline per score band — progress phrased as a story, never a shortfall. */
@@ -98,7 +101,30 @@ function TodayHeroCard({
   onAddWater,
   onStartFocus,
   onNavigate,
+  onCelebrate,
 }: TodayHeroCardProps) {
+  // Composite "day loop" score, computed unconditionally so the celebration
+  // effect below can watch it even while the skeleton is showing.
+  const tasksDoneAll = (todayTasks ?? []).filter((t) => t.completed).length
+  const tasksTotalAll = (todayTasks ?? []).length
+  const waterMlAll = hydration?.waterIntakeMl ?? 0
+  const waterTargetAll = hydration?.targetMl ?? 3000
+  const caloriesAll = nutrition?.todayTotalCalories ?? 0
+  const calorieGoalAll = nutrition?.calorieGoal ?? 0
+  const scoreRatios: number[] = [Math.min(focusMinutesToday / FOCUS_TARGET_MINUTES, 1)]
+  if (tasksTotalAll > 0) scoreRatios.push(Math.min(tasksDoneAll / tasksTotalAll, 1))
+  scoreRatios.push(Math.min(waterMlAll / Math.max(waterTargetAll, 1), 1))
+  if (calorieGoalAll > 0) scoreRatios.push(Math.min(caloriesAll / calorieGoalAll, 1))
+  const dayScore = Math.round((scoreRatios.reduce((sum, r) => sum + r, 0) / scoreRatios.length) * 100)
+
+  const prevScoreRef = useRef(dayScore)
+  useEffect(() => {
+    if (!loading && dayScore >= 100 && prevScoreRef.current < 100) {
+      onCelebrate?.()
+    }
+    prevScoreRef.current = dayScore
+  }, [dayScore, loading, onCelebrate])
+
   if (loading) {
     return (
       <section className="home-card home-card--hero" aria-label="Today at a glance">
@@ -132,23 +158,13 @@ function TodayHeroCard({
   const nextEvent = upcoming[0]
   const laterCount = Math.max(upcoming.length - 1, 0)
 
-  const tasksDone = (todayTasks ?? []).filter((t) => t.completed).length
-  const tasksTotal = (todayTasks ?? []).length
-
-  const waterMl = hydration?.waterIntakeMl ?? 0
-  const waterTarget = hydration?.targetMl ?? 3000
-
-  const calories = nutrition?.todayTotalCalories ?? 0
-  const calorieGoal = nutrition?.calorieGoal ?? 0
-
-  // Composite "day loop": mean of each active domain's progress ratio.
-  // Domains without a target today (no tasks, no calorie goal) sit out
-  // instead of dragging the score to zero.
-  const ratios: number[] = [Math.min(focusMinutesToday / FOCUS_TARGET_MINUTES, 1)]
-  if (tasksTotal > 0) ratios.push(Math.min(tasksDone / tasksTotal, 1))
-  ratios.push(Math.min(waterMl / Math.max(waterTarget, 1), 1))
-  if (calorieGoal > 0) ratios.push(Math.min(calories / calorieGoal, 1))
-  const dayScore = Math.round((ratios.reduce((sum, r) => sum + r, 0) / ratios.length) * 100)
+  // Aliases so the JSX below reads the same as before the hoist.
+  const tasksDone = tasksDoneAll
+  const tasksTotal = tasksTotalAll
+  const waterMl = waterMlAll
+  const waterTarget = waterTargetAll
+  const calories = caloriesAll
+  const calorieGoal = calorieGoalAll
 
   return (
     <section className="home-card home-card--hero" aria-label="Today at a glance">
@@ -170,7 +186,7 @@ function TodayHeroCard({
         )}
       </div>
 
-      <div className="home-hero-panel">
+      <div className={cn('home-hero-panel', dayScore >= 100 && 'is-complete')}>
         <div className="home-hero-gauge-col">
           <div className={cn('ntr-gauge-wrap', focusRunning && 'is-live')}>
             <ArcGauge

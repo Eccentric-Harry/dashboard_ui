@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { CheckSquare, Droplets, Lightbulb, MessageCircle, Moon, Plus, Trophy, Utensils } from 'lucide-react'
+import { CheckSquare, Droplets, Flame, LifeBuoy, Lightbulb, MessageCircle, Moon, Plus, Trophy, Utensils } from 'lucide-react'
 import type { QuickCaptureMode } from './quick-capture-card'
 
 // One line per day — deterministic, gentle, never a demand.
@@ -18,9 +18,12 @@ export type QuickAddAction = QuickCaptureMode | 'meal' | 'water' | 'sleep'
 type HomeHeaderProps = {
   dateIso: string
   onQuickAdd: (action: QuickAddAction) => void
+  /** Longest active habit streak, in days — 0 hides the chip. */
+  streak?: number
+  onSos: () => void
 }
 
-function HomeHeader({ dateIso, onQuickAdd }: HomeHeaderProps) {
+function HomeHeader({ dateIso, onQuickAdd, streak = 0, onSos }: HomeHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
 
@@ -72,6 +75,16 @@ function HomeHeader({ dateIso, onQuickAdd }: HomeHeaderProps) {
       </div>
 
       <div className="home-header-actions">
+        {streak > 0 && (
+          <span className="home-streak-chip" title={`${streak}-day streak on your best habit`}>
+            <Flame size={13} strokeWidth={2.6} className="home-streak-chip-flame" fill="currentColor" />
+            {streak}d streak
+          </span>
+        )}
+        <button type="button" className="home-sos-button" onClick={onSos}>
+          <LifeBuoy size={13} strokeWidth={2.4} />
+          SOS
+        </button>
         <div className="home-quick-add" ref={menuRef}>
           <button
             type="button"
