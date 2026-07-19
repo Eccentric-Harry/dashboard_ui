@@ -27,6 +27,7 @@ import { promoteForHome } from '../../../lib/insights/engine'
 import { buildBurndown, financeInsights } from '../../../lib/insights/finance'
 import { buildMindDays, mindInsights } from '../../../lib/insights/mind'
 import { nutritionDaysFromSummary, nutritionInsights } from '../../../lib/insights/nutrition'
+import { DEFAULT_RING_TARGETS } from '../../../lib/api'
 import { lastNDates, WATER_QUICK_ADD_ML } from './home-types'
 import { HOME_WINDOW_DAYS, useHomeData } from './use-home-data'
 import '../nutrition-overview/nutrition-redesign.css'
@@ -77,6 +78,9 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
 
   const weekDates = useMemo(() => lastNDates(INSIGHT_WINDOW_DAYS, home.today), [home.today])
   const windowDates = useMemo(() => lastNDates(HOME_WINDOW_DAYS, home.today), [home.today])
+
+  // Profile-backed ring targets; defaults cover loading and failure alike.
+  const ringTargets = home.targets.data ?? DEFAULT_RING_TARGETS
 
   // The 14-day cross-domain series every derived view (insights, momentum) reads from.
   const dayRecords = useMemo(
@@ -182,10 +186,11 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           spending: home.spending.data,
           workoutStreakWeeks: home.workoutStats.data?.currentStreakWeeks ?? 0,
           learningStreakDays: home.learnings.data?.stats?.streakDays ?? 0,
+          sleepTargetMinutes: ringTargets.sleepTargetMinutes,
         },
         promotedInsights,
       ),
-    [weekRecords, home.nutrition.data, home.spending.data, home.workoutStats.data, home.learnings.data, promotedInsights],
+    [weekRecords, home.nutrition.data, home.spending.data, home.workoutStats.data, home.learnings.data, promotedInsights, ringTargets.sleepTargetMinutes],
   )
 
   const todayRecord = dayRecords[dayRecords.length - 1]
@@ -400,6 +405,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           overdueCount={overdueCount}
           hydration={home.hydration.data}
           focusMinutesToday={todayRecord?.focusMinutes ?? 0}
+          focusTargetMinutes={ringTargets.focusTargetMinutes}
           focusRunning={focusSession?.status === 'RUNNING'}
           onAddWater={() => void handleAddWater()}
           onStartFocus={() => onNavigate('/learnings')}
@@ -420,6 +426,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           failed={home.sleep.failed}
           entries={home.sleep.data}
           today={home.today}
+          sleepTargetMinutes={ringTargets.sleepTargetMinutes}
           openFormNonce={sleepFormNonce}
           onLog={handleLogSleep}
           onRetry={() => void home.reloadSleep()}

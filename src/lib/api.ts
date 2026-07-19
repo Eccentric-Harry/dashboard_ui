@@ -1478,6 +1478,7 @@ export interface UserProfile {
   bmi?: number;
   bmr?: number;
   tdee?: number;
+  ringTargets?: Partial<RingTargets>;
 }
 
 export async function getUserProfile(): Promise<{ data: UserProfile }> {
@@ -1753,6 +1754,140 @@ export async function fetchSleepLogs(days?: number): Promise<ApiEnvelope<SleepLo
   const response = await fetch(`${API_BASE_URL}/health/sleep${query}`);
   if (!response.ok) {
     throw new Error('Failed to fetch sleep logs');
+  }
+  return response.json();
+}
+
+// ─── Rings (Three Non-Negotiables) ─────────────────────────────────────────
+// Mirrors the `daily_rings` + `streak_states` collections and RingsController.
+// Ring days are computed server-side from sleep/focus/Strava data and roll
+// over at the user's rollover hour (04:00 default), not midnight.
+
+export type RingMoveSource = 'STRAVA' | 'MANUAL';
+export type ManualMoveType = 'Walk' | 'Run' | 'Gym' | 'Cycle' | 'Other';
+
+export interface DailyRing {
+  id: string;
+  date: string;
+  restMinutes: number;
+  restTargetMinutes: number;
+  restClosed: boolean;
+  deepMinutes: number;
+  deepTargetMinutes: number;
+  deepClosed: boolean;
+  moveMinutes: number;
+  moveTargetMinutes: number;
+  moveClosed: boolean;
+  moveSource?: RingMoveSource | null;
+  moveNote?: string | null;
+  manualMoveMinutes?: number | null;
+  manualMoveType?: ManualMoveType | null;
+  ringsClosed: number;
+  perfect: boolean;
+  frozen: boolean;
+  xpEarned: number;
+  computedAt?: string;
+}
+
+export interface StreakState {
+  currentStreak: number;
+  longestStreak: number;
+  lastPerfectDate?: string | null;
+  freezesAvailable: number;
+  freezesUsedThisMonth: number;
+  freezeMonthKey?: string;
+  totalXp: number;
+  level: number;
+  perfectDaysAllTime: number;
+}
+
+export interface RingDay {
+  /** Null until anything is logged on the current ring day. */
+  ring: DailyRing | null;
+  streak: StreakState;
+  xpIntoLevel: number;
+  xpForNextLevel: number;
+}
+
+export interface ManualMovePayload {
+  date: string;
+  minutes: number;
+  activityType?: ManualMoveType;
+  note?: string;
+}
+
+/** The user's ring commitments; mirrors UserAccount.RingTargets defaults. */
+export interface RingTargets {
+  sleepTargetMinutes: number;
+  focusTargetMinutes: number;
+  moveTargetMinutes: number;
+  dayRolloverHour: number;
+}
+
+export const DEFAULT_RING_TARGETS: RingTargets = {
+  sleepTargetMinutes: 450,
+  focusTargetMinutes: 120,
+  moveTargetMinutes: 15,
+  dayRolloverHour: 4,
+};
+
+/** Profile targets with defaults filled in — never returns partial targets. */
+export function resolveRingTargets(profile?: Pick<UserProfile, 'ringTargets'> | null): RingTargets {
+  return { ...DEFAULT_RING_TARGETS, ...(profile?.ringTargets ?? {}) };
+}
+
+export async function fetchRingsToday(): Promise<ApiEnvelope<RingDay>> {
+  const response = await fetch(`${API_BASE_URL}/rings/today`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch today\'s rings');
+  }
+  return response.json();
+}
+
+export async function fetchRingsRange(startDate: string, endDate: string): Promise<ApiEnvelope<DailyRing[]>> {
+  const response = await fetch(`${API_BASE_URL}/rings/range?startDate=${startDate}&endDate=${endDate}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch ring history');
+  }
+  return response.json();
+}
+
+export async function fetchRingsStreak(): Promise<ApiEnvelope<StreakState>> {
+  const response = await fetch(`${API_BASE_URL}/rings/streak`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch streak state');
+  }
+  return response.json();
+}
+
+export async function logManualMove(payload: ManualMovePayload): Promise<ApiEnvelope<DailyRing>> {
+  const response = await fetch(`${API_BASE_URL}/rings/move/manual`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to log the move');
+  }
+  return response.json();
+}
+
+export async function undoManualMove(date: string): Promise<ApiEnvelope<DailyRing>> {
+  const response = await fetch(`${API_BASE_URL}/rings/move/manual?date=${date}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to undo the move');
+  }
+  return response.json();
+}
+
+export async function recomputeRingDay(date: string): Promise<ApiEnvelope<DailyRing | null>> {
+  const response = await fetch(`${API_BASE_URL}/rings/recompute?date=${date}`, {
+    method: 'POST',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to recompute the ring day');
   }
   return response.json();
 }

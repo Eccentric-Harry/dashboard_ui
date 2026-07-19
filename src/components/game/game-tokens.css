@@ -1,0 +1,241 @@
+/* ── Quiet Gamification — shared game tokens + primitive styles ──────────────
+   Every Duolingo signal translated into the app's desaturated pastel palette.
+   Declared once here, imported once at the top of index.css; components
+   consume the variables — never hardcode these values at call sites. */
+
+:root {
+  --game-streak: #c98a3c; /* muted apricot — never Duolingo orange */
+  --game-streak-soft: #f9e9cf;
+  --game-deep: #8aa832; /* Nutrilens lime family */
+  --game-deep-fill: #cfe965;
+  --game-deep-soft: #eef6cf;
+  --game-rest: #8f93d8; /* sleep-card periwinkle */
+  --game-rest-soft: #e7e8f7;
+  --game-move: #3d9e8c; /* Nutrilens aqua */
+  --game-move-soft: #e0f0eb;
+  --game-perfect: #eaff28; /* accent yellow — halo only, never a fill */
+  --game-locked: rgba(26, 31, 29, 0.24);
+  --game-freeze: #aecde9; /* desaturated sky */
+  --game-freeze-soft: #e2edf8;
+}
+
+/* ── RingDial ── */
+
+.game-ring-dial {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 50%;
+  color: inherit;
+  font: inherit;
+}
+.game-ring-dial:disabled,
+.game-ring-dial[data-static='true'] {
+  cursor: default;
+}
+.game-ring-dial:focus-visible {
+  outline: 2px solid rgba(16, 19, 18, 0.55);
+  outline-offset: 3px;
+}
+.game-ring-dial svg {
+  display: block;
+  transform: rotate(-90deg);
+}
+.game-ring-dial .game-ring-track {
+  fill: none;
+  stroke-linecap: round;
+}
+.game-ring-dial .game-ring-value {
+  fill: none;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.2s ease-out;
+}
+.game-ring-dial--rest .game-ring-value { stroke: var(--game-rest); }
+.game-ring-dial--rest .game-ring-track { stroke: var(--game-rest-soft); }
+.game-ring-dial--deep .game-ring-value { stroke: var(--game-deep); }
+.game-ring-dial--deep .game-ring-track { stroke: var(--game-deep-soft); }
+.game-ring-dial--move .game-ring-value { stroke: var(--game-move); }
+.game-ring-dial--move .game-ring-track { stroke: var(--game-move-soft); }
+.game-ring-dial--perfect .game-ring-value { stroke: var(--game-streak); }
+.game-ring-dial--perfect .game-ring-track { stroke: var(--game-streak-soft); }
+
+.game-ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  pointer-events: none;
+}
+.game-ring-center strong {
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  color: #101312;
+}
+.game-ring-center small {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #526057;
+}
+
+/* Closed: filled centre + check + perfect halo — visibly different from 97%. */
+.game-ring-dial.is-closed .game-ring-fill-rest { fill: var(--game-rest-soft); }
+.game-ring-dial.is-closed .game-ring-fill-deep { fill: var(--game-deep-soft); }
+.game-ring-dial.is-closed .game-ring-fill-move { fill: var(--game-move-soft); }
+.game-ring-dial .game-ring-halo {
+  fill: none;
+  stroke: var(--game-perfect);
+  stroke-width: 2.5;
+  opacity: 0;
+}
+.game-ring-dial.is-closed .game-ring-halo {
+  opacity: 0.9;
+}
+.game-ring-check {
+  stroke: #101312;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+/* The Zeigarnik hook: a slow breathing arc tip in the 70–99% band. Nothing else moves. */
+@keyframes game-ring-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+.game-ring-dial.is-almost .game-ring-value {
+  animation: game-ring-breathe 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-ring-dial .game-ring-value {
+    transition: none;
+    animation: none !important;
+  }
+}
+
+/* ── StreakFlame ── */
+
+.game-streak-flame {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px 4px 7px;
+  border-radius: 999px;
+  background: var(--game-streak-soft);
+  color: var(--game-streak);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1;
+}
+.game-streak-flame svg {
+  display: block;
+}
+.game-streak-flame--at-risk {
+  background: color-mix(in srgb, var(--game-streak-soft) 70%, #f3d9a8);
+}
+.game-streak-flame--frozen {
+  background: var(--game-freeze-soft);
+  color: color-mix(in srgb, var(--game-freeze) 60%, #101312);
+}
+.game-streak-flame--dormant {
+  background: rgba(26, 31, 29, 0.06);
+  color: var(--game-locked);
+}
+
+/* ── XpBar ── */
+
+.game-xp-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #526057;
+}
+.game-xp-bar-level {
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.game-xp-bar-track {
+  width: 64px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(26, 31, 29, 0.1);
+  overflow: hidden;
+}
+.game-xp-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--game-deep-fill);
+  transition: width 0.6s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .game-xp-bar-fill {
+    transition: none;
+  }
+}
+
+/* ── DayNode ── */
+
+.game-day-node {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+.game-day-node[data-static='true'] {
+  cursor: default;
+}
+.game-day-node:focus-visible {
+  outline: 2px solid rgba(16, 19, 18, 0.55);
+  outline-offset: 2px;
+}
+.game-day-node svg {
+  display: block;
+  transform: rotate(-90deg);
+}
+.game-day-node .game-day-glyph {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: none;
+  font-size: 9px;
+  font-weight: 800;
+  color: #526057;
+}
+.game-day-node--future {
+  opacity: 0.45;
+  cursor: default;
+}
+.game-day-node--today .game-day-ring {
+  animation: game-ring-breathe 2.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .game-day-node--today .game-day-ring {
+    animation: none;
+  }
+}

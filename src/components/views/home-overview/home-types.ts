@@ -24,14 +24,17 @@ export interface SpendingSummary {
   categoryBreakdown: Record<string, number>
 }
 
-// TODO: make the sleep target user-editable from Profile; hardcoded for now.
-export const SLEEP_TARGET_HOURS = 7.5
-export const SLEEP_TARGET_MINUTES = SLEEP_TARGET_HOURS * 60
-
-// TODO: make the daily focus target user-editable from Profile; hardcoded for now.
-export const FOCUS_TARGET_MINUTES = 120
+// Sleep and focus targets are no longer constants — they live on the user's
+// profile (UserAccount.RingTargets) and arrive resolved with defaults via
+// resolveRingTargets() in lib/api.ts.
 
 export const WATER_QUICK_ADD_ML = 250
+
+/** 450 → "7.5"; 480 → "8" — the sleep target as an hours label. */
+export function sleepTargetHoursLabel(sleepTargetMinutes: number): string {
+  const hours = sleepTargetMinutes / 60
+  return Number.isInteger(hours) ? String(hours) : hours.toFixed(1)
+}
 
 export function isoDate(date: Date = new Date()): string {
   const y = date.getFullYear()

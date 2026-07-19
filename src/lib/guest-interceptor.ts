@@ -212,6 +212,171 @@ const guestFocusHistory = guestFocusSeed.map(([offset, totalMinutes, sessions]) 
   sessions,
 }));
 
+// ── Rings / Three Non-Negotiables (guest, in-memory) ───────────────────────
+// ~21 days of plausible source data. The streak, freezes, frozen flags, and
+// XP are never seeded directly — guestRingsReplay derives them with the same
+// rules as the backend RingsService, so every number the demo shows is
+// internally consistent. Guest days roll over at midnight (no 04:00 shift) —
+// a simplification that never matters for canned data.
+interface GuestRingSource {
+  date: string;
+  restMinutes: number;
+  deepMinutes: number;
+  stravaMinutes: number;
+  manualMoveMinutes?: number | null;
+  manualMoveType?: string | null;
+  moveNote?: string | null;
+}
+
+interface GuestRing {
+  id: string;
+  date: string;
+  restMinutes: number; restTargetMinutes: number; restClosed: boolean;
+  deepMinutes: number; deepTargetMinutes: number; deepClosed: boolean;
+  moveMinutes: number; moveTargetMinutes: number; moveClosed: boolean;
+  moveSource: string | null;
+  moveNote: string | null;
+  manualMoveMinutes: number | null;
+  manualMoveType: string | null;
+  ringsClosed: number;
+  perfect: boolean;
+  frozen: boolean;
+  xpEarned: number;
+  computedAt: string;
+}
+
+interface GuestStreak {
+  currentStreak: number; longestStreak: number;
+  lastPerfectDate: string | null;
+  freezesAvailable: number; freezesUsedThisMonth: number; freezeMonthKey: string;
+  totalXp: number; level: number; perfectDaysAllTime: number;
+}
+
+const GUEST_RING_TARGETS = { sleepTargetMinutes: 450, focusTargetMinutes: 120, moveTargetMinutes: 15, dayRolloverHour: 4 };
+
+// [offset, restMinutes, deepMinutes, stravaMinutes] — gaps are unlogged days.
+// Texture first (partials while no streak exists), then one perfect day, one
+// bad day a freeze covers, then the live streak; today has REST closed only.
+const guestRingSeed: Array<[number, number, number, number]> = [
+  [-20, 465, 130, 0],
+  [-18, 420, 130, 0],
+  [-17, 470, 45, 30],
+  [-15, 400, 135, 0],
+  [-14, 480, 95, 40],
+  [-12, 410, 125, 0],
+  [-11, 460, 140, 0],
+  [-9, 430, 60, 0],
+  [-8, 465, 150, 0],
+  [-7, 475, 140, 35],
+  [-6, 405, 50, 0],
+  [-5, 460, 125, 30],
+  [-4, 480, 150, 45],
+  [-3, 455, 130, 20],
+  [-2, 470, 165, 40],
+  [-1, 462, 135, 25],
+  [0, 465, 70, 0],
+];
+
+const guestRingSources = new Map<string, GuestRingSource>(
+  guestRingSeed.map(([offset, restMinutes, deepMinutes, stravaMinutes]) => {
+    const date = guestAddDays(guestToday, offset);
+    return [date, { date, restMinutes, deepMinutes, stravaMinutes }];
+  }),
+);
+
+function guestComputeRing(src: GuestRingSource, index: number): GuestRing {
+  const t = GUEST_RING_TARGETS;
+  const manual = src.manualMoveMinutes ?? 0;
+  const moveMinutes = Math.max(Math.round(src.stravaMinutes), manual);
+  const moveSource = moveMinutes <= 0 ? null : manual > src.stravaMinutes ? 'MANUAL' : 'STRAVA';
+  const restClosed = src.restMinutes >= t.sleepTargetMinutes;
+  const deepClosed = src.deepMinutes >= t.focusTargetMinutes;
+  const moveClosed = moveMinutes >= t.moveTargetMinutes;
+  const ringsClosed = (restClosed ? 1 : 0) + (deepClosed ? 1 : 0) + (moveClosed ? 1 : 0);
+  return {
+    id: `ring-guest-${index}`,
+    date: src.date,
+    restMinutes: src.restMinutes, restTargetMinutes: t.sleepTargetMinutes, restClosed,
+    deepMinutes: src.deepMinutes, deepTargetMinutes: t.focusTargetMinutes, deepClosed,
+    moveMinutes, moveTargetMinutes: t.moveTargetMinutes, moveClosed,
+    moveSource,
+    moveNote: src.moveNote ?? null,
+    manualMoveMinutes: src.manualMoveMinutes ?? null,
+    manualMoveType: src.manualMoveType ?? null,
+    ringsClosed,
+    perfect: ringsClosed === 3,
+    frozen: false,
+    xpEarned: ringsClosed * 20 + (ringsClosed === 3 ? 40 : 0),
+    computedAt: new Date().toISOString(),
+  };
+}
+
+/** Full-history replay — the same rules as RingsService.recomputeStreak. */
+function guestRingsReplay(): { rings: GuestRing[]; streak: GuestStreak } {
+  const dates = [...guestRingSources.keys()].sort();
+  const byDate = new Map<string, GuestRing>();
+  dates.forEach((date, i) => byDate.set(date, guestComputeRing(guestRingSources.get(date)!, i)));
+
+  const empty: GuestStreak = {
+    currentStreak: 0, longestStreak: 0, lastPerfectDate: null,
+    freezesAvailable: 2, freezesUsedThisMonth: 0, freezeMonthKey: guestToday.slice(0, 7),
+    totalXp: 0, level: 1, perfectDaysAllTime: 0,
+  };
+  if (dates.length === 0) return { rings: [], streak: empty };
+
+  let streak = 0, longest = 0, perfectDays = 0, xpFromDays = 0;
+  let lastPerfect: string | null = null;
+  let monthKey = '', freezesLeft = 0, freezesUsed = 0;
+  const rings: GuestRing[] = [];
+
+  for (let d = dates[0]; d <= guestToday; d = guestAddDays(d, 1)) {
+    const dMonth = d.slice(0, 7);
+    if (dMonth !== monthKey) { monthKey = dMonth; freezesLeft = 2; freezesUsed = 0; }
+
+    let ring = byDate.get(d) ?? null;
+    const qualified = ring != null && ring.ringsClosed === 3;
+    let frozen = false;
+
+    if (qualified) {
+      streak++; perfectDays++; lastPerfect = d;
+    } else if (d < guestToday) {
+      if (streak > 0 && freezesLeft > 0) { freezesLeft--; freezesUsed++; frozen = true; }
+      else streak = 0;
+    }
+    longest = Math.max(longest, streak);
+
+    const xp = frozen ? 0 : (ring?.ringsClosed ?? 0) * 20 + (qualified ? 40 : 0);
+    xpFromDays += xp;
+
+    if (frozen && !ring) {
+      ring = {
+        id: `ring-guest-gap-${d}`, date: d,
+        restMinutes: 0, restTargetMinutes: GUEST_RING_TARGETS.sleepTargetMinutes, restClosed: false,
+        deepMinutes: 0, deepTargetMinutes: GUEST_RING_TARGETS.focusTargetMinutes, deepClosed: false,
+        moveMinutes: 0, moveTargetMinutes: GUEST_RING_TARGETS.moveTargetMinutes, moveClosed: false,
+        moveSource: null, moveNote: null, manualMoveMinutes: null, manualMoveType: null,
+        ringsClosed: 0, perfect: false, frozen: true, xpEarned: 0, computedAt: new Date().toISOString(),
+      };
+    }
+    if (ring) {
+      ring.frozen = frozen;
+      ring.xpEarned = xp;
+      rings.push(ring);
+    }
+  }
+
+  const milestoneXp = (longest >= 7 ? 100 : 0) + (longest >= 30 ? 500 : 0) + (longest >= 100 ? 2000 : 0);
+  const totalXp = xpFromDays + milestoneXp;
+  return {
+    rings,
+    streak: {
+      currentStreak: streak, longestStreak: longest, lastPerfectDate: lastPerfect,
+      freezesAvailable: freezesLeft, freezesUsedThisMonth: freezesUsed, freezeMonthKey: guestToday.slice(0, 7),
+      totalXp, level: Math.floor(Math.sqrt(totalXp / 100)) + 1, perfectDaysAllTime: perfectDays,
+    },
+  };
+}
+
 let mindEntries: GuestMindEntry[] = [
   { id: 'mg-1', type: 'THOUGHT', text: "I'll never be good enough for a senior role.", status: 'OPEN', date: guestToday, createdAt: new Date().toISOString() },
   { id: 'mg-2', type: 'THOUGHT', text: 'Everyone at standup could tell I was nervous.', status: 'OPEN', date: guestToday, createdAt: new Date().toISOString() },
@@ -354,6 +519,69 @@ export function enableGuestInterceptor() {
       }
     }
 
+    // ── Rings / Three Non-Negotiables ─────────────────────────────────────
+    if (urlStr.includes('/api/v1/rings/')) {
+      const method = (args[1]?.method || 'GET').toUpperCase();
+      const bodyOf = () => JSON.parse(typeof args[1]?.body === 'string' ? args[1].body : '{}');
+      const levelFloor = (level: number) => 100 * (level - 1) * (level - 1);
+
+      if (urlStr.includes('/rings/today')) {
+        const { rings, streak } = guestRingsReplay();
+        const ring = rings.find(r => r.date === guestToday) ?? null;
+        return respondWith({
+          data: {
+            ring,
+            streak,
+            xpIntoLevel: streak.totalXp - levelFloor(streak.level),
+            xpForNextLevel: levelFloor(streak.level + 1) - levelFloor(streak.level),
+          },
+        });
+      }
+
+      if (urlStr.includes('/rings/range')) {
+        const startDate = urlObj.searchParams.get('startDate') ?? '';
+        const endDate = urlObj.searchParams.get('endDate') ?? '9999-12-31';
+        const { rings } = guestRingsReplay();
+        return respondWith({ data: rings.filter(r => r.date >= startDate && r.date <= endDate) });
+      }
+
+      if (urlStr.includes('/rings/streak')) {
+        return respondWith({ data: guestRingsReplay().streak });
+      }
+
+      if (urlStr.includes('/rings/move/manual')) {
+        if (method === 'POST') {
+          const body = bodyOf();
+          const date: string = body.date || guestToday;
+          const src: GuestRingSource = guestRingSources.get(date)
+            ?? { date, restMinutes: 0, deepMinutes: 0, stravaMinutes: 0 };
+          src.manualMoveMinutes = Number(body.minutes) || 0;
+          src.manualMoveType = body.activityType ?? null;
+          src.moveNote = body.note ?? null;
+          guestRingSources.set(date, src);
+          const { rings } = guestRingsReplay();
+          return respondWith({ data: rings.find(r => r.date === date) ?? null });
+        }
+        if (method === 'DELETE') {
+          const date = urlObj.searchParams.get('date') ?? guestToday;
+          const src = guestRingSources.get(date);
+          if (src) {
+            src.manualMoveMinutes = null;
+            src.manualMoveType = null;
+            src.moveNote = null;
+          }
+          const { rings } = guestRingsReplay();
+          return respondWith({ data: rings.find(r => r.date === date) ?? null });
+        }
+      }
+
+      if (urlStr.includes('/rings/recompute')) {
+        const date = urlObj.searchParams.get('date') ?? guestToday;
+        const { rings } = guestRingsReplay();
+        return respondWith({ data: rings.find(r => r.date === date) ?? null });
+      }
+    }
+
     // User Profile API intercept
     if (urlStr.includes('/api/v1/users/profile')) {
       const method = (args[1]?.method || 'GET').toUpperCase();
@@ -397,7 +625,7 @@ export function enableGuestInterceptor() {
       if (method === 'PUT') {
         const body = JSON.parse(typeof args[1]?.body === 'string' ? args[1].body : '{}');
         profile = { ...profile, ...body, updatedAt: new Date().toISOString() };
-        
+
         if (body.physicalMetrics) {
            const height = body.physicalMetrics.height || profile.physicalMetrics.height;
            const weight = body.physicalMetrics.weight || profile.physicalMetrics.weight;
@@ -407,6 +635,10 @@ export function enableGuestInterceptor() {
         }
         localStorage.setItem('guest_user_profile', JSON.stringify(profile));
       }
+
+      // Ring targets ship resolved, like the real GET /users/profile — covers
+      // profiles cached in localStorage before rings existed.
+      profile.ringTargets = { ...GUEST_RING_TARGETS, ...(profile.ringTargets ?? {}) };
 
       return respondWith({ data: profile });
     }

@@ -9,6 +9,7 @@ import type {
   LearningsSummary,
   MindEntry,
   MindSummary,
+  RingTargets,
   SleepEntry,
   StravaActivity,
   StravaActivityStats,
@@ -28,6 +29,8 @@ import {
   fetchStravaActivities,
   fetchStravaActivityStats,
   fetchTasksForRange,
+  getUserProfile,
+  resolveRingTargets,
 } from '../../../lib/api'
 import type { NutritionSummary, SpendingSummary } from './home-types'
 import { addDaysIso, isoDate } from './home-types'
@@ -72,6 +75,8 @@ export interface HomeData {
   mindEntries: Slice<MindEntry[]>
   spending: Slice<SpendingSummary>
   finance: Slice<DailyFinancialLog[]>
+  /** Ring targets from the profile, resolved with defaults even on failure. */
+  targets: Slice<RingTargets>
   refetch: () => Promise<void>
   reloadSleep: () => Promise<void>
   reloadHydration: () => Promise<void>
@@ -103,6 +108,7 @@ export function useHomeData(): HomeData {
   const [mindEntries, setMindEntries] = useState<Slice<MindEntry[]>>(emptySlice)
   const [spending, setSpending] = useState<Slice<SpendingSummary>>(emptySlice)
   const [finance, setFinance] = useState<Slice<DailyFinancialLog[]>>(emptySlice)
+  const [targets, setTargets] = useState<Slice<RingTargets>>(emptySlice)
 
   const reloadSleep = useCallback(async () => {
     await settle(fetchSleepEntries(windowStart, today), (r) => r.data, setSleep)
@@ -128,6 +134,7 @@ export function useHomeData(): HomeData {
       settle(fetchMindEntries('THOUGHT'), (r) => r.data as MindEntry[], setMindEntries),
       settle(fetchSpendingSummary(today.slice(0, 7)), (r) => r.data as SpendingSummary, setSpending),
       settle(fetchDailyFinanceLogs(HOME_WINDOW_DAYS), (r) => r.data as DailyFinancialLog[], setFinance),
+      settle(getUserProfile(), (r) => resolveRingTargets(r.data), setTargets),
     ])
     setLoading(false)
   }, [today, windowStart])
@@ -170,6 +177,7 @@ export function useHomeData(): HomeData {
     mindEntries,
     spending,
     finance,
+    targets,
     refetch,
     reloadSleep,
     reloadHydration,

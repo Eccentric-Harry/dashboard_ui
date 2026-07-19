@@ -6,7 +6,7 @@ import { cn } from '../../../../lib/utils'
 import { useCountUp } from '../../../../hooks/use-count-up'
 import { ArcGauge } from '../../nutrition-overview/components/arc-gauge'
 import type { NutritionSummary } from '../home-types'
-import { formatMinutes, formatTimeLabel, FOCUS_TARGET_MINUTES } from '../home-types'
+import { formatMinutes, formatTimeLabel } from '../home-types'
 
 type TodayHeroCardProps = {
   loading: boolean
@@ -16,6 +16,8 @@ type TodayHeroCardProps = {
   overdueCount: number
   hydration: HydrationData | null
   focusMinutesToday: number
+  /** The user's focus target from their profile (resolved, minutes). */
+  focusTargetMinutes: number
   focusRunning: boolean
   onAddWater: () => void
   onStartFocus: () => void
@@ -97,6 +99,7 @@ function TodayHeroCard({
   overdueCount,
   hydration,
   focusMinutesToday,
+  focusTargetMinutes,
   focusRunning,
   onAddWater,
   onStartFocus,
@@ -111,7 +114,7 @@ function TodayHeroCard({
   const waterTargetAll = hydration?.targetMl ?? 3000
   const caloriesAll = nutrition?.todayTotalCalories ?? 0
   const calorieGoalAll = nutrition?.calorieGoal ?? 0
-  const scoreRatios: number[] = [Math.min(focusMinutesToday / FOCUS_TARGET_MINUTES, 1)]
+  const scoreRatios: number[] = [Math.min(focusMinutesToday / Math.max(focusTargetMinutes, 1), 1)]
   if (tasksTotalAll > 0) scoreRatios.push(Math.min(tasksDoneAll / tasksTotalAll, 1))
   scoreRatios.push(Math.min(waterMlAll / Math.max(waterTargetAll, 1), 1))
   if (calorieGoalAll > 0) scoreRatios.push(Math.min(caloriesAll / calorieGoalAll, 1))
@@ -224,9 +227,9 @@ function TodayHeroCard({
             icon={<FocusFlame size={11} strokeWidth={2.5} />}
             label="Focus"
             value={focusMinutesToday}
-            target={FOCUS_TARGET_MINUTES}
+            target={focusTargetMinutes}
             display={formatMinutes(focusMinutesToday)}
-            sub={`/${formatMinutes(FOCUS_TARGET_MINUTES)}${focusRunning ? ' · live' : ''}`}
+            sub={`/${formatMinutes(focusTargetMinutes)}${focusRunning ? ' · live' : ''}`}
             onClick={onStartFocus}
           />
           <HeroLoopRow

@@ -7,8 +7,7 @@ import {
   formatMinutes,
   lastNDates,
   shortDayLabel,
-  SLEEP_TARGET_HOURS,
-  SLEEP_TARGET_MINUTES,
+  sleepTargetHoursLabel,
   weekdayLetter,
 } from '../home-types'
 
@@ -26,6 +25,8 @@ type SleepCardProps = {
   failed: boolean
   entries: SleepEntry[] | null
   today: string
+  /** The user's sleep target from their profile (resolved, minutes). */
+  sleepTargetMinutes: number
   openFormNonce?: number
   onLog: (payload: SleepEntryPayload) => Promise<void>
   onRetry: () => void
@@ -83,7 +84,7 @@ function SleepTooltip({ active, payload }: any) {
   )
 }
 
-function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRetry }: SleepCardProps) {
+function SleepCard({ loading, failed, entries, today, sleepTargetMinutes, openFormNonce, onLog, onRetry }: SleepCardProps) {
   const [formOpen, setFormOpen] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
 
@@ -139,7 +140,7 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
       : null
   const debtMinutes =
     loggedThisWeek.length > 0
-      ? loggedThisWeek.reduce((sum, e) => sum + (SLEEP_TARGET_MINUTES - e.durationMinutes), 0)
+      ? loggedThisWeek.reduce((sum, e) => sum + (sleepTargetMinutes - e.durationMinutes), 0)
       : null
 
   const series = useMemo<SleepPoint[]>(
@@ -178,12 +179,12 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
     return { avgBed, avgWake, best, swing }
   }, [loggedThisWeek])
 
-  const chartMax = Math.max(SLEEP_TARGET_MINUTES, ...loggedThisWeek.map((e) => e.durationMinutes)) + 60
+  const chartMax = Math.max(sleepTargetMinutes, ...loggedThisWeek.map((e) => e.durationMinutes)) + 60
 
   const barFill = (point: SleepPoint): string => {
     if (point.minutes == null) return BAR_MISSING
     if (point.date === today) return BAR_LAST_NIGHT
-    return point.minutes >= SLEEP_TARGET_MINUTES ? BAR_ON_TARGET : BAR_UNDER
+    return point.minutes >= sleepTargetMinutes ? BAR_ON_TARGET : BAR_UNDER
   }
 
   const submit = async () => {
@@ -259,7 +260,7 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
                   <b>{avgMinutes != null ? formatMinutes(avgMinutes) : '—'}</b>
                 </div>
                 <div className="ntr-tap-stat">
-                  <span>vs {SLEEP_TARGET_HOURS}h</span>
+                  <span>vs {sleepTargetHoursLabel(sleepTargetMinutes)}h</span>
                   <b className={cn(debtMinutes != null && debtMinutes > 0 && 'is-watch')}>
                     {debtMinutes == null
                       ? '—'
@@ -359,12 +360,12 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
                     <YAxis hide domain={[0, chartMax]} />
                     <Tooltip content={<SleepTooltip />} cursor={{ fill: 'rgba(35, 38, 77, 0.05)' }} />
                     <ReferenceLine
-                      y={SLEEP_TARGET_MINUTES}
+                      y={sleepTargetMinutes}
                       stroke="rgba(35, 38, 77, 0.3)"
                       strokeDasharray="5 6"
                       label={{
                         position: 'insideTopRight',
-                        value: `TARGET ${SLEEP_TARGET_HOURS}H`,
+                        value: `TARGET ${sleepTargetHoursLabel(sleepTargetMinutes)}H`,
                         fill: 'rgba(35, 38, 77, 0.45)',
                         fontSize: 8.5,
                         fontWeight: 800,

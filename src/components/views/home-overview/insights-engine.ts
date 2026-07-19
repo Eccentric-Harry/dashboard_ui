@@ -19,7 +19,7 @@ import type {
 import type { Insight, InsightIcon, InsightSentiment } from '../../../lib/insights/engine'
 import { confidenceFrom } from '../../../lib/insights/engine'
 import type { NutritionSummary, SpendingSummary } from './home-types'
-import { formatMinutes, lastNDates, shortDayLabel, SLEEP_TARGET_MINUTES } from './home-types'
+import { formatMinutes, lastNDates, shortDayLabel } from './home-types'
 
 export const INSIGHT_WINDOW_DAYS = 7
 /** Minimum paired days before a correlation rule may speak. */
@@ -148,6 +148,8 @@ interface InsightContext {
   spending: SpendingSummary | null
   workoutStreakWeeks: number
   learningStreakDays: number
+  /** The user's sleep target from their profile (resolved, minutes). */
+  sleepTargetMinutes: number
 }
 
 const SENTIMENT_RANK: Record<InsightSentiment, number> = {
@@ -202,13 +204,13 @@ export function generateInsights(
     if (insight) insights.push(insight)
   }
 
-  push(sleepVsFocus(records))
+  push(sleepVsFocus(records, ctx.sleepTargetMinutes))
   push(sleepVsMood(records))
   push(workoutsVsFoodSpend(records))
   push(overdueVsFocus(records))
   push(proteinVsFocus(records, ctx.proteinGoal))
   push(thoughtsVsOverdue(records))
-  push(thoughtsVsSleep(records))
+  push(thoughtsVsSleep(records, ctx.sleepTargetMinutes))
 
   insights.sort(
     (a, b) => SENTIMENT_RANK[b.sentiment] - SENTIMENT_RANK[a.sentiment] || b.effect - a.effect,
@@ -240,11 +242,11 @@ export function countActiveDays(records: DayRecord[]): number {
 
 // ---------- Rules ----------
 
-function sleepVsFocus(records: DayRecord[]): Insight | null {
+function sleepVsFocus(records: DayRecord[], sleepTargetMinutes: number): Insight | null {
   const paired = records.filter((r) => r.sleepMinutes != null)
   if (paired.length < MIN_PAIRED_DAYS) return null
 
-  const shortLimit = SLEEP_TARGET_MINUTES - 60
+  const shortLimit = sleepTargetMinutes - 60
   const short = paired.filter((r) => (r.sleepMinutes as number) < shortLimit)
   const rested = paired.filter((r) => (r.sleepMinutes as number) >= shortLimit)
   if (short.length < MIN_BUCKET_DAYS || rested.length < MIN_BUCKET_DAYS) return null
@@ -414,12 +416,12 @@ function thoughtsVsOverdue(records: DayRecord[]): Insight | null {
   })
 }
 
-function thoughtsVsSleep(records: DayRecord[]): Insight | null {
+function thoughtsVsSleep(records: DayRecord[], sleepTargetMinutes: number): Insight | null {
   const paired = records.filter((r) => r.sleepMinutes != null && (r.thoughtsCaptured > 0 || r.tasksTotal > 0))
   if (paired.length < MIN_PAIRED_DAYS) return null
 
-  const short = paired.filter((r) => (r.sleepMinutes as number) < SLEEP_TARGET_MINUTES - 60)
-  const rested = paired.filter((r) => (r.sleepMinutes as number) >= SLEEP_TARGET_MINUTES - 60)
+  const short = paired.filter((r) => (r.sleepMinutes as number) < sleepTargetMinutes - 60)
+  const rested = paired.filter((r) => (r.sleepMinutes as number) >= sleepTargetMinutes - 60)
   if (short.length < MIN_BUCKET_DAYS || rested.length < MIN_BUCKET_DAYS) return null
 
   const shortAvg = mean(short.map((r) => r.thoughtsCaptured))
@@ -475,14 +477,14 @@ function bestPositive(records: DayRecord[], ctx: InsightContext): Insight | null
     const best = sleptNights.reduce((a, b) =>
       (b.sleepMinutes as number) > (a.sleepMinutes as number) ? b : a,
     )
-    if ((best.sleepMinutes as number) >= SLEEP_TARGET_MINUTES) {
+    if ((best.sleepMinutes as number) >= ctx.sleepTargetMinutes) {
       candidates.push(
         makeInsight({
           id: 'win-best-sleep',
           icon: 'sleep',
           sentiment: 'positive',
           title: `Best night this week: ${formatMinutes(best.sleepMinutes as number)} on ${shortDayLabel(best.date)} — right on target.`,
-          detail: `Longest of ${sleptNights.length} logged nights; target is ${formatMinutes(SLEEP_TARGET_MINUTES)}.`,
+          detail: `Longest of ${sleptNights.length} logged nights; target is ${formatMinutes(ctx.sleepTargetMinutes)}.`,
           sampleDays: sleptNights.length,
           effect: 0.15,
           metric: { value: Math.round((best.sleepMinutes as number) / 6) / 10, unit: 'h' },
