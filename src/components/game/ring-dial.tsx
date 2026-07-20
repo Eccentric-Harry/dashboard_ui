@@ -78,15 +78,19 @@ function RingDial({ value, target, label, accent, size = 104, display, state, on
           <circle className={`game-ring-fill-${accent}`} cx={center} cy={center} r={radius - strokeWidth / 2} />
         )}
         <circle className="game-ring-track" cx={center} cy={center} r={radius} strokeWidth={strokeWidth} />
-        <circle
-          className="game-ring-value"
-          cx={center}
-          cy={center}
-          r={radius}
-          strokeWidth={strokeWidth}
-          strokeDasharray={circumference}
-          strokeDashoffset={dashOffset}
-        />
+        {/* No arc at zero — also prevents a first-frame flash before the
+            dash attributes commit (the ArcGauge tip-marker guard, same idea). */}
+        {visualRatio > 0.001 && (
+          <circle
+            className="game-ring-value"
+            cx={center}
+            cy={center}
+            r={radius}
+            strokeWidth={strokeWidth}
+            strokeDasharray={circumference}
+            strokeDashoffset={dashOffset}
+          />
+        )}
         <circle className="game-ring-halo" cx={center} cy={center} r={radius + strokeWidth / 2} />
       </svg>
       <span className="game-ring-center">

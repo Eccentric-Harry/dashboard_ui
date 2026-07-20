@@ -4,7 +4,6 @@ import type { CalendarItem, DailyTask, HydrationData } from '../../../../lib/api
 import type { AppPath } from '../../../dashboard/quantified-self-dashboard/data'
 import { cn } from '../../../../lib/utils'
 import { useCountUp } from '../../../../hooks/use-count-up'
-import { ArcGauge } from '../../nutrition-overview/components/arc-gauge'
 import type { NutritionSummary } from '../home-types'
 import { formatMinutes, formatTimeLabel } from '../home-types'
 
@@ -130,17 +129,14 @@ function TodayHeroCard({
 
   if (loading) {
     return (
-      <section className="home-card home-card--hero" aria-label="Today at a glance">
+      <section className="home-card home-card--hero home-card--also" aria-label="Also today">
         <div className="ntr-card-head home-hero-head">
           <div>
-            <p className="ntr-eyebrow">Today</p>
-            <span className="home-skel home-skel--title" style={{ width: 260, marginTop: 6 }} />
+            <p className="ntr-eyebrow">Also today</p>
+            <span className="home-skel home-skel--title" style={{ width: 200, marginTop: 6 }} />
           </div>
         </div>
-        <div className="home-hero-panel is-skeleton">
-          <div className="home-hero-gauge-col">
-            <span className="home-skel" style={{ width: 190, height: 190, borderRadius: '50%' }} />
-          </div>
+        <div className="home-hero-panel home-also-panel is-skeleton">
           <div className="ntr-hero-macros">
             {Array.from({ length: 4 }, (_, i) => (
               <span key={i} className="home-skel" style={{ height: 54, borderRadius: 16 }} />
@@ -170,11 +166,11 @@ function TodayHeroCard({
   const calorieGoal = calorieGoalAll
 
   return (
-    <section className="home-card home-card--hero" aria-label="Today at a glance">
+    <section className="home-card home-card--hero home-card--also" aria-label="Also today">
       <div className="ntr-card-head home-hero-head">
         <div>
-          <p className="ntr-eyebrow">Today · Day loop</p>
-          <h2>{loopPhrase(dayScore, now.getHours())}</h2>
+          <p className="ntr-eyebrow">Also today · {dayScore}% of the loop</p>
+          <h2 className="home-card-title">{loopPhrase(dayScore, now.getHours())}</h2>
         </div>
         {focusRunning ? (
           <span className="ntr-pill dark home-pill-live">
@@ -199,28 +195,10 @@ function TodayHeroCard({
         )}
       </div>
 
-      <div className={cn('home-hero-panel', dayScore >= 100 && 'is-complete')}>
-        <div className="home-hero-gauge-col">
-          <div className={cn('ntr-gauge-wrap', focusRunning && 'is-live')}>
-            <ArcGauge
-              value={dayScore}
-              target={100}
-              format={(v) => `${v}%`}
-              centerSub="of today's loop"
-            />
-            {focusMinutesToday > 0 && (
-              <span className="ntr-gauge-badge">
-                <FocusFlame size={9} strokeWidth={2.6} />
-                {formatMinutes(focusMinutesToday)}
-              </span>
-            )}
-          </div>
-          <button type="button" className="home-hero-focus-btn" onClick={onStartFocus}>
-            <FocusFlame size={12} />
-            {focusRunning ? 'Session running' : 'Start focus'}
-          </button>
-        </div>
-
+      {/* Demoted to the ALSO TODAY strip: the loop rows and runway keep
+          working at reduced weight; the big gauge ceded the hero to the
+          Non-Negotiables rings, its score lives on in the eyebrow. */}
+      <div className={cn('home-hero-panel', 'home-also-panel', dayScore >= 100 && 'is-complete')}>
         <div className="ntr-hero-macros">
           <HeroLoopRow
             accent="focus"

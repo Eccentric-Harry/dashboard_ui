@@ -3,12 +3,14 @@ import type {
   CalendarItem,
   DailyFinancialLog,
   DailyLog,
+  DailyRing,
   DailyTask,
   FocusDaySummary,
   HydrationData,
   LearningsSummary,
   MindEntry,
   MindSummary,
+  RingDay,
   RingTargets,
   SleepEntry,
   StravaActivity,
@@ -24,6 +26,8 @@ import {
   fetchMindEntries,
   fetchMindSummary,
   fetchNutritionSummary,
+  fetchRingsRange,
+  fetchRingsToday,
   fetchSleepEntries,
   fetchSpendingSummary,
   fetchStravaActivities,
@@ -77,7 +81,12 @@ export interface HomeData {
   finance: Slice<DailyFinancialLog[]>
   /** Ring targets from the profile, resolved with defaults even on failure. */
   targets: Slice<RingTargets>
+  /** Today's three rings + streak + level (GET /rings/today). */
+  rings: Slice<RingDay>
+  /** Ring days for the 14-day window — powers the week strip. */
+  ringsRange: Slice<DailyRing[]>
   refetch: () => Promise<void>
+  reloadRings: () => Promise<void>
   reloadSleep: () => Promise<void>
   reloadHydration: () => Promise<void>
   patchHydration: (data: HydrationData) => void
@@ -109,6 +118,15 @@ export function useHomeData(): HomeData {
   const [spending, setSpending] = useState<Slice<SpendingSummary>>(emptySlice)
   const [finance, setFinance] = useState<Slice<DailyFinancialLog[]>>(emptySlice)
   const [targets, setTargets] = useState<Slice<RingTargets>>(emptySlice)
+  const [rings, setRings] = useState<Slice<RingDay>>(emptySlice)
+  const [ringsRange, setRingsRange] = useState<Slice<DailyRing[]>>(emptySlice)
+
+  const reloadRings = useCallback(async () => {
+    await Promise.allSettled([
+      settle(fetchRingsToday(), (r) => r.data, setRings),
+      settle(fetchRingsRange(windowStart, today), (r) => r.data, setRingsRange),
+    ])
+  }, [windowStart, today])
 
   const reloadSleep = useCallback(async () => {
     await settle(fetchSleepEntries(windowStart, today), (r) => r.data, setSleep)
@@ -135,6 +153,8 @@ export function useHomeData(): HomeData {
       settle(fetchSpendingSummary(today.slice(0, 7)), (r) => r.data as SpendingSummary, setSpending),
       settle(fetchDailyFinanceLogs(HOME_WINDOW_DAYS), (r) => r.data as DailyFinancialLog[], setFinance),
       settle(getUserProfile(), (r) => resolveRingTargets(r.data), setTargets),
+      settle(fetchRingsToday(), (r) => r.data, setRings),
+      settle(fetchRingsRange(windowStart, today), (r) => r.data, setRingsRange),
     ])
     setLoading(false)
   }, [today, windowStart])
@@ -151,6 +171,16 @@ export function useHomeData(): HomeData {
     window.addEventListener('calendar-updated', handleUpdate)
     return () => window.removeEventListener('calendar-updated', handleUpdate)
   }, [refetch])
+
+  // Ring closes (sleep log, focus completion, manual move) refresh only the
+  // rings slices — no need to re-pull all fourteen domains.
+  useEffect(() => {
+    const handleRings = () => {
+      void reloadRings()
+    }
+    window.addEventListener('rings-updated', handleRings)
+    return () => window.removeEventListener('rings-updated', handleRings)
+  }, [reloadRings])
 
   const patchHydration = useCallback((data: HydrationData) => {
     setHydration({ data, failed: false })
@@ -178,7 +208,10 @@ export function useHomeData(): HomeData {
     spending,
     finance,
     targets,
+    rings,
+    ringsRange,
     refetch,
+    reloadRings,
     reloadSleep,
     reloadHydration,
     patchHydration,

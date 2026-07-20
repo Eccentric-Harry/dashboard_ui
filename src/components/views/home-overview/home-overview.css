@@ -2026,3 +2026,354 @@
     display: flex;
   }
 }
+
+/* ---------- Non-Negotiables hero (.home-nn-*) ------------------------------
+   Phase 1 of quiet gamification: the marquee card answering "did I do my
+   three things today, and how long is my chain?" Ring/flame/XP/day-node
+   primitives live in components/game/; only card-local layout lives here. */
+
+.home-nn-card {
+  grid-column: span 6;
+  padding: 22px 24px 18px;
+  gap: 14px;
+  /* The "I moved" popover hangs below the card edge — no corner glyph here,
+     so escaping the .home-card overflow clip is safe. The explicit z-index
+     keeps the popover above later sibling cards in the grid. */
+  overflow: visible;
+  z-index: 5;
+}
+
+.home-nn-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.home-nn-phrase {
+  margin: 4px 0 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 25px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #17211c;
+}
+
+.home-nn-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  padding-top: 4px;
+}
+
+/* Perfect-day banner — inline and dismissible, never a modal. */
+.home-nn-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 8px 9px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(138, 168, 50, 0.28);
+  background: var(--game-deep-soft);
+  color: #3d4a17;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.home-nn-banner button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+  color: inherit;
+  cursor: pointer;
+}
+
+.home-nn-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px 30px;
+  align-items: center;
+}
+
+.home-nn-body.is-skeleton {
+  display: flex;
+  gap: 28px;
+  padding: 6px 2px;
+}
+
+.home-nn-rings {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: flex-start;
+  gap: clamp(12px, 3vw, 40px);
+}
+
+.home-nn-ring {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+}
+
+.home-nn-done {
+  padding: 5px 13px;
+  border-radius: 999px;
+  background: rgba(26, 31, 29, 0.055);
+  color: rgba(23, 28, 25, 0.48);
+  font-size: 9.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+
+.home-nn-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 13px;
+  border: 1px solid rgba(23, 27, 21, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.66);
+  color: #1a1f1d;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: transform 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+}
+
+.home-nn-action:hover {
+  background: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(23, 27, 21, 0.1);
+}
+
+/* "I moved" popover — small inline glass sheet under the MOVE dial. */
+.home-nn-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  width: 238px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: 0 18px 44px rgba(23, 27, 21, 0.18);
+}
+
+.home-nn-pop-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.home-nn-chip {
+  padding: 5px 11px;
+  border: 1px solid rgba(23, 27, 21, 0.13);
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(23, 28, 25, 0.72);
+  font-size: 10.5px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+
+.home-nn-chip.is-active {
+  background: rgba(23, 27, 21, 0.92);
+  border-color: transparent;
+  color: #fff;
+}
+
+.home-nn-pop-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.home-nn-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(26, 31, 29, 0.06);
+}
+
+.home-nn-stepper button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  color: #1a1f1d;
+  cursor: pointer;
+}
+
+.home-nn-stepper b {
+  min-width: 40px;
+  text-align: center;
+  font-size: 12.5px;
+  font-weight: 800;
+}
+
+.home-nn-pop-save {
+  flex: 1;
+}
+
+.home-nn-pop-note {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid rgba(23, 27, 21, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.8);
+  font-size: 11.5px;
+  color: #171b15;
+}
+
+.home-nn-pop-note::placeholder {
+  color: rgba(23, 28, 25, 0.38);
+}
+
+/* 7-day strip — DayNodes with weekday letters, quiet weekly readout. */
+.home-nn-week {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+  padding-left: 26px;
+  border-left: 1px solid rgba(26, 31, 29, 0.09);
+}
+
+.home-nn-week-row {
+  display: flex;
+  gap: 7px;
+}
+
+.home-nn-week-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.home-nn-week-col small {
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: rgba(23, 28, 25, 0.42);
+}
+
+.home-nn-week-note {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: rgba(23, 28, 25, 0.5);
+}
+
+/* ALSO TODAY — the demoted day-loop strip (old hero, reduced weight). */
+.home-card--also {
+  gap: 10px;
+  padding: 18px 20px 16px;
+}
+
+.home-card--also .home-hero-head {
+  margin-bottom: 6px;
+}
+
+.home-also-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 14px 12px;
+}
+
+.home-also-score {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 768px) {
+  .home-nn-card {
+    /* The mobile grid is a single column — without this reset the desktop
+       span-6 would force six implicit tracks and shred the whole grid. */
+    grid-column: span 1;
+    padding: 18px 16px 14px;
+  }
+
+  .home-nn-phrase {
+    font-size: 21px;
+  }
+
+  .home-nn-meta {
+    gap: 8px;
+  }
+
+  .home-nn-meta .game-xp-bar-track {
+    width: 44px;
+  }
+
+  .home-nn-body {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .home-nn-rings {
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  /* Action buttons collapse to icon pills; the label hides, aria-label carries it. */
+  .home-nn-action-label {
+    display: none;
+  }
+
+  .home-nn-action {
+    padding: 7px 12px;
+  }
+
+  /* Week strip moves under the rings as a full-width row. */
+  .home-nn-week {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding-left: 0;
+    padding-top: 12px;
+    border-left: 0;
+    border-top: 1px solid rgba(26, 31, 29, 0.09);
+  }
+
+  /* Keep the popover on-screen when anchored to the right-most dial. */
+  .home-nn-pop {
+    left: auto;
+    right: 0;
+    transform: none;
+    width: min(238px, calc(100vw - 56px));
+  }
+}
+
+/* Header XP line — level badge + thin bar tucked under the greeting. */
+.home-header-xp {
+  display: inline-flex;
+  margin-top: 7px;
+}

@@ -15,6 +15,7 @@ import { useFocus } from '../../../contexts/FocusContext'
 import { HomeHeader } from './components/home-header'
 import type { QuickAddAction } from './components/home-header'
 import { ConfettiBurst } from './components/confetti-burst'
+import { NonNegotiablesCard } from './components/non-negotiables-card'
 import { TodayHeroCard } from './components/today-hero-card'
 import { SleepCard } from './components/sleep-card'
 import { InsightsCard } from './components/insights-card'
@@ -326,6 +327,8 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
       try {
         await logSleep(payload)
         await home.reloadSleep()
+        // A new night can close the REST ring — the hero listens for this.
+        window.dispatchEvent(new CustomEvent('rings-updated'))
         toast.success('Night logged. Sleep well tonight too.')
       } catch {
         toast.error('Could not save sleep — try again.')
@@ -338,7 +341,13 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
   return (
     <div className="home-dashboard">
       <ConfettiBurst trigger={confettiTrigger} />
-      <HomeHeader dateIso={home.today} onQuickAdd={handleQuickAdd} />
+      <HomeHeader
+        dateIso={home.today}
+        onQuickAdd={handleQuickAdd}
+        level={home.rings.data?.streak.level}
+        xpIntoLevel={home.rings.data?.xpIntoLevel}
+        xpForNextLevel={home.rings.data?.xpForNextLevel}
+      />
 
       {/* Mobile FAB — fixed bottom-right, hidden on desktop via CSS */}
       {fabOpen && <div className="home-fab-overlay" onClick={() => setFabOpen(false)} aria-hidden="true" />}
@@ -397,6 +406,18 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
       )}
 
       <div className="home-grid">
+        <NonNegotiablesCard
+          loading={home.loading}
+          failed={home.rings.failed}
+          today={home.today}
+          rings={home.rings.data}
+          range={home.ringsRange.data}
+          onLogSleep={() => handleQuickAdd('sleep')}
+          onStartFocus={() => onNavigate('/learnings')}
+          onNavigate={onNavigate}
+          onRetry={() => void home.reloadRings()}
+        />
+
         <TodayHeroCard
           loading={home.loading}
           nutrition={home.nutrition.data}

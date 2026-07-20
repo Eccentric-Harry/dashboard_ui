@@ -74,6 +74,8 @@ export function FocusProvider({ children }: { children: ReactNode }) {
       if (initial <= 0) {
         completeFocusSession().then(() => {
           setSession(prev => prev ? { ...prev, status: 'COMPLETED', endTime: undefined } : null);
+          // Completed minutes can close the DEEP ring.
+          window.dispatchEvent(new CustomEvent('rings-updated'));
         }).catch(() => {});
         return;
       }
@@ -87,6 +89,7 @@ export function FocusProvider({ children }: { children: ReactNode }) {
           clearInterval(tickRef.current);
           completeFocusSession().then(() => {
             setSession(prev => prev ? { ...prev, status: 'COMPLETED', endTime: undefined } : null);
+            window.dispatchEvent(new CustomEvent('rings-updated'));
           }).catch(() => {});
         }
       }, 200);

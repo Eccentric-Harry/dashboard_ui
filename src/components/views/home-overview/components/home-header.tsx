@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { CheckSquare, Droplets, Lightbulb, MessageCircle, Moon, Plus, Trophy, Utensils } from 'lucide-react'
+import { XpBar } from '../../../game/xp-bar'
 import type { QuickCaptureMode } from './quick-capture-card'
 
 // One line per day — deterministic, gentle, never a demand.
@@ -18,9 +19,13 @@ export type QuickAddAction = QuickCaptureMode | 'meal' | 'water' | 'sleep'
 type HomeHeaderProps = {
   dateIso: string
   onQuickAdd: (action: QuickAddAction) => void
+  /** Rings level + XP — rendered only when the rings slice has loaded. */
+  level?: number
+  xpIntoLevel?: number
+  xpForNextLevel?: number
 }
 
-function HomeHeader({ dateIso, onQuickAdd }: HomeHeaderProps) {
+function HomeHeader({ dateIso, onQuickAdd, level, xpIntoLevel, xpForNextLevel }: HomeHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
 
@@ -69,6 +74,11 @@ function HomeHeader({ dateIso, onQuickAdd }: HomeHeaderProps) {
           {greeting}, {name}
         </strong>
         <span className="home-header-line">{dailyLine}</span>
+        {level != null && xpIntoLevel != null && xpForNextLevel != null && (
+          <span className="home-header-xp">
+            <XpBar level={level} xpIntoLevel={xpIntoLevel} xpForNextLevel={xpForNextLevel} />
+          </span>
+        )}
       </div>
 
       <div className="home-header-actions">
