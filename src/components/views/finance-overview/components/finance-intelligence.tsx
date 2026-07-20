@@ -25,9 +25,11 @@ import type { DailyFinancialLog, SubscriptionDTO } from '../../../../lib/api'
 import { inr, isoDate, monthLabel } from '../../../../lib/insights/engine'
 import {
   buildBurndown,
+  buildRestraint,
   categoryTrends,
   financeInsights,
   lendingExposure,
+  monthQuests,
   subscriptionRadar,
 } from '../../../../lib/insights/finance'
 import type {
@@ -37,7 +39,15 @@ import type {
 } from '../../../../lib/insights/finance'
 import { useCountUp } from '../../../../hooks/use-count-up'
 import { InsightList } from '../../../ui/insight-list'
+import { RingDial } from '../../../game/ring-dial'
+import { StreakFlame } from '../../../game/streak-flame'
+import { DayNode } from '../../../game/day-node'
+import type { DayNodeState } from '../../../game/day-node'
 import './finance-intelligence.css'
+
+/** ₹12,450 → "₹12.5k" for the dial centre; full inr() everywhere else. */
+const compactInr = (n: number): string =>
+  n >= 100000 ? `₹${(n / 100000).toFixed(1)}L` : n >= 1000 ? `₹${(n / 1000).toFixed(1)}k` : inr(n)
 
 type FinanceIntelligenceProps = {
   logs: DailyFinancialLog[]
@@ -125,18 +135,20 @@ function FinanceIntelligence({
   )
 
   // Memoized on the data window — recomputes only when data changes or on ↻.
-  const derived = useMemo(
-    () => ({
+  const derived = useMemo(() => {
+    const restraint = buildRestraint(input)
+    return {
       insights: financeInsights(input),
       burndown: buildBurndown(input),
       trends: categoryTrends(input, 4),
       subs: subscriptionRadar(input),
       exposure: lendingExposure(input),
-    }),
-    [input],
-  )
+      restraint,
+      quests: monthQuests(input, restraint),
+    }
+  }, [input])
 
-  const { burndown, trends, subs, exposure, insights } = derived
+  const { burndown, trends, subs, exposure, insights, restraint, quests } = derived
   const safeToSpend = insights.find((i) => i.id === 'fin-safe-to-spend')
   const forecast = insights.find((i) => i.id === 'fin-forecast')
   const listInsights = insights.filter(
@@ -216,10 +228,108 @@ function FinanceIntelligence({
         ? 'good'
         : 'over'
 
+  const overBy = burndown ? Math.max(0, burndown.spent - burndown.budget) : 0
+  const remaining = burndown ? Math.max(0, burndown.budget - burndown.spent) : 0
+
+  const stripState = (day: { noSpend: boolean; underAllowance: boolean; isToday: boolean }): DayNodeState =>
+    day.isToday ? 'today' : day.noSpend ? 'perfect' : day.underAllowance ? 'partial' : 'missed'
+  const stripLabel = (day: { date: string; noSpend: boolean; underAllowance: boolean; isToday: boolean; spend: number }): string =>
+    day.isToday
+      ? `${day.date}: today, ${inr(day.spend)} so far`
+      : day.noSpend
+        ? `${day.date}: no-spend day`
+        : day.underAllowance
+          ? `${day.date}: under allowance (${inr(day.spend)})`
+          : `${day.date}: over allowance (${inr(day.spend)})`
+
   return (
     <section className="finance-card fin-intel" aria-label="Finance intelligence">
       <Wallet className="fin-intel-glyph" aria-hidden="true" />
       <SectionHead months={availableMonths} selectedMonthKey={selectedMonthKey} onMonthChange={onMonthChange} onRefresh={loadSide} />
+
+      {/* ── Restraint panel (Phase 4) — the budget as a ring that drains ── */}
+      {burndown?.isCurrentMonth && restraint && (
+        <div className={`fin-restraint${overBy > 0 ? ' is-over' : ''}`}>
+          <div className="fin-restraint-main">
+            <RingDial
+              drain
+              value={remaining}
+              target={burndown.budget}
+              label="left"
+              accent={overBy > 0 ? 'perfect' : 'move'}
+              size={96}
+              display={compactInr(remaining)}
+              ariaLabel={
+                overBy > 0
+                  ? `Budget: ${inr(overBy)} over this month`
+                  : `Budget: ${inr(remaining)} of ${inr(burndown.budget)} remaining`
+              }
+            />
+            <div className="fin-restraint-copy">
+              {overBy > 0 ? (
+                <p className="fin-restraint-line is-over">
+                  {inr(overBy)} over — next month resets.
+                </p>
+              ) : (
+                <p className="fin-restraint-line">
+                  {inr(remaining)} of {inr(burndown.budget)} still yours.
+                </p>
+              )}
+              <span className="fin-restraint-streak">
+                <StreakFlame
+                  count={restraint.disciplineStreak}
+                  variant={restraint.disciplineStreak === 0 ? 'dormant' : 'live'}
+                  title={`${restraint.disciplineStreak} days at or under ${inr(restraint.dailyAllowance)}/day`}
+                />
+                days under {inr(restraint.dailyAllowance)}/day
+                {restraint.graceUsedThisMonth > 0 && (
+                  <em> · a grace covered {restraint.graceUsedThisMonth === 1 ? 'one day' : `${restraint.graceUsedThisMonth} days`}</em>
+                )}
+              </span>
+              <span className="fin-restraint-nospend">
+                {restraint.noSpendDaysThisMonth > 0
+                  ? `${restraint.noSpendDaysThisMonth} no-spend ${restraint.noSpendDaysThisMonth === 1 ? 'day' : 'days'} this month · +30 XP each`
+                  : 'A no-spend day earns +30 XP.'}
+              </span>
+            </div>
+          </div>
+
+          <div className="fin-restraint-strip" role="list" aria-label="Last 30 days, under or over allowance">
+            {restraint.days.map((day) => (
+              <span key={day.date} role="listitem" className="fin-restraint-day">
+                <DayNode
+                  state={stripState(day)}
+                  date={day.date}
+                  ringsClosed={day.isToday ? 0 : 3}
+                  size={18}
+                  ariaLabel={stripLabel(day)}
+                />
+              </span>
+            ))}
+          </div>
+
+          {quests.length > 0 && (
+            <div className="fin-restraint-quests" role="list" aria-label="Month quests">
+              {quests.map((quest) => {
+                const complete = quest.done >= quest.target
+                return (
+                  <article key={quest.id} className="fin-restraint-quest" role="listitem">
+                    <div className="fin-restraint-quest-head">
+                      <span>{quest.label}</span>
+                      <b className={complete ? 'is-done' : undefined}>
+                        {complete ? '✓' : `${quest.done} of ${quest.target}`}
+                      </b>
+                    </div>
+                    <span className="fin-restraint-quest-bar" aria-hidden="true">
+                      <i style={{ width: `${Math.min(quest.done / quest.target, 1) * 100}%` }} />
+                    </span>
+                  </article>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="fin-intel-grid">
         {/* ── Flagship: safe to spend + burn-down ── */}

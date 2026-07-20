@@ -17,6 +17,12 @@ type RingDialProps = {
   display?: string
   /** Override the derived visual state — e.g. a frozen day. */
   state?: 'closed' | 'open'
+  /**
+   * Drain mode (finance): the ring starts full and depletes — the arc is the
+   * TRUE remaining ratio with no Zeigarnik easing (tension to finish spending
+   * would be perverse), no almost-there breathing, and no closed snap.
+   */
+  drain?: boolean
   onClick?: () => void
   ariaLabel?: string
 }
@@ -39,10 +45,10 @@ function displayRatio(raw: number): number {
  * the 0.70–0.99 band breathe slowly at the arc tip — that is the entire hook.
  * All motion is gated behind prefers-reduced-motion via game-tokens.css.
  */
-function RingDial({ value, target, label, accent, size = 104, display, state, onClick, ariaLabel }: RingDialProps) {
+function RingDial({ value, target, label, accent, size = 104, display, state, drain, onClick, ariaLabel }: RingDialProps) {
   const rawRatio = target > 0 ? value / target : 0
-  const closed = state === 'closed' || (state !== 'open' && rawRatio >= 1)
-  const almost = !closed && rawRatio >= 0.7 && rawRatio < 1
+  const closed = !drain && (state === 'closed' || (state !== 'open' && rawRatio >= 1))
+  const almost = !drain && !closed && rawRatio >= 0.7 && rawRatio < 1
 
   const strokeWidth = Math.max(6, size * 0.085)
   const radius = (size - strokeWidth) / 2 - 2
@@ -57,7 +63,8 @@ function RingDial({ value, target, label, accent, size = 104, display, state, on
     const raf = requestAnimationFrame(() => setMounted(true))
     return () => cancelAnimationFrame(raf)
   }, [])
-  const visualRatio = closed ? 1 : displayRatio(target > 0 ? animatedValue / target : 0)
+  const animatedRaw = target > 0 ? animatedValue / target : 0
+  const visualRatio = closed ? 1 : drain ? Math.min(Math.max(animatedRaw, 0), 1) : displayRatio(animatedRaw)
   const dashOffset = circumference * (1 - (mounted || closed ? visualRatio : 0))
 
   const resolvedAria = ariaLabel ?? `${label}: ${display ?? value}${closed ? ', complete' : ` of ${target}`}`

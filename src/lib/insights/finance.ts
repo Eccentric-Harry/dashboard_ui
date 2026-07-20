@@ -219,6 +219,149 @@ export function buildBurndown(input: FinanceEngineInput): Burndown | null {
   }
 }
 
+// ---------- Restraint layer (Phase 4 quiet gamification) ----------
+// Gamify restraint, never spending: nothing here shames, and no number
+// rewards spending more. Mirrors FINANCE_XP_NO_SPEND in RingsService.
+
+export const FINANCE_XP_NO_SPEND = 30
+
+export interface RestraintDay {
+  date: string
+  spend: number
+  /** At or under that month's per-day allowance (budget / days in month). */
+  underAllowance: boolean
+  /** Completed day with zero expense transactions in a tracked month. */
+  noSpend: boolean
+  isToday: boolean
+}
+
+export interface Restraint {
+  /** The constant per-day line for the selected month: budget / days in month. */
+  dailyAllowance: number
+  /** Last 30 days ending today, ascending — powers the node strip. */
+  days: RestraintDay[]
+  /**
+   * Consecutive days at/under allowance ending today or yesterday. Today in
+   * progress never breaks it; up to 2 over-allowance days per month are
+   * covered by graces (the freeze rule with its own budget — ring freezes
+   * are not double-spent here).
+   */
+  disciplineStreak: number
+  graceUsedThisMonth: number
+  noSpendDaysThisMonth: number
+}
+
+export function buildRestraint(input: FinanceEngineInput): Restraint | null {
+  const budget = input.monthlyBudget ?? 0
+  if (budget <= 0) return null
+
+  const txs = flatten(input.logs)
+  const spendByDate = new Map<string, number>()
+  const loggedMonths = new Set<string>()
+  for (const t of txs) {
+    loggedMonths.add(monthKeyOf(t.date))
+    if (!t.expense) continue
+    spendByDate.set(t.date, (spendByDate.get(t.date) ?? 0) + t.amount)
+  }
+
+  const allowanceFor = (date: string) => budget / daysInMonth(monthKeyOf(date))
+
+  const strip: RestraintDay[] = []
+  for (let i = 29; i >= 0; i--) {
+    const date = addDaysIso(input.today, -i)
+    const spend = spendByDate.get(date) ?? 0
+    const isToday = date === input.today
+    strip.push({
+      date,
+      spend,
+      underAllowance: spend <= allowanceFor(date),
+      // A no-spend day must be finished and belong to a month that was
+      // actually tracked — absence of data alone is not restraint.
+      noSpend: !isToday && spend === 0 && loggedMonths.has(monthKeyOf(date)),
+      isToday,
+    })
+  }
+
+  // Discipline streak: replay the last 60 days ascending with 2 graces/month.
+  let streak = 0
+  let graceLeft = 0
+  let graceUsedCurrentMonth = 0
+  let month = ''
+  for (let i = 59; i >= 0; i--) {
+    const date = addDaysIso(input.today, -i)
+    const m = monthKeyOf(date)
+    if (m !== month) {
+      month = m
+      graceLeft = 2
+      graceUsedCurrentMonth = 0
+    }
+    const under = (spendByDate.get(date) ?? 0) <= allowanceFor(date)
+    if (under) {
+      streak++
+    } else if (date === input.today) {
+      // In progress — at risk, not broken.
+    } else if (streak > 0 && graceLeft > 0) {
+      graceLeft--
+      graceUsedCurrentMonth++
+    } else {
+      streak = 0
+    }
+  }
+
+  const monthDays = strip.filter((d) => monthKeyOf(d.date) === monthKeyOf(input.today))
+  return {
+    dailyAllowance: budget / daysInMonth(monthKeyOf(input.today)),
+    days: strip,
+    disciplineStreak: streak,
+    graceUsedThisMonth: graceUsedCurrentMonth,
+    noSpendDaysThisMonth: monthDays.filter((d) => d.noSpend).length,
+  }
+}
+
+export interface FinanceQuest {
+  id: string
+  label: string
+  done: number
+  target: number
+}
+
+/**
+ * Deterministic month quests from real logs — restraint-framed, no AI, no
+ * randomness. Rendered as thin progress bars in Finance Intelligence.
+ */
+export function monthQuests(input: FinanceEngineInput, restraint: Restraint | null): FinanceQuest[] {
+  const budget = input.monthlyBudget ?? 0
+  if (budget <= 0 || !restraint) return []
+  const elapsed = daysElapsedInMonth(input.monthKey, input.today)
+  if (elapsed === 0) return []
+
+  const monthDays = restraint.days.filter((d) => monthKeyOf(d.date) === input.monthKey)
+  const underDays = monthDays.filter((d) => d.underAllowance).length
+  const calmDays = monthDays.filter((d) => d.spend <= restraint.dailyAllowance * 2).length
+  const counted = Math.min(monthDays.length, elapsed)
+
+  return [
+    {
+      id: 'under-allowance',
+      label: `Stay under ${inr(restraint.dailyAllowance)}/day`,
+      done: Math.min(underDays, counted),
+      target: counted,
+    },
+    {
+      id: 'no-spend-days',
+      label: 'Three no-spend days',
+      done: Math.min(restraint.noSpendDaysThisMonth, 3),
+      target: 3,
+    },
+    {
+      id: 'no-blowouts',
+      label: `Every day under ${inr(restraint.dailyAllowance * 2)}`,
+      done: Math.min(calmDays, counted),
+      target: counted,
+    },
+  ]
+}
+
 // ---------- Category trends (UI bars + rule share one computation) ----------
 
 export interface CategoryTrend {

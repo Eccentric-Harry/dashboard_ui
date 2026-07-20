@@ -56,13 +56,16 @@ import {
   fetchCalendarItemsForRange,
   fetchGoogleAuthUrl,
   fetchGoogleSyncStatus,
+  fetchRingsRange,
   pushLocalEventsToGoogle,
   toggleCalendarItem,
   toggleCancelCalendarItem,
   triggerGoogleSync,
   updateCalendarItem,
 } from '../../../lib/api'
-import type { CalendarItem, CalendarItemPayload, CalendarItemType, CalendarRecurrence, GoogleCalendarAccount, GoogleSyncStatus } from '../../../lib/api'
+import type { CalendarItem, CalendarItemPayload, CalendarItemType, CalendarRecurrence, DailyRing, GoogleCalendarAccount, GoogleSyncStatus } from '../../../lib/api'
+import { DayNode } from '../../game/day-node'
+import type { DayNodeState } from '../../game/day-node'
 import { ConfirmDialog } from '../../ui/confirm-dialog'
 import { MiniMonth } from '../../ui/mini-month'
 import { getRoutineIconDetails } from './routine-icon-helper'
@@ -407,7 +410,10 @@ type ModalState =
   | { open: false; item?: never; date?: never }
   | { open: true; item?: CalendarItem; date: string }
 
-const CalendarSkeleton = ({ viewType }: { viewType: 'daily' | 'weekly' | 'monthly' }) => {
+/** The four calendar view modes — 'journey' is the rings-backed progress path. */
+type CalendarViewType = 'daily' | 'weekly' | 'monthly' | 'journey'
+
+const CalendarSkeleton = ({ viewType }: { viewType: CalendarViewType }) => {
   return (
     <div className={`calendar-skeleton view-${viewType}`}>
       {/* Header / Navigation row skeleton */}
@@ -417,7 +423,17 @@ const CalendarSkeleton = ({ viewType }: { viewType: 'daily' | 'weekly' | 'monthl
         <div className="skeleton-pill skeleton-btn" />
       </div>
 
-      {viewType === 'monthly' ? (
+      {viewType === 'journey' ? (
+        <div className="skeleton-journey">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div
+              key={i}
+              className="skeleton-journey-node"
+              style={{ transform: `translateX(${[0, 64, 0, -64][i % 4]}px)` }}
+            />
+          ))}
+        </div>
+      ) : viewType === 'monthly' ? (
         <div className="skeleton-monthly-grid">
           <div className="skeleton-month-header">
             {Array.from({ length: 7 }).map((_, i) => (
@@ -475,6 +491,264 @@ const CalendarSkeleton = ({ viewType }: { viewType: 'daily' | 'weekly' | 'monthl
   )
 }
 
+// ───────────────────────── Journey view (Phase 3) ─────────────────────────
+// The calendar's fourth view mode: history as a winding vertical path of
+// DayNodes fed by GET /rings/range — Duolingo's lesson-path grammar in the
+// app's pastel glass. Read-only over ring data; the recurrence engine,
+// completedDates/excludedDates, and Google sync are untouched. Tapping a day
+// hands off to the existing day view via the caller's date handler.
+
+const JOURNEY_PAST_DAYS = 83
+const JOURNEY_FUTURE_DAYS = 6
+const JOURNEY_ROW_H = 64
+
+type JourneyDay = {
+  date: string
+  state: DayNodeState
+  ringsClosed: number
+  xp: number
+  perfect: boolean
+  /** First of a month — gets a milestone diamond on the path. */
+  monthStart: boolean
+}
+
+type JourneyWeek = {
+  startDate: string
+  days: JourneyDay[]
+  perfectCount: number
+  xp: number
+  inFuture: boolean
+}
+
+/** Winding-trail x-offset: centre → right → centre → left, per global day index. */
+const journeyOffset = (index: number, amplitude: number): number =>
+  [0, amplitude, 0, -amplitude][index % 4]
+
+function JourneyView({ onSelectDay }: { onSelectDay: (date: string) => void }) {
+  const [rings, setRings] = useState<DailyRing[] | null>(null)
+  const [status, setStatus] = useState<'loading' | 'ready' | 'failed'>('loading')
+  const todayRef = useRef<HTMLDivElement | null>(null)
+  const todayIso = toISODate(new Date())
+
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches,
+  )
+  useEffect(() => {
+    const query = window.matchMedia('(max-width: 768px)')
+    const handle = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    query.addEventListener('change', handle)
+    return () => query.removeEventListener('change', handle)
+  }, [])
+
+  const load = useCallback(async () => {
+    setStatus('loading')
+    try {
+      const start = parseISODate(todayIso)
+      start.setDate(start.getDate() - JOURNEY_PAST_DAYS)
+      const end = parseISODate(todayIso)
+      end.setDate(end.getDate() + JOURNEY_FUTURE_DAYS)
+      const res = await fetchRingsRange(toISODate(start), toISODate(end))
+      setRings(res.data)
+      setStatus('ready')
+    } catch {
+      setStatus('failed')
+    }
+  }, [todayIso])
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void load()
+  }, [load])
+
+  useEffect(() => {
+    const handle = () => {
+      void load()
+    }
+    window.addEventListener('rings-updated', handle)
+    return () => window.removeEventListener('rings-updated', handle)
+  }, [load])
+
+  // ~90 days, Monday-aligned, chunked into week sections.
+  const weeks = useMemo<JourneyWeek[]>(() => {
+    const byDate = new Map((rings ?? []).map((r) => [r.date, r]))
+    const start = parseISODate(todayIso)
+    start.setDate(start.getDate() - JOURNEY_PAST_DAYS)
+    start.setDate(start.getDate() - ((start.getDay() + 6) % 7)) // back to Monday
+    const end = parseISODate(todayIso)
+    end.setDate(end.getDate() + JOURNEY_FUTURE_DAYS)
+
+    const days: JourneyDay[] = []
+    for (const d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const iso = toISODate(d)
+      const ring = byDate.get(iso) ?? null
+      let state: DayNodeState = 'missed'
+      if (iso === todayIso) state = 'today'
+      else if (iso > todayIso) state = 'future'
+      else if (ring?.frozen) state = 'frozen'
+      else if (ring?.perfect) state = 'perfect'
+      else if ((ring?.ringsClosed ?? 0) > 0) state = 'partial'
+      days.push({
+        date: iso,
+        state,
+        ringsClosed: ring?.ringsClosed ?? 0,
+        xp: ring?.xpEarned ?? 0,
+        perfect: ring?.perfect ?? false,
+        monthStart: iso.endsWith('-01'),
+      })
+    }
+
+    const result: JourneyWeek[] = []
+    for (let i = 0; i < days.length; i += 7) {
+      const chunk = days.slice(i, i + 7)
+      result.push({
+        startDate: chunk[0].date,
+        days: chunk,
+        perfectCount: chunk.filter((x) => x.perfect).length,
+        xp: chunk.reduce((sum, x) => sum + (x.state === 'future' ? 0 : x.xp), 0),
+        inFuture: chunk[0].date > todayIso,
+      })
+    }
+    return result
+  }, [rings, todayIso])
+
+  // Land with today centred. scrollIntoView lets the engine pick the real
+  // scroller — the journey pane on desktop, the page on stacked mobile flow.
+  const journeyRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    if (status !== 'ready') return
+    const timer = setTimeout(() => {
+      todayRef.current?.scrollIntoView({ block: 'center' })
+    }, 80)
+    return () => clearTimeout(timer)
+  }, [status])
+
+  const amplitude = isMobile ? 36 : 64
+  const colWidth = isMobile ? 220 : 320
+  const nodeSize = isMobile ? 44 : 34
+  const todaySize = isMobile ? 52 : 48
+
+  const weekLabel = (iso: string) =>
+    parseISODate(iso).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })
+  const monthLabel = (iso: string) =>
+    parseISODate(iso).toLocaleDateString('en-US', { month: 'long' })
+  const isQuarterStart = (iso: string) => ['-01-01', '-04-01', '-07-01', '-10-01'].some((s) => iso.endsWith(s))
+
+  /** Solid path through completed days, dashed continuation into the future. */
+  const weekPaths = (week: JourneyWeek, weekIndex: number) => {
+    const point = (i: number) => ({
+      x: colWidth / 2 + journeyOffset(weekIndex * 7 + i, amplitude),
+      y: i * JOURNEY_ROW_H + JOURNEY_ROW_H / 2,
+    })
+    let solid = ''
+    let dashed = ''
+    for (let i = 0; i < week.days.length - 1; i++) {
+      const a = point(i)
+      const b = point(i + 1)
+      const midY = (a.y + b.y) / 2
+      const segment = `M ${a.x} ${a.y} C ${a.x} ${midY}, ${b.x} ${midY}, ${b.x} ${b.y}`
+      if (week.days[i + 1].date <= todayIso) solid += ` ${segment}`
+      else dashed += ` ${segment}`
+    }
+    return { solid: solid.trim(), dashed: dashed.trim() }
+  }
+
+  if (status === 'loading') {
+    return (
+      <div className="calendar-journey" aria-label="Journey loading">
+        <div className="calendar-journey-lane" style={{ width: colWidth }}>
+          {Array.from({ length: 8 }, (_, i) => (
+            <span
+              key={i}
+              className="skeleton-shimmer calendar-journey-skel-node"
+              style={{ transform: `translateX(${journeyOffset(i, amplitude)}px)` }}
+            />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (status === 'failed') {
+    return (
+      <div className="calendar-journey calendar-journey--empty">
+        <p>Couldn't load the journey right now.</p>
+        <button type="button" className="view-tab" onClick={() => void load()}>
+          Retry
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="calendar-journey" aria-label="Journey — one node per day" ref={journeyRef}>
+      {weeks.map((week, weekIndex) => {
+        const paths = weekPaths(week, weekIndex)
+        return (
+          <section key={week.startDate} className="calendar-journey-week">
+            <header className="calendar-journey-week-head">
+              <b>Week of {weekLabel(week.startDate)}</b>
+              {!week.inFuture && (
+                <span>
+                  · {week.perfectCount} of {week.days.length} perfect · {week.xp} XP
+                </span>
+              )}
+            </header>
+
+            <div
+              className="calendar-journey-path"
+              style={{ width: colWidth, height: week.days.length * JOURNEY_ROW_H }}
+            >
+              <svg
+                className="calendar-journey-trail"
+                width={colWidth}
+                height={week.days.length * JOURNEY_ROW_H}
+                viewBox={`0 0 ${colWidth} ${week.days.length * JOURNEY_ROW_H}`}
+                aria-hidden="true"
+              >
+                {paths.solid && <path className="calendar-journey-trail-solid" d={paths.solid} />}
+                {paths.dashed && <path className="calendar-journey-trail-dashed" d={paths.dashed} />}
+              </svg>
+
+              {week.days.map((day, i) => {
+                const isToday = day.state === 'today'
+                return (
+                  <div
+                    key={day.date}
+                    ref={isToday ? todayRef : undefined}
+                    className={`calendar-journey-node${isToday ? ' is-today' : ''}`}
+                    style={{
+                      top: i * JOURNEY_ROW_H + JOURNEY_ROW_H / 2,
+                      left: colWidth / 2 + journeyOffset(weekIndex * 7 + i, amplitude),
+                    }}
+                  >
+                    {day.monthStart && (
+                      <span
+                        className={`calendar-journey-milestone${isQuarterStart(day.date) ? ' is-quarter' : ''}`}
+                        aria-label={`${monthLabel(day.date)} begins`}
+                      >
+                        <i aria-hidden="true" />
+                        {monthLabel(day.date)}
+                      </span>
+                    )}
+                    {isToday && <span className="calendar-journey-start">START</span>}
+                    <DayNode
+                      state={day.state}
+                      date={day.date}
+                      ringsClosed={day.ringsClosed}
+                      size={isToday ? todaySize : nodeSize}
+                      onClick={day.state === 'future' ? undefined : () => onSelectDay(day.date)}
+                    />
+                  </div>
+                )
+              })}
+            </div>
+          </section>
+        )
+      })}
+    </div>
+  )
+}
+
 function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOverviewDashboardProps) {
   const [selectedDate, setSelectedDate] = useState(() => {
     const fromParams = searchParams.get('date')
@@ -499,7 +773,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     return () => window.removeEventListener('mobile-quick-add', handler)
   }, [selectedDate])
 
-  const [viewType, setViewType] = useState<'daily' | 'weekly' | 'monthly'>(() => {
+  const [viewType, setViewType] = useState<CalendarViewType>(() => {
     if (typeof window !== 'undefined' && window.innerWidth <= 820) {
       return 'daily'
     }
@@ -1162,7 +1436,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
             </div>
 
             <div className="view-switcher-tabs">
-              {(['daily', 'weekly', 'monthly'] as const).map((view) => (
+              {(['daily', 'weekly', 'monthly', 'journey'] as const).map((view) => (
                 <button
                   key={view}
                   type="button"
@@ -1198,7 +1472,14 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
 
           {/* Stage Calendar Body Grid */}
           <div className="stage-grid-canvas" ref={canvasContainerRef}>
-            {viewType === 'monthly' ? (
+            {viewType === 'journey' ? (
+              <JourneyView
+                onSelectDay={(date) => {
+                  updateSelectedDate(date)
+                  setViewType('daily')
+                }}
+              />
+            ) : viewType === 'monthly' ? (
               <MonthViewGrid />
             ) : (
               <div className={`calendar-grid-scrollable view-${viewType}`} ref={weeklyScrollContainerRef}>

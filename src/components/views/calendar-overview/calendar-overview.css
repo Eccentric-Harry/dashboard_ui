@@ -4189,3 +4189,219 @@ body.calendar-modal-open .mobile-profile-trigger {
   display: none !important;
 }
 
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   JOURNEY VIEW (.calendar-journey-*) — Phase 3 quiet gamification.
+   Appended as one block per the repo rule for this 4k-line file; everything
+   stays under the .calendar-dashboard prefix. The winding day-node path is
+   rendered by JourneyView in calendar-overview-dashboard.tsx from rings data;
+   node visuals come from the shared DayNode primitive (components/game/).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.calendar-dashboard .calendar-journey {
+  height: 100%;
+  overflow-y: auto;
+  padding: 4px 16px 40px;
+  scrollbar-width: thin;
+}
+
+.calendar-dashboard .calendar-journey--empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: rgba(23, 28, 25, 0.6);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.calendar-dashboard .calendar-journey-lane {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 34px;
+  margin: 24px auto 0;
+}
+
+.calendar-dashboard .calendar-journey-skel-node {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+}
+
+.calendar-dashboard .calendar-journey-week {
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+/* Sticky glass week header — "Week of 13 Jul · 5 of 7 perfect · 480 XP". */
+.calendar-dashboard .calendar-journey-week-head {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0 auto 6px;
+  padding: 8px 16px;
+  width: fit-content;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 999px;
+  background: rgba(250, 252, 247, 0.78);
+  backdrop-filter: blur(14px) saturate(160%);
+  box-shadow: 0 8px 22px rgba(45, 60, 48, 0.08);
+  font-size: 11.5px;
+  color: rgba(23, 28, 25, 0.55);
+  font-weight: 700;
+}
+
+.calendar-dashboard .calendar-journey-week-head b {
+  color: #17211c;
+  font-weight: 800;
+}
+
+.calendar-dashboard .calendar-journey-path {
+  position: relative;
+  /* Headroom so a START label on a Monday (row 0) clears the sticky header. */
+  margin: 26px auto 0;
+}
+
+.calendar-dashboard .calendar-journey-trail {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.calendar-dashboard .calendar-journey-trail-solid,
+.calendar-dashboard .calendar-journey-trail-dashed {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.calendar-dashboard .calendar-journey-trail-solid {
+  stroke: rgba(138, 168, 50, 0.4); /* --game-deep at trail strength */
+}
+
+.calendar-dashboard .calendar-journey-trail-dashed {
+  stroke: var(--game-locked);
+  stroke-dasharray: 2 7;
+}
+
+/* One absolutely-positioned wrapper per day, centred on its path point. */
+.calendar-dashboard .calendar-journey-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Floating START label above today's node — the current-node treatment. */
+.calendar-dashboard .calendar-journey-start {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(23, 27, 21, 0.92);
+  color: var(--game-perfect);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  white-space: nowrap;
+  box-shadow: 0 8px 18px rgba(23, 27, 21, 0.25);
+  animation: calendar-journey-float 2.4s ease-in-out infinite;
+}
+
+.calendar-dashboard .calendar-journey-start::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: rgba(23, 27, 21, 0.92);
+}
+
+@keyframes calendar-journey-float {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-3px); }
+}
+
+/* Month milestone — a diamond silhouette riding the path at each month start. */
+.calendar-dashboard .calendar-journey-milestone {
+  position: absolute;
+  right: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(23, 28, 25, 0.5);
+  white-space: nowrap;
+}
+
+.calendar-dashboard .calendar-journey-milestone i {
+  width: 10px;
+  height: 10px;
+  transform: rotate(45deg);
+  border-radius: 2px;
+  background: var(--game-streak-soft);
+  border: 1.5px solid var(--game-streak);
+}
+
+.calendar-dashboard .calendar-journey-milestone.is-quarter i {
+  background: var(--game-deep-soft);
+  border-color: var(--game-deep);
+  width: 12px;
+  height: 12px;
+}
+
+/* Skeleton variant used by CalendarSkeleton when journey is active. */
+.calendar-dashboard .skeleton-journey {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 34px;
+  padding-top: 28px;
+}
+
+.calendar-dashboard .skeleton-journey-node {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(26, 31, 29, 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .calendar-dashboard .calendar-journey-start {
+    animation: none;
+  }
+  .calendar-dashboard .calendar-journey {
+    scroll-behavior: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .calendar-dashboard .calendar-journey {
+    padding: 4px 10px 96px; /* clear the bottom tab bar */
+  }
+
+  .calendar-dashboard .calendar-journey-week-head {
+    font-size: 10.5px;
+    padding: 7px 13px;
+  }
+
+  /* Milestone labels tuck above the node instead of the (missing) left rail. */
+  .calendar-dashboard .calendar-journey-milestone {
+    right: auto;
+    left: calc(100% + 10px);
+  }
+}
