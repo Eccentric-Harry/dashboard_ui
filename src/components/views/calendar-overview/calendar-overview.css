@@ -2744,11 +2744,6 @@
   color: #0d9488;
 }
 
-.grid-header-day-card.is-today .day-number-pill {
-  background-color: #0d9488 !important;
-  color: #ffffff !important;
-}
-
 /* Grid Body Canvas holding lines and columns absolute layer */
 .grid-body-canvas {
   position: relative;
@@ -2855,11 +2850,6 @@
   color: #374151 !important;
 }
 
-.grid-event-card:hover {
-  transform: scale(1.02);
-  z-index: 10;
-}
-
 .grid-event-card.is-active {
   z-index: 10;
 }
@@ -2903,6 +2893,25 @@
 .event-time svg {
   flex-shrink: 0;
   margin-top: -1px;
+}
+
+/* Short events don't have room to stack title above time — run them on one
+   line instead so the time never gets clipped by the card's overflow:hidden. */
+.event-card-content.is-compact .event-details-top {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.event-card-content.is-compact .event-title {
+  -webkit-line-clamp: 1;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.event-card-content.is-compact .event-time {
+  flex: 0 0 auto;
+  margin-top: 0;
 }
 
 .event-avatar-stack {

@@ -277,14 +277,12 @@ function renderAvatarStack(attendees: Array<{ name: string; avatar: string }>) {
   )
 }
 
-function getThreeDays(dateStr: string) {
+function getTwoDays(dateStr: string) {
   const selected = parseISODate(dateStr)
-  const d1 = new Date(selected)
-  d1.setDate(selected.getDate() - 1)
-  
-  return Array.from({ length: 3 }, (_, idx) => {
-    const d = new Date(d1)
-    d.setDate(d1.getDate() + idx)
+
+  return Array.from({ length: 2 }, (_, idx) => {
+    const d = new Date(selected)
+    d.setDate(selected.getDate() + idx)
     return d
   })
 }
@@ -436,22 +434,22 @@ const CalendarSkeleton = ({ viewType }: { viewType: 'daily' | 'weekly' | 'monthl
       ) : (
         <>
           {/* Grid header skeleton */}
-          <div className="skeleton-grid-header" style={{ gridTemplateColumns: `56px repeat(${viewType === 'weekly' ? 3 : 1}, minmax(0, 1fr))` }}>
+          <div className="skeleton-grid-header" style={{ gridTemplateColumns: `56px repeat(${viewType === 'weekly' ? 2 : 1}, minmax(0, 1fr))` }}>
             <div className="skeleton-tz-box" />
-            {Array.from({ length: viewType === 'weekly' ? 3 : 1 }).map((_, i) => (
+            {Array.from({ length: viewType === 'weekly' ? 2 : 1 }).map((_, i) => (
               <div key={i} className="skeleton-day-card" />
             ))}
           </div>
 
           {/* Grid body skeleton */}
-          <div className="skeleton-grid-body" style={{ gridTemplateColumns: `56px repeat(${viewType === 'weekly' ? 3 : 1}, minmax(0, 1fr))` }}>
+          <div className="skeleton-grid-body" style={{ gridTemplateColumns: `56px repeat(${viewType === 'weekly' ? 2 : 1}, minmax(0, 1fr))` }}>
             <div className="skeleton-time-column">
               {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="skeleton-time-slot" />
               ))}
             </div>
-            <div className="skeleton-columns" style={{ gridColumn: `span ${viewType === 'weekly' ? 3 : 1}`, gridTemplateColumns: `repeat(${viewType === 'weekly' ? 3 : 1}, minmax(0, 1fr))` }}>
-              {Array.from({ length: viewType === 'weekly' ? 3 : 1 }).map((_, i) => (
+            <div className="skeleton-columns" style={{ gridColumn: `span ${viewType === 'weekly' ? 2 : 1}`, gridTemplateColumns: `repeat(${viewType === 'weekly' ? 2 : 1}, minmax(0, 1fr))` }}>
+              {Array.from({ length: viewType === 'weekly' ? 2 : 1 }).map((_, i) => (
                 <div key={i} className="skeleton-column">
                   {i === 0 && (
                     <>
@@ -927,25 +925,15 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     }
   }, [items, upcomingItems, upcomingCardIndex])
 
-  const threeDays = useMemo(() => getThreeDays(selectedDate), [selectedDate])
+  const twoDays = useMemo(() => getTwoDays(selectedDate), [selectedDate])
   
   const weekItemsByDay = useMemo(() => {
-    return threeDays.map((d) => {
+    return twoDays.map((d) => {
       const iso = toISODate(d)
       const dayItems = filteredItems.filter((item) => item.date === iso)
       return dayItems.sort(compareItems)
     })
-  }, [threeDays, filteredItems])
-
-  const currentItem = useMemo(() => findCurrentItem(selectedItems, selectedDate), [selectedDate, selectedItems])
-  const selectedItem = useMemo(() => {
-    if (selectedItemKey) {
-      const explicit = filteredItems.find((item) => itemKey(item) === selectedItemKey)
-      if (explicit) return explicit
-    }
-    if (currentItem && !currentItem.completed) return currentItem
-    return selectedItems.find((item) => !item.completed) ?? selectedItems[0] ?? null
-  }, [currentItem, selectedItemKey, selectedItems, filteredItems])
+  }, [twoDays, filteredItems])
 
   const activeItem = useMemo(() => {
     if (selectedItemKey) {
@@ -1148,7 +1136,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
               {/* Navigation & view selection row */}
           <div className="stage-navigation-row">
             <div className="date-range-navigator">
-              <button type="button" className="nav-arrow" onClick={() => handleStep(viewType === 'weekly' ? -3 : -1)}>
+              <button type="button" className="nav-arrow" onClick={() => handleStep(viewType === 'weekly' ? -2 : -1)}>
                 <ChevronLeft size={16} />
               </button>
               <h2 className="range-title">
@@ -1156,7 +1144,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                   ? formatSelectedDateHeader(selectedDate)
                   : parseISODate(selectedDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
               </h2>
-              <button type="button" className="nav-arrow" onClick={() => handleStep(viewType === 'weekly' ? 3 : 1)}>
+              <button type="button" className="nav-arrow" onClick={() => handleStep(viewType === 'weekly' ? 2 : 1)}>
                 <ChevronRight size={16} />
               </button>
             </div>
@@ -1169,7 +1157,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                   className={`view-tab ${viewType === view ? 'is-selected' : ''}`}
                   onClick={() => setViewType(view)}
                 >
-                  {view === 'weekly' ? '3-Day' : view.charAt(0).toUpperCase() + view.slice(1)}
+                  {view === 'weekly' ? '2-Day' : view.charAt(0).toUpperCase() + view.slice(1)}
                 </button>
               ))}
             </div>
@@ -1203,11 +1191,11 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
             ) : (
               <div className={`calendar-grid-scrollable view-${viewType}`} ref={weeklyScrollContainerRef}>
                 {/* Day Columns Header */}
-                <div className="grid-header-days" style={{ gridTemplateColumns: `56px repeat(${viewType === 'weekly' ? 3 : 1}, minmax(0, 1fr))` }}>
+                <div className="grid-header-days" style={{ gridTemplateColumns: `56px repeat(${viewType === 'weekly' ? 2 : 1}, minmax(0, 1fr))` }}>
                   <div className="grid-header-tz">
                     <span>{viewType === 'weekly' ? 'GMT+5:30' : 'Time'}</span>
                   </div>
-                  {(viewType === 'weekly' ? threeDays : [parseISODate(selectedDate)]).map((d, dayIdx) => {
+                  {(viewType === 'weekly' ? twoDays : [parseISODate(selectedDate)]).map((d, dayIdx) => {
                     const iso = toISODate(d)
                     const isSelected = iso === selectedDate
                     const isToday = iso === toISODate(new Date())
@@ -1235,7 +1223,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                           <div className="all-day-events-container" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                             {dayAllDayItems.map((item) => {
                               const cardStyles = getEventStyleClasses(item)
-                              const isActive = selectedItem && itemKey(item) === itemKey(selectedItem)
+                              const isActive = activeItem && itemKey(item) === itemKey(activeItem)
                               return (
                                 <button
                                   type="button"
@@ -1286,9 +1274,9 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                     ))}
                   </div>
 
-                  <div className="grid-columns-container" style={{ gridTemplateColumns: `56px repeat(${viewType === 'weekly' ? 3 : 1}, minmax(0, 1fr))` }}>
+                  <div className="grid-columns-container" style={{ gridTemplateColumns: `56px repeat(${viewType === 'weekly' ? 2 : 1}, minmax(0, 1fr))` }}>
                     <div className="time-column-spacer" />
-                    {(viewType === 'weekly' ? threeDays : [parseISODate(selectedDate)]).map((d, dayIdx) => {
+                    {(viewType === 'weekly' ? twoDays : [parseISODate(selectedDate)]).map((d, dayIdx) => {
                       const iso = toISODate(d)
                       const dayItems = viewType === 'weekly' ? weekItemsByDay[dayIdx] : selectedItems
                       const positioned = getPositionedItems(dayItems)
@@ -1296,7 +1284,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                         <div key={iso} className="grid-day-column">
                           {positioned.map(({ item, top, height, width, left }) => {
                             const status = getItemStatus(item, iso)
-                            const isActive = selectedItem && itemKey(item) === itemKey(selectedItem)
+                            const isActive = activeItem && itemKey(item) === itemKey(activeItem)
                             const isAllDay = item.allDay || !item.startTime
                             const cardStyles = getEventStyleClasses(item)
                             return (
@@ -1328,7 +1316,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                                     <strong className="event-title">{item.title}</strong>
                                   </div>
                                 ) : (
-                                  <div className="event-card-content">
+                                  <div className={`event-card-content ${height < 46 ? 'is-compact' : ''}`}>
                                     <div className="event-details-top">
                                       <strong className="event-title">{item.title}</strong>
                                       <span className="event-time">
@@ -1566,7 +1554,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
               selectedDate={selectedDate}
               onSelect={handleDateSelect}
               allowFuture
-              highlightedRange={viewType === 'weekly' ? threeDays.map((d) => toISODate(d)) : undefined}
+              highlightedRange={viewType === 'weekly' ? twoDays.map((d) => toISODate(d)) : undefined}
             />
           </div>
 
@@ -2363,17 +2351,6 @@ function compareItems(a: CalendarItem, b: CalendarItem) {
   return (a.startTime ?? '99:99').localeCompare(b.startTime ?? '99:99')
 }
 
-function findCurrentItem(items: CalendarItem[], selectedDate: string) {
-  if (selectedDate !== toISODate(new Date())) return null
-  const now = new Date().getHours() * 60 + new Date().getMinutes()
-  return items.find((item) => {
-    if (!item.startTime) return false
-    const start = timeToMinutes(item.startTime)
-    const end = item.endTime ? timeToMinutes(item.endTime) : start + 60
-    return now >= start && now < end
-  }) ?? null
-}
-
 function getItemStatus(item: CalendarItem, selectedDate: string) {
   if (item.cancelled) return 'cancelled'
   if (item.completed) return 'past'
@@ -2528,20 +2505,27 @@ function getPositionedItems(dayItems: CalendarItem[]): PositionedItem[] {
   }
   
   const totalCols = columns.length
+  const GAP_PX = 4
   columns.forEach((colItems, colIdx) => {
-    colItems.forEach((item) => {
+    colItems.forEach((item, itemIdx) => {
       const { top, height, isAllDay } = calculateTimeStyles(item)
+      // calculateTimeStyles enforces a minimum readable height for short
+      // events, which can otherwise run past the start of the next stacked
+      // item even though their times don't actually overlap — clamp it.
+      const nextItem = colItems[itemIdx + 1]
+      const maxHeight = nextItem ? calculateTimeStyles(nextItem).top - top - GAP_PX : height
+      const clampedHeight = Math.max(24, Math.min(height, maxHeight))
       result.push({
         item,
         top,
-        height,
+        height: clampedHeight,
         width: `${100 / totalCols}%`,
         left: `${(colIdx * 100) / totalCols}%`,
         isAllDay
       })
     })
   })
-  
+
   return result
 }
 
