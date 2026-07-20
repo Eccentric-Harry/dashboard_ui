@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { fetchNutritionSummary } from '../../../../lib/api'
 import { useDashboard } from '../../../../contexts/DashboardContext'
+import { RingDial } from '../../../game/ring-dial'
 import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip, ReferenceLine } from 'recharts'
 
 type TrendPoint = {
@@ -190,8 +191,22 @@ function ProteinTrendCard() {
           <strong>{weeklyTotal}g</strong>
           <small>this week</small>
         </div>
+        {/* Protein-to-goal ring — the one metric that earns Zeigarnik tension. */}
+        <span className="ntr-protein-ring">
+          <RingDial
+            value={latestPoint.grams}
+            target={proteinTarget}
+            label="Protein"
+            accent="deep"
+            size={72}
+            display={`${latestPoint.grams}g`}
+            ariaLabel={`Protein today: ${latestPoint.grams}g of ${proteinTarget}g goal${latestPoint.grams >= proteinTarget ? ', complete' : ''}`}
+          />
+        </span>
         <div className="ntr-tap-stats">
-          <div className="ntr-tap-stat">
+          {/* The ring carries today's grams (plus goal context) on desktop;
+              the stat returns on phones where the ring hides. */}
+          <div className="ntr-tap-stat ntr-tap-stat--today">
             <span>today</span>
             <b>{latestPoint.grams}g</b>
           </div>

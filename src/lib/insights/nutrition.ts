@@ -276,6 +276,70 @@ export function loggedDayCount(input: NutritionEngineInput, window = 7): number 
   return input.days.slice(-window).filter((d) => d.logged).length
 }
 
+// ---------- Fuel XP + weekly quests (quiet gamification, Phase 2) ----------
+
+// Mirrors FUEL_XP_* in the backend RingsService — the server banks these into
+// DailyRing.fuelXp; the header line is a client-side display of the same rule.
+export const FUEL_XP_PER_MEAL = 10
+export const FUEL_XP_PROTEIN_GOAL = 25
+
+/** The day's fuel XP: +10 per logged meal, +25 when protein met the goal. */
+export function fuelXpForDay(mealCount: number, proteinGrams: number, proteinGoal: number | null): number {
+  const goalMet = proteinGoal != null && proteinGoal > 0 && proteinGrams >= proteinGoal
+  return mealCount * FUEL_XP_PER_MEAL + (goalMet ? FUEL_XP_PROTEIN_GOAL : 0)
+}
+
+export interface NutritionQuest {
+  id: string
+  /** e.g. "Protein goal 5 of 7 days" */
+  label: string
+  done: number
+  target: number
+}
+
+/**
+ * Three deterministic weekly goals over the last 7 days of real data — no AI,
+ * no randomness, and no quest whose inputs are missing (a hydration quest
+ * without hydration data would be fake progress). Falls back to a plain
+ * logging quest so the strip always has three honest rows.
+ */
+export function weeklyQuests(input: NutritionEngineInput): NutritionQuest[] {
+  const week = input.days.slice(-7)
+  const quests: NutritionQuest[] = []
+
+  if (input.proteinGoal != null && input.proteinGoal > 0) {
+    const goal = input.proteinGoal
+    const done = week.filter((d) => d.logged && d.protein >= goal).length
+    quests.push({ id: 'protein-days', label: 'Protein goal 5 of 7 days', done: Math.min(done, 5), target: 5 })
+  }
+
+  // Meal-level data (entries path only; the summary path has no meal types).
+  const hasMealDetail = week.some((d) => d.meals.length > 0)
+  if (hasMealDetail) {
+    const done = week.filter((d) => d.meals.some((m) => m.mealType.toLowerCase() === 'breakfast')).length
+    quests.push({ id: 'breakfasts', label: 'Log every breakfast', done, target: 7 })
+  }
+
+  if (input.hydration && input.hydration.length > 0) {
+    const weekDates = new Set(week.map((d) => d.date))
+    const done = input.hydration.filter(
+      (h) => weekDates.has(h.date) && h.targetMl > 0 && h.waterIntakeMl >= h.targetMl,
+    ).length
+    quests.push({ id: 'hydration-days', label: 'Hit hydration 4 days', done: Math.min(done, 4), target: 4 })
+  }
+
+  if (quests.length < 3) {
+    quests.push({
+      id: 'logging-days',
+      label: 'Log meals all 7 days',
+      done: week.filter((d) => d.logged).length,
+      target: 7,
+    })
+  }
+
+  return quests.slice(0, 3)
+}
+
 // ---------- Rules ----------
 
 const HEALTHY_PROTEIN_BAND: [number, number] = [15, 25]

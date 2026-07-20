@@ -2,9 +2,12 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { CalendarCheck, ChevronDown, LoaderCircle, X, Plus } from 'lucide-react'
 import { useDashboard } from '../../../../contexts/DashboardContext'
 import { fetchFoodEntries } from '../../../../lib/api'
+import { fuelXpForDay } from '../../../../lib/insights/nutrition'
 import { isStandalone } from '../../../../lib/utils'
 import { MiniMonth } from '../../../ui/mini-month'
+import { StreakFlame } from '../../../game/streak-flame'
 import { getFoodIconDetails } from './food-icon-helper'
+import { computeLoggingStreak, getFoodHistory } from './food-history'
 
 type FoodEntry = {
   id?: string
@@ -97,6 +100,31 @@ interface NutritionHeaderProps {
 function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
   const { data } = useDashboard()
   const foodEntries = useMemo<FoodEntry[]>(() => data?.health?.foodEntries || [], [data?.health?.foodEntries])
+
+  // Logging streak — computeLoggingStreak over the shared 15s-cached history
+  // (never a second fetchFoodEntries(365)). Rendered at ≥2 days.
+  const [loggingStreak, setLoggingStreak] = useState(0)
+  useEffect(() => {
+    let active = true
+    getFoodHistory()
+      .then((entries) => {
+        if (active) setLoggingStreak(computeLoggingStreak(entries))
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [foodEntries.length])
+
+  // Quiet fuel-XP line for the selected day — a display of the same rule the
+  // backend banks into DailyRing.fuelXp (+10/meal, +25 protein goal).
+  const fuelXp = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const circularGoals = (data?.health?.circularGoals || []) as any[]
+    const proteinGoal = circularGoals.find((g) => g?.label === 'Protein')
+    const proteinSum = foodEntries.reduce((sum, e) => sum + (Number(e.proteinGrams) || 0), 0)
+    return fuelXpForDay(foodEntries.length, proteinSum, Number(proteinGoal?.target) || null)
+  }, [foodEntries, data?.health?.circularGoals])
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
   const [pickedDate, setPickedDate] = useState<string | null>(null)
   const [pickedDateEntries, setPickedDateEntries] = useState<FoodEntry[]>([])
@@ -263,7 +291,10 @@ function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
   return (
     <header className="ntr-header">
       <div className="nutrition-date-picker" ref={calendarRef}>
-        <p className="ntr-eyebrow">Nutrition Overview · {foodEntries.length} meals logged</p>
+        <p className="ntr-eyebrow">
+          Nutrition Overview · {foodEntries.length} meals logged
+          {fuelXp > 0 && <span className="ntr-fuel-xp"> · +{fuelXp} XP fuel</span>}
+        </p>
         <button
           type="button"
           className="ntr-title-btn"
@@ -373,6 +404,12 @@ function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
       </div>
 
       <div className="ntr-header-right">
+        {loggingStreak >= 2 && (
+          <span className="ntr-streak-pill" title={`${loggingStreak} days of logged meals in a row`}>
+            <StreakFlame count={loggingStreak} variant="live" />
+            day streak
+          </span>
+        )}
         {onAddClick && (
           <button type="button" onClick={onAddClick} className="ntr-add-btn">
             <span className="ntr-add-ic">

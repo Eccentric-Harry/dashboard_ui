@@ -570,3 +570,72 @@
     width: 100%;
   }
 }
+
+/* ── Weekly quests strip (Phase 2) — three deterministic 7-day goals ── */
+
+.ntr-quests {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.ntr-quest {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid #eae9e0;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(23, 27, 21, 0.03), 0 10px 30px rgba(23, 27, 21, 0.05);
+}
+
+.ntr-quest-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ntr-ink, #171b15);
+}
+
+.ntr-quest-head b {
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(23, 27, 21, 0.55);
+  white-space: nowrap;
+}
+
+.ntr-quest-head b.is-done {
+  color: var(--game-deep);
+}
+
+.ntr-quest-bar {
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(23, 27, 21, 0.07);
+  overflow: hidden;
+}
+
+.ntr-quest-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--ntr-lime, #cfe965);
+  transition: width 0.5s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ntr-quest-bar i {
+    transition: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .ntr-quests {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}

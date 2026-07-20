@@ -1945,3 +1945,51 @@
   }
 
 }
+
+/* ── Quiet gamification (Phase 2) — additive only, no --ntr-* value changes ──
+   Streak pill finally has a live consumer (shared StreakFlame inside the
+   existing lime chrome), a quiet fuel-XP note on the eyebrow, and the
+   protein-to-goal RingDial on the weekly trend's accent panel. */
+
+.ntr-fuel-xp {
+  color: var(--game-deep);
+  font-weight: 800;
+}
+
+/* The lime pill supplies the chrome; the flame renders bare inside it. */
+.ntr-streak-pill .game-streak-flame {
+  background: transparent;
+  padding: 0;
+  color: #8a5a12;
+  font-size: 12px;
+}
+
+.ntr-protein-ring {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+/* Soft track reads poorly on the lime gradient — borrow the panel's ink. */
+.ntr-protein-ring .game-ring-track {
+  stroke: rgba(255, 255, 255, 0.55);
+}
+
+.ntr-protein-ring .game-ring-center strong {
+  font-size: 12px;
+}
+
+/* The ring shows today's grams with goal context, so the plain "today" stat
+   yields its slot on desktop and returns on phones where the ring hides. */
+.ntr-trend .ntr-tap-stat--today {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .ntr-protein-ring {
+    display: none; /* the accent panel is tight on phones */
+  }
+
+  .ntr-trend .ntr-tap-stat--today {
+    display: flex; /* restores the base .ntr-tap-stat column layout */
+  }
+}

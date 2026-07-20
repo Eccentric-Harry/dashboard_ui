@@ -33,6 +33,7 @@ import {
   proteinGapSummary,
   proteinLeaderboard,
   weekComparison,
+  weeklyQuests,
 } from '../../../../lib/insights/nutrition'
 import type { AdherenceDay, FoodEntryLike, HydrationDayLike, NutritionEngineInput } from '../../../../lib/insights/nutrition'
 import { useCountUp } from '../../../../hooks/use-count-up'
@@ -157,6 +158,7 @@ function NutritionIntelligence() {
       weeks: weekComparison(input),
       leaderboard: proteinLeaderboard(input, 6),
       loggedLast7: loggedDayCount(input, 7),
+      quests: weeklyQuests(input),
     }
   }, [input])
 
@@ -227,7 +229,7 @@ function NutritionIntelligence() {
     )
   }
 
-  const { gap, split, adherence, weeks, leaderboard, insights } = derived
+  const { gap, split, adherence, weeks, leaderboard, insights, quests } = derived
   const listInsights = insights.filter((i) => i.id !== 'ntr-protein-gap')
   const pctOfGoal = gap ? Math.round((gap.avg7 / gap.goal) * 100) : null
   const onTrack = pctOfGoal != null && pctOfGoal >= 95
@@ -248,6 +250,29 @@ function NutritionIntelligence() {
   return (
     <section className="ntr-intel" aria-label="Nutrition intelligence">
       <SectionHead onRefresh={load} />
+
+      {/* ── Weekly quests — three deterministic goals over the last 7 days ── */}
+      {quests.length > 0 && (
+        <div className="ntr-quests" role="list" aria-label="Weekly quests">
+          {quests.map((quest) => {
+            const ratio = Math.min(quest.done / quest.target, 1)
+            const complete = quest.done >= quest.target
+            return (
+              <article key={quest.id} className="ntr-quest" role="listitem">
+                <div className="ntr-quest-head">
+                  <span>{quest.label}</span>
+                  <b className={cn(complete && 'is-done')}>
+                    {complete ? '✓' : `${quest.done}/${quest.target}`}
+                  </b>
+                </div>
+                <span className="ntr-quest-bar" aria-hidden="true">
+                  <i style={{ width: `${ratio * 100}%` }} />
+                </span>
+              </article>
+            )
+          })}
+        </div>
+      )}
 
       <div className="ntr-intel-grid">
         {/* ── Flagship: chronic protein gap ── */}

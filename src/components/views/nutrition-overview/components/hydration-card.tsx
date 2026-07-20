@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import { fetchHydration, addWaterIntake } from '../../../../lib/api'
 import type { HydrationData } from '../../../../lib/api'
 import { useDashboard } from '../../../../contexts/DashboardContext'
+import { ConfettiBurst, useCelebration } from '../../../game/celebrate'
 
 const TARGET_ML = 4000
 const GLASS_ML = 250
@@ -44,6 +45,8 @@ function HydrationCard() {
   const [adding, setAdding] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [bounceBtn, setBounceBtn] = useState<string | null>(null)
+  // Goal-hit celebration through the shared game plumbing — once per day.
+  const { confettiTrigger, celebrate } = useCelebration()
 
   const loadHydration = useCallback(async () => {
     try {
@@ -70,10 +73,16 @@ function HydrationCard() {
     setTimeout(() => setBounceBtn(null), 400)
     try {
       setAdding(true)
+      const before = data?.waterIntakeMl ?? 0
+      const targetNow = data?.targetMl ?? TARGET_ML
       await addWaterIntake(amount, selectedDate)
       toast.success(`${amount > 0 ? 'Logged' : 'Removed'} ${Math.abs(amount)}ml of water`)
       const response = await fetchHydration(selectedDate)
       setData(response.data)
+      const after = response.data?.waterIntakeMl ?? 0
+      if (before < targetNow && after >= targetNow) {
+        celebrate('hydration', selectedDate)
+      }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       toast.error(err.message || 'Failed to log water')
@@ -116,6 +125,7 @@ function HydrationCard() {
 
   return (
     <section className="ntr-card ntr-hydro" aria-label="Daily hydration">
+      <ConfettiBurst trigger={confettiTrigger} />
       <div className="ntr-card-head">
         <div>
           <p className="ntr-eyebrow">Daily Hydration</p>
