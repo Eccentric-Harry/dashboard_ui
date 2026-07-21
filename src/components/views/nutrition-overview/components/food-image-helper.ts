@@ -57,6 +57,22 @@ import blackCoffeeMug from '../../../../assets/food/pastel/black_coffee_17837510
 import cookiesPlate from '../../../../assets/food/pastel/cookies_1783751076940.png'
 import spriteGlass from '../../../../assets/food/pastel/sprite_glass_1783751129701.png'
 import bhindiSabzi from '../../../../assets/food/pastel/bhindi_sabzi_1783751173982.png'
+
+// Fourth batch (13 newly generated custom dish images)
+import paneerBagelSandwich from '../../../../assets/food/pastel/paneer_bagel_sandwich_1784647890279.png'
+import rajmaChawal from '../../../../assets/food/pastel/rajma_chawal_1784647905958.png'
+import mixedFruitJuice from '../../../../assets/food/pastel/mixed_fruit_juice_1784647924285.png'
+import sambarRice from '../../../../assets/food/pastel/sambar_rice_fryums_1784647942825.png'
+import paneerBiryani from '../../../../assets/food/pastel/paneer_biryani_1784647964043.png'
+import chocolateWaffle from '../../../../assets/food/pastel/chocolate_waffle_1784647983011.png'
+import appleJuice from '../../../../assets/food/pastel/apple_juice_1784648000468.png'
+import aamPanna from '../../../../assets/food/pastel/aam_panna_1784648021990.png'
+import chilliPaneerNaan from '../../../../assets/food/pastel/chilli_paneer_naan_1784648044026.png'
+import malaiKoftaThali from '../../../../assets/food/pastel/malai_kofta_thali_1784648066524.png'
+import choleBhatura from '../../../../assets/food/pastel/chole_bhatura_1784648087262.png'
+import vegFriedRice from '../../../../assets/food/pastel/veg_fried_rice_1784648114037.png'
+import chocolateSundae from '../../../../assets/food/pastel/chocolate_sundae_1784648143789.png'
+
 export type FoodImage = {
   src: string
   alt: string
@@ -67,6 +83,20 @@ type FoodImageRule = FoodImage & { pattern: RegExp }
 // Ordered — first match wins. More specific dishes come before broad
 // categories (e.g. "curry" before "rice" so combo plates get the curry shot).
 const RULES: FoodImageRule[] = [
+  // Fourth batch rules (most specific dish matches)
+  { pattern: /bagel/i, src: paneerBagelSandwich, alt: 'Paneer bagel sandwich' },
+  { pattern: /rajma chawal|rajma.*chawal/i, src: rajmaChawal, alt: 'Rajma chawal bowl' },
+  { pattern: /mixed fruit juice/i, src: mixedFruitJuice, alt: 'Mixed fruit juice' },
+  { pattern: /sambar rice/i, src: sambarRice, alt: 'Sambar rice with fryums' },
+  { pattern: /paneer biryani/i, src: paneerBiryani, alt: 'Paneer biryani' },
+  { pattern: /waffle/i, src: chocolateWaffle, alt: 'Belgian chocolate waffle' },
+  { pattern: /apple juice/i, src: appleJuice, alt: 'Fresh apple juice' },
+  { pattern: /aam panna|panna/i, src: aamPanna, alt: 'Aam panna with pumpkin seeds' },
+  { pattern: /chilli paneer/i, src: chilliPaneerNaan, alt: 'Chilli paneer with butter naan' },
+  { pattern: /malai kofta/i, src: malaiKoftaThali, alt: 'Malai kofta thali' },
+  { pattern: /bhatura|chole bhatura/i, src: choleBhatura, alt: 'Chole bhatura' },
+  { pattern: /fried rice/i, src: vegFriedRice, alt: 'Vegetable fried rice' },
+  { pattern: /sundae/i, src: chocolateSundae, alt: 'Chocolate sundae' },
   // Third batch mappings
   { pattern: /medu vada|vada/i, src: meduVada, alt: 'Medu vada with chutney' },
   { pattern: /aloo paratha|paratha/i, src: alooParatha, alt: 'Aloo paratha' },
