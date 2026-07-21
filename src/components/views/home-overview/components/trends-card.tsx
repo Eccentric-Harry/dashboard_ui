@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Brain, CheckSquare, Flame, Moon, TrendingUp } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '../../../../lib/utils'
@@ -56,12 +57,31 @@ function halfTrend(series: (number | null)[]): Trend | null {
     : { arrow: '▼', text: `${pct}%`, tone: 'watch' }
 }
 
-/** Dependency-free area sparkline; nulls become gaps so unlogged days don't lie flat. */
-function Sparkline({ id, series }: { id: string; series: (number | null)[] }) {
+/** "Mon 14 Jul" — the day a hovered point belongs to. */
+function dayLabel(dateIso: string): string {
+  const date = new Date(`${dateIso}T00:00:00`)
+  return date.toLocaleDateString('en', { weekday: 'short', day: 'numeric', month: 'short' })
+}
+
+/** Dependency-free area sparkline; nulls become gaps so unlogged days don't lie flat.
+    Hover (or press, on touch) snaps a guide to the nearest logged day and floats
+    its value above the line — the tile footer only ever shows the aggregate. */
+function Sparkline({
+  id,
+  series,
+  dates,
+  format,
+}: {
+  id: string
+  series: (number | null)[]
+  dates: string[]
+  format: (n: number) => string
+}) {
+  const [active, setActive] = useState<number | null>(null)
+
   const points = series
     .map((v, i) => ({ v, i }))
     .filter((p): p is { v: number; i: number } => p.v != null)
-  if (points.length < 2) return null
 
   const w = 100
   const h = 34
@@ -73,22 +93,67 @@ function Sparkline({ id, series }: { id: string; series: (number | null)[] }) {
   const x = (i: number) => (i / lastX) * w
   const y = (v: number) => pad + (1 - (v - min) / span) * (h - 2 * pad)
 
+  if (points.length < 2) return null
+
   const line = points.map((p, k) => `${k ? 'L' : 'M'}${x(p.i).toFixed(1)} ${y(p.v).toFixed(1)}`).join(' ')
   const first = points[0]
   const last = points[points.length - 1]
   const area = `${line} L${x(last.i).toFixed(1)} ${h} L${x(first.i).toFixed(1)} ${h} Z`
 
+  // Nearest logged day to the pointer, in viewBox space (preserveAspectRatio
+  // is "none", so both axes map linearly onto the rendered box).
+  const track = (event: React.PointerEvent<SVGSVGElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect()
+    if (rect.width === 0) return
+    const cursor = ((event.clientX - rect.left) / rect.width) * w
+    let nearest = 0
+    for (let k = 1; k < points.length; k += 1) {
+      if (Math.abs(x(points[k].i) - cursor) < Math.abs(x(points[nearest].i) - cursor)) nearest = k
+    }
+    setActive(nearest)
+  }
+
+  const hovered = active != null ? points[active] : null
+  // Keep the pill inside the tile at either end of the line.
+  const tipLeft = hovered ? Math.min(Math.max(x(hovered.i), 16), 84) : 0
+
   return (
-    <svg
-      className={cn('home-trend-spark', `home-trend--${id}`)}
-      viewBox={`0 0 ${w} ${h}`}
-      preserveAspectRatio="none"
-      aria-hidden="true"
-    >
-      <path className="home-trend-area" d={area} />
-      <path className="home-trend-line" d={line} vectorEffect="non-scaling-stroke" />
-      <circle className="home-trend-dot" cx={x(last.i)} cy={y(last.v)} r={2.2} />
-    </svg>
+    <div className={cn('home-trend-sparkwrap', `home-trend--${id}`)}>
+      <svg
+        className="home-trend-spark"
+        viewBox={`0 0 ${w} ${h}`}
+        preserveAspectRatio="none"
+        aria-hidden="true"
+        onPointerMove={track}
+        onPointerDown={track}
+        onPointerLeave={() => setActive(null)}
+        onPointerCancel={() => setActive(null)}
+        onPointerUp={() => setActive(null)}
+      >
+        <path className="home-trend-area" d={area} />
+        <path className="home-trend-line" d={line} vectorEffect="non-scaling-stroke" />
+        <circle className="home-trend-dot" cx={x(last.i)} cy={y(last.v)} r={2.2} />
+        {hovered && (
+          <>
+            <line
+              className="home-trend-guide"
+              x1={x(hovered.i)}
+              y1={0}
+              x2={x(hovered.i)}
+              y2={h}
+              vectorEffect="non-scaling-stroke"
+            />
+            <circle className="home-trend-dot is-active" cx={x(hovered.i)} cy={y(hovered.v)} r={3} />
+          </>
+        )}
+      </svg>
+      {hovered && (
+        <span className="home-trend-tip" style={{ left: `${tipLeft}%` }} role="status">
+          <b>{format(hovered.v)}</b>
+          {dayLabel(dates[hovered.i])}
+        </span>
+      )}
+    </div>
   )
 }
 
@@ -146,7 +211,12 @@ function TrendsCard({ loading, records }: TrendsCardProps) {
                 </header>
 
                 {tile.hasData ? (
-                  <Sparkline id={tile.id} series={tile.series} />
+                  <Sparkline
+                    id={tile.id}
+                    series={tile.series}
+                    dates={records.map((r) => r.date)}
+                    format={tile.format}
+                  />
                 ) : (
                   <div className="home-trend-spark-empty" aria-hidden="true" />
                 )}

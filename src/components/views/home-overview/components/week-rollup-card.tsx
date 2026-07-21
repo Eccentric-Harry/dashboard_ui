@@ -12,8 +12,6 @@ type WeekRollupCardProps = {
   prevWeekRecords: DayRecord[]
   nutrition: NutritionSummary | null
   spending: SpendingSummary | null
-  /** Engine-computed budget-left ÷ days-left, current month only. */
-  safePerDay: number | null
 }
 
 type Tone = 'good' | 'watch' | 'flat'
@@ -52,7 +50,6 @@ function WeekRollupCard({
   prevWeekRecords,
   nutrition,
   spending,
-  safePerDay,
 }: WeekRollupCardProps) {
   const sum = (records: DayRecord[], pick: (r: DayRecord) => number) =>
     records.reduce((total, r) => total + pick(r), 0)
@@ -160,7 +157,7 @@ function WeekRollupCard({
     },
   ]
 
-  const allZero = tiles.every((t) => t.isZero) && safePerDay == null
+  const allZero = tiles.every((t) => t.isZero)
 
   return (
     <section className="home-card home-card--rollup" aria-label="This week">
@@ -170,13 +167,6 @@ function WeekRollupCard({
           <span className="home-card-eyebrow">This week</span>
           <h2 className="home-card-title">You showed up</h2>
         </div>
-        {safePerDay != null && (
-          <span className={cn('home-safe-chip', safePerDay === 0 && 'is-watch')}>
-            <Wallet size={13} strokeWidth={2.4} />
-            <b>₹{safePerDay.toLocaleString('en-IN')}</b>
-            <small>safe to spend/day</small>
-          </span>
-        )}
       </header>
 
       {loading ? (

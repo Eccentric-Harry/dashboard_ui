@@ -173,12 +173,9 @@ function TodayHeroCard({
           <p className="ntr-eyebrow">Today · Day loop</p>
           <h2>{loopPhrase(dayScore, now.getHours())}</h2>
         </div>
-        {focusRunning ? (
-          <span className="ntr-pill dark home-pill-live">
-            <i className="home-live-dot" aria-hidden="true" />
-            Session running
-          </span>
-        ) : overdueCount > 0 ? (
+        {/* No focus-session pill here — the running state already shows on the
+            gauge button and the Focus row, so a third copy just repeats itself. */}
+        {overdueCount > 0 ? (
           <span className="ntr-pill dark home-pill-urgent">
             <AlertTriangle size={12} strokeWidth={2.5} />
             {overdueCount} overdue

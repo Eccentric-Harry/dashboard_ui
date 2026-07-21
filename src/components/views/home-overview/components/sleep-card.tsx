@@ -14,12 +14,12 @@ import {
 
 const QUALITY_LABELS = ['Rough', 'Poor', 'Okay', 'Good', 'Great'] as const
 
-/* Periwinkle bar fills — deeper as the night gets closer to target,
+/* Slate-blue bar fills — deeper as the night gets closer to target,
    so the chart itself reads "how good was the week" at a glance. */
-const BAR_ON_TARGET = '#6b74cb'
-const BAR_UNDER = '#a9b0e8'
-const BAR_LAST_NIGHT = '#4d56ae'
-const BAR_MISSING = 'rgba(35, 38, 77, 0.1)'
+const BAR_ON_TARGET = '#6d9cbe'
+const BAR_UNDER = '#a9c6da'
+const BAR_LAST_NIGHT = '#43799e'
+const BAR_MISSING = 'rgba(30, 61, 82, 0.1)'
 
 type SleepCardProps = {
   loading: boolean
@@ -42,9 +42,23 @@ type SleepPoint = {
   wakeTime: string | null
 }
 
-function qualityClass(quality?: number | null): string {
-  if (!quality) return 'q-none'
-  return `q-${quality}`
+/** Quality as a labelled 5-segment meter — a bare colored dot read as
+    decoration and needed a hover to mean anything. */
+function QualityMeter({ quality }: { quality?: number | null }) {
+  const label = quality ? QUALITY_LABELS[quality - 1] : 'Not rated'
+  return (
+    <span
+      className={cn('home-sleep-quality', !quality && 'is-unrated')}
+      aria-label={`Sleep quality: ${label}`}
+    >
+      <span className="home-sleep-quality-meter" aria-hidden="true">
+        {[1, 2, 3, 4, 5].map((step) => (
+          <i key={step} className={cn(quality != null && step <= quality && 'is-on')} />
+        ))}
+      </span>
+      {label}
+    </span>
+  )
 }
 
 /** Mean of "HH:MM" clock times around an anchor hour, so 23:50 and 00:20
@@ -249,10 +263,7 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
                   {latest.bedtime} → {latest.wakeTime}
                 </small>
               </div>
-              <span
-                className={cn('home-sleep-quality-dot', qualityClass(latest.quality))}
-                title={latest.quality ? `Quality: ${QUALITY_LABELS[latest.quality - 1]}` : 'Quality not set'}
-              />
+              <QualityMeter quality={latest.quality} />
               <div className="ntr-tap-stats">
                 <div className="ntr-tap-stat">
                   <span>avg week</span>
@@ -357,15 +368,15 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
                       tick={{ fill: 'rgba(23, 27, 21, 0.42)', fontSize: 10, fontWeight: 650 }}
                     />
                     <YAxis hide domain={[0, chartMax]} />
-                    <Tooltip content={<SleepTooltip />} cursor={{ fill: 'rgba(35, 38, 77, 0.05)' }} />
+                    <Tooltip content={<SleepTooltip />} cursor={{ fill: 'rgba(30, 61, 82, 0.05)' }} />
                     <ReferenceLine
                       y={SLEEP_TARGET_MINUTES}
-                      stroke="rgba(35, 38, 77, 0.3)"
+                      stroke="rgba(30, 61, 82, 0.3)"
                       strokeDasharray="5 6"
                       label={{
                         position: 'insideTopRight',
                         value: `TARGET ${SLEEP_TARGET_HOURS}H`,
-                        fill: 'rgba(35, 38, 77, 0.45)',
+                        fill: 'rgba(30, 61, 82, 0.45)',
                         fontSize: 8.5,
                         fontWeight: 800,
                         letterSpacing: '0.06em',
@@ -376,7 +387,11 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
                       radius={[8, 8, 3, 3]}
                       maxBarSize={30}
                       minPointSize={4}
-                      isAnimationActive={isMounted && !window.matchMedia('(prefers-reduced-motion: reduce)').matches}
+                      /* Off deliberately: the card flex-grows to its neighbour's
+                         height, and a ResponsiveContainer resize mid-animation
+                         (recharts 3.8) leaves the bar paths empty — the chart
+                         then renders as an axis with no bars at all. */
+                      isAnimationActive={false}
                     >
                       {series.map((point) => (
                         <Cell key={point.date} fill={barFill(point)} />

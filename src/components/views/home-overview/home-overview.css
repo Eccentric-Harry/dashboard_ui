@@ -282,20 +282,24 @@
   border: 1px solid rgba(255, 255, 255, 0.54);
   border-radius: 26px;
   background: rgba(250, 252, 247, 0.72);
-  box-shadow: 0 22px 52px rgba(45, 60, 48, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  /* No drop shadow: the ambient blooms behind the grid made each card cast a
+     grey halo onto its neighbour. Separation comes from the hairline border
+     and the lighter surface instead — only the inner top highlight stays. */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78);
   backdrop-filter: blur(18px);
   padding: 22px;
   display: flex;
   flex-direction: column;
   gap: 14px;
   animation: home-card-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), background 0.28s ease;
 }
 
-/* Cards lift slightly on hover — calm, evening-dashboard subtle */
+/* Cards lift slightly on hover — calm, evening-dashboard subtle. The lift
+   now reads through the surface brightening, not a shadow. */
 .home-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 28px 58px rgba(45, 60, 48, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  background: rgba(252, 253, 249, 0.86);
 }
 
 @keyframes home-card-in {
@@ -443,20 +447,6 @@
   margin: 0 0 2px;
 }
 
-/* Live pill — soft lavender dot breathing inside the dark pill */
-.home-pill-live .home-live-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--ntr-lime);
-  animation: home-live-blink 1.8s ease-in-out infinite;
-}
-
-@keyframes home-live-blink {
-  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(188, 195, 242, 0.6); }
-  50% { opacity: 0.75; transform: scale(0.82); box-shadow: 0 0 0 4px rgba(188, 195, 242, 0); }
-}
-
 /* Overdue status pill — same red as .home-overdue-chip, promoted to the header */
 .home-pill-urgent {
   background: #c03546;
@@ -470,14 +460,14 @@
   align-items: center;
   padding: 20px 22px 18px;
   border-radius: 22px;
-  /* warm porcelain — calmer than the old periwinkle; domain accents and
-     the dark ink arc carry the color instead of the panel itself */
-  background: linear-gradient(160deg, #f7f3e8 0%, #efe7d4 55%, #e5dabd 100%);
+  /* periwinkle — swapped with the sleep card, which now carries the cool
+     blue; the dark ink arc and domain accents still lead the color story */
+  background: linear-gradient(160deg, #e9ebfb 0%, #d9dcf7 58%, #c9cdf1 100%);
   overflow: hidden;
 }
 
 .home-hero-panel.is-skeleton {
-  background: linear-gradient(160deg, rgba(247, 243, 232, 0.7), rgba(229, 218, 189, 0.4));
+  background: linear-gradient(160deg, rgba(233, 235, 251, 0.7), rgba(201, 205, 241, 0.4));
 }
 
 /* Loop closed for the day — a slow gold sheen sweeps the panel once,
@@ -817,6 +807,7 @@
 
 .home-card--sleep { grid-column: span 3; }
 .home-card--insights { grid-column: span 3; }
+.home-card--activity { grid-column: span 6; }
 .home-card--trends { grid-column: span 6; }
 .home-card--capture { grid-column: span 2; }
 .home-card--rollup { grid-column: span 6; }
@@ -837,16 +828,17 @@
   gap: 12px;
   padding: 14px 16px;
   border-radius: 20px;
-  background: linear-gradient(150deg, #e9ebfb 0%, #d9dcf7 58%, #c9cdf1 100%);
+  /* cool porcelain blue — swapped with the day-loop hero panel */
+  background: linear-gradient(150deg, #f4f8fb 0%, #e6eff6 55%, #d4e3ee 100%);
 }
 
 .home-sleep-accent .ntr-tap-big strong {
   font-size: 34px;
-  color: #23264d;
+  color: #1e3d52;
 }
 
 .home-sleep-accent .ntr-tap-big small {
-  color: rgba(35, 38, 77, 0.6);
+  color: rgba(30, 61, 82, 0.6);
   letter-spacing: 0.06em;
 }
 
@@ -855,23 +847,54 @@
 }
 
 .home-sleep-accent .ntr-tap-stat span {
-  color: rgba(35, 38, 77, 0.55);
+  color: rgba(30, 61, 82, 0.55);
 }
 
 .home-sleep-accent .ntr-tap-stat b {
-  color: #23264d;
+  color: #1e3d52;
 }
 
 .home-sleep-accent .ntr-tap-stat b.is-watch {
   color: #9a5a10;
 }
 
-.home-sleep-quality-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 1px solid rgba(26, 31, 29, 0.18);
-  align-self: center;
+/* Quality meter — segments count the rating, the word says it outright,
+   so nothing depends on decoding a color. */
+.home-sleep-quality {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 7px;
+  padding: 5px 11px 5px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  color: #1e3d52;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.home-sleep-quality.is-unrated {
+  color: rgba(30, 61, 82, 0.5);
+}
+
+.home-sleep-quality-meter {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2.5px;
+}
+
+.home-sleep-quality-meter i {
+  width: 3px;
+  height: 11px;
+  border-radius: 2px;
+  background: rgba(30, 61, 82, 0.16);
+}
+
+.home-sleep-quality-meter i.is-on {
+  background: #4a7fa3;
 }
 
 /* Quality scale reuses the mood pastel ramp — one meaning across the app */
@@ -894,7 +917,7 @@
   padding: 7px 11px;
   border-radius: 10px;
   background: #171b15;
-  color: #cdd2f5;
+  color: #cfe1ee;
   font-size: 11.5px;
   font-weight: 650;
   line-height: 1.5;
@@ -903,7 +926,7 @@
 
 .home-sleep-tooltip small {
   display: block;
-  color: rgba(205, 210, 245, 0.66);
+  color: rgba(207, 225, 238, 0.66);
   font-size: 10px;
   font-weight: 600;
 }
@@ -923,14 +946,14 @@
   gap: 2px;
   padding: 10px 12px;
   border-radius: 14px;
-  background: rgba(86, 95, 184, 0.07);
+  background: rgba(74, 127, 163, 0.09);
 }
 
 .home-sleep-fact small {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  color: rgba(35, 38, 77, 0.6);
+  color: rgba(30, 61, 82, 0.6);
   font-size: 9px;
   font-weight: 800;
   text-transform: uppercase;
@@ -939,11 +962,11 @@
 
 .home-sleep-fact small svg {
   flex-shrink: 0;
-  color: #565fb8;
+  color: #4a7fa3;
 }
 
 .home-sleep-fact b {
-  color: #23264d;
+  color: #1e3d52;
   font-size: 13.5px;
   font-weight: 750;
   letter-spacing: -0.01em;
@@ -1049,6 +1072,266 @@
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+/* ---------- Movement (latest activity) ----------
+   Two halves: the last recorded session as a sage accent panel (the Sleep
+   card's accent grammar, tinted for movement), and a week read — a 7-day
+   dot strip plus distance/moving/streak chips. Strava is the source, so the
+   panel only ever restates what the /workouts route already holds. */
+
+.home-activity-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: stretch;
+}
+
+.home-activity-latest {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px 15px;
+  border: 0;
+  border-radius: 20px;
+  text-align: left;
+  cursor: pointer;
+  color: #223a2a;
+  background: linear-gradient(150deg, #eff5ec 0%, #e2eddf 55%, #d1e4ce 100%);
+  transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+}
+
+.home-activity-latest:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px rgba(45, 60, 48, 0.14);
+}
+
+.home-activity-latest:active {
+  transform: translateY(1px);
+}
+
+.home-activity-top {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.home-activity-ic {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.7);
+  color: #3d6b52;
+}
+
+.home-activity-name {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.home-activity-name b {
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-activity-name small {
+  color: rgba(34, 58, 42, 0.62);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.home-activity-sport {
+  margin-left: auto;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.62);
+  color: rgba(34, 58, 42, 0.72);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.home-activity-headline {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.home-activity-headline strong {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.home-activity-headline em {
+  font-style: normal;
+  color: rgba(34, 58, 42, 0.58);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.home-activity-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  /* pins to the panel floor so the two halves stay level as the card grows */
+  margin-top: auto;
+}
+
+.home-activity-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.home-activity-metric span {
+  color: rgba(34, 58, 42, 0.55);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.home-activity-metric b {
+  font-size: 12.5px;
+  font-weight: 750;
+}
+
+/* Week half */
+
+.home-activity-week {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 15px 15px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.44);
+}
+
+.home-activity-week-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+}
+
+.home-activity-week-head span {
+  color: rgba(23, 28, 25, 0.6);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.home-activity-week-head b {
+  color: #17211c;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.home-activity-strip {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.home-activity-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  color: rgba(23, 28, 25, 0.42);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.home-activity-day i {
+  width: 17px;
+  height: 17px;
+  border-radius: 7px;
+  background: rgba(26, 31, 29, 0.09);
+}
+
+.home-activity-day.is-on i {
+  background: #9db892;
+}
+
+.home-activity-day.is-on {
+  color: rgba(23, 28, 25, 0.7);
+}
+
+.home-activity-day.is-today i {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9), 0 0 0 3.5px rgba(61, 107, 82, 0.45);
+}
+
+.home-activity-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: auto;
+}
+
+.home-activity-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 8px 10px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.home-activity-stat span {
+  color: rgba(23, 28, 25, 0.55);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.home-activity-stat b {
+  color: #17211c;
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+.home-activity-foot {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  color: rgba(23, 28, 25, 0.6);
+  font-size: 10.5px;
+  font-weight: 650;
+}
+
+/* Stacks below the two-column breakpoint the rest of Home uses */
+@media (max-width: 900px) {
+  .home-activity-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* ---------- Insights ----------
@@ -1162,11 +1445,64 @@
 .home-trend-pill.tone-watch { background: rgba(138, 80, 9, 0.12); color: #8a5009; }
 .home-trend-pill.tone-flat { background: rgba(23, 28, 25, 0.06); color: rgba(23, 28, 25, 0.5); }
 
+/* Sparkline + its hover read-out. The wrapper is the positioning context for
+   the floating pill; the pill itself never intercepts the pointer, so moving
+   across the line can't flicker the tooltip it just opened. */
+.home-trend-sparkwrap {
+  position: relative;
+}
+
 .home-trend-spark {
   display: block;
   width: 100%;
   height: 34px;
   overflow: visible;
+  cursor: crosshair;
+  /* vertical scroll must still win over tracking on touch */
+  touch-action: pan-y;
+}
+
+.home-trend-guide {
+  stroke: var(--trend-accent, #526057);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+  opacity: 0.45;
+}
+
+.home-trend-tip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  z-index: 4;
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 5px 9px;
+  border-radius: 10px;
+  background: #171b15;
+  color: rgba(244, 247, 240, 0.7);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateX(-50%);
+  box-shadow: 0 6px 16px rgba(23, 27, 21, 0.22);
+  animation: home-trend-tip-in 0.13s ease-out;
+}
+
+.home-trend-tip b {
+  color: #fafcf7;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes home-trend-tip-in {
+  from { opacity: 0; transform: translate(-50%, 3px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
 }
 
 .home-trend-area {
@@ -1187,6 +1523,10 @@
   fill: var(--trend-accent, #526057);
   stroke: #fafcf7;
   stroke-width: 1.4;
+}
+
+.home-trend-dot.is-active {
+  stroke-width: 1.8;
 }
 
 /* Placeholder baseline for a vital with too little data to draw a line */
@@ -1229,7 +1569,7 @@
   color: rgba(23, 28, 25, 0.4);
 }
 
-.home-trend--sleep { --trend-accent: #33377c; --trend-tint: #d9dcf7; }
+.home-trend--sleep { --trend-accent: #2c5c78; --trend-tint: #d7e6f0; }
 .home-trend--focus { --trend-accent: #4d56ae; --trend-tint: #e3e5f9; }
 .home-trend--mood { --trend-accent: #6f66b0; --trend-tint: #e7e5f6; }
 .home-trend--tasks { --trend-accent: #2f6b4b; --trend-tint: #dcefe3; }
@@ -1463,60 +1803,10 @@
 /* ---------- Week rollup ----------
    The Nutrition "This week vs last" tile pattern (.ntr-intel-week-delta):
    compact tinted tiles — icon chip, big number, week-over-week delta,
-   caps label — one accent per life domain. Safe-to-spend rides in the
-   head as a lavender highlight chip. */
+   caps label — one accent per life domain. */
 
 .home-card--rollup {
   padding-bottom: 18px;
-}
-
-/* Ghost chip — hairline border, tinted icon disc, no fill */
-.home-safe-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 14px 5px 6px;
-  border: 1px solid rgba(26, 31, 29, 0.12);
-  border-radius: 999px;
-  background: transparent;
-  color: #17211c;
-}
-
-.home-safe-chip svg {
-  box-sizing: content-box;
-  flex-shrink: 0;
-  padding: 6px;
-  border-radius: 50%;
-  background: #d8ece7;
-  color: #2c7264;
-}
-
-.home-safe-chip b {
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  font-variant-numeric: tabular-nums;
-}
-
-.home-safe-chip small {
-  color: rgba(23, 28, 25, 0.58);
-  font-size: 9px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.home-safe-chip.is-watch {
-  border-color: rgba(154, 90, 16, 0.35);
-}
-
-.home-safe-chip.is-watch svg {
-  background: #fbe8c8;
-  color: #8a5009;
-}
-
-.home-safe-chip.is-watch b {
-  color: #9a5a10;
 }
 
 .home-rollup-grid {
@@ -1600,7 +1890,7 @@
 .home-rollup--workouts { --rollup-accent: #8a5009; --rollup-tint: #fbe8c8; }
 .home-rollup--learnings { --rollup-accent: #3e6a8e; --rollup-tint: #ddeaf6; }
 .home-rollup--meals { --rollup-accent: #63801f; --rollup-tint: #ebf2d2; }
-.home-rollup--sleep { --rollup-accent: #33377c; --rollup-tint: #d9dcf7; }
+.home-rollup--sleep { --rollup-accent: #2c5c78; --rollup-tint: #d7e6f0; }
 .home-rollup--spend { --rollup-accent: #2c7264; --rollup-tint: #d8ece7; }
 
 /* Zeros stay grey and quiet — never green, never alarming */
@@ -1728,7 +2018,7 @@
 @media (prefers-reduced-motion: reduce) {
   .home-card,
   .home-skel,
-  .home-pill-live .home-live-dot,
+  .home-trend-tip,
   .ntr-gauge-wrap.is-live::before,
   .home-hero-panel.is-complete,
   .home-hero-panel.is-complete::before,
@@ -1983,6 +2273,7 @@
   .home-card--insights,
   .home-card--trends,
   .home-card--capture,
+  .home-card--activity,
   .home-card--rollup {
     grid-column: span 1;
   }
@@ -2007,10 +2298,6 @@
   /* Two trend tiles per row on phones — keeps sparklines legible */
   .home-trend-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .home-safe-chip {
-    max-width: 100%;
   }
 
   .home-capture-mood {
