@@ -97,9 +97,14 @@ function QuickCaptureCard({ onCapture, focusRequest, moodScore, onMood, recentCa
     <section className="home-card home-card--capture" aria-label="Quick capture">
       <PenLine className="home-card-glyph" aria-hidden="true" />
       <header className="home-card-head">
-        <div>
-          <span className="home-card-eyebrow">Quick capture</span>
-          <h2 className="home-card-title">Get it out of your head</h2>
+        <div className="home-card-heading">
+          <span className="home-card-ic" aria-hidden="true">
+            <PenLine size={14} strokeWidth={2.4} />
+          </span>
+          <div>
+            <span className="home-card-eyebrow">Quick capture</span>
+            <h2 className="home-card-title">Get it out of your head</h2>
+          </div>
         </div>
       </header>
 

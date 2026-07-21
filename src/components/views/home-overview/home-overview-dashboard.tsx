@@ -18,13 +18,12 @@ import { ConfettiBurst } from './components/confetti-burst'
 import { TodayHeroCard } from './components/today-hero-card'
 import { SleepCard } from './components/sleep-card'
 import { InsightsCard } from './components/insights-card'
-import { TrendsCard } from './components/trends-card'
+import { MomentumCard } from './components/momentum-card'
 import { QuickCaptureCard } from './components/quick-capture-card'
 import type { QuickCaptureMode, RecentCapture } from './components/quick-capture-card'
-import { WeekRollupCard } from './components/week-rollup-card'
 import { buildDayRecords, countActiveDays, generateInsights, INSIGHT_WINDOW_DAYS } from './insights-engine'
 import { promoteForHome } from '../../../lib/insights/engine'
-import { buildBurndown, financeInsights } from '../../../lib/insights/finance'
+import { financeInsights } from '../../../lib/insights/finance'
 import { buildMindDays, mindInsights } from '../../../lib/insights/mind'
 import { nutritionDaysFromSummary, nutritionInsights } from '../../../lib/insights/nutrition'
 import { lastNDates, WATER_QUICK_ADD_ML } from './home-types'
@@ -166,12 +165,6 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
     }
     return promoteForHome(domainInsights, 2)
   }, [home.nutrition.data, financeInput, home.mindEntries.data, home.today])
-
-  const safePerDay = useMemo(() => {
-    if (!financeInput) return null
-    const burndown = buildBurndown(financeInput)
-    return burndown?.isCurrentMonth ? Math.round(burndown.safePerDay) : null
-  }, [financeInput])
 
   const insights = useMemo(
     () =>
@@ -394,6 +387,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
       <div className="home-grid">
         <TodayHeroCard
           loading={home.loading}
+          dateIso={home.today}
           nutrition={home.nutrition.data}
           calendarItems={home.calendarToday.data}
           todayTasks={todayTasks}
@@ -433,15 +427,13 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           onNavigate={onNavigate}
         />
 
-        <TrendsCard loading={home.loading} records={dayRecords} />
-
-        <WeekRollupCard
+        <MomentumCard
           loading={home.loading}
+          records={dayRecords}
           weekRecords={weekRecords}
           prevWeekRecords={prevWeekRecords}
           nutrition={home.nutrition.data}
           spending={home.spending.data}
-          safePerDay={safePerDay}
         />
       </div>
     </div>

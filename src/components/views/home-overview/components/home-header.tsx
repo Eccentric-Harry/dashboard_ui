@@ -24,12 +24,7 @@ function HomeHeader({ dateIso, onQuickAdd }: HomeHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
 
-  const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
-  const name = (localStorage.getItem('displayName') || 'friend').split(' ')[0]
   const date = new Date(`${dateIso}T00:00:00`)
-  const weekday = date.toLocaleDateString('en-US', { weekday: 'long' })
-  const monthDay = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
   const dayOfYear = Math.floor(
     (date.getTime() - new Date(date.getFullYear(), 0, 0).getTime()) / 86400000,
   )
@@ -60,14 +55,10 @@ function HomeHeader({ dateIso, onQuickAdd }: HomeHeaderProps) {
 
   return (
     <header className="home-header">
+      {/* The greeting itself lives in the hero card now; this slim bar carries
+          the day's line plus the one global action. */}
       <div className="home-header-greeting">
         <span className="home-header-eyebrow">Your day at a glance</span>
-        <span className="home-header-date">
-          <em>{weekday},</em> {monthDay}
-        </span>
-        <strong>
-          {greeting}, {name}
-        </strong>
         <span className="home-header-line">{dailyLine}</span>
       </div>
 

@@ -18,9 +18,14 @@ function InsightsCard({ loading, insights, activeDays, onRefresh, onNavigate }: 
     <section className="home-card home-card--insights" aria-label="Patterns this week">
       <Sparkles className="home-card-glyph" aria-hidden="true" />
       <header className="home-card-head">
-        <div>
-          <span className="home-card-eyebrow">Patterns</span>
-          <h2 className="home-card-title">What stands out</h2>
+        <div className="home-card-heading">
+          <span className="home-card-ic" aria-hidden="true">
+            <Sparkles size={14} strokeWidth={2.4} />
+          </span>
+          <div>
+            <span className="home-card-eyebrow">Patterns</span>
+            <h2 className="home-card-title">What stands out</h2>
+          </div>
         </div>
         <button type="button" className="home-btn-quiet" onClick={onRefresh} aria-label="Refresh insights">
           <RefreshCw size={13} />

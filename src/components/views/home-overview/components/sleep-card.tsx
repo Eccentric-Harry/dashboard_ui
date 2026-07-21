@@ -209,9 +209,14 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
     <section className="home-card home-card--sleep" aria-label="Sleep">
       <Moon className="home-card-glyph" aria-hidden="true" />
       <header className="home-card-head">
-        <div>
-          <span className="home-card-eyebrow">Sleep</span>
-          <h2 className="home-card-title">Last night</h2>
+        <div className="home-card-heading">
+          <span className="home-card-ic" aria-hidden="true">
+            <Moon size={14} strokeWidth={2.4} />
+          </span>
+          <div>
+            <span className="home-card-eyebrow">Sleep</span>
+            <h2 className="home-card-title">Last night</h2>
+          </div>
         </div>
         {!loading && !failed && (
           <button

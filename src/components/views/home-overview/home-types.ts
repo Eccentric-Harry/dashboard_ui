@@ -33,6 +33,17 @@ export const FOCUS_TARGET_MINUTES = 120
 
 export const WATER_QUICK_ADD_ML = 250
 
+/** The waking window the hero's day-rail plots progress across. */
+export const DAY_START_MINUTES = 6 * 60
+export const DAY_END_MINUTES = 23 * 60
+
+export function greetingFor(hour: number): string {
+  if (hour < 5) return 'Still up'
+  if (hour < 12) return 'Good morning'
+  if (hour < 17) return 'Good afternoon'
+  return 'Good evening'
+}
+
 export function isoDate(date: Date = new Date()): string {
   const y = date.getFullYear()
   const m = String(date.getMonth() + 1).padStart(2, '0')
