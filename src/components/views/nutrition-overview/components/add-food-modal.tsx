@@ -766,12 +766,9 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                 {/* Central floating Glassmorphic Hub */}
                 <div className="af-processing-hub">
                   <div className="af-loader-box">
-                    <div className="af-pulse-rings">
-                      <div className="af-pulse-ring af-pulse-ring--1" />
-                      <div className="af-pulse-ring af-pulse-ring--2" />
-                      <div className="af-pulse-ring af-pulse-ring--3" />
+                    <div className="af-ai-spinner-container">
+                      <Loader2 size={24} className="af-spinner-icon" />
                     </div>
-                    <div className="af-pulse-core" />
                   </div>
                   
                   <div className="af-hub-header">
@@ -783,27 +780,39 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                   </div>
                   <div className="af-loading-checklist">
                     <div className="af-check-item completed">
-                      <span className="af-check-dot" />
+                      <CheckCircle size={15} className="af-check-icon completed" />
                       <span>Loaded profile & target metrics</span>
                     </div>
                     <div className={`af-check-item ${stageIndex >= 1 ? 'completed' : 'active'}`}>
-                      <span className="af-check-dot" />
+                      {stageIndex >= 1 ? (
+                        <CheckCircle size={15} className="af-check-icon completed" />
+                      ) : (
+                        <span className="af-check-dot active" />
+                      )}
                       <span>Identifying food items</span>
                     </div>
                     <div className={`af-check-item ${stageIndex >= 2 ? 'completed' : stageIndex === 1 ? 'active' : 'pending'}`}>
-                      <span className="af-check-dot" />
+                      {stageIndex >= 2 ? (
+                        <CheckCircle size={15} className="af-check-icon completed" />
+                      ) : stageIndex === 1 ? (
+                        <span className="af-check-dot active" />
+                      ) : (
+                        <span className="af-check-dot pending" />
+                      )}
                       <span>Orchestrating clinical diagnostics</span>
                     </div>
                   </div>
-                  <p className="af-processing-background-hint">
-                    AI analysis usually takes 1 to 2 minutes. You may safely close this modal or leave the page; we will notify you once your meal log is ready!
-                  </p>
+                  <div className="af-processing-background-hint">
+                    <Shield size={14} className="af-hint-icon" />
+                    <span>AI analysis takes 1-2 minutes. You can close this modal — we'll notify you once ready!</span>
+                  </div>
                   
                   <button
                     type="button"
                     className="af-background-run-btn"
                     onClick={onClose}
                   >
+                    <Bell size={14} />
                     Run in Background
                   </button>
                 </div>

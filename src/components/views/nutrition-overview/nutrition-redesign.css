@@ -1665,9 +1665,10 @@
   text-align: center;
 }
 .af-modal-header h2 {
-  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  font-size: 24px;
-  font-weight: 700;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+  font-size: 22px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
   margin: 0 0 6px;
   color: var(--ntr-ink);
 }
