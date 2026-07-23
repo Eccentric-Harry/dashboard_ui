@@ -180,3 +180,21 @@ export function getFoodImage(description?: string, mealType?: string): FoodImage
 
   return MEAL_TYPE_FALLBACKS[mealType || ''] || DEFAULT_IMAGE
 }
+
+/**
+ * Best image for a logged meal: the AI-generated pastel image (a data: URI stored
+ * on the entry) wins; otherwise fall back to the keyword-matched bundled asset.
+ * Handles both camelCase (`imageUrl`) and snake_case (`image_url`) payload shapes.
+ */
+export function getMealImage(entry: {
+  description?: string
+  mealType?: string
+  imageUrl?: string | null
+  image_url?: string | null
+}): FoodImage {
+  const generated = (entry.imageUrl ?? entry.image_url ?? '').trim()
+  if (generated) {
+    return { src: generated, alt: entry.description || 'Logged meal' }
+  }
+  return getFoodImage(entry.description, entry.mealType)
+}

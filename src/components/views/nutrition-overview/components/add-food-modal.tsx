@@ -13,6 +13,9 @@ type Phase = 'input' | 'processing' | 'results'
 
 const MEAL_TYPES = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Post Workout', 'Mid-Morning', 'Midnight']
 
+// AI Scan accepts up to 3 photos per meal.
+const MAX_AI_IMAGES = 3
+
 const STAGE_MESSAGES = [
   { stage: 'Stage 1 of 2', label: 'Identifying food items…', sub: 'Vision analysis in progress' },
   { stage: 'Stage 2 of 2', label: 'Calculating clinical nutrition…', sub: 'Consulting your health profile' },
@@ -173,8 +176,8 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
   // AI tab state
   const [aiPhase, setAiPhase] = useState<Phase>('input')
   const [stageIndex, setStageIndex] = useState(0)
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
+  const [imageFiles, setImageFiles] = useState<File[]>([])
+  const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
   const [aiDescription, setAiDescription] = useState('')
   const [aiMealType, setAiMealType] = useState('')
   const [aiDate, setAiDate] = useState(selectedDate)
@@ -211,9 +214,9 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       // Reset AI state
       setAiPhase('input')
       setStageIndex(0)
-      setImageFile(null)
-      if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl)
-      setImagePreviewUrl(null)
+      setImageFiles([])
+      imagePreviewUrls.forEach(url => URL.revokeObjectURL(url))
+      setImagePreviewUrls([])
       setAiDescription('')
       setAiMealType('')
       setAiDate(selectedDate)
@@ -369,34 +372,51 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
     }
   }
 
-  // ── AI image handling ─────────────────────────────────────────────────
-  const handleImageDrop = useCallback((file: File) => {
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please upload an image file (JPG, PNG, WEBP, HEIC)')
+  // ── AI image handling (up to 3 photos) ────────────────────────────────
+  const addImages = useCallback((incoming: File[]) => {
+    const remaining = MAX_AI_IMAGES - imageFiles.length
+    if (remaining <= 0) {
+      toast.error(`You can attach up to ${MAX_AI_IMAGES} photos`)
       return
     }
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error('Image must be under 10 MB')
-      return
+    const accepted: File[] = []
+    for (const file of incoming) {
+      if (accepted.length >= remaining) break
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please upload image files only (JPG, PNG, WEBP, HEIC)')
+        continue
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error(`"${file.name}" is over 10 MB`)
+        continue
+      }
+      accepted.push(file)
     }
-    setImageFile(file)
-    setImagePreviewUrl(URL.createObjectURL(file))
-  }, [])
+    if (accepted.length === 0) return
+    if (incoming.length > remaining) {
+      toast.error(`Up to ${MAX_AI_IMAGES} photos — extra images were skipped`)
+    }
+    setImageFiles(prev => [...prev, ...accepted])
+    setImagePreviewUrls(prev => [...prev, ...accepted.map(f => URL.createObjectURL(f))])
+  }, [imageFiles.length])
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     setIsDragOver(false)
-    const file = e.dataTransfer.files[0]
-    if (file) handleImageDrop(file)
-  }, [handleImageDrop])
+    const files = Array.from(e.dataTransfer.files)
+    if (files.length) addImages(files)
+  }, [addImages])
 
-  const removeImage = () => {
-    setImageFile(null)
-    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl)
-    setImagePreviewUrl(null)
+  const removeImage = (index: number) => {
+    setImagePreviewUrls(prev => {
+      const url = prev[index]
+      if (url) URL.revokeObjectURL(url)
+      return prev.filter((_, i) => i !== index)
+    })
+    setImageFiles(prev => prev.filter((_, i) => i !== index))
   }
 
-  const aiCanSubmit = (imageFile !== null || aiDescription.trim().length > 0) && aiMealType !== ''
+  const aiCanSubmit = (imageFiles.length > 0 || aiDescription.trim().length > 0) && aiMealType !== ''
 
   // ── AI stage cycling ──────────────────────────────────────────────────
   const cycleStages = useCallback(() => {
@@ -426,7 +446,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
     cycleStages()
 
     try {
-      const taskId = await startBackgroundScan(imageFile, aiDescription || null, aiMealType, aiDate)
+      const taskId = await startBackgroundScan(imageFiles, aiDescription || null, aiMealType, aiDate)
       setCurrentTaskId(taskId)
     } catch (err: unknown) {
       if (stageTimerRef.current) clearTimeout(stageTimerRef.current)
@@ -627,13 +647,50 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                   </div>
                 )}
 
-                {/* Drag-drop zone */}
-                {imagePreviewUrl ? (
-                  <div className="af-image-preview">
-                    <img src={imagePreviewUrl} alt="Meal preview" />
-                    <button type="button" className="af-image-remove" onClick={removeImage} aria-label="Remove image">
-                      <X size={12} />
-                    </button>
+                {/* Hidden inputs — always mounted so the "Add" tile can trigger them */}
+                <input
+                  ref={galleryInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/heic"
+                  multiple
+                  onChange={e => { const fs = Array.from(e.target.files ?? []); if (fs.length) addImages(fs); e.target.value = '' }}
+                  tabIndex={-1}
+                  id="af-file-input"
+                  style={{ display: 'none' }}
+                />
+                <input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) addImages([f]); e.target.value = '' }}
+                  tabIndex={-1}
+                  id="af-camera-input"
+                  style={{ display: 'none' }}
+                />
+
+                {/* Image tray (up to 3) or empty drop-zone */}
+                {imagePreviewUrls.length > 0 ? (
+                  <div className="af-image-grid">
+                    {imagePreviewUrls.map((url, i) => (
+                      <div className="af-image-preview" key={url}>
+                        <img src={url} alt={`Meal preview ${i + 1}`} />
+                        <button type="button" className="af-image-remove" onClick={() => removeImage(i)} aria-label="Remove image">
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                    {imageFiles.length < MAX_AI_IMAGES && (
+                      <button
+                        type="button"
+                        className="af-image-add-tile"
+                        onClick={() => galleryInputRef.current?.click()}
+                        aria-label="Add another photo"
+                      >
+                        <Upload size={15} />
+                        <span>Add<br />{imageFiles.length}/{MAX_AI_IMAGES}</span>
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <div
@@ -642,29 +699,8 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                     onDragLeave={() => setIsDragOver(false)}
                     onDrop={onDrop}
                   >
-                    {/* Hidden gallery input */}
-                    <input
-                      ref={galleryInputRef}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,image/heic"
-                      onChange={e => { const f = e.target.files?.[0]; if (f) handleImageDrop(f) }}
-                      tabIndex={-1}
-                      id="af-file-input"
-                      style={{ display: 'none' }}
-                    />
-                    {/* Hidden camera capture input */}
-                    <input
-                      ref={cameraInputRef}
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      onChange={e => { const f = e.target.files?.[0]; if (f) handleImageDrop(f) }}
-                      tabIndex={-1}
-                      id="af-camera-input"
-                      style={{ display: 'none' }}
-                    />
                     <p className="af-drop-label">Snap or upload your meal</p>
-                    <p className="af-drop-sublabel" style={{ marginBottom: '14px' }}>JPG, PNG, WEBP, HEIC · max 10 MB</p>
+                    <p className="af-drop-sublabel" style={{ marginBottom: '14px' }}>Up to 3 photos · JPG, PNG, WEBP, HEIC · max 10 MB each</p>
                     <div className="af-upload-actions">
                       <button
                         type="button"
@@ -847,6 +883,9 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
               <div className="af-results-container" style={{ flex: 1, overflowY: 'auto', paddingRight: '6px' }}>
                 {/* Summary strip */}
                 <div className="af-result-summary">
+                  {aiResult.imageUrl && (
+                    <img className="af-result-hero" src={aiResult.imageUrl} alt={aiResult.description} />
+                  )}
                   <div className="af-result-summary-left">
                     <p className="af-result-name">{aiResult.description}</p>
                     <p className="af-result-meta">{aiResult.calories} kcal · {aiResult.proteinGrams}g protein · {aiResult.mealType}</p>

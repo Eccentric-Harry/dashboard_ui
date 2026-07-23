@@ -50,7 +50,7 @@ type NotificationContextType = {
   playSound: () => void;
   backgroundScans: BackgroundScanTask[];
   startBackgroundScan: (
-    file: File | null,
+    files: File[],
     description: string | null,
     mealType: string,
     date: string
@@ -596,7 +596,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   };
 
   const startBackgroundScan = useCallback(async (
-    file: File | null,
+    files: File[],
     description: string | null,
     mealType: string,
     date: string
@@ -613,7 +613,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     setBackgroundScans((prev) => [newTask, ...prev]);
 
     // Perform analysis asynchronously
-    analyzeMeal(file, description, mealType, date)
+    analyzeMeal(files, description, mealType, date)
       .then((res) => {
         setBackgroundScans((prev) =>
           prev.map((t) => (t.id === taskId ? { ...t, status: 'success', result: res.data } : t))

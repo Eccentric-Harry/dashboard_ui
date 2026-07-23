@@ -248,22 +248,27 @@ export interface MealAnalysisApiResponse {
   description: string;
   calories: number;
   proteinGrams: number;
+  /** AI-generated pastel dish image as a data: URI (null if generation was skipped/failed) */
+  imageUrl?: string | null;
   analysis: GeminiAnalysisResult;
 }
 
 /**
- * Submit a meal image and/or text description for two-stage Gemini AI analysis.
- * Stage 1 identifies food items, Stage 2 calculates full nutrition + medical context.
- * The backend auto-persists the result and returns the full analysis.
+ * Submit up to 3 meal images and/or a text description for two-stage Gemini AI analysis.
+ * Stage 1 identifies food items, Stage 2 calculates full nutrition + medical context, and
+ * a pastel dish image is generated. The backend auto-persists the result and returns it.
  */
 export async function analyzeMeal(
-  file: File | null,
+  files: File[],
   description: string | null,
   mealType: string,
   date: string
 ): Promise<{ data: MealAnalysisApiResponse }> {
   const formData = new FormData();
-  if (file) formData.append('file', file);
+  // Send each image under the repeated "files" part (backend binds List<MultipartFile>).
+  for (const f of files.slice(0, 3)) {
+    if (f) formData.append('files', f);
+  }
   if (description && description.trim()) formData.append('description', description.trim());
   formData.append('mealType', mealType);
   formData.append('date', date);

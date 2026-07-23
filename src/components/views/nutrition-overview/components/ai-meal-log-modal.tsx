@@ -147,7 +147,7 @@ export function AiMealLogModal({ isOpen, onClose, onSuccess, selectedDate }: AiM
     cycleStages()
 
     try {
-      const res = await analyzeMeal(imageFile, description || null, mealType, date)
+      const res = await analyzeMeal(imageFile ? [imageFile] : [], description || null, mealType, date)
       if (stageTimerRef.current) clearTimeout(stageTimerRef.current)
       setResult(res.data)
       setPhase('results')

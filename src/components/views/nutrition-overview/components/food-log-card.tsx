@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CalendarDays, Flame, Wheat, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useDashboard } from '../../../../contexts/DashboardContext'
 import { sortFoodEntries } from './food-icon-helper'
-import { getFoodImage } from './food-image-helper'
+import { getMealImage } from './food-image-helper'
 import { gradeFromEntry } from './meal-grade'
 import { getFoodHistory } from './food-history'
 
@@ -26,6 +26,7 @@ type FoodEntry = {
   loggedDate?: string
   createdAt?: string
   mealQuality?: string
+  imageUrl?: string | null
 
   // Detailed nutrition payload
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -183,7 +184,7 @@ function DailyLogCardInstance({ dateValue, entries, totalProtein, totalCalories,
           const mealType = entry.mealType || 'Snack'
           const proteinGrams = Number(entry.proteinGrams) || 0
           const calories = Number(entry.calories) || 0
-          const foodImage = getFoodImage(description, mealType)
+          const foodImage = getMealImage(entry)
           const grade = gradeFromEntry(entry)
           const tone = mealDotColors[mealType] || '#8b9187'
 

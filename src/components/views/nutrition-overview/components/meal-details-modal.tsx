@@ -15,7 +15,7 @@ import {
   EyeOff,
 } from 'lucide-react'
 import './meal-details-modal.css'
-import { getFoodImage } from './food-image-helper'
+import { getMealImage } from './food-image-helper'
 import { gradeFromEntry, parseClinicalFlag } from './meal-grade'
 
 export interface MealDetailsModalProps {
@@ -60,7 +60,7 @@ export function MealDetailsModal({ open, onClose, entry, onEdit }: MealDetailsMo
 
   const mealType = entry.mealType || 'Snack'
   const description = entry.description || 'Food item'
-  const heroImage = getFoodImage(description, mealType)
+  const heroImage = getMealImage(entry)
   const grade = gradeFromEntry(entry)
 
   const isLongDescription = description.length > DESCRIPTION_CLAMP

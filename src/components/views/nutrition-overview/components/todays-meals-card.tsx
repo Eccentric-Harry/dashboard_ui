@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { ChevronRight, Pencil, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { sortFoodEntries } from './food-icon-helper'
-import { getFoodImage } from './food-image-helper'
+import { getMealImage } from './food-image-helper'
 import { gradeFromEntry } from './meal-grade'
 import { useDashboard } from '../../../../contexts/DashboardContext'
 import { deleteFoodEntry } from '../../../../lib/api'
@@ -25,6 +25,7 @@ type FoodEntry = {
   proteinGrams?: number
   calories?: number
   mealQuality?: string
+  imageUrl?: string | null
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   recomposition_assessment?: Record<string, any>
 }
@@ -147,7 +148,7 @@ function TodaysMealsCard({ onEdit, onSelectEntry }: TodaysMealsCardProps) {
           const proteinGrams = Number(entry.proteinGrams) || 0
           const calories = Number(entry.calories) || 0
           const tone = mealToneColors[mealType] || '#8b9187'
-          const foodImage = getFoodImage(description, mealType)
+          const foodImage = getMealImage(entry)
           const grade = gradeFromEntry(entry)
           const clickable = !isEditMode && !!id
 
