@@ -106,7 +106,7 @@ WHOLE-FOOD GRADE FLOORS (compute the raw banded score below, then take the
 HIGHER of the raw score and any floor that applies):
  • A meal made ENTIRELY of whole / minimally-processed foods (NOVA 1) — fresh
    fruit, veg, legumes, plain nuts, plain dairy, intact whole grains — with FREE
-   sugar ≤ 5 g, sodium < 400 mg and saturated fat < 3 g scores AT LEAST 80
+   sugar ≤ 5 g, sodium < 400 mg and saturated fat < 3 g scores AT LEAST 85
    (grade A) if light, or AT LEAST 70 (grade B) if main. A single whole fruit is
    an A-grade snack.
  • A meal that is ≥ 75% whole-food by calories, with FREE sugar ≤ 12 g, sodium
