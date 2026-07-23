@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { X, Loader2, ClipboardCheck, ClipboardPaste, Camera, CheckCircle, AlertTriangle, RotateCcw, Upload, Wifi, Bell, Scan, Shield, TrendingUp, Sparkles } from 'lucide-react'
+import { X, Loader2, ClipboardCheck, ClipboardPaste, Camera, CheckCircle, AlertTriangle, RotateCcw, Upload, Wifi, Bell, Scan, Shield, TrendingUp, Sparkles, Copy } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
 import { addFoodEntry, updateFoodEntry, type MealAnalysisApiResponse, type ClinicalFlag, type IngredientBreakdown } from '../../../../lib/api'
 import { useNotifications } from '../../../../contexts/NotificationContext'
 import { normalizeMealGrade } from './meal-grade'
+import { NUTRILOG_PROMPT } from './nutrilog-prompt'
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -285,6 +286,15 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
     }
   }
 
+  const handleCopyPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(NUTRILOG_PROMPT)
+      toast.success('Analysis prompt copied — paste it into your AI chatbot')
+    } catch {
+      toast.error('Clipboard unavailable — copy the prompt manually')
+    }
+  }
+
   // ── Manual form submit ────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -490,16 +500,30 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
             <div className="form-group">
               <div className="af-json-head">
                 <label>Import from AI (paste JSON)</label>
-                <button
-                  type="button"
-                  className="af-json-paste-btn"
-                  onClick={handlePasteFromClipboard}
-                  id="af-json-paste-btn"
-                >
-                  <ClipboardPaste size={12} />
-                  Paste from clipboard
-                </button>
+                <div className="af-json-head-actions">
+                  <button
+                    type="button"
+                    className="af-json-paste-btn"
+                    onClick={handleCopyPrompt}
+                    id="af-json-copy-prompt-btn"
+                  >
+                    <Copy size={12} />
+                    Copy AI prompt
+                  </button>
+                  <button
+                    type="button"
+                    className="af-json-paste-btn"
+                    onClick={handlePasteFromClipboard}
+                    id="af-json-paste-btn"
+                  >
+                    <ClipboardPaste size={12} />
+                    Paste from clipboard
+                  </button>
+                </div>
               </div>
+              <p className="af-json-hint">
+                Copy the prompt into any AI chatbot with your meal, then paste its JSON back here.
+              </p>
               <textarea
                 className="json-textarea"
                 placeholder='{&#10;  "description": "Lemon Rice",&#10;  "calories": 472,&#10;  "proteinGrams": 10,&#10;  "mealType": "Lunch",&#10;  "mealItems": [ ... ],&#10;  "totalSummary": { ... }&#10;}'

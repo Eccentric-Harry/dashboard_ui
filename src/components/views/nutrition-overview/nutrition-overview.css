@@ -2868,6 +2868,22 @@
   margin: 0;
 }
 
+.af-json-head-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* One-line helper explaining the copy-prompt → paste-JSON round trip */
+.af-json-hint {
+  margin: 0 0 8px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgba(16, 19, 18, 0.5);
+}
+
 .af-json-paste-btn {
   display: inline-flex;
   align-items: center;
