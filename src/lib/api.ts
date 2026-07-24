@@ -253,10 +253,32 @@ export interface MealAnalysisApiResponse {
   analysis: GeminiAnalysisResult;
 }
 
+/** fetch() wrapper that aborts after `timeoutMs` so a single hop can't hang. */
+async function fetchWithTimeout(input: string, init: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    return await fetch(input, { ...init, signal: controller.signal })
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
+
 /**
  * Submit up to 3 meal images and/or a text description for two-stage Gemini AI analysis.
- * Stage 1 identifies food items, Stage 2 calculates full nutrition + medical context, and
- * a pastel dish image is generated. The backend auto-persists the result and returns it.
+ *
+ * The analysis is a long-running background job: this POSTs to start it (which
+ * returns a jobId almost instantly), then polls the status endpoint until the job
+ * reaches a terminal state. Because each hop is short, the request can't be lost
+ * to a proxy read-timeout the way a single ~90s request could. Job status lives in
+ * the DB, so a dropped poll is simply retried on the next tick.
+ *
+ * Resolves with the full analysis on success; rejects with a `${code}: ${json}`
+ * error (carrying `meta.source`) on a genuine failure, or a plain timeout error if
+ * the job never finished within `timeoutMs` (the caller then reconciles against
+ * persisted entries).
  */
 export async function analyzeMeal(
   files: File[],
@@ -274,30 +296,62 @@ export async function analyzeMeal(
   formData.append('mealType', mealType);
   formData.append('date', date);
 
-  // Bound the request so a hung pipeline resolves deterministically instead of
-  // spinning forever. On abort the caller reconciles against the server to see
-  // whether the meal was actually persisted before declaring failure.
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  // ── 1) Start the job (short request) ───────────────────────────────────
+  // Do NOT set Content-Type manually — browser sets multipart/form-data boundary
+  const startRes = await fetchWithTimeout(`${API_BASE_URL}/meals/analyze`, {
+    method: 'POST',
+    body: formData,
+  }, 30000)
 
-  try {
-    // Do NOT set Content-Type manually — browser sets multipart/form-data boundary
-    const response = await fetch(`${API_BASE_URL}/meals/analyze`, {
-      method: 'POST',
-      body: formData,
-      signal: controller.signal,
-    });
-
-    if (!response.ok) {
-      let detail = ''
-      try { detail = await response.text() } catch { /* ignore */ }
-      // Include the numeric status so the UI can render contextual error cards
-      throw new Error(`${response.status}: ${detail || response.statusText}`)
-    }
-    return await response.json()
-  } finally {
-    clearTimeout(timer)
+  if (!startRes.ok) {
+    let detail = ''
+    try { detail = await startRes.text() } catch { /* ignore */ }
+    throw new Error(`${startRes.status}: ${detail || startRes.statusText}`)
   }
+
+  const startJson = await startRes.json()
+  const jobId: string | undefined = startJson?.data?.jobId
+  if (!jobId) {
+    throw new Error(`500: ${JSON.stringify({ meta: { source: 'meal-analysis-gemini-error' } })}`)
+  }
+
+  // ── 2) Poll for the terminal status ────────────────────────────────────
+  const deadline = Date.now() + timeoutMs
+  const POLL_INTERVAL_MS = 2500
+
+  while (Date.now() < deadline) {
+    await sleep(POLL_INTERVAL_MS)
+
+    let statusData: { status?: string; result?: MealAnalysisApiResponse; errorSource?: string } | undefined
+    try {
+      const pollRes = await fetchWithTimeout(`${API_BASE_URL}/meals/analyze/${jobId}`, { method: 'GET' }, 20000)
+      if (!pollRes.ok) {
+        // Transient (e.g. a 404 from an instance that hasn't seen the write yet,
+        // or a 5xx) — keep polling until the deadline.
+        continue
+      }
+      statusData = (await pollRes.json())?.data
+    } catch {
+      // Network blip on a single poll — retry on the next tick.
+      continue
+    }
+
+    const status = statusData?.status
+    if (status === 'COMPLETED' && statusData?.result) {
+      return { data: statusData.result }
+    }
+    if (status === 'FAILED') {
+      const source = statusData?.errorSource
+        ? `meal-analysis-${statusData.errorSource}`
+        : 'meal-analysis-gemini-error'
+      throw new Error(`500: ${JSON.stringify({ meta: { source } })}`)
+    }
+    // PENDING / PROCESSING → keep waiting.
+  }
+
+  // Never reached a terminal state in time — surface a non-structured error so the
+  // caller reconciles against persisted entries before declaring failure.
+  throw new Error('Analysis timed out while waiting for the result')
 }
 
 export async function fetchSpendingSummary(month?: string) {
