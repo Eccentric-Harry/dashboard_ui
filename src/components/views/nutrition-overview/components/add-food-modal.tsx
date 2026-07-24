@@ -311,9 +311,18 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
     if (currentTask.status === 'success') {
       if (stageTimerRef.current) clearTimeout(stageTimerRef.current)
       setProgressPercent(100)
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setAiResult(currentTask.result)
-      setAiPhase('results')
+      if (currentTask.result?.analysis) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setAiResult(currentTask.result)
+        setAiPhase('results')
+      } else {
+        // Recovered scan: the meal was persisted but the analysis payload was lost
+        // in transit. The context already surfaced a success toast — refresh the
+        // dashboard and close rather than rendering an empty results panel.
+        setCurrentTaskId(null)
+        onSuccess()
+        onClose()
+      }
     } else if (currentTask.status === 'failed') {
       if (stageTimerRef.current) clearTimeout(stageTimerRef.current)
       const rawMsg = currentTask.error || 'Analysis failed'
@@ -324,6 +333,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       setAiPhase('input')
       setCurrentTaskId(null)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentTask])
 
   const formatElapsed = (secs: number) => {
@@ -836,10 +846,20 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                 {/* Central floating Glassmorphic Hub */}
                 <div className="af-processing-hub">
                   <div className="af-processing-header-row">
-                    <div className="af-loader-box">
-                      <div className="af-ai-spinner-container">
-                        <Loader2 size={24} className="af-spinner-icon" />
-                      </div>
+                    <div className={`af-loader-box ${imagePreviewUrls.length > 0 ? 'has-image' : ''}`}>
+                      {imagePreviewUrls.length > 0 ? (
+                        <div className="af-scan-preview">
+                          <img src={imagePreviewUrls[0]} alt="Meal being analysed" className="af-scan-preview-img" />
+                          <div className="af-scan-line" />
+                          {imagePreviewUrls.length > 1 && (
+                            <span className="af-scan-count">+{imagePreviewUrls.length - 1}</span>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="af-ai-spinner-container">
+                          <Loader2 size={24} className="af-spinner-icon" />
+                        </div>
+                      )}
                     </div>
                     <div className="af-hub-header">
                       <div className="af-hub-title-row">

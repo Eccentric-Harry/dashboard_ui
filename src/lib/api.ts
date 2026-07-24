@@ -262,7 +262,8 @@ export async function analyzeMeal(
   files: File[],
   description: string | null,
   mealType: string,
-  date: string
+  date: string,
+  timeoutMs = 180000
 ): Promise<{ data: MealAnalysisApiResponse }> {
   const formData = new FormData();
   // Send each image under the repeated "files" part (backend binds List<MultipartFile>).
@@ -273,19 +274,30 @@ export async function analyzeMeal(
   formData.append('mealType', mealType);
   formData.append('date', date);
 
-  // Do NOT set Content-Type manually — browser sets multipart/form-data boundary
-  const response = await fetch(`${API_BASE_URL}/meals/analyze`, {
-    method: 'POST',
-    body: formData,
-  });
+  // Bound the request so a hung pipeline resolves deterministically instead of
+  // spinning forever. On abort the caller reconciles against the server to see
+  // whether the meal was actually persisted before declaring failure.
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
 
-  if (!response.ok) {
-    let detail = ''
-    try { detail = await response.text() } catch { /* ignore */ }
-    // Include the numeric status so the UI can render contextual error cards
-    throw new Error(`${response.status}: ${detail || response.statusText}`)
+  try {
+    // Do NOT set Content-Type manually — browser sets multipart/form-data boundary
+    const response = await fetch(`${API_BASE_URL}/meals/analyze`, {
+      method: 'POST',
+      body: formData,
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      let detail = ''
+      try { detail = await response.text() } catch { /* ignore */ }
+      // Include the numeric status so the UI can render contextual error cards
+      throw new Error(`${response.status}: ${detail || response.statusText}`)
+    }
+    return await response.json()
+  } finally {
+    clearTimeout(timer)
   }
-  return response.json()
 }
 
 export async function fetchSpendingSummary(month?: string) {

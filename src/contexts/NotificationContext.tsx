@@ -9,6 +9,7 @@ import {
   subscribeDevice,
   unsubscribeDevice,
   analyzeMeal,
+  fetchFoodEntries,
 } from '../lib/api';
 import type { CalendarItem } from '../lib/api';
 
@@ -31,6 +32,12 @@ export interface BackgroundScanTask {
   error?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   result?: any;
+  /**
+   * True when the analysis response was lost in transit (timeout / dropped
+   * connection) but we confirmed the meal was actually persisted server-side.
+   * The rich analysis panel isn't available in this case, only the summary.
+   */
+  recovered?: boolean;
 }
 
 type NotificationContextType = {
@@ -127,6 +134,67 @@ function parseNotificationError(errorMsg: string): string {
     if (code === '429') return 'Too many requests. Rate limit reached, please try again in a minute.';
   }
   return errorMsg;
+}
+
+/**
+ * Distinguish a definite server-side business error (nothing was persisted, so a
+ * failure is truthful) from a transport-level failure (network drop, client
+ * timeout/abort, proxy 5xx, or a truncated/unparseable body) where the meal may
+ * still have been saved. Only our own structured API errors are "definite".
+ */
+function isDefiniteBusinessFailure(errorMsg: string): boolean {
+  const match = errorMsg.match(/^(\d{3}):\s*(.*)$/);
+  if (!match) return false; // e.g. "Failed to fetch" / AbortError — not conclusive
+  try {
+    const source: string = JSON.parse(match[2])?.meta?.source || '';
+    // These are raised before/around persistence; the meal is genuinely not saved.
+    return /validation-error|gemini-error|persistence-error/.test(source);
+  } catch {
+    // Non-JSON body (e.g. an HTML 502/504 from a proxy) — treat as transport.
+    return false;
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type FoodEntryLite = { id?: string; mealType?: string; description?: string; calories?: number; proteinGrams?: number; imageUrl?: string | null };
+
+/** Snapshot the IDs of food entries already on `date` (best-effort; null on failure). */
+async function snapshotEntryIds(date: string): Promise<Set<string> | null> {
+  try {
+    const res = await fetchFoodEntries(undefined, date, date);
+    const list: FoodEntryLite[] = Array.isArray(res?.data) ? res.data : [];
+    return new Set(list.map((e) => e?.id).filter((id): id is string => Boolean(id)));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * After a transport failure, poll for a food entry on `date` that wasn't present
+ * before the scan started — proof the meal was persisted despite the lost
+ * response. Returns the recovered entry, or null if none appears.
+ */
+async function findRecoveredEntry(
+  date: string,
+  mealType: string,
+  priorIds: Set<string> | null,
+): Promise<FoodEntryLite | null> {
+  if (!priorIds) return null;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    await new Promise((r) => setTimeout(r, attempt === 0 ? 1500 : 4000));
+    try {
+      const res = await fetchFoodEntries(undefined, date, date);
+      const list: FoodEntryLite[] = Array.isArray(res?.data) ? res.data : [];
+      const fresh = list.filter((e) => e?.id && !priorIds.has(e.id));
+      if (fresh.length > 0) {
+        // Prefer an entry of the same meal type; otherwise take the newest fresh one.
+        return fresh.find((e) => (e.mealType || '').toLowerCase() === mealType.toLowerCase()) || fresh[0];
+      }
+    } catch {
+      // keep polling
+    }
+  }
+  return null;
 }
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
@@ -612,80 +680,114 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
     setBackgroundScans((prev) => [newTask, ...prev]);
 
+    // Capture the day's existing entries up front (runs in parallel with the scan)
+    // so that, if the response is lost in transit, we can tell whether the meal
+    // was nevertheless persisted instead of showing a false failure.
+    const priorIdsPromise = snapshotEntryIds(date);
+
+    const markSuccess = (data: FoodEntryLite & { mealEntryId?: string }, recovered: boolean) => {
+      setBackgroundScans((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, status: 'success', result: data, recovered } : t))
+      );
+
+      playSound();
+
+      const kcal = data.calories ?? 0;
+      const protein = data.proteinGrams ?? 0;
+      const desc = data.description || 'AI meal';
+      const newNotif: InAppNotification = {
+        id: `ai-meal-success-${Date.now()}`,
+        itemId: data.mealEntryId || data.id || '',
+        title: 'AI Meal Logged!',
+        message: `Added: ${desc} (${kcal} kcal, ${protein}g Protein)`,
+        timestamp: new Date().toISOString(),
+        itemType: 'MILESTONE',
+        isRead: false,
+      };
+      setNotifications((prev) => {
+        const updated = [newNotif, ...prev];
+        localStorage.setItem('dashboard_notifications', JSON.stringify(updated));
+        return updated;
+      });
+
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        try {
+          new Notification('AI Meal Logged!', {
+            body: `Added: ${desc} (${kcal} kcal)`,
+            icon: '/logo.png',
+          });
+        } catch (e) {
+          console.error('Desktop notification failed:', e);
+        }
+      }
+
+      toast.success(
+        recovered
+          ? 'Your meal was logged — open your food log to see the full analysis.'
+          : 'AI Meal Analysis complete and logged!'
+      );
+      window.dispatchEvent(new Event('dashboard-updated'));
+    };
+
+    const markFailure = (parsedError: string) => {
+      setBackgroundScans((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, status: 'failed', error: parsedError } : t))
+      );
+
+      playSound();
+
+      const newNotif: InAppNotification = {
+        id: `ai-meal-failed-${Date.now()}`,
+        itemId: '',
+        title: 'AI Meal Scan Failed',
+        message: `Failed to analyze "${description || 'AI meal scan'}": ${parsedError}`,
+        timestamp: new Date().toISOString(),
+        itemType: 'REMINDER',
+        isRead: false,
+      };
+      setNotifications((prev) => {
+        const updated = [newNotif, ...prev];
+        localStorage.setItem('dashboard_notifications', JSON.stringify(updated));
+        return updated;
+      });
+
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        try {
+          new Notification('AI Meal Scan Failed', {
+            body: `Failed: ${parsedError}`,
+            icon: '/logo.png',
+          });
+        } catch (e) {
+          console.error('Desktop notification failed:', e);
+        }
+      }
+
+      toast.error(`AI Meal analysis failed: ${parsedError}`);
+    };
+
     // Perform analysis asynchronously
     analyzeMeal(files, description, mealType, date)
-      .then((res) => {
-        setBackgroundScans((prev) =>
-          prev.map((t) => (t.id === taskId ? { ...t, status: 'success', result: res.data } : t))
-        );
-
-        playSound();
-
-        const newNotif: InAppNotification = {
-          id: `ai-meal-success-${Date.now()}`,
-          itemId: res.data.mealEntryId || '',
-          title: 'AI Meal Logged!',
-          message: `Added: ${res.data.description} (${res.data.calories} kcal, ${res.data.proteinGrams}g Protein)`,
-          timestamp: new Date().toISOString(),
-          itemType: 'MILESTONE',
-          isRead: false,
-        };
-        setNotifications((prev) => {
-          const updated = [newNotif, ...prev];
-          localStorage.setItem('dashboard_notifications', JSON.stringify(updated));
-          return updated;
-        });
-
-        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-          try {
-            new Notification('AI Meal Logged!', {
-              body: `Added: ${res.data.description} (${res.data.calories} kcal)`,
-              icon: '/logo.png',
-            });
-          } catch (e) {
-            console.error('Desktop notification failed:', e);
-          }
-        }
-
-        toast.success(`AI Meal Analysis complete and logged!`);
-        window.dispatchEvent(new Event('dashboard-updated'));
-      })
-      .catch((err: unknown) => {
+      .then((res) => markSuccess(res.data, false))
+      .catch(async (err: unknown) => {
         const errorMsg = err instanceof Error ? err.message : 'Analysis failed';
-        const parsedError = parseNotificationError(errorMsg);
-        setBackgroundScans((prev) =>
-          prev.map((t) => (t.id === taskId ? { ...t, status: 'failed', error: parsedError } : t))
-        );
 
-        playSound();
-
-        const newNotif: InAppNotification = {
-          id: `ai-meal-failed-${Date.now()}`,
-          itemId: '',
-          title: 'AI Meal Scan Failed',
-          message: `Failed to analyze "${description || 'AI meal scan'}": ${parsedError}`,
-          timestamp: new Date().toISOString(),
-          itemType: 'REMINDER',
-          isRead: false,
-        };
-        setNotifications((prev) => {
-          const updated = [newNotif, ...prev];
-          localStorage.setItem('dashboard_notifications', JSON.stringify(updated));
-          return updated;
-        });
-
-        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        // If this is a genuine business error, nothing was persisted — fail honestly.
+        // Otherwise the connection may have dropped after the meal was saved, so
+        // reconcile against the server before deciding.
+        if (!isDefiniteBusinessFailure(errorMsg)) {
           try {
-            new Notification('AI Meal Scan Failed', {
-              body: `Failed: ${parsedError}`,
-              icon: '/logo.png',
-            });
-          } catch (e) {
-            console.error('Desktop notification failed:', e);
+            const priorIds = await priorIdsPromise;
+            const recovered = await findRecoveredEntry(date, mealType, priorIds);
+            if (recovered) {
+              markSuccess(recovered, true);
+              return;
+            }
+          } catch (reconErr) {
+            console.warn('Meal persistence reconciliation failed:', reconErr);
           }
         }
 
-        toast.error(`AI Meal analysis failed: ${parsedError}`);
+        markFailure(parseNotificationError(errorMsg));
       });
 
     return taskId;
