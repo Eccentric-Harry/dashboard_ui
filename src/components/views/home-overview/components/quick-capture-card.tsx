@@ -59,7 +59,7 @@ type QuickCaptureCardProps = {
 }
 
 function QuickCaptureCard({ onCapture, focusRequest, moodScore, onMood, recentCaptures }: QuickCaptureCardProps) {
-  const [mode, setMode] = useState<QuickCaptureMode>('task')
+  const [mode, setMode] = useState<QuickCaptureMode>('thought')
   const [text, setText] = useState('')
   const [saving, setSaving] = useState(false)
   const [localMood, setLocalMood] = useState<number | null>(null)
