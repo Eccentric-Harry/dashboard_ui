@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { X, Loader2, ClipboardCheck, ClipboardPaste, Camera, CheckCircle, AlertTriangle, RotateCcw, Upload, Wifi, Bell, Scan, Shield, TrendingUp, Sparkles, Copy } from 'lucide-react'
+import { X, Loader2, ClipboardCheck, ClipboardPaste, Camera, CheckCircle, AlertTriangle, RotateCcw, Upload, Wifi, Bell, Scan, Shield, TrendingUp, Sparkles, Copy, ChevronLeft, ChevronRight } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
 import { addFoodEntry, updateFoodEntry, type MealAnalysisApiResponse, type ClinicalFlag, type IngredientBreakdown } from '../../../../lib/api'
@@ -16,10 +16,37 @@ const MEAL_TYPES = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Post Workout', 'Mi
 // AI Scan accepts up to 3 photos per meal.
 const MAX_AI_IMAGES = 3
 
-const STAGE_MESSAGES = [
-  { stage: 'Stage 1 of 2', label: 'Identifying food items…', sub: 'Vision analysis in progress' },
-  { stage: 'Stage 2 of 2', label: 'Calculating clinical nutrition…', sub: 'Consulting your health profile' },
-  { stage: 'Finalising', label: 'Saving your meal log…', sub: 'Almost done' },
+const NUTRITION_TRIVIA = [
+  {
+    title: 'Iron Bioavailability',
+    text: 'Pairing vitamin C (lemon juice, bell peppers) with plant iron (spinach, lentils) boosts absorption by up to 300%.',
+    tag: 'Nutrient Timing',
+  },
+  {
+    title: 'Fat-Soluble Bioavailability',
+    text: 'Vitamins A, D, E & K in leafy greens require healthy fats (avocado, nuts, seeds, ghee) to be absorbed effectively.',
+    tag: 'Pro-Tip',
+  },
+  {
+    title: 'Complete Amino Profiles',
+    text: 'Combining legumes (dal, rajma, chickpeas) with grains (rice, roti) delivers all 9 essential amino acids for muscle health.',
+    tag: 'Protein Synergy',
+  },
+  {
+    title: 'Mindful Satiety',
+    text: 'Chewing each bite 20-30 times allows your brain to register fullness hormones (leptin) naturally.',
+    tag: 'Satiety Science',
+  },
+  {
+    title: 'Gut Microbiome Diversity',
+    text: 'Eating 30+ unique plant foods per week (herbs, seeds, legumes, veggies) drastically enhances gut flora.',
+    tag: 'Microbiome',
+  },
+  {
+    title: 'Pre-Meal Hydration',
+    text: 'Drinking 300ml of water 15 minutes before meals supports optimal digestive enzyme secretion.',
+    tag: 'Hydration',
+  },
 ]
 
 const MACRO_COLORS: Record<string, string> = {
@@ -175,7 +202,6 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
 
   // AI tab state
   const [aiPhase, setAiPhase] = useState<Phase>('input')
-  const [stageIndex, setStageIndex] = useState(0)
   const [imageFiles, setImageFiles] = useState<File[]>([])
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
   const [aiDescription, setAiDescription] = useState('')
@@ -185,6 +211,11 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
   const [aiError, setAiError] = useState('')
   const [aiErrorCode, setAiErrorCode] = useState<number | null>(null)
   const [aiResult, setAiResult] = useState<MealAnalysisApiResponse | null>(null)
+
+  // Progressive progress bar & trivia state
+  const [progressPercent, setProgressPercent] = useState(0)
+  const [elapsedSeconds, setElapsedSeconds] = useState(0)
+  const [currentTipIndex, setCurrentTipIndex] = useState(0)
 
   const stageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
@@ -213,7 +244,6 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       setActiveTab('manual')
       // Reset AI state
       setAiPhase('input')
-      setStageIndex(0)
       setImageFiles([])
       imagePreviewUrls.forEach(url => URL.revokeObjectURL(url))
       setImagePreviewUrls([])
@@ -224,12 +254,54 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       setAiErrorCode(null)
       setAiResult(null)
       setCurrentTaskId(null)
+      setProgressPercent(0)
+      setElapsedSeconds(0)
+      setCurrentTipIndex(0)
     }
     return () => {
       if (stageTimerRef.current) clearTimeout(stageTimerRef.current)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, isEdit, initialData, selectedDate])
+
+  // Realistic progressive progress bar timer (~90s duration) + Trivia carousel
+  useEffect(() => {
+    if (aiPhase !== 'processing') {
+      setProgressPercent(0)
+      setElapsedSeconds(0)
+      return
+    }
+
+    const startTime = Date.now()
+    const TARGET_DURATION_MS = 90000 // 90 seconds (1.5 mins)
+
+    const timerInterval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000)
+      setElapsedSeconds(elapsed)
+
+      const ratio = (Date.now() - startTime) / TARGET_DURATION_MS
+      let pct: number
+      if (ratio <= 1) {
+        // Ease-out cubic curve up to 92%
+        const ease = 1 - Math.pow(1 - ratio, 2.5)
+        pct = Math.round(ease * 92)
+      } else {
+        // Crawl slowly from 92% to 98%
+        const extraSec = elapsed - 90
+        pct = Math.min(98, 92 + Math.floor(extraSec / 8))
+      }
+      setProgressPercent(Math.max(4, pct))
+    }, 300)
+
+    const triviaInterval = setInterval(() => {
+      setCurrentTipIndex(prev => (prev + 1) % NUTRITION_TRIVIA.length)
+    }, 7000)
+
+    return () => {
+      clearInterval(timerInterval)
+      clearInterval(triviaInterval)
+    }
+  }, [aiPhase])
 
   const currentTask = currentTaskId ? backgroundScans.find(t => t.id === currentTaskId) : null
 
@@ -238,6 +310,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
 
     if (currentTask.status === 'success') {
       if (stageTimerRef.current) clearTimeout(stageTimerRef.current)
+      setProgressPercent(100)
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setAiResult(currentTask.result)
       setAiPhase('results')
@@ -252,6 +325,18 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       setCurrentTaskId(null)
     }
   }, [currentTask])
+
+  const formatElapsed = (secs: number) => {
+    const m = Math.floor(secs / 60)
+    const s = secs % 60
+    return `${m}:${s < 10 ? '0' : ''}${s}`
+  }
+
+  const getDynamicStageInfo = (pct: number) => {
+    if (pct < 35) return { label: 'Identifying food items…', sub: 'Vision analysis & ingredient detection in progress' }
+    if (pct < 75) return { label: 'Calculating clinical nutrition…', sub: 'Consulting health profile & macro breakdown' }
+    return { label: 'Finalising clinical diagnostics…', sub: 'Synthesizing recommendations & preparing log' }
+  }
 
   const isNotificationsEnabled = desktopEnabled && typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted'
 
@@ -418,19 +503,6 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
 
   const aiCanSubmit = (imageFiles.length > 0 || aiDescription.trim().length > 0) && aiMealType !== ''
 
-  // ── AI stage cycling ──────────────────────────────────────────────────
-  const cycleStages = useCallback(() => {
-    let idx = 0
-    const tick = () => {
-      idx = Math.min(idx + 1, STAGE_MESSAGES.length - 1)
-      setStageIndex(idx)
-      if (idx < STAGE_MESSAGES.length - 1) {
-        stageTimerRef.current = setTimeout(tick, 4500)
-      }
-    }
-    stageTimerRef.current = setTimeout(tick, 4500)
-  }, [])
-
   // ── AI submit ─────────────────────────────────────────────────────────
   const handleAiSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -442,8 +514,6 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
     }
 
     setAiPhase('processing')
-    setStageIndex(0)
-    cycleStages()
 
     try {
       const taskId = await startBackgroundScan(imageFiles, aiDescription || null, aiMealType, aiDate)
@@ -765,36 +835,51 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
               <div className="af-processing-container-updated">
                 {/* Central floating Glassmorphic Hub */}
                 <div className="af-processing-hub">
-                  <div className="af-loader-box">
-                    <div className="af-ai-spinner-container">
-                      <Loader2 size={24} className="af-spinner-icon" />
+                  <div className="af-processing-header-row">
+                    <div className="af-loader-box">
+                      <div className="af-ai-spinner-container">
+                        <Loader2 size={24} className="af-spinner-icon" />
+                      </div>
+                    </div>
+                    <div className="af-hub-header">
+                      <div className="af-hub-title-row">
+                        <h3 className="af-hub-title">{getDynamicStageInfo(progressPercent).label}</h3>
+                        <span className="af-progress-badge">{progressPercent}%</span>
+                      </div>
+                      <p className="af-hub-subtitle">{getDynamicStageInfo(progressPercent).sub}</p>
                     </div>
                   </div>
-                  
-                  <div className="af-hub-header">
-                    <h3 className="af-hub-title">{STAGE_MESSAGES[stageIndex].label}</h3>
-                    <p className="af-hub-subtitle">{STAGE_MESSAGES[stageIndex].sub}</p>
+
+                  {/* Smooth progressive progress bar */}
+                  <div className="af-progress-wrapper">
+                    <div className="af-progress-track" role="progressbar" aria-valuenow={progressPercent} aria-valuemin={0} aria-valuemax={100}>
+                      <div className="af-progress-fill" style={{ width: `${progressPercent}%` }} />
+                    </div>
+                    <div className="af-progress-meta">
+                      <span className="af-elapsed-time">Elapsed: {formatElapsed(elapsedSeconds)}</span>
+                      <span className="af-est-time">~1:30 min total</span>
+                    </div>
                   </div>
-                  <div className="af-progress-track" role="progressbar" aria-valuenow={stageIndex + 1} aria-valuemin={1} aria-valuemax={STAGE_MESSAGES.length}>
-                    <div className="af-progress-fill" style={{ width: `${((stageIndex + 1) / STAGE_MESSAGES.length) * 100}%` }} />
-                  </div>
+
                   <div className="af-loading-checklist">
-                    <div className="af-check-item completed">
+                    <div className={`af-check-item ${progressPercent >= 10 ? 'completed' : 'active'}`}>
                       <CheckCircle size={15} className="af-check-icon completed" />
                       <span>Loaded profile & target metrics</span>
                     </div>
-                    <div className={`af-check-item ${stageIndex >= 1 ? 'completed' : 'active'}`}>
-                      {stageIndex >= 1 ? (
+                    <div className={`af-check-item ${progressPercent >= 35 ? 'completed' : progressPercent >= 10 ? 'active' : 'pending'}`}>
+                      {progressPercent >= 35 ? (
                         <CheckCircle size={15} className="af-check-icon completed" />
-                      ) : (
+                      ) : progressPercent >= 10 ? (
                         <span className="af-check-dot active" />
+                      ) : (
+                        <span className="af-check-dot pending" />
                       )}
-                      <span>Identifying food items</span>
+                      <span>Identifying food items & ingredients</span>
                     </div>
-                    <div className={`af-check-item ${stageIndex >= 2 ? 'completed' : stageIndex === 1 ? 'active' : 'pending'}`}>
-                      {stageIndex >= 2 ? (
+                    <div className={`af-check-item ${progressPercent >= 75 ? 'completed' : progressPercent >= 35 ? 'active' : 'pending'}`}>
+                      {progressPercent >= 75 ? (
                         <CheckCircle size={15} className="af-check-icon completed" />
-                      ) : stageIndex === 1 ? (
+                      ) : progressPercent >= 35 ? (
                         <span className="af-check-dot active" />
                       ) : (
                         <span className="af-check-dot pending" />
@@ -802,6 +887,50 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                       <span>Orchestrating clinical diagnostics</span>
                     </div>
                   </div>
+
+                  {/* ── Interactive Nutrition Trivia & Pro-Tips Carousel ── */}
+                  <div className="af-trivia-card">
+                    <div className="af-trivia-top">
+                      <div className="af-trivia-badge">
+                        <Sparkles size={13} className="af-trivia-icon" />
+                        <span>{NUTRITION_TRIVIA[currentTipIndex].tag}</span>
+                      </div>
+                      <div className="af-trivia-controls">
+                        <button
+                          type="button"
+                          className="af-trivia-arrow"
+                          onClick={() => setCurrentTipIndex(prev => (prev - 1 + NUTRITION_TRIVIA.length) % NUTRITION_TRIVIA.length)}
+                          aria-label="Previous tip"
+                        >
+                          <ChevronLeft size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          className="af-trivia-arrow"
+                          onClick={() => setCurrentTipIndex(prev => (prev + 1) % NUTRITION_TRIVIA.length)}
+                          aria-label="Next tip"
+                        >
+                          <ChevronRight size={14} />
+                        </button>
+                      </div>
+                    </div>
+
+                    <h4 className="af-trivia-headline">{NUTRITION_TRIVIA[currentTipIndex].title}</h4>
+                    <p className="af-trivia-body">{NUTRITION_TRIVIA[currentTipIndex].text}</p>
+
+                    <div className="af-trivia-pagination">
+                      {NUTRITION_TRIVIA.map((_, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          className={`af-trivia-dot ${idx === currentTipIndex ? 'active' : ''}`}
+                          onClick={() => setCurrentTipIndex(idx)}
+                          aria-label={`Jump to tip ${idx + 1}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="af-processing-background-hint">
                     <Shield size={14} className="af-hint-icon" />
                     <span>AI analysis takes 1-2 minutes. You can close this modal — we'll notify you once ready!</span>

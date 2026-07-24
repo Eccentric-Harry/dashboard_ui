@@ -3819,16 +3819,176 @@
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-.af-hub-header {
+.af-processing-header-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+}
+
+.af-hub-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.af-progress-badge {
+  font-size: 12.5px;
+  font-weight: 750;
+  color: #059669;
+  background: #ecfdf5;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  padding: 2px 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.af-progress-wrapper {
   display: flex;
   flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.af-progress-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.af-elapsed-time {
+  color: #0f172a;
+  font-weight: 650;
+}
+
+.af-est-time {
+  color: #94a3b8;
+}
+
+/* ─── Interactive Trivia Carousel ────────────────── */
+.af-trivia-card {
+  width: 100%;
+  box-sizing: border-box;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px 18px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.af-trivia-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.af-trivia-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #059669;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #ecfdf5;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.af-trivia-sparkle {
+  color: #10b981;
+}
+
+.af-trivia-controls {
+  display: flex;
   align-items: center;
   gap: 4px;
 }
 
+.af-trivia-arrow {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.af-trivia-arrow:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+.af-trivia-headline {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 2px 0 0;
+  letter-spacing: -0.01em;
+}
+
+.af-trivia-body {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #475569;
+  margin: 0;
+}
+
+.af-trivia-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 4px;
+}
+
+.af-trivia-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.af-trivia-dot.active {
+  width: 16px;
+  border-radius: 999px;
+  background: #10b981;
+}
+
+.af-hub-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
 .af-hub-title {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: #0f172a;
   margin: 0;
@@ -3836,7 +3996,7 @@
 }
 
 .af-hub-subtitle {
-  font-size: 13px;
+  font-size: 12.5px;
   color: #64748b;
   margin: 0;
 }
