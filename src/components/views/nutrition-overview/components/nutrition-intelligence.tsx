@@ -241,7 +241,7 @@ function NutritionIntelligence() {
         ]
       : [
           { name: 'Protein', value: split.proteinPct, color: '#8aa832' },
-          { name: 'Other', value: 100 - split.proteinPct, color: '#dde1d6' },
+          { name: 'Carbs & Fat', value: 100 - split.proteinPct, color: '#c3b18a' },
         ]
     : []
 
@@ -366,6 +366,9 @@ function NutritionIntelligence() {
                     </li>
                   ))}
                   <li className="ntr-intel-band-note">healthy protein band: 15–25%</li>
+                  {split.estimated && (
+                    <li className="ntr-intel-band-note">carbs &amp; fat estimated from analyzed meals</li>
+                  )}
                 </ul>
               </div>
             </article>

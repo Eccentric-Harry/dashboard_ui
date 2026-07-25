@@ -152,26 +152,46 @@ export interface MacroSplit {
   fatPct: number | null
   /** Share of logged calories that carried analyzed carb/fat data. */
   coverage: number
+  /** True when carbs/fat are inferred from partial analyzed coverage (< 50% of calories). */
+  estimated: boolean
   sampleDays: number
 }
 
-/** Average share of calories from each macro. Carbs/fat only when AI-analyzed entries cover ≥ half the calories. */
+/**
+ * Average share of calories from each macro.
+ *
+ * Protein is always known (grams are recorded on every entry). The remaining
+ * (non-protein) calories are carbohydrate + fat; we split that remainder using
+ * the carb:fat ratio observed in the AI-analyzed meals. When analyzed meals
+ * cover < 50% of calories the split is flagged as `estimated`. Only when there
+ * is no analyzed carb/fat data at all do carbs/fat stay null (the UI then shows
+ * the combined "Carbs & Fat" remainder instead of separate slices).
+ */
 export function macroSplit(input: NutritionEngineInput): MacroSplit | null {
   const logged = input.days.filter((d) => d.logged && d.calories > 0)
   if (logged.length < 5) return null
   const totalCalories = sum(logged.map((d) => d.calories))
   if (totalCalories <= 0) return null
   const proteinCalories = sum(logged.map((d) => d.protein)) * 4
+  const nonProteinCalories = Math.max(0, totalCalories - proteinCalories)
 
   const analyzed = logged.flatMap((d) => d.meals).filter((m) => m.carbsG != null && m.calories > 0)
   const analyzedCalories = sum(analyzed.map((m) => m.calories))
   const coverage = analyzedCalories / totalCalories
 
+  // Carb:fat calorie ratio from whatever meals we could analyze.
+  const analyzedCarbCals = sum(analyzed.map((m) => (m.carbsG ?? 0) * 4))
+  const analyzedFatCals = sum(analyzed.map((m) => (m.fatG ?? 0) * 9))
+  const macroBasis = analyzedCarbCals + analyzedFatCals
+
   let carbsPct: number | null = null
   let fatPct: number | null = null
-  if (coverage >= 0.5 && analyzedCalories > 0) {
-    carbsPct = Math.round((sum(analyzed.map((m) => (m.carbsG ?? 0) * 4)) / analyzedCalories) * 100)
-    fatPct = Math.round((sum(analyzed.map((m) => (m.fatG ?? 0) * 9)) / analyzedCalories) * 100)
+  if (macroBasis > 0) {
+    // Distribute the true non-protein remainder by the observed carb:fat ratio,
+    // so protein + carbs + fat sums to ~100% of calories.
+    const carbRatio = analyzedCarbCals / macroBasis
+    carbsPct = Math.round(((nonProteinCalories * carbRatio) / totalCalories) * 100)
+    fatPct = Math.round(((nonProteinCalories * (1 - carbRatio)) / totalCalories) * 100)
   }
 
   return {
@@ -179,6 +199,7 @@ export function macroSplit(input: NutritionEngineInput): MacroSplit | null {
     carbsPct,
     fatPct,
     coverage,
+    estimated: carbsPct != null && coverage < 0.5,
     sampleDays: logged.length,
   }
 }
