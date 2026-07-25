@@ -9,12 +9,12 @@
 
 .nutrition-dashboard {
   position: absolute;
-  inset: 72px 58px 8px 206px;
+  inset: 20px 58px 12px 206px;
   z-index: 2;
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 0 10px 72px 0;
+  padding: 24px 10px 32px 0;
   color: #101312;
   overscroll-behavior: auto;
   scrollbar-gutter: stable;

@@ -152,7 +152,7 @@ button {
 
 .route-view {
   position: absolute;
-  inset: 72px 104px 8px 206px;
+  inset: 20px 104px 12px 206px;
   display: grid;
   place-items: center;
 }
@@ -206,7 +206,8 @@ button {
   position: relative;
   width: min(100vw, 1200px);
   min-width: 1000px;
-  height: 900px;
+  height: clamp(900px, calc(100vh - 32px), 1200px);
+  min-height: 900px;
   margin: 0 auto;
   overflow: hidden;
   background: #dfe4df;
@@ -420,7 +421,7 @@ button {
 .top-chip {
   position: absolute;
   right: 57px;
-  top: 56px;
+  top: 20px;
   display: flex;
   height: 36px;
   align-items: center;

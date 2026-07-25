@@ -28,11 +28,11 @@
   --home-max: 1104px;
 
   position: absolute;
-  inset: 72px 58px 8px 206px;
+  inset: 20px 58px 12px 206px;
   z-index: 2;
   overflow-x: hidden;
   overflow-y: auto;
-  padding: 0 12px 72px 0;
+  padding: 24px 12px 32px 0;
   color: #101312;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
@@ -2037,7 +2037,7 @@
 
 @media (max-width: 1240px) {
   .home-dashboard {
-    inset: 72px 32px 8px 180px;
+    inset: 20px 32px 12px 180px;
   }
 }
 
