@@ -2161,6 +2161,11 @@
     inset: auto;
     padding: 20px 16px 108px;
     overflow: visible;
+    /* Detach the ambient gradients from the viewport on mobile. `fixed` forces
+       the browser to repaint all three radial washes on every scroll frame
+       (no compositor fast-path), which made this route scroll noticeably
+       jankier than the others. `scroll` lets them ride along with the content. */
+    background-attachment: scroll;
   }
 
   .home-header {
