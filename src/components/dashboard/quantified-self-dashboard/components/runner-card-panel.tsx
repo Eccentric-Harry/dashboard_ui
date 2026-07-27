@@ -1,5 +1,5 @@
 import runnerCard from '../../../../assets/image.png'
-import { useDashboard } from '../../../../contexts/DashboardContext';
+import { useDashboard } from '../../../../store/dashboard-store';
 
 function RunnerCardPanel() {
   const { data, isLoading } = useDashboard();

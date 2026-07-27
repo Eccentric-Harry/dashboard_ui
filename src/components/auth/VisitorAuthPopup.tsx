@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Lock, ArrowRight, Loader2, User, ArrowLeft, LogIn, UserPlus, Globe, AlertCircle } from 'lucide-react';
-import { loginUser, signupUser } from '../../lib/api';
+import { authService } from '../../services/auth-service';
 import toast from 'react-hot-toast';
 import './visitor-auth-popup.css';
 
@@ -33,7 +33,8 @@ export function VisitorAuthPopup() {
     setLoading(true);
     setErrorMsg('');
     try {
-      const res = await loginUser(loginUsername, loginPasscode);
+      const res = await authService.login(loginUsername, loginPasscode);
+      if (res.error) throw new Error(res.error.message);
       if (res?.data?.token) {
         localStorage.setItem('authToken', res.data.token);
         localStorage.setItem('username', res.data.username);
@@ -66,7 +67,8 @@ export function VisitorAuthPopup() {
     setLoading(true);
     setErrorMsg('');
     try {
-      const res = await signupUser(signupUsername, signupUsername, signupPasscode);
+      const res = await authService.signup(signupUsername, signupUsername, signupPasscode);
+      if (res.error) throw new Error(res.error.message);
       if (res?.data?.token) {
         localStorage.setItem('authToken', res.data.token);
         localStorage.setItem('username', res.data.username);

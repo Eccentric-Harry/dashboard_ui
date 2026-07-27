@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Bell, BellOff, Calendar, CheckSquare, Trophy, Eye, EyeOff, Clock, Loader2, RefreshCw, Terminal, LogOut } from 'lucide-react';
-import { useNotifications } from '../../../../contexts/NotificationContext';
+import { useNotifications } from '../../../../store/notification-store';
 import type { AppPath } from '../data';
 import { ConfirmDialog } from '../../../ui/confirm-dialog';
 

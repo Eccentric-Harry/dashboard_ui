@@ -7,7 +7,6 @@ import type { AppPath } from './components/dashboard/quantified-self-dashboard/d
 import { FinanceOverview } from './components/views/finance-view'
 import { NutritionOverview } from './components/views/nutrition-view'
 import { WorkoutsOverview } from './components/views/workouts-view'
-import { DashboardProvider } from './contexts/DashboardContext'
 import { LearningsOverview } from './components/views/learnings-view'
 import { CalendarOverview } from './components/views/calendar-view'
 import { PromptsOverview } from './components/views/prompts-view'
@@ -16,11 +15,18 @@ import { PeopleOverview } from './components/views/people-view'
 import { ProfileOverview } from './components/views/profile-view'
 import { MindOverview } from './components/views/mind-view'
 import { getAvatarImage } from './lib/avatar'
-import { FocusProvider } from './contexts/FocusContext'
 import { isStandalone } from './lib/utils'
-import { subscribeToActiveRequests, getUserProfile } from './lib/api'
+// Imported from lib/api (which re-exports it from axios-client) rather than from
+// axios-client directly: lib/api installs the window.fetch patch that injects the
+// bearer token and feeds the active-GET counter as an import side effect, and it
+// has to be loaded before the first request goes out. Phase B removes both.
+import { subscribeToActiveRequests } from './lib/api'
+import { resolveAuthGate } from './services/http/axios-client'
+import { userService } from './services/user-service'
+import { dashboardActions } from './store/dashboard-store'
+import { focusActions } from './store/focus-store'
+import { notificationActions, useNotifications } from './store/notification-store'
 import { OverlayLoader } from './components/ui/OverlayLoader'
-import { NotificationProvider, useNotifications } from './contexts/NotificationContext'
 import { NotificationCenter } from './components/dashboard/quantified-self-dashboard/components/notification-center'
 import { VisitorAuthPopup } from './components/auth/VisitorAuthPopup'
 import { enableGuestInterceptor } from './lib/guest-interceptor'
@@ -148,11 +154,19 @@ function App() {
   const [isTransitioning, setIsTransitioning] = useState(true)
   const [showOverlay, setShowOverlay] = useState(true)
 
-  // Prefetch profile on mount to sync global avatar and name in localStorage
+  // Arm the Axios auth gate, then prefetch the profile to sync the global avatar
+  // and name into localStorage.
+  //
+  // resolveAuthGate MUST run here, and before anything else can issue a request:
+  // every non-bypassed Axios request parks on a 25ms poll loop until the gate is
+  // resolved (services/http/axios-client.ts). If this call is ever dropped, the
+  // whole app hangs on a permanent loading overlay with no error anywhere.
   useEffect(() => {
+    resolveAuthGate(isGuest || !!authToken)
+
     async function prefetchProfile() {
       try {
-        const res = await getUserProfile()
+        const res = await userService.getProfile()
         if (res?.data) {
           localStorage.setItem('avatarUrl', res.data.avatarUrl || 'luffy')
           localStorage.setItem('displayName', res.data.displayName || 'User')
@@ -173,6 +187,28 @@ function App() {
       setActiveRequests(count)
     })
   }, [])
+
+  // One-time store bootstraps that used to live in FocusProvider /
+  // NotificationProvider. Both are internally guarded against double-invocation
+  // (StrictMode mounts effects twice in dev).
+  useEffect(() => {
+    focusActions.refresh()
+    notificationActions.bootstrap()
+  }, [])
+
+  const currentDate = searchParams.get('date') || undefined;
+
+  // Dashboard fetching is owned here and nowhere else — useDashboard() is a
+  // read-only compatibility hook, so if these two effects go missing every
+  // consumer silently renders empty. bootstrapListener wires the app-wide
+  // 'dashboard-updated' event; load() re-runs whenever ?date= changes.
+  useEffect(() => {
+    dashboardActions.bootstrapListener()
+  }, [])
+
+  useEffect(() => {
+    dashboardActions.load(currentDate)
+  }, [currentDate])
 
   // Trigger loading state on route change (pathname or search changes)
   useEffect(() => {
@@ -255,10 +291,10 @@ function App() {
       // Safari browser navigation elements, but allow query/search parameters to update.
       const newUrl = search ? `${window.location.pathname}${search}` : window.location.pathname
       window.history.replaceState({}, '', newUrl)
-      
+
       localStorage.setItem('pwa_last_path', normalized)
       localStorage.setItem('pwa_last_search', search || '')
-      
+
       setPathname(normalized)
       setSearchParams(new URLSearchParams(search || ''))
       return
@@ -299,101 +335,93 @@ function App() {
     content = <HomeOverview activePath={pathname} onNavigate={navigateTo} />
   }
 
-  const currentDate = searchParams.get('date') || undefined;
-
   if (!isGuest && !authToken) {
     return <VisitorAuthPopup />;
   }
 
   return (
     <>
-      <DashboardProvider date={currentDate}>
-      <FocusProvider>
-      <NotificationProvider>
-        <Toaster
-          position="top-center"
-          containerStyle={{
-            top: 40,
-            zIndex: 100000,
-          }}
-        >
-          {(t) => {
-            const message = resolveValue(t.message, t);
+      <Toaster
+        position="top-center"
+        containerStyle={{
+          top: 40,
+          zIndex: 100000,
+        }}
+      >
+        {(t) => {
+          const message = resolveValue(t.message, t);
 
-            let type: 'info' | 'success' | 'warning' | 'error' = 'info';
-            let title = 'Information';
+          let type: 'info' | 'success' | 'warning' | 'error' = 'info';
+          let title = 'Information';
 
-            if (t.type === 'success') {
-              type = 'success';
-              title = 'Success';
-            } else if (t.type === 'error') {
-              type = 'error';
-              title = 'Error';
-            } else if (t.type === 'loading') {
-              type = 'info';
-              title = 'Loading';
-            } else if (t.icon === '⚠️' || (typeof message === 'string' && message.toLowerCase().includes('warning'))) {
-              type = 'warning';
-              title = 'Warning';
+          if (t.type === 'success') {
+            type = 'success';
+            title = 'Success';
+          } else if (t.type === 'error') {
+            type = 'error';
+            title = 'Error';
+          } else if (t.type === 'loading') {
+            type = 'info';
+            title = 'Loading';
+          } else if (t.icon === '⚠️' || (typeof message === 'string' && message.toLowerCase().includes('warning'))) {
+            type = 'warning';
+            title = 'Warning';
+          }
+
+          const renderIcon = () => {
+            const size = 16;
+            if (t.type === 'loading') {
+              return <Loader2 size={size} className="toast-icon-loading animate-spin" />;
             }
+            switch (type) {
+              case 'success':
+                return <Check size={size} className="toast-icon-check" />;
+              case 'error':
+                return <AlertCircle size={size} className="toast-icon-error" />;
+              case 'warning':
+                return <AlertTriangle size={size} className="toast-icon-warning" />;
+              case 'info':
+              default:
+                return <Info size={size} className="toast-icon-info" />;
+            }
+          };
 
-            const renderIcon = () => {
-              const size = 16;
-              if (t.type === 'loading') {
-                return <Loader2 size={size} className="toast-icon-loading animate-spin" />;
-              }
-              switch (type) {
-                case 'success':
-                  return <Check size={size} className="toast-icon-check" />;
-                case 'error':
-                  return <AlertCircle size={size} className="toast-icon-error" />;
-                case 'warning':
-                  return <AlertTriangle size={size} className="toast-icon-warning" />;
-                case 'info':
-                default:
-                  return <Info size={size} className="toast-icon-info" />;
-              }
-            };
-
-            return (
-              <div
-                className={`custom-toast custom-toast--${type} ${t.visible ? 'toast-enter' : 'toast-leave'}`}
-                style={{
-                  ...t.style,
-                  opacity: t.visible ? 1 : 0,
-                }}
-              >
-                <div className="toast-glow-bg" />
-                <div className="toast-icon-wrapper">
-                  <div className="toast-icon-box">
-                    {renderIcon()}
-                  </div>
+          return (
+            <div
+              className={`custom-toast custom-toast--${type} ${t.visible ? 'toast-enter' : 'toast-leave'}`}
+              style={{
+                ...t.style,
+                opacity: t.visible ? 1 : 0,
+              }}
+            >
+              <div className="toast-glow-bg" />
+              <div className="toast-icon-wrapper">
+                <div className="toast-icon-box">
+                  {renderIcon()}
                 </div>
-                <div className="toast-content">
-                  <span className="toast-title">{title}</span>
-                  <span className="toast-message">{message}</span>
-                </div>
-                <button
-                  type="button"
-                  className="toast-close-btn"
-                  onClick={() => toast.dismiss(t.id)}
-                  aria-label="Close notification"
-                >
-                  <X size={14} />
-                </button>
               </div>
-            );
-          }}
-        </Toaster>
-        <div key={pathname} className="route-view-container">
-          {content}
-        </div>
-        <MobileProfileTrigger onNavigate={navigateTo} activePath={pathname} />
-        <NotificationCenter onNavigate={navigateTo} />
-        <OverlayLoader show={showOverlay} />
-      </NotificationProvider>
-      </FocusProvider>
-      </DashboardProvider>
+              <div className="toast-content">
+                <span className="toast-title">{title}</span>
+                <span className="toast-message">{message}</span>
+              </div>
+              <button
+                type="button"
+                className="toast-close-btn"
+                onClick={() => toast.dismiss(t.id)}
+                aria-label="Close notification"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          );
+        }}
+      </Toaster>
+      <div key={pathname} className="route-view-container">
+        {content}
+      </div>
+      <MobileProfileTrigger onNavigate={navigateTo} activePath={pathname} />
+      <NotificationCenter onNavigate={navigateTo} />
+      <OverlayLoader show={showOverlay} />
     </>
   );
 }

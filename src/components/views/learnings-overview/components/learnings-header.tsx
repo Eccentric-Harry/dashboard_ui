@@ -2,7 +2,8 @@ import { useMemo, useState, useEffect } from 'react'
 import { ChevronDown, Plus } from 'lucide-react'
 import type { AppPath } from '../../../dashboard/quantified-self-dashboard/data'
 import type { LearningsSummary } from '../../../../lib/api'
-import { fetchLearningsForRange, fetchTasksForRange } from '../../../../lib/api'
+import { learningsService } from '../../../../services/learnings-service'
+import { tasksService } from '../../../../services/tasks-service'
 import { formatHeaderDate, parseIsoDate } from '../learnings-utils'
 import { MiniMonth } from '../../../ui/mini-month'
 
@@ -31,8 +32,8 @@ export function LearningsHeader({
     if (!calendarRange) return
     let active = true
     Promise.all([
-      fetchLearningsForRange(calendarRange.start, calendarRange.end),
-      fetchTasksForRange(calendarRange.start, calendarRange.end),
+      learningsService.getLearningsRange(calendarRange.start, calendarRange.end),
+      tasksService.getTasksRange(calendarRange.start, calendarRange.end),
     ])
       .then(([learningsRes, tasksRes]) => {
         if (!active) return
@@ -41,8 +42,8 @@ export function LearningsHeader({
           const key = typeof raw === 'string' ? raw.split('T')[0] : raw
           if (key) datesSet.add(key)
         }
-        learningsRes?.data?.forEach((item: { date: string }) => addDate(item.date))
-        tasksRes?.data?.forEach((item: { date: string }) => addDate(item.date))
+        learningsRes?.data?.forEach((item) => addDate(item.date))
+        tasksRes?.data?.forEach((item) => item.date && addDate(item.date))
         setActiveLearningsDates(datesSet)
       })
       .catch((err) => {

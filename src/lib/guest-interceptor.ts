@@ -226,6 +226,15 @@ let mindEntries: GuestMindEntry[] = [
 
 export function enableGuestInterceptor() {
   window.fetch = async (...args) => {
+    // Normalize an Axios fetch-adapter Request into (url, init) form so all the
+    // url+init branch logic below (method via args[1].method, string body via
+    // args[1].body) works unchanged for migrated service traffic. Legacy string
+    // calls skip this untouched.
+    if (typeof Request !== 'undefined' && args[0] instanceof Request) {
+      const req = args[0];
+      const bodyText = await req.clone().text();
+      args = [req.url, { method: req.method, headers: req.headers, body: bodyText || undefined }] as Parameters<typeof fetch>;
+    }
     const urlStr = typeof args[0] === 'string' ? args[0] : args[0] instanceof URL ? args[0].href : args[0].url;
     const urlObj = new URL(urlStr, window.location.origin || 'http://localhost');
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
-import { fetchNutritionSummary } from '../../../../lib/api'
-import { useDashboard } from '../../../../contexts/DashboardContext'
+import { getNutritionSummaryShared } from './food-history'
+import { useDashboard } from '../../../../store/dashboard-store'
 import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip, ReferenceLine } from 'recharts'
 
 type TrendPoint = {
@@ -74,13 +74,15 @@ function ProteinTrendCard() {
 
     async function loadTrend() {
       try {
-        const res = await fetchNutritionSummary(selectedDate)
+        // Shared with the intelligence section, which asks for the same summary on mount.
+        const summary = (await getNutritionSummaryShared(selectedDate)) as {
+          dailyProtein?: Record<string, number>
+        }
         if (cancelled) return
 
-        const summary = res.data
-
-        if (summary.dailyProtein) {
-          const formatted = Object.keys(summary.dailyProtein)
+        const dailyProtein = summary.dailyProtein
+        if (dailyProtein) {
+          const formatted = Object.keys(dailyProtein)
             .sort()
             .slice(-7)
             .map((dateStr: string) => {
@@ -89,7 +91,7 @@ function ProteinTrendCard() {
               return {
                 day: dayName,
                 dateStr,
-                grams: summary.dailyProtein[dateStr],
+                grams: dailyProtein[dateStr],
                 target: FALLBACK_PROTEIN_TARGET
               }
             })

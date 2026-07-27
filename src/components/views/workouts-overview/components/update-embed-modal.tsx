@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { X } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
-import { updateFeaturedStravaEmbed } from '../../../../lib/api'
+import { workoutsService } from '../../../../services/workouts-service'
 
 interface UpdateEmbedModalProps {
   isOpen: boolean
@@ -32,7 +32,8 @@ export function UpdateEmbedModal({ isOpen, onClose, onSuccess }: UpdateEmbedModa
     try {
       const info = extractEmbedInfo(embedHtml)
       if (info) {
-        await updateFeaturedStravaEmbed(info)
+        const res = await workoutsService.updateFeaturedEmbed(info)
+        if (res.error) throw new Error(res.error.message)
         toast.success(`Featured activity updated`)
         onSuccess(info)
         onClose()

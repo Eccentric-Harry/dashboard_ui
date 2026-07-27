@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Check, Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { addTransaction, fetchSliceRepayments, type RepaymentInstallment } from '../../../../lib/api'
+import type { RepaymentInstallment } from '../../../../lib/api'
+import { financeService } from '../../../../services/finance-service'
 
 interface RepaymentScheduleCardProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -18,8 +19,9 @@ export function RepaymentScheduleCard({ transactions, onRefresh }: RepaymentSche
   const ITEMS_PER_PAGE = 4
 
   useEffect(() => {
-    fetchSliceRepayments()
+    financeService.getSliceRepayments()
       .then(res => {
+        if (res.error) throw new Error(res.error.message)
         setRepayments(res.data || [])
         setLoading(false)
       })
@@ -83,13 +85,14 @@ export function RepaymentScheduleCard({ transactions, onRefresh }: RepaymentSche
       const numericAmount = parseFloat(installment.amount.replace(/[^0-9.]/g, ''))
       const today = new Date().toISOString().split('T')[0]
 
-      await addTransaction({
+      const res = await financeService.addTransaction({
         description: `Slice Repayment (Due ${installment.dueDate})`,
         amount: Math.round(numericAmount),
         category: 'Bills & Utilities',
         type: 'Expense',
         date: today
       })
+      if (res.error) throw new Error(res.error.message)
 
       setOptimisticPaidIds(prev => new Set(prev).add(id))
       toast.success(`Paid Slice installment of ${installment.amount}`)

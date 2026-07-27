@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { GraduationCap, Plus, Check, ChevronLeft, ChevronRight, X, Loader2, Pencil, Trash2 } from 'lucide-react'
-import { fetchPursuits, createPursuit, togglePursuitStep, deletePursuit, updatePursuit, deletePursuitStep, updatePursuitStep } from '../../../../lib/api'
 import type { LearningPursuit, PursuitStep } from '../../../../lib/api'
+import { learningsService } from '../../../../services/learnings-service'
 import { toast } from 'react-hot-toast'
 
 const NotionIcon = () => (
@@ -45,8 +45,9 @@ export function ActiveStudyQueue({ refreshKey, onRefresh }: ActiveStudyQueueProp
   const loadPursuits = async () => {
     try {
       setIsLoading(true)
-      const res = await fetchPursuits()
-      setTracks(res.data)
+      const res = await learningsService.getPursuits()
+      if (res.error) throw new Error(res.error.message)
+      setTracks(res.data ?? [])
     } catch (err) {
       console.error('Failed to load learning pursuits:', err)
       toast.error('Could not load pursuits.')
@@ -95,9 +96,10 @@ export function ActiveStudyQueue({ refreshKey, onRefresh }: ActiveStudyQueueProp
 
     // 2. Perform PATCH in background
     try {
-      const res = await togglePursuitStep(pursuitId, stepId)
+      const res = await learningsService.togglePursuitStep(pursuitId, stepId)
+      if (res.error) throw new Error(res.error.message)
       // If completed, it has been migrated and removed from queue
-      if (res.data.status === 'COMPLETED') {
+      if (res.data?.status === 'COMPLETED') {
         toast.success(`"${res.data.title}" completed! Moved to All Learnings.`)
         loadPursuits()
         if (onRefresh) onRefresh()
@@ -145,7 +147,8 @@ export function ActiveStudyQueue({ refreshKey, onRefresh }: ActiveStudyQueueProp
     setEditingPursuitId(null)
 
     try {
-      await updatePursuit(id, { title: editTitle.trim(), category: finalCategory })
+      const res = await learningsService.updatePursuit(id, { title: editTitle.trim(), category: finalCategory })
+      if (res.error) throw new Error(res.error.message)
       toast.success('Pursuit updated')
       if (onRefresh) onRefresh()
     } catch (err) {
@@ -161,7 +164,8 @@ export function ActiveStudyQueue({ refreshKey, onRefresh }: ActiveStudyQueueProp
       // Optimistically remove
       setTracks((prev) => prev.filter((t) => t.id !== id))
       try {
-        await deletePursuit(id)
+        const res = await learningsService.deletePursuit(id)
+        if (res.error) throw new Error(res.error.message)
         toast.success('Pursuit deleted')
         if (onRefresh) onRefresh()
       } catch (err) {
@@ -195,7 +199,8 @@ export function ActiveStudyQueue({ refreshKey, onRefresh }: ActiveStudyQueueProp
     setEditingStepId(null)
 
     try {
-      await updatePursuitStep(pursuitId, stepId, editStepText.trim())
+      const res = await learningsService.updatePursuitStep(pursuitId, stepId, editStepText.trim())
+      if (res.error) throw new Error(res.error.message)
       toast.success('Subtask updated')
     } catch (err) {
       console.error('Failed to update step:', err)
@@ -220,8 +225,9 @@ export function ActiveStudyQueue({ refreshKey, onRefresh }: ActiveStudyQueueProp
       )
 
       try {
-        const res = await deletePursuitStep(pursuitId, stepId)
-        if (res.data.status === 'COMPLETED') {
+        const res = await learningsService.deletePursuitStep(pursuitId, stepId)
+        if (res.error) throw new Error(res.error.message)
+        if (res.data?.status === 'COMPLETED') {
           toast.success(`"${res.data.title}" completed! Moved to All Learnings.`)
           loadPursuits()
           if (onRefresh) onRefresh()
@@ -262,13 +268,14 @@ export function ActiveStudyQueue({ refreshKey, onRefresh }: ActiveStudyQueueProp
 
     try {
       setIsSubmitting(true)
-      const res = await createPursuit({
+      const res = await learningsService.createPursuit({
         title: newTitle.trim(),
         category: finalCategory,
         steps: sanitizedSteps,
       })
+      if (res.error || !res.data) throw new Error(res.error?.message ?? 'Failed to create pursuit')
 
-      setTracks((prev) => [...prev, res.data])
+      setTracks((prev) => [...prev, res.data as LearningPursuit])
       toast.success('Added pursuit & created Notion page!')
       
       // Reset Form

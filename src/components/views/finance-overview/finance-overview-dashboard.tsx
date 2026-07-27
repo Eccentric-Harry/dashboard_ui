@@ -14,9 +14,9 @@ import { LendingCard } from './components/lending-card'
 import { FinanceIntelligence } from './components/finance-intelligence'
 import { ConfirmDialog } from '../../ui/confirm-dialog'
 import { financeMetrics as fallbackMetrics } from './data'
-import { fetchDailyFinanceLogs, fetchFinanceAccount, deleteTransaction, deleteLendingRecord, type LendingRecord } from '../../../lib/api'
-import { fetchFinanceBudget } from '../../../lib/api'
-import type { DailyFinancialLog } from '../../../lib/api'
+import type { LendingRecord } from '../../../types/finance'
+import { financeService } from '../../../services/finance-service'
+import { useFinanceStore } from '../../../store/finance-store'
 import {
   ArrowUpRight, PiggyBank, Target
 } from 'lucide-react'
@@ -27,12 +27,21 @@ import './finance-overview.css'
 
 function FinanceOverviewDashboard() {
   const isGuest = localStorage.getItem('isGuest') === 'true'
-  const [logs, setLogs] = useState<DailyFinancialLog[]>([])
-  const [balance, setBalance] = useState<number | null>(null)
-  const [monthlyBudget, setMonthlyBudget] = useState<number | null>(null)
+
+  // Server state now comes from the finance store (RemoteDataStatus slices).
+  // Ephemeral UI state (modals, filters, selected date) stays local below.
+  const logsState = useFinanceStore.use.dailyLogs()
+  const accountState = useFinanceStore.use.account()
+  const budgetState = useFinanceStore.use.budget()
+  const financeActions = useFinanceStore.use.actions()
+
+  const logs = logsState.data
+  const loading = logsState.loading || (!logsState.loaded && !logsState.hasErrors)
+  const balance = accountState.loaded ? (accountState.data?.balance ?? 0) : null
+  const monthlyBudget = budgetState.data?.monthlyBudget ?? accountState.data?.monthlyBudget ?? null
+
   const [isEditBalanceOpen, setIsEditBalanceOpen] = useState(false)
   const [isEditBudgetOpen, setIsEditBudgetOpen] = useState(false)
-  const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -111,31 +120,14 @@ function FinanceOverviewDashboard() {
   }
 
 
+  // Refresh every finance slice; passed to child cards/modals as their onRefresh.
   const refreshData = () => {
-    setLoading(true)
-    fetchDailyFinanceLogs(365).then((res) => {
-      const fetchedLogs = res.data || []
-      setLogs(fetchedLogs)
-      setLoading(false)
-    }).catch(err => {
-      console.error(err)
-      setLoading(false)
-    })
-    fetchFinanceAccount()
-      .then((res) => {
-        setBalance(res.data?.balance ?? 0)
-        setMonthlyBudget(res.data?.monthlyBudget ?? 20000)
-      })
-      .catch(err => console.error('Failed to fetch balance:', err))
-    fetchFinanceBudget()
-      .then((res) => setMonthlyBudget(res.data?.monthlyBudget ?? 20000))
-      .catch(() => { /* non-critical */ })
+    void financeActions.loadAll()
   }
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    refreshData()
-  }, [])
+    void financeActions.loadAll()
+  }, [financeActions])
 
   const metrics = useMemo(() => {
     if (!logs.length) return fallbackMetrics
@@ -266,7 +258,8 @@ function FinanceOverviewDashboard() {
   const confirmDelete = async () => {
     if (!deleteTarget) return
     try {
-      await deleteTransaction(deleteTarget.id)
+      const res = await financeService.deleteTransaction(deleteTarget.id)
+      if (res.error) throw new Error(res.error.message)
       toast.success(`Deleted "${deleteTarget.merchant}"`)
       setDeleteTarget(null)
       refreshData()
@@ -281,7 +274,8 @@ function FinanceOverviewDashboard() {
   const confirmDeleteLending = async () => {
     if (!deleteLendingTarget) return
     try {
-      await deleteLendingRecord(deleteLendingTarget.id)
+      const res = await financeService.deleteLending(deleteLendingTarget.id)
+      if (res.error) throw new Error(res.error.message)
       toast.success(`Deleted lending record for ${deleteLendingTarget.borrower}`)
       setDeleteLendingTarget(null)
       setLendingRefreshKey(prev => prev + 1)
@@ -377,14 +371,14 @@ function FinanceOverviewDashboard() {
         isOpen={isEditBalanceOpen}
         currentBalance={balance ?? 0}
         onClose={() => setIsEditBalanceOpen(false)}
-        onSuccess={(newBalance) => setBalance(newBalance)}
+        onSuccess={(newBalance) => financeActions.applyBalance(newBalance)}
       />
 
       <EditBudgetModal
         isOpen={isEditBudgetOpen}
         currentBudget={monthlyBudget ?? 20000}
         onClose={() => setIsEditBudgetOpen(false)}
-        onSuccess={(newBudget) => setMonthlyBudget(newBudget)}
+        onSuccess={(newBudget) => financeActions.applyBudget(newBudget)}
       />
 
       <AddTransactionModal

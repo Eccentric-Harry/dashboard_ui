@@ -4,8 +4,8 @@ import toast from 'react-hot-toast'
 import { sortFoodEntries } from './food-icon-helper'
 import { getMealImage } from './food-image-helper'
 import { gradeFromEntry } from './meal-grade'
-import { useDashboard } from '../../../../contexts/DashboardContext'
-import { deleteFoodEntry } from '../../../../lib/api'
+import { useDashboard } from '../../../../store/dashboard-store'
+import { nutritionService } from '../../../../services/nutrition-service'
 import { ConfirmDialog } from '../../../ui/confirm-dialog'
 
 const mealToneColors: Record<string, string> = {
@@ -60,7 +60,8 @@ function TodaysMealsCard({ onEdit, onSelectEntry }: TodaysMealsCardProps) {
     if (!itemToDelete?.id) return
 
     try {
-      await deleteFoodEntry(selectedDate, itemToDelete.id)
+      const res = await nutritionService.deleteFoodEntry(selectedDate, itemToDelete.id)
+      if (res.error) throw new Error(res.error.message)
       toast.success('Food entry deleted')
       await refetch()
     } catch (error: unknown) {

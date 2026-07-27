@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Loader2, Wallet } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { updateFinanceBalance } from '../../../../lib/api'
+import { financeService } from '../../../../services/finance-service'
 
 interface EditBalanceModalProps {
   isOpen: boolean
@@ -37,7 +37,8 @@ export function EditBalanceModal({ isOpen, currentBalance, onClose, onSuccess }:
 
     setLoading(true)
     try {
-      const res = await updateFinanceBalance(numAmount)
+      const res = await financeService.updateBalance(numAmount)
+      if (res.error) throw new Error(res.error.message)
       const saved = res.data?.balance ?? numAmount
       toast.success(`Balance set to ₹${saved.toLocaleString('en-IN')}`)
       onSuccess(saved)

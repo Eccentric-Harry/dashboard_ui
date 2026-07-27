@@ -1,4 +1,4 @@
-import { useDashboard } from '../../../../contexts/DashboardContext';
+import { useDashboard } from '../../../../store/dashboard-store';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CircularStat = ({ data, label, unit, isLoading }: { data: any, label: string, unit: string, isLoading: boolean }) => {

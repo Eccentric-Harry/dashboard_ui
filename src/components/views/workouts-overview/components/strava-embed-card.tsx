@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { ExternalLink, Pin } from 'lucide-react'
 import type { StravaActivityStats } from '../../../../lib/api'
-import { fetchFeaturedStravaEmbed } from '../../../../lib/api'
+import { workoutsService } from '../../../../services/workouts-service'
 
 type StravaEmbedCardProps = {
   stats: StravaActivityStats | null
@@ -16,7 +16,9 @@ function StravaEmbedCard({ stats, onEditClick }: StravaEmbedCardProps) {
   useEffect(() => {
     const loadFeatured = async () => {
       try {
-        const featured = await fetchFeaturedStravaEmbed()
+        const res = await workoutsService.getFeaturedEmbed()
+        if (res.error) throw new Error(res.error.message)
+        const featured = res.data
         if (featured) {
           setActiveEmbed(featured)
         } else if (stats?.recentEmbeds?.length) {

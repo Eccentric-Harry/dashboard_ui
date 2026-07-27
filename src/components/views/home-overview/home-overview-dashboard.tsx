@@ -2,16 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { CheckSquare, Droplets, Lightbulb, MessageCircle, Moon, Plus, Trophy, Utensils } from 'lucide-react'
 import type { SleepEntryPayload } from '../../../lib/api'
-import {
-  addLearning,
-  addTask,
-  addWaterIntake,
-  createMindEntry,
-  logSleep,
-  saveMindMood,
-} from '../../../lib/api'
+import { learningsService } from '../../../services/learnings-service'
+import { mindService } from '../../../services/mind-service'
+import { nutritionService } from '../../../services/nutrition-service'
+import { sleepService } from '../../../services/sleep-service'
+import { tasksService } from '../../../services/tasks-service'
 import type { AppPath } from '../../dashboard/quantified-self-dashboard/data'
-import { useFocus } from '../../../contexts/FocusContext'
+import { useFocusStore } from '../../../store/focus-store'
 import { HomeHeader } from './components/home-header'
 import type { QuickAddAction } from './components/home-header'
 import { ConfettiBurst } from './components/confetti-burst'
@@ -46,7 +43,7 @@ type HomeOverviewDashboardProps = {
 
 function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
   const home = useHomeData()
-  const { session: focusSession } = useFocus()
+  const focusSession = useFocusStore.use.session()
   const [captureRequest, setCaptureRequest] = useState<{ mode: QuickCaptureMode; nonce: number } | null>(null)
   const [fabOpen, setFabOpen] = useState(false)
   const [sleepFormNonce, setSleepFormNonce] = useState(0)
@@ -228,7 +225,8 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
     const before = home.hydration.data?.waterIntakeMl ?? 0
     const target = home.hydration.data?.targetMl ?? 3000
     try {
-      const res = await addWaterIntake(WATER_QUICK_ADD_ML, home.today)
+      const res = await nutritionService.addWaterIntake(WATER_QUICK_ADD_ML, home.today)
+      if (res.error) throw new Error(res.error.message)
       if (res?.data) {
         home.patchHydration(res.data)
       } else {
@@ -271,19 +269,23 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
     async (mode: QuickCaptureMode, text: string) => {
       try {
         if (mode === 'task') {
-          await addTask({ title: text, date: home.today })
+          const res = await tasksService.addTask({ title: text, date: home.today })
+          if (res.error) throw new Error(res.error.message)
           window.dispatchEvent(new CustomEvent('calendar-updated'))
         } else if (mode === 'thought') {
-          await createMindEntry({ text, date: home.today })
+          const res = await mindService.createEntry({ text, date: home.today })
+          if (res.error) throw new Error(res.error.message)
         } else if (mode === 'win') {
-          await createMindEntry({ type: 'WIN', text, date: home.today })
+          const res = await mindService.createEntry({ type: 'WIN', text, date: home.today })
+          if (res.error) throw new Error(res.error.message)
         } else {
-          await addLearning({
+          const res = await learningsService.addLearning({
             title: text.length > 80 ? `${text.slice(0, 79).trim()}…` : text,
             description: text,
             category: 'General',
             date: home.today,
           })
+          if (res.error) throw new Error(res.error.message)
         }
         toast.success(CAPTURE_TOASTS[mode])
         if (mode === 'task' || mode === 'learning') {
@@ -300,7 +302,8 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
   const handleMood = useCallback(
     async (score: number) => {
       try {
-        await saveMindMood(home.today, score)
+        const res = await mindService.saveMood(home.today, score)
+        if (res.error) throw new Error(res.error.message)
         toast.success('Noted. Thanks for checking in.')
         void home.refetch()
       } catch {
@@ -314,7 +317,8 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
   const handleLogSleep = useCallback(
     async (payload: SleepEntryPayload) => {
       try {
-        await logSleep(payload)
+        const res = await sleepService.logEntry(payload)
+        if (res.error) throw new Error(res.error.message)
         await home.reloadSleep()
         toast.success('Night logged. Sleep well tonight too.')
       } catch {

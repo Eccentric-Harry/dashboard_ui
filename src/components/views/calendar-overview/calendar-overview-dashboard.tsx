@@ -49,20 +49,9 @@ import {
 import toast from 'react-hot-toast'
 
 import type { AppPath } from '../../dashboard/quantified-self-dashboard/data'
-import {
-  createCalendarItem,
-  deleteCalendarItem,
-  disconnectGoogleCalendar,
-  fetchCalendarItemsForRange,
-  fetchGoogleAuthUrl,
-  fetchGoogleSyncStatus,
-  pushLocalEventsToGoogle,
-  toggleCalendarItem,
-  toggleCancelCalendarItem,
-  triggerGoogleSync,
-  updateCalendarItem,
-} from '../../../lib/api'
-import type { CalendarItem, CalendarItemPayload, CalendarItemType, CalendarRecurrence, GoogleCalendarAccount, GoogleSyncStatus } from '../../../lib/api'
+import type { CalendarItem, CalendarItemPayload, CalendarItemType, CalendarRecurrence, GoogleCalendarAccount } from '../../../lib/api'
+import { calendarService } from '../../../services/calendar-service'
+import { useCalendarStore } from '../../../store/calendar-store'
 import { ConfirmDialog } from '../../ui/confirm-dialog'
 import { MiniMonth } from '../../ui/mini-month'
 import { getRoutineIconDetails } from './routine-icon-helper'
@@ -481,12 +470,18 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     if (isGuest) return '2026-06-09'
     return toISODate(new Date())
   })
-  const [items, setItems] = useState<CalendarItem[]>([])
+  // Calendar server state comes from the calendar store; UI state stays local.
+  const calendarItemsState = useCalendarStore.use.items()
+  const googleStatusState = useCalendarStore.use.googleStatus()
+  const upcomingItems = useCalendarStore.use.upcoming()
+  const calendarActions = useCalendarStore.use.actions()
+  const items = calendarItemsState.data
+  const googleSyncStatus = googleStatusState.data
   const [selectedItemKey, setSelectedItemKey] = useState<string | null>(null)
   const [anchorRect, setAnchorRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null)
   const [overflowDay, setOverflowDay] = useState<{ date: string; rect: { top: number; left: number; width: number; height: number } } | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [hasLoadedOnce, setHasLoadedOnce] = useState(false)
+  const loading = calendarItemsState.loading
+  const hasLoadedOnce = calendarItemsState.loaded || calendarItemsState.hasErrors
   const [modal, setModal] = useState<ModalState>({ open: false })
   const [deleteTarget, setDeleteTarget] = useState<CalendarItem | null>(null)
 
@@ -505,7 +500,6 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   })
   const [searchQuery, setSearchQuery] = useState('')
   const [uncheckedCategories, setUncheckedCategories] = useState<string[]>([])
-  const [upcomingItems, setUpcomingItems] = useState<CalendarItem[]>([])
   const [upcomingCardIndex, setUpcomingCardIndex] = useState(0)
   const [filtersOpen, setFiltersOpen] = useState(() => {
     if (typeof window !== 'undefined' && window.innerWidth <= 820) {
@@ -570,7 +564,6 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   }, [viewType, selectedDate, loading, items])
 
   const [profileAvatar, setProfileAvatar] = useState(() => getAvatarImage(localStorage.getItem('avatarUrl') || 'luffy'))
-  const [googleSyncStatus, setGoogleSyncStatus] = useState<GoogleSyncStatus | null>(null)
   const [googlePushingEmail, setGooglePushingEmail] = useState<string | null>(null)
   const [googleSyncingEmail, setGoogleSyncingEmail] = useState<string | null>(null)
   const [googleDisconnectingEmail, setGoogleDisconnectingEmail] = useState<string | null>(null)
@@ -647,7 +640,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
       futureDate.setDate(futureDate.getDate() + 30)
       const futureStr = toISODate(futureDate)
 
-      const response = await fetchCalendarItemsForRange(todayStr, futureStr)
+      const response = await calendarService.getItemsForRange(todayStr, futureStr)
       const candidates = (response?.data ?? []).filter((item: CalendarItem) => {
         if (item.completed || item.cancelled) return false
         if (item.date > todayStr) return true
@@ -666,35 +659,21 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
         return (a.startTime ?? '99:99').localeCompare(b.startTime ?? '99:99')
       })
 
-      setUpcomingItems(candidates.slice(0, 5))
+      calendarActions.setUpcoming(candidates.slice(0, 5))
       setUpcomingCardIndex(0)
     } catch (err) {
       console.error('Failed to load upcoming item', err)
     }
-  }, [])
+  }, [calendarActions])
 
-  // Monotonic sequence guards against out-of-order responses: only the most
-  // recently issued request may update state, so rapid date clicks can never
-  // leave stale data on screen.
-  const requestSeqRef = useRef(0)
-
+  // The monotonic seq guard now lives inside the store's loadItems action, so
+  // rapid date clicks can never leave stale data on screen.
   const loadItems = useCallback(async () => {
-    const seq = ++requestSeqRef.current
-    setLoading(true)
-    try {
-      const response = await fetchCalendarItemsForRange(visibleRange.start, visibleRange.end)
-      if (seq !== requestSeqRef.current) return
-      setItems(response?.data ?? [])
-    } catch (error) {
-      if (seq !== requestSeqRef.current) return
-      toast.error(error instanceof Error ? error.message : 'Failed to load calendar')
-    } finally {
-      if (seq === requestSeqRef.current) {
-        setLoading(false)
-        setHasLoadedOnce(true)
-      }
+    const res = await calendarActions.loadItems(visibleRange.start, visibleRange.end)
+    if (res?.error) {
+      toast.error(res.error.message || 'Failed to load calendar')
     }
-  }, [visibleRange.end, visibleRange.start])
+  }, [calendarActions, visibleRange.end, visibleRange.start])
 
   useEffect(() => {
     const timer = window.setTimeout(loadItems, 0)
@@ -718,20 +697,18 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   }, [loadItems, loadUpcomingItem])
 
   useEffect(() => {
-    fetchGoogleSyncStatus()
-      .then((res) => setGoogleSyncStatus(res.data))
-      .catch(() => setGoogleSyncStatus(null))
-  }, [])
+    void calendarActions.loadGoogleStatus()
+  }, [calendarActions])
 
   const refreshGoogleStatus = async () => {
-    const res = await fetchGoogleSyncStatus()
-    setGoogleSyncStatus(res.data)
+    await calendarActions.loadGoogleStatus()
   }
 
   const handleGoogleConnect = async () => {
     setGoogleConnecting(true)
     try {
-      const res = await fetchGoogleAuthUrl()
+      const res = await calendarService.getGoogleAuthUrl()
+      if (res.error) throw new Error(res.error.message)
       const url = res.data?.url
       if (!url) throw new Error('No auth URL returned')
       const popup = window.open(url, 'google-oauth', 'width=600,height=700,left=200,top=100')
@@ -762,7 +739,8 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   const handleGooglePushLocal = async (email?: string) => {
     setGooglePushingEmail(email ?? '__all__')
     try {
-      const res = await pushLocalEventsToGoogle(email)
+      const res = await calendarService.pushLocalToGoogle(email)
+      if (res.error) throw new Error(res.error.message)
       const pushed = res.data?.totalPushed ?? 0
       toast.success(`Pushed ${pushed} event${pushed === 1 ? '' : 's'} to Google Calendar`)
     } catch (err) {
@@ -775,7 +753,8 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   const handleGooglePullSync = async (email?: string) => {
     setGoogleSyncingEmail(email ?? '__all__')
     try {
-      await triggerGoogleSync(email)
+      const res = await calendarService.syncGoogle(email)
+      if (res.error) throw new Error(res.error.message)
       toast.success('Google Calendar sync triggered')
       await refreshGoogleStatus()
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -790,7 +769,8 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     if (!window.confirm(`Disconnect ${email} from Google Calendar sync?`)) return
     setGoogleDisconnectingEmail(email)
     try {
-      await disconnectGoogleCalendar(email)
+      const res = await calendarService.disconnectGoogle(email)
+      if (res.error) throw new Error(res.error.message)
       toast.success(`Disconnected ${email}`)
       await refreshGoogleStatus()
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -969,14 +949,15 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     if (!item.id) return
     const key = itemKey(item)
     const nextCompleted = !item.completed
-    setItems((prev) => prev.map((it) => (itemKey(it) === key ? { ...it, completed: nextCompleted } : it)))
+    calendarActions.applyItems((prev) => prev.map((it) => (itemKey(it) === key ? { ...it, completed: nextCompleted } : it)))
     try {
       const isRecurring = item.recurrenceFrequency && item.recurrenceFrequency !== 'NONE'
-      await toggleCalendarItem(item.id, isRecurring ? item.date : undefined)
+      const res = await calendarService.toggleItem(item.id, isRecurring ? item.date : undefined)
+      if (res.error) throw new Error(res.error.message)
       toast.success(nextCompleted ? `Completed "${item.title}"` : `Reopened "${item.title}"`)
       window.dispatchEvent(new CustomEvent('calendar-updated'))
     } catch (error) {
-      setItems((prev) => prev.map((it) => (itemKey(it) === key ? { ...it, completed: item.completed } : it)))
+      calendarActions.applyItems((prev) => prev.map((it) => (itemKey(it) === key ? { ...it, completed: item.completed } : it)))
       toast.error(error instanceof Error ? error.message : 'Failed to update item')
     }
   }
@@ -985,14 +966,15 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     if (!item.id) return
     const key = itemKey(item)
     const nextCancelled = !item.cancelled
-    setItems((prev) => prev.map((it) => (itemKey(it) === key ? { ...it, cancelled: nextCancelled } : it)))
+    calendarActions.applyItems((prev) => prev.map((it) => (itemKey(it) === key ? { ...it, cancelled: nextCancelled } : it)))
     try {
       const isRecurring = item.recurrenceFrequency && item.recurrenceFrequency !== 'NONE'
-      await toggleCancelCalendarItem(item.id, isRecurring ? item.date : undefined)
+      const res = await calendarService.toggleCancelItem(item.id, isRecurring ? item.date : undefined)
+      if (res.error) throw new Error(res.error.message)
       toast.success(nextCancelled ? `Cancelled "${item.title}"` : `Restored "${item.title}"`)
       window.dispatchEvent(new CustomEvent('calendar-updated'))
     } catch (error) {
-      setItems((prev) => prev.map((it) => (itemKey(it) === key ? { ...it, cancelled: item.cancelled } : it)))
+      calendarActions.applyItems((prev) => prev.map((it) => (itemKey(it) === key ? { ...it, cancelled: item.cancelled } : it)))
       toast.error(error instanceof Error ? error.message : 'Failed to update item')
     }
   }
@@ -1001,16 +983,17 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     const target = deleteTarget
     if (!target?.id) return
     const prevItems = items
-    setItems((prev) => prev.filter((it) => it.id !== target.id))
+    calendarActions.applyItems((prev) => prev.filter((it) => it.id !== target.id))
     setDeleteTarget(null)
     setSelectedItemKey(null)
     setAnchorRect(null)
     try {
-      await deleteCalendarItem(target.id)
+      const res = await calendarService.deleteItem(target.id)
+      if (res.error) throw new Error(res.error.message)
       toast.success(`Deleted "${target.title}"`)
       window.dispatchEvent(new CustomEvent('calendar-updated'))
     } catch (error) {
-      setItems(prevItems)
+      calendarActions.applyItems(() => prevItems)
       toast.error(error instanceof Error ? error.message : 'Failed to delete item')
     }
   }
@@ -1020,18 +1003,19 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     const target = deleteTarget
     if (!target?.id) return
     const prevItems = items
-    setItems((prev) =>
+    calendarActions.applyItems((prev) =>
       prev.filter((it) => (mode === 'ONLY_THIS' ? !(it.id === target.id && it.date === target.date) : it.id !== target.id)),
     )
     setDeleteTarget(null)
     setSelectedItemKey(null)
     setAnchorRect(null)
     try {
-      await deleteCalendarItem(target.id, mode === 'ONLY_THIS' ? target.date : undefined)
+      const res = await calendarService.deleteItem(target.id, mode === 'ONLY_THIS' ? target.date : undefined)
+      if (res.error) throw new Error(res.error.message)
       toast.success(mode === 'ONLY_THIS' ? 'Occurrence deleted' : 'Recurring routine deleted')
       window.dispatchEvent(new CustomEvent('calendar-updated'))
     } catch (error) {
-      setItems(prevItems)
+      calendarActions.applyItems(() => prevItems)
       toast.error(error instanceof Error ? error.message : 'Failed to delete item')
     }
   }
@@ -2062,7 +2046,8 @@ function CalendarItemModal({
 
     try {
       if (item?.id) {
-        await updateCalendarItem(item.id, payload)
+        const res = await calendarService.updateItem(item.id, payload)
+        if (res.error) throw new Error(res.error.message)
         let toastMsg = `Updated "${title.trim()}"`
         if (item.title !== title.trim()) {
           toastMsg = `Task title updated from "${item.title}" to "${title.trim()}"`
@@ -2073,7 +2058,8 @@ function CalendarItemModal({
         }
         toast.success(toastMsg)
       } else {
-        await createCalendarItem(payload)
+        const res = await calendarService.createItem(payload)
+        if (res.error) throw new Error(res.error.message)
         toast.success(`Added "${title.trim()}"`)
       }
       onSaved()

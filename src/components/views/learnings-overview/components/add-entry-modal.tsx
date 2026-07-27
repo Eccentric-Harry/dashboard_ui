@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react'
 import { X, Loader2, ListTodo, BookOpen } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
-import { addLearning, updateLearning, addTask, updateTask } from '../../../../lib/api'
 import type { LearningLog, DailyTask } from '../../../../lib/api'
+import { learningsService } from '../../../../services/learnings-service'
+import { tasksService } from '../../../../services/tasks-service'
 import './add-learning-modal.css'
 
 function formatTimeTo12Hour(time24: string): string {
@@ -161,10 +162,12 @@ export function AddEntryModal({
       }
 
       if (isEdit && initialLearningData?.id) {
-        await updateLearning(initialLearningData.id, payload)
+        const res = await learningsService.updateLearning(initialLearningData.id, payload)
+        if (res.error) throw new Error(res.error.message)
         toast.success(`Updated learning: "${learningTitle.trim()}"`)
       } else {
-        await addLearning(payload)
+        const res = await learningsService.addLearning(payload)
+        if (res.error) throw new Error(res.error.message)
         toast.success(`Logged learning: "${learningTitle.trim()}"`)
       }
       
@@ -199,10 +202,12 @@ export function AddEntryModal({
       }
 
       if (isEdit && initialTaskData?.id) {
-        await updateTask(initialTaskData.id, payload)
+        const res = await tasksService.updateTask(initialTaskData.id, payload)
+        if (res.error) throw new Error(res.error.message)
         toast.success(`Updated task: "${taskTitle.trim()}"`)
       } else {
-        await addTask(payload)
+        const res = await tasksService.addTask(payload)
+        if (res.error) throw new Error(res.error.message)
         toast.success(`Added task: "${taskTitle.trim()}"`)
       }
 

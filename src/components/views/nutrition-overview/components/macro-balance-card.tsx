@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { UtensilsCrossed } from 'lucide-react'
 import { ArcGauge } from './arc-gauge'
-import { useDashboard } from '../../../../contexts/DashboardContext'
+import { useDashboard } from '../../../../store/dashboard-store'
 
 const goalTones: Record<string, string> = {
   protein: 'tone-lime',

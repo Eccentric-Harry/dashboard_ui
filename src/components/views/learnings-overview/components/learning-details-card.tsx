@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { Plus, Pencil, Trash2, BookOpen, Edit2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { mockTasksData } from '../../../dashboard/quantified-self-dashboard/data'
-import { fetchLearnings, deleteLearning } from '../../../../lib/api'
 import type { LearningLog } from '../../../../lib/api'
+import { learningsService } from '../../../../services/learnings-service'
 import { AddEntryModal } from './add-entry-modal'
 
 function extractNotionUrl(text: string): string | null {
@@ -63,7 +63,8 @@ export function LearningDetailsCard({ selectedDate, onRefresh }: LearningDetails
     setLoading(true)
     setError(null)
     try {
-      const res = await fetchLearnings(selectedDate)
+      const res = await learningsService.getLearnings(selectedDate)
+      if (res.error) throw new Error(res.error.message)
       if (res && res.data) {
         setLearnings(res.data)
       } else {
@@ -99,7 +100,8 @@ export function LearningDetailsCard({ selectedDate, onRefresh }: LearningDetails
   const handleDelete = async (id: string, title: string) => {
     if (window.confirm(`Are you sure you want to delete the learning log: "${title}"?`)) {
       try {
-        await deleteLearning(id)
+        const res = await learningsService.deleteLearning(id)
+        if (res.error) throw new Error(res.error.message)
         toast.success(`Deleted "${title}"`)
         loadLearnings()
         if (onRefresh) onRefresh()

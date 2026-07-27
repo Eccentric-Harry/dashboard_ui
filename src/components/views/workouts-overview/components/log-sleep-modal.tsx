@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { X, Loader2 } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
-import { addSleepLog } from '../../../../lib/api'
+import { sleepService } from '../../../../services/sleep-service'
 
 type LogSleepModalProps = {
   isOpen: boolean
@@ -61,13 +61,14 @@ function LogSleepModal({ isOpen, onClose, onSuccess }: LogSleepModalProps) {
     }
     setLoading(true)
     try {
-      await addSleepLog({
+      const res = await sleepService.addSleepLog({
         date: formData.date,
         bedTime: formData.bedTime,
         wakeTime: formData.wakeTime,
         durationMinutes,
         notes: formData.notes || undefined,
       })
+      if (res.error) throw new Error(res.error.message)
       setIsSuccess(true)
       toast.success('Sleep logged')
       setTimeout(() => {

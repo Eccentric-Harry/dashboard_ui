@@ -13,22 +13,15 @@ import type {
   StravaActivity,
   StravaActivityStats,
 } from '../../../lib/api'
-import {
-  fetchCalendarItemsForRange,
-  fetchDailyFinanceLogs,
-  fetchDailyLogRange,
-  fetchFocusHistory,
-  fetchHydration,
-  fetchLearningsSummary,
-  fetchMindEntries,
-  fetchMindSummary,
-  fetchNutritionSummary,
-  fetchSleepEntries,
-  fetchSpendingSummary,
-  fetchStravaActivities,
-  fetchStravaActivityStats,
-  fetchTasksForRange,
-} from '../../../lib/api'
+import { calendarService } from '../../../services/calendar-service'
+import { financeService } from '../../../services/finance-service'
+import { focusService } from '../../../services/focus-service'
+import { learningsService } from '../../../services/learnings-service'
+import { mindService } from '../../../services/mind-service'
+import { nutritionService } from '../../../services/nutrition-service'
+import { sleepService } from '../../../services/sleep-service'
+import { tasksService } from '../../../services/tasks-service'
+import { workoutsService } from '../../../services/workouts-service'
 import type { NutritionSummary, SpendingSummary } from './home-types'
 import { addDaysIso, isoDate } from './home-types'
 
@@ -42,16 +35,15 @@ export type Slice<T> = {
 
 const emptySlice = { data: null, failed: false }
 
-async function settle<T, R>(
-  promise: Promise<T>,
-  pick: (result: T) => R | null | undefined,
+async function settle<R>(
+  promise: Promise<{ data?: R | null; error?: unknown }>,
   set: (slice: Slice<R>) => void,
 ): Promise<void> {
-  try {
-    const result = await promise
-    set({ data: pick(result) ?? null, failed: false })
-  } catch {
+  const result = await promise
+  if (result.error) {
     set({ data: null, failed: true })
+  } else {
+    set({ data: result.data ?? null, failed: false })
   }
 }
 
@@ -105,29 +97,29 @@ export function useHomeData(): HomeData {
   const [finance, setFinance] = useState<Slice<DailyFinancialLog[]>>(emptySlice)
 
   const reloadSleep = useCallback(async () => {
-    await settle(fetchSleepEntries(windowStart, today), (r) => r.data, setSleep)
+    await settle<SleepEntry[]>(sleepService.getEntries(windowStart, today), setSleep)
   }, [windowStart, today])
 
   const reloadHydration = useCallback(async () => {
-    await settle(fetchHydration(today), (r) => r.data as HydrationData, setHydration)
+    await settle<HydrationData>(nutritionService.getHydration(today), setHydration)
   }, [today])
 
   const refetch = useCallback(async () => {
     await Promise.allSettled([
-      settle(fetchNutritionSummary(today), (r) => r.data as NutritionSummary, setNutrition),
-      settle(fetchHydration(today), (r) => r.data as HydrationData, setHydration),
-      settle(fetchTasksForRange(windowStart, today), (r) => r.data as DailyTask[], setTasks),
-      settle(fetchCalendarItemsForRange(today, today), (r) => r.data as CalendarItem[], setCalendarToday),
-      settle(fetchSleepEntries(windowStart, today), (r) => r.data, setSleep),
-      settle(fetchFocusHistory(windowStart, today), (r) => r.data, setFocus),
-      settle(fetchDailyLogRange(windowStart, today), (r) => r.data, setMoods),
-      settle(fetchStravaActivities(), (r) => r.data as StravaActivity[], setWorkouts),
-      settle(fetchStravaActivityStats(), (r) => r.data as StravaActivityStats, setWorkoutStats),
-      settle(fetchLearningsSummary(today), (r) => r.data as LearningsSummary, setLearnings),
-      settle(fetchMindSummary(today), (r) => r.data, setMind),
-      settle(fetchMindEntries('THOUGHT'), (r) => r.data as MindEntry[], setMindEntries),
-      settle(fetchSpendingSummary(today.slice(0, 7)), (r) => r.data as SpendingSummary, setSpending),
-      settle(fetchDailyFinanceLogs(HOME_WINDOW_DAYS), (r) => r.data as DailyFinancialLog[], setFinance),
+      settle<NutritionSummary>(nutritionService.getSummary(today) as Promise<{ data?: NutritionSummary; error?: unknown }>, setNutrition),
+      settle<HydrationData>(nutritionService.getHydration(today), setHydration),
+      settle<DailyTask[]>(tasksService.getTasksRange(windowStart, today), setTasks),
+      settle<CalendarItem[]>(calendarService.getItemsForRange(today, today), setCalendarToday),
+      settle<SleepEntry[]>(sleepService.getEntries(windowStart, today), setSleep),
+      settle<FocusDaySummary[]>(focusService.getHistory(windowStart, today), setFocus),
+      settle<DailyLog[]>(mindService.getDailyLogRange(windowStart, today), setMoods),
+      settle<StravaActivity[]>(workoutsService.getActivities(), setWorkouts),
+      settle<StravaActivityStats>(workoutsService.getStats(), setWorkoutStats),
+      settle<LearningsSummary>(learningsService.getSummary(today), setLearnings),
+      settle<MindSummary>(mindService.getSummary(today), setMind),
+      settle<MindEntry[]>(mindService.getEntries('THOUGHT'), setMindEntries),
+      settle<SpendingSummary>(financeService.getSpendingSummary(today.slice(0, 7)) as Promise<{ data?: SpendingSummary; error?: unknown }>, setSpending),
+      settle<DailyFinancialLog[]>(financeService.getDailyLogs(HOME_WINDOW_DAYS), setFinance),
     ])
     setLoading(false)
   }, [today, windowStart])

@@ -5,7 +5,8 @@ import { SideRail } from '../dashboard/quantified-self-dashboard/components/side
 import { TopChip } from '../dashboard/quantified-self-dashboard/components/top-chip'
 import type { AppPath } from '../dashboard/quantified-self-dashboard/data'
 import type { Prompt } from '../../lib/api'
-import { fetchPrompts, createPrompt, updatePrompt, deletePrompt } from '../../lib/api'
+import { promptsService } from '../../services/prompts-service'
+import { usePromptsStore } from '../../store/prompts-store'
 import { ConfirmDialog } from '../ui/confirm-dialog'
 import './prompts-overview.css'
 
@@ -15,8 +16,10 @@ type PromptsOverviewProps = {
 }
 
 function PromptsOverviewDashboard() {
-  const [prompts, setPrompts] = useState<Prompt[]>([])
-  const [loading, setLoading] = useState(true)
+  const promptsState = usePromptsStore.use.prompts()
+  const promptsActions = usePromptsStore.use.actions()
+  const prompts = promptsState.data
+  const loading = promptsState.loading || (!promptsState.loaded && !promptsState.hasErrors)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null)
   
@@ -38,15 +41,10 @@ function PromptsOverviewDashboard() {
   }, [])
 
   const loadPrompts = async () => {
-    try {
-      setLoading(true)
-      const res = await fetchPrompts()
-      setPrompts(res.data)
-    } catch (error) {
-      console.error('Failed to load prompts:', error)
+    const res = await promptsActions.loadPrompts()
+    if (res?.error) {
+      console.error('Failed to load prompts:', res.error)
       toast.error('Failed to load prompts.')
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -84,18 +82,20 @@ function PromptsOverviewDashboard() {
     try {
       setIsSaving(true)
       if (selectedPrompt) {
-        await updatePrompt(selectedPrompt.id, {
+        const res = await promptsService.updatePrompt(selectedPrompt.id, {
           title: editTitle.trim(),
           content: editContent.trim()
         })
+        if (res.error) throw new Error(res.error.message)
         toast.success('Prompt updated')
       } else {
-        const res = await createPrompt({
+        const res = await promptsService.createPrompt({
           title: editTitle.trim(),
           content: editContent.trim()
         })
+        if (res.error) throw new Error(res.error.message)
         toast.success('Prompt created')
-        setSelectedPrompt(res.data) // Auto select the new prompt
+        if (res.data) setSelectedPrompt(res.data) // Auto select the new prompt
       }
       setIsEditing(false)
       loadPrompts()
@@ -111,7 +111,8 @@ function PromptsOverviewDashboard() {
   const confirmDelete = async () => {
     if (!promptToDelete) return
     try {
-      await deletePrompt(promptToDelete.id)
+      const res = await promptsService.deletePrompt(promptToDelete.id)
+      if (res.error) throw new Error(res.error.message)
       if (selectedPrompt?.id === promptToDelete.id) {
         setIsEditing(false)
         setSelectedPrompt(null)

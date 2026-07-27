@@ -1,16 +1,9 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import toast from 'react-hot-toast'
-import type { MindDistortionTag, MindEntry, MindSummary } from './mind-types'
+import type { MindDistortionTag, MindEntry } from './mind-types'
 import { AFFIRMATIONS, buildSeedEntries, mindAddDays, mindIsoDate, MIND_VALUE_TAGS } from './mind-types'
-import {
-  convertMindEntry,
-  createMindEntry,
-  updateMindEntry,
-  fetchMindEntries,
-  fetchMindSummary,
-  saveMindMood,
-  updateMindStatus,
-} from '../../../lib/api'
+import { mindService } from '../../../services/mind-service'
+import { mindActions, useMindStore } from '../../../store/mind-store'
 import { MindHeader } from './components/mind-header'
 import { MindInboxCard } from './components/mind-inbox-card'
 import { MindIntelligenceCard } from './components/mind-intelligence'
@@ -32,10 +25,12 @@ function tempId(): string {
 
 function MindOverviewDashboard() {
   const [selectedDate] = useState(() => mindIsoDate())
-  const [entries, setEntries] = useState<MindEntry[]>([])
-  const [summary, setSummary] = useState<MindSummary | null>(null)
+  // Entries/summary/mood live in the mind store (plain shared state); the view
+  // keeps its own load + seed-fallback orchestration and optimistic updates.
+  const entries = useMindStore.use.entries()
+  const summary = useMindStore.use.summary()
+  const mood = useMindStore.use.mood()
   const [releasingIds, setReleasingIds] = useState<ReadonlySet<string>>(new Set())
-  const [mood, setMood] = useState<number | null>(null)
   const [sosOpen, setSosOpen] = useState(false)
   const [affirmationIndex, setAffirmationIndex] = useState(0)
 
@@ -71,13 +66,14 @@ function MindOverviewDashboard() {
   const load = useCallback(async () => {
     try {
       const [entriesRes, summaryRes] = await Promise.all([
-        fetchMindEntries(),
-        fetchMindSummary(selectedDate),
+        mindService.getEntries(),
+        mindService.getSummary(selectedDate),
       ])
+      if (entriesRes.error || summaryRes.error) throw entriesRes.error ?? summaryRes.error
       const fetched = entriesRes.data ?? []
-      setEntries(fetched)
-      setSummary(summaryRes.data ?? null)
-      setMood(summaryRes.data?.moodScore ?? null)
+      mindActions.setEntries(fetched)
+      mindActions.setSummary(summaryRes.data ?? null)
+      mindActions.setMood(summaryRes.data?.moodScore ?? null)
 
       // Sync intention from backend
       const anchor = fetched.find((e) => e.type === 'INTENTION' && e.date === selectedDate)
@@ -91,8 +87,8 @@ function MindOverviewDashboard() {
     } catch {
       // Never leave the tab blank in dev / offline — fall back to local seeds.
       const seeds = buildSeedEntries(selectedDate)
-      setEntries(seeds)
-      setSummary(null)
+      mindActions.setEntries(seeds)
+      mindActions.setSummary(null)
 
       // Sync intention from seeds
       const anchor = seeds.find((e) => e.type === 'INTENTION' && e.date === selectedDate)
@@ -122,8 +118,9 @@ function MindOverviewDashboard() {
 
   const refreshSummary = useCallback(async () => {
     try {
-      const res = await fetchMindSummary(selectedDate)
-      setSummary(res.data ?? null)
+      const res = await mindService.getSummary(selectedDate)
+      if (res.error) return
+      mindActions.setSummary(res.data ?? null)
     } catch {
       /* keep the last-known summary */
     }
@@ -134,23 +131,27 @@ function MindOverviewDashboard() {
     try {
       const existing = entries.find((e) => e.type === 'INTENTION' && e.date === selectedDate)
       if (existing) {
-        const res = await updateMindEntry(existing.id, {
+        const res = await mindService.updateEntry(existing.id, {
           text: text.trim(),
           type: 'INTENTION',
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           valueTag: tag as any,
           date: selectedDate
         })
-        setEntries((prev) => prev.map((e) => (e.id === existing.id ? res.data : e)))
+        if (res.error || !res.data) throw new Error(res.error?.message ?? 'Failed to save intention')
+        const savedEntry = res.data
+        mindActions.setEntries((prev) => prev.map((e) => (e.id === existing.id ? savedEntry : e)))
       } else {
-        const res = await createMindEntry({
+        const res = await mindService.createEntry({
           text: text.trim(),
           type: 'INTENTION',
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           valueTag: tag as any,
           date: selectedDate
         })
-        setEntries((prev) => [...prev, res.data])
+        if (res.error || !res.data) throw new Error(res.error?.message ?? 'Failed to save intention')
+        const savedEntry = res.data
+        mindActions.setEntries((prev) => [...prev, savedEntry])
       }
     } catch (err) {
       console.error('Failed to save today\'s anchor', err)
@@ -210,19 +211,23 @@ function MindOverviewDashboard() {
     const text = `Breathed for ${currentCycles} ${currentCycles === 1 ? 'cycle' : 'cycles'}`
     try {
       if (todayBreathEntry) {
-        const res = await updateMindEntry(todayBreathEntry.id, {
+        const res = await mindService.updateEntry(todayBreathEntry.id, {
           text,
           type: 'BREATH',
           date: selectedDate
         })
-        setEntries((prev) => prev.map((e) => (e.id === todayBreathEntry.id ? res.data : e)))
+        if (res.error || !res.data) throw new Error(res.error?.message ?? 'Failed to log breathing')
+        const savedEntry = res.data
+        mindActions.setEntries((prev) => prev.map((e) => (e.id === todayBreathEntry.id ? savedEntry : e)))
       } else {
-        const res = await createMindEntry({
+        const res = await mindService.createEntry({
           text,
           type: 'BREATH',
           date: selectedDate
         })
-        setEntries((prev) => [...prev, res.data])
+        if (res.error || !res.data) throw new Error(res.error?.message ?? 'Failed to log breathing')
+        const savedEntry = res.data
+        mindActions.setEntries((prev) => [...prev, savedEntry])
         toast.success('Mindful breathing logged! Streak updated 🔥')
       }
       void refreshSummary()
@@ -232,7 +237,7 @@ function MindOverviewDashboard() {
   }, [entries, selectedDate, refreshSummary])
 
   const patchEntry = useCallback((id: string, patch: Partial<MindEntry>) => {
-    setEntries((prev) => prev.map((entry) => (entry.id === id ? { ...entry, ...patch } : entry)))
+    mindActions.setEntries((prev) => prev.map((entry) => (entry.id === id ? { ...entry, ...patch } : entry)))
   }, [])
 
   const handleCapture = useCallback(
@@ -245,12 +250,14 @@ function MindOverviewDashboard() {
         date: selectedDate,
         createdAt: new Date().toISOString(),
       }
-      setEntries((prev) => [optimistic, ...prev])
+      mindActions.setEntries((prev) => [optimistic, ...prev])
       try {
-        const res = await createMindEntry({ text, date: selectedDate })
-        setEntries((prev) => prev.map((e) => (e.id === optimistic.id ? res.data : e)))
+        const res = await mindService.createEntry({ text, date: selectedDate })
+        if (res.error || !res.data) throw new Error(res.error?.message ?? 'Failed to save thought')
+        const savedEntry = res.data
+        mindActions.setEntries((prev) => prev.map((e) => (e.id === optimistic.id ? savedEntry : e)))
       } catch {
-        setEntries((prev) => prev.filter((e) => e.id !== optimistic.id))
+        mindActions.setEntries((prev) => prev.filter((e) => e.id !== optimistic.id))
         toast.error('Could not save that — try again.')
       }
     },
@@ -262,7 +269,8 @@ function MindOverviewDashboard() {
       patchEntry(id, { status: 'CONVERTED', resolvedAt: new Date().toISOString() })
       toast.success('Turned into a task. It has a home now — not your head.')
       try {
-        const res = await convertMindEntry(id)
+        const res = await mindService.convertEntry(id)
+        if (res.error || !res.data) throw new Error(res.error?.message ?? 'Failed to convert entry')
         patchEntry(id, res.data)
         void refreshSummary()
       } catch {
@@ -279,7 +287,8 @@ function MindOverviewDashboard() {
       patchEntry(id, { status: 'PARKED', reviewDate, wasParked: true })
       toast.success('Parked. It will come back when you said — not before.')
       try {
-        await updateMindStatus(id, { status: 'PARKED', reviewDate })
+        const res = await mindService.updateStatus(id, { status: 'PARKED', reviewDate })
+        if (res.error) throw new Error(res.error.message)
       } catch {
         toast.error('Could not park that — try again.')
         void load()
@@ -299,7 +308,8 @@ function MindOverviewDashboard() {
           return next
         })
         try {
-          await updateMindStatus(id, { status: 'RELEASED' })
+          const res = await mindService.updateStatus(id, { status: 'RELEASED' })
+          if (res.error) throw new Error(res.error.message)
           void refreshSummary()
         } catch {
           /* the thought is already gone from view; a reload will reconcile */
@@ -319,7 +329,8 @@ function MindOverviewDashboard() {
       })
       toast.success("Reframed. That's a rep for your mind.")
       try {
-        await updateMindStatus(id, { status: 'RESOLVED', reframedText, distortionTag })
+        const res = await mindService.updateStatus(id, { status: 'RESOLVED', reframedText, distortionTag })
+        if (res.error) throw new Error(res.error.message)
         void refreshSummary()
       } catch {
         toast.error('Could not save the reframe — try again.')
@@ -339,13 +350,15 @@ function MindOverviewDashboard() {
         date: selectedDate,
         createdAt: new Date().toISOString(),
       }
-      setEntries((prev) => [...prev, optimistic])
+      mindActions.setEntries((prev) => [...prev, optimistic])
       toast.success('Filed as evidence.')
       try {
-        const res = await createMindEntry({ type: 'WIN', text, date: selectedDate })
-        setEntries((prev) => prev.map((e) => (e.id === optimistic.id ? res.data : e)))
+        const res = await mindService.createEntry({ type: 'WIN', text, date: selectedDate })
+        if (res.error || !res.data) throw new Error(res.error?.message ?? 'Failed to save win')
+        const savedEntry = res.data
+        mindActions.setEntries((prev) => prev.map((e) => (e.id === optimistic.id ? savedEntry : e)))
       } catch {
-        setEntries((prev) => prev.filter((e) => e.id !== optimistic.id))
+        mindActions.setEntries((prev) => prev.filter((e) => e.id !== optimistic.id))
         toast.error('Could not save that win — try again.')
       }
     },
@@ -362,12 +375,14 @@ function MindOverviewDashboard() {
         date: selectedDate,
         createdAt: new Date().toISOString(),
       }
-      setEntries((prev) => [...prev, optimistic])
+      mindActions.setEntries((prev) => [...prev, optimistic])
       try {
-        const res = await createMindEntry({ type: 'GRATITUDE', text, date: selectedDate })
-        setEntries((prev) => prev.map((e) => (e.id === optimistic.id ? res.data : e)))
+        const res = await mindService.createEntry({ type: 'GRATITUDE', text, date: selectedDate })
+        if (res.error || !res.data) throw new Error(res.error?.message ?? 'Failed to save gratitude')
+        const savedEntry = res.data
+        mindActions.setEntries((prev) => prev.map((e) => (e.id === optimistic.id ? savedEntry : e)))
       } catch {
-        setEntries((prev) => prev.filter((e) => e.id !== optimistic.id))
+        mindActions.setEntries((prev) => prev.filter((e) => e.id !== optimistic.id))
         toast.error('Could not save that — try again.')
       }
     },
@@ -378,7 +393,8 @@ function MindOverviewDashboard() {
     async (id: string) => {
       patchEntry(id, { status: 'OPEN', reviewDate: null })
       try {
-        await updateMindStatus(id, { status: 'OPEN' })
+        const res = await mindService.updateStatus(id, { status: 'OPEN' })
+        if (res.error) throw new Error(res.error.message)
       } catch {
         void load()
       }
@@ -389,11 +405,10 @@ function MindOverviewDashboard() {
   const handleMoodSelect = useCallback(
     async (value: number) => {
       const next = mood === value ? null : value
-      setMood(next)
+      mindActions.setMood(next)
       if (next != null) {
-        try {
-          await saveMindMood(selectedDate, next)
-        } catch {
+        const res = await mindService.saveMood(selectedDate, next)
+        if (res.error) {
           /* mood is a soft signal; don't nag on failure */
         }
       }

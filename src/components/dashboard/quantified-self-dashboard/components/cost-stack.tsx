@@ -1,6 +1,6 @@
 import { costCards } from '../data'
 import { MiniHistogram } from './mini-histogram'
-import { useDashboard } from '../../../../contexts/DashboardContext';
+import { useDashboard } from '../../../../store/dashboard-store';
 
 function CostStack() {
   const { data, isLoading } = useDashboard();

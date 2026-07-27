@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { CalendarCheck, ChevronDown, LoaderCircle, X, Plus } from 'lucide-react'
-import { useDashboard } from '../../../../contexts/DashboardContext'
-import { fetchFoodEntries } from '../../../../lib/api'
+import { useDashboard } from '../../../../store/dashboard-store'
+import { nutritionService } from '../../../../services/nutrition-service'
 import { isStandalone } from '../../../../lib/utils'
 import { MiniMonth } from '../../../ui/mini-month'
 import { getFoodIconDetails } from './food-icon-helper'
+import { getFoodHistory } from './food-history'
 
 type FoodEntry = {
   id?: string
@@ -111,17 +112,29 @@ function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
   const [activeNutritionDates, setActiveNutritionDates] = useState<Set<string>>(new Set())
   const [calendarRange, setCalendarRange] = useState<{ start: string; end: string } | null>(null)
 
+  // Which days have meals, for the calendar's dots. The shared 365-day history already
+  // covers every month the picker can reach in practice, so read it instead of firing a
+  // per-month range request; only months older than that window need their own fetch.
   useEffect(() => {
     if (!calendarRange) return
     let active = true
-    fetchFoodEntries(undefined, calendarRange.start, calendarRange.end)
-      .then((res) => {
+
+    const historyFloor = isoDate(new Date(Date.now() - 365 * 24 * 60 * 60 * 1000))
+    const source = calendarRange.start >= historyFloor
+      ? getFoodHistory()
+      : nutritionService.getFoodEntries(undefined, calendarRange.start, calendarRange.end)
+        .then((res) => {
+          if (res.error) throw res.error
+          return extractEntries(res)
+        })
+
+    source
+      .then((entries) => {
         if (!active) return
-        const entries = extractEntries(res)
         const dates = new Set(
           entries
             .map((entry) => entry.date?.split('T')[0])
-            .filter(Boolean) as string[],
+            .filter((date): date is string => Boolean(date)),
         )
         setActiveNutritionDates(dates)
       })
@@ -236,9 +249,10 @@ function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
     setIsPickedDateLoading(true)
     setPickedDateError(null)
 
-    fetchFoodEntries(undefined, pickedDate, pickedDate)
+    nutritionService.getFoodEntries(undefined, pickedDate, pickedDate)
       .then((response) => {
         if (isActive) {
+          if (response.error) throw response.error
           setPickedDateEntries(extractEntries(response))
         }
       })

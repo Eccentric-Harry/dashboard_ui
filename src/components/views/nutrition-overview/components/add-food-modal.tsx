@@ -2,8 +2,9 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { X, Loader2, ClipboardCheck, ClipboardPaste, Camera, CheckCircle, AlertTriangle, RotateCcw, Upload, Wifi, Bell, Scan, Shield, TrendingUp, Sparkles, Copy, ChevronLeft, ChevronRight } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
-import { addFoodEntry, updateFoodEntry, type MealAnalysisApiResponse, type ClinicalFlag, type IngredientBreakdown } from '../../../../lib/api'
-import { useNotifications } from '../../../../contexts/NotificationContext'
+import type { MealAnalysisApiResponse, ClinicalFlag, IngredientBreakdown } from '../../../../lib/api'
+import { nutritionService } from '../../../../services/nutrition-service'
+import { useNotifications } from '../../../../store/notification-store'
 import { normalizeMealGrade } from './meal-grade'
 import { NUTRILOG_PROMPT } from './nutrilog-prompt'
 
@@ -451,10 +452,12 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
     setLoading(true)
     try {
       if (isEdit && initialData?.id) {
-        await updateFoodEntry(finalPayload.date, initialData.id, finalPayload)
+        const res = await nutritionService.updateFoodEntry(finalPayload.date, initialData.id, finalPayload)
+        if (res.error) throw new Error(res.error.message)
         toast.success(`Updated "${finalPayload.description}"`)
       } else {
-        await addFoodEntry(finalPayload)
+        const res = await nutritionService.addFoodEntry(finalPayload)
+        if (res.error) throw new Error(res.error.message)
         toast.success(`Logged "${finalPayload.description}"`)
       }
       onSuccess()

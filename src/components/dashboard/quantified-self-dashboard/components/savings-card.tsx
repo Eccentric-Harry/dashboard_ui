@@ -10,7 +10,7 @@ import {
 import type { LearningCategory } from '../learning-data'
 
 import { type AppPath } from '../data'
-import { useDashboard } from '../../../../contexts/DashboardContext';
+import { useDashboard } from '../../../../store/dashboard-store';
 
 function SavingsCard({ onNavigate }: { onNavigate?: (path: AppPath, search?: string) => void }) {
   const { data: apiData, isLoading } = useDashboard();

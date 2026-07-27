@@ -9,8 +9,9 @@ import { ProteinTrendCard } from './components/protein-trend-card'
 import { AddFoodModal } from './components/add-food-modal'
 import { MealDetailsModal } from './components/meal-details-modal'
 import { NutritionIntelligence } from './components/nutrition-intelligence'
-import { useDashboard } from '../../../contexts/DashboardContext'
-import { fetchFoodEntries } from '../../../lib/api'
+import { useDashboard } from '../../../store/dashboard-store'
+import { nutritionService } from '../../../services/nutrition-service'
+import { getFoodHistory } from './components/food-history'
 
 import './nutrition-overview.css'
 import './nutrition-redesign.css'
@@ -22,6 +23,8 @@ type FoodEntry = {
   proteinGrams?: number
   calories?: number
   date?: string
+  /** Present only on the full view — its absence is how we detect a summary entry. */
+  meal_items?: unknown
   [key: string]: unknown
 }
 
@@ -89,39 +92,67 @@ function NutritionOverviewDashboard() {
     setItemId(null)
   }, [])
 
-  // Resolve the entry for the current ?item= id: today's dashboard data
-  // first, then the food-entry history (covers deep links & older days).
+  // Resolve the entry for the current ?item= id. Today's meals arrive complete on the
+  // /dashboard payload; anything older comes from the list cards, which now carry only
+  // the summary fields — so the detail sheet pulls the full record for that one day.
+  // Deep links (no entry in hand at all) find the date via the shared history first.
   const dashboardEntries = data?.health?.foodEntries as FoodEntry[] | undefined
+  const hydratedIdRef = useRef<string | null>(null)
   useEffect(() => {
     if (!itemId) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setDetailEntry(null)
+      hydratedIdRef.current = null
       return
     }
-    if (detailEntry?.id === itemId) return
+    if (hydratedIdRef.current === itemId) return
 
     const local = (dashboardEntries || []).find((entry) => entry.id === itemId)
-    if (local) {
+    if (local && Array.isArray(local.meal_items)) {
+      hydratedIdRef.current = itemId
       setDetailEntry(local)
       return
     }
 
     let active = true
+    hydratedIdRef.current = itemId
     setIsDetailLoading(true)
-    fetchFoodEntries(365)
-      .then((response) => {
+    ;(async () => {
+      try {
+        // The card that was clicked already handed us a summary entry — its date saves
+        // a lookup. A cold deep link has to scan the shared history for it.
+        let date = detailEntry?.id === itemId ? detailEntry.date?.slice(0, 10) : undefined
+        if (!date) {
+          const history = await getFoodHistory()
+          if (!active) return
+          date = history.find((entry) => entry.id === itemId)?.date?.slice(0, 10)
+        }
+        if (!date) {
+          if (active) setDetailEntry(null)
+          return
+        }
+
+        const res = await nutritionService.getFoodEntries(undefined, date, date, undefined, 'full')
         if (!active) return
-        const entries = extractEntries(response)
-        setDetailEntry(entries.find((entry) => entry.id === itemId) || null)
-      })
-      .catch((error) => console.error('Failed to resolve food entry for detail view', error))
-      .finally(() => {
+        if (res.error) throw res.error
+        const full = extractEntries(res).find((entry) => entry.id === itemId)
+        // Keep the summary entry on screen if the full read came back empty —
+        // a partial detail sheet beats "meal not found".
+        if (full || detailEntry?.id !== itemId) setDetailEntry(full || null)
+      } catch (error) {
+        console.error('Failed to resolve food entry for detail view', error)
+        hydratedIdRef.current = null
+      } finally {
         if (active) setIsDetailLoading(false)
-      })
+      }
+    })()
     return () => {
       active = false
     }
-  }, [itemId, dashboardEntries, detailEntry?.id])
+    // detailEntry is read for its date but must not re-trigger this effect —
+    // hydratedIdRef already guards against a second pass for the same id.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itemId, dashboardEntries])
 
   const handleSuccess = () => {
     refetch()

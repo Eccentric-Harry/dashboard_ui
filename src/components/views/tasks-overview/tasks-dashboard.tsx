@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { Plus, Search, List, Columns3, CalendarDays, X, Clock, Briefcase, BookOpen, Dumbbell, ShoppingCart, Home, DollarSign, User, Hash, LayoutDashboard, Tag, Film } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { fetchTasks, toggleTask, deleteTask, updateTask, addTask } from '../../../lib/api'
 import type { DailyTask } from '../../../lib/api'
+import { tasksService } from '../../../services/tasks-service'
+import { useTasksStore } from '../../../store/tasks-store'
 import { ConfirmDialog } from '../../ui/confirm-dialog'
 import { TasksListView } from './tasks-list-view'
 import { TasksKanbanView } from './tasks-kanban-view'
@@ -49,8 +50,22 @@ type TasksDashboardProps = {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function TasksDashboard(_props: TasksDashboardProps) {
-  const [tasks, setTasks] = useState<DailyTask[]>([])
-  const [loading, setLoading] = useState(true)
+  // Task list server state comes from the tasks store; UI/filter state stays local.
+  const tasksState = useTasksStore.use.tasks()
+  const tasksActions = useTasksStore.use.actions()
+  const rawTasks = tasksState.data
+  const loading = tasksState.loading || (!tasksState.loaded && !tasksState.hasErrors)
+  const tasks = useMemo(
+    () =>
+      [...rawTasks].sort((a, b) => {
+        const dateCompare = (b.date || '').localeCompare(a.date || '')
+        if (dateCompare !== 0) return dateCompare
+        if (a.sortOrder !== undefined && b.sortOrder !== undefined) return a.sortOrder - b.sortOrder
+        if (b.id && a.id) return b.id.localeCompare(a.id)
+        return 0
+      }),
+    [rawTasks],
+  )
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all')
@@ -84,28 +99,11 @@ export function TasksDashboard(_props: TasksDashboardProps) {
   }, [viewMode, statusFilter, categoryFilters, tagFilters, searchQuery])
 
   const load = useCallback(async (showLoading = true) => {
-    if (showLoading) setLoading(true)
-    try {
-      const res = await fetchTasks()
-      const sorted = (res?.data ?? []).sort((a: DailyTask, b: DailyTask) => {
-        const dateCompare = (b.date || '').localeCompare(a.date || '')
-        if (dateCompare !== 0) return dateCompare
-        if (a.sortOrder !== undefined && b.sortOrder !== undefined) {
-          return a.sortOrder - b.sortOrder
-        }
-        if (b.id && a.id) return b.id.localeCompare(a.id)
-        return 0
-      })
-      setTasks(sorted)
-    } catch {
-      if (showLoading) setTasks([])
-    } finally {
-      if (showLoading) setLoading(false)
-    }
-  }, [])
+    if (showLoading) await tasksActions.loadTasks()
+    else await tasksActions.reloadTasks()
+  }, [tasksActions])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     load()
   }, [load])
 
@@ -139,21 +137,22 @@ export function TasksDashboard(_props: TasksDashboardProps) {
     if (!task.id) return
 
     // Optimistic UI update
-    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, completed: !t.completed } : t)))
+    tasksActions.applyTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, completed: !t.completed } : t)))
     if (selectedTask?.id === task.id) {
       setSelectedTask((prev) => prev ? { ...prev, completed: !prev.completed } : prev)
     }
 
     try {
       const isRecurring = task.recurrenceFrequency && task.recurrenceFrequency !== 'NONE'
-      const res = await toggleTask(task.id, isRecurring ? task.date : undefined)
+      const res = await tasksService.toggleTask(task.id, isRecurring ? task.date : undefined)
+      if (res.error) throw new Error(res.error.message)
       if (selectedTask?.id === task.id && res?.data) {
         setSelectedTask(res.data)
       }
       await load(false)
     } catch (err: unknown) {
       // Rollback on error
-      setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, completed: !t.completed } : t)))
+      tasksActions.applyTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, completed: !t.completed } : t)))
       if (selectedTask?.id === task.id) {
         setSelectedTask((prev) => prev ? { ...prev, completed: !prev.completed } : prev)
       }
@@ -166,10 +165,11 @@ export function TasksDashboard(_props: TasksDashboardProps) {
     const id = deleteTarget.id
 
     // Optimistic UI update
-    setTasks((prev) => prev.filter((t) => t.id !== id))
+    tasksActions.applyTasks((prev) => prev.filter((t) => t.id !== id))
 
     try {
-      await deleteTask(id)
+      const res = await tasksService.deleteTask(id)
+      if (res.error) throw new Error(res.error.message)
       toast.success(`Deleted "${deleteTarget.title}"`)
       if (selectedTask?.id === id) {
         setSelectedTask(null)
@@ -189,12 +189,13 @@ export function TasksDashboard(_props: TasksDashboardProps) {
 
   const handleUpdate = async (id: string, data: Partial<DailyTask>) => {
     // Optimistic UI update
-    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...data } : t)))
+    tasksActions.applyTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...data } : t)))
 
     try {
       const existing = tasks.find((t) => t.id === id)
       if (!existing) return
-      const res = await updateTask(id, { ...existing, ...data } as DailyTask)
+      const res = await tasksService.updateTask(id, { ...existing, ...data } as DailyTask)
+      if (res.error) throw new Error(res.error.message)
       toast.success('Task updated')
       if (selectedTask?.id === id && res?.data) {
         setSelectedTask(res.data)
@@ -243,13 +244,14 @@ export function TasksDashboard(_props: TasksDashboardProps) {
         })
         setModalMode(null)
       } else {
-        const res = await addTask({
+        const res = await tasksService.addTask({
           title: modalFormTitle.trim(),
           date: modalFormDate,
           scheduledTime: modalFormTime || undefined,
           category: finalCategory,
           notes: modalFormNotes.trim() || undefined,
         })
+        if (res.error) throw new Error(res.error.message)
         toast.success('Task created')
         setModalMode(null)
         load(false)
