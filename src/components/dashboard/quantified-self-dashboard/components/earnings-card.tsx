@@ -1,5 +1,5 @@
 import { earningsMetricRows, waveform, earningsFooterItems } from '../data'
-import { useDashboard } from '../../../../contexts/DashboardContext';
+import { useDashboard } from '../../../../store/dashboard-store';
 
 function EarningsCard() {
   const { data, isLoading } = useDashboard();

@@ -1,7 +1,8 @@
-// Shared 365-day food-entry history with a short-lived promise cache so the
-// header (streak badge) and the recent-logs card don't each fire the same
-// heavy GET on page load.
-import { fetchFoodEntries } from '../../../../lib/api'
+// Shared nutrition reads for the /nutrition route, behind short-lived promise
+// caches. Five cards mount at once and each used to fire its own GET; the
+// history window, the calendar dots, the analytics window and the two copies of
+// the 7-day summary now collapse into one request each.
+import { nutritionService } from '../../../../services/nutrition-service'
 
 export type HistoryFoodEntry = {
   id?: string
@@ -40,12 +41,36 @@ export function getFoodHistory(options?: { fresh?: boolean }): Promise<HistoryFo
   if (!options?.fresh && cache && now - cache.time < TTL_MS) {
     return cache.promise
   }
-  const promise = fetchFoodEntries(365).then(extractEntries)
+  // Summary view — a year of entries stays small enough to be the one shared read
+  // that the history list, the calendar dots and the analytics window all sit on.
+  const promise = nutritionService.getFoodEntries(365).then((res) => {
+    if (res.error) throw res.error
+    return extractEntries(res)
+  })
   // a failed fetch shouldn't poison the cache for the TTL window
   promise.catch(() => {
     if (cache?.promise === promise) cache = null
   })
   cache = { promise, time: now }
+  return promise
+}
+
+/** Same TTL treatment for the 7-day summary, which two cards ask for on mount. */
+const summaryCache = new Map<string, { promise: Promise<unknown>; time: number }>()
+
+export function getNutritionSummaryShared(date: string): Promise<unknown> {
+  const now = Date.now()
+  const hit = summaryCache.get(date)
+  if (hit && now - hit.time < TTL_MS) return hit.promise
+
+  const promise = nutritionService.getSummary(date).then((res) => {
+    if (res.error) throw res.error
+    return res.data
+  })
+  promise.catch(() => {
+    if (summaryCache.get(date)?.promise === promise) summaryCache.delete(date)
+  })
+  summaryCache.set(date, { promise, time: now })
   return promise
 }
 

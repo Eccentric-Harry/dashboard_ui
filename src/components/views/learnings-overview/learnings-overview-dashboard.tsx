@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { AppPath } from '../../dashboard/quantified-self-dashboard/data'
-import type { LearningLog, LearningsSummary } from '../../../lib/api'
-import { fetchLearningsSummary, createCalendarItem } from '../../../lib/api'
+import type { LearningLog } from '../../../lib/api'
+import { calendarService } from '../../../services/calendar-service'
+import { useLearningsStore } from '../../../store/learnings-store'
 import { isoDate, parseIsoDate } from './learnings-utils'
 import { LearningsHeader } from './components/learnings-header'
 import { LearningsStatsRow } from './components/learnings-stats-row'
@@ -28,8 +29,12 @@ interface LearningsOverviewDashboardProps {
 function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverviewDashboardProps) {
   const [selectedDate, setSelectedDate] = useState(() => parseDateFromParams(searchParams))
   const [refreshKey, setRefreshKey] = useState(0)
-  const [summary, setSummary] = useState<LearningsSummary | null>(null)
-  const [summaryLoading, setSummaryLoading] = useState(true)
+
+  // Summary server state comes from the learnings store (date-keyed slice).
+  const summaryState = useLearningsStore.use.summary()
+  const learningsActions = useLearningsStore.use.actions()
+  const summary = summaryState.data
+  const summaryLoading = summaryState.loading || (!summaryState.loaded && !summaryState.hasErrors)
 
   const [entryModalOpen, setEntryModalOpen] = useState(false)
   const [editingLearning, setEditingLearning] = useState<LearningLog | undefined>()
@@ -49,27 +54,18 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
     setSelectedDate(parseDateFromParams(searchParams))
   }, [searchParams])
 
-  const loadSummary = useCallback(async () => {
-    setSummaryLoading(true)
-    try {
-      const res = await fetchLearningsSummary(selectedDate)
-      setSummary(res?.data ?? null)
-    } catch {
-      setSummary(null)
-    } finally {
-      setSummaryLoading(false)
-    }
-  }, [selectedDate])
+  const reloadSummary = useCallback(() => {
+    void learningsActions.loadSummary(selectedDate)
+  }, [learningsActions, selectedDate])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadSummary()
-  }, [loadSummary, refreshKey])
+    reloadSummary()
+  }, [reloadSummary, refreshKey])
 
   const handleRefresh = useCallback(() => {
     setRefreshKey((k) => k + 1)
-    void loadSummary()
-  }, [loadSummary])
+    reloadSummary()
+  }, [reloadSummary])
 
   const handleDateChange = (date: string) => {
     setSelectedDate(date)
@@ -83,7 +79,7 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
       const endTime = new Date(now.getTime() + durationMinutes * 60 * 1000)
       const endTimeStr = endTime.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
 
-      await createCalendarItem({
+      const res = await calendarService.createItem({
         title: `Focus: ${activityType}`,
         date: selectedDate,
         startTime: startTimeStr,
@@ -94,6 +90,7 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
         color: '#1a7a4a',
         completed: true,
       })
+      if (res.error) throw new Error(res.error.message)
       handleRefresh()
     } catch (err) {
       console.error('Failed to log focus session to calendar', err)

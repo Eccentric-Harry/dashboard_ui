@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import { Check, Loader2, Pencil, Plus, Trash2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { fetchSubscriptions, addTransaction, deleteSubscription } from '../../../../lib/api'
 import type { SubscriptionDTO } from '../../../../lib/api'
+import { financeService } from '../../../../services/finance-service'
 import { AddSubscriptionModal } from './add-subscription-modal'
 
 interface SubscriptionsCardProps {
@@ -21,8 +21,9 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
   const [isEditing, setIsEditing] = useState(false)
 
   const loadSubscriptions = useCallback(() => {
-    return fetchSubscriptions()
+    return financeService.getSubscriptions()
       .then((res) => {
+        if (res.error) throw new Error(res.error.message)
         setApiSubscriptions(res.data || [])
         setLoading(false)
       })
@@ -39,7 +40,8 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
   const handleDelete = async (subscription: SubscriptionDTO) => {
     setDeletingId(subscription.id)
     try {
-      await deleteSubscription(subscription.id)
+      const res = await financeService.deleteSubscription(subscription.id)
+      if (res.error) throw new Error(res.error.message)
       toast.success(`Removed ${subscription.name}`)
       await loadSubscriptions()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -249,13 +251,14 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
 
       const today = new Date().toISOString().split('T')[0]
 
-      await addTransaction({
+      const res = await financeService.addTransaction({
         description: `${subscription.name} Subscription`,
         amount: numericAmount,
         category: subscription.name.toLowerCase().includes('jio') ? 'Bills & Utilities' : 'Entertainment',
         type: 'Expense',
         date: today
       })
+      if (res.error) throw new Error(res.error.message)
 
       setOptimisticPaidIds(prev => new Set(prev).add(id))
       toast.success(`Paid ${subscription.name} subscription`)

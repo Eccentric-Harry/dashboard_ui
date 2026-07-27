@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { RefreshCw, Minus, GlassWater, Droplet, Milk, Check } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { fetchHydration, addWaterIntake } from '../../../../lib/api'
+import { nutritionService } from '../../../../services/nutrition-service'
 import type { HydrationData } from '../../../../lib/api'
-import { useDashboard } from '../../../../contexts/DashboardContext'
+import { useDashboard } from '../../../../store/dashboard-store'
 
 const TARGET_ML = 4000
 const GLASS_ML = 250
@@ -49,8 +49,9 @@ function HydrationCard() {
     try {
       setError(null)
       setLoading(true)
-      const response = await fetchHydration(selectedDate)
-      setData(response.data)
+      const response = await nutritionService.getHydration(selectedDate)
+      if (response.error) throw response.error
+      setData(response.data ?? null)
     } catch (err) {
       setError('Connection Error')
       console.error(err)
@@ -70,10 +71,12 @@ function HydrationCard() {
     setTimeout(() => setBounceBtn(null), 400)
     try {
       setAdding(true)
-      await addWaterIntake(amount, selectedDate)
+      const addRes = await nutritionService.addWaterIntake(amount, selectedDate)
+      if (addRes.error) throw addRes.error
       toast.success(`${amount > 0 ? 'Logged' : 'Removed'} ${Math.abs(amount)}ml of water`)
-      const response = await fetchHydration(selectedDate)
-      setData(response.data)
+      const response = await nutritionService.getHydration(selectedDate)
+      if (response.error) throw response.error
+      setData(response.data ?? null)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       toast.error(err.message || 'Failed to log water')

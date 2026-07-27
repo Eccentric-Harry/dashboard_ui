@@ -20,7 +20,9 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { fetchFoodEntries, fetchHydrationRange, fetchNutritionSummary, getUserProfile } from '../../../../lib/api'
+import { userService } from '../../../../services/user-service'
+import { nutritionService } from '../../../../services/nutrition-service'
+import { getFoodHistory, getNutritionSummaryShared } from './food-history'
 import type { UserProfile } from '../../../../lib/api'
 import type { Insight } from '../../../../lib/insights/engine'
 import { isoDate, shortDay } from '../../../../lib/insights/engine'
@@ -40,19 +42,6 @@ import { InsightList } from '../../../ui/insight-list'
 import './nutrition-intelligence.css'
 
 const WINDOW_DAYS = 30
-
-const extractEntries = (response: unknown): FoodEntryLike[] => {
-  if (Array.isArray(response)) return response as FoodEntryLike[]
-  const payload = response as {
-    data?: FoodEntryLike[] | { entries?: FoodEntryLike[]; foodEntries?: FoodEntryLike[] }
-    entries?: FoodEntryLike[]
-  }
-  if (Array.isArray(payload?.data)) return payload.data
-  if (payload?.data && Array.isArray(payload.data.entries)) return payload.data.entries
-  if (payload?.data && Array.isArray(payload.data.foodEntries)) return payload.data.foodEntries
-  if (Array.isArray(payload?.entries)) return payload.entries
-  return []
-}
 
 const extractHydration = (response: unknown): HydrationDayLike[] => {
   const payload = response as { data?: { date: string; waterIntakeMl?: number; targetMl?: number }[] }
@@ -93,30 +82,39 @@ function NutritionIntelligence() {
     setIsMounted(true)
   }, [])
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (options?: { fresh?: boolean }) => {
     setLoading(true)
     setFailed(false)
+    // The history read and the 7-day summary are shared with the other cards —
+    // buildNutritionDays windows the entries down to WINDOW_DAYS locally, so
+    // asking for a second, narrower copy of the same data buys nothing.
     const [entriesRes, profileRes, summaryRes, hydrationRes] = await Promise.allSettled([
-      fetchFoodEntries(WINDOW_DAYS),
-      getUserProfile(),
-      fetchNutritionSummary(today),
-      fetchHydrationRange(WINDOW_DAYS),
+      getFoodHistory(options),
+      userService.getProfile(),
+      getNutritionSummaryShared(today),
+      nutritionService.getHydrationRange(WINDOW_DAYS),
     ])
     if (entriesRes.status === 'fulfilled') {
-      setEntries(extractEntries(entriesRes.value))
+      setEntries(entriesRes.value as FoodEntryLike[])
     } else {
       setEntries(null)
       setFailed(true)
     }
     // Profile is optional (guest mode has no profile endpoint) — targets fall
     // back to the nutrition summary's goals.
-    setProfile(profileRes.status === 'fulfilled' ? profileRes.value.data : null)
+    setProfile(
+      profileRes.status === 'fulfilled' && !profileRes.value.error ? (profileRes.value.data ?? null) : null,
+    )
     if (summaryRes.status === 'fulfilled') {
-      const summary = (summaryRes.value as { data?: GoalFallback })?.data
+      const summary = summaryRes.value as GoalFallback | undefined
       setGoalFallback({ proteinGoal: summary?.proteinGoal, calorieGoal: summary?.calorieGoal })
     }
     // Hydration is a nice-to-have for the insights list — never blocks the section.
-    setHydration(hydrationRes.status === 'fulfilled' ? extractHydration(hydrationRes.value) : null)
+    setHydration(
+      hydrationRes.status === 'fulfilled' && !hydrationRes.value.error
+        ? extractHydration(hydrationRes.value)
+        : null,
+    )
     setLoading(false)
   }, [today])
 
@@ -202,7 +200,7 @@ function NutritionIntelligence() {
         <SectionHead onRefresh={load} />
         <div className="ntr-card ntr-intel-empty">
           <p>Couldn't load your food history for insights.</p>
-          <button type="button" className="ntr-pill" onClick={() => void load()}>
+          <button type="button" className="ntr-pill" onClick={() => void load({ fresh: true })}>
             Try again
           </button>
         </div>

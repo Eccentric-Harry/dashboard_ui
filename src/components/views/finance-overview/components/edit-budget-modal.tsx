@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Loader2, Target } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { updateFinanceBudget } from '../../../../lib/api'
+import { financeService } from '../../../../services/finance-service'
 
 interface EditBudgetModalProps {
   isOpen: boolean
@@ -35,7 +35,8 @@ export function EditBudgetModal({ isOpen, currentBudget, onClose, onSuccess }: E
     }
     setLoading(true)
     try {
-      const res = await updateFinanceBudget(numAmount)
+      const res = await financeService.updateBudget(numAmount)
+      if (res.error) throw new Error(res.error.message)
       const saved = res.data?.monthlyBudget ?? numAmount
       toast.success(`Monthly budget set to ₹${saved.toLocaleString('en-IN')}`)
       onSuccess(saved)

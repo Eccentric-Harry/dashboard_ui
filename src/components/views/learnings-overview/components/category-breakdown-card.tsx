@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { PieChart as PieIcon, X } from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
-import { fetchLearnings } from '../../../../lib/api'
 import type { LearningLog } from '../../../../lib/api'
+import { learningsService } from '../../../../services/learnings-service'
 import { getConsistentColor, getIconForCategory } from '../learnings-utils'
 
 interface CategoryBreakdownCardProps {
@@ -43,7 +43,8 @@ export function CategoryBreakdownCard({ refreshKey }: CategoryBreakdownCardProps
   const loadCategories = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetchLearnings()
+      const res = await learningsService.getLearnings()
+      if (res.error) throw new Error(res.error.message)
       const list: LearningLog[] = res?.data ?? []
       setLearnings(list)
 

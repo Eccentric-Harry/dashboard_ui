@@ -1,12 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Check, Loader2, ChevronLeft, ChevronRight, Pencil, Trash2, DollarSign } from 'lucide-react'
 import toast from 'react-hot-toast'
-import {
-  fetchLendingRecords,
-  toggleLendingRecordStatus,
-  addTransaction,
-  type LendingRecord
-} from '../../../../lib/api'
+import type { LendingRecord } from '../../../../lib/api'
+import { financeService } from '../../../../services/finance-service'
 
 interface LendingCardProps {
   refreshKey: number
@@ -31,7 +27,8 @@ export function LendingCard({ refreshKey, onEditClick, onDeleteClick, onRefreshT
   const loadRecords = async () => {
     setLoading(true)
     try {
-      const res = await fetchLendingRecords()
+      const res = await financeService.getLending()
+      if (res.error) throw new Error(res.error.message)
       setRecords(res.data || [])
     } catch (err) {
       console.error('Failed to fetch lending records:', err)
@@ -86,18 +83,20 @@ export function LendingCard({ refreshKey, onEditClick, onDeleteClick, onRefreshT
     setProcessingId(record.id)
     const nextStatus = record.status === 'Pending' ? 'Repaid' : 'Pending'
     try {
-      await toggleLendingRecordStatus(record.id)
+      const toggleRes = await financeService.toggleLending(record.id)
+      if (toggleRes.error) throw new Error(toggleRes.error.message)
 
       // If moving to Repaid, offer to record a recovery transaction
       if (nextStatus === 'Repaid') {
         const today = new Date().toISOString().split('T')[0]
-        await addTransaction({
+        const txRes = await financeService.addTransaction({
           description: `Lending Recovery: ${record.borrower}`,
           amount: Math.round(record.amount),
           category: 'Loan Recovery',
           type: 'Income',
           date: today
         })
+        if (txRes.error) throw new Error(txRes.error.message)
         toast.success(`Marked as Repaid & logged recovery of ₹${record.amount.toLocaleString()} in transactions!`)
         if (onRefreshTransactions) onRefreshTransactions()
       } else {

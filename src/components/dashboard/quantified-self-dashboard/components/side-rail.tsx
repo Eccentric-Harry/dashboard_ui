@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { getAvatarImage } from '../../../../lib/avatar'
 import { type AppPath, navItems, railBottomItems } from '../data'
-import { useNotifications } from '../../../../contexts/NotificationContext'
+import { useNotifications } from '../../../../store/notification-store'
 import { ConfirmDialog } from '../../../ui/confirm-dialog'
 
 type DashboardStageProps = {

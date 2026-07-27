@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import type { AppPath } from '../../../dashboard/quantified-self-dashboard/data'
-import { fetchLearningsForRange, fetchTasksForRange } from '../../../../lib/api'
+import { learningsService } from '../../../../services/learnings-service'
+import { tasksService } from '../../../../services/tasks-service'
 import { isoDate } from '../learnings-utils'
 
 interface CalendarSelectorCardProps {
@@ -67,8 +68,8 @@ export function CalendarSelectorCard({
       setLoading(true)
       try {
         const [learningsRes, tasksRes] = await Promise.all([
-          fetchLearningsForRange(rangeStart, rangeEnd),
-          fetchTasksForRange(rangeStart, rangeEnd),
+          learningsService.getLearningsRange(rangeStart, rangeEnd),
+          tasksService.getTasksRange(rangeStart, rangeEnd),
         ])
         const datesSet = new Set<string>()
         const addDate = (raw: string) => {
@@ -76,10 +77,10 @@ export function CalendarSelectorCard({
           if (key) datesSet.add(key)
         }
         if (active && learningsRes?.data) {
-          learningsRes.data.forEach((item: { date: string }) => addDate(item.date))
+          learningsRes.data.forEach((item) => addDate(item.date))
         }
         if (active && tasksRes?.data) {
-          tasksRes.data.forEach((item: { date: string }) => addDate(item.date))
+          tasksRes.data.forEach((item) => item.date && addDate(item.date))
         }
         if (active) setHighlightedDates(datesSet)
       } catch (err) {

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { X, Loader2, ClipboardCheck, FileJson } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
-import { createStravaActivity, importStravaJson } from '../../../../lib/api'
+import { workoutsService } from '../../../../services/workouts-service'
 
 type InitialData = {
   activityName?: string
@@ -96,13 +96,14 @@ function AddActivityModal({ isOpen, onClose, onSuccess, isEdit, initialData }: A
 
       // Note: Ideally call updateStravaActivity here if isEdit is true,
       // but assuming createStravaActivity handles upsert or mock for now
-      await createStravaActivity({
+      const res = await workoutsService.createActivity({
         ...formData,
         distanceKm: parseFloat(formData.distanceKm) || 0,
         elevationGainMeters: parseInt(formData.elevationGainMeters) || 0,
         stravaEmbedId: embedId,
         stravaToken: token
       })
+      if (res.error) throw new Error(res.error.message)
       setIsSuccess(true)
       toast.success(isEdit ? 'Activity updated' : 'Activity saved manually')
       setTimeout(() => {
@@ -126,7 +127,8 @@ function AddActivityModal({ isOpen, onClose, onSuccess, isEdit, initialData }: A
     try {
       const payload = JSON.parse(stravaJson)
       setLoading(true)
-      await importStravaJson(payload)
+      const res = await workoutsService.importStravaJson(payload)
+      if (res.error) throw new Error(res.error.message)
       setIsSuccess(true)
       toast.success('Activity imported from Strava')
       setTimeout(() => {

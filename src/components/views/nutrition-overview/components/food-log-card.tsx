@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CalendarDays, Flame, Wheat, ChevronLeft, ChevronRight } from 'lucide-react'
-import { useDashboard } from '../../../../contexts/DashboardContext'
+import { useDashboard } from '../../../../store/dashboard-store'
 import { sortFoodEntries } from './food-icon-helper'
 import { getMealImage } from './food-image-helper'
 import { gradeFromEntry } from './meal-grade'

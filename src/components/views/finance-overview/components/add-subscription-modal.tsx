@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { addSubscription } from '../../../../lib/api'
+import { financeService } from '../../../../services/finance-service'
 
 interface AddSubscriptionModalProps {
   isOpen: boolean
@@ -45,11 +45,12 @@ export function AddSubscriptionModal({ isOpen, onClose, onSuccess }: AddSubscrip
 
     setLoading(true)
     try {
-      await addSubscription({
+      const res = await financeService.addSubscription({
         name: name.trim(),
         cost: numCost,
         billingDate: billingDate || undefined,
       })
+      if (res.error) throw new Error(res.error.message)
       toast.success(`Added ${name.trim()} subscription`)
       onSuccess()
       onClose()

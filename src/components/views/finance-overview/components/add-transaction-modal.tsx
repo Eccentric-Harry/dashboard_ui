@@ -1,13 +1,8 @@
 import { useState, useEffect } from 'react'
 import { X, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import {
-  addTransaction,
-  updateTransaction,
-  addLendingRecord,
-  updateLendingRecord,
-  type LendingRecord
-} from '../../../../lib/api'
+import type { LendingRecord } from '../../../../lib/api'
+import { financeService } from '../../../../services/finance-service'
 
 import faaahAudio from '../../../../assets/faaah.mp3'
 
@@ -145,10 +140,12 @@ export function AddTransactionModal({
       }
 
       if (isEdit && initialTransactionData?.id) {
-        await updateTransaction(initialTransactionData.id, payload)
+        const res = await financeService.updateTransaction(initialTransactionData.id, payload)
+        if (res.error) throw new Error(res.error.message)
         toast.success(`Updated "${description}" (₹${numAmount.toLocaleString()})`)
       } else {
-        await addTransaction(payload)
+        const res = await financeService.addTransaction(payload)
+        if (res.error) throw new Error(res.error.message)
         toast.success(`Saved "${description}" (₹${numAmount.toLocaleString()})`)
       }
 
@@ -194,10 +191,12 @@ export function AddTransactionModal({
       }
 
       if (isEdit && initialLendingData?.id) {
-        await updateLendingRecord(initialLendingData.id, payload)
+        const res = await financeService.updateLending(initialLendingData.id, payload)
+        if (res.error) throw new Error(res.error.message)
         toast.success(`Updated lending to ${borrower}`)
       } else {
-        await addLendingRecord(payload)
+        const res = await financeService.addLending(payload)
+        if (res.error) throw new Error(res.error.message)
         toast.success(`Recorded lending of ₹${numAmount.toLocaleString()} to ${borrower}`)
       }
 

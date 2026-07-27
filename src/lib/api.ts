@@ -1,3 +1,35 @@
+import { incrementActiveGets, decrementActiveGets } from '../services/http/axios-client';
+import { downscaleImages } from './image-downscale';
+
+// The active-GET counter now lives in services/http/axios-client (its final home).
+// Re-exported here so existing importers (e.g. App.tsx) don't move during migration.
+export { subscribeToActiveRequests } from '../services/http/axios-client';
+
+// Finance domain types now live in types/finance.ts (single source of truth).
+// Imported for this module's own signatures and re-exported for existing consumers.
+import type {
+  FinancialTotals,
+  FinancialTransaction,
+  DailyFinancialLog,
+  FinanceAccount,
+  RepaymentInstallment,
+  SubscriptionDTO,
+  LendingRecord,
+} from '../types/finance';
+export type {
+  FinancialTotals,
+  FinancialTransaction,
+  DailyFinancialLog,
+  FinanceAccount,
+  RepaymentInstallment,
+  SubscriptionDTO,
+  LendingRecord,
+};
+
+// Workouts (Strava) domain types now live in types/workouts.ts.
+import type { StravaActivity, StravaActivityStats } from '../types/workouts';
+export type { StravaActivity, StravaActivityStats };
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api/v1';
 
 export async function fetchDashboardData(date?: string) {
@@ -82,31 +114,14 @@ export interface IngredientNutrients {
   sodium_mg: number;
 }
 
-export interface ItemMathCheck {
-  expected_kcal: number;
-  stated_kcal: number;
-  passed: boolean;
-}
-
 export interface IngredientBreakdown {
   item_id: number;
   name: string;
   common_name: string;
   estimated_weight_g: number;
   is_hidden: boolean;
-  nutrition_per_100g_source: string;
   nutrients: IngredientNutrients;
-  item_math_check: ItemMathCheck;
-  glycaemic_index_estimate: number | null;
-  glycaemic_load_contribution: number | null;
   clinical_item_flags: string[];
-}
-
-export interface MathVerification {
-  expected_calories_from_macros: number;
-  stated_calories: number;
-  delta_kcal: number;
-  gate_passed: boolean;
 }
 
 export interface MacroTotals {
@@ -115,7 +130,6 @@ export interface MacroTotals {
   carbohydrates_g: number;
   fat_g: number;
   saturated_fat_g: number;
-  unsaturated_fat_g: number;
   trans_fat_g: number;
   dietary_fiber_g: number;
   sugar_g: number;
@@ -123,29 +137,12 @@ export interface MacroTotals {
   sodium_mg: number;
   potassium_mg: number;
   cholesterol_mg: number;
-  math_verification: MathVerification;
-}
-
-export interface GiOffender {
-  ingredient_name: string;
-  gi_estimate: number;
-  gl_contribution: number;
-  clinical_note: string;
 }
 
 export interface GlycaemicAssessment {
   total_meal_glycaemic_load: number;
   gl_classification: string;
   insulin_impact_summary: string;
-  highest_gi_offenders: GiOffender[];
-}
-
-export interface BudgetValues {
-  calories_kcal: number;
-  protein_g: number;
-  carbs_g: number;
-  fat_g: number;
-  sodium_mg: number;
 }
 
 export interface BudgetStatus {
@@ -164,70 +161,57 @@ export interface DailyGoalPercentages {
   sodium_pct: number;
 }
 
+/**
+ * Computed on the backend from the meal totals and the user's daily targets — not
+ * returned by the model. Asking an LLM for this division cost output tokens and
+ * risked arithmetic drift on a value the server already knows exactly.
+ */
 export interface DailyBudgetAnalysis {
-  remaining_budget_before_this_meal: BudgetValues;
-  remaining_budget_after_this_meal: BudgetValues;
   budget_status: BudgetStatus;
   percentage_of_daily_goals_this_meal: DailyGoalPercentages;
 }
 
 export interface ClinicalFlag {
-  flag_id: string;
   severity: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
-  category: string;
   condition_link: string;
   title: string;
-  evidence_basis: string;
   mechanistic_pathway: string;
-  affected_ingredients: string[];
   quantified_risk: string;
-  urgency: string;
 }
 
 export interface MealScore {
+  meal_context: 'main' | 'light';
   overall_score: number;
   score_rationale: string;
-  macro_balance_score: number;
-  glycaemic_score: number;
-  micronutrient_density_score: number;
-  condition_safety_score: number;
   letter_grade: 'A' | 'B' | 'C' | 'D' | 'F';
 }
 
 export interface Recommendation {
-  rec_id: string;
   priority: string;
-  type: string;
   title: string;
   action: string;
-  rationale: string;
-  example: string;
   condition_targeted: string;
 }
 
 export interface PositiveHighlight {
-  highlight_id: string;
   ingredient_or_aspect: string;
   benefit: string;
-  evidence: string;
 }
 
-export interface NextMealGuidance {
-  suggested_calorie_range_kcal: string;
-  priority_nutrients_to_target: string[];
-  foods_to_favour: string[];
-  foods_to_limit: string[];
-  timing_recommendation: string;
-  hydration_note: string;
-}
-
+/**
+ * Stage-2 clinical assessment.
+ *
+ * The schema is deliberately narrow: it carries only fields that are persisted onto
+ * the MealEntry or rendered in the UI. Output tokens are the most expensive part of a
+ * scan, so a field nothing reads is the costliest kind of dead code — if you add one
+ * here, add the corresponding renderer too. Keep this in sync with the Stage-2 output
+ * schema in NutritionPipelineService.
+ */
 export interface GeminiAnalysisResult {
-  _reasoning_scratchpad?: string;
-  pipeline_stage: string;
+  /** Compact arithmetic trace (macro→calorie sum, gate result, glycaemic load). */
+  _verification?: string;
   meal_label: string;
-  cuisine_type: string;
   meal_type: string;
-  analysis_timestamp_utc: string;
   macro_totals: MacroTotals;
   ingredients_breakdown: IngredientBreakdown[];
   glycaemic_assessment: GlycaemicAssessment;
@@ -236,9 +220,6 @@ export interface GeminiAnalysisResult {
   meal_score: MealScore;
   recommendations: Recommendation[];
   positive_highlights: PositiveHighlight[];
-  next_meal_guidance: NextMealGuidance;
-  data_quality_flags: string[];
-  disclaimer: string;
 }
 
 export interface MealAnalysisApiResponse {
@@ -288,9 +269,13 @@ export async function analyzeMeal(
   timeoutMs = 180000
 ): Promise<{ data: MealAnalysisApiResponse }> {
   const formData = new FormData();
+  // Downscale before upload: vision models bill images by resolution, so a native
+  // 12MP camera photo costs several times a 1MP render for no gain in identifying
+  // what is on the plate. The backend downscales again independently.
+  const prepared = await downscaleImages(files.slice(0, 3).filter(Boolean));
   // Send each image under the repeated "files" part (backend binds List<MultipartFile>).
-  for (const f of files.slice(0, 3)) {
-    if (f) formData.append('files', f);
+  for (const f of prepared) {
+    formData.append('files', f);
   }
   if (description && description.trim()) formData.append('description', description.trim());
   formData.append('mealType', mealType);
@@ -361,13 +346,6 @@ export async function fetchSpendingSummary(month?: string) {
     throw new Error('Failed to fetch spending summary');
   }
   return response.json();
-}
-
-export interface SubscriptionDTO {
-  id: string;
-  name: string;
-  cost: number;
-  billingDate: string;
 }
 
 export async function fetchSubscriptions() {
@@ -467,26 +445,6 @@ export async function updateHydration(id: string, data: { waterIntakeMl: number;
   return response.json();
 }
 
-export interface FinancialTotals {
-  totalExpense: number;
-  totalIncome: number;
-}
-
-export interface FinancialTransaction {
-  id: string;
-  description: string;
-  amount: number;
-  type: string; // "Income" | "Expense"
-  timestamp: string;
-}
-
-export interface DailyFinancialLog {
-  id: string;
-  date: string;
-  dailyTotals: FinancialTotals;
-  transactions: Record<string, FinancialTransaction[]>;
-}
-
 export async function fetchDailyFinanceLogs(days?: number) {
   const query = days ? `?days=${days}` : '';
   const response = await fetch(`${API_BASE_URL}/finance/daily-logs${query}`);
@@ -531,11 +489,6 @@ export async function deleteTransaction(id: string) {
 }
 
 // ─── Finance Account (Total Balance) ─────────────────────────────────
-export interface FinanceAccount {
-  balance: number;
-  monthlyBudget: number;
-}
-
 export async function fetchFinanceAccount(): Promise<{ data: FinanceAccount }> {
   const response = await fetch(`${API_BASE_URL}/finance/account`);
   if (!response.ok) {
@@ -576,13 +529,6 @@ export async function updateFinanceBudget(monthlyBudget: number): Promise<{ data
   return response.json();
 }
 
-export interface RepaymentInstallment {
-  id: string;
-  dueDate: string;
-  amount: string;
-  status: string;
-}
-
 export async function fetchSliceRepayments() {
   const response = await fetch(`${API_BASE_URL}/finance/slice-repayments`);
   if (!response.ok) {
@@ -592,36 +538,6 @@ export async function fetchSliceRepayments() {
 }
 
 // ─── Strava Activities ───────────────────────────────────────────────
-
-export interface StravaActivity {
-  id: string;
-  stravaEmbedId?: string;
-  stravaToken?: string;
-  date: string;
-  activityName: string;
-  sportType: string;
-  distanceKm: number;
-  movingTime: string;
-  movingTimeMinutes: number;
-  elevationGainMeters: number;
-  paceMinPerKm?: number;
-  source: string;
-  startTime?: string;
-  activityUrl?: string;
-}
-
-export interface StravaActivityStats {
-  totalDistanceKm: number;
-  totalActivities: number;
-  totalMovingTimeMinutes: number;
-  totalElevationMeters: number;
-  best5kPaceMinPerKm: number | null;
-  best5kPaceFormatted: string;
-  countBySportType: Record<string, number>;
-  distanceBySportType: Record<string, number>;
-  currentStreakWeeks: number;
-  recentEmbeds: Array<{ id: string; token?: string }>;
-}
 
 export async function fetchStravaActivities() {
   const response = await fetch(`${API_BASE_URL}/workouts/activities`);
@@ -1309,16 +1225,6 @@ export async function completeFocusSession(): Promise<{ data: FocusSession }> {
 }
 // ─── Lending Records API ─────────────────────────────────────────────
 
-export interface LendingRecord {
-  id: string;
-  borrower: string;
-  amount: number;
-  date: string;
-  dueDate?: string;
-  status: 'Pending' | 'Repaid';
-  notes?: string;
-}
-
 export async function fetchLendingRecords(): Promise<{ data: LendingRecord[] }> {
   const response = await fetch(`${API_BASE_URL}/finance/lending`);
   if (!response.ok) {
@@ -1423,42 +1329,56 @@ export async function deletePrompt(id: string): Promise<void> {
   }
 }
 
-// Global active GET request tracking for route navigation loader
-let activeGetRequests = 0;
-const requestChangeListeners = new Set<(count: number) => void>();
-
-export function subscribeToActiveRequests(listener: (count: number) => void) {
-  requestChangeListeners.add(listener);
-  listener(activeGetRequests);
-  return () => {
-    requestChangeListeners.delete(listener);
-  };
-}
-
+// Global active-GET request tracking for the route navigation loader. The counter
+// lives in axios-client (re-exported above); this patch feeds it during Phase A and
+// also injects the bearer token. Normalizes (string | URL | Request, init) so that
+// Axios's fetch adapter — which may call fetch with a Request — is covered too.
 if (typeof window !== 'undefined') {
   const originalFetch = window.fetch;
   window.fetch = async function (...args) {
-    const url = typeof args[0] === 'string' ? args[0] : args[0] instanceof URL ? args[0].href : '';
+    const input = args[0];
     let options = args[1];
-    const isGet = !options || !options.method || options.method.toUpperCase() === 'GET';
+    const url =
+      typeof input === 'string'
+        ? input
+        : input instanceof URL
+          ? input.href
+          : input instanceof Request
+            ? input.url
+            : '';
+    const method = (
+      options?.method ??
+      (input instanceof Request ? input.method : undefined) ??
+      'GET'
+    ).toUpperCase();
+    const isGet = method === 'GET';
     const isLocalApi = url.includes('/api/v1/');
 
     const shouldTrack = isGet && isLocalApi;
     if (shouldTrack) {
-      activeGetRequests++;
-      requestChangeListeners.forEach(cb => cb(activeGetRequests));
+      incrementActiveGets();
     }
 
     const isGuestMode = localStorage.getItem('isGuest') === 'true';
     if (!isGuestMode && isLocalApi && !url.includes('/auth/verify')) {
       const token = localStorage.getItem('authToken');
       if (token) {
-        const headers = new Headers(options?.headers);
-        headers.set('Authorization', `Bearer ${token}`);
-        options = {
-          ...options,
-          headers
-        };
+        if (input instanceof Request) {
+          const headers = new Headers(input.headers);
+          if (!headers.has('Authorization')) {
+            headers.set('Authorization', `Bearer ${token}`);
+          }
+          args[0] = new Request(input, { headers });
+        } else {
+          const headers = new Headers(options?.headers);
+          if (!headers.has('Authorization')) {
+            headers.set('Authorization', `Bearer ${token}`);
+          }
+          options = {
+            ...options,
+            headers,
+          };
+        }
       }
     }
 
@@ -1466,8 +1386,7 @@ if (typeof window !== 'undefined') {
       return await originalFetch(args[0], options);
     } finally {
       if (shouldTrack) {
-        activeGetRequests--;
-        requestChangeListeners.forEach(cb => cb(activeGetRequests));
+        decrementActiveGets();
       }
     }
   };

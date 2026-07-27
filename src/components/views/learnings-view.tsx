@@ -3,7 +3,7 @@ import { TopChip } from '../dashboard/quantified-self-dashboard/components/top-c
 import type { AppPath } from '../dashboard/quantified-self-dashboard/data'
 
 import { LearningsOverviewDashboard } from './learnings-overview/learnings-overview-dashboard'
-import { useFocus } from '../../contexts/FocusContext'
+import { useFocusStore } from '../../store/focus-store'
 
 type LearningsOverviewProps = {
   activePath: AppPath
@@ -12,7 +12,7 @@ type LearningsOverviewProps = {
 }
 
 function LearningsOverview({ activePath, onNavigate, searchParams }: LearningsOverviewProps) {
-  const { isFocusMode } = useFocus()
+  const isFocusMode = useFocusStore.use.isFocusMode()
 
   return (
     <main className="dashboard-shell">

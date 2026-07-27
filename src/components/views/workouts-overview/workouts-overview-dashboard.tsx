@@ -9,8 +9,7 @@ import {
   AddActivityModal,
   UpdateEmbedModal,
 } from './components'
-import { fetchStravaActivities, fetchStravaActivityStats } from '../../../lib/api'
-import type { StravaActivity, StravaActivityStats } from '../../../lib/api'
+import { useWorkoutsStore } from '../../../store/workouts-store'
 import { Activity, Mountain, Timer, Flame } from 'lucide-react'
 
 import { ConfirmDialog } from '../../ui/confirm-dialog'
@@ -18,9 +17,17 @@ import toast from 'react-hot-toast'
 import './workouts-overview.css'
 
 function WorkoutsOverviewDashboard() {
-  const [activities, setActivities] = useState<StravaActivity[]>([])
-  const [stats, setStats] = useState<StravaActivityStats | null>(null)
-  const [loading, setLoading] = useState(true)
+  // Server state from the workouts store; UI state (modals, edit/delete targets) stays local.
+  const activitiesState = useWorkoutsStore.use.activities()
+  const statsState = useWorkoutsStore.use.stats()
+  const workoutsActions = useWorkoutsStore.use.actions()
+
+  const activities = activitiesState.data
+  const stats = statsState.data
+  const loading =
+    activitiesState.loading || statsState.loading ||
+    (!activitiesState.loaded && !activitiesState.hasErrors)
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEmbedModalOpen, setIsEmbedModalOpen] = useState(false)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -29,21 +36,10 @@ function WorkoutsOverviewDashboard() {
   const [activityToDelete, setActivityToDelete] = useState<any>(null)
 
   const refreshData = useCallback(() => {
-    setLoading(true)
-    Promise.all([fetchStravaActivities(), fetchStravaActivityStats()])
-      .then(([activitiesRes, statsRes]) => {
-        setActivities(activitiesRes.data || [])
-        setStats(statsRes.data || null)
-        setLoading(false)
-      })
-      .catch(err => {
-        console.error('Error fetching workouts data:', err)
-        setLoading(false)
-      })
-  }, [])
+    void workoutsActions.loadAll()
+  }, [workoutsActions])
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { refreshData() }, [refreshData])
+  useEffect(() => { void workoutsActions.loadAll() }, [workoutsActions])
 
   // Bottom-dock quick-add bubble opens the same "add activity" modal
   useEffect(() => {

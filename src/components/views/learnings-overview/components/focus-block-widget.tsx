@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Play, Pause, Minimize2, Timer } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { useFocus } from '../../../../contexts/FocusContext'
+import { useFocusStore, focusActions } from '../../../../store/focus-store'
 
 export interface FocusSessionState {
   isCounting: boolean
@@ -26,14 +26,9 @@ function formatTime(ms: number): string {
 }
 
 export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
-  const {
-    session,
-    remainingSeconds,
-    start,
-    pause,
-    resume,
-    cancel,
-  } = useFocus()
+  const session = useFocusStore.use.session()
+  const remainingSeconds = useFocusStore.use.remainingSeconds()
+  const { start, pause, resume, cancel } = focusActions
 
   const [isExpanded, setIsExpanded] = useState(false)
   const [activity, setActivity] = useState(PRESET_ACTIVITIES[0])

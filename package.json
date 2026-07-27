@@ -11,8 +11,10 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.4",
+    "axios": "^1.18.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "immer": "^11.1.15",
     "lucide-react": "^1.11.0",
     "mongodb": "^7.2.0",
     "react": "^19.2.5",
@@ -20,7 +22,8 @@
     "react-hot-toast": "^2.6.0",
     "recharts": "^3.8.1",
     "tailwind-merge": "^3.5.0",
-    "tailwindcss": "^4.2.4"
+    "tailwindcss": "^4.2.4",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

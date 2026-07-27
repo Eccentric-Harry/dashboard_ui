@@ -16,11 +16,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import {
-  fetchLendingRecords,
-  fetchSliceRepayments,
-  fetchSubscriptions,
-} from '../../../../lib/api'
+import { financeService } from '../../../../services/finance-service'
 import type { DailyFinancialLog, SubscriptionDTO } from '../../../../lib/api'
 import { inr, isoDate, monthLabel } from '../../../../lib/insights/engine'
 import {
@@ -92,16 +88,18 @@ function FinanceIntelligence({
     // Each side source settles independently — a failing one just gates
     // its own insights instead of blanking the section.
     const [subsRes, lendRes, repayRes] = await Promise.allSettled([
-      fetchSubscriptions(),
-      fetchLendingRecords(),
-      fetchSliceRepayments(),
+      financeService.getSubscriptions(),
+      financeService.getLending(),
+      financeService.getSliceRepayments(),
     ])
     setSubscriptions(
-      subsRes.status === 'fulfilled' ? ((subsRes.value as { data?: SubscriptionDTO[] })?.data ?? []) : null,
+      subsRes.status === 'fulfilled' && !subsRes.value.error ? (subsRes.value.data ?? []) : null,
     )
-    setLending(lendRes.status === 'fulfilled' ? (lendRes.value.data ?? []) : null)
+    setLending(lendRes.status === 'fulfilled' && !lendRes.value.error ? (lendRes.value.data ?? []) : null)
     setRepayments(
-      repayRes.status === 'fulfilled' ? ((repayRes.value as { data?: RepaymentLike[] })?.data ?? []) : null,
+      repayRes.status === 'fulfilled' && !repayRes.value.error
+        ? ((repayRes.value.data as RepaymentLike[] | undefined) ?? [])
+        : null,
     )
     setSideLoading(false)
   }, [])

@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { BookOpen, ChevronLeft, ChevronRight, Edit2, Pencil, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { fetchLearnings, deleteLearning } from '../../../../lib/api'
 import type { LearningLog } from '../../../../lib/api'
+import { learningsService } from '../../../../services/learnings-service'
 import { ConfirmDialog } from '../../../ui/confirm-dialog'
 import { extractNotionUrl, getCategoryStyle, parseIsoDate } from '../learnings-utils'
 
@@ -28,7 +28,8 @@ export function LearningsLogCard({
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetchLearnings()
+      const res = await learningsService.getLearnings()
+      if (res.error) throw new Error(res.error.message)
       const sorted = (res?.data ?? []).sort((a: LearningLog, b: LearningLog) => {
         const dateCompare = (b.date || '').localeCompare(a.date || '')
         if (dateCompare !== 0) return dateCompare
@@ -53,7 +54,8 @@ export function LearningsLogCard({
   const handleDelete = async () => {
     if (!deleteTarget?.id) return
     try {
-      await deleteLearning(deleteTarget.id)
+      const res = await learningsService.deleteLearning(deleteTarget.id)
+      if (res.error) throw new Error(res.error.message)
       toast.success(`Deleted "${deleteTarget.title}"`)
       setDeleteTarget(null)
       load()

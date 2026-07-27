@@ -5,21 +5,14 @@ import {
   Cake, PersonStanding, Ruler, Weight, Footprints,
   HeartPulse, CalendarDays, Sparkle, Leaf, ShieldAlert
 } from 'lucide-react';
-import {
-  getUserProfile,
-  updateUserProfile,
-  fetchGoogleSyncStatus,
-  fetchGoogleAuthUrl,
-  disconnectGoogleCalendar,
-  triggerGoogleSync,
-  type UserProfile,
-  type GoogleSyncStatus
-} from '../../lib/api';
+import type { UserProfile, GoogleSyncStatus } from '../../lib/api';
+import { userService } from '../../services/user-service';
+import { calendarService } from '../../services/calendar-service';
 import { SideRail } from '../dashboard/quantified-self-dashboard/components/side-rail';
 import { TopChip } from '../dashboard/quantified-self-dashboard/components/top-chip';
 import type { AppPath } from '../dashboard/quantified-self-dashboard/data';
 import toast from 'react-hot-toast';
-import { useNotifications } from '../../contexts/NotificationContext';
+import { useNotifications } from '../../store/notification-store';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { getAvatarImage, avatarPresets } from '../../lib/avatar';
 import './profile-view.css';
@@ -144,7 +137,8 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
   useEffect(() => {
     async function loadProfile() {
       try {
-        const res = await getUserProfile();
+        const res = await userService.getProfile();
+        if (res.error) throw new Error(res.error.message);
         if (res?.data) {
           const data = res.data;
           setProfile(data);
@@ -183,7 +177,8 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
 
   const loadSyncStatus = async () => {
     try {
-      const res = await fetchGoogleSyncStatus();
+      const res = await calendarService.getGoogleStatus();
+      if (res.error) throw new Error(res.error.message);
       if (res?.data) {
         setSyncStatus(res.data);
       }
@@ -211,7 +206,8 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
   const handleConnectGoogle = async () => {
     setAuthUrlLoading(true);
     try {
-      const res = await fetchGoogleAuthUrl();
+      const res = await calendarService.getGoogleAuthUrl();
+      if (res.error) throw new Error(res.error.message);
       if (res?.data?.url) {
         const width = 600;
         const height = 700;
@@ -238,7 +234,8 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
       return;
     }
     try {
-      await disconnectGoogleCalendar();
+      const res = await calendarService.disconnectGoogle();
+      if (res.error) throw new Error(res.error.message);
       toast.success('Disconnected from Google Calendar');
       setSyncStatus({ connected: false, accounts: [] });
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -250,7 +247,8 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
   const handleSyncNow = async () => {
     setSyncLoading(true);
     try {
-      await triggerGoogleSync();
+      const res = await calendarService.syncGoogle();
+      if (res.error) throw new Error(res.error.message);
       toast.success('Calendar synchronization triggered');
       setTimeout(loadSyncStatus, 2000);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -288,7 +286,8 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
         medicalConditions,
       };
 
-      const res = await updateUserProfile(payload);
+      const res = await userService.updateProfile(payload);
+      if (res.error) throw new Error(res.error.message);
       if (res?.data) {
         toast.success('Profile updated successfully!');
         localStorage.setItem('displayName', res.data.displayName);
