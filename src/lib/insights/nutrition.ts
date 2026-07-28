@@ -68,6 +68,23 @@ const num = (v: unknown): number | null => {
   return typeof n === 'number' && Number.isFinite(n) ? n : null
 }
 
+/**
+ * First readable number among several spellings of the same `total_summary` key.
+ *
+ * The stored payload is whatever the analysis pipeline of the day produced, and the
+ * spellings drifted: carbs are `carbs_g` on every record actually in the collection,
+ * while fat is split — `fat_g` on some, `fats_g` on others. Reading a single name
+ * silently yields null and the caller treats the meal as un-analyzed, so list the
+ * canonical key first and the known variants after it.
+ */
+const pickNum = (summary: Record<string, unknown>, ...keys: string[]): number | null => {
+  for (const key of keys) {
+    const value = num(summary[key])
+    if (value != null) return value
+  }
+  return null
+}
+
 /** Build the ascending day series for the `windowDays` ending at `today` from raw entries. */
 export function buildNutritionDays(
   entries: FoodEntryLike[],
@@ -84,8 +101,12 @@ export function buildNutritionDays(
       mealType: entry.mealType || 'Snack',
       calories: num(entry.calories) ?? 0,
       protein: num(entry.proteinGrams) ?? 0,
-      carbsG: summary ? num(summary['carbohydrates_g']) : null,
-      fatG: summary ? num(summary['fat_g']) : null,
+      // `carbohydrates_g` is the spelling the AI response DTO uses (GeminiAnalysisResult
+      // .MacroTotals); the stored total_summary is written as `carbs_g`. Reading only the
+      // former left carbsG null for every meal, which made macroSplit() treat the whole
+      // log as un-analyzed and always fall back to protein-vs-other.
+      carbsG: summary ? pickNum(summary, 'carbs_g', 'carbohydrates_g') : null,
+      fatG: summary ? pickNum(summary, 'fat_g', 'fats_g') : null,
     }
     const list = byDate.get(date)
     if (list) list.push(meal)
