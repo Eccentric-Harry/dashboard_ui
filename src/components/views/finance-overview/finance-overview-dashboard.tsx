@@ -14,11 +14,12 @@ import { LendingCard } from './components/lending-card'
 import { FinanceIntelligence } from './components/finance-intelligence'
 import { ConfirmDialog } from '../../ui/confirm-dialog'
 import { financeMetrics as fallbackMetrics } from './data'
+import type { FinanceMetric } from './data'
 import type { LendingRecord } from '../../../types/finance'
 import { financeService } from '../../../services/finance-service'
 import { useFinanceStore } from '../../../store/finance-store'
 import {
-  ArrowUpRight, PiggyBank, Target
+  ArrowUpRight, Gauge, PiggyBank, Target
 } from 'lucide-react'
 import { getIconForCategory } from './utils'
 
@@ -131,56 +132,101 @@ function FinanceOverviewDashboard() {
 
   const metrics = useMemo(() => {
     if (!logs.length) return fallbackMetrics
-    
+
     let totalIncome = 0
     let totalExpense = 0
-    
+    let txCount = 0
+
     logs.forEach(log => {
       const d = new Date(log.date)
       const logMonthKey = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`
-      
+
       if (logMonthKey === selectedMonthKey) {
         totalIncome += log.dailyTotals?.totalIncome || 0
         totalExpense += log.dailyTotals?.totalExpense || 0
+        Object.values(log.transactions || {}).forEach(txs => { txCount += txs.length })
       }
     })
-    
-    const monthlySavings = Math.max(0, totalIncome - totalExpense)
+
+    const inr = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`
+
     const budget = monthlyBudget ?? 20000
     const budgetRemaining = budget - totalExpense
     const budgetSubtitle = budgetRemaining >= 0
-      ? `₹${Math.round(budgetRemaining).toLocaleString('en-IN')} left`
-      : `₹${Math.round(-budgetRemaining).toLocaleString('en-IN')} over`
+      ? `${inr(budgetRemaining)} left`
+      : `${inr(-budgetRemaining)} over`
     const budgetSubtitleTone = budgetRemaining >= 0
       ? (budgetRemaining < budget * 0.2 ? 'warning' as const : 'positive' as const)
       : 'negative' as const
 
-    return [
-      {
-        label: 'Monthly Savings',
-        value: `₹${monthlySavings.toLocaleString()}`,
+    // Days elapsed in the *selected* month — the current month counts only up to
+    // today, a past month counts in full, so the daily average is never diluted
+    // by days that haven't happened yet.
+    const [yearStr, monthStr] = selectedMonthKey.split('-')
+    const year = Number(yearStr)
+    const monthIndex = Number(monthStr) - 1
+    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate()
+    const now = new Date()
+    const isCurrentMonth = now.getFullYear() === year && now.getMonth() === monthIndex
+    const daysElapsed = isCurrentMonth ? now.getDate() : daysInMonth
+    const avgPerDay = daysElapsed > 0 ? totalExpense / daysElapsed : 0
+    const budgetPerDay = daysInMonth > 0 ? budget / daysInMonth : 0
+
+    // The 4th tile adapts rather than sitting dead: "Monthly Savings" was
+    // max(0, income − expense), and with no income ever recorded it displayed a
+    // permanent ₹0 while also hiding any net-negative month. Show real savings
+    // when there is income to save from, otherwise show the burn rate — which is
+    // always meaningful and is what actually predicts overspend.
+    const hasIncome = totalIncome > 0
+    const netSaved = totalIncome - totalExpense
+    const paceTile: FinanceMetric = hasIncome
+      ? {
+        label: 'Net Saved',
+        value: `${netSaved < 0 ? '−' : ''}${inr(Math.abs(netSaved))}`,
         cents: '',
         change: '',
-        tone: 'positive' as const,
+        tone: netSaved >= 0 ? 'positive' as const : 'negative' as const,
         icon: PiggyBank,
-      },
+        subtitle: `${inr(totalIncome)} in · ${inr(totalExpense)} out`,
+        subtitleTone: netSaved >= 0 ? 'positive' as const : 'negative' as const,
+      }
+      : {
+        label: 'Avg / day',
+        value: inr(avgPerDay),
+        cents: '',
+        change: '',
+        tone: avgPerDay <= budgetPerDay ? 'positive' as const : 'negative' as const,
+        icon: Gauge,
+        subtitle: budgetPerDay > 0
+          ? `${inr(budgetPerDay)}/day pace`
+          : `over ${daysElapsed} days`,
+        subtitleTone: avgPerDay <= budgetPerDay ? 'positive' as const : 'warning' as const,
+      }
+
+    return [
+      paceTile,
       {
         label: 'Monthly Budget',
-        value: `₹${budget.toLocaleString()}`,
+        value: inr(budget),
         cents: '',
         change: '',
         tone: 'positive' as const,
         icon: Target,
         subtitle: budgetSubtitle,
         subtitleTone: budgetSubtitleTone,
+        progress: budget > 0 ? totalExpense / budget : 0,
+        progressTone: budgetSubtitleTone,
       },
       {
         label: 'Monthly Expenses',
-        value: `₹${totalExpense.toLocaleString()}`,
+        value: inr(totalExpense),
         cents: '',
         change: '',
         tone: 'negative' as const,
         icon: ArrowUpRight,
+        subtitle: `${txCount} transaction${txCount === 1 ? '' : 's'}`,
+        // A count is a fact, not good news — green here read as a value judgment.
+        subtitleTone: 'neutral' as const,
       },
     ]
   }, [logs, selectedMonthKey, monthlyBudget])

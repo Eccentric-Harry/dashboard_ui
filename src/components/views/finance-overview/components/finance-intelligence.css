@@ -109,10 +109,26 @@
    half-empty column; the patterns list flows into responsive columns. */
 .finance-dashboard .fin-intel-trends,
 .finance-dashboard .fin-intel-list {
+  position: relative;
   grid-column: 1 / -1;
   min-width: 0;
-  padding-top: 14px;
-  border-top: 1px dashed rgba(23, 28, 25, 0.1);
+  padding-top: 16px;
+}
+
+/* Gradient hairline instead of a full-width dashed rule: it separates the
+   sections without drawing a hard line across the card. */
+.finance-dashboard .fin-intel-trends::before,
+.finance-dashboard .fin-intel-list::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(23, 28, 25, 0.13),
+    rgba(23, 28, 25, 0.07) 45%,
+    transparent
+  );
 }
 
 @media (max-width: 900px) {
@@ -123,14 +139,28 @@
 
 /* ── Hero: safe to spend + burn-down ── */
 
+/* Surface stack: the card sits at .45 white, so inner panels have to climb
+   *above* it to be legible — an inner panel at a similar value is what made
+   this section read as white-on-white. The hero takes the Home route's panel
+   treatment (an opaque 150deg light→mid→deep ramp in one hue, as on
+   .home-hero-panel) so the burn-down chart sits on a real surface. */
 .finance-dashboard .fin-intel-hero {
+  position: relative;
   display: flex;
   flex-direction: column;
   min-width: 0;
-  padding: 16px 18px;
-  border-radius: 18px;
-  border: 1px solid rgba(23, 28, 25, 0.05);
-  background: linear-gradient(165deg, rgba(255, 255, 255, 0.92), rgba(240, 245, 238, 0.6));
+  padding: 18px 20px;
+  border-radius: 22px;
+  /* .home-activity-latest sage, verbatim. This was previously mixed a couple of
+     steps lighter to "stay a quiet backdrop", which made it near-identical to
+     the card behind it — the panel disappeared and the section went back to
+     reading as one flat white field. Home's panels work precisely because the
+     deep end (#d1e4ce) is clearly darker than the card they sit on. */
+  background: linear-gradient(150deg, #eff5ec 0%, #e2eddf 55%, #d1e4ce 100%);
+}
+
+.finance-dashboard .fin-intel-hero > * {
+  position: relative;
 }
 
 .finance-dashboard .fin-intel-big {
@@ -256,11 +286,31 @@
   min-width: 0;
 }
 
+/* The side column is shorter than the hero chart beside it. With a full column
+   (forecast + subscriptions + lending) the last tile absorbs the slack so the
+   section bottom sits flush, and its content is centred so the stretched tile
+   doesn't read as top-loaded with a void beneath.
+   Only from the third tile onward: when subscriptions are empty there are just
+   two, and stretching one of them across the whole gap looks far worse than
+   simply letting the background breathe. */
+.finance-dashboard .fin-intel-side > :last-child:nth-child(n + 3) {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Side tiles use the same ramp one step lighter, so the column reads as the
+   hero's quieter sibling rather than as a different material. */
+/* Side tiles sit directly on the card rather than on a panel, so they take the
+   opposite treatment to the hero: near-white with a hairline, reading as crisp
+   objects on the surface (the same relationship Home's Patterns rows have to
+   their card). Tinting these too would just re-flatten the column. */
 .finance-dashboard .fin-intel-tile {
-  padding: 13px 15px;
-  border-radius: 16px;
-  border: 1px solid rgba(23, 28, 25, 0.06);
-  background: rgba(255, 255, 255, 0.55);
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(23, 28, 25, 0.07);
+  background: rgba(255, 255, 255, 0.82);
 }
 
 .finance-dashboard .fin-intel-tile-main {
@@ -383,6 +433,9 @@
 }
 
 .finance-dashboard .fin-intel-trend-name {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   font-size: 11.5px;
   font-weight: 700;
   color: #333b36;
@@ -391,10 +444,23 @@
   white-space: nowrap;
 }
 
+/* Colour dot ties the label to its bar, so the row still reads left-to-right
+   when the bar itself is only a few pixels wide. */
+.finance-dashboard .fin-intel-trend-name::before {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #7d9887;
+  background: color-mix(in srgb, var(--cat, #7d9887) 56%, #dfe4df);
+}
+
 .finance-dashboard .fin-intel-trend-track {
   height: 7px;
   border-radius: 999px;
   background: rgba(23, 28, 25, 0.07);
+  box-shadow: inset 0 1px 1.5px rgba(23, 28, 25, 0.05);
   overflow: hidden;
 }
 
@@ -402,7 +468,17 @@
   display: block;
   height: 100%;
   border-radius: 999px;
+  /* Flat fallback first for anything without color-mix(). The source palette in
+     utils.ts is picked for legibility on white and is far too vivid for this
+     route, so each hue is mixed down hard — toward white at the head and toward
+     the #dfe4df ground at the tail. Enough to tell Food from Transport at a
+     glance; not enough to break the desaturated-pastel rule. */
   background: #7d9887;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--cat, #7d9887) 26%, #ffffff),
+    color-mix(in srgb, var(--cat, #7d9887) 52%, #dfe4df)
+  );
 }
 
 .finance-dashboard .fin-intel-trend-amount {
@@ -453,6 +529,16 @@
 @media (max-width: 640px) {
   .finance-dashboard .fin-intel {
     padding: 16px;
+  }
+
+  /* The month picker sits beside the title, leaving it ~150px — at 21px the
+     serif heading broke onto three lines. Let it use the full width instead. */
+  .finance-dashboard .fin-intel-head {
+    flex-wrap: wrap;
+  }
+
+  .finance-dashboard .fin-intel-head h2 {
+    font-size: 19px;
   }
 
   .finance-dashboard .fin-intel-big strong {

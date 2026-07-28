@@ -32,6 +32,20 @@ function MetricCard({ metric, loading = false, onEdit }: MetricCardProps) {
       ) : (
         <>
           <strong>{metric.value}</strong>
+          {metric.progress != null && (
+            <span
+              className="finance-metric-meter"
+              role="img"
+              aria-label={`${Math.round(metric.progress * 100)}% of budget used`}
+            >
+              {/* Clamped so an overspent month fills the track rather than
+                  overflowing it — the "over" figure below carries the magnitude. */}
+              <i
+                className={`finance-metric-meter-fill is-${metric.progressTone ?? metric.subtitleTone ?? 'positive'}`}
+                style={{ width: `${Math.min(100, Math.max(0, metric.progress * 100))}%` }}
+              />
+            </span>
+          )}
           {metric.subtitle && (
             <span className={`finance-metric-subtitle finance-metric-subtitle--${metric.subtitleTone ?? 'positive'}`}>
               {metric.subtitle}

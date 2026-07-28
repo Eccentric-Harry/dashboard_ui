@@ -19,7 +19,12 @@ export interface FinanceMetric {
   tone: 'positive' | 'negative'
   icon: LucideIcon
   subtitle?: string
-  subtitleTone?: 'positive' | 'warning' | 'negative'
+  /** 'neutral' for facts that aren't good or bad news, e.g. a transaction count. */
+  subtitleTone?: 'positive' | 'warning' | 'negative' | 'neutral'
+  /** 0–1 fill for the card's meter. Omit for cards that have nothing to track against. */
+  progress?: number
+  /** Meter colour band; falls back to subtitleTone when unset. */
+  progressTone?: 'positive' | 'warning' | 'negative'
 }
 
 export interface SpendingCategory {

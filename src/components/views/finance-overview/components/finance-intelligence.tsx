@@ -16,6 +16,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { getConsistentColor } from '../utils'
 import { financeService } from '../../../../services/finance-service'
 import type { DailyFinancialLog, SubscriptionDTO } from '../../../../lib/api'
 import { inr, isoDate, monthLabel } from '../../../../lib/insights/engine'
@@ -255,9 +256,14 @@ function FinanceIntelligence({
                 <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
                   <ComposedChart data={burndown.points} margin={{ top: 12, right: 8, left: 8, bottom: 0 }}>
                     <defs>
+                      {/* Sage rather than neutral grey: a grey wash over the warm
+                          hero panel greys the whole chart down, where the green
+                          reads as part of the route's palette and gives the
+                          curve some body instead of a bare line. */}
                       <linearGradient id="finActualFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#2f3a33" stopOpacity={0.16} />
-                        <stop offset="95%" stopColor="#2f3a33" stopOpacity={0} />
+                        <stop offset="0%" stopColor="#5d8a70" stopOpacity={0.26} />
+                        <stop offset="60%" stopColor="#5d8a70" stopOpacity={0.09} />
+                        <stop offset="100%" stopColor="#5d8a70" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <XAxis
@@ -402,11 +408,29 @@ function FinanceIntelligence({
           <div className="fin-intel-trends">
             <p className="fin-intel-eyebrow">Category trends · {monthName} vs last month</p>
             <div className="fin-intel-trend-bars">
+              {/* Bars are scaled to the biggest category, not to total spend.
+                  `share` is a share-of-total (~25% at the top, and the rule text
+                  depends on that meaning, so it stays as-is) — but drawing it
+                  directly left every track three-quarters empty and the rows
+                  unreadable as a ranking. The amount label carries the absolute
+                  figure; the bar's job is the comparison. */}
               {trends.map((t) => (
-                <div key={t.category} className="fin-intel-trend-row">
+                <div
+                  key={t.category}
+                  className="fin-intel-trend-row"
+                  /* Each category carries its own hue so the stack reads as a
+                     palette rather than one repeated green bar. The CSS mixes
+                     this toward the sage ground, so even a vivid source colour
+                     lands inside the route's desaturated range. */
+                  style={{ '--cat': getConsistentColor(t.category) } as React.CSSProperties}
+                >
                   <span className="fin-intel-trend-name">{t.category}</span>
                   <div className="fin-intel-trend-track">
-                    <i style={{ width: `${Math.max(t.share, 3)}%` }} />
+                    <i
+                      style={{
+                        width: `${Math.max((t.share / Math.max(...trends.map((x) => x.share), 1)) * 100, 4)}%`,
+                      }}
+                    />
                   </div>
                   <b className="fin-intel-trend-amount">{inr(t.total)}</b>
                   <span

@@ -13,9 +13,13 @@
   list-style: none;
 }
 
-/* Hosts can opt into a two-column flow (wide finance section) */
+/* Hosts can opt into a two-column flow (wide finance section).
+   min(330px, 100%) rather than a bare 330px: on a container narrower than the
+   track floor, minmax(330px, …) still lays out a 330px track and the rows spill
+   past the card edge — on a 375px phone the finance insight rows overflowed by
+   53px. The min() lets the single column collapse to whatever space exists. */
 .ins-list--columns {
-  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(330px, 100%), 1fr));
   align-items: start;
 }
 
