@@ -1,14 +1,21 @@
-import { CalendarClock, Cloud, Inbox, Wind } from 'lucide-react'
+import { useState } from 'react'
+import { CalendarClock, ChevronDown, ChevronUp, Cloud, History, Inbox, Wind } from 'lucide-react'
 import type { MindEntry } from '../mind-types'
-import { mindFormatDay } from '../mind-types'
+import { mindFormatDay, mindFormatTimestamp } from '../mind-types'
 
 type WorryParkingCardProps = {
   parked: MindEntry[]
+  released: MindEntry[]
   onBringBack: (id: string) => void
   onRelease: (id: string) => void
 }
 
-function WorryParkingCard({ parked, onBringBack, onRelease }: WorryParkingCardProps) {
+function WorryParkingCard({ parked, released, onBringBack, onRelease }: WorryParkingCardProps) {
+  const [showHistory, setShowHistory] = useState(false)
+  const sortedReleased = [...released].sort((a, b) =>
+    (b.resolvedAt ?? b.createdAt ?? '').localeCompare(a.resolvedAt ?? a.createdAt ?? ''),
+  )
+
   return (
     <section className="mind-card mind-card--parking mind-tint-mist" aria-label="Worry parking lot">
       <Cloud className="mind-card-watermark" size={104} strokeWidth={1.3} aria-hidden="true" />
@@ -51,7 +58,33 @@ function WorryParkingCard({ parked, onBringBack, onRelease }: WorryParkingCardPr
         </ul>
       )}
 
-      <p className="mind-parked-footnote">2 parked worries expired last week without ever coming true.</p>
+      <div className="mind-parked-history">
+        <button
+          type="button"
+          className="mind-parked-history-toggle"
+          onClick={() => setShowHistory((s) => !s)}
+          disabled={sortedReleased.length === 0}
+        >
+          <History size={12} />
+          {sortedReleased.length === 0
+            ? 'Nothing released yet — history is empty.'
+            : `${sortedReleased.length} parked ${sortedReleased.length === 1 ? 'worry' : 'worries'} released without ever coming true.`}
+          {sortedReleased.length > 0 && (showHistory ? <ChevronUp size={12} /> : <ChevronDown size={12} />)}
+        </button>
+
+        {showHistory && sortedReleased.length > 0 && (
+          <ul className="mind-parked-history-list">
+            {sortedReleased.map((entry) => (
+              <li key={entry.id} className="mind-parked-history-item">
+                <p className="mind-parked-history-text">“{entry.text}”</p>
+                <span className="mind-parked-history-date">
+                  Released {entry.resolvedAt ? mindFormatTimestamp(entry.resolvedAt) : 'earlier'}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </section>
   )
 }

@@ -419,6 +419,10 @@ function MindOverviewDashboard() {
   const thoughts = useMemo(() => entries.filter((e) => e.type === 'THOUGHT'), [entries])
   const openThoughts = useMemo(() => thoughts.filter((e) => e.status === 'OPEN'), [thoughts])
   const parked = useMemo(() => thoughts.filter((e) => e.status === 'PARKED'), [thoughts])
+  const releasedParked = useMemo(
+    () => thoughts.filter((e) => e.wasParked && e.status === 'RELEASED'),
+    [thoughts],
+  )
   const wins = useMemo(() => entries.filter((e) => e.type === 'WIN'), [entries])
   const gratitude = useMemo(() => entries.filter((e) => e.type === 'GRATITUDE'), [entries])
   const closedLoops = useMemo(
@@ -479,7 +483,12 @@ function MindOverviewDashboard() {
 
         <MindIntelligenceCard entries={thoughts} />
 
-        <WorryParkingCard parked={parked} onBringBack={handleBringBack} onRelease={handleRelease} />
+        <WorryParkingCard
+          parked={parked}
+          released={releasedParked}
+          onBringBack={handleBringBack}
+          onRelease={handleRelease}
+        />
 
         <GratitudeCard gratitude={gratitude} onAddGratitude={handleAddGratitude} />
       </div>

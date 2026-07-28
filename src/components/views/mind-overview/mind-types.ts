@@ -61,6 +61,11 @@ export function mindFormatDay(iso: string): string {
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
 }
 
+// For full timestamps (e.g. resolvedAt), unlike mindFormatDay which expects a bare date.
+export function mindFormatTimestamp(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
 let seedCounter = 0
 function seedId(): string {
   seedCounter += 1

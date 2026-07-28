@@ -145,7 +145,7 @@ export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: Tasks
     <div className="tasks-list-view">
       {sortedCategories.map((category) => {
         const categoryTasks = groupedTasks[category]
-        const isCollapsed = !!collapsedCategories[category]
+        const isCollapsed = collapsedCategories[category]
         const categoryInfo = getTagColor(category)
         const completedCount = categoryTasks.filter((t) => t.completed).length
         const totalCount = categoryTasks.length
@@ -153,7 +153,7 @@ export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: Tasks
         const pendingTasks = categoryTasks.filter((t) => !t.completed)
         const completedTasks = categoryTasks.filter((t) => t.completed)
         const allDone = pendingTasks.length === 0
-        const isCompletedExpanded = !!completedExpanded[category]
+        const isCompletedExpanded = completedExpanded[category]
 
         // If all tasks are done, show first 3 as preview; otherwise show all pending + collapsible completed
         const visiblePending = allDone ? [] : pendingTasks

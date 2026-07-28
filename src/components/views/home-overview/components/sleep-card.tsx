@@ -77,24 +77,36 @@ function avgClockTime(times: string[], anchorHour: number): string | null {
   return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function SleepTooltip({ active, payload }: any) {
-  if (!active || !payload?.length) return null
-  const point = payload[0].payload as SleepPoint
-  if (point.minutes == null) {
-    return <div className="home-sleep-tooltip">{point.day}: not logged</div>
+/**
+ * The x-axis uses single-letter weekday labels (weekdayLetter), which collide —
+ * Thu and Tue both render "T", Sun and Sat both render "S". The tooltip used to
+ * echo that same ambiguous letter, so hovering the *Thursday* bar could read as
+ * "T: 7h45m · Poor" right next to a "Last night: 8h30m · Great" hero for Tuesday,
+ * making two different nights look like a contradiction. Building the tooltip's
+ * own label from the full date (via shortDayLabel, three letters — unambiguous
+ * within a 7-day window) and calling out "Last night" explicitly fixes that.
+ */
+function makeSleepTooltip(today: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return function SleepTooltip({ active, payload }: any) {
+    if (!active || !payload?.length) return null
+    const point = payload[0].payload as SleepPoint
+    const label = point.date === today ? 'Last night' : shortDayLabel(point.date)
+    if (point.minutes == null) {
+      return <div className="home-sleep-tooltip">{label}: not logged</div>
+    }
+    return (
+      <div className="home-sleep-tooltip">
+        {label}: {formatMinutes(point.minutes)}
+        {point.quality ? ` · ${QUALITY_LABELS[point.quality - 1]}` : ''}
+        {point.bedtime && point.wakeTime && (
+          <small>
+            {point.bedtime} → {point.wakeTime}
+          </small>
+        )}
+      </div>
+    )
   }
-  return (
-    <div className="home-sleep-tooltip">
-      {point.day}: {formatMinutes(point.minutes)}
-      {point.quality ? ` · ${QUALITY_LABELS[point.quality - 1]}` : ''}
-      {point.bedtime && point.wakeTime && (
-        <small>
-          {point.bedtime} → {point.wakeTime}
-        </small>
-      )}
-    </div>
-  )
 }
 
 function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRetry }: SleepCardProps) {
@@ -368,7 +380,7 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
                       tick={{ fill: 'rgba(23, 27, 21, 0.42)', fontSize: 10, fontWeight: 650 }}
                     />
                     <YAxis hide domain={[0, chartMax]} />
-                    <Tooltip content={<SleepTooltip />} cursor={{ fill: 'rgba(30, 61, 82, 0.05)' }} />
+                    <Tooltip content={makeSleepTooltip(today)} cursor={{ fill: 'rgba(30, 61, 82, 0.05)' }} />
                     <ReferenceLine
                       y={SLEEP_TARGET_MINUTES}
                       stroke="rgba(30, 61, 82, 0.3)"
