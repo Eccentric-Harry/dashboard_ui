@@ -73,6 +73,21 @@ import choleBhatura from '../../../../assets/food/pastel/chole_bhatura_178464808
 import vegFriedRice from '../../../../assets/food/pastel/veg_fried_rice_1784648114037.png'
 import chocolateSundae from '../../../../assets/food/pastel/chocolate_sundae_1784648143789.png'
 
+// Fifth batch (13 specific food log dish images)
+import bircherMuesli from '../../../../assets/food/pastel/bircher_muesli_1785259003918.png'
+import methiTandooriRoti from '../../../../assets/food/pastel/methi_tandoori_roti_1785259037094.png'
+import paneerGrilledSandwich from '../../../../assets/food/pastel/paneer_grilled_sandwich_1785259068432.png'
+import paneerBhurjiSandwich from '../../../../assets/food/pastel/paneer_bhurji_sandwich_1785259101339.png'
+import paneerSteakQuinoa from '../../../../assets/food/pastel/paneer_steak_quinoa_1785259139827.png'
+import proteinChocoBar from '../../../../assets/food/pastel/protein_choco_bar_1785259173657.png'
+import paneerTikkaDhokla from '../../../../assets/food/pastel/paneer_tikka_dhokla_1785259211364.png'
+import paneerSubSandwich from '../../../../assets/food/pastel/paneer_sub_sandwich_1785259252564.png'
+import dietCokeGlass from '../../../../assets/food/pastel/diet_coke_glass_1785259293454.png'
+import gheeKaramDosa from '../../../../assets/food/pastel/ghee_karam_dosa_1785259324663.png'
+import idliPeanutChutney from '../../../../assets/food/pastel/idli_peanut_chutney_1785259353947.png'
+import paneerParathaCurd from '../../../../assets/food/pastel/paneer_paratha_curd_1785259399742.png'
+import continentalBreakfast from '../../../../assets/food/pastel/continental_breakfast_1785259438191.png'
+
 export type FoodImage = {
   src: string
   alt: string
@@ -83,6 +98,21 @@ type FoodImageRule = FoodImage & { pattern: RegExp }
 // Ordered — first match wins. More specific dishes come before broad
 // categories (e.g. "curry" before "rice" so combo plates get the curry shot).
 const RULES: FoodImageRule[] = [
+  // Fifth batch rules (most specific dish matches for recent food logs)
+  { pattern: /bircher muesli|bircher/i, src: bircherMuesli, alt: 'Bircher muesli bowl with fresh berries' },
+  { pattern: /methi tandoori roti|methi roti/i, src: methiTandooriRoti, alt: 'Methi tandoori roti with dal and curd' },
+  { pattern: /paneer bhurji.*sandwich|bhurji sandwich/i, src: paneerBhurjiSandwich, alt: 'Paneer bhurji grilled sandwich' },
+  { pattern: /paneer steak|paneer.*quinoa/i, src: paneerSteakQuinoa, alt: 'Grilled paneer steak quinoa plate' },
+  { pattern: /protein.*bar|choco.*bar/i, src: proteinChocoBar, alt: 'Chocolate berry protein bar' },
+  { pattern: /paneer tikka.*dhokla|dhokla/i, src: paneerTikkaDhokla, alt: 'Paneer tikka and dhokla platter' },
+  { pattern: /sub sandwich|paneer sub/i, src: paneerSubSandwich, alt: 'Vegetable and paneer sub sandwich' },
+  { pattern: /diet coke|coke|cola/i, src: dietCokeGlass, alt: 'Chilled Diet Coke with lemon' },
+  { pattern: /ghee karam|karam dosa/i, src: gheeKaramDosa, alt: 'Ghee karam masala dosa' },
+  { pattern: /peanut chutney/i, src: idliPeanutChutney, alt: 'Idlies with peanut chutney' },
+  { pattern: /paneer paratha.*curd/i, src: paneerParathaCurd, alt: 'Paneer paratha with curd and pickle' },
+  { pattern: /paneer.*grilled sandwich|grilled paneer sandwich/i, src: paneerGrilledSandwich, alt: 'Paneer grilled sandwich' },
+  { pattern: /continental breakfast/i, src: continentalBreakfast, alt: 'Continental breakfast assortment' },
+
   // Fourth batch rules (most specific dish matches)
   { pattern: /bagel/i, src: paneerBagelSandwich, alt: 'Paneer bagel sandwich' },
   { pattern: /rajma chawal|rajma.*chawal/i, src: rajmaChawal, alt: 'Rajma chawal bowl' },
