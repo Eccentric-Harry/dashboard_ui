@@ -59,8 +59,11 @@ function WeekRollupCard({
     return Math.round(nights.reduce((total, r) => total + (r.sleepMinutes as number), 0) / nights.length)
   }
 
-  const focus = sum(weekRecords, (r) => r.focusMinutes)
-  const prevFocus = sum(prevWeekRecords, (r) => r.focusMinutes)
+  // A total of logged minutes reads as "at least this much", so counting an
+  // unlogged day as 0 is honest here — unlike the averages and correlations in
+  // insights-engine.ts, where it would invent a data point.
+  const focus = sum(weekRecords, (r) => r.focusMinutes ?? 0)
+  const prevFocus = sum(prevWeekRecords, (r) => r.focusMinutes ?? 0)
   const tasks = sum(weekRecords, (r) => r.tasksCompleted)
   const prevTasks = sum(prevWeekRecords, (r) => r.tasksCompleted)
   const workouts = sum(weekRecords, (r) => r.workouts)

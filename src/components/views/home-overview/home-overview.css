@@ -805,12 +805,400 @@
   margin-inline: auto;
 }
 
+.home-card--anchor { grid-column: span 6; }
 .home-card--sleep { grid-column: span 3; }
 .home-card--insights { grid-column: span 3; }
 .home-card--activity { grid-column: span 6; }
 .home-card--trends { grid-column: span 6; }
 .home-card--capture { grid-column: span 2; }
 .home-card--rollup { grid-column: span 6; }
+.home-card--focuslog { grid-column: span 6; }
+
+/* ---------- Focus log ----------
+   Data-hygiene card: retroactive focus entry plus calendar-derived suggestions.
+   Sits under Patterns because it is the fix for thin focus insights. Kept in the
+   neutral glass family — this is a maintenance tool, not a daily-glance metric,
+   and it should not compete with the hero. */
+
+.home-focus-coverage {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.home-focus-coverage-bar {
+  display: flex;
+  gap: 3px;
+}
+
+.home-focus-tick {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(23, 27, 21, 0.1);
+}
+
+.home-focus-tick.is-logged {
+  background: #6f8a5e;
+}
+
+.home-focus-coverage p {
+  margin: 0;
+  color: rgba(23, 28, 25, 0.7);
+  font-size: 11.5px;
+}
+
+.home-focus-coverage strong {
+  color: #17211c;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The honesty caveat reads as a quiet aside, not a warning */
+.home-focus-coverage em {
+  font-style: italic;
+  color: rgba(23, 28, 25, 0.52);
+}
+
+.home-focus-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 13px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.home-focus-form-row {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.home-focus-form label {
+  display: flex;
+  flex: 1;
+  min-width: 120px;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.home-focus-form label span {
+  color: rgba(23, 28, 25, 0.6);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.home-focus-form input {
+  padding: 7px 11px;
+  border: 1px solid rgba(26, 31, 29, 0.14);
+  border-radius: 11px;
+  background: #fff;
+  color: #17211c;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.home-focus-form input:focus {
+  outline: none;
+  border-color: rgba(26, 31, 29, 0.34);
+}
+
+.home-focus-quick {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.home-focus-chip {
+  padding: 5px 11px;
+  border: 1px solid rgba(26, 31, 29, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  color: #3c4a3f;
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.home-focus-chip.is-active {
+  border-color: transparent;
+  background: #202321;
+  color: #fff;
+}
+
+.home-focus-pursuit {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid rgba(26, 31, 29, 0.14);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 12.5px;
+}
+
+.home-focus-pursuit:focus {
+  outline: none;
+  border-color: rgba(26, 31, 29, 0.34);
+}
+
+.home-focus-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(26, 31, 29, 0.13);
+}
+
+.home-focus-suggestions .home-card-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.home-focus-hint,
+.home-focus-empty {
+  margin: 0;
+  color: rgba(23, 28, 25, 0.62);
+  font-size: 11.5px;
+  line-height: 1.5;
+  max-width: 68ch;
+}
+
+.home-focus-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-focus-sugg {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid rgba(26, 31, 29, 0.1);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.55);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.home-focus-sugg:hover {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.home-focus-sugg.is-selected {
+  border-color: #6f8a5e;
+  background: rgba(111, 138, 94, 0.12);
+}
+
+.home-focus-sugg-check {
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+  border: 1.5px solid rgba(26, 31, 29, 0.24);
+  border-radius: 6px;
+  background: #fff;
+  color: #fff;
+}
+
+.home-focus-sugg.is-selected .home-focus-sugg-check {
+  border-color: #6f8a5e;
+  background: #6f8a5e;
+}
+
+.home-focus-sugg-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.home-focus-sugg-text b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #17211c;
+}
+
+.home-focus-sugg-text small {
+  color: rgba(23, 27, 21, 0.55);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.home-focus-sugg-text em {
+  font-style: normal;
+  font-weight: 700;
+  color: rgba(23, 27, 21, 0.45);
+}
+
+.home-focus-sugg-min {
+  flex-shrink: 0;
+  color: #3c4a3f;
+  font-size: 11px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.home-focus-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ---------- Today's anchor ----------
+   A slim full-width strip above the hero — the day's single intention, mirrored
+   from /mind's anchor card. Deliberately one row tall: it is a statement, not a
+   panel, and anything taller pushes the hero below the fold. Butter tint keeps
+   it distinct from the periwinkle hero directly beneath it. */
+
+.home-card--anchor {
+  flex-direction: row;
+  align-items: center;
+  gap: 13px;
+  padding: 14px 18px;
+  background: linear-gradient(140deg, rgba(247, 248, 232, 0.86), rgba(240, 243, 224, 0.7));
+}
+
+.home-anchor-ic {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 12px;
+  background: rgba(23, 27, 21, 0.9);
+  color: #eaff28;
+}
+
+.home-anchor-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.home-anchor-saving {
+  margin-left: 8px;
+  color: rgba(23, 28, 25, 0.45);
+  font-size: 9px;
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.home-anchor-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.home-anchor-quote {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 19px;
+  font-weight: 600;
+  font-style: italic;
+  letter-spacing: -0.01em;
+  color: #17211c;
+}
+
+.home-anchor-quote.is-empty {
+  font-style: normal;
+  font-size: 17px;
+  color: rgba(23, 28, 25, 0.42);
+}
+
+.home-anchor-pencil {
+  flex-shrink: 0;
+  color: rgba(23, 27, 21, 0.32);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.home-anchor-display:hover .home-anchor-pencil,
+.home-anchor-display:focus-visible .home-anchor-pencil {
+  opacity: 1;
+}
+
+.home-anchor-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.home-anchor-edit input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 12px;
+  border: 1px solid rgba(26, 31, 29, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  color: #17211c;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.home-anchor-edit input:focus {
+  outline: none;
+  border-color: rgba(26, 31, 29, 0.34);
+}
+
+.home-anchor-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #202321;
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.home-anchor-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: rgba(23, 27, 21, 0.07);
+  color: #3c4a3f;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.home-anchor-tag span {
+  color: #6f8a5e;
+  font-size: 8px;
+}
 
 /* ---------- Sleep card ----------
    The second hero. Reuses the Nutrition trend card's accent-panel + stat-chip
@@ -2044,11 +2432,13 @@
 /* iPads in landscape keep the desktop hero+capture pairing; only true
    portrait/tablet widths stack to full-width cards. */
 @media (max-width: 1024px) {
+  .home-card--anchor,
   .home-card--hero,
   .home-card--sleep,
   .home-card--insights,
   .home-card--trends,
-  .home-card--capture {
+  .home-card--capture,
+  .home-card--focuslog {
     grid-column: span 6;
   }
 }
@@ -2273,14 +2663,31 @@
     grid-template-columns: 1fr;
   }
 
+  .home-card--anchor,
   .home-card--hero,
   .home-card--sleep,
   .home-card--insights,
   .home-card--trends,
   .home-card--capture,
   .home-card--activity,
+  .home-card--focuslog,
   .home-card--rollup {
     grid-column: span 1;
+  }
+
+  /* One suggestion per row on phones — two columns crushes the titles */
+  .home-focus-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* The tag drops below the intention rather than squeezing it on phones */
+  .home-card--anchor {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  .home-anchor-quote {
+    font-size: 17px;
   }
 
   .home-rollup-grid {

@@ -88,6 +88,21 @@ import idliPeanutChutney from '../../../../assets/food/pastel/idli_peanut_chutne
 import paneerParathaCurd from '../../../../assets/food/pastel/paneer_paratha_curd_1785259399742.png'
 import continentalBreakfast from '../../../../assets/food/pastel/continental_breakfast_1785259438191.png'
 
+// Sixth batch (13 newly generated unique vegetarian dish images)
+import ravaUpma from '../../../../assets/food/pastel/rava_upma_1785344730876.png'
+import khamanDhokla from '../../../../assets/food/pastel/khaman_dhokla_1785344828122.png'
+import vegMomos from '../../../../assets/food/pastel/veg_momos_1785345111983.png'
+import pavBhaji from '../../../../assets/food/pastel/pav_bhaji_1785345280336.png'
+import kadhiPakora from '../../../../assets/food/pastel/kadhi_pakora_1785345348935.png'
+import bainganBharta from '../../../../assets/food/pastel/baingan_bharta_1785345405945.png'
+import sabudanaKhichdi from '../../../../assets/food/pastel/sabudana_khichdi_1785345447949.png'
+import matarPaneer from '../../../../assets/food/pastel/matar_paneer_1785345491242.png'
+import dumAloo from '../../../../assets/food/pastel/dum_aloo_1785345551126.png'
+import moongDalChilla from '../../../../assets/food/pastel/moong_dal_chilla_1785345624362.png'
+import vegHakkaNoodles from '../../../../assets/food/pastel/veg_hakka_noodles_1785345684311.png'
+import bhelPuri from '../../../../assets/food/pastel/bhel_puri_1785345728740.png'
+import coldCoffee from '../../../../assets/food/pastel/cold_coffee_1785345776312.png'
+
 export type FoodImage = {
   src: string
   alt: string
@@ -98,6 +113,20 @@ type FoodImageRule = FoodImage & { pattern: RegExp }
 // Ordered — first match wins. More specific dishes come before broad
 // categories (e.g. "curry" before "rice" so combo plates get the curry shot).
 const RULES: FoodImageRule[] = [
+  // Sixth batch rules
+  { pattern: /rava upma|upma/i, src: ravaUpma, alt: 'Rava upma garnished with cashews' },
+  { pattern: /khaman|khaman dhokla/i, src: khamanDhokla, alt: 'Khaman dhokla tempered with mustard seeds' },
+  { pattern: /momo|momos|dim sum/i, src: vegMomos, alt: 'Steamed veg momos with chili chutney' },
+  { pattern: /pav bhaji|bhaji/i, src: pavBhaji, alt: 'Pav bhaji with butter pav' },
+  { pattern: /kadhi pakora|kadhi/i, src: kadhiPakora, alt: 'Kadhi pakora with rice' },
+  { pattern: /baingan|bharta/i, src: bainganBharta, alt: 'Smoky baingan bharta with phulka' },
+  { pattern: /sabudana|sabudana khichdi/i, src: sabudanaKhichdi, alt: 'Sabudana khichdi with roasted peanuts' },
+  { pattern: /matar paneer|mutter paneer/i, src: matarPaneer, alt: 'Matar paneer curry' },
+  { pattern: /dum aloo/i, src: dumAloo, alt: 'Kashmiri dum aloo' },
+  { pattern: /chilla|cheela|moong dal chilla/i, src: moongDalChilla, alt: 'Moong dal chilla stuffed with paneer' },
+  { pattern: /hakka noodles|chow mein/i, src: vegHakkaNoodles, alt: 'Vegetable Hakka noodles' },
+  { pattern: /bhel|bhel puri/i, src: bhelPuri, alt: 'Tangy bhel puri snack' },
+  { pattern: /cold coffee/i, src: coldCoffee, alt: 'Cold coffee topped with ice cream' },
   // Fifth batch rules (most specific dish matches for recent food logs)
   { pattern: /bircher muesli|bircher/i, src: bircherMuesli, alt: 'Bircher muesli bowl with fresh berries' },
   { pattern: /methi tandoori roti|methi roti/i, src: methiTandooriRoti, alt: 'Methi tandoori roti with dal and curd' },

@@ -3,6 +3,9 @@ import { cn } from '../../../../lib/utils'
 
 const MOOD_LABELS = ['Heavy', 'Low', 'Okay', 'Good', 'Light'] as const
 
+// Temporarily hidden — not ready to surface yet. Keep onOpenSos/SosOverlay wired up for when this flips back on.
+const SOS_ENABLED = false
+
 const MOUTHS: Record<number, string> = {
   1: 'M10 21.5 Q15 16.5 20 21.5',
   2: 'M10 20.5 Q15 18.2 20 20.5',
@@ -72,10 +75,12 @@ function MindHeader({ dateIso, mood, onMoodSelect, streakDays, onOpenSos }: Mind
           {streakDays}
         </span>
 
-        <button type="button" className="mind-sos-button" onClick={onOpenSos}>
-          <LifeBuoy size={14} />
-          SOS
-        </button>
+        {SOS_ENABLED && (
+          <button type="button" className="mind-sos-button" onClick={onOpenSos}>
+            <LifeBuoy size={14} />
+            SOS
+          </button>
+        )}
       </div>
     </header>
   )

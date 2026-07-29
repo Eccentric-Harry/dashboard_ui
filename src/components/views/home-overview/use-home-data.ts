@@ -22,6 +22,7 @@ import { nutritionService } from '../../../services/nutrition-service'
 import { sleepService } from '../../../services/sleep-service'
 import { tasksService } from '../../../services/tasks-service'
 import { workoutsService } from '../../../services/workouts-service'
+import type { FocusSuggestion } from '../../../types/focus'
 import type { NutritionSummary, SpendingSummary } from './home-types'
 import { addDaysIso, isoDate } from './home-types'
 
@@ -62,9 +63,13 @@ export interface HomeData {
   learnings: Slice<LearningsSummary>
   mind: Slice<MindSummary>
   mindEntries: Slice<MindEntry[]>
+  anchors: Slice<MindEntry[]>
+  focusSuggestions: Slice<FocusSuggestion[]>
   spending: Slice<SpendingSummary>
   finance: Slice<DailyFinancialLog[]>
   refetch: () => Promise<void>
+  reloadAnchors: () => Promise<void>
+  reloadFocus: () => Promise<void>
   reloadSleep: () => Promise<void>
   reloadHydration: () => Promise<void>
   patchHydration: (data: HydrationData) => void
@@ -93,11 +98,28 @@ export function useHomeData(): HomeData {
   const [learnings, setLearnings] = useState<Slice<LearningsSummary>>(emptySlice)
   const [mind, setMind] = useState<Slice<MindSummary>>(emptySlice)
   const [mindEntries, setMindEntries] = useState<Slice<MindEntry[]>>(emptySlice)
+  const [anchors, setAnchors] = useState<Slice<MindEntry[]>>(emptySlice)
+  const [focusSuggestions, setFocusSuggestions] = useState<Slice<FocusSuggestion[]>>(emptySlice)
   const [spending, setSpending] = useState<Slice<SpendingSummary>>(emptySlice)
   const [finance, setFinance] = useState<Slice<DailyFinancialLog[]>>(emptySlice)
 
   const reloadSleep = useCallback(async () => {
     await settle<SleepEntry[]>(sleepService.getEntries(windowStart, today), setSleep)
+  }, [windowStart, today])
+
+  const reloadAnchors = useCallback(async () => {
+    await settle<MindEntry[]>(mindService.getEntries('INTENTION'), setAnchors)
+  }, [])
+
+  /** Focus history + calendar suggestions move together: importing a block changes both. */
+  const reloadFocus = useCallback(async () => {
+    await Promise.allSettled([
+      settle<FocusDaySummary[]>(focusService.getHistory(windowStart, today), setFocus),
+      settle<FocusSuggestion[]>(
+        focusService.getCalendarSuggestions(windowStart, today),
+        setFocusSuggestions,
+      ),
+    ])
   }, [windowStart, today])
 
   const reloadHydration = useCallback(async () => {
@@ -118,6 +140,11 @@ export function useHomeData(): HomeData {
       settle<LearningsSummary>(learningsService.getSummary(today), setLearnings),
       settle<MindSummary>(mindService.getSummary(today), setMind),
       settle<MindEntry[]>(mindService.getEntries('THOUGHT'), setMindEntries),
+      settle<MindEntry[]>(mindService.getEntries('INTENTION'), setAnchors),
+      settle<FocusSuggestion[]>(
+        focusService.getCalendarSuggestions(windowStart, today),
+        setFocusSuggestions,
+      ),
       settle<SpendingSummary>(financeService.getSpendingSummary(today.slice(0, 7)) as Promise<{ data?: SpendingSummary; error?: unknown }>, setSpending),
       settle<DailyFinancialLog[]>(financeService.getDailyLogs(HOME_WINDOW_DAYS), setFinance),
     ])
@@ -160,9 +187,13 @@ export function useHomeData(): HomeData {
     learnings,
     mind,
     mindEntries,
+    anchors,
+    focusSuggestions,
     spending,
     finance,
     refetch,
+    reloadAnchors,
+    reloadFocus,
     reloadSleep,
     reloadHydration,
     patchHydration,

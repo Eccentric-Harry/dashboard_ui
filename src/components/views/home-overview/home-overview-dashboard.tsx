@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { CheckSquare, Droplets, Lightbulb, MessageCircle, Moon, Plus, Trophy, Utensils } from 'lucide-react'
 import type { SleepEntryPayload } from '../../../lib/api'
+import type { FocusLogPayload } from '../../../types/focus'
+import { focusService } from '../../../services/focus-service'
 import { learningsService } from '../../../services/learnings-service'
 import { mindService } from '../../../services/mind-service'
 import { nutritionService } from '../../../services/nutrition-service'
@@ -13,14 +15,16 @@ import { HomeHeader } from './components/home-header'
 import type { QuickAddAction } from './components/home-header'
 import { ConfettiBurst } from './components/confetti-burst'
 import { TodayHeroCard } from './components/today-hero-card'
+import { TodaysAnchorCard } from './components/todays-anchor-card'
 import { SleepCard } from './components/sleep-card'
 import { ActivityCard } from './components/activity-card'
 import { InsightsCard } from './components/insights-card'
+import { FocusLogCard } from './components/focus-log-card'
 import { TrendsCard } from './components/trends-card'
 import { QuickCaptureCard } from './components/quick-capture-card'
 import type { QuickCaptureMode, RecentCapture } from './components/quick-capture-card'
 import { WeekRollupCard } from './components/week-rollup-card'
-import { buildDayRecords, countActiveDays, generateInsights, INSIGHT_WINDOW_DAYS } from './insights-engine'
+import { buildDayRecords, countActiveDays, focusCoverage, generateInsights, INSIGHT_WINDOW_DAYS } from './insights-engine'
 import { promoteForHome } from '../../../lib/insights/engine'
 import { financeInsights } from '../../../lib/insights/finance'
 import { buildMindDays, mindInsights } from '../../../lib/insights/mind'
@@ -48,6 +52,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
   const [fabOpen, setFabOpen] = useState(false)
   const [sleepFormNonce, setSleepFormNonce] = useState(0)
   const [confettiTrigger, setConfettiTrigger] = useState(0)
+  const [anchorSaving, setAnchorSaving] = useState(false)
   const fabRef = useRef<HTMLDivElement | null>(null)
 
   const fireConfetti = useCallback(() => setConfettiTrigger((n) => n + 1), [])
@@ -195,6 +200,19 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
     [home.moods.data, home.today],
   )
 
+  const todayAnchor = useMemo(
+    () => (home.anchors.data ?? []).find((e) => e.date === home.today) ?? null,
+    [home.anchors.data, home.today],
+  )
+
+  // The focus card reports on the same 14-day window every other slice uses.
+  const focusWindowStart = useMemo(() => windowDates[0] ?? home.today, [windowDates, home.today])
+  const focusStats = useMemo(() => {
+    const coverage = focusCoverage(dayRecords)
+    const loggedMinutes = dayRecords.reduce((total, r) => total + (r.focusMinutes ?? 0), 0)
+    return { coverage, loggedMinutes }
+  }, [dayRecords])
+
   // Newest-first feed of what actually went through the Task/Thought/Win
   // capture grid today — fills the card's leftover footer space instead of
   // leaving it dead air.
@@ -314,6 +332,61 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
     [home],
   )
 
+  const handleLogFocus = useCallback(
+    async (payload: FocusLogPayload) => {
+      try {
+        const res = await focusService.logPastFocus(payload)
+        if (res.error) throw new Error(res.error.message)
+        await home.reloadFocus()
+        toast.success(`${payload.minutes} min logged. Your patterns just got more honest.`)
+      } catch {
+        toast.error('Could not log that focus — try again.')
+      }
+    },
+    [home],
+  )
+
+  const handleImportFocus = useCallback(
+    async (occurrenceIds: string[]) => {
+      try {
+        const res = await focusService.importFromCalendar(occurrenceIds, focusWindowStart, home.today)
+        if (res.error) throw new Error(res.error.message)
+        await home.reloadFocus()
+        const n = res.data?.length ?? occurrenceIds.length
+        toast.success(`${n} block${n === 1 ? '' : 's'} imported as focus.`)
+      } catch {
+        toast.error('Could not import those blocks — try again.')
+      }
+    },
+    [home, focusWindowStart],
+  )
+
+  const handleSaveAnchor = useCallback(
+    async (text: string) => {
+      setAnchorSaving(true)
+      try {
+        // The tag is owned by /mind — carry the existing one through so editing
+        // the text here never silently clears it.
+        const res = todayAnchor
+          ? await mindService.updateEntry(todayAnchor.id, {
+              text,
+              type: 'INTENTION',
+              valueTag: todayAnchor.valueTag,
+              date: home.today,
+            })
+          : await mindService.createEntry({ text, type: 'INTENTION', date: home.today })
+        if (res.error) throw new Error(res.error.message)
+        await home.reloadAnchors()
+        toast.success('Anchor set. That’s today’s one thing.')
+      } catch {
+        toast.error('Could not save your anchor — try again.')
+      } finally {
+        setAnchorSaving(false)
+      }
+    },
+    [todayAnchor, home],
+  )
+
   const handleLogSleep = useCallback(
     async (payload: SleepEntryPayload) => {
       try {
@@ -391,6 +464,13 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
       )}
 
       <div className="home-grid">
+        <TodaysAnchorCard
+          intention={todayAnchor?.text ?? ''}
+          valueTag={todayAnchor?.valueTag ?? null}
+          saving={anchorSaving}
+          onSave={handleSaveAnchor}
+        />
+
         <TodayHeroCard
           loading={home.loading}
           nutrition={home.nutrition.data}
@@ -430,6 +510,18 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           activeDays={countActiveDays(weekRecords)}
           onRefresh={() => void home.refetch()}
           onNavigate={onNavigate}
+        />
+
+        {/* Sits directly under Patterns: it is the answer to "why are my
+            focus insights thin?", so it belongs next to the question. */}
+        <FocusLogCard
+          today={home.today}
+          coverage={focusStats.coverage}
+          loggedMinutes={focusStats.loggedMinutes}
+          suggestions={home.focusSuggestions.data ?? []}
+          suggestionsFailed={home.focusSuggestions.failed}
+          onLog={handleLogFocus}
+          onImport={handleImportFocus}
         />
 
         <ActivityCard

@@ -27,12 +27,36 @@ const MIN_PAIRED_DAYS = 5
 /** Minimum days per bucket for a split comparison. */
 const MIN_BUCKET_DAYS = 2
 const MAX_VISIBLE_INSIGHTS = 4
+/**
+ * Days carrying focus data before any focus-dependent rule may speak at all.
+ * Below this the window is mostly unlogged and a "correlation" would really be
+ * describing which days got logged, so those rules stay silent instead.
+ */
+const MIN_FOCUS_DAYS = 4
+
+/** Days where focus was actually recorded — the only ones a focus rule may read. */
+type FocusLoggedDay = DayRecord & { focusMinutes: number }
+const withFocus = (records: DayRecord[]): FocusLoggedDay[] =>
+  records.filter((r): r is FocusLoggedDay => r.focusMinutes != null)
+
+/** How many of the window's days carry focus data — drives the coverage hint. */
+export function focusCoverage(records: DayRecord[]): { logged: number; total: number } {
+  return { logged: withFocus(records).length, total: records.length }
+}
 
 export interface DayRecord {
   date: string
   /** Night ending on this morning; null when not logged. */
   sleepMinutes: number | null
-  focusMinutes: number
+  /**
+   * Null when no focus was recorded that day — which means *unknown*, not zero.
+   * Focus is only captured when the user logs it (live timer, retroactive entry,
+   * or a confirmed calendar import), so a day with no record is overwhelmingly
+   * a day they worked without logging, not a day they did nothing. Treating the
+   * gap as 0 fabricates an inverse signal and lets the rules below "discover"
+   * correlations that are really just office days. Every rule filters nulls out.
+   */
+  focusMinutes: number | null
   moodScore: number | null
   tasksCompleted: number
   tasksTotal: number
@@ -107,7 +131,7 @@ export function buildDayRecords(sources: DayRecordSources): DayRecord[] {
     return {
       date,
       sleepMinutes: sleepByDate.get(date)?.durationMinutes ?? null,
-      focusMinutes: focusByDate.get(date)?.totalMinutes ?? 0,
+      focusMinutes: focusByDate.get(date)?.totalMinutes ?? null,
       moodScore: moodByDate.get(date)?.moodScore ?? null,
       tasksCompleted: dayTasks.filter((t) => t.completed).length,
       tasksTotal: dayTasks.length,
@@ -231,7 +255,7 @@ export function countActiveDays(records: DayRecord[]): number {
     (r) =>
       r.sleepMinutes != null ||
       r.moodScore != null ||
-      r.focusMinutes > 0 ||
+      r.focusMinutes != null ||
       r.tasksTotal > 0 ||
       r.workouts > 0 ||
       (r.proteinGrams ?? 0) > 0,
@@ -241,8 +265,10 @@ export function countActiveDays(records: DayRecord[]): number {
 // ---------- Rules ----------
 
 function sleepVsFocus(records: DayRecord[]): Insight | null {
-  const paired = records.filter((r) => r.sleepMinutes != null)
-  if (paired.length < MIN_PAIRED_DAYS) return null
+  // Both signals must be present: an unlogged focus day says nothing about how
+  // the previous night's sleep played out.
+  const paired = withFocus(records).filter((r) => r.sleepMinutes != null)
+  if (paired.length < MIN_PAIRED_DAYS || paired.length < MIN_FOCUS_DAYS) return null
 
   const shortLimit = SLEEP_TARGET_MINUTES - 60
   const short = paired.filter((r) => (r.sleepMinutes as number) < shortLimit)
@@ -263,7 +289,7 @@ function sleepVsFocus(records: DayRecord[]): Insight | null {
       icon: 'sleep',
       sentiment: 'watch',
       title: `On nights under ${shortLabel}, your next-day focus averages ${shortAvg} min vs ${restedAvg} min after longer sleep.`,
-      detail: `${short.length} short nights (avg focus ${shortAvg} min) vs ${rested.length} rested nights (avg focus ${restedAvg} min). Threshold: ${shortLabel} of sleep.`,
+      detail: `${short.length} short nights (avg focus ${shortAvg} min) vs ${rested.length} rested nights (avg focus ${restedAvg} min). Threshold: ${shortLabel} of sleep. Counts only the ${paired.length} days with focus actually logged — unlogged days are excluded, not read as zero.`,
       sampleDays: paired.length,
       effect: relDiff,
       spark,
@@ -358,8 +384,8 @@ function workoutsVsFoodSpend(records: DayRecord[]): Insight | null {
 }
 
 function overdueVsFocus(records: DayRecord[]): Insight | null {
-  const paired = records.filter((r) => r.tasksTotal > 0 || r.overdueCarried > 0 || r.focusMinutes > 0)
-  if (paired.length < MIN_PAIRED_DAYS) return null
+  const paired = withFocus(records)
+  if (paired.length < MIN_PAIRED_DAYS || paired.length < MIN_FOCUS_DAYS) return null
   if (!paired.some((r) => r.overdueCarried > 0)) return null
 
   const r = pearson(
@@ -379,7 +405,7 @@ function overdueVsFocus(records: DayRecord[]): Insight | null {
     icon: 'tasks',
     sentiment: 'watch',
     title: `Focus dips on days you carry ${threshold}+ overdue tasks${clearFocus != null ? ` (${heavyFocus} min vs ${clearFocus} min on clear days)` : ''}.`,
-    detail: `Correlation between carried overdue tasks and focus minutes: r = ${r.toFixed(2)} over ${paired.length} days. ${heavyDays.length} days carried overdue work${clearFocus != null ? `; ${clearDays.length} days were clear` : ''}.`,
+    detail: `Correlation between carried overdue tasks and focus minutes: r = ${r.toFixed(2)} over the ${paired.length} days with focus logged. ${heavyDays.length} days carried overdue work${clearFocus != null ? `; ${clearDays.length} days were clear` : ''}. Days without logged focus are excluded rather than counted as zero.`,
     sampleDays: paired.length,
     effect: Math.abs(r),
     metric: clearFocus != null ? { value: heavyFocus, unit: 'min', delta: heavyFocus - clearFocus, deltaDir: 'down' } : undefined,
@@ -440,8 +466,8 @@ function thoughtsVsSleep(records: DayRecord[]): Insight | null {
 
 function proteinVsFocus(records: DayRecord[], proteinGoal: number | null): Insight | null {
   if (!proteinGoal || proteinGoal <= 0) return null
-  const paired = records.filter((r) => r.proteinGrams != null && (r.proteinGrams > 0 || r.tasksTotal > 0))
-  if (paired.length < MIN_PAIRED_DAYS) return null
+  const paired = withFocus(records).filter((r) => r.proteinGrams != null)
+  if (paired.length < MIN_PAIRED_DAYS || paired.length < MIN_FOCUS_DAYS) return null
 
   const hit = paired.filter((r) => (r.proteinGrams as number) >= proteinGoal)
   const missed = paired.filter((r) => (r.proteinGrams as number) < proteinGoal)
@@ -458,7 +484,7 @@ function proteinVsFocus(records: DayRecord[], proteinGoal: number | null): Insig
     icon: 'protein',
     sentiment: 'positive',
     title: `On days you hit your protein goal you average ${hitFocus} min of focus, vs ${missedFocus} min when you miss it.`,
-    detail: `${hit.length} goal-hit days (≥ ${proteinGoal}g, avg focus ${hitFocus} min) vs ${missed.length} days under goal (avg ${missedFocus} min).`,
+    detail: `${hit.length} goal-hit days (≥ ${proteinGoal}g, avg focus ${hitFocus} min) vs ${missed.length} days under goal (avg ${missedFocus} min). Limited to the ${paired.length} days with both protein and focus logged.`,
     sampleDays: paired.length,
     effect: relDiff,
     metric: { value: hitFocus, unit: 'min', delta: hitFocus - missedFocus, deltaDir: 'up' },
@@ -491,21 +517,24 @@ function bestPositive(records: DayRecord[], ctx: InsightContext): Insight | null
     }
   }
 
-  const bestFocus = records.reduce((a, b) => (b.focusMinutes > a.focusMinutes ? b : a))
-  if (bestFocus.focusMinutes >= 60) {
-    candidates.push(
-      makeInsight({
-        id: 'win-focus-peak',
-        icon: 'focus',
-        sentiment: 'positive',
-        title: `${formatMinutes(bestFocus.focusMinutes)} of deep focus on ${shortDayLabel(bestFocus.date)} — your peak this week.`,
-        detail: `Highest single-day completed focus time in the last ${records.length} days.`,
-        sampleDays: records.length,
-        effect: 0.14,
-        metric: { value: bestFocus.focusMinutes, unit: 'min' },
-        spark: records.map((r) => r.focusMinutes),
-      }),
-    )
+  const focusDays = withFocus(records)
+  if (focusDays.length > 0) {
+    const bestFocus = focusDays.reduce((a, b) => (b.focusMinutes > a.focusMinutes ? b : a))
+    if (bestFocus.focusMinutes >= 60) {
+      candidates.push(
+        makeInsight({
+          id: 'win-focus-peak',
+          icon: 'focus',
+          sentiment: 'positive',
+          title: `${formatMinutes(bestFocus.focusMinutes)} of deep focus on ${shortDayLabel(bestFocus.date)} — your peak this week.`,
+          detail: `Highest single-day focus time across the ${focusDays.length} logged day${focusDays.length === 1 ? '' : 's'} in the last ${records.length}.`,
+          sampleDays: focusDays.length,
+          effect: 0.14,
+          metric: { value: bestFocus.focusMinutes, unit: 'min' },
+          spark: focusDays.map((r) => r.focusMinutes),
+        }),
+      )
+    }
   }
 
   const workoutCount = records.reduce((sum, r) => sum + r.workouts, 0)

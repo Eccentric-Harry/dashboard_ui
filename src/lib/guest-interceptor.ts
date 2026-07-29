@@ -206,11 +206,43 @@ const guestFocusSeed: Array<[number, number, number]> = [
   [-1, 60, 2],
   [0, 25, 1],
 ];
+// Mutable: retroactive logs and calendar imports fold into this in guest mode.
+// Only the last 7 days are seeded, so the 14-day window shows a real coverage
+// gap — which is exactly what the focus-log card exists to surface.
 const guestFocusHistory = guestFocusSeed.map(([offset, totalMinutes, sessions]) => ({
   date: guestAddDays(guestToday, offset),
   totalMinutes,
   sessions,
+  timerMinutes: totalMinutes,
+  manualMinutes: 0,
+  calendarMinutes: 0,
 }));
+
+/** Timed calendar blocks offered as focus, mirroring the real suggestion shape. */
+let guestFocusSuggestions = [
+  { occurrenceId: 'occ-guest-1', date: guestAddDays(guestToday, -1), title: 'Deep work — payments refactor', startTime: '10:00', endTime: '12:00', minutes: 120, category: 'WORK', origin: 'GOOGLE' as const },
+  { occurrenceId: 'occ-guest-2', date: guestAddDays(guestToday, -2), title: 'Design review', startTime: '15:00', endTime: '16:00', minutes: 60, category: 'WORK', origin: 'GOOGLE' as const },
+  { occurrenceId: 'occ-guest-3', date: guestAddDays(guestToday, -3), title: 'Spring Boot reading', startTime: '19:30', endTime: '20:45', minutes: 75, category: 'LEARNING', origin: 'LOCAL' as const },
+];
+
+/** Fold minutes into the guest day bucket, creating the day when it is new. */
+function guestAddFocus(date: string, minutes: number, kind: 'manualMinutes' | 'calendarMinutes') {
+  const existing = guestFocusHistory.find(f => f.date === date);
+  if (existing) {
+    existing.totalMinutes += minutes;
+    existing.sessions += 1;
+    existing[kind] += minutes;
+    return;
+  }
+  guestFocusHistory.push({
+    date,
+    totalMinutes: minutes,
+    sessions: 1,
+    timerMinutes: 0,
+    manualMinutes: kind === 'manualMinutes' ? minutes : 0,
+    calendarMinutes: kind === 'calendarMinutes' ? minutes : 0,
+  });
+}
 
 let mindEntries: GuestMindEntry[] = [
   { id: 'mg-1', type: 'THOUGHT', text: "I'll never be good enough for a senior role.", status: 'OPEN', date: guestToday, createdAt: new Date().toISOString() },
@@ -716,6 +748,45 @@ export function enableGuestInterceptor() {
       const start = urlObj.searchParams.get('startDate') || '0000-01-01';
       const end = urlObj.searchParams.get('endDate') || '9999-12-31';
       return respondWith({ data: guestFocusHistory.filter(f => f.date >= start && f.date <= end) });
+    }
+
+    if (urlStr.includes('/api/v1/focus/calendar-suggestions')) {
+      const start = urlObj.searchParams.get('startDate') || '0000-01-01';
+      const end = urlObj.searchParams.get('endDate') || '9999-12-31';
+      return respondWith({ data: guestFocusSuggestions.filter(s => s.date >= start && s.date <= end) });
+    }
+
+    if (urlStr.includes('/api/v1/focus/log')) {
+      const body = JSON.parse(typeof args[1]?.body === 'string' ? args[1].body : '{}');
+      guestAddFocus(body.date, Number(body.minutes) || 0, 'manualMinutes');
+      return respondWith({
+        data: {
+          id: `focus-manual-guest-${Date.now()}`,
+          activePursuit: body.activePursuit || 'Deep work',
+          durationMinutes: Number(body.minutes) || 0,
+          status: 'COMPLETED',
+          source: 'MANUAL',
+        },
+      });
+    }
+
+    if (urlStr.includes('/api/v1/focus/import')) {
+      const body = JSON.parse(typeof args[1]?.body === 'string' ? args[1].body : '{}');
+      const wanted: string[] = body.occurrenceIds || [];
+      const taken = guestFocusSuggestions.filter(s => wanted.includes(s.occurrenceId));
+      taken.forEach(s => guestAddFocus(s.date, s.minutes, 'calendarMinutes'));
+      // Imported blocks stop being suggestions — same dedupe the server enforces.
+      guestFocusSuggestions = guestFocusSuggestions.filter(s => !wanted.includes(s.occurrenceId));
+      return respondWith({
+        data: taken.map(s => ({
+          id: `focus-cal-guest-${s.occurrenceId}`,
+          activePursuit: s.title,
+          durationMinutes: s.minutes,
+          status: 'COMPLETED',
+          source: 'CALENDAR',
+          sourceRefId: s.occurrenceId,
+        })),
+      });
     }
 
     // Learnings: logs (used by LearningsLogCard, CategoryBreakdownCard, LearningsHeader, CalendarSelectorCard)

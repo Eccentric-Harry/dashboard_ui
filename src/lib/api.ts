@@ -1015,6 +1015,10 @@ export interface FocusDaySummary {
   date: string; // YYYY-MM-DD
   totalMinutes: number;
   sessions: number;
+  /** Provenance split — measured by the timer vs entered later vs imported. */
+  timerMinutes?: number;
+  manualMinutes?: number;
+  calendarMinutes?: number;
 }
 
 export async function fetchFocusHistory(startDate: string, endDate: string): Promise<ApiEnvelope<FocusDaySummary[]>> {
