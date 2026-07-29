@@ -1062,16 +1062,22 @@
 
 /* ---------- Today's anchor ----------
    A slim full-width strip above the hero — the day's single intention, mirrored
-   from /mind's anchor card. Deliberately one row tall: it is a statement, not a
-   panel, and anything taller pushes the hero below the fold. Butter tint keeps
-   it distinct from the periwinkle hero directly beneath it. */
+   from /mind's anchor card. Deliberately slim: it is a statement, not a panel,
+   and anything taller pushes the hero below the fold — but it wraps rather than
+   truncating, because an unreadable anchor defeats the card.
+
+   Porcelain-sage, not the old butter tint: that gradient was the only yellow-
+   green surface on the route and read as washed-out against the #dfe4df page
+   while fighting the periwinkle hero directly beneath it. This echoes the base
+   sage instead, so the strip separates by lightness rather than by hue — the
+   near-black icon disc and its #eaff28 glyph stay the one accent here. */
 
 .home-card--anchor {
   flex-direction: row;
   align-items: center;
   gap: 13px;
   padding: 14px 18px;
-  background: linear-gradient(140deg, rgba(247, 248, 232, 0.86), rgba(240, 243, 224, 0.7));
+  background: linear-gradient(140deg, rgba(252, 253, 250, 0.92), rgba(228, 236, 229, 0.8));
 }
 
 .home-anchor-ic {
@@ -1104,7 +1110,8 @@
 
 .home-anchor-display {
   display: flex;
-  align-items: center;
+  /* Top-aligned so the pencil stays beside the first line once the quote wraps */
+  align-items: flex-start;
   gap: 8px;
   width: 100%;
   min-width: 0;
@@ -1116,9 +1123,11 @@
 }
 
 .home-anchor-quote {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* Wraps rather than ellipsising. This is the one thing the user committed to
+     today — truncating it to "Fix @Transaction…" makes the card unreadable at
+     exactly the width it matters most. A slightly taller strip is the cheaper
+     trade. `anywhere` covers long unbroken tokens (@Transactional, URLs). */
+  overflow-wrap: anywhere;
   font-family: 'Playfair Display', Georgia, serif;
   font-size: 19px;
   font-weight: 600;
@@ -1180,24 +1189,6 @@
   font-size: 10.5px;
   font-weight: 700;
   cursor: pointer;
-}
-
-.home-anchor-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  flex-shrink: 0;
-  padding: 5px 11px;
-  border-radius: 999px;
-  background: rgba(23, 27, 21, 0.07);
-  color: #3c4a3f;
-  font-size: 10.5px;
-  font-weight: 700;
-}
-
-.home-anchor-tag span {
-  color: #6f8a5e;
-  font-size: 8px;
 }
 
 /* ---------- Sleep card ----------
@@ -2680,14 +2671,15 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  /* The tag drops below the intention rather than squeezing it on phones */
+  /* Phones: top-align the icon so it sits beside the first line once the
+     intention wraps, rather than floating mid-block on a 2–3 line anchor. */
   .home-card--anchor {
-    flex-wrap: wrap;
-    row-gap: 8px;
+    align-items: flex-start;
   }
 
   .home-anchor-quote {
-    font-size: 17px;
+    font-size: 16.5px;
+    line-height: 1.34;
   }
 
   .home-rollup-grid {

@@ -5,13 +5,13 @@ import { cn } from '../../../../lib/utils'
 type TodaysAnchorCardProps = {
   /** Today's intention text, '' when none is set yet. */
   intention: string
-  /** The focus tag chosen on /mind, shown read-only here. */
-  valueTag: string | null
   saving: boolean
   onSave: (text: string) => Promise<void>
 }
 
-function TodaysAnchorCard({ intention, valueTag, saving, onSave }: TodaysAnchorCardProps) {
+// The /mind focus tag is deliberately not surfaced here — Home shows the one
+// thing, nothing else. The tag is still preserved on save (see handleSaveAnchor).
+function TodaysAnchorCard({ intention, saving, onSave }: TodaysAnchorCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [draft, setDraft] = useState('')
   const inputRef = useRef<HTMLInputElement | null>(null)
@@ -73,13 +73,6 @@ function TodaysAnchorCard({ intention, valueTag, saving, onSave }: TodaysAnchorC
           </button>
         )}
       </div>
-
-      {valueTag && !isEditing && (
-        <span className="home-anchor-tag">
-          <span aria-hidden="true">●</span>
-          {valueTag}
-        </span>
-      )}
     </section>
   )
 }

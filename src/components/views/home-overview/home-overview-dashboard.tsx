@@ -466,7 +466,6 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
       <div className="home-grid">
         <TodaysAnchorCard
           intention={todayAnchor?.text ?? ''}
-          valueTag={todayAnchor?.valueTag ?? null}
           saving={anchorSaving}
           onSave={handleSaveAnchor}
         />
