@@ -20,5 +20,5 @@ export const API_DELETE_MIND_ENTRY: ApiEndpoint<{ id: string }> = {
   url: ({ id }) => `/mind/entries/${id}`,
   method: 'delete',
 };
-export const API_SAVE_MIND_MOOD: ApiEndpoint = { url: '/mind/mood', method: 'post' };
+export const API_SAVE_MIND_MOOD: ApiEndpoint = { url: '/mind/mood', method: 'put' };
 export const API_GET_DAILY_LOG_RANGE: ApiEndpoint = { url: '/daily-log/range', method: 'get' };
