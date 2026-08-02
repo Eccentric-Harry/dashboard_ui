@@ -10,7 +10,7 @@ export const API_UPDATE_MIND_ENTRY: ApiEndpoint<{ id: string }> = {
 };
 export const API_UPDATE_MIND_STATUS: ApiEndpoint<{ id: string }> = {
   url: ({ id }) => `/mind/entries/${id}/status`,
-  method: 'put',
+  method: 'patch',
 };
 export const API_CONVERT_MIND_ENTRY: ApiEndpoint<{ id: string }> = {
   url: ({ id }) => `/mind/entries/${id}/convert`,
