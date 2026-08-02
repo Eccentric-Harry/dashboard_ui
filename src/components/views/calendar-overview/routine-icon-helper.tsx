@@ -37,26 +37,14 @@ const rules: { pattern: RegExp; icon: typeof ListChecks; color: string; bg: stri
   { pattern: /\b(call|phone|skype|facetime|discord|slack|message|text|email|inbox|correspondence)\b/, icon: Users, color: '#6366f1', bg: '#eef0f7' },
 ]
 
-function overrideLightColors(colorStr: string, category?: string) {
+function overrideLightColors(colorStr: string) {
   const upper = colorStr.toUpperCase()
-  if (upper === '#C8F3A3' || upper === 'C8F3A3' || (category && category.toLowerCase() === 'personal')) {
-    return '#7c3aed' // Bold Violet
-  }
-  if (upper === '#9EE7E8' || upper === '9EE7E8' || (category && category.toLowerCase() === 'health')) {
-    return '#10b981' // Bold Emerald
-  }
-  if (upper === '#9BD7FF' || upper === '9BD7FF' || (category && category.toLowerCase() === 'work')) {
-    return '#2563eb' // Bold Blue
-  }
-  if (upper === '#C9BFF6' || upper === 'C9BFF6' || (category && category.toLowerCase() === 'learning')) {
-    return '#0d9488' // Bold Teal
-  }
-  if (upper === '#FFD37D' || upper === 'FFD37D' || (category && category.toLowerCase() === 'finance')) {
-    return '#d97706' // Bold Amber
-  }
-  if (upper === '#FFB4D2' || upper === 'FFB4D2' || (category && category.toLowerCase() === 'social')) {
-    return '#db2777' // Bold Pink/Rose
-  }
+  if (upper === '#C8F3A3' || upper === 'C8F3A3') return '#7c3aed' // Bold Violet
+  if (upper === '#9EE7E8' || upper === '9EE7E8') return '#10b981' // Bold Emerald
+  if (upper === '#9BD7FF' || upper === '9BD7FF') return '#2563eb' // Bold Blue
+  if (upper === '#C9BFF6' || upper === 'C9BFF6') return '#0d9488' // Bold Teal
+  if (upper === '#FFD37D' || upper === 'FFD37D') return '#d97706' // Bold Amber
+  if (upper === '#FFB4D2' || upper === 'FFB4D2') return '#db2777' // Bold Pink/Rose
   return colorStr
 }
 
@@ -73,7 +61,7 @@ export const getRoutineIconDetails = (item: {
   const type = (item.itemType || '').toUpperCase()
   const text = `${title} ${notes}`
 
-  const rawColor = item.color ? overrideLightColors(item.color, item.category) : undefined
+  const rawColor = item.color ? overrideLightColors(item.color) : undefined
 
   // If the item has an explicit custom hex color (e.g., from Google Calendar), use it!
   if (rawColor && rawColor.startsWith('#')) {

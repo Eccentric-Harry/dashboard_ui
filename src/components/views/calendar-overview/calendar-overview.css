@@ -14,6 +14,17 @@
   min-width: 0;
   flex-direction: column;
   color: #151a18;
+
+  /* Timeline grid metrics. The day header, the hour labels and the absolutely
+     positioned event columns all have to agree on the same gutter and insets
+     or they drift apart, so they read from these instead of repeating numbers.
+     The mobile query below retightens the whole grid by re-declaring them. */
+  --cal-time-gutter: 56px;
+  --cal-col-gap: 12px;
+  --cal-grid-inset-left: 12px;
+  --cal-grid-inset-right: 24px;
+  --cal-grid-pad-top: 24px;
+  --cal-hour-label-gap: 12px;
 }
 
 .calendar-header {
@@ -1671,7 +1682,17 @@
   .calendar-dashboard {
     position: static;
     min-height: 100svh;
-    padding: 20px 16px 100px;
+    padding: 20px 10px 100px;
+
+    /* Retighten the whole timeline in one place. The desktop gutter (56px)
+       and 12/24px insets cost ~40% of a phone's width before a single event
+       is drawn, so the grid runs closer to the edges here. */
+    --cal-time-gutter: 42px;
+    --cal-col-gap: 8px;
+    --cal-grid-inset-left: 0px;
+    --cal-grid-inset-right: 4px;
+    --cal-grid-pad-top: 10px;
+    --cal-hour-label-gap: 8px;
   }
 
   .calendar-header {
@@ -1791,11 +1812,10 @@
     overflow-y: visible;
   }
 
-  .calendar-main-stage {
-    height: auto;
-    overflow: visible;
-    padding: 16px 12px;
-  }
+  /* NOTE: rules for .calendar-main-stage / .stage-grid-canvas / .grid-body-canvas
+     do NOT belong in this block — their base declarations live further down the
+     file and media queries carry no extra specificity, so anything set here for
+     them is silently overridden. See the mobile timeline block at the end. */
 
   .stage-grid-canvas {
     height: auto !important;
@@ -1811,11 +1831,6 @@
   .calendar-grid-scrollable {
     flex: none;
     overflow-y: visible;
-  }
-
-  /* Keep the day header pinned while the page scrolls through the timeline */
-  .grid-header-days {
-    top: 0;
   }
 }
 
@@ -2679,12 +2694,12 @@
   top: 0;
   z-index: 15;
   display: grid;
-  grid-template-columns: 56px repeat(7, minmax(0, 1fr));
+  grid-template-columns: var(--cal-time-gutter) repeat(7, minmax(0, 1fr));
   background: #ffffff;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  gap: 12px;
-  margin-left: 12px;
-  margin-right: 24px;
+  gap: var(--cal-col-gap);
+  margin-left: var(--cal-grid-inset-left);
+  margin-right: var(--cal-grid-inset-right);
   padding: 12px 0;
 }
 
@@ -2754,7 +2769,9 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.015);
   margin-top: 12px;
   min-height: 0;
-  padding: 24px 24px 24px 12px;
+  /* Padding must stay in lockstep with .grid-columns-container's insets below,
+     or the event columns stop lining up with the hour rows behind them. */
+  padding: var(--cal-grid-pad-top) var(--cal-grid-inset-right) 24px var(--cal-grid-inset-left);
 }
 
 .grid-lines-container {
@@ -2768,9 +2785,9 @@
 }
 
 .hour-label {
-  width: 56px;
+  width: var(--cal-time-gutter);
   text-align: right;
-  padding-right: 12px;
+  padding-right: var(--cal-hour-label-gap);
   margin-top: -6px;
   font-size: 10.5px;
   font-weight: 600;
@@ -2785,13 +2802,13 @@
 /* Columns layer overlapping grid lines */
 .grid-columns-container {
   position: absolute;
-  top: 24px;
+  top: var(--cal-grid-pad-top);
   height: 1920px;
-  left: 12px;
-  right: 24px;
+  left: var(--cal-grid-inset-left);
+  right: var(--cal-grid-inset-right);
   display: grid;
-  grid-template-columns: 56px repeat(7, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: var(--cal-time-gutter) repeat(7, minmax(0, 1fr));
+  gap: var(--cal-col-gap);
 }
 
 .time-column-spacer {
@@ -4186,10 +4203,162 @@
   background: #2a2e2c;
 }
 
+/* ── Per-event color swatch picker (Add/Edit routine modal) ────────────── */
+.color-swatch-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 2px 0 4px;
+}
+
+.color-swatch-dot {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  background: var(--swatch-color);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  padding: 0;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+
+.color-swatch-dot:hover {
+  transform: scale(1.14);
+}
+
+.color-swatch-dot.is-selected {
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px var(--swatch-color), 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+
+.color-swatch-default {
+  border: 1.5px dashed rgba(16, 19, 18, 0.4);
+}
+
 /* ── Mobile: hide "Create event" header button ─────────────────────────── */
 @media (max-width: 820px) {
   .create-event-btn {
     display: none !important;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Mobile timeline: flatten the nested card stack
+   --------------------------------------------------------------------------
+   Desktop nests four surfaces to build the timeline:
+
+     .focus-canvas          glass card, 30px radius, border + shadow
+       .calendar-main-stage   24px padding
+         .stage-grid-canvas     white card, 24px radius, border + shadow
+           .grid-body-canvas    white card, 24px radius, border + shadow, 24px padding
+             .grid-day-column   tinted plate, 16px radius
+
+   That reads well at 1200px and is almost entirely chrome at 375px — the
+   borders, radii and paddings alone ate ~40% of the width before a single
+   event was drawn. On phones only the outer glass card keeps its treatment;
+   everything inside runs flush, and the grid metrics (--cal-* on
+   .calendar-dashboard) retighten the gutter and insets to match.
+
+   This block must stay AFTER the base declarations above: media queries add
+   no specificity, so the earlier @media (max-width: 820px) block cannot
+   override selectors that are defined further down the file.
+   ────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 820px) {
+  .calendar-main-stage {
+    padding: 14px 10px 8px;
+  }
+
+  .stage-grid-canvas,
+  .grid-body-canvas {
+    background: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  /* The inner white cards were what the pastel event chips read against.
+     With them gone the glass canvas is the timeline's own surface, so lift it
+     toward white to keep chip contrast, and firm up the hour rules that were
+     tuned for a pure-white background. */
+  .focus-canvas {
+    background: rgba(253, 254, 251, 0.88);
+  }
+
+  .grid-hour-row {
+    border-bottom-color: rgba(0, 0, 0, 0.045);
+  }
+
+  .grid-body-canvas {
+    margin-top: 0;
+    padding-bottom: 12px;
+  }
+
+  /* The sticky day header sat on an opaque white card; with the card gone it
+     needs its own backdrop so hour rows don't bleed through underneath it. */
+  .grid-header-days {
+    background: rgba(250, 252, 247, 0.94);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    padding: 8px 0;
+  }
+
+  /* Compact day header: the stacked label + 46px pill spent ~90px of vertical
+     restating the date already shown in the nav row above it. Same
+     information, one row. */
+  .grid-header-day-card {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 13px;
+  }
+
+  .grid-header-day-card .day-name {
+    margin-bottom: 0;
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+
+  .grid-header-day-card .day-number-pill {
+    width: 28px;
+    height: 28px;
+    font-size: 18px;
+  }
+
+  /* Daily view is a single full-width column, so the tinted plate is one more
+     nested box saying nothing. 2-Day keeps it — there it separates the days. */
+  .calendar-grid-scrollable.view-daily .grid-day-column {
+    background: none;
+    border-radius: 0;
+  }
+
+  /* In Daily view the day-header card just restates the date already shown in
+     the nav row a few pixels above, and "Time" restates the hour column under
+     it — ~70px of vertical spent on duplication. 2-Day still needs it: there
+     the two cards are how you tell the columns apart and switch days. */
+  .calendar-grid-scrollable.view-daily .grid-header-days {
+    display: none;
+  }
+
+  .stage-navigation-row {
+    margin-bottom: 10px;
+  }
+
+  /* Page title: the standing description is onboarding copy that costs a
+     sixth of the fold on every visit. Title and eyebrow carry the context. */
+  .calendar-header {
+    margin-bottom: 10px !important;
+  }
+
+  .calendar-header p {
+    display: none;
   }
 }
 

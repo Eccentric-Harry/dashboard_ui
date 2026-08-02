@@ -167,26 +167,14 @@ function getMockAttendeesForItem(item: CalendarItem) {
 }
 */
 
-function overrideLightColors(colorStr: string, category?: string) {
+function overrideLightColors(colorStr: string) {
   const upper = colorStr.toUpperCase()
-  if (upper === '#C8F3A3' || upper === 'C8F3A3' || (category && category.toLowerCase() === 'personal')) {
-    return '#7c3aed' // Bold Violet
-  }
-  if (upper === '#9EE7E8' || upper === '9EE7E8' || (category && category.toLowerCase() === 'health')) {
-    return '#10b981' // Bold Emerald
-  }
-  if (upper === '#9BD7FF' || upper === '9BD7FF' || (category && category.toLowerCase() === 'work')) {
-    return '#2563eb' // Bold Blue
-  }
-  if (upper === '#C9BFF6' || upper === 'C9BFF6' || (category && category.toLowerCase() === 'learning')) {
-    return '#0d9488' // Bold Teal
-  }
-  if (upper === '#FFD37D' || upper === 'FFD37D' || (category && category.toLowerCase() === 'finance')) {
-    return '#d97706' // Bold Amber
-  }
-  if (upper === '#FFB4D2' || upper === 'FFB4D2' || (category && category.toLowerCase() === 'social')) {
-    return '#db2777' // Bold Pink/Rose
-  }
+  if (upper === '#C8F3A3' || upper === 'C8F3A3') return '#7c3aed' // Bold Violet
+  if (upper === '#9EE7E8' || upper === '9EE7E8') return '#10b981' // Bold Emerald
+  if (upper === '#9BD7FF' || upper === '9BD7FF') return '#2563eb' // Bold Blue
+  if (upper === '#C9BFF6' || upper === 'C9BFF6') return '#0d9488' // Bold Teal
+  if (upper === '#FFD37D' || upper === 'FFD37D') return '#d97706' // Bold Amber
+  if (upper === '#FFB4D2' || upper === 'FFB4D2') return '#db2777' // Bold Pink/Rose
   return colorStr
 }
 
@@ -291,18 +279,39 @@ const CATEGORY_OPTIONS = [
   { label: 'Movies', color: '#e11d48' },
 ]
 
+// Mirrors the Google Calendar event-color palette 1:1 (see GOOGLE_EVENT_COLORS
+// in the backend's GoogleCalendarClient) so a per-event override picked here
+// maps onto the exact same colorId when pushed to a synced Google Calendar.
+const EVENT_COLOR_SWATCHES = [
+  { name: 'Lavender', hex: '#7986cb' },
+  { name: 'Sage', hex: '#33b679' },
+  { name: 'Grape', hex: '#8e24aa' },
+  { name: 'Flamingo', hex: '#e67c73' },
+  { name: 'Banana', hex: '#f6bf26' },
+  { name: 'Tangerine', hex: '#f4511e' },
+  { name: 'Peacock', hex: '#039be5' },
+  { name: 'Graphite', hex: '#616161' },
+  { name: 'Blueberry', hex: '#3f51b5' },
+  { name: 'Basil', hex: '#0b8043' },
+  { name: 'Tomato', hex: '#d50000' },
+]
+
 /**
  * Single source of truth for what color an item renders with, everywhere
- * (filters, month capsules, grid chips, popover, sidebar card). The category
- * always determines the color — registered categories use the shared palette
- * and unknown ones a stable hash hue — so a category can never render two
- * different colors across the UI. A stored item color only applies when the
+ * (filters, month capsules, grid chips, popover, sidebar card). A per-event
+ * custom color (picked via the swatch grid in the edit modal, stored locally
+ * keyed by item id) always wins first — this is the Google Calendar-style
+ * "override this one event" color. Otherwise the category determines the
+ * color — registered categories use the shared palette and unknown ones a
+ * stable hash hue. A stored item color only applies as a last resort when the
  * item has no category at all (e.g. some Google-synced events).
  */
-function displayColorForItem(item: { category?: string; color?: string }) {
+function displayColorForItem(item: { id?: string; category?: string; color?: string }) {
+  const override = getCustomItemColor(item)
+  if (override) return override
   const normalized = (item.category || '').trim().toLowerCase()
   if (normalized) return colorForCategory(item.category!)
-  if (item.color) return overrideLightColors(item.color, item.category)
+  if (item.color) return overrideLightColors(item.color)
   return colorForCategory('Personal')
 }
 
@@ -423,7 +432,7 @@ const CalendarSkeleton = ({ viewType }: { viewType: 'daily' | 'weekly' | 'monthl
       ) : (
         <>
           {/* Grid header skeleton */}
-          <div className="skeleton-grid-header" style={{ gridTemplateColumns: `56px repeat(${viewType === 'weekly' ? 2 : 1}, minmax(0, 1fr))` }}>
+          <div className="skeleton-grid-header" style={{ gridTemplateColumns: `var(--cal-time-gutter) repeat(${viewType === 'weekly' ? 2 : 1}, minmax(0, 1fr))` }}>
             <div className="skeleton-tz-box" />
             {Array.from({ length: viewType === 'weekly' ? 2 : 1 }).map((_, i) => (
               <div key={i} className="skeleton-day-card" />
@@ -431,7 +440,7 @@ const CalendarSkeleton = ({ viewType }: { viewType: 'daily' | 'weekly' | 'monthl
           </div>
 
           {/* Grid body skeleton */}
-          <div className="skeleton-grid-body" style={{ gridTemplateColumns: `56px repeat(${viewType === 'weekly' ? 2 : 1}, minmax(0, 1fr))` }}>
+          <div className="skeleton-grid-body" style={{ gridTemplateColumns: `var(--cal-time-gutter) repeat(${viewType === 'weekly' ? 2 : 1}, minmax(0, 1fr))` }}>
             <div className="skeleton-time-column">
               {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="skeleton-time-slot" />
@@ -517,8 +526,11 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      // 1. Daily/Weekly view: vertical auto-scroll to current time
-      if ((viewType === 'daily' || viewType === 'weekly') && weeklyScrollContainerRef.current) {
+      // 1. Daily/Weekly view: vertical auto-scroll to current time — only
+      // when today is actually in view. Looking at a past/future date is a
+      // deliberate choice to browse that day, not a cue to jump to "now".
+      const isTodayInView = selectedDate === toISODate(new Date())
+      if ((viewType === 'daily' || viewType === 'weekly') && isTodayInView && weeklyScrollContainerRef.current) {
         const container = weeklyScrollContainerRef.current
         const now = new Date()
         const currentHour = now.getHours()
@@ -990,6 +1002,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     try {
       const res = await calendarService.deleteItem(target.id)
       if (res.error) throw new Error(res.error.message)
+      clearCustomItemColor(target.id)
       toast.success(`Deleted "${target.title}"`)
       window.dispatchEvent(new CustomEvent('calendar-updated'))
     } catch (error) {
@@ -1012,6 +1025,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     try {
       const res = await calendarService.deleteItem(target.id, mode === 'ONLY_THIS' ? target.date : undefined)
       if (res.error) throw new Error(res.error.message)
+      if (mode === 'ALL') clearCustomItemColor(target.id)
       toast.success(mode === 'ONLY_THIS' ? 'Occurrence deleted' : 'Recurring routine deleted')
       window.dispatchEvent(new CustomEvent('calendar-updated'))
     } catch (error) {
@@ -1175,7 +1189,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
             ) : (
               <div className={`calendar-grid-scrollable view-${viewType}`} ref={weeklyScrollContainerRef}>
                 {/* Day Columns Header */}
-                <div className="grid-header-days" style={{ gridTemplateColumns: `56px repeat(${viewType === 'weekly' ? 2 : 1}, minmax(0, 1fr))` }}>
+                <div className="grid-header-days" style={{ gridTemplateColumns: `var(--cal-time-gutter) repeat(${viewType === 'weekly' ? 2 : 1}, minmax(0, 1fr))` }}>
                   <div className="grid-header-tz">
                     <span>{viewType === 'weekly' ? 'GMT+5:30' : 'Time'}</span>
                   </div>
@@ -1258,7 +1272,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                     ))}
                   </div>
 
-                  <div className="grid-columns-container" style={{ gridTemplateColumns: `56px repeat(${viewType === 'weekly' ? 2 : 1}, minmax(0, 1fr))` }}>
+                  <div className="grid-columns-container" style={{ gridTemplateColumns: `var(--cal-time-gutter) repeat(${viewType === 'weekly' ? 2 : 1}, minmax(0, 1fr))` }}>
                     <div className="time-column-spacer" />
                     {(viewType === 'weekly' ? twoDays : [parseISODate(selectedDate)]).map((d, dayIdx) => {
                       const iso = toISODate(d)
@@ -1956,7 +1970,11 @@ function CalendarItemModal({
   const [itemDate, setItemDate] = useState(item?.originalDate ?? item?.date ?? date)
   const [itemType, setItemType] = useState<CalendarItemType>(item?.itemType ?? 'TASK')
   const [category, setCategory] = useState(item?.category ?? 'Personal')
-  const [color, setColor] = useState(item?.color ?? colorForCategory(item?.category ?? 'Personal'))
+  // Per-event color override (Google Calendar-style): undefined means "follow
+  // the category color"; a hex means the user explicitly picked a swatch for
+  // this one event, independent of its category.
+  const [colorOverride, setColorOverride] = useState<string | undefined>(() => getCustomItemColor(item ?? {}))
+  const categoryColor = colorForCategory(category)
   const [startTime, setStartTime] = useState(item?.startTime ?? '09:00')
   const [endTime, setEndTime] = useState(item?.endTime ?? '10:00')
   const [notes, setNotes] = useState(item?.notes ?? '')
@@ -1999,7 +2017,6 @@ function CalendarItemModal({
     }
     setShowCustomCategory(false)
     setCategory(nextCategory)
-    setColor(colorForCategory(nextCategory))
   }
 
   const handleAddCustomCategory = () => {
@@ -2017,7 +2034,6 @@ function CalendarItemModal({
       }
     }
     setCategory(trimmed)
-    setColor(colorForCategory(trimmed))
     setShowCustomCategory(false)
     setCustomCategoryInput('')
   }
@@ -2034,7 +2050,7 @@ function CalendarItemModal({
       date: itemDate,
       itemType,
       category,
-      color,
+      color: colorOverride ?? categoryColor,
       allDay: false,
       startTime,
       endTime,
@@ -2048,6 +2064,8 @@ function CalendarItemModal({
       if (item?.id) {
         const res = await calendarService.updateItem(item.id, payload)
         if (res.error) throw new Error(res.error.message)
+        if (colorOverride) setCustomItemColor(item.id, colorOverride)
+        else clearCustomItemColor(item.id)
         let toastMsg = `Updated "${title.trim()}"`
         if (item.title !== title.trim()) {
           toastMsg = `Task title updated from "${item.title}" to "${title.trim()}"`
@@ -2060,6 +2078,7 @@ function CalendarItemModal({
       } else {
         const res = await calendarService.createItem(payload)
         if (res.error) throw new Error(res.error.message)
+        if (colorOverride && res.data?.id) setCustomItemColor(res.data.id, colorOverride)
         toast.success(`Added "${title.trim()}"`)
       }
       onSaved()
@@ -2070,7 +2089,7 @@ function CalendarItemModal({
     }
   }
 
-  const tempItem = { title, category, notes, itemType, startTime, endTime }
+  const tempItem = { title, category, notes, itemType, startTime, endTime, ...(colorOverride ? { color: colorOverride } : {}) }
   const routineIconDetails = getRoutineIconDetails(tempItem)
   const RoutineIcon = routineIconDetails.icon
 
@@ -2180,6 +2199,35 @@ function CalendarItemModal({
                       <option value="__custom__">+ Add custom...</option>
                     </select>
                   )}
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>EVENT COLOR</label>
+                <div className="color-swatch-row">
+                  <button
+                    type="button"
+                    className={`color-swatch-dot color-swatch-default ${!colorOverride ? 'is-selected' : ''}`}
+                    style={{ '--swatch-color': categoryColor } as React.CSSProperties}
+                    onClick={() => setColorOverride(undefined)}
+                    title="Match category color"
+                    aria-label="Match category color"
+                  >
+                    {!colorOverride && <Check size={11} strokeWidth={3} />}
+                  </button>
+                  {EVENT_COLOR_SWATCHES.map((swatch) => (
+                    <button
+                      key={swatch.hex}
+                      type="button"
+                      className={`color-swatch-dot ${colorOverride === swatch.hex ? 'is-selected' : ''}`}
+                      style={{ '--swatch-color': swatch.hex } as React.CSSProperties}
+                      onClick={() => setColorOverride(swatch.hex)}
+                      title={swatch.name}
+                      aria-label={swatch.name}
+                    >
+                      {colorOverride === swatch.hex && <Check size={11} strokeWidth={3} />}
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -2423,6 +2471,40 @@ function colorForCategory(category: string) {
   if (match) return match.color
   const h = hueForCategory(category)
   return `hsl(${h}, 55%, 42%)`
+}
+
+// Per-event color overrides (Google Calendar-style "change this one event's
+// color" independent of its category/calendar), keyed by item id and stored
+// locally — same mechanism as the per-category custom colors above.
+const ITEM_COLOR_OVERRIDES_KEY = 'calendar_item_custom_colors'
+
+let _customItemColors: Record<string, string> = (() => {
+  try {
+    const saved = localStorage.getItem(ITEM_COLOR_OVERRIDES_KEY)
+    if (saved) return JSON.parse(saved)
+  // eslint-disable-next-line no-empty
+  } catch {}
+  return {}
+})()
+
+function getCustomItemColor(item: { id?: string }) {
+  if (!item.id) return undefined
+  return _customItemColors[item.id]
+}
+
+function setCustomItemColor(id: string, color: string) {
+  _customItemColors = { ..._customItemColors, [id]: color }
+  // eslint-disable-next-line no-empty
+  try { localStorage.setItem(ITEM_COLOR_OVERRIDES_KEY, JSON.stringify(_customItemColors)) } catch {}
+}
+
+function clearCustomItemColor(id: string) {
+  if (!(id in _customItemColors)) return
+  const next = { ..._customItemColors }
+  delete next[id]
+  _customItemColors = next
+  // eslint-disable-next-line no-empty
+  try { localStorage.setItem(ITEM_COLOR_OVERRIDES_KEY, JSON.stringify(_customItemColors)) } catch {}
 }
 
 

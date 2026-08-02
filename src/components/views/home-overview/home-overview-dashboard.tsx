@@ -12,7 +12,7 @@ import { tasksService } from '../../../services/tasks-service'
 import type { AppPath } from '../../dashboard/quantified-self-dashboard/data'
 import { useFocusStore } from '../../../store/focus-store'
 import { HomeHeader } from './components/home-header'
-import type { QuickAddAction } from './components/home-header'
+import type { HomeHeaderSignals, QuickAddAction } from './components/home-header'
 import { ConfettiBurst } from './components/confetti-burst'
 import { TodayHeroCard } from './components/today-hero-card'
 import { TodaysAnchorCard } from './components/todays-anchor-card'
@@ -203,6 +203,22 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
   const todayAnchor = useMemo(
     () => (home.anchors.data ?? []).find((e) => e.date === home.today) ?? null,
     [home.anchors.data, home.today],
+  )
+
+  // What the header's line reacts to — reuses the same per-day figures the
+  // rest of the page already derived, so it stays in lockstep with the cards.
+  const headerSignals: HomeHeaderSignals = useMemo(
+    () => ({
+      overdueCount,
+      moodScore: todayRecord?.moodScore ?? null,
+      sleepMinutes: todayRecord?.sleepMinutes ?? null,
+      focusMinutes: todayRecord?.focusMinutes ?? null,
+      tasksCompleted: todayRecord?.tasksCompleted ?? 0,
+      tasksTotal: todayRecord?.tasksTotal ?? 0,
+      workoutStreakWeeks: home.workoutStats.data?.currentStreakWeeks ?? 0,
+      learningStreakDays: home.learnings.data?.stats?.streakDays ?? 0,
+    }),
+    [overdueCount, todayRecord, home.workoutStats.data, home.learnings.data],
   )
 
   // The focus card reports on the same 14-day window every other slice uses.
@@ -405,7 +421,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
   return (
     <div className="home-dashboard">
       <ConfettiBurst trigger={confettiTrigger} />
-      <HomeHeader dateIso={home.today} onQuickAdd={handleQuickAdd} />
+      <HomeHeader dateIso={home.today} onQuickAdd={handleQuickAdd} signals={headerSignals} />
 
       {/* Mobile FAB — fixed bottom-right, hidden on desktop via CSS */}
       {fabOpen && <div className="home-fab-overlay" onClick={() => setFabOpen(false)} aria-hidden="true" />}
