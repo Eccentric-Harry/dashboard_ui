@@ -44,7 +44,7 @@ export const dateTiles = [
   { value: '23', accent: true },
 ] as const
 
-// Desktop sidebar nav — same list also powers the mobile scrollable dock
+// Desktop sidebar nav — the full route list
 export const navItems: DashboardNavItem[] = [
   { label: 'Home', icon: Home, to: '/home' },
   { label: 'Learnings Map', icon: GraduationCap, to: '/learnings' },
@@ -56,6 +56,23 @@ export const navItems: DashboardNavItem[] = [
   { label: 'Tasks', icon: CheckSquare, to: '/tasks' },
   { label: 'Mind Space', icon: Brain, to: '/mind' },
   { label: 'People', icon: Users, to: '/people' },
+]
+
+/**
+ * Mobile bottom dock order. The dock is sized to show four routes at a time
+ * (see --dock-visible-count in index.css) and still scrolls horizontally for
+ * the rest, so the four checked daily lead the list — they're what's on screen
+ * at rest, everything else is one swipe away.
+ */
+const MOBILE_DOCK_LEAD: AppPath[] = ['/home', '/nutrition', '/calendar', '/tasks']
+
+const isLeadItem = (item: DashboardNavItem) => Boolean(item.to && MOBILE_DOCK_LEAD.includes(item.to))
+
+export const mobileNavItems: DashboardNavItem[] = [
+  ...MOBILE_DOCK_LEAD.map((path) => navItems.find((item) => item.to === path)).filter(
+    (item): item is DashboardNavItem => item != null,
+  ),
+  ...navItems.filter((item) => !isLeadItem(item)),
 ]
 
 export const railBottomItems: DashboardNavItem[] = [

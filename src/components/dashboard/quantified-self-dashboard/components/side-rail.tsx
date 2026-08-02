@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { getAvatarImage } from '../../../../lib/avatar'
-import { type AppPath, navItems, railBottomItems } from '../data'
+import { type AppPath, mobileNavItems, navItems, railBottomItems } from '../data'
 import { useNotifications } from '../../../../store/notification-store'
 import { ConfirmDialog } from '../../../ui/confirm-dialog'
 
@@ -24,7 +24,8 @@ function SideRail({ activePath, onNavigate }: DashboardStageProps) {
     return () => window.removeEventListener('profile-updated', handleUpdate)
   }, [])
 
-  // Keep the active route icon in view as the scrollable dock's selection changes
+  // Only four of the routes are on screen at a time, so pull the active one
+  // into view when navigation happens from somewhere other than the dock.
   useEffect(() => {
     activeMobileBtnRef.current?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
   }, [activePath])
@@ -79,7 +80,7 @@ function SideRail({ activePath, onNavigate }: DashboardStageProps) {
       {/* Mobile bottom dock — scrollable route island + fixed quick-add island */}
       <div className="rail-mobile-dock">
         <nav className="rail-nav-mobile">
-          {navItems.map((item) => {
+          {mobileNavItems.map((item) => {
             const { label, icon: Icon, to } = item
             const isActive = to && activePath === to
             return (

@@ -1325,22 +1325,32 @@ button {
     height: 64px;
   }
 
-  /* Left island — horizontally scrollable route dock */
+  /* Left island — horizontally scrollable route dock. Buttons are sized to a
+     fraction of the island so exactly --dock-visible-count of them fill it at
+     rest (the daily routes lead the list, see mobileNavItems in data.ts) and
+     the remainder scroll in from the right. Snapping keeps them icon-aligned
+     rather than stopping mid-button. */
   .rail-nav-mobile {
+    --dock-visible-count: 4;
+    --dock-gap: 2px;
+    --dock-pad: 8px;
+
     position: relative;
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 2px;
+    gap: var(--dock-gap);
     flex: 1 1 auto;
     min-width: 0;
     height: 64px;
-    padding: 0 8px;
+    padding: 0 var(--dock-pad);
     overflow-x: auto;
     overflow-y: hidden;
     scrollbar-width: none;
     -ms-overflow-style: none;
     scroll-behavior: smooth;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: var(--dock-pad);
     border-radius: 40px;
     background: rgba(255, 255, 255, 0.8);
     box-shadow:
@@ -1376,6 +1386,24 @@ button {
     background: rgba(255, 255, 255, 0.6);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
     border: 0.5px solid rgba(255, 255, 255, 0.7);
+  }
+
+  /* Split the island into --dock-visible-count equal slots so exactly that many
+     routes fill it at any screen width and the rest scroll in from the right.
+     Must stay after the .side-rail button rules above — same specificity, so
+     source order is what decides the width and radius. */
+  .rail-nav-mobile button {
+    flex: 0 0
+      calc(
+        (100% - var(--dock-pad) * 2 - var(--dock-gap) * (var(--dock-visible-count) - 1)) /
+          var(--dock-visible-count)
+      );
+    width: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 24px;
+    scroll-snap-align: start;
   }
 
   .side-rail button.muted {
