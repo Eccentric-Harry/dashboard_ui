@@ -1,3 +1,5 @@
+import { compressMealImage } from './image-compression';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api/v1';
 
 export async function fetchDashboardData(date?: string) {
@@ -123,6 +125,10 @@ export interface MacroTotals {
   sodium_mg: number;
   potassium_mg: number;
   cholesterol_mg: number;
+  /** Lower bound of the energy estimate implied by portion uncertainty. */
+  calories_low_kcal?: number;
+  /** Upper bound of the energy estimate implied by portion uncertainty. */
+  calories_high_kcal?: number;
   math_verification: MathVerification;
 }
 
@@ -238,6 +244,12 @@ export interface GeminiAnalysisResult {
   positive_highlights: PositiveHighlight[];
   next_meal_guidance: NextMealGuidance;
   data_quality_flags: string[];
+  /** Share of meal energy backed by a measured USDA record, 0–1. */
+  data_confidence?: number;
+  /** 'USDA_DETERMINISTIC' when totals came from database lookup rather than model estimate. */
+  nutrient_source?: string;
+  /** True when the result was served from cache with no model call. */
+  served_from_cache?: boolean;
   disclaimer: string;
 }
 
@@ -252,9 +264,14 @@ export interface MealAnalysisApiResponse {
 }
 
 /**
- * Submit a meal image and/or text description for two-stage Gemini AI analysis.
- * Stage 1 identifies food items, Stage 2 calculates full nutrition + medical context.
- * The backend auto-persists the result and returns the full analysis.
+ * Submit a meal image and/or text description for AI analysis.
+ *
+ * The vision stage identifies ingredients and portions; nutrient values are then looked up
+ * from USDA data and the arithmetic is done server-side, so the returned totals are exact
+ * rather than model-estimated. The backend auto-persists the result.
+ *
+ * Images are downscaled here rather than at the call sites so every caller gets the smaller
+ * upload without having to remember to ask for it.
  */
 export async function analyzeMeal(
   file: File | null,
@@ -263,7 +280,10 @@ export async function analyzeMeal(
   date: string
 ): Promise<{ data: MealAnalysisApiResponse }> {
   const formData = new FormData();
-  if (file) formData.append('file', file);
+  if (file) {
+    const { file: prepared } = await compressMealImage(file);
+    formData.append('file', prepared);
+  }
   if (description && description.trim()) formData.append('description', description.trim());
   formData.append('mealType', mealType);
   formData.append('date', date);

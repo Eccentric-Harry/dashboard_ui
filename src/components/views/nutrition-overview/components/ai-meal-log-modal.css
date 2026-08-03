@@ -94,6 +94,14 @@
   margin: 4px 0 0;
 }
 
+/* Portion-uncertainty band — deliberately quieter than the headline figure. */
+.ai-modal-range {
+  font-size: 11px;
+  color: rgba(240,244,241,0.32);
+  margin: 3px 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ─── Phase 1: Input ──────────────────────────────────────────────── */
 
 /* Drag-and-drop zone */
