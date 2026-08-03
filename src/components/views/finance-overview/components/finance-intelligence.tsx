@@ -4,7 +4,7 @@
 // radar, lending exposure, and the Patterns-style insight rows.
 // All math lives in lib/insights; this file only fetches and renders.
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { RefreshCw, Wallet } from 'lucide-react'
 import {
   Area,
@@ -44,6 +44,8 @@ type FinanceIntelligenceProps = {
   loading: boolean
   /** Bumped by the parent whenever transactions/lending change. */
   refreshKey?: number
+  /** Entrance-stagger index; drives the `--i` animation delay. */
+  stagger?: number
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -71,6 +73,7 @@ function FinanceIntelligence({
   onMonthChange,
   loading,
   refreshKey = 0,
+  stagger = 0,
 }: FinanceIntelligenceProps) {
   const today = isoDate()
   const [subscriptions, setSubscriptions] = useState<SubscriptionDTO[] | null>(null)
@@ -173,7 +176,7 @@ function FinanceIntelligence({
 
   if (loading || sideLoading) {
     return (
-      <section className="finance-card fin-intel" aria-label="Finance intelligence loading">
+      <section className="finance-card fin-intel" aria-label="Finance intelligence loading" style={{ '--i': stagger } as CSSProperties}>
         <SectionHead months={availableMonths} selectedMonthKey={selectedMonthKey} onMonthChange={onMonthChange} onRefresh={loadSide} />
         <div className="fin-intel-grid">
           <div className="fin-intel-hero">
@@ -194,7 +197,7 @@ function FinanceIntelligence({
   // Low-data state: no budget or nothing logged this month yet.
   if (!burndown && monthTxCount === 0) {
     return (
-      <section className="finance-card fin-intel" aria-label="Finance intelligence">
+      <section className="finance-card fin-intel" aria-label="Finance intelligence" style={{ '--i': stagger } as CSSProperties}>
         <SectionHead months={availableMonths} selectedMonthKey={selectedMonthKey} onMonthChange={onMonthChange} onRefresh={loadSide} />
         <div className="fin-intel-empty">
           <p>
@@ -216,7 +219,7 @@ function FinanceIntelligence({
         : 'over'
 
   return (
-    <section className="finance-card fin-intel" aria-label="Finance intelligence">
+    <section className="finance-card fin-intel" aria-label="Finance intelligence" style={{ '--i': stagger } as CSSProperties}>
       <Wallet className="fin-intel-glyph" aria-hidden="true" />
       <SectionHead months={availableMonths} selectedMonthKey={selectedMonthKey} onMonthChange={onMonthChange} onRefresh={loadSide} />
 

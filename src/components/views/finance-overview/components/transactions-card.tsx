@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
-import { useState } from 'react'
-import { ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react'
+import { useMemo, useState, type CSSProperties } from 'react'
+import { ChevronLeft, ChevronRight, Pencil, Receipt, Trash2 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { getConsistentColor, getIconForCategory } from '../utils'
 
@@ -22,6 +22,8 @@ interface TransactionsCardProps {
   loading?: boolean
   onEdit?: (transaction: TransactionProp) => void
   onDelete?: (transaction: TransactionProp) => void
+  /** Entrance-stagger index; drives the `--i` animation delay. */
+  stagger?: number
 }
 
 const PAGE_SIZE = 7
@@ -55,27 +57,108 @@ export const getPastelBG = (colorHex: string) => {
   }
 }
 
-function TransactionsCard({ transactions = [], loading = false, onEdit, onDelete }: TransactionsCardProps) {
+/**
+ * "Today" / "Yesterday" / "Sat 2 Aug" for a day header.
+ *
+ * Compared on local Y-M-D parts rather than by differencing timestamps: a plain
+ * `(a - b) / 86400000` calculation drifts across a DST boundary and can label
+ * yesterday as today, which is exactly the kind of bug nobody notices until the
+ * clocks change.
+ */
+const dayLabel = (iso: string): string => {
+  const [y, m, d] = iso.split('-').map(Number)
+  if (!y || !m || !d) return iso
+
+  const date = new Date(y, m - 1, d)
+  const today = new Date()
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  const diffDays = Math.round((startOfToday.getTime() - date.getTime()) / 86400000)
+
+  if (diffDays === 0) return 'Today'
+  if (diffDays === 1) return 'Yesterday'
+
+  return date.toLocaleDateString('en-US', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  })
+}
+
+type DayGroup = {
+  key: string
+  label: string
+  /** Net of the day: income counted up, expenses down. */
+  net: number
+  rows: TransactionProp[]
+}
+
+/**
+ * Groups an already-sorted page of transactions by calendar day.
+ *
+ * Grouping happens *after* pagination on purpose — the page boundary stays a
+ * fixed 7 rows, so pages don't jump around in height, and a day that straddles
+ * two pages simply gets its header repeated. Grouping before pagination would
+ * mean variable-length pages and a much more disruptive change to the control.
+ */
+const groupByDay = (rows: TransactionProp[]): DayGroup[] => {
+  const groups: DayGroup[] = []
+
+  rows.forEach((tx) => {
+    const key = tx.rawDate
+    let group = groups.find((g) => g.key === key)
+    if (!group) {
+      group = { key, label: dayLabel(key), net: 0, rows: [] }
+      groups.push(group)
+    }
+    group.rows.push(tx)
+    group.net += tx.tone === 'income' ? tx.rawAmount : -tx.rawAmount
+  })
+
+  return groups
+}
+
+const formatNet = (net: number): string => {
+  const sign = net > 0 ? '+' : net < 0 ? '−' : ''
+  return `${sign}₹${Math.abs(net).toLocaleString('en-IN')}`
+}
+
+function TransactionsCard({
+  transactions = [],
+  loading = false,
+  onEdit,
+  onDelete,
+  stagger = 0,
+}: TransactionsCardProps) {
   const [page, setPage] = useState(1)
   const [isEditMode, setIsEditMode] = useState(false)
   const totalPages = Math.ceil(transactions.length / PAGE_SIZE)
-  const start = (page - 1) * PAGE_SIZE
+
+  // A category filter can shrink the list under the current page — without this
+  // the card would render a blank page with no way back except paginating.
+  const safePage = Math.min(page, Math.max(1, totalPages))
+  const start = (safePage - 1) * PAGE_SIZE
   const paginated = transactions.slice(start, start + PAGE_SIZE)
 
+  const groups = useMemo(() => groupByDay(paginated), [paginated])
+
   return (
-    <section className="finance-card finance-transactions-card">
+    <section
+      className="finance-card finance-transactions-card"
+      style={{ '--i': stagger } as CSSProperties}
+    >
       <div className="finance-section-head compact">
         <div>
           <h2>Recent Transactions</h2>
           <p>{transactions.length} transactions recorded</p>
         </div>
-        <button 
+        <button
           className={`finance-transaction-action-btn ${isEditMode ? 'active' : ''}`}
           onClick={() => setIsEditMode(!isEditMode)}
           aria-label="Toggle edit mode"
-          style={{ 
-            background: isEditMode ? 'rgba(20, 24, 22, 0.06)' : 'transparent', 
-            padding: '0', 
+          aria-pressed={isEditMode}
+          style={{
+            background: isEditMode ? 'rgba(20, 24, 22, 0.06)' : 'transparent',
+            padding: '0',
             borderRadius: '8px',
             width: '32px',
             height: '32px',
@@ -117,138 +200,121 @@ function TransactionsCard({ transactions = [], loading = false, onEdit, onDelete
               </div>
             ))
           ) : paginated.length === 0 ? (
-            <div className="p-4 text-center text-sm text-gray-500">No recent transactions</div>
+            <div className="fin-empty">
+              <span className="fin-empty-glyph">
+                <Receipt size={20} strokeWidth={2.2} />
+              </span>
+              <p className="fin-empty-title">Nothing logged yet</p>
+              <p className="fin-empty-sub">
+                Add your first transaction and this ledger will start tracking your
+                spend, day by day.
+              </p>
+            </div>
           ) : (
-            paginated.map((tx, index) => {
-              const { merchant, detail, category, amount, tone, icon: Icon } = tx;
-              return (
-                <div className="finance-transaction-row" key={`${merchant}-${detail}-${index}`} role="row">
-                  <div className="finance-transaction-merchant" role="cell">
-                    <span style={{ 
-                      background: getPastelBG(getConsistentColor(category)), 
-                      color: getConsistentColor(category),
-                      border: 'none',
-                      borderRadius: '12px',
-                      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
-                    }}>
-                      <Icon size={14} strokeWidth={2.6} />
-                    </span>
-                    <p>
-                      <b>{merchant}</b>
-                      <small>{detail}</small>
-                    </p>
-                  </div>
-                  <div className="finance-transaction-category" role="cell">
-                    <em style={{ 
-                      backgroundColor: `${getConsistentColor(category)}15`, 
-                      color: getConsistentColor(category),
-                      border: `1px solid ${getConsistentColor(category)}30`
-                    }}>
-                      {(() => {
-                        const CatIcon = getIconForCategory(category);
-                        return <CatIcon size={10} style={{ marginRight: '4px' }} />;
-                      })()}
-                      {category}
-                    </em>
-                  </div>
-                    <div className="finance-transaction-amount-group" role="cell">
-                      <strong className={tone}>
-                        {amount}
-                      </strong>
-                      {isEditMode && (
-                        <div className="finance-transaction-actions" style={{ gap: '6px' }}>
-                          {onEdit && (
-                            <button 
-                              type="button" 
-                              onClick={() => onEdit(tx)}
-                              aria-label="Edit transaction"
-                              style={{
-                                display: 'grid',
-                                width: '28px',
-                                height: '28px',
-                                placeItems: 'center',
-                                border: '0',
-                                borderRadius: '6px',
-                                background: 'rgba(23, 28, 25, 0.05)',
-                                color: 'rgba(23, 28, 25, 0.7)',
-                                cursor: 'pointer',
-                                transition: 'background 0.2s, color 0.2s',
-                                boxShadow: 'none',
-                                minWidth: '28px',
-                                minHeight: '28px',
-                                padding: '0',
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.background = 'rgba(23, 28, 25, 0.1)'
-                                e.currentTarget.style.color = 'rgba(23, 28, 25, 0.9)'
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.background = 'rgba(23, 28, 25, 0.05)'
-                                e.currentTarget.style.color = 'rgba(23, 28, 25, 0.7)'
-                              }}
-                            >
-                              <Pencil size={12} />
-                            </button>
-                          )}
-                          {onDelete && (
-                            <button 
-                              type="button" 
-                              onClick={() => onDelete(tx)}
-                              aria-label="Delete transaction"
-                              style={{
-                                display: 'grid',
-                                width: '28px',
-                                height: '28px',
-                                placeItems: 'center',
-                                border: '0',
-                                borderRadius: '6px',
-                                background: 'rgba(239, 68, 68, 0.08)',
-                                color: '#dc2626',
-                                cursor: 'pointer',
-                                transition: 'background 0.2s, color 0.2s',
-                                boxShadow: 'none',
-                                minWidth: '28px',
-                                minHeight: '28px',
-                                padding: '0',
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'
-                                e.currentTarget.style.color = '#b91c1c'
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)'
-                                e.currentTarget.style.color = '#dc2626'
-                              }}
-                            >
-                              <Trash2 size={12} />
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
+            groups.map((group) => (
+              <div className="fin-day-group" key={group.key}>
+                <div className="fin-day-head">
+                  <span className="fin-day-label">{group.label}</span>
+                  <span className="fin-day-total">{formatNet(group.net)}</span>
                 </div>
-              );
-            })
+                {group.rows.map((tx, index) => {
+                  const { merchant, detail, category, amount, tone, icon: Icon } = tx
+                  const accent = getConsistentColor(category)
+                  return (
+                    <div
+                      className="finance-transaction-row"
+                      key={tx.id || `${merchant}-${detail}-${index}`}
+                      role="row"
+                      style={{ '--row-accent': accent } as CSSProperties}
+                    >
+                      <div className="finance-transaction-merchant" role="cell">
+                        <span style={{
+                          background: getPastelBG(accent),
+                          color: accent,
+                          border: 'none',
+                          borderRadius: '12px',
+                          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
+                        }}>
+                          <Icon size={14} strokeWidth={2.6} />
+                        </span>
+                        <p>
+                          <b>{merchant}</b>
+                          <small>{detail}</small>
+                        </p>
+                      </div>
+                      <div className="finance-transaction-category" role="cell">
+                        <em style={{
+                          backgroundColor: `${accent}15`,
+                          color: accent,
+                          border: `1px solid ${accent}30`
+                        }}>
+                          {(() => {
+                            const CatIcon = getIconForCategory(category)
+                            return <CatIcon size={10} style={{ marginRight: '4px' }} />
+                          })()}
+                          {category}
+                        </em>
+                      </div>
+                      <div className="finance-transaction-amount-group" role="cell">
+                        <strong className={tone}>
+                          {amount}
+                        </strong>
+                        {isEditMode && (
+                          /* Hover/focus styling now lives in finance-playful.css.
+                             This previously ran through onMouseEnter/onMouseLeave
+                             handlers mutating element.style, which never fired for
+                             keyboard users and couldn't carry the route's spring. */
+                          <div className="finance-transaction-actions" style={{ gap: '6px' }}>
+                            {onEdit && (
+                              <button
+                                type="button"
+                                className="fin-row-action"
+                                onClick={() => onEdit(tx)}
+                                aria-label={`Edit ${merchant}`}
+                              >
+                                <Pencil size={12} />
+                              </button>
+                            )}
+                            {onDelete && (
+                              <button
+                                type="button"
+                                className="fin-row-action is-danger"
+                                onClick={() => onDelete(tx)}
+                                aria-label={`Delete ${merchant}`}
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ))
           )}
         </div>
         {!loading && totalPages > 1 && (
           <div className="finance-pagination">
             <button
-              disabled={page === 1}
-              onClick={() => setPage(p => p - 1)}
+              disabled={safePage === 1}
+              onClick={() => setPage(safePage - 1)}
               className="pagination-btn"
               type="button"
+              aria-label="Previous page"
             >
               <ChevronLeft size={16} />
             </button>
             <span className="pagination-info">
-              Page {page} of {totalPages}
+              Page {safePage} of {totalPages}
             </span>
             <button
-              disabled={page === totalPages}
-              onClick={() => setPage(p => p + 1)}
+              disabled={safePage === totalPages}
+              onClick={() => setPage(safePage + 1)}
               className="pagination-btn"
               type="button"
+              aria-label="Next page"
             >
               <ChevronRight size={16} />
             </button>

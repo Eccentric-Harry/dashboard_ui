@@ -25,6 +25,10 @@ export interface FinanceMetric {
   progress?: number
   /** Meter colour band; falls back to subtitleTone when unset. */
   progressTone?: 'positive' | 'warning' | 'negative'
+  /** Renders `progress` as a mood ring beside the value instead of a flat bar. */
+  useRing?: boolean
+  /** One-word verdict chip ("Cruising", "Watch it", "Over budget"). */
+  mood?: { label: string; tone: 'good' | 'watch' | 'over' }
 }
 
 export interface SpendingCategory {

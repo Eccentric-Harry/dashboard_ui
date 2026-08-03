@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback, type CSSProperties } from 'react'
 import { Check, Loader2, Pencil, Plus, Trash2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import type { SubscriptionDTO } from '../../../../lib/api'
@@ -9,9 +9,13 @@ interface SubscriptionsCardProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   transactions: any[]
   onRefresh?: () => void
+  /** Fired when a bill is cleared, so the route can celebrate. */
+  onCelebrate?: () => void
+  /** Entrance-stagger index; drives the `--i` animation delay. */
+  stagger?: number
 }
 
-function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) {
+function SubscriptionsCard({ transactions, onRefresh, onCelebrate, stagger = 0 }: SubscriptionsCardProps) {
   const [processingId, setProcessingId] = useState<string | null>(null)
   const [optimisticPaidIds, setOptimisticPaidIds] = useState<Set<string>>(new Set())
   const [apiSubscriptions, setApiSubscriptions] = useState<SubscriptionDTO[]>([])
@@ -262,6 +266,7 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
 
       setOptimisticPaidIds(prev => new Set(prev).add(id))
       toast.success(`Paid ${subscription.name} subscription`)
+      onCelebrate?.()
       if (onRefresh) onRefresh()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
@@ -280,7 +285,7 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
 
   if (loading) {
     return (
-      <section className="finance-card finance-subscription-card">
+      <section className="finance-card finance-subscription-card" style={{ '--i': stagger } as CSSProperties}>
         <div className="finance-section-head compact">
           <div>
             <h2>Subscriptions</h2>
@@ -306,7 +311,7 @@ function SubscriptionsCard({ transactions, onRefresh }: SubscriptionsCardProps) 
   }
 
   return (
-    <section className="finance-card finance-subscription-card">
+    <section className="finance-card finance-subscription-card" style={{ '--i': stagger } as CSSProperties}>
       <div className="finance-section-head compact">
         <div>
           <h2>Subscriptions</h2>

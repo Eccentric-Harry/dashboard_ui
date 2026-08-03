@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, type CSSProperties } from 'react'
 import { Check, Loader2, ChevronLeft, ChevronRight, Pencil, Trash2, DollarSign } from 'lucide-react'
 import toast from 'react-hot-toast'
 import type { LendingRecord } from '../../../../lib/api'
@@ -9,9 +9,13 @@ interface LendingCardProps {
   onEditClick: (record: LendingRecord) => void
   onDeleteClick: (record: LendingRecord) => void
   onRefreshTransactions?: () => void
+  /** Fired when a loan is recovered, so the route can celebrate. */
+  onCelebrate?: () => void
+  /** Entrance-stagger index; drives the `--i` animation delay. */
+  stagger?: number
 }
 
-export function LendingCard({ refreshKey, onEditClick, onDeleteClick, onRefreshTransactions }: LendingCardProps) {
+export function LendingCard({ refreshKey, onEditClick, onDeleteClick, onRefreshTransactions, onCelebrate, stagger = 0 }: LendingCardProps) {
   const [records, setRecords] = useState<LendingRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [processingId, setProcessingId] = useState<string | null>(null)
@@ -98,6 +102,7 @@ export function LendingCard({ refreshKey, onEditClick, onDeleteClick, onRefreshT
         })
         if (txRes.error) throw new Error(txRes.error.message)
         toast.success(`Marked as Repaid & logged recovery of ₹${record.amount.toLocaleString()} in transactions!`)
+        onCelebrate?.()
         if (onRefreshTransactions) onRefreshTransactions()
       } else {
         toast.success(`Status updated for ${record.borrower}`)
@@ -115,7 +120,7 @@ export function LendingCard({ refreshKey, onEditClick, onDeleteClick, onRefreshT
 
   if (loading && records.length === 0) {
     return (
-      <section className="finance-card lending-tracker-card">
+      <section className="finance-card lending-tracker-card" style={{ '--i': stagger } as CSSProperties}>
         <div className="finance-section-head compact">
           <div>
             <h2>Lending Tracker</h2>
@@ -141,7 +146,7 @@ export function LendingCard({ refreshKey, onEditClick, onDeleteClick, onRefreshT
   }
 
   return (
-    <section className="finance-card lending-tracker-card">
+    <section className="finance-card lending-tracker-card" style={{ '--i': stagger } as CSSProperties}>
       <div className="finance-section-head compact">
         <div>
           <h2>Lending Tracker</h2>
