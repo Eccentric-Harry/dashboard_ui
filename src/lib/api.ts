@@ -233,6 +233,35 @@ export interface GeminiAnalysisResult {
   nutrient_source?: string;
   /** True when served from the repeat-meal cache with no model call. */
   served_from_cache?: boolean;
+  /** Share of meal mass matched to a nutrient record, 0-1. Low values mean macros — protein
+   *  especially — are understated, since unmatched items contribute nothing. */
+  mass_coverage?: number;
+  /** What this specific analysis cost to produce. */
+  api_cost?: ApiCostSummary;
+}
+
+export interface ApiCostStage {
+  stage: string;
+  provider: string;
+  model: string;
+  input_tokens: number;
+  cached_input_tokens: number;
+  output_tokens: number;
+  thinking_tokens: number;
+  cost_usd: number;
+  from_cache: boolean;
+}
+
+/** Per-analysis API spend, recorded at scan time and persisted with the meal. */
+export interface ApiCostSummary {
+  total_cost_usd: number;
+  total_cost_inr: number;
+  total_input_tokens: number;
+  total_output_tokens: number;
+  total_cached_tokens: number;
+  fully_cached: boolean;
+  usd_to_inr: number;
+  stages: ApiCostStage[];
 }
 
 export interface MealAnalysisApiResponse {

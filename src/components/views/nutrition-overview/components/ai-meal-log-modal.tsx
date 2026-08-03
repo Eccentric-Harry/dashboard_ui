@@ -344,6 +344,23 @@ export function AiMealLogModal({ isOpen, onClose, onSuccess, selectedDate }: AiM
                   {Math.round(result.analysis.macro_totals.calories_high_kcal)} kcal
                 </p>
               )}
+              {/* Unmatched ingredients contribute nothing to the totals, so a low coverage
+                  figure means the macros — protein most of all — are understated. */}
+              {result.analysis.mass_coverage != null && result.analysis.mass_coverage < 0.9 && (
+                <p className="ai-modal-warning">
+                  Only {Math.round(result.analysis.mass_coverage * 100)}% of this meal matched a
+                  nutrient record — macros below are understated.
+                </p>
+              )}
+              {result.analysis.api_cost && (
+                <p className="ai-modal-cost">
+                  {result.analysis.api_cost.fully_cached
+                    ? 'Served from cache — no API cost'
+                    : `Analysis cost ₹${result.analysis.api_cost.total_cost_inr.toFixed(2)} · ` +
+                      `${result.analysis.api_cost.total_input_tokens.toLocaleString()} in / ` +
+                      `${result.analysis.api_cost.total_output_tokens.toLocaleString()} out tokens`}
+                </p>
+              )}
             </div>
 
             <div className="ai-results-container">

@@ -94,6 +94,21 @@
   margin: 4px 0 0;
 }
 
+/* Data-coverage warning — this one should be noticed, so it borrows the alert hue. */
+.ai-modal-warning {
+  font-size: 11px;
+  color: #f0b429;
+  margin: 4px 0 0;
+}
+
+/* Per-analysis API spend — informational, so the quietest thing on the header. */
+.ai-modal-cost {
+  font-size: 10px;
+  color: rgba(240,244,241,0.28);
+  margin: 3px 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Portion-uncertainty band — deliberately quieter than the headline figure. */
 .ai-modal-range {
   font-size: 11px;
