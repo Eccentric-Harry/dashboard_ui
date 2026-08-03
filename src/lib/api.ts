@@ -308,7 +308,11 @@ export async function analyzeMeal(
   description: string | null,
   mealType: string,
   date: string,
-  timeoutMs = 180000
+  // Sized to the server's stage budget with room for one fallback attempt:
+  // extraction 75s + narrative 45s, each able to fail over to the secondary provider
+  // (~45s), lands a worst case near 210s. 180s cut into that and surfaced as a
+  // spurious timeout on slow analyses that were in fact still running server-side.
+  timeoutMs = 240000
 ): Promise<{ data: MealAnalysisApiResponse }> {
   const formData = new FormData();
   // Downscale before upload: vision models bill images by resolution, so a native
