@@ -11,6 +11,7 @@ import {
   type ClinicalFlag,
   type IngredientBreakdown,
 } from '../../../../lib/api'
+import { confirmCloseIfDirty } from '../../../../lib/modal-utils'
 import './ai-meal-log-modal.css'
 
 // ─── Types ────────────────────────────────────────────────────────────────
@@ -174,10 +175,15 @@ export function AiMealLogModal({ isOpen, onClose, onSuccess, selectedDate }: AiM
 
   if (!isOpen) return null
 
+  const isDirty = Boolean(description.trim() || imageFile !== null)
+  const handleGuardedClose = () => {
+    confirmCloseIfDirty(isDirty, onClose)
+  }
+
   const currentStage = STAGE_MESSAGES[stageIndex]
 
   return createPortal(
-    <div className="ai-meal-backdrop" role="presentation" onClick={phase !== 'processing' ? onClose : undefined}>
+    <div className="ai-meal-backdrop" role="presentation" onClick={phase !== 'processing' ? handleGuardedClose : undefined}>
       <div
         className="ai-meal-modal"
         role="dialog"
@@ -187,7 +193,7 @@ export function AiMealLogModal({ isOpen, onClose, onSuccess, selectedDate }: AiM
       >
         {/* Close button — hidden while processing */}
         {phase !== 'processing' && (
-          <button type="button" className="ai-modal-close" onClick={onClose} aria-label="Close">
+          <button type="button" className="ai-modal-close" onClick={handleGuardedClose} aria-label="Close">
             <X size={14} />
           </button>
         )}

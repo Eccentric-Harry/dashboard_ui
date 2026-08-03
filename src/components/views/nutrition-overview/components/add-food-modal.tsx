@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { X, Loader2, ClipboardCheck, ClipboardPaste, Camera, CheckCircle, AlertTriangle, RotateCcw, Upload, Wifi, Bell, Scan, Shield, TrendingUp, Sparkles, Copy, ChevronLeft, ChevronRight } from 'lucide-react'
+import { X, Loader2, ClipboardCheck, ClipboardPaste, Camera, CheckCircle, AlertTriangle, RotateCcw, Upload, Wifi, Bell, Scan, Shield, TrendingUp, Sparkles, Copy, ChevronLeft, ChevronRight, ChevronDown, ImagePlus } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
 import type { MealAnalysisApiResponse, ClinicalFlag, IngredientBreakdown } from '../../../../lib/api'
@@ -7,6 +7,7 @@ import { nutritionService } from '../../../../services/nutrition-service'
 import { useNotifications } from '../../../../store/notification-store'
 import { normalizeMealGrade } from './meal-grade'
 import { NUTRILOG_PROMPT } from './nutrilog-prompt'
+import { confirmCloseIfDirty } from '../../../../lib/modal-utils'
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -200,6 +201,12 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
   const [date, setDate] = useState(selectedDate)
   const [jsonPayload, setJsonPayload] = useState('')
   const [jsonPreview, setJsonPreview] = useState<JsonParseResult | null>(null)
+  // JSON import is a power-user path — collapsed by default so the plain
+  // food fields stay the first thing you see.
+  const [showJsonImport, setShowJsonImport] = useState(false)
+
+  // The push-alert nudge is advice, not a gate — let it be dismissed.
+  const [alertDismissed, setAlertDismissed] = useState(false)
 
   // AI tab state
   const [aiPhase, setAiPhase] = useState<Phase>('input')
@@ -232,6 +239,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       setDate(initialData.date)
       setJsonPayload('')
       setJsonPreview(null)
+      setShowJsonImport(false)
       setActiveTab('manual')
       setCurrentTaskId(null)
     } else if (isOpen && !isEdit) {
@@ -242,6 +250,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       setDate(selectedDate)
       setJsonPayload('')
       setJsonPreview(null)
+      setShowJsonImport(false)
       setActiveTab('manual')
       // Reset AI state
       setAiPhase('input')
@@ -258,6 +267,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       setProgressPercent(0)
       setElapsedSeconds(0)
       setCurrentTipIndex(0)
+      setAlertDismissed(false)
     }
     return () => {
       if (stageTimerRef.current) clearTimeout(stageTimerRef.current)
@@ -554,8 +564,21 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
 
   if (!isOpen) return null
 
+  const isDirty = Boolean(
+    description.trim() ||
+    proteinGrams ||
+    calories ||
+    jsonPayload.trim() ||
+    aiDescription.trim() ||
+    imageFiles.length > 0
+  )
+
+  const handleGuardedClose = () => {
+    confirmCloseIfDirty(isDirty, onClose)
+  }
+
   return createPortal(
-    <div className="finance-modal-backdrop" role="presentation" onClick={onClose}>
+    <div className="finance-modal-backdrop" role="presentation" onClick={handleGuardedClose}>
       <div
         className="finance-modal-popover add-tx-modal"
         role="dialog"
@@ -563,13 +586,13 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
         onClick={(e) => e.stopPropagation()}
         style={{ width: 'min(560px, calc(100vw - 42px))', maxHeight: 'min(90vh, 760px)', display: 'flex', flexDirection: 'column' }}
       >
-        <button type="button" className="finance-modal-close" onClick={onClose}>
+        <button type="button" className="finance-modal-close" onClick={handleGuardedClose}>
           <X size={15} />
         </button>
 
         <div className="af-modal-header">
           <h2>{isEdit ? 'Edit Food Entry' : 'Add Food Entry'}</h2>
-          <p>Log your meal and track your progress!</p>
+          <p>{isEdit ? 'Update the details of this logged meal.' : 'Log your meal and track your progress!'}</p>
         </div>
 
         {/* ── Tab switcher (hidden while processing or showing AI results) */}
@@ -599,55 +622,6 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
         {/* ═══════════════ MANUAL TAB ═══════════════ */}
         {activeTab === 'manual' && (
           <form onSubmit={handleSubmit} className="add-tx-form" style={{ flex: 1, overflowY: 'auto', paddingRight: '6px' }}>
-            {/* JSON import first — the primary flow when logging via an external AI */}
-            <div className="form-group">
-              <div className="af-json-head">
-                <label>Import from AI (paste JSON)</label>
-                <div className="af-json-head-actions">
-                  <button
-                    type="button"
-                    className="af-json-paste-btn"
-                    onClick={handleCopyPrompt}
-                    id="af-json-copy-prompt-btn"
-                  >
-                    <Copy size={12} />
-                    Copy AI prompt
-                  </button>
-                  <button
-                    type="button"
-                    className="af-json-paste-btn"
-                    onClick={handlePasteFromClipboard}
-                    id="af-json-paste-btn"
-                  >
-                    <ClipboardPaste size={12} />
-                    Paste from clipboard
-                  </button>
-                </div>
-              </div>
-              <p className="af-json-hint">
-                Copy the prompt into any AI chatbot with your meal, then paste its JSON back here.
-              </p>
-              <textarea
-                className="json-textarea"
-                placeholder='{&#10;  "description": "Lemon Rice",&#10;  "calories": 472,&#10;  "proteinGrams": 10,&#10;  "mealType": "Lunch",&#10;  "mealItems": [ ... ],&#10;  "totalSummary": { ... }&#10;}'
-                value={jsonPayload}
-                onChange={(e) => applyJsonText(e.target.value)}
-                aria-label="AI meal JSON payload"
-              />
-              {jsonPreview && (
-                jsonPreview.ok ? (
-                  <JsonPreviewStrip parsed={jsonPreview.parsed} />
-                ) : (
-                  <div className="af-json-preview error" role="alert">
-                    <AlertTriangle size={13} />
-                    <span>{jsonPreview.error}</span>
-                  </div>
-                )
-              )}
-            </div>
-
-            <div className="af-or-divider"><span>or enter manually</span></div>
-
             <div className="form-group">
               <label>Food Name</label>
               <input
@@ -655,6 +629,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                 placeholder="e.g. Paneer Sandwich, Salad..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                autoFocus
               />
             </div>
 
@@ -689,6 +664,71 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
               </div>
             </div>
 
+            {/* JSON import — a power-user shortcut, tucked behind a disclosure so
+                the plain fields above stay the primary, uncluttered path. */}
+            <div className="af-json-import-block">
+              <button
+                type="button"
+                className={`af-json-toggle-btn ${jsonPreview?.ok ? 'has-import' : ''}`}
+                onClick={() => setShowJsonImport(v => !v)}
+                aria-expanded={showJsonImport}
+                id="af-json-toggle-btn"
+              >
+                {jsonPreview?.ok ? <CheckCircle size={12} /> : <Sparkles size={12} />}
+                <span>{jsonPreview?.ok ? `JSON imported · ${jsonPreview.parsed.description || 'meal'}` : 'Have JSON from an AI chatbot? Paste it instead'}</span>
+                <ChevronDown size={13} className={`af-json-toggle-chevron ${showJsonImport ? 'open' : ''}`} />
+              </button>
+
+              {showJsonImport && (
+                <div className="form-group af-json-import-panel">
+                  <div className="af-json-head">
+                    <label>Import from AI (paste JSON)</label>
+                    <div className="af-json-head-actions">
+                      <button
+                        type="button"
+                        className="af-json-paste-btn"
+                        onClick={handleCopyPrompt}
+                        id="af-json-copy-prompt-btn"
+                      >
+                        <Copy size={12} />
+                        Copy AI prompt
+                      </button>
+                      <button
+                        type="button"
+                        className="af-json-paste-btn"
+                        onClick={handlePasteFromClipboard}
+                        id="af-json-paste-btn"
+                      >
+                        <ClipboardPaste size={12} />
+                        Paste from clipboard
+                      </button>
+                    </div>
+                  </div>
+                  <p className="af-json-hint">
+                    Copy the prompt into any AI chatbot with your meal, then paste its JSON back here — it autofills the fields above.
+                  </p>
+                  <textarea
+                    className="json-textarea"
+                    placeholder='{&#10;  "description": "Lemon Rice",&#10;  "calories": 472,&#10;  "proteinGrams": 10,&#10;  "mealType": "Lunch",&#10;  "mealItems": [ ... ],&#10;  "totalSummary": { ... }&#10;}'
+                    value={jsonPayload}
+                    onChange={(e) => applyJsonText(e.target.value)}
+                    aria-label="AI meal JSON payload"
+                    autoFocus
+                  />
+                  {jsonPreview && (
+                    jsonPreview.ok ? (
+                      <JsonPreviewStrip parsed={jsonPreview.parsed} />
+                    ) : (
+                      <div className="af-json-preview error" role="alert">
+                        <AlertTriangle size={13} />
+                        <span>{jsonPreview.error}</span>
+                      </div>
+                    )
+                  )}
+                </div>
+              )}
+            </div>
+
             {error && <p className="add-tx-error">{error}</p>}
 
             <div className="af-live-macro-preview">
@@ -718,7 +758,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                   Upload a photo or describe your meal — AI identifies every item and calculates full clinical nutrition.
                 </p>
 
-                {!isNotificationsEnabled && (
+                {!isNotificationsEnabled && !alertDismissed && (
                   <div className="af-compact-alert">
                     <Bell size={16} className="af-compact-alert-icon" />
                     <span className="af-compact-alert-text">
@@ -726,6 +766,14 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                     </span>
                     <button type="button" onClick={toggleDesktopNotifications} className="af-compact-alert-btn">
                       Enable
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAlertDismissed(true)}
+                      className="af-compact-alert-dismiss"
+                      aria-label="Dismiss"
+                    >
+                      <X size={12} />
                     </button>
                   </div>
                 )}
@@ -782,6 +830,9 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                     onDragLeave={() => setIsDragOver(false)}
                     onDrop={onDrop}
                   >
+                    <div className="af-drop-icon">
+                      <ImagePlus size={18} />
+                    </div>
                     <p className="af-drop-label">Snap or upload your meal</p>
                     <p className="af-drop-sublabel" style={{ marginBottom: '14px' }}>Up to 3 photos · JPG, PNG, WEBP, HEIC · max 10 MB each</p>
                     <div className="af-upload-actions">

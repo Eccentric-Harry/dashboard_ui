@@ -15,6 +15,7 @@ import toast from 'react-hot-toast';
 import { useNotifications } from '../../store/notification-store';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { getAvatarImage, avatarPresets } from '../../lib/avatar';
+import { confirmCloseIfDirty } from '../../lib/modal-utils';
 import './profile-view.css';
 
 type ProfileOverviewProps = {
@@ -334,6 +335,22 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
       setMedicalConditions(profile.medicalConditions || []);
     }
     setIsEditing(false);
+  };
+
+  const isProfileDirty = Boolean(
+    profile && (
+      displayName !== (profile.displayName || '') ||
+      title !== (profile.title || '') ||
+      bio !== (profile.bio || '') ||
+      email !== (profile.email || '') ||
+      height !== (profile.physicalMetrics?.height?.toString() || '') ||
+      weight !== (profile.physicalMetrics?.weight?.toString() || '') ||
+      age !== (profile.physicalMetrics?.age?.toString() || '')
+    )
+  );
+
+  const handleGuardedCancel = () => {
+    confirmCloseIfDirty(isProfileDirty, handleCancel);
   };
 
   const handleToggleCondition = (cond: string) => {
@@ -831,14 +848,14 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
 
       {/* EDIT PROFILE MODAL DIALOG */}
       {isEditing && (
-        <div className="profile-modal-overlay" onClick={handleCancel}>
+        <div className="profile-modal-overlay" onClick={handleGuardedCancel}>
           <div className="profile-modal-card glass-panel animate-modal-in" onClick={(e) => e.stopPropagation()}>
             <div className="profile-modal-header">
               <h2>Edit Profile Details</h2>
               <button
                 type="button"
                 className="profile-modal-close-btn"
-                onClick={handleCancel}
+                onClick={handleGuardedCancel}
                 aria-label="Close"
               >
                 <X size={20} />
@@ -1117,7 +1134,7 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                   <button
                     type="button"
                     className="profile-cancel-btn"
-                    onClick={handleCancel}
+                    onClick={handleGuardedCancel}
                   >
                     Cancel
                   </button>

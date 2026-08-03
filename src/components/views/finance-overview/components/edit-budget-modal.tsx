@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { X, Loader2, Target } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { financeService } from '../../../../services/finance-service'
+import { confirmCloseIfDirty } from '../../../../lib/modal-utils'
 
 interface EditBudgetModalProps {
   isOpen: boolean
@@ -48,8 +49,13 @@ export function EditBudgetModal({ isOpen, currentBudget, onClose, onSuccess }: E
     }
   }
 
+  const isDirty = amount !== currentBudget.toString() && amount !== ''
+  const handleGuardedClose = () => {
+    confirmCloseIfDirty(isDirty, onClose)
+  }
+
   return (
-    <div className="finance-modal-backdrop" role="presentation" onClick={onClose}>
+    <div className="finance-modal-backdrop" role="presentation" onClick={handleGuardedClose}>
       <div
         className="finance-modal-popover add-tx-modal"
         role="dialog"
@@ -57,7 +63,7 @@ export function EditBudgetModal({ isOpen, currentBudget, onClose, onSuccess }: E
         onClick={(e) => e.stopPropagation()}
         style={{ width: 'min(400px, calc(100vw - 42px))' }}
       >
-        <button type="button" className="finance-modal-close" onClick={onClose}>
+        <button type="button" className="finance-modal-close" onClick={handleGuardedClose}>
           <X size={15} />
         </button>
 

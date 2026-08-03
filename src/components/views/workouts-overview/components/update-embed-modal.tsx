@@ -3,6 +3,7 @@ import { X } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
 import { workoutsService } from '../../../../services/workouts-service'
+import { confirmCloseIfDirty } from '../../../../lib/modal-utils'
 
 interface UpdateEmbedModalProps {
   isOpen: boolean
@@ -49,10 +50,15 @@ export function UpdateEmbedModal({ isOpen, onClose, onSuccess }: UpdateEmbedModa
     }
   }
 
+  const isDirty = Boolean(embedHtml.trim())
+  const handleGuardedClose = () => {
+    confirmCloseIfDirty(isDirty, onClose)
+  }
+
   return createPortal(
-    <div className="workouts-modal-backdrop">
-      <div className="workouts-modal-popover" style={{ maxWidth: '480px' }}>
-        <button className="workouts-modal-close" onClick={onClose}><X size={20} /></button>
+    <div className="workouts-modal-backdrop" onClick={handleGuardedClose}>
+      <div className="workouts-modal-popover" style={{ maxWidth: '480px' }} onClick={e => e.stopPropagation()}>
+        <button type="button" className="workouts-modal-close" onClick={handleGuardedClose}><X size={20} /></button>
         
         <h2>Feature Activity</h2>
         
@@ -72,7 +78,7 @@ export function UpdateEmbedModal({ isOpen, onClose, onSuccess }: UpdateEmbedModa
           </div>
 
           <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-            <button type="button" className="workouts-btn-secondary" onClick={onClose} style={{ flex: 1, height: '40px', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', background: 'transparent', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}>Cancel</button>
+            <button type="button" className="workouts-btn-secondary" onClick={handleGuardedClose} style={{ flex: 1, height: '40px', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', background: 'transparent', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}>Cancel</button>
             <button type="submit" className="workouts-form-submit" disabled={loading || !embedHtml.trim()} style={{ flex: 2, margin: 0 }}>
               {loading ? 'Updating...' : 'Pin Activity'}
             </button>

@@ -6,6 +6,7 @@ import type { DailyTask } from '../../../lib/api'
 import { tasksService } from '../../../services/tasks-service'
 import { useTasksStore } from '../../../store/tasks-store'
 import { ConfirmDialog } from '../../ui/confirm-dialog'
+import { confirmCloseIfDirty } from '../../../lib/modal-utils'
 import { TasksListView } from './tasks-list-view'
 import { TasksKanbanView } from './tasks-kanban-view'
 import { TasksCalendarView } from './tasks-calendar-view'
@@ -325,6 +326,14 @@ export function TasksDashboard(_props: TasksDashboardProps) {
 
   const totalPages = Math.ceil(filteredTasks.length / pageSize)
 
+  const isTaskFormDirty = modalMode === 'edit' && selectedTask
+    ? modalFormTitle.trim() !== (selectedTask.title ?? '') || modalFormNotes.trim() !== (selectedTask.notes ?? '')
+    : modalFormTitle.trim() !== '' || modalFormNotes.trim() !== '' || customCategory.trim() !== ''
+
+  const handleCloseTaskModal = () => {
+    confirmCloseIfDirty(isTaskFormDirty, () => setModalMode(null))
+  }
+
   return (
     <div className="tasks-dashboard">
       {/* Top Control Bar */}
@@ -592,11 +601,11 @@ export function TasksDashboard(_props: TasksDashboardProps) {
       </div>
 
       {modalMode && createPortal(
-        <div className="tasks-add-modal-overlay" onClick={() => setModalMode(null)}>
+        <div className="tasks-add-modal-overlay" onClick={handleCloseTaskModal}>
           <div className="tasks-add-entry-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{modalMode === 'edit' ? 'Edit Task' : 'Add Task'}</h3>
-              <button type="button" className="close-modal-btn" onClick={() => setModalMode(null)}>
+              <button type="button" className="close-modal-btn" onClick={handleCloseTaskModal}>
                 <X size={16} />
               </button>
             </div>
@@ -740,7 +749,7 @@ export function TasksDashboard(_props: TasksDashboardProps) {
                   </div>
                 ) : <div />}
                 <div className="modal-btn-group">
-                  <button type="button" className="modal-btn-cancel" onClick={() => setModalMode(null)}>
+                  <button type="button" className="modal-btn-cancel" onClick={handleCloseTaskModal}>
                     Cancel
                   </button>
                   <button type="submit" className="modal-btn-save" disabled={!modalFormTitle.trim()}>

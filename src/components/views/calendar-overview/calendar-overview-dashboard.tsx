@@ -53,6 +53,7 @@ import type { CalendarItem, CalendarItemPayload, CalendarItemType, CalendarRecur
 import { calendarService } from '../../../services/calendar-service'
 import { useCalendarStore } from '../../../store/calendar-store'
 import { ConfirmDialog } from '../../ui/confirm-dialog'
+import { confirmCloseIfDirty } from '../../../lib/modal-utils'
 import { MiniMonth } from '../../ui/mini-month'
 import { getRoutineIconDetails } from './routine-icon-helper'
 import { getAvatarImage } from '../../../lib/avatar'
@@ -2114,12 +2115,20 @@ function CalendarItemModal({
     }
   }
 
+  const isDirty = item
+    ? title.trim() !== (item.title ?? '') || notes.trim() !== (item.notes ?? '') || category !== (item.category ?? 'Personal')
+    : title.trim() !== '' || notes.trim() !== '' || customCategoryInput.trim() !== ''
+
+  const handleGuardedClose = () => {
+    confirmCloseIfDirty(isDirty, onClose)
+  }
+
   return (
-    <div className="tasks-add-modal-overlay theme-glassmorphic" onClick={onClose}>
+    <div className="tasks-add-modal-overlay theme-glassmorphic" onClick={handleGuardedClose}>
       <div className="tasks-add-entry-modal" onClick={(event) => event.stopPropagation()}>
         <div className="modal-header">
           <h3>{item ? 'Edit routine block' : 'Add routine block'}</h3>
-          <button type="button" className="close-modal-btn" onClick={onClose} aria-label="Close">
+          <button type="button" className="close-modal-btn" onClick={handleGuardedClose} aria-label="Close">
             <X size={16} />
           </button>
         </div>
@@ -2362,7 +2371,7 @@ function CalendarItemModal({
             ) : <div />}
             {error && <p className="calendar-form-error" style={{ color: '#b4232e', fontSize: '11px', fontWeight: 800 }}>{error}</p>}
             <div className="modal-btn-group">
-              <button type="button" className="modal-btn-cancel" onClick={onClose}>
+              <button type="button" className="modal-btn-cancel" onClick={handleGuardedClose}>
                 Cancel
               </button>
               <button type="submit" className="modal-btn-save" disabled={!title.trim() || saving}>

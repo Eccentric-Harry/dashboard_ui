@@ -1314,7 +1314,12 @@
 .finance-modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 1050;
+  /* Above the floating mobile-profile-trigger avatar (z-index: 9990, see
+     index.css) — that trigger is fixed-position global chrome and was
+     rendering on top of every modal using this shared shell (finance +
+     nutrition add/edit modals), covering the close button. Stays below the
+     notification-center overlay (9999/10000) and toasts (100000). */
+  z-index: 9995;
   display: grid;
   place-items: center;
   padding: 24px;

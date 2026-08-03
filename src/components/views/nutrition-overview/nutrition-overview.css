@@ -2855,6 +2855,77 @@
   line-height: 1.5;
 }
 
+/* Disclosure toggle that reveals the JSON import panel — collapsed by
+   default so the manual fields are the first thing a user sees. */
+.af-json-import-block {
+  margin-top: 4px;
+}
+
+.af-json-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px dashed rgba(16, 19, 18, 0.14);
+  background: rgba(16, 19, 18, 0.02);
+  color: rgba(16, 19, 18, 0.55);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.af-json-toggle-btn:hover {
+  background: rgba(16, 19, 18, 0.05);
+  border-color: rgba(16, 19, 18, 0.22);
+  color: #101312;
+}
+
+.af-json-toggle-btn svg:first-child {
+  flex-shrink: 0;
+  color: rgba(16, 19, 18, 0.4);
+}
+
+.af-json-toggle-btn.has-import {
+  border-style: solid;
+  border-color: rgba(53, 182, 75, 0.25);
+  background: rgba(53, 182, 75, 0.05);
+  color: #1a5e28;
+}
+
+.af-json-toggle-btn.has-import svg:first-child {
+  color: #35b64b;
+}
+
+.af-json-toggle-btn span {
+  flex: 1;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.af-json-toggle-chevron {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.af-json-toggle-chevron.open {
+  transform: rotate(180deg);
+}
+
+.af-json-import-panel {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(16, 19, 18, 0.02);
+  border: 1px solid rgba(16, 19, 18, 0.06);
+  animation: af-fade-up 0.2s ease;
+}
+
 /* JSON import header row: label + paste-from-clipboard button */
 .af-json-head {
   display: flex;
@@ -2965,6 +3036,15 @@
   transition: border-color 0.18s, background 0.18s;
   margin-bottom: 0;
   overflow: hidden;
+  /* Bug fix: as a flex child of the scrollable .add-tx-form column, this
+     zone's own `overflow: hidden` zeroes out its flexbox automatic minimum
+     size — without flex-shrink: 0, the flex algorithm was free to squash it
+     down to ~45px whenever content above it (e.g. the notification banner)
+     grew, silently clipping the sublabel and Camera/Gallery buttons behind
+     `overflow: hidden` instead of showing them or letting the form scroll.
+     flex-shrink: 0 pins it to its natural content height; the form's own
+     overflow-y: auto handles any remaining overflow by scrolling instead. */
+  flex-shrink: 0;
 }
 
 .af-drop-zone:hover,
@@ -3092,6 +3172,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
+  flex-shrink: 0; /* never let the scrollable form squash the photo tray */
 }
 
 .af-image-grid .af-image-preview {
@@ -4200,6 +4281,7 @@
   animation: af-fade-up 0.2s ease;
   width: 100%;
   box-sizing: border-box;
+  flex-shrink: 0; /* a tip banner should never be able to squeeze the upload zone below it */
 }
 
 .af-compact-alert-icon {
@@ -4236,6 +4318,26 @@
 
 .af-compact-alert-btn:active {
   transform: scale(0.97);
+}
+
+.af-compact-alert-dismiss {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(16, 19, 18, 0.35);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.af-compact-alert-dismiss:hover {
+  background: rgba(16, 19, 18, 0.08);
+  color: rgba(16, 19, 18, 0.65);
 }
 
 /* Background processing enhancements */

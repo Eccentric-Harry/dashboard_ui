@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import type { LearningLog, DailyTask } from '../../../../lib/api'
 import { learningsService } from '../../../../services/learnings-service'
 import { tasksService } from '../../../../services/tasks-service'
+import { confirmCloseIfDirty } from '../../../../lib/modal-utils'
 import './add-learning-modal.css'
 
 function formatTimeTo12Hour(time24: string): string {
@@ -221,6 +222,20 @@ export function AddEntryModal({
     }
   }
 
+  if (!isOpen) return null
+
+  const isDirty = Boolean(
+    learningTitle.trim() ||
+    learningDescription.trim() ||
+    customCategory.trim() ||
+    taskTitle.trim() ||
+    taskNotes.trim()
+  )
+
+  const handleGuardedClose = () => {
+    confirmCloseIfDirty(isDirty, onClose)
+  }
+
   const renderTitle = () => {
     if (isEdit) {
       return activeTab === 'Task' ? 'Edit Task' : 'Edit Learning Log'
@@ -229,14 +244,14 @@ export function AddEntryModal({
   }
 
   return createPortal(
-    <div className={`learning-modal-backdrop ${activeTab === 'Task' ? 'is-tasks-theme' : ''}`} role="presentation" onClick={onClose}>
+    <div className={`learning-modal-backdrop ${activeTab === 'Task' ? 'is-tasks-theme' : ''}`} role="presentation" onClick={handleGuardedClose}>
       <div 
         className="learning-modal-popover" 
         role="dialog" 
         aria-modal="true" 
         onClick={(e) => e.stopPropagation()}
       >
-        <button type="button" className="learning-modal-close" onClick={onClose}>
+        <button type="button" className="learning-modal-close" onClick={handleGuardedClose}>
           <X size={16} />
         </button>
         

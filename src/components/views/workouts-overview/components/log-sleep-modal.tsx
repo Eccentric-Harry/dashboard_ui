@@ -3,6 +3,7 @@ import { X, Loader2 } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
 import { sleepService } from '../../../../services/sleep-service'
+import { confirmCloseIfDirty } from '../../../../lib/modal-utils'
 
 type LogSleepModalProps = {
   isOpen: boolean
@@ -84,13 +85,19 @@ function LogSleepModal({ isOpen, onClose, onSuccess }: LogSleepModalProps) {
     }
   }
 
+  const isDirty = Boolean(formData.notes.trim() || formData.bedTime !== '22:30' || formData.wakeTime !== '06:30')
+
+  const handleGuardedClose = () => {
+    confirmCloseIfDirty(isDirty, onClose)
+  }
+
   return createPortal(
-    <div className="workouts-modal-backdrop" onClick={onClose}>
+    <div className="workouts-modal-backdrop" onClick={handleGuardedClose}>
       <div
         className="workouts-modal-popover sleep-modal-popover"
         onClick={e => e.stopPropagation()}
       >
-        <button className="workouts-modal-close" onClick={onClose} type="button">
+        <button className="workouts-modal-close" onClick={handleGuardedClose} type="button">
           <X size={16} />
         </button>
 

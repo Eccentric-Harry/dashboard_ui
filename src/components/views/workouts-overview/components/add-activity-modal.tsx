@@ -3,6 +3,7 @@ import { X, Loader2, ClipboardCheck, FileJson } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
 import { workoutsService } from '../../../../services/workouts-service'
+import { confirmCloseIfDirty } from '../../../../lib/modal-utils'
 
 type InitialData = {
   activityName?: string
@@ -146,14 +147,27 @@ function AddActivityModal({ isOpen, onClose, onSuccess, isEdit, initialData }: A
     }
   }
 
+  const isDirty = Boolean(
+    formData.activityName.trim() ||
+    formData.distanceKm ||
+    formData.movingTime ||
+    formData.elevationGainMeters ||
+    formData.stravaEmbedId ||
+    stravaJson.trim()
+  )
+
+  const handleGuardedClose = () => {
+    confirmCloseIfDirty(isDirty, onClose)
+  }
+
   return createPortal(
-    <div className="workouts-modal-backdrop" onClick={onClose}>
+    <div className="workouts-modal-backdrop" onClick={handleGuardedClose}>
       <div 
         className="workouts-modal-popover" 
         onClick={e => e.stopPropagation()}
         style={{ width: 'min(540px, calc(100vw - 42px))', maxWidth: 'none' }}
       >
-        <button className="workouts-modal-close" onClick={onClose} type="button">
+        <button className="workouts-modal-close" onClick={handleGuardedClose} type="button">
           <X size={16} />
         </button>
 
