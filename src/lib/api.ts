@@ -137,6 +137,13 @@ export interface MacroTotals {
   sodium_mg: number;
   potassium_mg: number;
   cholesterol_mg: number;
+  /**
+   * Energy band implied by the vision stage's portion-confidence brackets. Portion size
+   * is the dominant error source in photo-based assessment, so a single figure implies
+   * precision the image cannot support.
+   */
+  calories_low_kcal?: number;
+  calories_high_kcal?: number;
 }
 
 export interface GlycaemicAssessment {
@@ -220,6 +227,12 @@ export interface GeminiAnalysisResult {
   meal_score: MealScore;
   recommendations: Recommendation[];
   positive_highlights: PositiveHighlight[];
+  /** Share of meal energy backed by a measured USDA record, 0-1. */
+  data_confidence?: number;
+  /** 'USDA_DETERMINISTIC' when totals came from database lookup rather than model recall. */
+  nutrient_source?: string;
+  /** True when served from the repeat-meal cache with no model call. */
+  served_from_cache?: boolean;
 }
 
 export interface MealAnalysisApiResponse {

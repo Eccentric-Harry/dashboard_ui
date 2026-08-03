@@ -23,9 +23,9 @@ const MEAL_TYPES = [
 ]
 
 const STAGE_MESSAGES = [
-  { stage: 'Stage 1 of 2', label: 'Identifying food items from your meal…', sub: 'Vision analysis in progress' },
-  { stage: 'Stage 2 of 2', label: 'Calculating clinical nutrition & medical analysis…', sub: 'Consulting your health profile' },
-  { stage: 'Finalising', label: 'Saving your meal log…', sub: 'Almost done' },
+  { stage: 'Step 1 of 3', label: 'Identifying ingredients and portions…', sub: 'Vision analysis in progress' },
+  { stage: 'Step 2 of 3', label: 'Looking up nutrients and running clinical checks…', sub: 'USDA FoodData Central' },
+  { stage: 'Step 3 of 3', label: 'Writing your personalised guidance…', sub: 'Almost done' },
 ]
 
 //-- test--
@@ -332,6 +332,18 @@ export function AiMealLogModal({ isOpen, onClose, onSuccess, selectedDate }: AiM
               <p className="ai-modal-subtitle">
                 {result.calories} kcal · {result.proteinGrams}g protein · {result.mealType}
               </p>
+              {/*
+                Portion size, not nutrient composition, is the largest error source in
+                photo-based estimation. Showing the range the photo actually supports is
+                more honest than a single number the image cannot justify.
+              */}
+              {result.analysis.macro_totals?.calories_low_kcal != null &&
+               result.analysis.macro_totals?.calories_high_kcal != null && (
+                <p className="ai-modal-range">
+                  Portion estimate spans {Math.round(result.analysis.macro_totals.calories_low_kcal)}–
+                  {Math.round(result.analysis.macro_totals.calories_high_kcal)} kcal
+                </p>
+              )}
             </div>
 
             <div className="ai-results-container">

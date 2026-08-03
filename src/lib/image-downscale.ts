@@ -26,7 +26,11 @@ export async function downscaleImage(file: File): Promise<File> {
   if (!file.type.startsWith('image/')) return file
 
   try {
-    const bitmap = await createImageBitmap(file)
+    // `imageOrientation: 'from-image'` bakes in the EXIF rotation. Without it a photo
+    // shot in portrait decodes sideways, and re-encoding to JPEG here drops the EXIF
+    // tag that would otherwise let the model correct for it — so the vision stage sees
+    // a rotated plate and its portion estimates degrade accordingly.
+    const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
     const longestEdge = Math.max(bitmap.width, bitmap.height)
 
     if (longestEdge <= MAX_EDGE_PX) {
