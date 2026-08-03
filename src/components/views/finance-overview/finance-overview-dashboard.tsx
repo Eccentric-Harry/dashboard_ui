@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useCallback, useEffect, useState, useMemo, type CSSProperties } from 'react'
 import toast from 'react-hot-toast'
 import { BalanceSummaryCard } from './components/balance-summary-card'
 import { FinanceHeader } from './components/finance-header'
@@ -22,8 +22,11 @@ import {
   ArrowUpRight, Gauge, PiggyBank, Target
 } from 'lucide-react'
 import { getIconForCategory } from './utils'
+import { FinanceCelebration } from './components/finance-celebration'
 
 import './finance-overview.css'
+// Redesign layer — must load after the base sheet so its refinements win.
+import './finance-playful.css'
 
 
 function FinanceOverviewDashboard() {
@@ -53,6 +56,10 @@ function FinanceOverviewDashboard() {
   const [editingLending, setEditingLending] = useState<LendingRecord | null>(null)
   const [deleteLendingTarget, setDeleteLendingTarget] = useState<LendingRecord | null>(null)
   const [lendingRefreshKey, setLendingRefreshKey] = useState(0)
+  // Bumped by any child that lands a "money went right" moment — a loan
+  // recovered, a bill cleared, an instalment closed out.
+  const [celebrationTrigger, setCelebrationTrigger] = useState(0)
+  const celebrate = useCallback(() => setCelebrationTrigger((n) => n + 1), [])
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const params = new URLSearchParams(window.location.search)
     return params.get('date') || new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)
@@ -216,6 +223,21 @@ function FinanceOverviewDashboard() {
         subtitleTone: budgetSubtitleTone,
         progress: budget > 0 ? totalExpense / budget : 0,
         progressTone: budgetSubtitleTone,
+        useRing: true,
+        // The route's verdict, in one word. Pace — not raw spend — decides it:
+        // being 60% through the budget is fine on the 20th and alarming on the
+        // 3rd, so the comparison is against how far through the month you are.
+        mood: (() => {
+          const spentShare = budget > 0 ? totalExpense / budget : 0
+          const monthShare = daysInMonth > 0 ? daysElapsed / daysInMonth : 0
+          if (spentShare > 1) return { label: 'Over budget', tone: 'over' as const }
+          // Only meaningful once a little of the month has actually elapsed —
+          // on day 1 every non-zero spend outruns the pace and would cry wolf.
+          if (monthShare > 0.15 && spentShare > monthShare * 1.15) {
+            return { label: 'Ahead of pace', tone: 'watch' as const }
+          }
+          return { label: 'Cruising', tone: 'good' as const }
+        })(),
       },
       {
         label: 'Monthly Expenses',
@@ -249,7 +271,11 @@ function FinanceOverviewDashboard() {
             allTxs.push({
               id: tx.id,
               merchant: tx.description,
-              detail: new Date(tx.timestamp).toLocaleDateString(),
+              // Time, not date: the ledger now groups rows under a day header,
+              // so repeating "8/3/2026" on every row under "TODAY" spent a line
+              // of each row restating what the header already said. The clock
+              // time is the detail that header can't carry.
+              detail: new Date(tx.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
               category: category,
               amount: `${isIncome ? '+' : '-'}₹${tx.amount.toLocaleString()}`,
               tone: isIncome ? 'income' : 'expense',
@@ -344,19 +370,22 @@ function FinanceOverviewDashboard() {
         selectedDate={selectedDate}
         onDateChange={handleDateChange}
       />
+      {/* Entrance stagger: each grid child declares its own index, so cards can
+          be added or reordered without any nth-child bookkeeping in the CSS. */}
       <div className={`finance-dashboard-grid${isGuest ? ' finance-dashboard-guest' : ''}`}>
-        <div className="finance-stats-row">
+        <div className="finance-stats-row" style={{ '--i': 0 } as CSSProperties}>
           <BalanceSummaryCard
             balance={balance}
             loading={loading && balance === null}
             onEdit={() => setIsEditBalanceOpen(true)}
           />
-          {metrics.map((metric) => (
+          {metrics.map((metric, index) => (
             <MetricCard
               key={metric.label}
               metric={metric}
               loading={loading}
               onEdit={metric.label === 'Monthly Budget' ? () => setIsEditBudgetOpen(true) : undefined}
+              stagger={index + 1}
             />
           ))}
         </div>
@@ -367,23 +396,36 @@ function FinanceOverviewDashboard() {
           onMonthChange={setSelectedMonthKey}
           loading={loading}
           refreshKey={lendingRefreshKey}
+          stagger={1}
         />
         <SpendingOverviewCard
-          logs={logs} 
-          selectedCategory={selectedCategory} 
-          onCategorySelect={setSelectedCategory} 
+          logs={logs}
+          selectedCategory={selectedCategory}
+          onCategorySelect={setSelectedCategory}
           selectedMonthKey={selectedMonthKey}
           onMonthSelect={setSelectedMonthKey}
           loading={loading}
+          stagger={2}
         />
-        <TransactionsCard 
-          transactions={recentTransactions} 
-          loading={loading} 
+        <TransactionsCard
+          transactions={recentTransactions}
+          loading={loading}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          stagger={3}
         />
-        <SubscriptionsCard transactions={recentTransactions} onRefresh={refreshData} />
-        {!isGuest && showFinanceGrids && <RepaymentScheduleCard transactions={recentTransactions} onRefresh={refreshData} />}
+        <SubscriptionsCard
+          transactions={recentTransactions}
+          onRefresh={refreshData}
+          onCelebrate={celebrate}
+          stagger={4}
+        />
+        {!isGuest && showFinanceGrids && <RepaymentScheduleCard
+          transactions={recentTransactions}
+          onRefresh={refreshData}
+          onCelebrate={celebrate}
+          stagger={5}
+        />}
         {!isGuest && showFinanceGrids && <LendingCard
           refreshKey={lendingRefreshKey}
           onEditClick={(record) => {
@@ -394,8 +436,12 @@ function FinanceOverviewDashboard() {
             setDeleteLendingTarget(record)
           }}
           onRefreshTransactions={refreshData}
+          onCelebrate={celebrate}
+          stagger={6}
         />}
       </div>
+
+      <FinanceCelebration trigger={celebrationTrigger} />
       
       <ConfirmDialog
         open={!!deleteTarget}

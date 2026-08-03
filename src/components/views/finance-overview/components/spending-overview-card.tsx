@@ -1,5 +1,6 @@
-import { useMemo, useState, useCallback, useEffect } from 'react'
+import { useMemo, useState, useCallback, useEffect, type CSSProperties } from 'react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
+import { PieChart as PieChartIcon } from 'lucide-react'
 import type { DailyFinancialLog } from '../../../../lib/api'
 import { getIconForCategory, getConsistentColor } from '../utils'
 
@@ -10,6 +11,8 @@ interface SpendingOverviewCardProps {
   selectedMonthKey?: string
   onMonthSelect?: (monthKey: string) => void
   loading?: boolean
+  /** Entrance-stagger index; drives the `--i` animation delay. */
+  stagger?: number
 }
 
 const formatMonth = (dateString: string) => {
@@ -50,13 +53,14 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null
 }
 
-function SpendingOverviewCard({ 
-  logs = [], 
-  selectedCategory = null, 
+function SpendingOverviewCard({
+  logs = [],
+  selectedCategory = null,
   onCategorySelect,
   selectedMonthKey = '',
   onMonthSelect,
-  loading = false
+  loading = false,
+  stagger = 0
 }: SpendingOverviewCardProps) {
   // Extract all available months from logs
   const availableMonths = useMemo(() => {
@@ -143,6 +147,15 @@ function SpendingOverviewCard({
     setIsMounted(true)
   }, [])
 
+  // One-shot donut entrance. The chart re-renders on every filter click, so a
+  // mount keyframe left on the container permanently would re-fire the sweep
+  // each time a category is toggled; this retires the class once it has played.
+  const [isEntering, setIsEntering] = useState(true)
+  useEffect(() => {
+    const timer = window.setTimeout(() => setIsEntering(false), 700)
+    return () => window.clearTimeout(timer)
+  }, [])
+
   const [activeIndex, setActiveIndex] = useState<number>(-1)
 
   const onPieEnter = useCallback((_: unknown, index: number) => {
@@ -173,7 +186,7 @@ function SpendingOverviewCard({
 
   if (loading) {
     return (
-      <section className="finance-card finance-spending-card">
+      <section className="finance-card finance-spending-card" style={{ '--i': stagger } as CSSProperties}>
         <div className="finance-section-head">
           <div>
             <h2>Spending Overview</h2>
@@ -217,7 +230,7 @@ function SpendingOverviewCard({
   }
 
   return (
-    <section className="finance-card finance-spending-card">
+    <section className="finance-card finance-spending-card" style={{ '--i': stagger } as CSSProperties}>
       <div className="finance-section-head">
         <div>
           <h2>Spending Overview</h2>
@@ -249,7 +262,7 @@ function SpendingOverviewCard({
       </div>
 
       <div className="finance-spending-body">
-        <div className="finance-donut-container">
+        <div className={`finance-donut-container${isEntering ? ' is-entering' : ''}`}>
           {spendingData.categories.length > 0 ? (
             isMounted ? (
               <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
@@ -325,7 +338,15 @@ function SpendingOverviewCard({
 
         <div className="finance-category-list">
           {spendingData.categories.length === 0 ? (
-            <div className="text-center text-xs text-gray-500 py-4">No spending data</div>
+            <div className="fin-empty">
+              <span className="fin-empty-glyph">
+                <PieChartIcon size={20} strokeWidth={2.2} />
+              </span>
+              <p className="fin-empty-title">No spending this month</p>
+              <p className="fin-empty-sub">
+                Once you log an expense, the breakdown by category shows up here.
+              </p>
+            </div>
           ) : (
             spendingData.categories.map(({ label, value, share, tone, icon: Icon }) => (
               <div

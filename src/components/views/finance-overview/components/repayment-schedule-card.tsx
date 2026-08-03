@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, type CSSProperties } from 'react'
 import { Check, Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
 import toast from 'react-hot-toast'
 import type { RepaymentInstallment } from '../../../../lib/api'
@@ -8,9 +8,13 @@ interface RepaymentScheduleCardProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   transactions: any[]
   onRefresh?: () => void
+  /** Fired when an instalment is cleared, so the route can celebrate. */
+  onCelebrate?: () => void
+  /** Entrance-stagger index; drives the `--i` animation delay. */
+  stagger?: number
 }
 
-export function RepaymentScheduleCard({ transactions, onRefresh }: RepaymentScheduleCardProps) {
+export function RepaymentScheduleCard({ transactions, onRefresh, onCelebrate, stagger = 0 }: RepaymentScheduleCardProps) {
   const [repayments, setRepayments] = useState<RepaymentInstallment[]>([])
   const [loading, setLoading] = useState(true)
   const [processingId, setProcessingId] = useState<string | null>(null)
@@ -96,6 +100,7 @@ export function RepaymentScheduleCard({ transactions, onRefresh }: RepaymentSche
 
       setOptimisticPaidIds(prev => new Set(prev).add(id))
       toast.success(`Paid Slice installment of ${installment.amount}`)
+      onCelebrate?.()
       if (onRefresh) onRefresh()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
@@ -116,7 +121,7 @@ export function RepaymentScheduleCard({ transactions, onRefresh }: RepaymentSche
 
   if (loading) {
     return (
-      <section className="finance-card finance-repayment-card">
+      <section className="finance-card finance-repayment-card" style={{ '--i': stagger } as CSSProperties}>
         <div className="finance-section-head compact">
           <div>
             <h2>Repayment Schedule</h2>
@@ -142,7 +147,7 @@ export function RepaymentScheduleCard({ transactions, onRefresh }: RepaymentSche
   }
 
   return (
-    <section className="finance-card finance-repayment-card">
+    <section className="finance-card finance-repayment-card" style={{ '--i': stagger } as CSSProperties}>
       <div className="finance-section-head compact">
         <div>
           <h2>Repayment Schedule</h2>
