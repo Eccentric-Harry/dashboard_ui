@@ -522,79 +522,14 @@
   gap: 10px;
 }
 
-/* ---------- The five-segment loop arc ----------
-   One arc per loop signal, each filling independently. Segment order is fixed,
-   so the position of a gap always means the same thing. */
-
-.home-loop-arc {
-  position: relative;
-  display: flex;
-  justify-content: center;
-}
-
-.home-loop-arc svg {
+.home-card--hero .ntr-gauge svg {
   width: min(100%, 208px);
-  height: auto;
-  overflow: visible;
 }
 
-.home-loop-seg-track {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.6);
-  stroke-width: 14;
-  stroke-linecap: round;
-}
-
-.home-loop-seg-fill {
-  fill: none;
-  stroke: var(--home-loop-color, #4b5280);
-  stroke-width: 14;
-  stroke-linecap: round;
-  transition: stroke-dashoffset 0.7s cubic-bezier(0.4, 0, 0.2, 1), stroke-width 0.2s ease, opacity 0.2s ease;
-}
-
-/* Hovering a row (or the suggested next step) lifts its segment out of the ring */
-.home-loop-seg.is-active .home-loop-seg-fill {
-  stroke-width: 17;
-}
-
-.home-loop-seg.is-active .home-loop-seg-track {
-  stroke: rgba(255, 255, 255, 0.9);
-}
-
-/* Closed segments carry the full-strength accent; open ones sit back a little
-   so the ring reads as "what's left" before you read any numbers. */
-.home-loop-seg-fill {
-  opacity: 0.78;
-}
-
-.home-loop-seg.is-done .home-loop-seg-fill {
-  opacity: 1;
-}
-
-.home-loop-arc-center {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  text-align: center;
-  pointer-events: none;
-}
-
-.home-loop-arc-center strong {
-  font-size: 34px;
-  font-weight: 700;
-  letter-spacing: -0.05em;
-  line-height: 1;
-}
-
-.home-loop-arc-center small {
-  color: rgba(23, 27, 21, 0.62);
-  font-size: 11px;
-  font-weight: 700;
+/* "2h 25m" runs wider than "1,900" — ease the center type down a notch */
+.home-card--hero .ntr-gauge-center strong {
+  font-size: 31px;
+  letter-spacing: -0.04em;
 }
 
 .home-loop-count {
@@ -722,14 +657,12 @@
 /* One accent per loop signal, borrowed from the route each one lives in, so a
    color means the same thing here as it does on the page it links to:
    sleep = the sleep card's slate blue, mood = mind's violet, movement = the
-   workouts red-clay, learning = learnings' amber, fuel = nutrition's olive.
-   Each is declared once as --home-loop-color and picked up by both the arc
-   segment and the row's bar — the ring and the list can't drift apart. */
-.home-loop-seg--sleep,  .home-loop--sleep    { --home-loop-color: #43799e; }
-.home-loop-seg--mood,   .home-loop--mood     { --home-loop-color: #7a63b8; }
-.home-loop-seg--movement, .home-loop--movement { --home-loop-color: #b5654a; }
-.home-loop-seg--learning, .home-loop--learning { --home-loop-color: #bd8b2f; }
-.home-loop-seg--fuel,   .home-loop--fuel     { --home-loop-color: #7e9c2c; }
+   workouts red-clay, learning = learnings' amber, fuel = nutrition's olive. */
+.home-loop--sleep    { --home-loop-color: #43799e; }
+.home-loop--mood     { --home-loop-color: #7a63b8; }
+.home-loop--movement { --home-loop-color: #b5654a; }
+.home-loop--learning { --home-loop-color: #bd8b2f; }
+.home-loop--fuel     { --home-loop-color: #7e9c2c; }
 
 .home-card--hero .ntr-macro-row[class*='home-loop--'] .ntr-macro-bar i {
   background: var(--home-loop-color);
@@ -2789,23 +2722,12 @@
     justify-self: center;
   }
 
-  .home-loop-arc svg {
-    width: min(100%, 168px);
+  .home-card--hero .ntr-gauge svg {
+    width: min(100%, 158px);
   }
 
-  /* Thinner strokes at phone size: at 168px the desktop weight closes the gaps
-     between segments and the ring reads as one arc again. */
-  .home-loop-seg-track,
-  .home-loop-seg-fill {
-    stroke-width: 12;
-  }
-
-  .home-loop-seg.is-active .home-loop-seg-fill {
-    stroke-width: 14;
-  }
-
-  .home-loop-arc-center strong {
-    font-size: 28px;
+  .home-card--hero .ntr-gauge-center strong {
+    font-size: 26px;
   }
 
   /* The 2-column tile grid holds on phones too — just tighter. Also undo

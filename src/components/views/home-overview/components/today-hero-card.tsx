@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import {
   AlertTriangle,
   ArrowRight,
@@ -21,7 +21,7 @@ import type { MealQualityDay, NutritionSummary } from '../home-types'
 import { formatMinutes, formatTimeLabel, FOCUS_TARGET_MINUTES } from '../home-types'
 import type { LoopMetric, LoopMetricId } from '../day-loop'
 import { buildDayLoop, loopClosedCount, loopScore, nextLoopNudge } from '../day-loop'
-import { LoopArc } from './loop-arc'
+import { ArcGauge } from '../../nutrition-overview/components/arc-gauge'
 
 type TodayHeroCardProps = {
   loading: boolean
@@ -71,15 +71,7 @@ const LOOP_ICONS: Record<LoopMetricId, LucideIcon> = {
 }
 
 /** One loop signal: label + value + its own bar, tappable straight through to the fix. */
-function LoopRow({
-  metric,
-  onClick,
-  onHover,
-}: {
-  metric: LoopMetric
-  onClick: () => void
-  onHover: (id: LoopMetricId | null) => void
-}) {
+function LoopRow({ metric, onClick }: { metric: LoopMetric; onClick: () => void }) {
   const animated = useCountUp(metric.ratio)
   const Icon = LOOP_ICONS[metric.id]
   return (
@@ -94,10 +86,6 @@ function LoopRow({
       tabIndex={0}
       aria-label={`${metric.label}: ${metric.display}${metric.sub ? ` ${metric.sub}` : ''}. ${metric.hint}.`}
       onClick={onClick}
-      onMouseEnter={() => onHover(metric.id)}
-      onMouseLeave={() => onHover(null)}
-      onFocus={() => onHover(metric.id)}
-      onBlur={() => onHover(null)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
@@ -178,8 +166,6 @@ function TodayHeroCard({
   onNavigate,
   onCelebrate,
 }: TodayHeroCardProps) {
-  const [hoveredId, setHoveredId] = useState<LoopMetricId | null>(null)
-
   // The loop is computed unconditionally so the celebration effect below can watch
   // it even while the skeleton is showing.
   const metrics = buildDayLoop({
@@ -281,12 +267,7 @@ function TodayHeroCard({
       <div className={cn('home-hero-panel', dayScore >= 100 && 'is-complete')}>
         <div className="home-hero-gauge-col">
           <div className={cn('ntr-gauge-wrap', focusRunning && 'is-live')}>
-            <LoopArc
-              segments={metrics.map((m) => ({ id: m.id, label: m.label, ratio: m.ratio, done: m.done }))}
-              score={dayScore}
-              centerSub="of today's loop"
-              activeId={hoveredId ?? nudge?.id ?? null}
-            />
+            <ArcGauge value={dayScore} target={100} format={(v) => `${v}%`} centerSub="of today's loop" />
           </div>
           <p className="home-loop-count">
             <strong>{closed}</strong> of {metrics.length} closed
@@ -308,7 +289,7 @@ function TodayHeroCard({
 
         <div className="ntr-hero-macros">
           {metrics.map((metric) => (
-            <LoopRow key={metric.id} metric={metric} onClick={openRoute[metric.id]} onHover={setHoveredId} />
+            <LoopRow key={metric.id} metric={metric} onClick={openRoute[metric.id]} />
           ))}
         </div>
 
