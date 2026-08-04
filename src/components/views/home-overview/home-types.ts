@@ -2,6 +2,21 @@
 // these are the shapes of the two untyped dashboard endpoints Home consumes,
 // plus small pure helpers shared by the cards and the insights engine.
 
+/**
+ * One day's meal-quality aggregate, from DashboardService.mealQualityOf.
+ *
+ * `averagePoints` runs on the GPA-shaped ramp the grade badges use (A=4 … D=1) and
+ * covers only the graded meals — manual entries never get a grade, which is why
+ * `gradedMeals` is reported separately from `mealsLogged`. Null average means
+ * "nothing assessed yet", never "poor".
+ */
+export interface MealQualityDay {
+  mealsLogged: number
+  gradedMeals: number
+  averagePoints: number | null
+  letter: 'A' | 'B' | 'C' | 'D' | null
+}
+
 /** Shape of GET /dashboard/nutrition-summary (DashboardService.getNutritionSummary). */
 export interface NutritionSummary {
   date: string
@@ -12,6 +27,9 @@ export interface NutritionSummary {
   todayTotalProtein: number
   calorieGoal: number
   proteinGoal: number
+  /** Optional: absent when the UI is running against a backend older than the day-loop change. */
+  dailyMealQuality?: Record<string, MealQualityDay>
+  todayMealQuality?: MealQualityDay | null
 }
 
 /** Shape of GET /dashboard/spending-summary (DashboardService.getSpendingSummary). */
@@ -32,6 +50,17 @@ export const SLEEP_TARGET_MINUTES = SLEEP_TARGET_HOURS * 60
 export const FOCUS_TARGET_MINUTES = 120
 
 export const WATER_QUICK_ADD_ML = 250
+
+// ---------- Day-loop targets ----------
+// Deliberately low bars. The loop asks "did the day happen", not "was it perfect":
+// one workout, one learning entry, a mood check-in. See day-loop.ts.
+
+/** Meals a fully-logged day is expected to carry, for the fuel row's coverage factor. */
+export const MEAL_COVERAGE_TARGET = 3
+/** Learning entries that count as having taken a step. */
+export const LEARNING_TARGET_ENTRIES = 1
+/** Workouts that count as having moved. */
+export const MOVEMENT_TARGET_SESSIONS = 1
 
 export function isoDate(date: Date = new Date()): string {
   const y = date.getFullYear()

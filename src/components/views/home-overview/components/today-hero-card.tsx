@@ -1,12 +1,27 @@
-import { useEffect, useRef } from 'react'
-import { AlertTriangle, ArrowRight, CalendarClock, CheckSquare, Droplets, Flame as FocusFlame, Utensils } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import {
+  AlertTriangle,
+  ArrowRight,
+  BookOpen,
+  CalendarClock,
+  CheckSquare,
+  Droplets,
+  Flame as FocusFlame,
+  Footprints,
+  Moon,
+  Smile,
+  Utensils,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import type { CalendarItem, DailyTask, HydrationData } from '../../../../lib/api'
 import type { AppPath } from '../../../dashboard/quantified-self-dashboard/data'
 import { cn } from '../../../../lib/utils'
 import { useCountUp } from '../../../../hooks/use-count-up'
-import { ArcGauge } from '../../nutrition-overview/components/arc-gauge'
-import type { NutritionSummary } from '../home-types'
+import type { MealQualityDay, NutritionSummary } from '../home-types'
 import { formatMinutes, formatTimeLabel, FOCUS_TARGET_MINUTES } from '../home-types'
+import type { LoopMetric, LoopMetricId } from '../day-loop'
+import { buildDayLoop, loopClosedCount, loopScore, nextLoopNudge } from '../day-loop'
+import { LoopArc } from './loop-arc'
 
 type TodayHeroCardProps = {
   loading: boolean
@@ -17,8 +32,21 @@ type TodayHeroCardProps = {
   hydration: HydrationData | null
   focusMinutesToday: number
   focusRunning: boolean
+  /** Minutes slept on the night that ended this morning; null when unlogged. */
+  sleepMinutesToday: number | null
+  /** Today's mood check-in, 1–5. */
+  moodScore: number | null
+  /** Workouts recorded today, and the first one's name for the row's sub-label. */
+  workoutsToday: number
+  workoutLabel: string | null
+  /** Learning entries logged today. */
+  learningsToday: number
+  /** Today's meal-quality aggregate from the nutrition summary. */
+  mealQuality: MealQualityDay | null
   onAddWater: () => void
   onStartFocus: () => void
+  onLogSleep: () => void
+  onCheckInMood: () => void
   onNavigate: (path: AppPath, search?: string) => void
   /** Fires once when today's loop first reaches 100%. */
   onCelebrate?: () => void
@@ -34,37 +62,42 @@ function loopPhrase(score: number, hour: number): string {
   return 'Loop closed. Take a bow.'
 }
 
-/** One stacked loop bar — the Nutrition macro-row component re-aimed at a daily loop. */
-function HeroLoopRow({
-  accent,
-  icon,
-  label,
-  value,
-  target,
-  display,
-  sub,
+const LOOP_ICONS: Record<LoopMetricId, LucideIcon> = {
+  sleep: Moon,
+  mood: Smile,
+  movement: Footprints,
+  learning: BookOpen,
+  fuel: Utensils,
+}
+
+/** One loop signal: label + value + its own bar, tappable straight through to the fix. */
+function LoopRow({
+  metric,
   onClick,
-  badge,
+  onHover,
 }: {
-  accent: 'focus' | 'tasks' | 'water' | 'fuel'
-  icon: React.ReactNode
-  label: string
-  value: number
-  target: number
-  display: string
-  sub?: string
+  metric: LoopMetric
   onClick: () => void
-  badge?: React.ReactNode
+  onHover: (id: LoopMetricId | null) => void
 }) {
-  const animated = useCountUp(value)
-  const ratio = target > 0 ? Math.min(animated / target, 1) : 0
+  const animated = useCountUp(metric.ratio)
+  const Icon = LOOP_ICONS[metric.id]
   return (
     <div
-      className={cn('ntr-macro-row', `home-loop--${accent}`)}
+      className={cn(
+        'ntr-macro-row',
+        `home-loop--${metric.id}`,
+        metric.done && 'is-done',
+        metric.empty && 'is-empty',
+      )}
       role="button"
       tabIndex={0}
-      aria-label={`${label}: ${display}${sub ? ` ${sub}` : ''}`}
+      aria-label={`${metric.label}: ${metric.display}${metric.sub ? ` ${metric.sub}` : ''}. ${metric.hint}.`}
       onClick={onClick}
+      onMouseEnter={() => onHover(metric.id)}
+      onMouseLeave={() => onHover(null)}
+      onFocus={() => onHover(metric.id)}
+      onBlur={() => onHover(null)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
@@ -74,18 +107,52 @@ function HeroLoopRow({
     >
       <div className="ntr-macro-header">
         <p>
-          {icon} {label}
-          {badge}
+          <Icon size={11} strokeWidth={2.5} /> {metric.label}
+          {metric.done && <span className="home-loop-tick" aria-hidden="true" />}
         </p>
         <strong>
-          {display}
-          {sub && <em> {sub}</em>}
+          {metric.display}
+          {metric.sub && <em> {metric.sub}</em>}
         </strong>
       </div>
       <span className="ntr-macro-bar" aria-hidden="true">
-        <i style={{ width: `${ratio * 100}%` }} />
+        <i style={{ width: `${Math.min(Math.max(animated, 0), 1) * 100}%` }} />
       </span>
     </div>
+  )
+}
+
+/** A signal the loop doesn't score but the day still runs on — compact, still tappable. */
+function SupportChip({
+  accent,
+  icon,
+  label,
+  value,
+  sub,
+  ratio,
+  onClick,
+}: {
+  accent: 'focus' | 'tasks' | 'water' | 'kcal'
+  icon: React.ReactNode
+  label: string
+  value: string
+  sub?: string
+  ratio: number
+  onClick: () => void
+}) {
+  return (
+    <button type="button" className={cn('home-support-chip', `home-support--${accent}`)} onClick={onClick}>
+      <span className="home-support-label">
+        {icon} {label}
+      </span>
+      <span className="home-support-value">
+        {value}
+        {sub && <em>{sub}</em>}
+      </span>
+      <span className="home-support-bar" aria-hidden="true">
+        <i style={{ width: `${Math.min(Math.max(ratio, 0), 1) * 100}%` }} />
+      </span>
+    </button>
   )
 }
 
@@ -98,24 +165,34 @@ function TodayHeroCard({
   hydration,
   focusMinutesToday,
   focusRunning,
+  sleepMinutesToday,
+  moodScore,
+  workoutsToday,
+  workoutLabel,
+  learningsToday,
+  mealQuality,
   onAddWater,
   onStartFocus,
+  onLogSleep,
+  onCheckInMood,
   onNavigate,
   onCelebrate,
 }: TodayHeroCardProps) {
-  // Composite "day loop" score, computed unconditionally so the celebration
-  // effect below can watch it even while the skeleton is showing.
-  const tasksDoneAll = (todayTasks ?? []).filter((t) => t.completed).length
-  const tasksTotalAll = (todayTasks ?? []).length
-  const waterMlAll = hydration?.waterIntakeMl ?? 0
-  const waterTargetAll = hydration?.targetMl ?? 3000
-  const caloriesAll = nutrition?.todayTotalCalories ?? 0
-  const calorieGoalAll = nutrition?.calorieGoal ?? 0
-  const scoreRatios: number[] = [Math.min(focusMinutesToday / FOCUS_TARGET_MINUTES, 1)]
-  if (tasksTotalAll > 0) scoreRatios.push(Math.min(tasksDoneAll / tasksTotalAll, 1))
-  scoreRatios.push(Math.min(waterMlAll / Math.max(waterTargetAll, 1), 1))
-  if (calorieGoalAll > 0) scoreRatios.push(Math.min(caloriesAll / calorieGoalAll, 1))
-  const dayScore = Math.round((scoreRatios.reduce((sum, r) => sum + r, 0) / scoreRatios.length) * 100)
+  const [hoveredId, setHoveredId] = useState<LoopMetricId | null>(null)
+
+  // The loop is computed unconditionally so the celebration effect below can watch
+  // it even while the skeleton is showing.
+  const metrics = buildDayLoop({
+    sleepMinutes: sleepMinutesToday,
+    moodScore,
+    workouts: workoutsToday,
+    workoutLabel,
+    learnings: learningsToday,
+    meal: mealQuality,
+  })
+  const dayScore = loopScore(metrics)
+  const closed = loopClosedCount(metrics)
+  const nudge = nextLoopNudge(metrics)
 
   const prevScoreRef = useRef(dayScore)
   useEffect(() => {
@@ -139,7 +216,7 @@ function TodayHeroCard({
             <span className="home-skel" style={{ width: 190, height: 190, borderRadius: '50%' }} />
           </div>
           <div className="ntr-hero-macros">
-            {Array.from({ length: 4 }, (_, i) => (
+            {Array.from({ length: 5 }, (_, i) => (
               <span key={i} className="home-skel" style={{ height: 54, borderRadius: 16 }} />
             ))}
           </div>
@@ -158,13 +235,21 @@ function TodayHeroCard({
   const nextEvent = upcoming[0]
   const laterCount = Math.max(upcoming.length - 1, 0)
 
-  // Aliases so the JSX below reads the same as before the hoist.
-  const tasksDone = tasksDoneAll
-  const tasksTotal = tasksTotalAll
-  const waterMl = waterMlAll
-  const waterTarget = waterTargetAll
-  const calories = caloriesAll
-  const calorieGoal = calorieGoalAll
+  // Support signals — shown, but outside the loop score.
+  const tasksDone = (todayTasks ?? []).filter((t) => t.completed).length
+  const tasksTotal = (todayTasks ?? []).length
+  const waterMl = hydration?.waterIntakeMl ?? 0
+  const waterTarget = hydration?.targetMl ?? 3000
+  const calories = nutrition?.todayTotalCalories ?? 0
+  const calorieGoal = nutrition?.calorieGoal ?? 0
+
+  const openRoute: Record<LoopMetricId, () => void> = {
+    sleep: onLogSleep,
+    mood: onCheckInMood,
+    movement: () => onNavigate('/workouts'),
+    learning: () => onNavigate('/learnings'),
+    fuel: () => onNavigate('/nutrition'),
+  }
 
   return (
     <section className="home-card home-card--hero" aria-label="Today at a glance">
@@ -174,7 +259,7 @@ function TodayHeroCard({
           <h2>{loopPhrase(dayScore, now.getHours())}</h2>
         </div>
         {/* No focus-session pill here — the running state already shows on the
-            gauge button and the Focus row, so a third copy just repeats itself. */}
+            gauge button and the Focus chip, so a third copy just repeats itself. */}
         {overdueCount > 0 ? (
           <span className="ntr-pill dark home-pill-urgent">
             <AlertTriangle size={12} strokeWidth={2.5} />
@@ -196,66 +281,75 @@ function TodayHeroCard({
       <div className={cn('home-hero-panel', dayScore >= 100 && 'is-complete')}>
         <div className="home-hero-gauge-col">
           <div className={cn('ntr-gauge-wrap', focusRunning && 'is-live')}>
-            <ArcGauge
-              value={dayScore}
-              target={100}
-              format={(v) => `${v}%`}
+            <LoopArc
+              segments={metrics.map((m) => ({ id: m.id, label: m.label, ratio: m.ratio, done: m.done }))}
+              score={dayScore}
               centerSub="of today's loop"
+              activeId={hoveredId ?? nudge?.id ?? null}
             />
-            {focusMinutesToday > 0 && (
-              <span className="ntr-gauge-badge">
-                <FocusFlame size={9} strokeWidth={2.6} />
-                {formatMinutes(focusMinutesToday)}
-              </span>
-            )}
           </div>
-          <button type="button" className="home-hero-focus-btn" onClick={onStartFocus}>
-            <FocusFlame size={12} />
-            {focusRunning ? 'Session running' : 'Start focus'}
-          </button>
+          <p className="home-loop-count">
+            <strong>{closed}</strong> of {metrics.length} closed
+          </p>
+          {/* The cheapest unlogged signal — the gauge's "so what". Falls back to
+              the focus button once there's nothing left to suggest. */}
+          {nudge ? (
+            <button type="button" className="home-hero-focus-btn" onClick={openRoute[nudge.id]}>
+              <ArrowRight size={12} />
+              {nudge.cta}
+            </button>
+          ) : (
+            <button type="button" className="home-hero-focus-btn" onClick={onStartFocus}>
+              <FocusFlame size={12} />
+              {focusRunning ? 'Session running' : 'Start focus'}
+            </button>
+          )}
         </div>
 
         <div className="ntr-hero-macros">
-          <HeroLoopRow
+          {metrics.map((metric) => (
+            <LoopRow key={metric.id} metric={metric} onClick={openRoute[metric.id]} onHover={setHoveredId} />
+          ))}
+        </div>
+
+        {/* Below the line: the day's other counters. They move with what the day
+            demanded rather than with the same daily ask, so they inform the loop
+            without scoring it — and stay one tap from where they're logged. */}
+        <div className="home-support-strip">
+          <SupportChip
             accent="focus"
-            icon={<FocusFlame size={11} strokeWidth={2.5} />}
+            icon={<FocusFlame size={10} strokeWidth={2.6} />}
             label="Focus"
-            value={focusMinutesToday}
-            target={FOCUS_TARGET_MINUTES}
-            display={formatMinutes(focusMinutesToday)}
-            sub={`/${formatMinutes(FOCUS_TARGET_MINUTES)}${focusRunning ? ' · live' : ''}`}
+            value={formatMinutes(focusMinutesToday)}
+            sub={focusRunning ? ' live' : ` /${formatMinutes(FOCUS_TARGET_MINUTES)}`}
+            ratio={focusMinutesToday / FOCUS_TARGET_MINUTES}
             onClick={onStartFocus}
           />
-          <HeroLoopRow
+          <SupportChip
             accent="tasks"
-            icon={<CheckSquare size={11} strokeWidth={2.5} />}
+            icon={<CheckSquare size={10} strokeWidth={2.6} />}
             label="Tasks"
-            value={tasksDone}
-            target={Math.max(tasksTotal, 1)}
-            display={tasksTotal > 0 ? `${tasksDone}` : 'Clear list'}
-            sub={tasksTotal > 0 ? `/${tasksTotal} done` : undefined}
+            value={tasksTotal > 0 ? `${tasksDone}` : '—'}
+            sub={tasksTotal > 0 ? ` /${tasksTotal}` : ' clear'}
+            ratio={tasksTotal > 0 ? tasksDone / tasksTotal : 1}
             onClick={() => onNavigate('/tasks')}
-            badge={overdueCount > 0 ? <span className="home-overdue-chip">{overdueCount} overdue</span> : undefined}
           />
-          <HeroLoopRow
+          <SupportChip
             accent="water"
-            icon={<Droplets size={11} strokeWidth={2.5} />}
+            icon={<Droplets size={10} strokeWidth={2.6} />}
             label="Water"
-            value={waterMl}
-            target={waterTarget}
-            display={waterMl.toLocaleString()}
-            sub={`/${waterTarget.toLocaleString()}ml`}
+            value={waterMl.toLocaleString()}
+            sub=" tap +250"
+            ratio={waterMl / Math.max(waterTarget, 1)}
             onClick={onAddWater}
-            badge={<span className="home-tap-chip">tap +250</span>}
           />
-          <HeroLoopRow
-            accent="fuel"
-            icon={<Utensils size={11} strokeWidth={2.5} />}
-            label="Fuel"
-            value={calories}
-            target={calorieGoal}
-            display={calorieGoal > 0 ? calories.toLocaleString() : 'Log a meal'}
-            sub={calorieGoal > 0 ? `/${calorieGoal.toLocaleString()} kcal` : undefined}
+          <SupportChip
+            accent="kcal"
+            icon={<Utensils size={10} strokeWidth={2.6} />}
+            label="Calories"
+            value={calorieGoal > 0 ? calories.toLocaleString() : '—'}
+            sub={calorieGoal > 0 ? ` /${calorieGoal.toLocaleString()}` : ' no goal'}
+            ratio={calorieGoal > 0 ? calories / calorieGoal : 0}
             onClick={() => onNavigate('/nutrition')}
           />
         </div>

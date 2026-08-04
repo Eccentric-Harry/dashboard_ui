@@ -106,6 +106,38 @@ const enrichGuestMeal = (meal: { carbsGrams: number; fatGrams: number }, mealInd
   ...(mealIndex === 0 ? guestRichAnalysis(meal.carbsGrams, meal.fatGrams) : {}),
 });
 
+// GPA-shaped points per grading, mirroring the backend's MealGrades ramp.
+const GUEST_QUALITY_POINTS: Record<string, number> = {
+  excellent: 4, good: 3, fair: 2, poor: 1, A: 4, B: 3, C: 2, D: 1,
+};
+
+interface GuestMealQuality {
+  mealsLogged: number;
+  gradedMeals: number;
+  averagePoints: number | null;
+  letter: string | null;
+}
+
+/** The nutrition summary's per-day grade aggregate for one guest day. */
+const guestMealQuality = (mealCount: number, dayIndex: number): GuestMealQuality => {
+  const points: number[] = [];
+  for (let mealIndex = 0; mealIndex < mealCount; mealIndex++) {
+    const grading = GUEST_MEAL_QUALITIES[(dayIndex + mealIndex) % GUEST_MEAL_QUALITIES.length];
+    const value = GUEST_QUALITY_POINTS[grading];
+    if (value) points.push(value);
+  }
+  if (points.length === 0) {
+    return { mealsLogged: mealCount, gradedMeals: 0, averagePoints: null, letter: null };
+  }
+  const average = points.reduce((sum, p) => sum + p, 0) / points.length;
+  return {
+    mealsLogged: mealCount,
+    gradedMeals: points.length,
+    averagePoints: Math.round(average * 100) / 100,
+    letter: ['D', 'D', 'C', 'B', 'A'][Math.round(average)] ?? null,
+  };
+};
+
 // Guest finance account ("Total Balance") — a running balance moved by transactions.
 const financeAccount: { balance: number; monthlyBudget: number } = { balance: 2450800, monthlyBudget: 20000 };
 
@@ -556,9 +588,14 @@ export function enableGuestInterceptor() {
     if (urlStr.includes('/api/v1/dashboard/nutrition-summary')) {
       const dailyProtein: Record<string, number> = {};
       const dailyCalories: Record<string, number> = {};
-      dummyNutritionHistory.forEach(day => {
+      // Same per-day grade aggregate the real DashboardService folds in, built from
+      // the same rotating qualities the /health/food mock hands out — so guest mode
+      // exercises the day loop's fuel row instead of leaving it permanently empty.
+      const dailyMealQuality: Record<string, GuestMealQuality> = {};
+      dummyNutritionHistory.forEach((day, dayIdx) => {
         dailyProtein[day.date] = day.dailyMetrics.macroBreakdown.protein.logged;
         dailyCalories[day.date] = day.dailyMetrics.caloriesConsumed;
+        dailyMealQuality[day.date] = guestMealQuality(day.additionalInfo.mealLogs.length, dayIdx);
       });
       const summaryDate = urlObj.searchParams.get('date') || guestToday;
       const summaryDay = dummyNutritionHistory.find(d => d.date === summaryDate) || dummyNutritionHistory[dummyNutritionHistory.length - 1];
@@ -572,6 +609,8 @@ export function enableGuestInterceptor() {
           todayTotalProtein: summaryDay.dailyMetrics.macroBreakdown.protein.logged,
           calorieGoal: summaryDay.dailyMetrics.calorieGoal,
           proteinGoal: summaryDay.dailyMetrics.macroBreakdown.protein.target,
+          dailyMealQuality,
+          todayMealQuality: dailyMealQuality[summaryDate] ?? guestMealQuality(0, 0),
         },
       });
     }

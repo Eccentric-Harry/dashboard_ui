@@ -54,16 +54,27 @@ type QuickCaptureCardProps = {
   /** Today's saved mood (1–5) from the daily log, if any. */
   moodScore: number | null
   onMood: (score: number) => Promise<void>
+  /** Bumps when the hero's Mood loop row sends the user here to check in. */
+  moodRequest?: number
   /** Latest task/thought/win entries, newest first — fills the card's footer space. */
   recentCaptures: RecentCapture[]
 }
 
-function QuickCaptureCard({ onCapture, focusRequest, moodScore, onMood, recentCaptures }: QuickCaptureCardProps) {
+function QuickCaptureCard({
+  onCapture,
+  focusRequest,
+  moodScore,
+  onMood,
+  moodRequest,
+  recentCaptures,
+}: QuickCaptureCardProps) {
   const [mode, setMode] = useState<QuickCaptureMode>('thought')
   const [text, setText] = useState('')
   const [saving, setSaving] = useState(false)
   const [localMood, setLocalMood] = useState<number | null>(null)
+  const [moodNudged, setMoodNudged] = useState(false)
   const inputRef = useRef<HTMLInputElement | null>(null)
+  const moodRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     if (!focusRequest) return
@@ -71,6 +82,17 @@ function QuickCaptureCard({ onCapture, focusRequest, moodScore, onMood, recentCa
     setMode(focusRequest.mode)
     inputRef.current?.focus()
   }, [focusRequest])
+
+  // Arriving from the hero: bring the faces into view and glow them once, so the
+  // jump lands on something obviously actionable rather than mid-card.
+  useEffect(() => {
+    if (!moodRequest) return
+    moodRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMoodNudged(true)
+    const timer = setTimeout(() => setMoodNudged(false), 1800)
+    return () => clearTimeout(timer)
+  }, [moodRequest])
 
   const active = MODES.find((m) => m.id === mode) ?? MODES[0]
   const shownMood = localMood ?? moodScore
@@ -171,7 +193,7 @@ function QuickCaptureCard({ onCapture, focusRequest, moodScore, onMood, recentCa
         )}
       </div>
 
-      <div className="home-capture-mood">
+      <div className={cn('home-capture-mood', moodNudged && 'is-nudged')} ref={moodRef}>
         <div className="home-capture-mood-text">
           <span className="home-card-eyebrow">Mood check-in</span>
           <p>{shownMood ? `Today feels ${MOOD_LABELS[shownMood - 1].toLowerCase()}.` : 'How’s the head today?'}</p>
