@@ -146,22 +146,40 @@ interface GuestSubscription { id: string; name: string; cost: number; billingDat
 let guestSubscriptions: GuestSubscription[] = [];
 
 // ── Mind tab (guest, in-memory) ────────────────────────────────────────────
+interface GuestWorryPrediction {
+  fearedOutcome?: string | null;
+  predictedProbability?: number | null;
+  outcome?: string | null;
+  severity?: string | null;
+  recordedAt?: string | null;
+}
+
 interface GuestMindEntry {
   id: string;
   type: string;
-  text: string;
+  text: string | null;
   reframedText?: string | null;
   distortionTag?: string | null;
   status: string;
   linkedTaskId?: string | null;
   valueTag?: string | null;
   pinned?: boolean;
+  lane?: string | null;
+  textSealed?: boolean;
+  prediction?: GuestWorryPrediction | null;
+  intrusive?: { category?: string | null; intensity?: number | null; urgeWaitedSeconds?: number | null; urgeFaded?: boolean | null } | null;
+  spiral?: { solvableIn24h?: boolean | null; returnedToTaskId?: string | null; durationSeconds?: number | null } | null;
   reviewDate?: string | null;
   wasParked?: boolean;
   date: string;
   createdAt: string;
   resolvedAt?: string | null;
 }
+
+/** Mirrors MindService.redactSealed — guest mode must hide sealed text too, or the
+ *  guarantee is only true when a backend happens to be running. */
+const guestRedact = (e: GuestMindEntry): GuestMindEntry =>
+  e.textSealed ? { ...e, text: null } : e;
 
 // Local-date formatting (mirrors mindIsoDate) so "today" and date math stay consistent
 // regardless of timezone — using toISOString() here would shift the date and mis-resurface parked worries.
@@ -172,6 +190,13 @@ const guestIso = (d: Date = new Date()) => {
   return `${y}-${m}-${day}`;
 };
 const guestToday = guestIso();
+
+// Date.now() alone collides when several entries are created in the same millisecond —
+// which the one-tap notice, the urge timer and the spiral log all make easy to do. A
+// duplicate id surfaces as React's "two children with the same key" warning and mangles
+// list reconciliation, so make the counter part of the id.
+let guestMindSeq = 0;
+const guestMindId = () => `mind-guest-${Date.now()}-${++guestMindSeq}`;
 const guestAddDays = (iso: string, days: number) => {
   const d = new Date(`${iso}T00:00:00`);
   d.setDate(d.getDate() + days);
@@ -341,6 +366,161 @@ export function enableGuestInterceptor() {
         });
       }
 
+      if (urlStr.includes('/mind/noticed')) {
+        const body = bodyOf();
+        const text = (body.text || '').trim() || null;
+        const entry: GuestMindEntry = {
+          id: guestMindId(),
+          type: 'THOUGHT',
+          lane: 'INTRUSIVE',
+          text,
+          textSealed: !!text,
+          intrusive: {
+            category: (body.category || 'UNNAMED').toUpperCase(),
+            intensity: body.intensity ?? null,
+            urgeWaitedSeconds: body.urgeWaitedSeconds ?? null,
+            urgeFaded: body.urgeFaded ?? null,
+          },
+          status: 'NOTICED',
+          date: body.date || guestToday,
+          createdAt: new Date().toISOString(),
+          resolvedAt: new Date().toISOString(),
+        };
+        mindEntries.unshift(entry);
+        return respondWith({ data: guestRedact(entry) });
+      }
+
+      if (urlStr.includes('/mind/worry-ledger')) {
+        const predicted = mindEntries.filter(e => e.prediction);
+        const resolved = predicted.map(e => e.prediction!).filter(pr => pr.outcome);
+        const happened = resolved.filter(pr => pr.outcome === 'HAPPENED').length;
+        const partly = resolved.filter(pr => pr.outcome === 'PARTLY').length;
+        const probs = predicted
+          .map(e => e.prediction!.predictedProbability)
+          .filter((v): v is number => v != null);
+        return respondWith({
+          data: {
+            totalPredicted: predicted.length,
+            totalResolved: resolved.length,
+            notHappened: resolved.filter(pr => pr.outcome === 'NOT_HAPPENED').length,
+            partly,
+            happened,
+            meanPredictedProbability: probs.length ? probs.reduce((a, b) => a + b, 0) / probs.length : null,
+            actualOccurrenceRate: resolved.length ? ((happened + partly / 2) / resolved.length) * 100 : null,
+            copedBetter: resolved.filter(pr => pr.severity === 'BETTER').length,
+            copedAsFeared: resolved.filter(pr => pr.severity === 'AS_FEARED').length,
+            copedWorse: resolved.filter(pr => pr.severity === 'WORSE').length,
+          },
+        });
+      }
+
+      if (urlStr.includes('/mind/sealed')) {
+        return respondWith({ data: mindEntries.filter(e => e.textSealed) });
+      }
+
+      if (urlStr.includes('/mind/spiral')) {
+        const body = bodyOf();
+        const entry: GuestMindEntry = {
+          id: guestMindId(),
+          type: 'SPIRAL',
+          text: null,
+          status: 'RESOLVED',
+          spiral: {
+            solvableIn24h: body.solvableIn24h ?? null,
+            returnedToTaskId: body.returnedToTaskId ?? null,
+            durationSeconds: body.durationSeconds ?? null,
+          },
+          date: body.date || guestToday,
+          createdAt: new Date().toISOString(),
+          resolvedAt: new Date().toISOString(),
+        };
+        mindEntries.unshift(entry);
+        return respondWith({ data: entry });
+      }
+
+      if (urlStr.includes('/mind/loop-radar')) {
+        const days = Number(urlObj.searchParams.get('days')) || 30;
+        // Today comes from the real in-memory entries; earlier days are seeded demo
+        // history, so guest mode can actually demonstrate the radar rules instead of
+        // showing an empty panel. The seeded shape is deliberately mild — a real
+        // tendency, not a dramatic one.
+        const series = Array.from({ length: days }, (_, i) => {
+          const date = guestAddDays(guestToday, -(days - 1 - i));
+          const isToday = date === guestToday;
+          const onDay = mindEntries.filter(e => e.date === date);
+          const laneCount = (lane: string) =>
+            onDay.filter(e => e.type === 'THOUGHT' && e.lane === lane).length;
+
+          const shortSleep = i % 5 === 0 || i % 7 === 3;
+          const workedOut = !shortSleep && i % 3 === 0;
+          const seededLoops = shortSleep ? 4 + (i % 3) : workedOut ? 1 : 2 + (i % 2);
+          // Triage rate climbs across the window — the recognition rule reads this.
+          const triagedShare = i / days;
+
+          return {
+            date,
+            problems: isToday ? laneCount('PROBLEM') : Math.round(seededLoops * triagedShare * 0.3),
+            worries: isToday ? laneCount('WORRY') : Math.round(seededLoops * triagedShare * 0.4),
+            intrusive: isToday ? laneCount('INTRUSIVE') : Math.round(seededLoops * triagedShare * 0.3),
+            untriaged: isToday
+              ? onDay.filter(e => e.type === 'THOUGHT' && !e.lane).length
+              : Math.max(0, seededLoops - Math.round(seededLoops * triagedShare)),
+            spirals: onDay.filter(e => e.type === 'SPIRAL').length,
+            sleepHours: shortSleep ? 5.2 + (i % 3) * 0.2 : 7.1 + (i % 4) * 0.2,
+            focusMinutes: workedOut ? 120 + (i % 4) * 20 : (i * 23) % 110,
+            tasksCompleted: (i * 3) % 7,
+            workouts: workedOut ? 1 : 0,
+            moodScore: shortSleep ? 2 : 4,
+          };
+        });
+        return respondWith({ data: series });
+      }
+
+      const laneMatch = urlStr.match(/\/mind\/entries\/([^/?]+)\/lane/);
+      if (laneMatch) {
+        const entry = mindEntries.find(e => e.id === laneMatch[1]);
+        const body = bodyOf();
+        if (entry) {
+          entry.lane = (body.lane || '').toUpperCase();
+          if (entry.lane === 'INTRUSIVE' && entry.text) entry.textSealed = true;
+        }
+        return respondWith({ data: entry ? guestRedact(entry) : null });
+      }
+
+      const predictionMatch = urlStr.match(/\/mind\/entries\/([^/?]+)\/prediction/);
+      if (predictionMatch) {
+        const entry = mindEntries.find(e => e.id === predictionMatch[1]);
+        const body = bodyOf();
+        if (entry) {
+          entry.prediction = {
+            ...(entry.prediction ?? {}),
+            fearedOutcome: body.fearedOutcome ?? entry.prediction?.fearedOutcome ?? null,
+            predictedProbability: body.predictedProbability ?? entry.prediction?.predictedProbability ?? null,
+          };
+          if (!entry.lane) entry.lane = 'WORRY';
+        }
+        return respondWith({ data: entry ? guestRedact(entry) : null });
+      }
+
+      const verdictMatch = urlStr.match(/\/mind\/entries\/([^/?]+)\/verdict/);
+      if (verdictMatch) {
+        const entry = mindEntries.find(e => e.id === verdictMatch[1]);
+        const body = bodyOf();
+        if (entry) {
+          const outcome = (body.outcome || '').toUpperCase();
+          entry.prediction = {
+            ...(entry.prediction ?? {}),
+            outcome,
+            severity: outcome === 'NOT_HAPPENED' ? null : (body.severity || null),
+            recordedAt: new Date().toISOString(),
+          };
+          entry.status = 'RESOLVED';
+          entry.reviewDate = null;
+          entry.resolvedAt = new Date().toISOString();
+        }
+        return respondWith({ data: entry ? guestRedact(entry) : null });
+      }
+
       const convertMatch = urlStr.match(/\/mind\/entries\/([^/?]+)\/convert/);
       if (convertMatch) {
         const entry = mindEntries.find(e => e.id === convertMatch[1]);
@@ -398,7 +578,7 @@ export function enableGuestInterceptor() {
         if (method === 'POST') {
           const body = bodyOf();
           const entry: GuestMindEntry = {
-            id: `mind-guest-${Date.now()}`,
+            id: guestMindId(),
             type: (body.type || 'THOUGHT').toUpperCase(),
             text: (body.text || '').trim(),
             status: 'OPEN',
@@ -414,8 +594,13 @@ export function enableGuestInterceptor() {
         // GET — resurface any parked worry whose review date has arrived.
         mindEntries.forEach(e => {
           if (e.status === 'PARKED' && e.reviewDate && e.reviewDate <= guestToday) {
-            e.status = 'OPEN';
-            e.reviewDate = null;
+            if (e.prediction && !e.prediction.outcome) {
+              // Keeps reviewDate so the verdict prompt can say when it was parked.
+              e.status = 'VERDICT_DUE';
+            } else {
+              e.status = 'OPEN';
+              e.reviewDate = null;
+            }
           }
         });
         const typeParam = urlObj.searchParams.get('type');
@@ -423,7 +608,7 @@ export function enableGuestInterceptor() {
         let result = [...mindEntries];
         if (typeParam) result = result.filter(e => e.type === typeParam);
         if (statusParam) result = result.filter(e => e.status === statusParam);
-        return respondWith({ data: result });
+        return respondWith({ data: result.map(guestRedact) });
       }
     }
 

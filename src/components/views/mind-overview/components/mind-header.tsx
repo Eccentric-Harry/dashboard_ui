@@ -1,10 +1,11 @@
-import { Flame, LifeBuoy } from 'lucide-react'
+import { Flame } from 'lucide-react'
 import { cn } from '../../../../lib/utils'
 
 const MOOD_LABELS = ['Heavy', 'Low', 'Okay', 'Good', 'Light'] as const
 
-// Temporarily hidden — not ready to surface yet. Keep onOpenSos/SosOverlay wired up for when this flips back on.
-const SOS_ENABLED = false
+// SOS lives in the route footer now, not up here. It has to stay one tap away
+// (MIND_WELLNESS_PLAN §2), but a crisis button sitting in peripheral vision on every
+// visit sets the tone of the whole page — quiet and reachable beats prominent.
 
 const MOUTHS: Record<number, string> = {
   1: 'M10 21.5 Q15 16.5 20 21.5',
@@ -29,10 +30,9 @@ type MindHeaderProps = {
   mood: number | null
   onMoodSelect: (value: number) => void
   streakDays: number
-  onOpenSos: () => void
 }
 
-function MindHeader({ dateIso, mood, onMoodSelect, streakDays, onOpenSos }: MindHeaderProps) {
+function MindHeader({ dateIso, mood, onMoodSelect, streakDays }: MindHeaderProps) {
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
   const name = (localStorage.getItem('displayName') || 'friend').split(' ')[0]
@@ -74,13 +74,6 @@ function MindHeader({ dateIso, mood, onMoodSelect, streakDays, onOpenSos }: Mind
           <Flame size={13} />
           {streakDays}
         </span>
-
-        {SOS_ENABLED && (
-          <button type="button" className="mind-sos-button" onClick={onOpenSos}>
-            <LifeBuoy size={14} />
-            SOS
-          </button>
-        )}
       </div>
     </header>
   )

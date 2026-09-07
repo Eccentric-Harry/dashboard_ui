@@ -388,6 +388,18 @@ button {
   margin-bottom: 21px;
 }
 
+/* Spiral breaker trigger — present on every route, but styled to sit back until
+   it's wanted. A permanently prominent "are you panicking?" button is its own
+   low-grade suggestion. */
+.side-rail button.rail-spiral-btn {
+  color: rgba(93, 103, 165, 0.72);
+}
+
+.side-rail button.rail-spiral-btn:hover {
+  color: #414a78;
+  background: rgba(224, 228, 246, 0.7);
+}
+
 /* Sidebar notification bell — unread badge overlay */
 .side-rail button.rail-notifications-btn {
   transition: all 0.15s ease;
@@ -1441,7 +1453,44 @@ button {
     transform: scale(0.92);
   }
 
+  /*
+    `display: contents` rather than `none`: the bottom group's own buttons are hidden
+    individually below, but a `display: none` parent zeroes out every descendant, which
+    would take the Spiral Breaker with it however it styles itself.
+  */
   .rail-bottom {
+    display: contents;
+  }
+
+  .rail-bottom > button:not(.rail-spiral-btn) {
+    display: none;
+  }
+
+  /*
+    The mobile dock hides .rail-bottom, but the Spiral Breaker has to survive that —
+    a phone is the device you are most likely holding when a spiral starts, and a
+    global trigger that vanishes on mobile is not global. Lift just this one button
+    out as a small pill sitting above the dock.
+  */
+  .side-rail button.rail-spiral-btn {
+    display: grid;
+    place-items: center;
+    position: fixed;
+    left: 16px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 96px);
+    z-index: 1001;
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.82);
+    color: #414a78;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 0.5px solid rgba(255, 255, 255, 0.45);
+  }
+
+  .side-rail button.rail-spiral-btn .rail-tooltip {
     display: none;
   }
 

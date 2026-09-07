@@ -885,9 +885,9 @@
 .mind-capture-input {
   flex: 1;
   resize: none;
-  padding: 15px 54px 15px 17px;
+  padding: 12px 52px 12px 15px;
   border: 1px solid rgba(255, 255, 255, 0.7);
-  border-radius: 19px;
+  border-radius: 17px;
   background: rgba(255, 255, 255, 0.58);
   color: #101312;
   font-family: inherit;
@@ -936,15 +936,15 @@
 .mind-thought-stack {
   display: flex;
   flex-direction: column;
-  gap: 11px;
+  gap: 8px;
 }
 
 .mind-thought-card {
   max-height: 400px;
   border: 1px solid rgba(255, 255, 255, 0.65);
-  border-radius: 19px;
+  border-radius: 17px;
   background: rgba(255, 255, 255, 0.52);
-  padding: 15px 17px;
+  padding: 12px 14px;
   animation: mind-rise 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
@@ -955,8 +955,8 @@
 }
 
 .mind-thought-text {
-  margin: 0 0 11px;
-  font-size: 13px;
+  margin: 0 0 9px;
+  font-size: 12.5px;
   line-height: 1.5;
   color: #1d201f;
 }
@@ -1023,6 +1023,403 @@
 
 .mind-chip--release:hover {
   background: rgba(217, 223, 217, 0.5);
+}
+
+/* ---------- Triage: what is this? ---------- */
+
+/* The question comes before the actions, so the card can never offer a reframe on a
+   thought that gets worse when reframed.
+
+   Kept to one row: three untriaged thoughts is an ordinary morning, and at the old
+   size that was a whole phone screen of the same three captions repeated. */
+.mind-triage {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mind-triage-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mind-triage-question {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #77857b;
+}
+
+.mind-triage-help {
+  padding: 0;
+  border: none;
+  background: none;
+  color: #9aa79e;
+  font-size: 9.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: rgba(154, 167, 158, 0.4);
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+
+.mind-triage-help:hover {
+  color: #6f7d74;
+}
+
+.mind-triage-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.mind-lane-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 8px 6px;
+  border-radius: 12px;
+  border: 1px solid rgba(26, 31, 29, 0.1);
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease, background 0.25s ease;
+}
+
+.mind-lane-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.mind-lane-btn span {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1d201f;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mind-lane-icon {
+  flex: none;
+}
+
+/* Definitions live here rather than under every button — shown until dismissed once,
+   then one tap away from the header. */
+.mind-triage-legend {
+  margin: 2px 0 0;
+  padding: 9px 11px;
+  border-radius: 12px;
+  background: rgba(240, 242, 240, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mind-triage-legend-row {
+  display: flex;
+  gap: 6px;
+  font-size: 9.5px;
+  line-height: 1.45;
+}
+
+.mind-triage-legend-row dt {
+  flex: none;
+  font-weight: 700;
+  color: #4c5a51;
+}
+
+.mind-triage-legend-row dd {
+  margin: 0;
+  color: #8a9490;
+}
+
+/* Under ~400px the three labels need every pixel; the icons are decoration there. */
+@media (max-width: 400px) {
+  .mind-lane-icon {
+    display: none;
+  }
+}
+
+.mind-lane-btn--problem {
+  border-color: rgba(93, 103, 165, 0.22);
+  color: #414a78;
+}
+
+.mind-lane-btn--worry {
+  border-color: rgba(90, 128, 150, 0.22);
+  color: #3d576a;
+}
+
+.mind-lane-btn--intrusive {
+  border-color: rgba(122, 116, 138, 0.22);
+  color: #5c566b;
+}
+
+.mind-thought-card.is-lane-intrusive {
+  background: rgba(246, 245, 248, 0.6);
+  border-color: rgba(255, 255, 255, 0.7);
+}
+
+/* ---------- Intrusive lane ---------- */
+
+.mind-intrusive-lane {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.mind-intrusive-cats {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.mind-tag--quiet {
+  font-size: 10px;
+  padding: 5px 10px;
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.mind-tag--quiet.is-active {
+  background: rgba(122, 116, 138, 0.16);
+  border-color: rgba(122, 116, 138, 0.3);
+  color: #5c566b;
+}
+
+.mind-chip--noticed {
+  background: rgba(122, 116, 138, 0.13);
+  border-color: rgba(122, 116, 138, 0.24);
+  color: #5c566b;
+}
+
+.mind-chip--noticed:hover {
+  box-shadow: 0 6px 16px rgba(122, 116, 138, 0.2);
+}
+
+.mind-chip--defuse {
+  background: transparent;
+  border: 1px dashed rgba(122, 116, 138, 0.28);
+  color: #6b6579;
+}
+
+.mind-chip--defuse:hover {
+  background: rgba(240, 238, 244, 0.6);
+}
+
+/* A sealed thought is described, never quoted — meeting it again is the thing the
+   seal exists to prevent. */
+.mind-thought-text.is-sealed {
+  font-style: italic;
+  color: #8a9490;
+}
+
+/* ---------- One-tap notice strip ---------- */
+
+.mind-notice-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 8px 0 10px;
+  padding: 8px 11px;
+  border-radius: 15px;
+  border: 1px dashed rgba(122, 116, 138, 0.24);
+  background: rgba(246, 245, 248, 0.5);
+}
+
+.mind-notice-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(122, 116, 138, 0.24);
+  background: rgba(255, 255, 255, 0.6);
+  color: #5c566b;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.25s ease;
+}
+
+.mind-notice-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.mind-notice-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.mind-notice-meta {
+  font-size: 10px;
+  color: #77857b;
+}
+
+/* ---------- Park form + prediction ---------- */
+
+.mind-park-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mind-park-when {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.mind-prob {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.mind-prob-label {
+  font-size: 11px;
+  color: #526057;
+}
+
+.mind-prob-label strong {
+  color: #1d201f;
+}
+
+.mind-prob-slider {
+  width: 100%;
+  accent-color: #7a748a;
+}
+
+.mind-prob-hint {
+  font-size: 9.5px;
+  color: #8a9490;
+}
+
+/* ---------- Defusion drill ---------- */
+
+/* Three beats of changing grammar, then the thought dissolves. Nothing here argues
+   with it — arguing is the compulsion. */
+.mind-defusion {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 11px;
+  padding: 18px 16px 15px;
+  border-radius: 17px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(240, 238, 244, 0.66);
+}
+
+.mind-defusion-skip {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  padding: 5px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.6);
+  color: #77857b;
+  cursor: pointer;
+}
+
+.mind-defusion-stage {
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.mind-defusion-line {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #2b2f3a;
+  /* `forwards` matters: mind-rise starts at opacity 0, and a throttled or
+     never-started animation would otherwise leave the line permanently invisible. */
+  animation: mind-rise 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.mind-defusion-prefix {
+  color: #8a8697;
+  font-weight: 600;
+}
+
+.mind-defusion-line.is-dissolving {
+  animation: mind-defuse-fade 2.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes mind-defuse-fade {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0.06;
+    transform: scale(0.82);
+    filter: blur(3px);
+  }
+}
+
+.mind-defusion-close {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  color: #6b6579;
+  animation: mind-rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.mind-defusion-normalizer {
+  margin: 0;
+  max-width: 320px;
+  font-size: 11px;
+  line-height: 1.55;
+  color: #6b6579;
+}
+
+.mind-defusion-progress {
+  display: flex;
+  gap: 5px;
+}
+
+.mind-defusion-dot {
+  width: 16px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(122, 116, 138, 0.2);
+  transition: background 0.3s ease;
+}
+
+.mind-defusion-dot.is-done {
+  background: rgba(122, 116, 138, 0.55);
+}
+
+.mind-defusion-done {
+  align-self: center;
+}
+
+/* Respect a reduced-motion preference: the drill still runs, it just stops moving. */
+@media (prefers-reduced-motion: reduce) {
+  .mind-defusion-line,
+  .mind-defusion-line.is-dissolving,
+  .mind-defusion-close {
+    animation: none;
+  }
+
+  .mind-defusion-line.is-dissolving {
+    opacity: 0.25;
+  }
 }
 
 .mind-park-wrap {
@@ -1179,16 +1576,17 @@
 .mind-loop-stats {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
 }
 
 .mind-stat-pill {
-  padding: 5px 11px;
+  padding: 4px 9px;
   border-radius: 999px;
   background: rgba(26, 31, 29, 0.05);
-  color: #526057;
-  font-size: 10.5px;
+  color: #6b7973;
+  font-size: 9.5px;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 /* ---------- Evidence locker ---------- */
@@ -1795,19 +2193,21 @@
     margin-top: 4px;
   }
 
+  /* SOS moved to the footer, which left the streak chip alone on a 38px row of its
+     own. Sit it beside the mood strip instead and give the row back to content. */
   .mind-header-actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     width: 100%;
   }
 
   .mind-mood {
-    grid-column: span 2;
-    width: 100%;
+    flex: 1;
+    min-width: 0;
     justify-content: center;
-    gap: 8px;
-    padding: 6px 14px;
+    gap: 6px;
+    padding: 6px 10px;
   }
 
   .mind-face-btn {
@@ -1821,13 +2221,13 @@
   }
 
   .mind-streak-chip {
+    flex: none;
     display: flex;
     align-items: center;
     justify-content: center;
     height: 38px;
-    width: 100%;
+    padding: 0 12px;
     font-size: 11.5px;
-    padding: 0;
   }
 
   .mind-sos-button {
@@ -1841,9 +2241,39 @@
     letter-spacing: 0.05em;
   }
 
+  /* Four pills need ~323px and the card gives 265, so they wrapped 3+1 and looked
+     broken. Same numbers, run as one metadata line instead of four chips. */
+  .mind-loop-stats {
+    gap: 0;
+    font-size: 9.5px;
+    line-height: 1.7;
+    color: #6b7973;
+  }
+
+  .mind-stat-pill {
+    padding: 0;
+    background: none;
+  }
+
+  .mind-stat-pill:not(:last-child)::after {
+    content: '·';
+    margin: 0 5px;
+    color: #a8b3ad;
+  }
+
   .mind-grid {
     grid-template-columns: 1fr;
     gap: 13px;
+  }
+
+  /*
+    Desktop keeps the approved bento order (breathing first) because the whole board is
+    visible at once there. Stacked on a phone that same order buries the inbox about
+    1100px down — two full screens below the thing you opened the tab to do. The calm
+    tools are something you go to deliberately; the inbox is what you reach for.
+  */
+  .mind-card--inbox {
+    order: -1;
   }
 
   .mind-card--breathe,
@@ -1860,4 +2290,352 @@
   .mind-parked-list {
     grid-template-columns: 1fr;
   }
+}
+
+/* ---------- Worry ledger ---------- */
+
+/* Figures, stated flat. No celebration styling anywhere in here: the moment this reads
+   as a score, it stops being a record the user trusts. */
+.mind-ledger {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 13px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  background: rgba(255, 255, 255, 0.44);
+}
+
+.mind-ledger-line {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #3d576a;
+}
+
+.mind-ledger-line strong {
+  color: #1d201f;
+  font-weight: 700;
+}
+
+.mind-ledger-calibration {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mind-ledger-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.mind-ledger-stat em {
+  font-style: normal;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #7d8d97;
+}
+
+.mind-ledger-stat strong {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #2f4a5c;
+}
+
+.mind-ledger-arrow {
+  font-size: 15px;
+  color: #9aa9b2;
+}
+
+.mind-ledger-cope,
+.mind-ledger-empty {
+  margin: 0;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: #6f8290;
+}
+
+.mind-ledger-empty {
+  margin-bottom: 12px;
+}
+
+.mind-parked-pred {
+  margin: 3px 0 0;
+  font-size: 10.5px;
+  color: #6f8290;
+}
+
+/* ---------- Verdict prompt ---------- */
+
+.mind-parked-item.is-verdict-due {
+  border-color: rgba(90, 128, 150, 0.32);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.mind-verdict {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.mind-verdict-feared {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #3d576a;
+}
+
+.mind-verdict-pred {
+  color: #8698a3;
+}
+
+.mind-verdict-question {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #7d8d97;
+}
+
+.mind-verdict-options {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* ---------- Route footer: real help, sealed archive, one honest line ---------- */
+
+.mind-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-top: 16px;
+  padding: 14px 4px 6px;
+  border-top: 1px solid rgba(26, 31, 29, 0.07);
+}
+
+.mind-footer-note {
+  margin: 0;
+  font-size: 10.5px;
+  color: #8a9490;
+}
+
+.mind-footer-links {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mind-footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(26, 31, 29, 0.1);
+  background: rgba(255, 255, 255, 0.42);
+  color: #526057;
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+.mind-footer-link:hover {
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.mind-footer-link:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* The one place outside the SOS surface where the danger colour is allowed, and only
+   as a hairline — this is a door, not an alarm. */
+.mind-footer-link--sos {
+  border-color: rgba(241, 105, 119, 0.3);
+  color: #b4515e;
+}
+
+.mind-footer-link--sos:hover {
+  background: rgba(241, 105, 119, 0.08);
+}
+
+.mind-archive {
+  margin-top: 4px;
+  padding: 13px 15px;
+  border-radius: 18px;
+  border: 1px solid rgba(122, 116, 138, 0.2);
+  background: rgba(246, 245, 248, 0.6);
+}
+
+.mind-archive-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #7a748a;
+}
+
+.mind-archive-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mind-archive-item {
+  padding: 9px 12px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.mind-archive-text {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #4a4557;
+}
+
+.mind-archive-date {
+  font-size: 9.5px;
+  color: #8f89a0;
+}
+
+/* ---------- Urge-decay timer ---------- */
+
+.mind-urge-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #7a748a;
+  font-size: 10px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: rgba(122, 116, 138, 0.3);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.mind-urge-open:hover {
+  color: #5c566b;
+}
+
+.mind-urge {
+  position: relative;
+  flex: 1 1 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 8px;
+  padding: 13px 15px;
+  border-radius: 15px;
+  border: 1px solid rgba(122, 116, 138, 0.2);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.mind-urge-close {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  display: inline-flex;
+  padding: 4px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(240, 238, 244, 0.8);
+  color: #7a748a;
+  cursor: pointer;
+}
+
+.mind-urge-title {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #3a3547;
+}
+
+.mind-urge-sub {
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.5;
+  color: #8a849a;
+}
+
+.mind-urge-clock {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #4a4557;
+  font-variant-numeric: tabular-nums;
+}
+
+.mind-urge-bar {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(122, 116, 138, 0.16);
+  overflow: hidden;
+}
+
+/* Drains rather than fills — the point being watched is the urge receding. */
+.mind-urge-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: rgba(122, 116, 138, 0.5);
+  transition: width 1s linear;
+}
+
+.mind-urge-early {
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #7a748a;
+  font-size: 10px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.mind-urge-answers {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.mind-urge-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 10px;
+  color: #6b6579;
+}
+
+.mind-urge-again {
+  padding: 0;
+  border: none;
+  background: none;
+  color: #7a748a;
+  font-size: 10px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
 }

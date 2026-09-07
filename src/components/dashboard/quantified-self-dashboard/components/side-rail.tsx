@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { Plus } from 'lucide-react'
+import { LifeBuoy, Plus } from 'lucide-react'
 import { getAvatarImage } from '../../../../lib/avatar'
 import { type AppPath, mobileNavItems, navItems, railBottomItems } from '../data'
 import { useNotifications } from '../../../../store/notification-store'
 import { ConfirmDialog } from '../../../ui/confirm-dialog'
+import { spiralActions } from '../../../../store/spiral-store'
 
 type DashboardStageProps = {
   activePath: AppPath
@@ -112,6 +113,19 @@ function SideRail({ activePath, onNavigate }: DashboardStageProps) {
       </div>
 
       <div className="rail-bottom">
+        {/* Reachable from every route on purpose: a spiral almost never starts while
+            you happen to be looking at /mind. */}
+        <button
+          type="button"
+          className="rail-spiral-btn"
+          aria-label="Spiral breaker"
+          title="Spiral breaker"
+          onClick={() => spiralActions.open()}
+        >
+          <LifeBuoy size={16} />
+          <span className="rail-tooltip">Spiral breaker</span>
+        </button>
+
         {railBottomItems.map(({ label, icon: Icon, muted }) => {
           const isNotifications = label === 'Notifications'
           const btnClassName = `${muted && !isNotifications ? 'muted' : ''} ${isNotifications && isOpen ? 'active' : ''} ${isNotifications ? 'rail-notifications-btn' : ''}`.trim() || undefined

@@ -2,13 +2,15 @@ import { useEffect, useState } from 'react'
 import { useCountUp } from '../../../../hooks/use-count-up'
 
 /**
- * The day loop, drawn as five arcs instead of one.
+ * The day loop, drawn as one continuous arc.
  *
- * The single continuous gauge this replaces could only say "30%" — it couldn't say
- * *which* 30%, so the number never pointed at anything you could go and do. One
- * segment per loop signal, each filling on its own, makes the shortfall legible from
- * across the room: a gap at 2 o'clock is the mood check-in, every time, because the
- * segments keep a fixed order regardless of what's logged.
+ * The gauge answers a single question — how much of today is closed — and the four
+ * tiles beside it answer "which part". Splitting the ring into one segment per
+ * signal duplicated that breakdown in a shape that had to be decoded first; one arc
+ * reads at a glance and lets the tiles carry the detail.
+ *
+ * The stroke is ink black: the tiles already carry the domain colors, and a single
+ * neutral ring keeps the panel's one loud element loud.
  */
 
 const CX = 100
@@ -16,20 +18,6 @@ const CY = 100
 const RADIUS = 80
 const START_ANGLE = 135 // degrees, clockwise from 3 o'clock — matches ArcGauge
 const SWEEP = 270
-/**
- * Angular gap between segments. Has to be generous: the round linecaps overshoot
- * each segment's ends by half the stroke width (~5° at this radius, from both
- * sides), so anything under ~11° closes up and the ring reads as one arc again.
- */
-const GAP = 14
-
-export type LoopArcSegment = {
-  id: string
-  label: string
-  /** 0–1 */
-  ratio: number
-  done: boolean
-}
 
 const polar = (angleDeg: number) => {
   const rad = (angleDeg * Math.PI) / 180
@@ -43,61 +31,43 @@ const arcPath = (fromDeg: number, toDeg: number) => {
   return `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} A ${RADIUS} ${RADIUS} 0 ${largeArc} 1 ${end.x.toFixed(2)} ${end.y.toFixed(2)}`
 }
 
-const arcLength = (spanDeg: number) => (Math.PI * RADIUS * spanDeg) / 180
+const TRACK = arcPath(START_ANGLE, START_ANGLE + SWEEP)
+const LENGTH = (Math.PI * RADIUS * SWEEP) / 180
 
 type LoopArcProps = {
-  segments: LoopArcSegment[]
-  /** Whole-percent loop score shown in the centre. */
+  /** Whole-percent loop score — drives both the fill and the centre number. */
   score: number
   centerSub: string
-  /** Which segment to highlight — the row the user is hovering, or the suggested next step. */
-  activeId?: string | null
+  /** Read out after the score, so the ring's aria label names what's still open. */
+  description?: string
 }
 
-function LoopArc({ segments, score, centerSub, activeId }: LoopArcProps) {
+function LoopArc({ score, centerSub, description }: LoopArcProps) {
   const animatedScore = useCountUp(score)
 
-  // Fills sweep in on mount; the CSS transition on stroke-dashoffset carries it.
+  // The fill sweeps in on mount; the CSS transition on stroke-dashoffset carries it.
   const [mounted, setMounted] = useState(false)
   useEffect(() => {
     const raf = requestAnimationFrame(() => setMounted(true))
     return () => cancelAnimationFrame(raf)
   }, [])
 
-  const count = Math.max(segments.length, 1)
-  const span = (SWEEP - GAP * (count - 1)) / count
-  const length = arcLength(span)
+  const drawn = mounted ? Math.min(Math.max(score / 100, 0), 1) : 0
 
   return (
     <div
-      className="home-loop-arc"
+      className={`home-loop-arc${score >= 100 ? ' is-complete' : ''}`}
       role="img"
-      aria-label={`${score}% ${centerSub}. ${segments
-        .map((s) => `${s.label} ${Math.round(s.ratio * 100)}%`)
-        .join(', ')}.`}
+      aria-label={`${score}% ${centerSub}.${description ? ` ${description}` : ''}`}
     >
       <svg viewBox="0 0 200 200" aria-hidden="true">
-        {segments.map((segment, index) => {
-          const from = START_ANGLE + index * (span + GAP)
-          const path = arcPath(from, from + span)
-          const drawn = mounted ? Math.min(Math.max(segment.ratio, 0), 1) : 0
-          return (
-            <g
-              key={segment.id}
-              className={`home-loop-seg home-loop-seg--${segment.id}${segment.done ? ' is-done' : ''}${
-                activeId === segment.id ? ' is-active' : ''
-              }`}
-            >
-              <path d={path} className="home-loop-seg-track" />
-              <path
-                d={path}
-                className="home-loop-seg-fill"
-                strokeDasharray={length}
-                strokeDashoffset={length * (1 - drawn)}
-              />
-            </g>
-          )
-        })}
+        <path d={TRACK} className="home-loop-track" />
+        <path
+          d={TRACK}
+          className="home-loop-fill"
+          strokeDasharray={LENGTH}
+          strokeDashoffset={LENGTH * (1 - drawn)}
+        />
       </svg>
       <span className="home-loop-arc-center">
         <strong>{Math.round(animatedScore)}%</strong>

@@ -51,7 +51,6 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
   const [captureRequest, setCaptureRequest] = useState<{ mode: QuickCaptureMode; nonce: number } | null>(null)
   const [fabOpen, setFabOpen] = useState(false)
   const [sleepFormNonce, setSleepFormNonce] = useState(0)
-  const [moodRequest, setMoodRequest] = useState(0)
   const [confettiTrigger, setConfettiTrigger] = useState(0)
   const [anchorSaving, setAnchorSaving] = useState(false)
   const fabRef = useRef<HTMLDivElement | null>(null)
@@ -206,26 +205,10 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
     [home.anchors.data, home.today],
   )
 
-  // ---- The five day-loop signals ----
-  // Sleep, mood and workout counts come straight off today's DayRecord, the same
-  // row the trends and insights read, so the hero can't disagree with the cards
-  // below it. Only the two the record doesn't carry are derived here.
-
-  const workoutsToday = useMemo(
-    () => (home.workouts.data ?? []).filter((activity) => activity.date === home.today),
-    [home.workouts.data, home.today],
-  )
-
-  // Sport type over activity name for the hero's Movement row: "Run" fits, while
-  // "Morning Run along the canal" ellipsizes into nothing readable.
-  const workoutLabel = workoutsToday[0]?.sportType || workoutsToday[0]?.activityName || null
-
-  /**
-   * Learning steps taken today. Pursuit steps carry no completion date, so a
-   * checked-off step can't be attributed to a day — logged learnings are the only
-   * honest per-day signal, and the /learnings streak already counts them the same way.
-   */
-  const learningsToday = home.learnings.data?.today?.learningsCount ?? 0
+  // ---- The four day-loop signals ----
+  // Sleep comes straight off today's DayRecord, the same row the trends and
+  // insights read, so the hero can't disagree with the cards below it; water and
+  // tasks come off their own live records. Only meal quality is derived here.
 
   /**
    * Meal grades for today, folded into the nutrition summary server-side. Optional:
@@ -270,6 +253,9 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
       .map((t) => ({ id: `task-${t.id}`, mode: 'task' as const, text: t.title, at: t.createdAt as string }))
     const fromMind = (home.mindEntries.data ?? [])
       .filter((e) => (e.type === 'THOUGHT' || e.type === 'WIN') && e.date === home.today && e.createdAt)
+      // Sealed entries carry no text on a normal read, and are deliberately kept out of
+      // the Home digest entirely — the whole point of sealing is not meeting it again.
+      .filter((e): e is typeof e & { text: string } => !e.textSealed && !!e.text)
       .map((e) => ({
         id: `mind-${e.id}`,
         mode: (e.type === 'WIN' ? 'win' : 'thought') as 'win' | 'thought',
@@ -520,23 +506,16 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
 
         <TodayHeroCard
           loading={home.loading}
-          nutrition={home.nutrition.data}
           calendarItems={home.calendarToday.data}
           todayTasks={todayTasks}
           overdueCount={overdueCount}
           hydration={home.hydration.data}
-          focusMinutesToday={todayRecord?.focusMinutes ?? 0}
           focusRunning={focusSession?.status === 'RUNNING'}
           sleepMinutesToday={todayRecord?.sleepMinutes ?? null}
-          moodScore={todayMood}
-          workoutsToday={todayRecord?.workouts ?? 0}
-          workoutLabel={workoutLabel}
-          learningsToday={learningsToday}
           mealQuality={mealQualityToday}
           onAddWater={() => void handleAddWater()}
           onStartFocus={() => onNavigate('/learnings')}
           onLogSleep={() => handleQuickAdd('sleep')}
-          onCheckInMood={() => setMoodRequest((n) => n + 1)}
           onNavigate={onNavigate}
           onCelebrate={fireConfetti}
         />
@@ -546,7 +525,6 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           focusRequest={captureRequest}
           moodScore={todayMood}
           onMood={handleMood}
-          moodRequest={moodRequest}
           recentCaptures={recentCaptures}
         />
 

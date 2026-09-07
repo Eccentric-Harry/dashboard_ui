@@ -7,12 +7,20 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { createSelectors } from './zustand-utils';
-import type { MindEntry, MindSummary } from '../types/mind';
+import type { MindEntry, MindSummary, MindWorryLedger, MindLoopRadarDay } from '../types/mind';
 
 interface MindState {
   entries: MindEntry[];
   summary: MindSummary | null;
   mood: number | null;
+  worryLedger: MindWorryLedger | null;
+  loopRadar: MindLoopRadarDay[];
+  /**
+   * Sealed entry text, loaded only when the user deliberately opens the archive and
+   * cleared the moment they leave it. Held apart from `entries` so no ordinary render
+   * path can reach it by accident.
+   */
+  sealedEntries: MindEntry[] | null;
 }
 
 interface MindActions {
@@ -20,6 +28,9 @@ interface MindActions {
     setEntries: (updater: MindEntry[] | ((prev: MindEntry[]) => MindEntry[])) => void;
     setSummary: (summary: MindSummary | null) => void;
     setMood: (mood: number | null) => void;
+    setWorryLedger: (ledger: MindWorryLedger | null) => void;
+    setLoopRadar: (days: MindLoopRadarDay[]) => void;
+    setSealedEntries: (entries: MindEntry[] | null) => void;
   };
 }
 
@@ -31,6 +42,9 @@ const useMindStoreBase = create<MindStore>()(
       entries: [],
       summary: null,
       mood: null,
+      worryLedger: null,
+      loopRadar: [],
+      sealedEntries: null,
       actions: {
         setEntries: (updater) =>
           set((s) => {
@@ -43,6 +57,18 @@ const useMindStoreBase = create<MindStore>()(
         setMood: (mood) =>
           set((s) => {
             s.mood = mood;
+          }),
+        setWorryLedger: (ledger) =>
+          set((s) => {
+            s.worryLedger = ledger;
+          }),
+        setLoopRadar: (days) =>
+          set((s) => {
+            s.loopRadar = days;
+          }),
+        setSealedEntries: (entries) =>
+          set((s) => {
+            s.sealedEntries = entries;
           }),
       },
     })),

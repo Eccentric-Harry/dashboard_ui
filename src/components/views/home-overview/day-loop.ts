@@ -1,38 +1,32 @@
-// The day loop: the five signals /home scores a day on, and how each one is scored.
+// The day loop: the four signals /home scores a day on, and how each one is scored.
 //
-// Everything else about the loop — the segmented arc, the rows under it, the
-// headline, the celebration at 100% — reads this module, so the picture and the
-// number can never drift apart.
+// Everything else about the loop — the arc, the tiles under it, the headline, the
+// celebration at 100% — reads this module, so the picture and the number can never
+// drift apart.
 //
-// Why these five: they are the daily base the rest of the app hangs off — a night
-// of sleep, a mood check-in, movement, one step of learning, and eating decently.
-// Focus minutes, task counts, water and calories still matter and still show in
-// the hero, but they sit *outside* the loop: they measure output volume, which
-// swings with what the day demanded, while these five are the same ask every day.
+// Why these four: sleep, water, fuel and tasks are the day's base load — rested,
+// hydrated, fed, and moving through what you said you'd do. Mood, movement and
+// learning still live on the page (and on their own routes); they just don't score
+// the loop, which keeps the hero to one glanceable row of four rather than a wall
+// of counters.
 
 import type { MealQualityDay } from './home-types'
-import {
-  formatMinutes,
-  LEARNING_TARGET_ENTRIES,
-  MEAL_COVERAGE_TARGET,
-  MOVEMENT_TARGET_SESSIONS,
-  SLEEP_TARGET_MINUTES,
-} from './home-types'
+import { formatMinutes, MEAL_COVERAGE_TARGET, SLEEP_TARGET_MINUTES } from './home-types'
 
-export type LoopMetricId = 'sleep' | 'mood' | 'movement' | 'learning' | 'fuel'
+export type LoopMetricId = 'sleep' | 'water' | 'fuel' | 'tasks'
 
 export interface LoopMetric {
   id: LoopMetricId
   label: string
-  /** 0–1. Drives both the arc segment and the row's bar. */
+  /** 0–1. Drives both the arc's fill and the tile's bar. */
   ratio: number
-  /** Whether the day's ask for this signal is met — the arc's segment reads full. */
+  /** Whether the day's ask for this signal is met. */
   done: boolean
-  /** The number/word the row leads with. */
+  /** The number/word the tile leads with. */
   display: string
-  /** Trailing context on the row ("/7h 30m", "· 2 meals"), omitted when there is none. */
+  /** Trailing context on the tile ("/7h 30m", "· 2 meals"), omitted when there is none. */
   sub?: string
-  /** The row's aria description — what this number means. */
+  /** The tile's aria description — what this number means. */
   hint: string
   /** Button text when this is the signal the hero suggests closing next. */
   cta: string
@@ -43,22 +37,22 @@ export interface LoopMetric {
 export interface DayLoopInput {
   /** Minutes slept on the night that ended this morning; null when unlogged. */
   sleepMinutes: number | null
-  /** Today's mood check-in, 1–5; null when the user hasn't checked in. */
-  moodScore: number | null
-  /** Workouts recorded today. */
-  workouts: number
-  /** First workout's name, for the row's sub-label. */
-  workoutLabel: string | null
-  /** Learning entries logged today. */
-  learnings: number
+  /** Water logged today, in ml. */
+  waterMl: number
+  /** The day's hydration target in ml; falls back internally when unset. */
+  waterTargetMl: number
   /** Today's meal-quality aggregate from the nutrition summary. */
   meal: MealQualityDay | null
+  /** Tasks completed today, and how many are on the list. */
+  tasksCompleted: number
+  tasksTotal: number
 }
 
-const MOOD_WORDS = ['Heavy', 'Low', 'Okay', 'Good', 'Light'] as const
+/** Used when the hydration record carries no target of its own. */
+const WATER_TARGET_FALLBACK_ML = 3000
 
 /**
- * Grade points (A=4 … D=1) → how much of the fuel row that day's eating earns.
+ * Grade points (A=4 … D=1) → how much of the fuel tile that day's eating earns.
  *
  * Not a straight rescale: a straight one would score a day of D-grade meals at
  * zero, making "ate badly" indistinguishable from "ate nothing", and would treat
@@ -107,87 +101,31 @@ function sleepMetric(minutes: number | null): LoopMetric {
   }
 }
 
-/**
- * Mood is scored on *having checked in*, not on the score itself. A heavy day is
- * still a logged day, and a loop that drops because you felt low would be asking
- * you to feel better to make a number go up.
- */
-function moodMetric(score: number | null): LoopMetric {
-  if (score == null) {
+/** Water against the day's target — the tile itself is the +250ml button. */
+function waterMetric(ml: number, targetMl: number): LoopMetric {
+  const target = targetMl > 0 ? targetMl : WATER_TARGET_FALLBACK_ML
+  if (ml <= 0) {
     return {
-      id: 'mood',
-      label: 'Mood',
+      id: 'water',
+      label: 'Water',
       ratio: 0,
       done: false,
-      display: 'No check-in',
-      hint: 'No mood logged yet',
-      cta: 'Check in on your mood',
+      display: 'None yet',
+      hint: 'Nothing logged — tap to add 250ml',
+      cta: 'Log your first glass',
       empty: true,
     }
   }
+  const ratio = clamp01(ml / target)
   return {
-    id: 'mood',
-    label: 'Mood',
-    ratio: 1,
-    done: true,
-    display: MOOD_WORDS[Math.min(Math.max(score, 1), 5) - 1],
-    sub: `${score}/5`,
-    hint: 'Checked in today',
-    cta: 'Check in on your mood',
-    empty: false,
-  }
-}
-
-function movementMetric(workouts: number, label: string | null): LoopMetric {
-  const ratio = clamp01(workouts / MOVEMENT_TARGET_SESSIONS)
-  if (workouts <= 0) {
-    return {
-      id: 'movement',
-      label: 'Movement',
-      ratio: 0,
-      done: false,
-      display: 'Rest day',
-      hint: 'Nothing logged yet — any session counts',
-      cta: 'Log a workout',
-      empty: true,
-    }
-  }
-  return {
-    id: 'movement',
-    label: 'Movement',
+    id: 'water',
+    label: 'Water',
     ratio,
     done: ratio >= 1,
-    display: workouts === 1 ? 'Moved' : `${workouts} sessions`,
-    sub: workouts === 1 && label ? label : undefined,
-    hint: 'Logged today',
-    cta: 'Log a workout',
-    empty: false,
-  }
-}
-
-function learningMetric(learnings: number): LoopMetric {
-  if (learnings <= 0) {
-    return {
-      id: 'learning',
-      label: 'Learning',
-      ratio: 0,
-      done: false,
-      display: 'Nothing yet',
-      hint: 'One entry closes this',
-      cta: 'Log a learning',
-      empty: true,
-    }
-  }
-  const ratio = clamp01(learnings / LEARNING_TARGET_ENTRIES)
-  return {
-    id: 'learning',
-    label: 'Learning',
-    ratio,
-    done: ratio >= 1,
-    display: `${learnings}`,
-    sub: learnings === 1 ? 'entry' : 'entries',
-    hint: 'Logged today',
-    cta: 'Log a learning',
+    display: ml.toLocaleString(),
+    sub: `/${target.toLocaleString()} ml`,
+    hint: 'Logged today — tap to add 250ml',
+    cta: 'Add a glass of water',
     empty: false,
   }
 }
@@ -236,21 +174,55 @@ function fuelMetric(meal: MealQualityDay | null): LoopMetric {
   }
 }
 
-/** The five loop signals, in the order they read on the arc and in the rows. */
+/**
+ * Tasks closed out of the ones planned.
+ *
+ * An empty list reads as unplanned, not as finished — scoring "no tasks" at 100%
+ * would hand the loop a quarter of its score for a day nobody decided anything
+ * about. So it counts as an open signal the day can still fix, with a nudge to
+ * put something on the list.
+ */
+function tasksMetric(completed: number, total: number): LoopMetric {
+  if (total <= 0) {
+    return {
+      id: 'tasks',
+      label: 'Tasks',
+      ratio: 0,
+      done: false,
+      display: 'None planned',
+      hint: "Nothing on today's list yet",
+      cta: "Plan today's tasks",
+      empty: true,
+    }
+  }
+  const ratio = clamp01(completed / total)
+  return {
+    id: 'tasks',
+    label: 'Tasks',
+    ratio,
+    done: ratio >= 1,
+    display: `${completed}`,
+    sub: `/${total} done`,
+    hint: 'Completed today',
+    cta: 'Close out a task',
+    empty: false,
+  }
+}
+
+/** The four loop signals, in the order they read on the arc and in the tiles. */
 export function buildDayLoop(input: DayLoopInput): LoopMetric[] {
   return [
     sleepMetric(input.sleepMinutes),
-    moodMetric(input.moodScore),
-    movementMetric(input.workouts, input.workoutLabel),
-    learningMetric(input.learnings),
+    waterMetric(input.waterMl, input.waterTargetMl),
     fuelMetric(input.meal),
+    tasksMetric(input.tasksCompleted, input.tasksTotal),
   ]
 }
 
 /**
- * The gauge percentage: an unweighted mean of the five ratios.
+ * The gauge percentage: an unweighted mean of the four ratios.
  *
- * Unweighted on purpose — the whole point of naming five signals is that no one of
+ * Unweighted on purpose — the whole point of naming four signals is that no one of
  * them can carry the day on its own, and a weighting would quietly re-rank them.
  * Every metric always counts, including the ones with nothing logged: a day with no
  * sleep entry is a day the loop can't call closed, not a day sleep didn't apply to.
@@ -261,13 +233,13 @@ export function loopScore(metrics: LoopMetric[]): number {
   return Math.round((total / metrics.length) * 100)
 }
 
-/** How many of the five are closed — the "3 of 5" line under the gauge. */
+/** How many of the four are closed — the "3 of 4" line under the gauge. */
 export function loopClosedCount(metrics: LoopMetric[]): number {
   return metrics.filter((metric) => metric.done).length
 }
 
 /** Cheapest signal to close first, for breaking ties between equally-open ones. */
-const EFFORT: Record<LoopMetricId, number> = { mood: 0, learning: 1, fuel: 2, sleep: 3, movement: 4 }
+const EFFORT: Record<LoopMetricId, number> = { water: 0, tasks: 1, fuel: 2, sleep: 3 }
 
 /**
  * The one thing most worth doing next, or null when there's nothing to suggest.
@@ -275,7 +247,7 @@ const EFFORT: Record<LoopMetricId, number> = { mood: 0, learning: 1, fuel: 2, sl
  * Only *unlogged* signals qualify. A six-hour night scores 0.8 and never reaches
  * done, but no button can fix it before tomorrow — suggesting it would be nagging
  * about a closed decision. Empty signals are the ones still open to being changed
- * today, and among those the cheapest wins: a mood tap beats going for a run.
+ * today, and among those the cheapest wins: a glass of water beats cooking a meal.
  */
 export function nextLoopNudge(metrics: LoopMetric[]): LoopMetric | null {
   const actionable = metrics.filter((metric) => metric.empty)

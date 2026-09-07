@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import toast from 'react-hot-toast'
-import type { MindDistortionTag, MindEntry } from './mind-types'
+import type {
+  MindDistortionTag,
+  MindEntry,
+  MindIntrusiveCategory,
+  MindLane,
+  MindWorryOutcome,
+  MindWorrySeverity,
+} from './mind-types'
 import { AFFIRMATIONS, buildSeedEntries, mindAddDays, mindIsoDate, MIND_VALUE_TAGS } from './mind-types'
 import { mindService } from '../../../services/mind-service'
 import { mindActions, useMindStore } from '../../../store/mind-store'
@@ -13,6 +20,7 @@ import { WorryParkingCard } from './components/worry-parking-card'
 import { GratitudeCard } from './components/gratitude-card'
 import { BreatheCard, GroundingCard } from './components/calm-tools-card'
 import { SosOverlay } from './components/sos-overlay'
+import { MindFooter } from './components/mind-footer'
 import './mind-overview.css'
 
 const RELEASE_ANIMATION_MS = 620
@@ -30,9 +38,21 @@ function MindOverviewDashboard() {
   const entries = useMindStore.use.entries()
   const summary = useMindStore.use.summary()
   const mood = useMindStore.use.mood()
+  const worryLedger = useMindStore.use.worryLedger()
+  const loopRadar = useMindStore.use.loopRadar()
   const [releasingIds, setReleasingIds] = useState<ReadonlySet<string>>(new Set())
   const [sosOpen, setSosOpen] = useState(false)
   const [affirmationIndex, setAffirmationIndex] = useState(0)
+  /**
+   * A coarse clock for the rolling-hour notice cap. Without it the cap is computed from
+   * a frozen timestamp and never lifts until some unrelated entry changes — which would
+   * leave the button disabled long after the hour had passed.
+   */
+  const [nowMs, setNowMs] = useState(() => Date.now())
+  useEffect(() => {
+    const id = window.setInterval(() => setNowMs(Date.now()), 60_000)
+    return () => window.clearInterval(id)
+  }, [])
 
   // Anchor persistence state
   const [intention, setIntention] = useState('')
@@ -78,7 +98,7 @@ function MindOverviewDashboard() {
       // Sync intention from backend
       const anchor = fetched.find((e) => e.type === 'INTENTION' && e.date === selectedDate)
       if (anchor) {
-        setIntention(anchor.text)
+        setIntention(anchor.text ?? '')
         setValueTag(anchor.valueTag || null)
       } else {
         setIntention('')
@@ -93,7 +113,7 @@ function MindOverviewDashboard() {
       // Sync intention from seeds
       const anchor = seeds.find((e) => e.type === 'INTENTION' && e.date === selectedDate)
       if (anchor) {
-        setIntention(anchor.text)
+        setIntention(anchor.text ?? '')
         setValueTag(anchor.valueTag || null)
       } else {
         setIntention('')
@@ -282,13 +302,30 @@ function MindOverviewDashboard() {
   )
 
   const handlePark = useCallback(
-    async (id: string, days: number) => {
+    async (id: string, days: number, fearedOutcome: string, probability: number | null) => {
       const reviewDate = mindAddDays(selectedDate, days)
-      patchEntry(id, { status: 'PARKED', reviewDate, wasParked: true })
-      toast.success('Parked. It will come back when you said — not before.')
+      const prediction = fearedOutcome
+        ? { fearedOutcome, predictedProbability: probability, outcome: null, severity: null, recordedAt: null }
+        : undefined
+      patchEntry(id, { status: 'PARKED', reviewDate, wasParked: true, ...(prediction ? { prediction } : {}) })
+      toast.success(
+        fearedOutcome
+          ? 'Parked, with your prediction on record. We\'ll check what actually happened.'
+          : 'Parked. It will come back when you said — not before.',
+      )
       try {
         const res = await mindService.updateStatus(id, { status: 'PARKED', reviewDate })
         if (res.error) throw new Error(res.error.message)
+        // The prediction is a separate write so that a park still succeeds if the user
+        // skipped the forecast — the forecast is the bonus, not the point.
+        if (fearedOutcome) {
+          const predRes = await mindService.savePrediction(id, {
+            fearedOutcome,
+            predictedProbability: probability ?? undefined,
+          })
+          if (predRes.error) throw new Error(predRes.error.message)
+          if (predRes.data) patchEntry(id, predRes.data)
+        }
       } catch {
         toast.error('Could not park that — try again.')
         void load()
@@ -296,6 +333,139 @@ function MindOverviewDashboard() {
     },
     [patchEntry, selectedDate, load],
   )
+
+  /** Triage: answer "what is this?" before the card offers any action on it. */
+  const handleSetLane = useCallback(
+    async (id: string, lane: MindLane) => {
+      patchEntry(id, { lane, ...(lane === 'INTRUSIVE' ? { textSealed: true, text: null } : {}) })
+      try {
+        const res = await mindService.setLane(id, lane)
+        if (res.error || !res.data) throw new Error(res.error?.message ?? 'Failed to triage')
+        patchEntry(id, res.data)
+      } catch {
+        toast.error('Could not sort that — try again.')
+        void load()
+      }
+    },
+    [patchEntry, load],
+  )
+
+  /**
+   * Noticed and let pass. No toast celebrating it, no counter that rewards volume —
+   * a reward here would turn noticing into one more thing to perform.
+   */
+  const handleNoticed = useCallback(
+    async (id: string, category: MindIntrusiveCategory) => {
+      setReleasingIds((prev) => new Set(prev).add(id))
+      window.setTimeout(async () => {
+        patchEntry(id, {
+          status: 'NOTICED',
+          textSealed: true,
+          text: null,
+          intrusive: { category, intensity: null, urgeWaitedSeconds: null, urgeFaded: null },
+          resolvedAt: new Date().toISOString(),
+        })
+        setReleasingIds((prev) => {
+          const next = new Set(prev)
+          next.delete(id)
+          return next
+        })
+        try {
+          const res = await mindService.updateStatus(id, { status: 'NOTICED' })
+          if (res.error) throw new Error(res.error.message)
+          void refreshSummary()
+        } catch {
+          /* already gone from view; a reload reconciles */
+        }
+      }, RELEASE_ANIMATION_MS)
+    },
+    [patchEntry, refreshSummary],
+  )
+
+  const refreshLedger = useCallback(async () => {
+    const res = await mindService.getWorryLedger()
+    if (!res.error && res.data) mindActions.setWorryLedger(res.data)
+  }, [])
+
+  const refreshRadar = useCallback(async () => {
+    const res = await mindService.getLoopRadar(30)
+    if (!res.error && res.data) mindActions.setLoopRadar(res.data)
+  }, [])
+
+  useEffect(() => {
+    void refreshLedger()
+    void refreshRadar()
+  }, [refreshLedger, refreshRadar])
+
+  /**
+   * Record what actually happened. This is the row that makes the ledger worth having —
+   * a prediction nobody ever answers is just the worry again, written down.
+   */
+  const handleVerdict = useCallback(
+    async (id: string, outcome: MindWorryOutcome, severity: MindWorrySeverity | null) => {
+      patchEntry(id, {
+        status: 'RESOLVED',
+        reviewDate: null,
+        resolvedAt: new Date().toISOString(),
+      })
+      try {
+        const res = await mindService.saveVerdict(id, { outcome, severity: severity ?? undefined })
+        if (res.error || !res.data) throw new Error(res.error?.message ?? 'Failed to save verdict')
+        patchEntry(id, res.data)
+        void refreshLedger()
+        void refreshSummary()
+      } catch {
+        toast.error('Could not record that — try again.')
+        void load()
+      }
+    },
+    [patchEntry, refreshLedger, refreshSummary, load],
+  )
+
+  /**
+   * An urge waited out. Recorded as its own DOUBT-category notice rather than attached
+   * to an inbox entry — an urge to check rarely arrives as something you sat down and
+   * typed out.
+   */
+  const handleLogUrge = useCallback(
+    async (waitedSeconds: number, faded: boolean) => {
+      const res = await mindService.noticed({
+        category: 'DOUBT',
+        urgeWaitedSeconds: waitedSeconds,
+        urgeFaded: faded,
+        date: selectedDate,
+      })
+      if (!res.error && res.data) {
+        const saved = res.data
+        mindActions.setEntries((prev) => [saved, ...prev])
+      }
+    },
+    [selectedDate],
+  )
+
+  /** The one-tap path: nothing typed, nothing stored but that it passed through. */
+  const handleQuickNotice = useCallback(async () => {
+    const optimistic: MindEntry = {
+      id: tempId(),
+      type: 'THOUGHT',
+      text: null,
+      lane: 'INTRUSIVE',
+      status: 'NOTICED',
+      intrusive: { category: 'UNNAMED', intensity: null, urgeWaitedSeconds: null, urgeFaded: null },
+      date: selectedDate,
+      createdAt: new Date().toISOString(),
+      resolvedAt: new Date().toISOString(),
+    }
+    mindActions.setEntries((prev) => [optimistic, ...prev])
+    try {
+      const res = await mindService.noticed({ date: selectedDate })
+      if (res.error || !res.data) throw new Error(res.error?.message ?? 'Failed to log')
+      const saved = res.data
+      mindActions.setEntries((prev) => prev.map((e) => (e.id === optimistic.id ? saved : e)))
+    } catch {
+      mindActions.setEntries((prev) => prev.filter((e) => e.id !== optimistic.id))
+    }
+  }, [selectedDate])
 
   const handleRelease = useCallback(
     (id: string) => {
@@ -419,6 +589,7 @@ function MindOverviewDashboard() {
   const thoughts = useMemo(() => entries.filter((e) => e.type === 'THOUGHT'), [entries])
   const openThoughts = useMemo(() => thoughts.filter((e) => e.status === 'OPEN'), [thoughts])
   const parked = useMemo(() => thoughts.filter((e) => e.status === 'PARKED'), [thoughts])
+  const awaitingVerdict = useMemo(() => thoughts.filter((e) => e.status === 'VERDICT_DUE'), [thoughts])
   const releasedParked = useMemo(
     () => thoughts.filter((e) => e.wasParked && e.status === 'RELEASED'),
     [thoughts],
@@ -439,6 +610,27 @@ function MindOverviewDashboard() {
     [thoughts],
   )
 
+  /**
+   * Past this many notices in an hour, the counter stops moving and the button goes
+   * quiet. Not a punishment and never phrased as one — the risk is that tapping
+   * "noticed" becomes its own ritual, and a number that keeps climbing is exactly the
+   * thing that would make it one.
+   */
+  const NOTICE_HOURLY_CAP = 10
+
+  const noticedToday = useMemo(
+    () => thoughts.filter((e) => e.status === 'NOTICED' && e.date === selectedDate).length,
+    [thoughts, selectedDate],
+  )
+
+  const noticedCapped = useMemo(() => {
+    const hourAgo = nowMs - 60 * 60 * 1000
+    const recent = thoughts.filter(
+      (e) => e.status === 'NOTICED' && e.createdAt && new Date(e.createdAt).getTime() >= hourAgo,
+    )
+    return recent.length >= NOTICE_HOURLY_CAP
+  }, [thoughts, nowMs])
+
   return (
     <div className="mind-dashboard">
       <MindHeader
@@ -446,7 +638,6 @@ function MindOverviewDashboard() {
         mood={mood}
         onMoodSelect={handleMoodSelect}
         streakDays={summary?.streakDays ?? 0}
-        onOpenSos={() => setSosOpen(true)}
       />
 
       <div className="mind-grid">
@@ -472,26 +663,37 @@ function MindOverviewDashboard() {
           closedLoops={closedLoops}
           releasingIds={releasingIds}
           stats={stats}
+          noticedToday={noticedToday}
+          noticedCapped={noticedCapped}
           onCapture={handleCapture}
+          onQuickNotice={handleQuickNotice}
+          onLogUrge={handleLogUrge}
+          onSetLane={handleSetLane}
           onDo={handleDo}
           onPark={handlePark}
           onRelease={handleRelease}
+          onNoticed={handleNoticed}
           onReframeSave={handleReframeSave}
         />
 
         <EvidenceLockerCard wins={wins} autoEvidence={summary} onAddWin={handleAddWin} />
 
-        <MindIntelligenceCard entries={thoughts} />
+        <MindIntelligenceCard entries={thoughts} radar={loopRadar} ledger={worryLedger} />
 
         <WorryParkingCard
           parked={parked}
+          awaitingVerdict={awaitingVerdict}
           released={releasedParked}
+          ledger={worryLedger}
           onBringBack={handleBringBack}
           onRelease={handleRelease}
+          onVerdict={handleVerdict}
         />
 
         <GratitudeCard gratitude={gratitude} onAddGratitude={handleAddGratitude} />
       </div>
+
+      <MindFooter onOpenSos={() => setSosOpen(true)} />
 
       <SosOverlay open={sosOpen} onClose={() => setSosOpen(false)} />
     </div>

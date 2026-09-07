@@ -28,6 +28,7 @@ import { focusActions } from './store/focus-store'
 import { notificationActions, useNotifications } from './store/notification-store'
 import { OverlayLoader } from './components/ui/OverlayLoader'
 import { NotificationCenter } from './components/dashboard/quantified-self-dashboard/components/notification-center'
+import { SpiralBreakerOverlay } from './components/spiral-breaker/spiral-breaker-overlay';
 import { VisitorAuthPopup } from './components/auth/VisitorAuthPopup'
 import { enableGuestInterceptor } from './lib/guest-interceptor'
 
@@ -421,6 +422,8 @@ function App() {
       </div>
       <MobileProfileTrigger onNavigate={navigateTo} activePath={pathname} />
       <NotificationCenter onNavigate={navigateTo} />
+      {/* Mounted once at the root so the Spiral Breaker is one tap from any route. */}
+      <SpiralBreakerOverlay />
       <OverlayLoader show={showOverlay} />
     </>
   );

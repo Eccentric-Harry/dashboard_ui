@@ -1612,8 +1612,25 @@ export interface ApiEnvelope<T> {
   meta: ApiMeta;
 }
 
-export type MindEntryType = 'THOUGHT' | 'WIN' | 'GRATITUDE' | 'AFFIRMATION' | 'REFLECTION' | 'INTENTION' | 'BREATH';
-export type MindEntryStatus = 'OPEN' | 'RESOLVED' | 'PARKED' | 'RELEASED' | 'CONVERTED';
+export type MindEntryType =
+  | 'THOUGHT'
+  | 'WIN'
+  | 'GRATITUDE'
+  | 'AFFIRMATION'
+  | 'REFLECTION'
+  | 'INTENTION'
+  | 'BREATH'
+  | 'SPIRAL';
+export type MindEntryStatus =
+  | 'OPEN'
+  | 'RESOLVED'
+  | 'PARKED'
+  | 'RELEASED'
+  | 'CONVERTED'
+  /** An intrusive thought that was noticed and let pass. Terminal — never returns to the inbox. */
+  | 'NOTICED'
+  /** A parked worry whose review date arrived and whose prediction is still unanswered. */
+  | 'VERDICT_DUE';
 export type MindValueTag = 'Coding' | 'Growth' | 'Calm' | 'Confidence' | 'Devotion' | 'Joy' | 'Fulfilment';
 export type MindDistortionTag =
   | 'Catastrophizing'
@@ -1622,22 +1639,105 @@ export type MindDistortionTag =
   | 'Fortune-telling'
   | 'Labeling';
 
+/**
+ * Which of the three handling lanes a thought was triaged into.
+ *
+ * This is the axis the UI branches on, and it matters more than it looks: a worry gets
+ * better when it is examined and predicted, an intrusive thought gets worse. So the lane
+ * — not the text — decides which actions are offered at all. Null means untriaged.
+ */
+export type MindLane = 'PROBLEM' | 'WORRY' | 'INTRUSIVE';
+
+export type MindIntrusiveCategory = 'DOUBT' | 'HARM' | 'IMMORAL' | 'UNNAMED';
+export type MindWorryOutcome = 'NOT_HAPPENED' | 'PARTLY' | 'HAPPENED';
+export type MindWorrySeverity = 'BETTER' | 'AS_FEARED' | 'WORSE';
+
+/** A worry's feared outcome and predicted likelihood, plus the verdict once it is known. */
+export interface MindWorryPrediction {
+  fearedOutcome?: string | null;
+  /** Gut-feel likelihood at park time, 0-100. */
+  predictedProbability?: number | null;
+  outcome?: MindWorryOutcome | null;
+  severity?: MindWorrySeverity | null;
+  recordedAt?: string | null;
+}
+
+/** Coarse metadata on an INTRUSIVE-lane entry. Deliberately shallow — detail invites rumination. */
+export interface MindIntrusiveMeta {
+  category?: MindIntrusiveCategory | null;
+  /** 1-5. */
+  intensity?: number | null;
+  urgeWaitedSeconds?: number | null;
+  urgeFaded?: boolean | null;
+}
+
+/** A completed or abandoned Spiral Breaker session. */
+export interface MindSpiralLog {
+  solvableIn24h?: boolean | null;
+  returnedToTaskId?: string | null;
+  durationSeconds?: number | null;
+}
+
 export interface MindEntry {
   id: string;
   type: MindEntryType;
-  text: string;
+  /**
+   * Null when the entry is sealed — the backend strips it on every read except the
+   * sealed archive, so never assume this is present on an INTRUSIVE-lane entry.
+   */
+  text: string | null;
   reframedText?: string | null;
   distortionTag?: MindDistortionTag | null;
   status: MindEntryStatus;
   linkedTaskId?: string | null;
   valueTag?: MindValueTag | null;
   pinned?: boolean;
+  lane?: MindLane | null;
+  /** True when `text` is withheld from normal reads. Render nothing in its place. */
+  textSealed?: boolean;
+  prediction?: MindWorryPrediction | null;
+  intrusive?: MindIntrusiveMeta | null;
+  spiral?: MindSpiralLog | null;
   reviewDate?: string | null;
   /** True once this entry has ever been PARKED — unlike reviewDate, this never clears on resurface. */
   wasParked?: boolean;
   date: string;
   createdAt?: string;
   resolvedAt?: string | null;
+}
+
+/**
+ * The accumulating case against catastrophising: what the gut predicted against what
+ * actually happened. Rates are null until at least one verdict exists — show an empty
+ * state rather than inventing a reassuring 0%.
+ */
+export interface MindWorryLedger {
+  totalPredicted: number;
+  totalResolved: number;
+  notHappened: number;
+  partly: number;
+  happened: number;
+  meanPredictedProbability: number | null;
+  /** 0-100. PARTLY counts as half an occurrence. */
+  actualOccurrenceRate: number | null;
+  copedBetter: number;
+  copedAsFeared: number;
+  copedWorse: number;
+}
+
+/** One day of mind activity next to the Life OS signals that plausibly move it. */
+export interface MindLoopRadarDay {
+  date: string;
+  problems: number;
+  worries: number;
+  intrusive: number;
+  untriaged: number;
+  spirals: number;
+  sleepHours: number | null;
+  focusMinutes: number | null;
+  tasksCompleted: number | null;
+  workouts: number | null;
+  moodScore: number | null;
 }
 
 export interface MindSummary {
@@ -1667,6 +1767,37 @@ export interface MindStatusPayload {
   reframedText?: string;
   distortionTag?: MindDistortionTag | null;
   pinned?: boolean;
+}
+
+/** Every field optional — the primary path is a single tap with an empty body. */
+export interface MindNoticedPayload {
+  text?: string;
+  category?: MindIntrusiveCategory;
+  intensity?: number;
+  urgeWaitedSeconds?: number;
+  urgeFaded?: boolean;
+  date?: string;
+}
+
+export interface MindLanePayload {
+  lane: MindLane;
+}
+
+export interface MindPredictionPayload {
+  fearedOutcome?: string;
+  predictedProbability?: number;
+}
+
+export interface MindVerdictPayload {
+  outcome: MindWorryOutcome;
+  severity?: MindWorrySeverity;
+}
+
+export interface MindSpiralPayload {
+  solvableIn24h?: boolean;
+  returnedToTaskId?: string;
+  durationSeconds?: number;
+  date?: string;
 }
 
 export async function fetchMindEntries(type?: MindEntryType, status?: MindEntryStatus): Promise<ApiEnvelope<MindEntry[]>> {

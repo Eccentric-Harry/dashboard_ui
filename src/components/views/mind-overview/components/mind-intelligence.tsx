@@ -8,7 +8,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis } from 'recharts'
 import { Brain, Sparkles } from 'lucide-react'
-import type { MindEntry } from '../../../../lib/api'
+import type { MindEntry, MindLoopRadarDay, MindWorryLedger } from '../../../../types/mind'
 import { isoDate, shortDay } from '../../../../lib/insights/engine'
 import type { Insight } from '../../../../lib/insights/engine'
 import {
@@ -39,7 +39,14 @@ const TREND_TOOLTIP = ({
     </div>
   ) : null
 
-function MindIntelligenceCard({ entries }: { entries: MindEntry[] }) {
+type MindIntelligenceCardProps = {
+  entries: MindEntry[]
+  /** Loop Radar series and ledger totals — optional so the panel still renders without them. */
+  radar?: MindLoopRadarDay[]
+  ledger?: MindWorryLedger | null
+}
+
+function MindIntelligenceCard({ entries, radar, ledger }: MindIntelligenceCardProps) {
   const today = isoDate()
   const [isMounted, setIsMounted] = useState(false)
 
@@ -49,8 +56,14 @@ function MindIntelligenceCard({ entries }: { entries: MindEntry[] }) {
   }, [])
 
   const engineInput = useMemo(
-    () => ({ today, days: buildMindDays(entries, today, WINDOW_DAYS), windowDays: WINDOW_DAYS }),
-    [entries, today],
+    () => ({
+      today,
+      days: buildMindDays(entries, today, WINDOW_DAYS),
+      windowDays: WINDOW_DAYS,
+      radar,
+      ledger: ledger ?? undefined,
+    }),
+    [entries, today, radar, ledger],
   )
 
   const composition = useMemo(() => triageComposition(engineInput), [engineInput])

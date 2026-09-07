@@ -10,8 +10,8 @@
 // used here, matching the "never guilt" rule.
 
 import type { Insight } from './engine'
-import { confidenceFrom, lastNDates, rankInsights } from './engine'
-import type { MindDistortionTag, MindEntry } from '../api'
+import { confidenceFrom, lastNDates, mean, rankInsights } from './engine'
+import type { MindDistortionTag, MindEntry, MindLoopRadarDay, MindWorryLedger } from '../api'
 
 // ---------- Inputs ----------
 
@@ -25,6 +25,10 @@ export interface MindEngineInput {
   /** Ascending day series, one entry per day in the window; build with buildMindDays. */
   days: MindDay[]
   windowDays: number
+  /** Loop Radar series from `/mind/loop-radar` — mind activity next to sleep, focus, workouts. */
+  radar?: MindLoopRadarDay[]
+  /** Worry ledger totals from `/mind/worry-ledger`. */
+  ledger?: MindWorryLedger
 }
 
 /** Build the ascending day series for the `windowDays` ending at `today` from raw THOUGHT entries. */
@@ -353,6 +357,136 @@ function closingLoopWinRule(input: MindEngineInput): Insight | null {
 }
 
 /** All mind insights that pass their thresholds, ranked. */
+// ---------- Loop Radar ----------
+//
+// These rules answer "what actually gets me out", by putting loop volume next to the
+// signals the rest of Life OS already records. They are correlational and say so —
+// none of them claims a cause, and none fires on a sample small enough to be noise.
+// An insight drawn from three days reads to the person using it as a verdict, not a
+// hypothesis, which is exactly the failure worth avoiding here.
+
+const MIN_RADAR_DAYS = 12
+const MIN_GROUP_DAYS = 3
+
+const loopCount = (d: MindLoopRadarDay): number => d.worries + d.intrusive + d.untriaged
+
+/** Mean loop volume on days meeting `predicate`, versus all other days with data. */
+function splitByPredicate(
+  radar: MindLoopRadarDay[],
+  hasSignal: (d: MindLoopRadarDay) => boolean,
+  predicate: (d: MindLoopRadarDay) => boolean,
+): { onMean: number; offMean: number; onDays: number; offDays: number } | null {
+  const withSignal = radar.filter(hasSignal)
+  if (withSignal.length < MIN_RADAR_DAYS) return null
+  const on = withSignal.filter(predicate)
+  const off = withSignal.filter((d) => !predicate(d))
+  if (on.length < MIN_GROUP_DAYS || off.length < MIN_GROUP_DAYS) return null
+  return {
+    onMean: mean(on.map(loopCount)),
+    offMean: mean(off.map(loopCount)),
+    onDays: on.length,
+    offDays: off.length,
+  }
+}
+
+function sleepLoopRule(input: MindEngineInput): Insight | null {
+  const radar = input.radar
+  if (!radar) return null
+  const split = splitByPredicate(radar, (d) => d.sleepHours != null, (d) => (d.sleepHours ?? 0) < 6)
+  if (!split) return null
+  // Only fires when short-sleep days are meaningfully busier, and never the reverse —
+  // "you loop less when you sleep badly" is noise, not a finding worth surfacing.
+  if (split.onMean < split.offMean + 1) return null
+  return {
+    id: 'mnd-radar-sleep',
+    domain: 'mind',
+    kind: 'composition',
+    sentiment: 'watch',
+    icon: 'sleep',
+    title: `On under six hours' sleep you log about ${split.onMean.toFixed(1)} thoughts a day, against ${split.offMean.toFixed(1)} on other days.`,
+    detail: `${split.onDays} short nights vs ${split.offDays} others in the window. A pattern, not a cause — but sleep is the cheaper thing to change.`,
+    sampleWindow: `last ${radar.length} days`,
+    confidence: confidenceFrom(split.onDays + split.offDays, 0.5),
+    effect: Math.min((split.onMean - split.offMean) / 6, 1),
+  }
+}
+
+function movementLoopRule(input: MindEngineInput): Insight | null {
+  const radar = input.radar
+  if (!radar) return null
+  const split = splitByPredicate(radar, () => true, (d) => (d.workouts ?? 0) > 0)
+  if (!split) return null
+  if (split.offMean < split.onMean + 1) return null
+  return {
+    id: 'mnd-radar-movement',
+    domain: 'mind',
+    kind: 'composition',
+    sentiment: 'positive',
+    icon: 'balance',
+    title: `Days you move are quieter — about ${split.onMean.toFixed(1)} thoughts logged, against ${split.offMean.toFixed(1)} on days you don't.`,
+    detail: `${split.onDays} days with a workout vs ${split.offDays} without.`,
+    sampleWindow: `last ${radar.length} days`,
+    confidence: confidenceFrom(split.onDays + split.offDays, 0.5),
+    effect: Math.min((split.offMean - split.onMean) / 6, 1),
+  }
+}
+
+/**
+ * Is the user getting quicker at naming *what kind* of thought they're holding?
+ *
+ * Recognition is the skill the triage lane is actually training — knowing a thought is
+ * intrusive rather than arguing with it is most of the work. So this measures triage
+ * rate, and never the content of what gets triaged.
+ */
+function recognitionRule(input: MindEngineInput): Insight | null {
+  const radar = input.radar
+  if (!radar || radar.length < 14) return null
+  const share = (days: MindLoopRadarDay[]): number | null => {
+    const total = days.reduce((s, d) => s + d.problems + d.worries + d.intrusive + d.untriaged, 0)
+    if (total === 0) return null
+    const triaged = days.reduce((s, d) => s + d.problems + d.worries + d.intrusive, 0)
+    return (triaged / total) * 100
+  }
+  const recent = share(radar.slice(-7))
+  const previous = share(radar.slice(-14, -7))
+  if (recent == null || previous == null) return null
+  if (recent - previous < 15) return null
+  return {
+    id: 'mnd-radar-recognition',
+    domain: 'mind',
+    kind: 'trend',
+    sentiment: 'positive',
+    icon: 'thought',
+    title: `You're naming what kind of thought it is more often — ${Math.round(recent)}% of captures this week, up from ${Math.round(previous)}%.`,
+    detail: 'Recognising a thought as intrusive rather than arguing with it is most of the work.',
+    sampleWindow: 'last 7 days vs the 7 before',
+    confidence: confidenceFrom(radar.length, (recent - previous) / 100),
+    effect: Math.min((recent - previous) / 100, 1),
+  }
+}
+
+/** The ledger, stated as a sentence. Numbers only — no encouragement attached. */
+function worryLedgerRule(input: MindEngineInput): Insight | null {
+  const ledger = input.ledger
+  if (!ledger || ledger.totalResolved < 4) return null
+  const gut = ledger.meanPredictedProbability
+  const real = ledger.actualOccurrenceRate
+  if (gut == null || real == null) return null
+  if (gut - real < 15) return null
+  return {
+    id: 'mnd-worry-ledger',
+    domain: 'mind',
+    kind: 'win',
+    sentiment: 'positive',
+    icon: 'trophy',
+    title: `Across ${ledger.totalResolved} answered worries your gut averaged ${Math.round(gut)}%, and ${Math.round(real)}% actually happened.`,
+    detail: `${ledger.notHappened} never happened at all. This is your own record, not a general claim.`,
+    sampleWindow: 'all logged predictions',
+    confidence: confidenceFrom(ledger.totalResolved, (gut - real) / 100),
+    effect: Math.min((gut - real) / 100, 1),
+  }
+}
+
 export function mindInsights(input: MindEngineInput): Insight[] {
   const insights = [
     distortionPatternRule(input),
@@ -362,6 +496,10 @@ export function mindInsights(input: MindEngineInput): Insight[] {
     timeOfDayRule(input),
     captureTrendRule(input),
     closingLoopWinRule(input),
+    sleepLoopRule(input),
+    movementLoopRule(input),
+    recognitionRule(input),
+    worryLedgerRule(input),
   ].filter((i): i is Insight => i != null)
   return rankInsights(insights)
 }

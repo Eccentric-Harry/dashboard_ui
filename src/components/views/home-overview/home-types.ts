@@ -46,21 +46,14 @@ export interface SpendingSummary {
 export const SLEEP_TARGET_HOURS = 7.5
 export const SLEEP_TARGET_MINUTES = SLEEP_TARGET_HOURS * 60
 
-// TODO: make the daily focus target user-editable from Profile; hardcoded for now.
-export const FOCUS_TARGET_MINUTES = 120
-
 export const WATER_QUICK_ADD_ML = 250
 
 // ---------- Day-loop targets ----------
-// Deliberately low bars. The loop asks "did the day happen", not "was it perfect":
-// one workout, one learning entry, a mood check-in. See day-loop.ts.
+// Deliberately low bars. The loop asks "did the day happen", not "was it
+// perfect". See day-loop.ts.
 
 /** Meals a fully-logged day is expected to carry, for the fuel row's coverage factor. */
 export const MEAL_COVERAGE_TARGET = 3
-/** Learning entries that count as having taken a step. */
-export const LEARNING_TARGET_ENTRIES = 1
-/** Workouts that count as having moved. */
-export const MOVEMENT_TARGET_SESSIONS = 1
 
 export function isoDate(date: Date = new Date()): string {
   const y = date.getFullYear()

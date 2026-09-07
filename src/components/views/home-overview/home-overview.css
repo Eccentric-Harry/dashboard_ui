@@ -457,8 +457,14 @@
   position: relative;
   display: grid;
   grid-template-columns: minmax(180px, 210px) minmax(0, 1fr);
+  /* The panel grows to fill the card (its row height is set by whatever card
+     sits beside it), and all of that growth lands on the ring/tiles row — the
+     agenda strip keeps its own height. Paired with align-items: stretch, the
+     tile stack always matches the gauge column instead of leaving dead air. */
+  flex: 1;
+  grid-template-rows: minmax(0, 1fr) auto;
   gap: 16px 28px;
-  align-items: center;
+  align-items: stretch;
   padding: 20px 22px 18px;
   border-radius: 22px;
   /* periwinkle — swapped with the sleep card, which now carries the cool
@@ -519,12 +525,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 10px;
 }
 
-/* ---------- The five-segment loop arc ----------
-   One arc per loop signal, each filling independently. Segment order is fixed,
-   so the position of a gap always means the same thing. */
+/* ---------- The loop arc ----------
+   One continuous 270° ring: how much of today is closed. The four tiles beside
+   it carry the breakdown, so the ring itself stays a single unbroken read. */
 
 .home-loop-arc {
   position: relative;
@@ -538,37 +545,26 @@
   overflow: visible;
 }
 
-.home-loop-seg-track {
+.home-loop-track {
   fill: none;
   stroke: rgba(255, 255, 255, 0.6);
-  stroke-width: 14;
+  stroke-width: 15;
   stroke-linecap: round;
 }
 
-.home-loop-seg-fill {
+/* Ink black, one colour: the tiles carry the domain accents, so the ring stays
+   the panel's single loudest mark instead of competing with them. */
+.home-loop-fill {
   fill: none;
-  stroke: var(--home-loop-color, #4b5280);
-  stroke-width: 14;
+  stroke: #171b15;
+  stroke-width: 15;
   stroke-linecap: round;
-  transition: stroke-dashoffset 0.7s cubic-bezier(0.4, 0, 0.2, 1), stroke-width 0.2s ease, opacity 0.2s ease;
+  opacity: 0.92;
+  transition: stroke-dashoffset 0.9s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
 }
 
-/* Hovering a row (or the suggested next step) lifts its segment out of the ring */
-.home-loop-seg.is-active .home-loop-seg-fill {
-  stroke-width: 17;
-}
-
-.home-loop-seg.is-active .home-loop-seg-track {
-  stroke: rgba(255, 255, 255, 0.9);
-}
-
-/* Closed segments carry the full-strength accent; open ones sit back a little
-   so the ring reads as "what's left" before you read any numbers. */
-.home-loop-seg-fill {
-  opacity: 0.78;
-}
-
-.home-loop-seg.is-done .home-loop-seg-fill {
+/* Full loop: the ring goes to full strength rather than growing */
+.home-loop-arc.is-complete .home-loop-fill {
   opacity: 1;
 }
 
@@ -658,26 +654,27 @@
   color: var(--ntr-lime);
 }
 
-/* Five loop tiles in a 2-column grid — the Nutrition mobile-chip grammar
-   (label up top, value below, bar underneath) at every width. Fuel is the odd
-   one out and takes the full last row, which gives its "B avg · 3 meals" the
-   width it needs and reads as deliberate rather than as a stray tile. */
+/* Four loop signals in a 2×2 grid beside the ring — side by side pairs, not
+   stacked full-width rows. Four tiles divide the 2 columns evenly (unlike the
+   old five-signal layout, which needed an odd tile spanning the full row), so
+   the grid can stretch both rows to the gauge column's height with no orphan
+   tile and no leftover gap under the last row. */
 .home-card--hero .ntr-hero-macros {
   position: relative;
   z-index: 1;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+  align-content: stretch;
   gap: 8px;
-}
-
-.home-card--hero .ntr-hero-macros > .home-loop--fuel {
-  grid-column: 1 / -1;
+  height: 100%;
 }
 
 .home-card--hero .ntr-macro-row {
   cursor: pointer;
-  padding: 11px 14px 12px;
-  gap: 7px;
+  justify-content: center;
+  padding: 14px 16px;
+  gap: 9px;
   background: rgba(255, 255, 255, 0.5);
   transition: background-color 0.18s ease, transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -686,14 +683,16 @@
   background: rgba(255, 255, 255, 0.78);
 }
 
+/* Label above value, not side by side — the tile is half-width now, and a
+   left/right split at this width crushes the value against the label. */
 .home-card--hero .ntr-macro-header {
   flex-direction: column;
   align-items: flex-start;
-  gap: 3px;
+  gap: 5px;
 }
 
 .home-card--hero .ntr-macro-header strong {
-  font-size: 14px;
+  font-size: 17px;
   letter-spacing: -0.02em;
   white-space: nowrap;
   overflow: hidden;
@@ -702,7 +701,12 @@
 }
 
 .home-card--hero .ntr-macro-header strong em {
-  font-size: 10px;
+  font-size: 11px;
+}
+
+/* A touch heavier than Nutrition's 5px: four tiles carry the whole panel here */
+.home-card--hero .ntr-macro-bar {
+  height: 6px;
 }
 
 /* Tactile press — every loop row responds to the tap */
@@ -713,23 +717,23 @@
 .home-card--hero .ntr-macro-header p {
   display: inline-flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 5px;
+  gap: 6px;
   min-width: 0;
-  font-size: 10.5px;
+  overflow: hidden;
+  font-size: 11.5px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 /* One accent per loop signal, borrowed from the route each one lives in, so a
    color means the same thing here as it does on the page it links to:
-   sleep = the sleep card's slate blue, mood = mind's violet, movement = the
-   workouts red-clay, learning = learnings' amber, fuel = nutrition's olive.
-   Each is declared once as --home-loop-color and picked up by both the arc
-   segment and the row's bar — the ring and the list can't drift apart. */
-.home-loop-seg--sleep,  .home-loop--sleep    { --home-loop-color: #43799e; }
-.home-loop-seg--mood,   .home-loop--mood     { --home-loop-color: #7a63b8; }
-.home-loop-seg--movement, .home-loop--movement { --home-loop-color: #b5654a; }
-.home-loop-seg--learning, .home-loop--learning { --home-loop-color: #bd8b2f; }
-.home-loop-seg--fuel,   .home-loop--fuel     { --home-loop-color: #7e9c2c; }
+   sleep = the sleep card's slate blue, water = hydration's cooler blue,
+   fuel = nutrition's olive, tasks = the tasks green. The ring stays neutral
+   black so these four are the only colour the panel spends. */
+.home-loop--sleep { --home-loop-color: #43799e; }
+.home-loop--water { --home-loop-color: #5d87ad; }
+.home-loop--fuel  { --home-loop-color: #7e9c2c; }
+.home-loop--tasks { --home-loop-color: #5f8a6e; }
 
 .home-card--hero .ntr-macro-row[class*='home-loop--'] .ntr-macro-bar i {
   background: var(--home-loop-color);
@@ -746,7 +750,7 @@
 }
 
 /* Closed: a small filled dot after the label. Deliberately not a checkmark —
-   five ticks in a row would read as a to-do list, and the loop isn't one. */
+   four ticks in a row would read as a to-do list, and the loop isn't one. */
 .home-loop-tick {
   width: 6px;
   height: 6px;
@@ -755,96 +759,6 @@
   background: var(--home-loop-color);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--home-loop-color) 20%, transparent);
 }
-
-/* ---------- Support strip ----------
-   Focus, tasks, water and calories: shown because the day runs on them, kept
-   out of the loop score because they measure volume, not the daily ask. */
-.home-support-strip {
-  grid-column: 1 / -1;
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
-  margin-top: 2px;
-}
-
-.home-support-chip {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-  padding: 8px 10px 9px;
-  border: 0;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.38);
-  color: var(--ntr-ink);
-  text-align: left;
-  cursor: pointer;
-  transition: background-color 0.18s ease, transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.home-support-chip:hover {
-  background: rgba(255, 255, 255, 0.7);
-}
-
-.home-support-chip:active {
-  transform: scale(0.96);
-}
-
-.home-support-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: rgba(23, 27, 21, 0.6);
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.home-support-label svg {
-  color: var(--home-loop-color);
-}
-
-.home-support-value {
-  overflow: hidden;
-  font-size: 12.5px;
-  font-weight: 750;
-  letter-spacing: -0.02em;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  font-variant-numeric: tabular-nums;
-}
-
-.home-support-value em {
-  color: rgba(23, 27, 21, 0.5);
-  font-size: 9.5px;
-  font-style: normal;
-  font-weight: 700;
-}
-
-.home-support-bar {
-  display: block;
-  height: 3px;
-  border-radius: 999px;
-  background: rgba(23, 27, 21, 0.1);
-  overflow: hidden;
-}
-
-.home-support-bar i {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-  background: var(--home-loop-color);
-  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.home-support--focus { --home-loop-color: #5560bb; }
-.home-support--tasks { --home-loop-color: #5f8a6e; }
-.home-support--water { --home-loop-color: #5d87ad; }
-.home-support--kcal  { --home-loop-color: #7e9c2c; }
 
 /* Overdue is the loudest thing in the hero — and the only red */
 
@@ -956,8 +870,11 @@
 }
 
 @media (max-width: 700px) {
+  /* Stacked: nothing to match heights with, so the rows go back to sizing
+     themselves and the panel to its content. */
   .home-hero-panel {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
     justify-items: center;
   }
 
@@ -2793,50 +2710,33 @@
     width: min(100%, 168px);
   }
 
-  /* Thinner strokes at phone size: at 168px the desktop weight closes the gaps
-     between segments and the ring reads as one arc again. */
-  .home-loop-seg-track,
-  .home-loop-seg-fill {
+  /* Thinner ring at phone size — 15 reads heavy against a 168px arc */
+  .home-loop-track,
+  .home-loop-fill {
     stroke-width: 12;
-  }
-
-  .home-loop-seg.is-active .home-loop-seg-fill {
-    stroke-width: 14;
   }
 
   .home-loop-arc-center strong {
     font-size: 28px;
   }
 
-  /* The 2-column tile grid holds on phones too — just tighter. Also undo
-     nutrition-redesign's mobile flex flip so the grid rules win. */
+  /* The 2×2 grid holds on phones too — just at its own height, since the
+     panel stacks to one column here and there's no gauge row to match. */
   .home-card--hero .ntr-hero-macros {
     width: 100%;
+    height: auto;
+    grid-auto-rows: auto;
     gap: 7px;
-  }
-
-  .home-support-strip {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
   }
 
   .home-card--hero .ntr-macro-row {
     flex: none;
-    padding: 9px 11px 10px;
-  }
-
-  .home-card--hero .ntr-macro-header {
-    flex-direction: column;
-    align-items: flex-start;
+    padding: 11px 12px;
+    gap: 7px;
   }
 
   .home-card--hero .ntr-macro-header strong {
-    font-size: 13px;
-  }
-
-  /* Nutrition hides "/target" on its mobile chips; keep ours visible */
-  .home-card--hero .ntr-macro-header strong em {
-    display: inline;
+    font-size: 15px;
   }
 
   .home-next-strip {

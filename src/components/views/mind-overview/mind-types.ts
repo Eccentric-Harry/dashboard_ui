@@ -7,9 +7,23 @@ export type {
   MindValueTag,
   MindDistortionTag,
   MindSummary,
+  MindLane,
+  MindIntrusiveCategory,
+  MindWorryOutcome,
+  MindWorrySeverity,
+  MindWorryPrediction,
+  MindIntrusiveMeta,
+  MindSpiralLog,
+  MindWorryLedger,
+  MindLoopRadarDay,
 } from '../../../lib/api'
 
-import type { MindValueTag, MindDistortionTag, MindEntry } from '../../../lib/api'
+import type {
+  MindValueTag,
+  MindDistortionTag,
+  MindEntry,
+  MindIntrusiveCategory,
+} from '../../../lib/api'
 
 export const MIND_VALUE_TAGS: MindValueTag[] = [
   'Coding',
@@ -27,6 +41,18 @@ export const MIND_DISTORTION_TAGS: MindDistortionTag[] = [
   'All-or-nothing',
   'Fortune-telling',
   'Labeling',
+]
+
+/**
+ * Coarse buckets for an intrusive thought. Blunt on purpose — a richer taxonomy would
+ * invite the user to work out which one it "really" is, and that analysis is the
+ * compulsion the lane exists to avoid.
+ */
+export const INTRUSIVE_CATEGORIES: { value: MindIntrusiveCategory; label: string }[] = [
+  { value: 'DOUBT', label: 'Doubt' },
+  { value: 'HARM', label: 'Harm' },
+  { value: 'IMMORAL', label: 'Immoral' },
+  { value: 'UNNAMED', label: 'Rather not say' },
 ]
 
 export const PARK_OPTIONS = [
