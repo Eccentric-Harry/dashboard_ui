@@ -101,8 +101,8 @@
 .finance-dashboard .fin-intel-grid {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-  gap: 18px;
+  grid-template-columns: minmax(0, 1.62fr) minmax(0, 1fr);
+  gap: 22px;
 }
 
 /* Trends and patterns span the full card so the section never leaves a
@@ -148,15 +148,18 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  padding: 18px 20px;
-  border-radius: 22px;
-  /* No fill. This carried a sage gradient (#eff5ec → #d1e4ce) to stop the panel
-     dissolving into the white card, but a reassuring green wash behind a chart that
-     may be reporting an overspend reads as a mood the data has not earned — the panel
-     was green while the copy inside it said "₹35,497 over budget". Containment now
-     comes from the hairline alone, which is how every other sub-surface on a white
-     card in this app is defined. */
-  border: 1px solid var(--ntr-line, #eae9e0);
+  /* No box. This was a bordered, 22px-radius panel sitting inside an already
+     bordered card — a container whose only content was another container. The
+     hero is the primary content of this section, so it sits on the card directly
+     and is separated from the side column by a rule instead of by a frame. */
+  padding: 0 24px 0 0;
+  border: 0;
+}
+
+@media (min-width: 901px) {
+  .finance-dashboard .fin-intel-hero {
+    border-right: 1px solid rgba(23, 28, 25, 0.09);
+  }
 }
 
 .finance-dashboard .fin-intel-hero > * {
@@ -203,8 +206,29 @@
 }
 
 .finance-dashboard .fin-intel-chart {
-  height: 176px;
-  margin: 10px -6px 0;
+  height: 208px;
+  margin: 0 0 0 -6px;
+}
+
+/* Chart header: the legend used to sit *under* the plot, so the reader met three
+   unexplained lines before being told what they were. */
+.finance-dashboard .fin-intel-chart-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 18px 0 2px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(23, 28, 25, 0.08);
+}
+
+.finance-dashboard .fin-intel-chart-title {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: rgba(23, 28, 25, 0.45);
 }
 
 .finance-dashboard .fin-intel-tooltip {
@@ -216,25 +240,52 @@
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid rgba(0, 0, 0, 0.07);
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.13);
+  min-width: 158px;
   font-size: 11px;
   color: #101312;
 }
 
 .finance-dashboard .fin-intel-tooltip b {
+  margin-bottom: 3px;
   font-size: 11px;
   font-weight: 800;
 }
 
 .finance-dashboard .fin-intel-tooltip span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-weight: 600;
-  color: rgba(23, 28, 25, 0.72);
+  color: rgba(23, 28, 25, 0.66);
+}
+
+.finance-dashboard .fin-intel-tooltip span i {
+  flex: none;
+  width: 9px;
+  height: 2.5px;
+  border-radius: 2px;
+  background: #232b26;
+}
+
+.finance-dashboard .fin-intel-tooltip span.is-ideal i {
+  background: rgba(23, 28, 25, 0.3);
+}
+
+.finance-dashboard .fin-intel-tooltip span.is-forecast i {
+  background: #4b7a63;
+}
+
+.finance-dashboard .fin-intel-tooltip span em {
+  margin-left: auto;
+  font-style: normal;
+  font-weight: 750;
+  color: #101312;
   font-variant-numeric: tabular-nums;
 }
 
 .finance-dashboard .fin-intel-chart-legend {
   display: flex;
-  gap: 14px;
-  margin-top: 6px;
+  gap: 13px;
 }
 
 .finance-dashboard .fin-intel-chart-legend span {
@@ -267,10 +318,9 @@
 
 /* Urgent over-budget callout — the one legitimately red element */
 .finance-dashboard .fin-intel-alert {
-  margin: 10px 0 0;
-  padding: 9px 12px;
-  border-radius: 12px;
-  background: rgba(216, 53, 66, 0.09);
+  margin: 14px 0 0;
+  padding: 2px 0 2px 12px;
+  border-left: 2px solid rgba(192, 50, 61, 0.55);
   color: #a02832;
   font-size: 12px;
   font-weight: 650;
@@ -286,15 +336,18 @@
   min-width: 0;
 }
 
-/* The side column is shorter than the hero chart beside it. With a full column
-   (forecast + subscriptions + lending) the last tile absorbs the slack so the
-   section bottom sits flush, and its content is centred so the stretched tile
-   doesn't read as top-loaded with a void beneath.
-   Only from the third tile onward: when subscriptions are empty there are just
-   two, and stretching one of them across the whole gap looks far worse than
-   simply letting the background breathe. */
-.finance-dashboard .fin-intel-side > :last-child:nth-child(n + 3) {
-  flex: 1 1 auto;
+/* The side column is shorter than the hero chart beside it, and how much
+   shorter depends on how many tiles there are — with subscriptions empty it was
+   two tiles against a ~400px hero, leaving a conspicuous void at the bottom of
+   the section. Distributing the height across *every* tile equally reads as a
+   deliberate column; stretching only the last one reads as a bug. */
+.finance-dashboard .fin-intel-side {
+  display: grid;
+  grid-auto-rows: minmax(0, 1fr);
+  align-content: stretch;
+}
+
+.finance-dashboard .fin-intel-tile {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -308,9 +361,9 @@
    their card). Tinting these too would just re-flatten the column. */
 .finance-dashboard .fin-intel-tile {
   padding: 14px 16px;
-  border-radius: 18px;
+  border-radius: 16px;
   border: 1px solid rgba(23, 28, 25, 0.07);
-  background: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.7);
 }
 
 .finance-dashboard .fin-intel-tile-main {
@@ -418,16 +471,51 @@
 
 /* ── Category trend bars ── */
 
-.finance-dashboard .fin-intel-trend-bars {
+/* Header strip: the section needs to say what the bar and the marker each mean,
+   or the bullet chart is just a bar with a mystery tick on it. */
+.finance-dashboard .fin-intel-trends-head {
   display: flex;
-  flex-direction: column;
-  gap: 9px;
-  margin-top: 10px;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.finance-dashboard .fin-intel-trends-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 650;
+  color: rgba(23, 28, 25, 0.5);
+}
+
+.finance-dashboard .fin-intel-trends-key i {
+  width: 2px;
+  height: 11px;
+  border-radius: 1px;
+  background: rgba(23, 28, 25, 0.42);
+}
+
+/* Two columns from tablet up. Four full-width bars across a 1400px card left
+   each row 80% empty track and the section reading as a stretched-out list;
+   paired columns halve the height and put twice as many categories on screen. */
+.finance-dashboard .fin-intel-trend-bars {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 9px 34px;
+  margin-top: 12px;
+}
+
+@media (min-width: 900px) {
+  .finance-dashboard .fin-intel-trend-bars {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .finance-dashboard .fin-intel-trend-row {
   display: grid;
-  grid-template-columns: minmax(84px, 130px) minmax(0, 1fr) auto 58px;
+  grid-template-columns: minmax(74px, 108px) minmax(0, 1fr) auto 48px;
   align-items: center;
   gap: 10px;
 }
@@ -457,17 +545,31 @@
 }
 
 .finance-dashboard .fin-intel-trend-track {
-  height: 7px;
-  border-radius: 999px;
-  background: rgba(23, 28, 25, 0.07);
-  box-shadow: inset 0 1px 1.5px rgba(23, 28, 25, 0.05);
-  overflow: hidden;
+  position: relative;
+  height: 9px;
+  border-radius: 3px;
+  background: rgba(23, 28, 25, 0.06);
+  overflow: visible;
+}
+
+/* Last month's spend, as a tick standing across the track — the comparative
+   marker of a bullet chart. Reading "this month is past last month's line" is
+   instant in a way that a "▲12%" badge two columns to the right is not. */
+.finance-dashboard .fin-intel-trend-track u {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: rgba(23, 28, 25, 0.42);
+  text-decoration: none;
 }
 
 .finance-dashboard .fin-intel-trend-track i {
   display: block;
   height: 100%;
-  border-radius: 999px;
+  border-radius: 3px;
   /* Flat fallback first for anything without color-mix(). The source palette in
      utils.ts is picked for legibility on white and is far too vivid for this
      route, so each hue is mixed down hard — toward white at the head and toward
@@ -476,8 +578,8 @@
   background: #7d9887;
   background: linear-gradient(
     90deg,
-    color-mix(in srgb, var(--cat, #7d9887) 26%, #ffffff),
-    color-mix(in srgb, var(--cat, #7d9887) 52%, #dfe4df)
+    color-mix(in srgb, var(--cat, #7d9887) 30%, #ffffff),
+    color-mix(in srgb, var(--cat, #7d9887) 58%, #dfe4df)
   );
 }
 
@@ -491,7 +593,7 @@
 .finance-dashboard .fin-intel-trend-delta {
   justify-self: end;
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 750;
   font-variant-numeric: tabular-nums;
 }
 
@@ -546,7 +648,11 @@
   }
 
   .finance-dashboard .fin-intel-trend-row {
-    grid-template-columns: minmax(70px, 96px) minmax(0, 1fr) auto 52px;
+    grid-template-columns: minmax(66px, 92px) minmax(0, 1fr) auto 44px;
     gap: 7px;
+  }
+
+  .finance-dashboard .fin-intel-hero {
+    padding-right: 0;
   }
 }

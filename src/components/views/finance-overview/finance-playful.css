@@ -254,12 +254,12 @@
   stroke: var(--fin-mood-watch);
 }
 .fin-ring-fill.is-over {
-  stroke: var(--fin-mood-over);
+  stroke: #b0555d;
 }
 
 .fin-ring-label {
   position: relative;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
@@ -288,95 +288,79 @@
    a running per-day total gives the list a spine, and answers the question
    people actually bring to a ledger — "what did I spend *on Tuesday*?" */
 .fin-day-group + .fin-day-group {
-  margin-top: 14px;
+  margin-top: 10px;
 }
 
+/* The day header is a rule with a label sitting on it, rather than a shaded
+   band: the ledger reads as one continuous table broken by datelines, which is
+   how a statement is actually laid out. */
 .fin-day-head {
   position: sticky;
   top: 0;
   z-index: 3;
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
+  align-items: center;
   gap: 12px;
-  margin-bottom: 8px;
-  padding: 6px 6px 6px 2px;
-  /* Opaque enough to hide rows scrolling under it. A translucent header over a
-     translucent card let row text ghost through and read as a rendering bug. */
+  margin: 0;
+  padding: 12px 10px 6px;
   background: linear-gradient(
     180deg,
-    rgba(247, 250, 245, 0.97) 62%,
-    rgba(247, 250, 245, 0)
+    rgba(250, 251, 249, 0.98) 60%,
+    rgba(250, 251, 249, 0)
   );
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
 }
 
+.fin-day-head::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(23, 28, 25, 0.09);
+}
+
 .fin-day-label {
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 800;
-  letter-spacing: 0.11em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(23, 28, 25, 0.5);
+  color: rgba(23, 28, 25, 0.46);
+  white-space: nowrap;
 }
 
 .fin-day-total {
-  font-size: 11px;
-  font-weight: 750;
+  order: 3;
+  font-size: 10.5px;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: rgba(23, 28, 25, 0.42);
+  color: rgba(23, 28, 25, 0.4);
+  white-space: nowrap;
 }
 
-/* Category hue as a left accent rail. The palette already existed in
-   CATEGORY_COLORS but only ever surfaced in a 10px chip — the rows themselves
-   were all the same off-white, so the ledger had no colour rhythm. The rail
-   grows from nothing on hover, which is the cheapest possible way to make a
-   dense list feel responsive to the pointer. */
+.fin-day-total.is-positive {
+  color: #3f7d5c;
+}
+
+/* No transform, no shadow, no accent rail, no icon rotation. All of the row's
+   hover feedback is the background wash defined in finance-overview.css; this
+   block exists to make sure the earlier "playful" pass stays deleted rather
+   than being re-added by a later merge. */
 .finance-transaction-list .finance-transaction-row {
   position: relative;
   overflow: hidden;
-  transition:
-    transform var(--fin-dur-fast) var(--fin-spring),
-    background var(--fin-dur-mid) var(--fin-ease),
-    box-shadow var(--fin-dur-mid) var(--fin-ease);
+  transform: none;
 }
 
 .finance-transaction-list .finance-transaction-row::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 0;
-  width: 3px;
-  height: 0;
-  border-radius: 0 3px 3px 0;
-  background: var(--row-accent, transparent);
-  transform: translateY(-50%);
-  transition: height var(--fin-dur-mid) var(--fin-ease);
-}
-
-.finance-transaction-list .finance-transaction-row:hover {
-  transform: translateX(3px);
-  background: rgba(255, 255, 255, 0.86);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.9),
-    0 6px 16px rgba(19, 31, 22, 0.06);
-}
-
-.finance-transaction-list .finance-transaction-row:hover::before {
-  height: 58%;
+  content: none;
 }
 
 .finance-transaction-amount-group strong {
   font-variant-numeric: tabular-nums;
 }
 
-/* The merchant icon reacts with the row rather than sitting inert. */
 .finance-transaction-merchant > span {
-  transition: transform var(--fin-dur-mid) var(--fin-spring);
-}
-
-.finance-transaction-row:hover .finance-transaction-merchant > span {
-  transform: scale(1.08) rotate(-4deg);
+  transition: none;
 }
 
 /* Row actions, previously driven by inline JS onMouseEnter/onMouseLeave
@@ -638,13 +622,13 @@
 
   .finance-balance-card:hover,
   .finance-metric-card:hover,
-  .finance-transaction-list .finance-transaction-row:hover,
+  .finance-transaction-list .finance-transaction-row:hover-disabled,
   .finance-category-list > div:hover,
   .finance-add-btn:hover {
     transform: none;
   }
 
-  .finance-transaction-row:hover .finance-transaction-merchant > span,
+  .finance-transaction-row:hover-disabled .finance-transaction-merchant > span,
   .finance-add-btn:hover svg {
     transform: none;
   }

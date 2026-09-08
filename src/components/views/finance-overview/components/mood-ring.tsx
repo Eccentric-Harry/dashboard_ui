@@ -20,8 +20,8 @@ type MoodRingProps = {
   size?: number
 }
 
-function MoodRing({ progress, tone, label, size = 46 }: MoodRingProps) {
-  const stroke = 4.5
+function MoodRing({ progress, tone, label, size = 44 }: MoodRingProps) {
+  const stroke = 3.4
   const radius = (size - stroke) / 2
   const circumference = 2 * Math.PI * radius
 

@@ -2,7 +2,7 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import { ChevronLeft, ChevronRight, Pencil, Receipt, Trash2 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { getConsistentColor, getIconForCategory } from '../utils'
+import { getConsistentColor } from '../utils'
 
 export interface TransactionProp {
   id: string
@@ -26,7 +26,7 @@ interface TransactionsCardProps {
   stagger?: number
 }
 
-const PAGE_SIZE = 7
+const PAGE_SIZE = 12
 
 export const getPastelBG = (colorHex: string) => {
   const hex = colorHex.toLowerCase()
@@ -96,7 +96,7 @@ type DayGroup = {
  * Groups an already-sorted page of transactions by calendar day.
  *
  * Grouping happens *after* pagination on purpose — the page boundary stays a
- * fixed 7 rows, so pages don't jump around in height, and a day that straddles
+ * fixed PAGE_SIZE rows, so pages don't jump around in height, and a day that straddles
  * two pages simply gets its header repeated. Grouping before pagination would
  * mean variable-length pages and a much more disruptive change to the control.
  */
@@ -186,8 +186,8 @@ function TransactionsCard({
             Array.from({ length: 5 }).map((_, idx) => (
               <div className="finance-transaction-row" key={`loader-${idx}`} role="row" style={{ pointerEvents: 'none' }}>
                 <div className="finance-transaction-merchant" role="cell">
-                  <div className="skeleton-shimmer skeleton-circle" style={{ width: '28px', height: '28px', borderRadius: '12px' }} />
-                  <div style={{ flex: 1, marginLeft: '12px' }}>
+                  <div className="skeleton-shimmer skeleton-circle" style={{ width: '30px', height: '30px', borderRadius: '50%' }} />
+                  <div style={{ flex: 1, marginLeft: '11px' }}>
                     <div className="skeleton-shimmer skeleton-rect" style={{ width: '120px', height: '12px', borderRadius: '3px' }} />
                     <div className="skeleton-shimmer skeleton-rect" style={{ width: '60px', height: '8px', marginTop: '6px', borderRadius: '2px' }} />
                   </div>
@@ -216,7 +216,9 @@ function TransactionsCard({
               <div className="fin-day-group" key={group.key}>
                 <div className="fin-day-head">
                   <span className="fin-day-label">{group.label}</span>
-                  <span className="fin-day-total">{formatNet(group.net)}</span>
+                  <span className={`fin-day-total${group.net > 0 ? ' is-positive' : ''}`}>
+                    {formatNet(group.net)}
+                  </span>
                 </div>
                 {group.rows.map((tx, index) => {
                   const { merchant, detail, category, amount, tone, icon: Icon } = tx
@@ -226,17 +228,15 @@ function TransactionsCard({
                       className="finance-transaction-row"
                       key={tx.id || `${merchant}-${detail}-${index}`}
                       role="row"
-                      style={{ '--row-accent': accent } as CSSProperties}
+                      style={{
+                        '--row-accent': accent,
+                        '--row-accent-soft': getPastelBG(accent),
+                        '--row-accent-ink': accent,
+                      } as CSSProperties}
                     >
                       <div className="finance-transaction-merchant" role="cell">
-                        <span style={{
-                          background: getPastelBG(accent),
-                          color: accent,
-                          border: 'none',
-                          borderRadius: '12px',
-                          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
-                        }}>
-                          <Icon size={14} strokeWidth={2.6} />
+                        <span>
+                          <Icon size={14} strokeWidth={2.3} />
                         </span>
                         <p>
                           <b>{merchant}</b>
@@ -244,17 +244,7 @@ function TransactionsCard({
                         </p>
                       </div>
                       <div className="finance-transaction-category" role="cell">
-                        <em style={{
-                          backgroundColor: `${accent}15`,
-                          color: accent,
-                          border: `1px solid ${accent}30`
-                        }}>
-                          {(() => {
-                            const CatIcon = getIconForCategory(category)
-                            return <CatIcon size={10} style={{ marginRight: '4px' }} />
-                          })()}
-                          {category}
-                        </em>
+                        <em>{category}</em>
                       </div>
                       <div className="finance-transaction-amount-group" role="cell">
                         <strong className={tone}>

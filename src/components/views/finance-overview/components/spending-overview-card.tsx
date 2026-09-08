@@ -360,7 +360,10 @@ function SpendingOverviewCard({
                   transition: 'opacity 0.2s'
                 }}
               >
-                <span style={{ background: tone, color: '#fff', boxShadow: `0 4px 10px ${tone}40` }}>
+                {/* Flat swatch, no coloured glow. The drop shadow under each chip
+                    made ten rows read as ten stickers laid on the card rather than
+                    as a legend keyed to the donut beside them. */}
+                <span style={{ background: tone, color: '#fff' }}>
                   <Icon size={12} strokeWidth={2.5} />
                 </span>
                 <p style={{ fontWeight: selectedCategory === label ? 700 : 500 }}>{label}</p>

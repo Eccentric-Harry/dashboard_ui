@@ -8,8 +8,11 @@ import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'r
 import { RefreshCw, Wallet } from 'lucide-react'
 import {
   Area,
+  CartesianGrid,
   ComposedChart,
   Line,
+  ReferenceArea,
+  ReferenceDot,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -48,18 +51,44 @@ type FinanceIntelligenceProps = {
   stagger?: number
 }
 
+/** ₹20,000 → "₹20k". Axis ticks have ~40px; the full en-IN grouping does not fit. */
+const compactInr = (n: number): string => {
+  const abs = Math.abs(n)
+  if (abs >= 10000000) return `₹${(n / 10000000).toFixed(abs >= 100000000 ? 0 : 1)}Cr`
+  if (abs >= 100000) return `₹${(n / 100000).toFixed(abs >= 1000000 ? 0 : 1)}L`
+  if (abs >= 1000) return `₹${Math.round(n / 1000)}k`
+  return `₹${Math.round(n)}`
+}
+
+const SERIES_LABEL: Record<string, string> = {
+  actual: 'spent so far',
+  ideal: 'even pace',
+  forecast: 'projected',
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const BurndownTooltip = ({ active, payload, label }: any) => {
+const BurndownTooltip = ({ active, payload, label, monthKey }: any) => {
   if (!active || !payload?.length) return null
   const row = payload.filter((p: { value: number | null }) => p.value != null)
   if (row.length === 0) return null
+
+  // "Day 14" is an index; "14 Sep" is a date. The axis already carries the
+  // number, so the tooltip is the one place worth spending the extra glyphs.
+  const dayDate = monthKey
+    ? new Date(`${monthKey}-${String(label).padStart(2, '0')}T00:00:00`).toLocaleDateString('en-US', {
+        day: 'numeric',
+        month: 'short',
+      })
+    : `Day ${label}`
+
   return (
     <div className="fin-intel-tooltip">
-      <b>Day {label}</b>
+      <b>{dayDate}</b>
       {row.map((p: { dataKey: string; value: number }) => (
-        <span key={p.dataKey}>
-          {p.dataKey === 'actual' ? 'spent' : p.dataKey === 'ideal' ? 'even pace' : 'forecast'}:{' '}
-          {inr(p.value)}
+        <span key={p.dataKey} className={`is-${p.dataKey}`}>
+          <i />
+          {SERIES_LABEL[p.dataKey] ?? p.dataKey}
+          <em>{inr(p.value)}</em>
         </span>
       ))}
     </div>
@@ -131,7 +160,7 @@ function FinanceIntelligence({
     () => ({
       insights: financeInsights(input),
       burndown: buildBurndown(input),
-      trends: categoryTrends(input, 4),
+      trends: categoryTrends(input, 6),
       subs: subscriptionRadar(input),
       exposure: lendingExposure(input),
     }),
@@ -173,6 +202,24 @@ function FinanceIntelligence({
       }, 0),
     [logs, selectedMonthKey],
   )
+
+  // Y scale is pinned to the two numbers that matter — 0 and the budget — plus
+  // headroom for whatever the series actually reaches. Recharts' automatic ticks
+  // land on arbitrary round numbers that never coincide with the budget line,
+  // which is the one gridline a burn-down chart has to make readable.
+  const { yTicks, yMax } = useMemo(() => {
+    if (!burndown) return { yTicks: [] as number[], yMax: 0 }
+    const peak = burndown.points.reduce(
+      (max, pt) => Math.max(max, pt.actual ?? 0, pt.forecast ?? 0, pt.ideal ?? 0),
+      0,
+    )
+    const top = Math.max(peak, burndown.budget) * 1.08
+    const ticks = [0, burndown.budget]
+    // Only add a top tick when it clears the budget label by enough to not
+    // collide with it.
+    if (top > burndown.budget * 1.35) ticks.push(Math.round(peak))
+    return { yTicks: ticks, yMax: top }
+  }, [burndown])
 
   if (loading || sideLoading) {
     return (
@@ -254,10 +301,24 @@ function FinanceIntelligence({
               </>
             )}
 
+            <div className="fin-intel-chart-head">
+              <span className="fin-intel-chart-title">Cumulative spend vs budget</span>
+              <div className="fin-intel-chart-legend">
+                <span><i className="actual" /> actual</span>
+                <span><i className="ideal" /> even pace</span>
+                {burndown.isCurrentMonth && (
+                  <span><i className={`forecast ${projectedTone === 'over' ? 'over' : ''}`} /> forecast</span>
+                )}
+              </div>
+            </div>
+
             <div className="fin-intel-chart">
               {isMounted && (
                 <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
-                  <ComposedChart data={burndown.points} margin={{ top: 12, right: 8, left: 8, bottom: 0 }}>
+                  <ComposedChart
+                    data={burndown.points}
+                    margin={{ top: 18, right: 48, left: 0, bottom: 0 }}
+                  >
                     <defs>
                       {/* Sage rather than neutral grey: a grey wash over the warm
                           hero panel greys the whole chart down, where the green
@@ -269,32 +330,91 @@ function FinanceIntelligence({
                         <stop offset="100%" stopColor="#5d8a70" stopOpacity={0} />
                       </linearGradient>
                     </defs>
+
+                    {/* Horizontal rules only, pinned to the same ticks the Y axis
+                        labels. Without them the curve floated in an unscaled void:
+                        you could see it rising but not read *how much* off it. */}
+                    <CartesianGrid
+                      vertical={false}
+                      stroke="rgba(23, 28, 25, 0.07)"
+                      strokeDasharray="0"
+                    />
+
+                    {/* The part of the month that hasn't happened yet, washed back
+                        so "measured" and "projected" are distinguishable at a glance
+                        rather than only by the dash pattern of a thin line. */}
+                    {burndown.isCurrentMonth && burndown.daysElapsed < burndown.points.length && (
+                      <ReferenceArea
+                        x1={burndown.daysElapsed}
+                        x2={burndown.points.length}
+                        fill="rgba(23, 28, 25, 0.035)"
+                        stroke="none"
+                      />
+                    )}
+
                     <XAxis
                       dataKey="day"
                       axisLine={false}
                       tickLine={false}
+                      tickMargin={8}
                       ticks={[1, 5, 10, 15, 20, 25, burndown.points.length]}
-                      tick={{ fill: 'rgba(23, 28, 25, 0.45)', fontSize: 9, fontWeight: 650 }}
+                      tick={{ fill: 'rgba(23, 28, 25, 0.42)', fontSize: 9.5, fontWeight: 650 }}
                     />
-                    <YAxis hide domain={[0, (dataMax: number) => Math.max(dataMax, burndown.budget) * 1.05]} />
-                    <Tooltip content={<BurndownTooltip />} />
+                    <YAxis
+                      width={46}
+                      axisLine={false}
+                      tickLine={false}
+                      ticks={yTicks}
+                      domain={[0, yMax]}
+                      tickFormatter={compactInr}
+                      tick={{ fill: 'rgba(23, 28, 25, 0.42)', fontSize: 9.5, fontWeight: 650 }}
+                    />
+                    <Tooltip
+                      content={<BurndownTooltip monthKey={selectedMonthKey} />}
+                      cursor={{ stroke: 'rgba(23, 28, 25, 0.22)', strokeWidth: 1 }}
+                    />
+
+                    {/* Budget line, labelled on the right where it terminates. The
+                        label used to be crammed into the top-left *inside* the
+                        plot, where it collided with the curve on any month that
+                        started fast. */}
                     <ReferenceLine
                       y={burndown.budget}
-                      stroke="rgba(23, 28, 25, 0.28)"
-                      strokeDasharray="3 5"
+                      stroke="rgba(23, 28, 25, 0.34)"
+                      strokeDasharray="4 4"
                       label={{
-                        position: 'insideTopLeft',
-                        value: `BUDGET ${inr(burndown.budget)}`,
+                        position: 'right',
+                        value: 'budget',
                         fill: 'rgba(23, 28, 25, 0.5)',
-                        fontSize: 8.5,
+                        fontSize: 9,
                         fontWeight: 800,
-                        letterSpacing: '0.05em',
+                        letterSpacing: '0.06em',
                       }}
                     />
+
+                    {/* "Today" is the single most useful annotation on this chart:
+                        it is what explains where the solid line stops and the
+                        dashes begin. */}
+                    {burndown.isCurrentMonth && (
+                      <ReferenceLine
+                        x={burndown.daysElapsed}
+                        stroke="rgba(23, 28, 25, 0.28)"
+                        strokeWidth={1}
+                        label={{
+                          position: 'top',
+                          value: 'today',
+                          fill: 'rgba(23, 28, 25, 0.5)',
+                          fontSize: 9,
+                          fontWeight: 800,
+                          letterSpacing: '0.06em',
+                        }}
+                      />
+                    )}
+
                     <Line
                       type="linear"
                       dataKey="ideal"
-                      stroke="rgba(23, 28, 25, 0.22)"
+                      stroke="rgba(23, 28, 25, 0.24)"
                       strokeWidth={1.4}
                       dot={false}
                       activeDot={false}
@@ -304,7 +424,7 @@ function FinanceIntelligence({
                       <Line
                         type="linear"
                         dataKey="forecast"
-                        stroke={projectedTone === 'over' ? '#d83542' : '#4b7a63'}
+                        stroke={projectedTone === 'over' ? '#c0323d' : '#4b7a63'}
                         strokeWidth={1.8}
                         strokeDasharray="4 5"
                         dot={false}
@@ -316,21 +436,23 @@ function FinanceIntelligence({
                       type="monotone"
                       dataKey="actual"
                       stroke="#232b26"
-                      strokeWidth={2.4}
+                      strokeWidth={2.2}
                       fill="url(#finActualFill)"
                       dot={false}
                       activeDot={{ r: 4, fill: '#232b26', stroke: '#fff', strokeWidth: 2 }}
                       isAnimationActive={false}
                     />
+                    {/* Where you actually stand right now. */}
+                    <ReferenceDot
+                      x={burndown.daysElapsed}
+                      y={burndown.spent}
+                      r={3.5}
+                      fill="#232b26"
+                      stroke="#ffffff"
+                      strokeWidth={2}
+                    />
                   </ComposedChart>
                 </ResponsiveContainer>
-              )}
-            </div>
-            <div className="fin-intel-chart-legend">
-              <span><i className="actual" /> actual</span>
-              <span><i className="ideal" /> even pace</span>
-              {burndown.isCurrentMonth && (
-                <span><i className={`forecast ${projectedTone === 'over' ? 'over' : ''}`} /> forecast</span>
               )}
             </div>
             {safeToSpend?.sentiment === 'urgent' && (
@@ -409,44 +531,59 @@ function FinanceIntelligence({
         {/* ── Category trends (MoM) ── */}
         {trends.length > 0 && (
           <div className="fin-intel-trends">
-            <p className="fin-intel-eyebrow">Category trends · {monthName} vs last month</p>
+            <div className="fin-intel-trends-head">
+              <p className="fin-intel-eyebrow">Category trends</p>
+              <span className="fin-intel-trends-key">
+                bar = {monthName} · <i /> marker = last month
+              </span>
+            </div>
             <div className="fin-intel-trend-bars">
-              {/* Bars are scaled to the biggest category, not to total spend.
-                  `share` is a share-of-total (~25% at the top, and the rule text
-                  depends on that meaning, so it stays as-is) — but drawing it
-                  directly left every track three-quarters empty and the rows
-                  unreadable as a ranking. The amount label carries the absolute
-                  figure; the bar's job is the comparison. */}
-              {trends.map((t) => (
-                <div
-                  key={t.category}
-                  className="fin-intel-trend-row"
-                  /* Each category carries its own hue so the stack reads as a
-                     palette rather than one repeated green bar. The CSS mixes
-                     this toward the sage ground, so even a vivid source colour
-                     lands inside the route's desaturated range. */
-                  style={{ '--cat': getConsistentColor(t.category) } as React.CSSProperties}
-                >
-                  <span className="fin-intel-trend-name">{t.category}</span>
-                  <div className="fin-intel-trend-track">
-                    <i
-                      style={{
-                        width: `${Math.max((t.share / Math.max(...trends.map((x) => x.share), 1)) * 100, 4)}%`,
-                      }}
-                    />
-                  </div>
-                  <b className="fin-intel-trend-amount">{inr(t.total)}</b>
-                  <span
-                    className={`fin-intel-trend-delta ${
-                      t.changePct == null ? 'na' : t.changePct > 0 ? 'up' : 'down'
-                    }`}
+              {/* A bullet chart, not a share bar.
+                  Previously the track drew `share` (a share-of-total) while the
+                  label beside it showed the absolute rupee total, and the change
+                  was relegated to a "▼63%" badge — three different quantities in
+                  one row, none of them comparable to the next row. Now the bar is
+                  this month's spend and the tick behind it is last month's, both
+                  on one scale set by the largest of either. The comparison the
+                  section is named for becomes something you can see. */}
+              {trends.map((t) => {
+                const scale = Math.max(
+                  ...trends.map((x) => Math.max(x.total, x.previous ?? 0)),
+                  1,
+                )
+                return (
+                  <div
+                    key={t.category}
+                    className="fin-intel-trend-row"
+                    /* Each category carries its own hue so the stack reads as a
+                       palette rather than one repeated green bar. The CSS mixes
+                       this toward the sage ground, so even a vivid source colour
+                       lands inside the route's desaturated range. */
+                    style={{ '--cat': getConsistentColor(t.category) } as React.CSSProperties}
                   >
-                    {t.changePct == null
-                      ? 'new'
-                      : `${t.changePct > 0 ? '▲' : '▼'} ${Math.abs(t.changePct)}%`}
-                  </span>
-                </div>
-              ))}
+                    <span className="fin-intel-trend-name">{t.category}</span>
+                    <div className="fin-intel-trend-track">
+                      <i style={{ width: `${Math.max((t.total / scale) * 100, 1.5)}%` }} />
+                      {t.previous != null && t.previous > 0 && (
+                        <u
+                          style={{ left: `${Math.min((t.previous / scale) * 100, 100)}%` }}
+                          title={`last month: ${inr(t.previous)}`}
+                        />
+                      )}
+                    </div>
+                    <b className="fin-intel-trend-amount">{inr(t.total)}</b>
+                    <span
+                      className={`fin-intel-trend-delta ${
+                        t.changePct == null ? 'na' : t.changePct > 0 ? 'up' : 'down'
+                      }`}
+                    >
+                      {t.changePct == null
+                        ? 'new'
+                        : `${t.changePct > 0 ? '+' : '−'}${Math.abs(t.changePct)}%`}
+                    </span>
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}

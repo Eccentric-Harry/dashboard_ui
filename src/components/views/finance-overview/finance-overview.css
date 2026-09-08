@@ -174,11 +174,16 @@
    Addressed by child position, not :nth-of-type — the balance card is also a
    <section>, so type-counting silently shifts every tint one tile along and
    leaves the last one untinted. Children 2-4 are the three metric tiles. */
+/* The tint used to sit on a panel inset 8px from the card edge, so each tile
+   read as a rounded box drawn inside another rounded box — four of them in a
+   row, and the first thing the eye counted on this route was containers. The
+   tint now *is* the tile: one surface, one radius, and the white card is only
+   the hairline holding it. */
 .finance-stats-row > *::before {
   content: '';
   position: absolute;
-  inset: 8px;
-  border-radius: 20px;
+  inset: 0;
+  border-radius: inherit;
   pointer-events: none;
 }
 
@@ -240,13 +245,11 @@
   width: 30px;
   height: 30px;
   place-items: center;
-  border-radius: 11px;
+  border-radius: 9px;
   margin: 0 auto 12px;
-  background: rgba(16, 185, 129, 0.14);
-  color: #059669;
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.55),
-    0 2px 5px rgba(44, 58, 48, 0.08);
+  background: rgba(16, 185, 129, 0.13);
+  color: #3f7d5c;
+  box-shadow: none;
 }
 
 
@@ -277,13 +280,9 @@
   width: 30px;
   height: 30px;
   place-items: center;
-  border-radius: 11px;
+  border-radius: 9px;
   margin: 0 auto 12px;
-  /* Hairline ring + a whisper of lift, so the chip sits *on* the glass rather
-     than reading as a flat sticker printed into it. */
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.55),
-    0 2px 5px rgba(44, 58, 48, 0.08);
+  box-shadow: none;
 }
 
 /* ── Budget meter ─────────────────────────────────────────────────────────
@@ -320,13 +319,13 @@
 }
 
 .finance-metric-icon.positive {
-  background: rgba(61, 193, 82, 0.14);
-  color: #32a947;
+  background: rgba(61, 193, 82, 0.13);
+  color: #3f7d5c;
 }
 
 .finance-metric-icon.negative {
-  background: rgba(232, 84, 93, 0.13);
-  color: #d44752;
+  background: rgba(232, 84, 93, 0.12);
+  color: #b0555d;
 }
 
 .finance-metric-card p {
@@ -1103,13 +1102,10 @@
   grid-column: 1 / -1;
   grid-row: 4;
   height: auto;
-  min-height: 610px;
+  min-height: 0;
   flex-direction: column;
-  padding: 18px;
+  padding: 20px 22px 14px;
   overflow: hidden;
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.84), rgba(239, 246, 237, 0.7)),
-    rgba(250, 252, 247, 0.72);
 }
 
 .finance-dashboard-guest .finance-transactions-card {
@@ -1126,7 +1122,7 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  margin-top: 15px;
+  margin-top: 12px;
   overflow: hidden;
 }
 
@@ -1135,10 +1131,10 @@
   align-content: start;
   flex: 1;
   min-height: 0;
-  gap: 10px;
+  gap: 0;
   overflow-x: hidden;
   overflow-y: hidden;
-  padding: 4px 6px 4px 2px;
+  padding: 0;
   scrollbar-gutter: stable;
 }
 
@@ -1157,57 +1153,79 @@
   background: rgba(18, 32, 23, 0.24);
 }
 
+/* A ledger is a table, not a stack of cards.
+   Every row used to be its own 14px-radius glass card with an inset border, a
+   drop shadow and a 10px gutter between it and the next one — a card, inside a
+   card, inside the dashboard grid. At seven rows that reads as bubbles rather
+   than as data, and the gutters alone ate ~70px of the card's height. Rows now
+   sit directly on the card surface and are separated by a single hairline, so
+   the eye tracks columns instead of counting containers. */
 .finance-transaction-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 0.9fr) minmax(0, 0.9fr);
+  grid-template-columns: minmax(0, 1fr) 132px 124px;
   align-items: center;
-  gap: 16px;
-  min-height: 56px;
-  padding: 10px 16px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.65);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8), 0 2px 8px rgba(19, 31, 22, 0.02);
-  backdrop-filter: blur(10px);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  cursor: pointer;
+  gap: 14px;
+  min-height: 46px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+  transition: background 0.15s ease;
+  cursor: default;
 }
 
+.finance-transaction-row + .finance-transaction-row {
+  box-shadow: inset 0 1px 0 rgba(23, 28, 25, 0.06);
+}
+
+/* Hover is a wash and nothing else. The previous state translated the row 3px
+   to the right, grew a coloured rail out of its left edge, lifted it on a 24px
+   shadow and rotated the merchant icon — four simultaneous effects on a row
+   whose only job is to be read. */
 .finance-transaction-row:not(.header):hover {
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: inset 0 0 0 1px #fff, 0 8px 24px rgba(19, 31, 22, 0.06);
+  background: rgba(255, 255, 255, 0.62);
 }
 
 .finance-transaction-row.header {
-  min-height: 20px;
-  padding: 0 18px 10px 16px;
+  min-height: 0;
+  padding: 0 10px 8px;
+  border-radius: 0;
   background: transparent;
-  box-shadow: none;
-  color: rgba(23, 28, 25, 0.45);
+  box-shadow: inset 0 -1px 0 rgba(23, 28, 25, 0.09);
+  color: rgba(23, 28, 25, 0.4);
   font-size: 9px;
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   cursor: default;
   transform: none !important;
 }
 
+.finance-transaction-row.header span:last-child {
+  text-align: right;
+}
+
+.finance-transaction-row.header + .finance-transaction-row {
+  box-shadow: none;
+}
+
 .finance-transaction-merchant {
   display: grid;
   min-width: 0;
-  grid-template-columns: 42px 1fr;
+  grid-template-columns: 30px 1fr;
   align-items: center;
-  gap: 12px;
+  gap: 11px;
 }
 
 .finance-transaction-merchant > span {
   display: grid;
-  width: 42px;
-  height: 42px;
+  width: 30px;
+  height: 30px;
   place-items: center;
-  border-radius: 14px;
-  background: linear-gradient(145deg, #ffffff, #f0f4f1);
-  color: #2b3b31;
-  box-shadow: 4px 4px 10px rgba(18, 32, 23, 0.05), -4px -4px 10px rgba(255, 255, 255, 0.8), inset 1px 1px 0 rgba(255,255,255,1);
+  border-radius: 50%;
+  background: var(--row-accent-soft, rgba(23, 28, 25, 0.05));
+  color: var(--row-accent, #2b3b31);
+  box-shadow: none;
 }
 
 .finance-transaction-merchant p {
@@ -1225,18 +1243,19 @@
 }
 
 .finance-transaction-merchant b {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 12.5px;
+  font-weight: 650;
   color: #111514;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.005em;
 }
 
 .finance-transaction-merchant small,
 .finance-transaction-row > small {
-  color: rgba(23, 28, 25, 0.55);
+  color: rgba(23, 28, 25, 0.42);
   font-size: 10px;
-  margin-top: 3px;
-  font-weight: 500;
+  margin-top: 1px;
+  font-weight: 550;
+  font-variant-numeric: tabular-nums;
 }
 
 .finance-transaction-category {
@@ -1250,27 +1269,35 @@
   align-items: center;
   width: fit-content;
   max-width: 100%;
-  padding: 5px 10px;
-  border-radius: 8px;
-  font-size: 9px;
+  gap: 6px;
+  padding: 0;
+  border: 0 !important;
+  border-radius: 0;
+  background: transparent !important;
+  color: rgba(23, 28, 25, 0.62) !important;
+  font-size: 11px;
   font-style: normal;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  transition: all 0.2s ease;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
-.finance-transaction-row:hover .finance-transaction-category em {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+.finance-transaction-category em::before {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--row-accent, rgba(23, 28, 25, 0.3));
 }
 
 .finance-transaction-row strong {
   justify-self: end;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
   white-space: nowrap;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
 }
 
 .finance-transaction-row strong.income {
@@ -1967,8 +1994,8 @@
 
   .finance-transaction-row {
     grid-template-columns: 1fr auto;
-    gap: 8px;
-    padding: 12px;
+    gap: 4px 8px;
+    padding: 9px 4px;
   }
 
   .finance-transaction-row.header {
@@ -1978,13 +2005,13 @@
   .finance-transaction-merchant {
     grid-column: 1;
     grid-row: 1;
-    grid-template-columns: 36px 1fr;
+    grid-template-columns: 30px 1fr;
   }
 
   .finance-transaction-category {
     grid-column: 1;
     grid-row: 2;
-    padding-left: 48px;
+    padding-left: 41px;
   }
 
   .finance-transaction-amount-group {
@@ -2588,12 +2615,16 @@
     margin-top: 14px;
   }
 
-  .finance-transactions-card,
   .finance-subscription-card,
   .finance-repayment-card,
   .lending-tracker-card {
     height: auto;
     max-height: 620px;
+  }
+
+  .finance-transactions-card {
+    height: auto;
+    max-height: none;
   }
 
   .finance-transaction-row {
@@ -2628,11 +2659,13 @@
     grid-column: 1 / -1;
   }
 
+  /* Same reason as the phone rule above: a 12-row page does not fit a 500px
+     cap on a list whose overflow is hidden, and the rows past the cap vanish. */
   .finance-transactions-card {
     grid-column: 1 / -1;
     grid-row: auto;
     height: auto;
-    max-height: 500px;
+    max-height: none;
   }
 
   .finance-subscription-card {
