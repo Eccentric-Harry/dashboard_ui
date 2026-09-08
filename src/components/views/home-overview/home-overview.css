@@ -1,6 +1,8 @@
 /* Home / command center — scoped under .home-dashboard.
-   Same pastel glass family as the other routes:
-   - surfaces rgba(250,252,247,0.72), radius 26px, blur(18px)
+   Cards use the Nutrition route's opaque recipe:
+   - surfaces #ffffff on a #eae9e0 hairline, radius 26px, soft two-layer shadow
+   - the page keeps its ambient pastel blooms; they read in the gutters, not
+     through the card surfaces
    - Playfair Display for display type, Inter for data
    Color semantics enforced route-wide:
    - red        = overdue / SOS only
@@ -36,14 +38,12 @@
   color: #101312;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
-  /* Ambient depth — three soft pastel washes, low-opacity so the glass
-     cards still read as the primary surface. Same hues as the sleep
-     accent (lavender) and accent yellow, just diluted. */
-  background:
-    radial-gradient(720px circle at 94% -8%, rgba(234, 255, 40, 0.09), transparent 58%),
-    radial-gradient(820px circle at -8% 20%, rgba(188, 195, 242, 0.16), transparent 56%),
-    radial-gradient(640px circle at 46% 118%, rgba(158, 205, 178, 0.12), transparent 60%);
-  background-attachment: fixed;
+  /* No route-level background. Home used to lay three pastel washes over the shell
+     (chartreuse / periwinkle / sage), which made sense when the cards were translucent
+     and the washes read *through* them as depth. With opaque cards the washes only
+     tinted the gutters, leaving Home visibly greener between cards than every other
+     route. /nutrition sets no route background either — both now show the shared
+     .dashboard-shell ground and nothing else. */
 }
 
 .home-dashboard::-webkit-scrollbar {
@@ -279,14 +279,19 @@
   position: relative;
   min-width: 0;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.54);
-  border-radius: 26px;
-  background: rgba(250, 252, 247, 0.72);
-  /* No drop shadow: the ambient blooms behind the grid made each card cast a
-     grey halo onto its neighbour. Separation comes from the hairline border
-     and the lighter surface instead — only the inner top highlight stays. */
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(18px);
+  /* Solid white on a warm hairline, matching the Nutrition route's card recipe
+     (--ntr-card / --ntr-line / --ntr-shadow, already declared on .home-dashboard).
+     The translucent version let the ambient blooms wash through every surface, which
+     is what made these cards read as murky next to Nutrition's crisp ones.
+     The blooms now show only in the gutters, where they belong.
+
+     The drop shadow is back, and no longer haloes: it used to show *through* the
+     translucent neighbours, which is what made it look grey and muddy. An opaque
+     card hides the shadow cast behind it. */
+  border: 1px solid var(--ntr-line);
+  border-radius: var(--ntr-radius);
+  background: var(--ntr-card);
+  box-shadow: var(--ntr-shadow);
   padding: 22px;
   display: flex;
   flex-direction: column;
@@ -295,11 +300,12 @@
   transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), background 0.28s ease;
 }
 
-/* Cards lift slightly on hover — calm, evening-dashboard subtle. The lift
-   now reads through the surface brightening, not a shadow. */
+/* Cards lift slightly on hover — calm, evening-dashboard subtle. With an opaque
+   surface there is nowhere brighter to go, so the lift reads through the shadow
+   deepening instead of the background brightening. */
 .home-card:hover {
   transform: translateY(-2px);
-  background: rgba(252, 253, 249, 0.86);
+  box-shadow: 0 1px 2px rgba(23, 27, 21, 0.04), 0 16px 38px rgba(23, 27, 21, 0.09);
 }
 
 @keyframes home-card-in {
@@ -410,7 +416,7 @@
   padding: 8px 13px;
   border: 1px solid rgba(26, 31, 29, 0.14);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(23, 27, 21, 0.025);
   color: #2b352f;
   font-size: 11px;
   font-weight: 700;
@@ -1073,7 +1079,7 @@
   padding: 9px 12px;
   border: 1px solid rgba(26, 31, 29, 0.1);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(23, 27, 21, 0.025);
   text-align: left;
   cursor: pointer;
   transition: background 0.18s ease, border-color 0.18s ease;
@@ -1165,7 +1171,6 @@
   align-items: center;
   gap: 13px;
   padding: 14px 18px;
-  background: linear-gradient(140deg, rgba(252, 253, 250, 0.92), rgba(228, 236, 229, 0.8));
 }
 
 .home-anchor-ic {
@@ -1691,7 +1696,7 @@
   gap: 10px;
   padding: 14px 15px 15px;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.44);
+  background: rgba(23, 27, 21, 0.022);
 }
 
 .home-activity-week-head {
@@ -1766,7 +1771,7 @@
   gap: 1px;
   padding: 8px 10px;
   border-radius: 13px;
-  background: rgba(255, 255, 255, 0.62);
+  background: rgba(23, 27, 21, 0.035);
 }
 
 .home-activity-stat span {
@@ -2054,7 +2059,7 @@
   padding: 5px;
   border: 1px solid rgba(26, 31, 29, 0.1);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(23, 27, 21, 0.035);
   overflow-x: auto;
 }
 
@@ -2106,7 +2111,7 @@
   padding: 12px 16px;
   border: 1px solid rgba(26, 31, 29, 0.14);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.75);
+  background: rgba(23, 27, 21, 0.028);
   color: #17211c;
   font-size: 13px;
 }
@@ -2392,7 +2397,7 @@
 .home-card--welcome {
   max-width: var(--home-max);
   margin: 0 auto 16px;
-  background: linear-gradient(135deg, rgba(213, 218, 247, 0.6), rgba(250, 252, 247, 0.72) 55%);
+  background: linear-gradient(135deg, var(--ntr-lime-soft), #ffffff 55%);
 }
 
 .home-card--welcome h2 {

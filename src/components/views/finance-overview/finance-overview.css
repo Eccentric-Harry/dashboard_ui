@@ -1,4 +1,15 @@
 .finance-dashboard {
+  /* Borrows the Nutrition/Home opaque card recipe (PROJECT_CONTEXT §1.3) — Finance
+     was the last route still on translucent glass, which is why it read as flat and
+     washed-out next to them. */
+  --ntr-card: #ffffff;
+  --ntr-line: #eae9e0;
+  --ntr-radius: 26px;
+  --ntr-shadow: 0 1px 2px rgba(23, 27, 21, 0.03), 0 10px 30px rgba(23, 27, 21, 0.05);
+  --fin-ink: #171b15;
+  --fin-ink-soft: #6b7165;
+  --fin-ink-faint: #99a096;
+
   position: absolute;
   inset: 20px 58px 12px 206px;
   z-index: 2;
@@ -117,14 +128,12 @@
   min-width: 0;
   min-height: max-content;
   overflow: visible;
-  border: 1px solid rgba(255, 255, 255, 0.54);
-  border-radius: 26px;
-  background-color: rgba(250, 252, 247, 0.72);
+  border: 1px solid var(--ntr-line);
+  border-radius: var(--ntr-radius);
+  background-color: var(--ntr-card);
   background-image: var(--fin-grain);
   background-repeat: repeat;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  box-shadow: var(--ntr-shadow);
 }
 
 .finance-card h2,
@@ -1265,11 +1274,17 @@
 }
 
 .finance-transaction-row strong.income {
-  color: #1a8b30;
+  color: #3f7d5c;
 }
 
+/* Expenses render in plain ink, not alarm red.
+   Nearly every row in a spending ledger is an expense, so colouring them all #d83542
+   made the whole column shout and left red meaning "you bought lunch" rather than
+   "something needs attention". Income keeps its green because it is the rare, genuinely
+   notable row — the contrast is what makes it findable. Sign and alignment already tell
+   the reader the direction. */
 .finance-transaction-row strong.expense {
-  color: #d83542;
+  color: var(--fin-ink, #171b15);
 }
 
 .finance-transaction-amount-group {
@@ -2130,8 +2145,9 @@
   display: inline-block;
   min-width: 0;
   overflow: visible;
-  font-size: 24px;
-  font-weight: 500;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: 30px;
+  font-weight: 600;
   line-height: 1.15;
   letter-spacing: 0;
   text-overflow: ellipsis;
@@ -2631,4 +2647,34 @@
     grid-row: auto;
     height: auto;
   }
+}
+
+/* ---------- Section headings: eyebrow + serif ----------
+   Finance's card titles were plain 16px bold sans — the one route with no editorial
+   voice, which is most of why it read as "basic" next to Nutrition and Home. Same
+   pairing as those routes: a small uppercase eyebrow over a Playfair display line. */
+
+.finance-section-head h2,
+.finance-section-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  color: var(--fin-ink);
+}
+
+.finance-eyebrow {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fin-ink-faint);
+}
+
+.finance-date-trigger strong em {
+  font-style: italic;
+  font-weight: 550;
 }

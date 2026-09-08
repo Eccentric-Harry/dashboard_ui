@@ -123,6 +123,10 @@ function SpiralBreakerOverlay() {
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Mobile-only affordance (hidden by CSS on desktop) — the sheet reads as a
+            sheet, not as a card that happened to land near the bottom edge. */}
+        <div className="spiral-grabber" aria-hidden="true" />
+
         <button type="button" className="spiral-close" onClick={() => finish()} aria-label="Close">
           <X size={14} />
         </button>

@@ -288,7 +288,8 @@ function SubscriptionsCard({ transactions, onRefresh, onCelebrate, stagger = 0 }
       <section className="finance-card finance-subscription-card" style={{ '--i': stagger } as CSSProperties}>
         <div className="finance-section-head compact">
           <div>
-            <h2>Subscriptions</h2>
+            <span className="finance-eyebrow">Recurring</span>
+          <h2>Subscriptions</h2>
             <span className="skeleton-rect skeleton-shimmer" style={{ width: 100, height: 10, marginTop: 6 }} />
           </div>
           <span className="skeleton-rect skeleton-shimmer" style={{ width: 80, height: 20 }} />
@@ -314,6 +315,7 @@ function SubscriptionsCard({ transactions, onRefresh, onCelebrate, stagger = 0 }
     <section className="finance-card finance-subscription-card" style={{ '--i': stagger } as CSSProperties}>
       <div className="finance-section-head compact">
         <div>
+          <span className="finance-eyebrow">Recurring</span>
           <h2>Subscriptions</h2>
           <p>{apiSubscriptions.length} active renewals</p>
         </div>

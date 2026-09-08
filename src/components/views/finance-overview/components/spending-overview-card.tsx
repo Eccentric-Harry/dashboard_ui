@@ -189,7 +189,8 @@ function SpendingOverviewCard({
       <section className="finance-card finance-spending-card" style={{ '--i': stagger } as CSSProperties}>
         <div className="finance-section-head">
           <div>
-            <h2>Spending Overview</h2>
+            <span className="finance-eyebrow">Breakdown</span>
+          <h2>Spending Overview</h2>
           </div>
           <span className="skeleton-rect skeleton-shimmer" style={{ width: 100, height: 28, borderRadius: 11 }} />
         </div>
@@ -233,6 +234,7 @@ function SpendingOverviewCard({
     <section className="finance-card finance-spending-card" style={{ '--i': stagger } as CSSProperties}>
       <div className="finance-section-head">
         <div>
+          <span className="finance-eyebrow">Breakdown</span>
           <h2>Spending Overview</h2>
         </div>
 

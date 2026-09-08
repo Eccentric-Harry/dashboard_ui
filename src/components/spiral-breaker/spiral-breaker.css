@@ -46,6 +46,10 @@
   background: rgba(217, 223, 217, 0.9);
 }
 
+.spiral-grabber {
+  display: none;
+}
+
 .spiral-pane {
   display: flex;
   flex-direction: column;
@@ -261,16 +265,74 @@
 }
 
 @media (max-width: 768px) {
+  /* A real bottom sheet, not a card stranded near the bottom edge: flush to the
+     bottom, rounded on top only, full width, thumb-reachable. */
   .spiral-backdrop {
-    padding: 16px;
+    padding: 0;
     align-items: flex-end;
   }
 
   .spiral-dialog {
-    padding: 22px 18px 20px;
+    width: 100%;
+    max-width: none;
+    display: flex;
+    flex-direction: column;
+    border-radius: 28px 28px 0 0;
+    border-bottom: 0;
+    /*
+      One constant sheet height for all four steps. The steps are 194 / 296 / 300 /
+      360px tall, so a content-sized sheet grew under the user's thumb at every tap —
+      and step 1 alone left ~740px of empty blur above it on a 932px screen. The
+      content changes now; the sheet does not.
+    */
+    min-height: min(420px, 74vh);
+    max-height: 88vh;
+    padding: 10px 20px calc(22px + env(safe-area-inset-bottom, 0px));
+    animation: spiral-sheet-up 0.34s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .spiral-grabber {
+    display: block;
+    width: 38px;
+    height: 4px;
+    margin: 0 auto 14px;
+    border-radius: 999px;
+    background: rgba(26, 31, 29, 0.16);
+  }
+
+  .spiral-close {
+    top: 16px;
+    right: 14px;
+  }
+
+  .spiral-pane {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  /* The action block sits in the same place on every step. Someone mid-spiral should
+     not have to re-find the button each time the copy changes. */
+  .spiral-pane > :last-child {
+    margin-top: auto;
+  }
+
+  .spiral-primary,
+  .spiral-ghost {
+    align-self: stretch;
+    justify-content: center;
   }
 
   .spiral-choices {
     flex-direction: column;
+  }
+}
+
+@keyframes spiral-sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
   }
 }

@@ -40,6 +40,17 @@ const formatHeaderDate = (date: Date) =>
     day: 'numeric',
     year: 'numeric',
   })
+/**
+ * Weekday in italic, the rest roman — the same editorial split /nutrition's header
+ * uses. It costs nothing and it is most of what gives that route its voice.
+ */
+const HeaderDate = ({ date }: { date: Date }) => (
+  <>
+    <em>{date.toLocaleDateString('en-US', { weekday: 'long' })},</em>{' '}
+    {date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+  </>
+)
+
 const isFutureDate = (date: Date) => isoDate(date) > isoDate(new Date())
 
 const getPastelBG = (colorHex: string) => {
@@ -219,7 +230,9 @@ function FinanceHeader({ onAddClick, logs, selectedDate, onDateChange }: Finance
         >
           <span>
             <span className="finance-date-title-wrap">
-              <strong>{formatHeaderDate(selectedDateObject)}</strong>
+              <strong>
+                <HeaderDate date={selectedDateObject} />
+              </strong>
               <ChevronDown size={20} className="finance-date-chevron" />
             </span>
             <small>

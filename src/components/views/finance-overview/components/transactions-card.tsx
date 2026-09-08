@@ -148,6 +148,7 @@ function TransactionsCard({
     >
       <div className="finance-section-head compact">
         <div>
+          <span className="finance-eyebrow">Ledger</span>
           <h2>Recent Transactions</h2>
           <p>{transactions.length} transactions recorded</p>
         </div>

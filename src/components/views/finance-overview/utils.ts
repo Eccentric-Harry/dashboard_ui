@@ -6,24 +6,37 @@ import {
   CircleDollarSign, Bike, Map, type LucideIcon 
 } from 'lucide-react'
 
+/**
+ * Category palette — desaturated, one family.
+ *
+ * These were fully saturated (royal blue, crimson, emerald, magenta, bright orange),
+ * which is what made the spending donut read as a stock analytics widget rather than
+ * part of this app; CLAUDE.md's design system forbids saturated colour outright. Every
+ * hue below is muted into the same pastel family the rest of Life OS uses, still far
+ * enough apart to stay legible as adjacent donut arcs and 24px category chips.
+ *
+ * Rule for new entries: keep saturation low and lightness in the 45–60% band. Nothing
+ * here may compete with the accent yellow (#eaff28) or the danger rose (#f16977) —
+ * those two carry meaning and stop meaning anything if a category borrows their weight.
+ */
 export const CATEGORY_COLORS: Record<string, string> = {
-  'Home': '#4684ff',      // Royal Blue
-  'To Home': '#4684ff',   // Legacy Royal Blue
-  'Bills': '#ff6c61',     // Crimson
-  'Food': '#039855',      // Emerald Green
-  'Dining': '#10b981',    // Teal Green
-  'Lending': '#7A5AF8',   // Royal Purple
-  'Loan Recovery': '#0BA5EC', // Ocean Blue
-  'Shopping': '#DC6803',  // Burnt Orange
-  'Transport': '#0284c7', // Rich Sapphire Blue
-  'Cycling': '#f97316',   // Bright Orange
-  'Entertainment': '#DD2590', // Magenta
-  'Outing': '#8b5cf6',    // Violet
-  'Income': '#12B76A',    // Green for income
-  'Salary': '#32D583',    // Light Green for salary
+  'Home': '#5f6bab',           // dusty indigo
+  'To Home': '#5f6bab',        // legacy alias
+  'Bills': '#b4707a',          // clay rose — near danger, deliberately softer
+  'Food': '#5f8a6a',           // sage
+  'Dining': '#4e7a63',         // deeper sage
+  'Lending': '#7a74a8',        // muted violet
+  'Loan Recovery': '#4f8a9a',  // dusty teal
+  'Shopping': '#b1935a',       // warm ochre
+  'Transport': '#5d87ad',      // slate blue
+  'Cycling': '#b57f5f',        // terracotta
+  'Entertainment': '#a1739b',  // mauve
+  'Outing': '#7d84c4',         // periwinkle
+  'Income': '#4e8a72',         // moss
+  'Salary': '#6f9e7f',         // light moss
 }
 
-const FALLBACK_COLORS = ['#6172F3', '#12B76A', '#F79009', '#F04438', '#EE46BC', '#0E9384']
+const FALLBACK_COLORS = ['#6f78b5', '#5f8a6a', '#b1935a', '#b4707a', '#a1739b', '#4f8a9a']
 
 export const getConsistentColor = (label: string) => {
   if (CATEGORY_COLORS[label]) return CATEGORY_COLORS[label]
