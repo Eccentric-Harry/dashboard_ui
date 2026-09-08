@@ -46,10 +46,6 @@
   background: rgba(217, 223, 217, 0.9);
 }
 
-.spiral-grabber {
-  display: none;
-}
-
 .spiral-pane {
   display: flex;
   flex-direction: column;
@@ -237,6 +233,152 @@
   white-space: nowrap;
 }
 
+/* ── Sketches ────────────────────────────────────────────────────────────────
+   A step's drawing is the flexible element in the pane: it takes whatever room
+   the copy and the actions leave over, so the surface never opens with a blank
+   band in the middle of it, and it scales down instead of pushing the action
+   off-screen when the copy is long. */
+
+.spiral-sketch {
+  flex: 1 1 118px;
+  min-height: 74px;
+  max-height: 190px;
+  margin: 2px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.spiral-sketch svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.sk-stroke {
+  fill: none;
+  stroke: rgba(62, 107, 84, 0.42);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.sk-cap {
+  fill: none;
+  stroke: rgba(62, 107, 84, 0.55);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.sk-faint {
+  stroke: rgba(62, 107, 84, 0.26);
+}
+
+.sk-fainter {
+  stroke: rgba(62, 107, 84, 0.16);
+}
+
+.sk-dashed {
+  stroke-dasharray: 4 5;
+}
+
+.sk-fill {
+  fill: rgba(219, 233, 221, 0.6);
+}
+
+.sk-dot {
+  fill: rgba(62, 107, 84, 0.5);
+  stroke: none;
+}
+
+.sk-dot.sk-faint {
+  fill: rgba(62, 107, 84, 0.3);
+}
+
+.sk-dot.sk-fainter {
+  fill: rgba(62, 107, 84, 0.18);
+}
+
+/* Drawn rather than dropped in: the line arrives at about the pace of a breath,
+   which is the pace the rest of the step is asking for. */
+.sk-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: sk-draw 1.5s cubic-bezier(0.32, 0.72, 0.28, 1) forwards;
+}
+
+/* Everything that is a shape rather than a line just arrives. */
+.spiral-sketch .sk-dot,
+.spiral-sketch rect,
+.spiral-sketch .sk-cap,
+.spiral-sketch .sk-fade {
+  opacity: 0;
+  animation: sk-in 0.5s ease forwards;
+  animation-delay: 0.45s;
+}
+
+.spiral-sketch .sk-delay-2 {
+  animation-delay: 0.3s;
+}
+
+.spiral-sketch .sk-delay-3 {
+  animation-delay: 0.55s;
+}
+
+.spiral-sketch .sk-delay-4 {
+  animation-delay: 0.8s;
+}
+
+/* One ripple leaves the centre every 1.2s, at the pace of a slow breath. */
+.sk-ripples > * {
+  transform-box: view-box;
+  transform-origin: 160px 104px;
+  animation: sk-ripple 3.6s ease-out infinite;
+}
+
+.sk-ripples > *:nth-child(2) {
+  animation-delay: 1.2s;
+}
+
+.sk-ripples > *:nth-child(3) {
+  animation-delay: 2.4s;
+}
+
+@keyframes sk-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes sk-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sk-ripple {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
 @keyframes spiral-fade {
   from {
     opacity: 0;
@@ -259,62 +401,51 @@
 
 @media (prefers-reduced-motion: reduce) {
   .spiral-backdrop,
-  .spiral-dialog {
+  .spiral-dialog,
+  .sk-ripples > * {
+    animation: none;
+  }
+
+  /* The drawings still need to be visible, just not drawn. */
+  .sk-draw {
+    stroke-dashoffset: 0;
+    animation: none;
+  }
+
+  .spiral-sketch .sk-dot,
+  .spiral-sketch rect,
+  .spiral-sketch .sk-cap,
+  .spiral-sketch .sk-fade {
+    opacity: 1;
     animation: none;
   }
 }
 
 @media (max-width: 768px) {
-  /* A real bottom sheet, not a card stranded near the bottom edge: flush to the
-     bottom, rounded on top only, full width, thumb-reachable. */
+  /* Centred on the screen at every size — a card that sits in the middle of the
+     blur reads as one held thought. Pinned to the bottom edge it had to reserve a
+     constant sheet height for the tallest step, which left the shorter ones with a
+     dead band of empty white above the action. Sized to its content and centred,
+     there is nothing to reserve. */
   .spiral-backdrop {
-    padding: 0;
-    align-items: flex-end;
+    padding: 18px;
+    align-items: center;
   }
 
   .spiral-dialog {
     width: 100%;
-    max-width: none;
+    max-width: 420px;
     display: flex;
     flex-direction: column;
-    border-radius: 28px 28px 0 0;
-    border-bottom: 0;
-    /*
-      One constant sheet height for all four steps. The steps are 194 / 296 / 300 /
-      360px tall, so a content-sized sheet grew under the user's thumb at every tap —
-      and step 1 alone left ~740px of empty blur above it on a 932px screen. The
-      content changes now; the sheet does not.
-    */
-    min-height: min(420px, 74vh);
-    max-height: 88vh;
-    padding: 10px 20px calc(22px + env(safe-area-inset-bottom, 0px));
-    animation: spiral-sheet-up 0.34s cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-
-  .spiral-grabber {
-    display: block;
-    width: 38px;
-    height: 4px;
-    margin: 0 auto 14px;
-    border-radius: 999px;
-    background: rgba(26, 31, 29, 0.16);
-  }
-
-  .spiral-close {
-    top: 16px;
-    right: 14px;
+    border-radius: 26px;
+    max-height: min(86vh, 86dvh);
+    padding: 24px 20px calc(20px + env(safe-area-inset-bottom, 0px));
   }
 
   .spiral-pane {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-  }
-
-  /* The action block sits in the same place on every step. Someone mid-spiral should
-     not have to re-find the button each time the copy changes. */
-  .spiral-pane > :last-child {
-    margin-top: auto;
   }
 
   .spiral-primary,
@@ -326,13 +457,10 @@
   .spiral-choices {
     flex-direction: column;
   }
+
+  .spiral-sketch {
+    flex: 1 1 104px;
+    max-height: 150px;
+  }
 }
 
-@keyframes spiral-sheet-up {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
-}

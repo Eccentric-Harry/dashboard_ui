@@ -5,6 +5,7 @@ import { cn } from '../../lib/utils'
 import { mindService } from '../../services/mind-service'
 import { tasksService } from '../../services/tasks-service'
 import { useSpiralStore, spiralActions } from '../../store/spiral-store'
+import { SpiralSketch } from './spiral-sketches'
 import type { DailyTask } from '../../types/tasks'
 import './spiral-breaker.css'
 
@@ -123,10 +124,6 @@ function SpiralBreakerOverlay() {
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Mobile-only affordance (hidden by CSS on desktop) — the sheet reads as a
-            sheet, not as a card that happened to land near the bottom edge. */}
-        <div className="spiral-grabber" aria-hidden="true" />
-
         <button type="button" className="spiral-close" onClick={() => finish()} aria-label="Close">
           <X size={14} />
         </button>
@@ -139,6 +136,7 @@ function SpiralBreakerOverlay() {
               Nothing has gone wrong. Your mind is doing the thing it does. You do not have to
               finish the thought to be allowed to stop.
             </p>
+            <SpiralSketch name="unwind" />
             <button type="button" className="spiral-primary" onClick={() => setStep('solvable')}>
               Okay
               <ArrowRight size={14} />
@@ -151,6 +149,7 @@ function SpiralBreakerOverlay() {
             <span className="spiral-eyebrow">Step 2</span>
             <h2 className="spiral-title">Is this solvable in the next 24 hours?</h2>
             <p className="spiral-body">Not "could it matter" — could you actually do something about it today?</p>
+            <SpiralSketch name="fork" />
             <div className="spiral-choices">
               <button
                 type="button"
@@ -198,6 +197,8 @@ function SpiralBreakerOverlay() {
               </>
             )}
 
+            <SpiralSketch name="ripple" />
+
             <div className="spiral-ground">
               <Eye size={15} />
               <p className="spiral-ground-prompt">
@@ -229,6 +230,7 @@ function SpiralBreakerOverlay() {
             <span className="spiral-eyebrow">Step 4</span>
             <h2 className="spiral-title">What were you doing before this started?</h2>
             <p className="spiral-body">Go back to it. That's the whole exit — not feeling better first.</p>
+            <SpiralSketch name="return" />
 
             {tasks.length > 0 ? (
               <div className="spiral-tasks">
