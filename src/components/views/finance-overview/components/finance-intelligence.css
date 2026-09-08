@@ -142,8 +142,7 @@
 /* Surface stack: the card sits at .45 white, so inner panels have to climb
    *above* it to be legible — an inner panel at a similar value is what made
    this section read as white-on-white. The hero takes the Home route's panel
-   treatment (an opaque 150deg light→mid→deep ramp in one hue, as on
-   .home-hero-panel) so the burn-down chart sits on a real surface. */
+   treatment so the burn-down chart sits on a defined surface. */
 .finance-dashboard .fin-intel-hero {
   position: relative;
   display: flex;
@@ -151,12 +150,13 @@
   min-width: 0;
   padding: 18px 20px;
   border-radius: 22px;
-  /* .home-activity-latest sage, verbatim. This was previously mixed a couple of
-     steps lighter to "stay a quiet backdrop", which made it near-identical to
-     the card behind it — the panel disappeared and the section went back to
-     reading as one flat white field. Home's panels work precisely because the
-     deep end (#d1e4ce) is clearly darker than the card they sit on. */
-  background: linear-gradient(150deg, #eff5ec 0%, #e2eddf 55%, #d1e4ce 100%);
+  /* No fill. This carried a sage gradient (#eff5ec → #d1e4ce) to stop the panel
+     dissolving into the white card, but a reassuring green wash behind a chart that
+     may be reporting an overspend reads as a mood the data has not earned — the panel
+     was green while the copy inside it said "₹35,497 over budget". Containment now
+     comes from the hairline alone, which is how every other sub-surface on a white
+     card in this app is defined. */
+  border: 1px solid var(--ntr-line, #eae9e0);
 }
 
 .finance-dashboard .fin-intel-hero > * {
