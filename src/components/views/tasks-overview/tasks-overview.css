@@ -4,7 +4,7 @@
   z-index: 2;
   overflow-x: hidden;
   overflow-y: auto;
-  padding: 24px 12px 32px 0;
+  padding: 18px 12px 24px 0;
   color: #101312;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
@@ -30,8 +30,8 @@
 .tasks-control-bar {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 14px;
+  margin-bottom: 16px;
 }
 
 .tasks-search-avatar-row {
@@ -740,31 +740,36 @@
 /* ─── List View ─── */
 
 .tasks-list-view {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
+  column-count: 2;
+  column-gap: 12px;
   padding-bottom: 8px;
 }
 
 .tasks-list-card {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  border-radius: 12px;
-  background: #fff;
-  border: 1px solid rgba(16, 19, 18, 0.08);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  align-items: flex-start;
+  gap: 9px;
+  padding: 9px 6px;
+  border-radius: 10px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(16, 19, 18, 0.12);
+  box-shadow: none;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-color 0.15s ease, border-radius 0.15s ease;
+  min-width: 0;
+}
+
+.tasks-accordion-content .tasks-list-card:last-child {
+  border-bottom: none;
 }
 
 .tasks-list-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transform: translateY(-1px);
+  background: rgba(16, 19, 18, 0.035);
+  border-bottom-color: transparent;
 }
 
-.tasks-list-card.is-completed {
+.tasks-list-card.is-completed .task-list-body {
   opacity: 0.55;
 }
 
@@ -774,16 +779,16 @@
 }
 
 .tasks-list-card.is-selected {
-  background: rgba(255, 255, 255, 0.75);
-  border-color: rgba(16, 19, 18, 0.12);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  background: rgba(16, 19, 18, 0.055);
+  border-bottom-color: transparent;
 }
 
 .task-list-check {
-  width: 22px;
-  height: 22px;
-  min-width: 22px;
-  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  margin-top: 1px;
+  border-radius: 5px;
   border: 2px solid rgba(16, 19, 18, 0.14);
   background: transparent;
   display: flex;
@@ -800,8 +805,10 @@
 }
 
 .task-list-check.checked {
-  border-color: #1a7a4a;
-  background: #1a7a4a;
+  border-color: rgba(16, 19, 18, 0.35);
+  background: rgba(16, 19, 18, 0.06);
+  color: rgba(16, 19, 18, 0.55);
+  box-shadow: none;
 }
 
 .task-list-check.checked svg {
@@ -814,11 +821,16 @@
 }
 
 .task-list-title {
-  font-size: 14px;
+  font-size: 12.5px;
   font-weight: 600;
   color: #101312;
-  margin-bottom: 3px;
+  margin-bottom: 4px;
   line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .task-list-meta {
@@ -828,12 +840,34 @@
   align-items: center;
 }
 
+.tasks-list-card .k-tag {
+  padding: 2px 6px;
+  font-size: 9.5px;
+  border-radius: 5px;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.tasks-list-card .k-tag.sla.sla-done {
+  background: rgba(16, 19, 18, 0.07);
+  color: #101312;
+}
+
 
 /* ─── Accordion Section ─── */
 
 .tasks-accordion-group {
+  display: inline-block;
+  width: 100%;
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  page-break-inside: avoid;
   margin-bottom: 12px;
-  border-radius: 14px;
+  padding: 10px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid rgba(23, 27, 21, 0.07);
+  box-shadow: 0 1px 2px rgba(23, 27, 21, 0.03), 0 8px 20px rgba(23, 27, 21, 0.03);
   overflow: hidden;
   transition: all 0.2s ease;
 }
@@ -842,22 +876,26 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 16px;
-  background: rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  border-radius: 14px;
+  padding: 4px 6px 10px;
+  margin-bottom: 2px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(16, 19, 18, 0.08);
+  border-radius: 0;
   cursor: pointer;
   user-select: none;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  transition: opacity 0.15s ease, border-color 0.2s ease;
+  box-shadow: none;
+}
+
+.tasks-accordion-group.is-collapsed .tasks-accordion-header {
+  padding-bottom: 4px;
+  margin-bottom: 0;
+  border-bottom-color: transparent;
 }
 
 .tasks-accordion-header:hover {
-  background: rgba(255, 255, 255, 0.7);
-  border-color: rgba(255, 255, 255, 0.85);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  opacity: 0.7;
 }
 
 .tasks-accordion-header-left {
@@ -901,9 +939,9 @@
 .tasks-accordion-content {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0;
   margin-top: 6px;
-  padding: 2px 4px;
+  padding: 2px;
   transition: all 0.2s ease;
 }
 
@@ -1841,6 +1879,10 @@ textarea.form-input {
     position: static;
     padding: 20px 16px 88px;
     overflow: visible;
+  }
+
+  .tasks-list-view {
+    column-count: 1;
   }
 
   .tasks-add-btn-primary {

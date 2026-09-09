@@ -184,12 +184,7 @@ export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: Tasks
 
               <div className="task-list-body">
                 <div className="task-list-title">{task.title}</div>
-                <div className="task-list-meta" style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
-                  <span className="k-tag dept" style={{ background: categoryInfo.bg, color: categoryInfo.text }}>
-                    <span className="dot" style={{ background: categoryInfo.dot, width: 6, height: 6, borderRadius: '50%', display: 'inline-block' }} />
-                    {category}
-                  </span>
-
+                <div className="task-list-meta">
                   {task.tags && task.tags.length > 0 && task.tags.map((tag) => (
                     <span key={tag} className="k-tag id">
                       <span className="at">#</span>
@@ -217,13 +212,6 @@ export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: Tasks
                     </span>
                   )}
 
-                  {task.completed && (
-                    <span className="k-tag sla sla-done" style={{ background: '#d1fae5', color: '#047857' }}>
-                      <Check size={10} />
-                      Done
-                    </span>
-                  )}
-
                   {task.createdAt && (
                     <span className="k-tag id" style={{ background: 'rgba(16,19,18,0.03)', color: 'rgba(16,19,18,0.35)', fontSize: 9 }}>
                       Created {new Date(task.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
@@ -236,7 +224,7 @@ export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: Tasks
         }
 
         return (
-          <div key={category} className="tasks-accordion-group">
+          <div key={category} className={`tasks-accordion-group ${isCollapsed ? 'is-collapsed' : ''}`}>
             <div
               className="tasks-accordion-header"
               onClick={() => toggleCategory(category)}

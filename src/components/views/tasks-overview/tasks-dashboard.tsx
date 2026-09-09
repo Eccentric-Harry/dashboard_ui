@@ -499,16 +499,25 @@ export function TasksDashboard(_props: TasksDashboardProps) {
           {loading ? (
             viewMode === 'list' ? (
               <div className="tasks-list-view" style={{ pointerEvents: 'none' }}>
-                {Array.from({ length: 5 }).map((_, idx) => (
-                  <div key={idx} className="tasks-list-card" style={{ display: 'flex', gap: '12px', alignItems: 'center', padding: '16px' }}>
-                    <div className="skeleton-shimmer skeleton-circle" style={{ width: '22px', height: '22px' }} />
-                    <div style={{ flex: 1 }}>
-                      <div className="skeleton-shimmer skeleton-rect" style={{ width: '40%', height: '14px', borderRadius: '3px' }} />
-                      <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
-                        <div className="skeleton-shimmer skeleton-rect" style={{ width: '70px', height: '14px', borderRadius: '4px' }} />
-                        <div className="skeleton-shimmer skeleton-rect" style={{ width: '45px', height: '14px', borderRadius: '4px' }} />
+                {Array.from({ length: 4 }).map((_, groupIdx) => (
+                  <div key={groupIdx} className="tasks-accordion-group">
+                    <div className="skeleton-shimmer skeleton-rect" style={{ width: '90px', height: '14px', borderRadius: '3px', margin: '4px 6px 12px' }} />
+                    {Array.from({ length: groupIdx % 2 === 0 ? 3 : 2 }).map((_, idx) => (
+                      <div
+                        key={idx}
+                        className="tasks-list-card"
+                        style={{ display: 'flex', gap: '9px', alignItems: 'flex-start' }}
+                      >
+                        <div className="skeleton-shimmer skeleton-circle" style={{ width: '18px', height: '18px', marginTop: '1px' }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div className="skeleton-shimmer skeleton-rect" style={{ width: '70%', height: '12px', borderRadius: '3px' }} />
+                          <div style={{ display: 'flex', gap: '4px', marginTop: '6px' }}>
+                            <div className="skeleton-shimmer skeleton-rect" style={{ width: '54px', height: '12px', borderRadius: '4px' }} />
+                            <div className="skeleton-shimmer skeleton-rect" style={{ width: '38px', height: '12px', borderRadius: '4px' }} />
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
                 ))}
               </div>
