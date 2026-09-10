@@ -70,7 +70,7 @@
   gap: 16px;
   flex-wrap: wrap;
   max-width: var(--home-max);
-  margin: 0 auto 18px;
+  margin: 0 auto 12px;
   padding: 0 8px 0 2px;
 }
 
@@ -80,45 +80,27 @@
   min-width: 0;
 }
 
-.home-header-eyebrow {
-  color: rgba(23, 28, 25, 0.64);
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.11em;
-}
-
-/* Date restyled to the Nutrition title treatment — italic serif weekday */
-.home-header-date {
-  margin-top: 6px;
-  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: rgba(23, 33, 28, 0.78);
-}
-
-.home-header-date em {
-  font-style: italic;
-  font-weight: 550;
-}
-
 .home-header-greeting strong {
-  margin-top: 4px;
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 30px;
+  font-size: 23px;
   font-weight: 600;
   letter-spacing: -0.015em;
-  line-height: 1.12;
+  line-height: 1.1;
   color: #17211c;
 }
 
+/* Weekday + daily line folded into one quiet meta row under the greeting. */
 .home-header-line {
-  margin-top: 6px;
-  color: rgba(23, 28, 25, 0.66);
+  margin-top: 3px;
+  color: rgba(23, 28, 25, 0.62);
   font-size: 12px;
   font-style: italic;
   font-family: 'Playfair Display', Georgia, serif;
+}
+
+.home-header-line em {
+  font-style: italic;
+  color: rgba(23, 33, 28, 0.8);
 }
 
 .home-header-actions {
@@ -446,8 +428,16 @@
   gap: 0;
 }
 
+.home-grid--primary .home-card--hero {
+  gap: 0;
+}
+
 .home-hero-head {
-  margin-bottom: 14px;
+  margin-bottom: 12px;
+}
+
+.home-hero-head h2 {
+  font-size: 20px;
 }
 
 .home-hero-head .ntr-eyebrow {
@@ -470,14 +460,14 @@
   align-items: stretch;
   padding: 18px 20px;
   border-radius: 22px;
-  /* Flat lavender — the tinted stat panel inside a white card, same idea as
-     /nutrition's lime panel but a single solid fill, no gradient. */
-  background: #eceefb;
+  /* Flat cool periwinkle-blue — the tinted stat panel inside a white card, the
+     same idea as /nutrition's lime panel but a single solid fill, no gradient. */
+  background: #d5deef;
   overflow: hidden;
 }
 
 .home-hero-panel.is-skeleton {
-  background: #eff0f8;
+  background: #dde4f1;
 }
 
 /* Loop closed for the day — a slow gold sheen sweeps the panel once,
@@ -534,7 +524,7 @@
 }
 
 .home-loop-arc svg {
-  width: min(100%, 156px);
+  width: min(100%, 132px);
   height: auto;
   overflow: visible;
 }
@@ -546,7 +536,7 @@
 
 .home-loop-track {
   fill: none;
-  stroke: rgba(255, 255, 255, 0.6);
+  stroke: rgba(255, 255, 255, 0.78);
   stroke-width: 15;
   stroke-linecap: round;
 }
@@ -671,12 +661,12 @@
   justify-content: center;
   padding: 10px 14px;
   gap: 8px;
-  background: rgba(255, 255, 255, 0.66);
+  background: rgba(255, 255, 255, 0.8);
   transition: background-color 0.18s ease, transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .home-card--hero .ntr-macro-row:hover {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.97);
 }
 
 .home-card--hero .ntr-macro-header {
@@ -896,20 +886,80 @@
    12-col rhythm: two rows of a 7 + 5 pair. Grid stretch pairs each row to a
    shared height, so it reads as evenly filled the way /nutrition does rather
    than one tall card next to a short one. */
+/* Four equal cards — a plain 2 × 2 of identical-width cells (Anchor | Capture,
+   Day loop | Tasks). Grid `align-items: stretch` keeps each row's pair the same
+   height; a long list inside a card scrolls within that height. */
 .home-grid--primary {
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
   align-items: stretch;
 }
 
 .home-grid--rest {
-  margin-top: 18px;
+  margin-top: 16px;
 }
 
-.home-grid--primary .home-card--anchor { grid-column: span 5; flex-direction: column; }
-.home-grid--primary .home-card--capture { grid-column: span 7; }
-.home-grid--primary .home-card--hero { grid-column: span 7; }
-.home-grid--primary .home-card--tasks { grid-column: span 5; }
+/* Reset the 6-col spans the cards carry for the other grid — here every cell
+   is exactly one of the two equal tracks. */
+.home-grid--primary .home-card {
+  grid-column: auto;
+}
+
+.home-grid--primary .home-card--anchor { flex-direction: column; }
+
+/* Each card sizes to its content, and grid `align-items: stretch` pulls the
+   shorter card in a row up to its partner's height — so the four read as one
+   even block (like /nutrition) with nothing clipped. A tall list inside a card
+   (tasks, recent captures) scrolls within that shared height. */
+.home-grid--primary .home-card {
+  height: 376px;
+  padding: 18px 20px;
+  gap: 10px;
+}
+
+/* Inner scroll regions so a full list never grows the fixed card height. */
+.home-grid--primary .home-tasks-list,
+.home-grid--primary .home-card--capture .home-capture-recent {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Quick capture holds a lot (modes, input, recent list, mood) — the recent
+   list gives up its space first and scrolls, so the mood row stays pinned and
+   visible instead of being clipped by the fixed height. */
+.home-grid--primary .home-card--capture .home-capture-modes {
+  padding: 4px;
+}
+
+.home-grid--primary .home-card--capture .home-capture-mode {
+  padding: 6px 10px;
+}
+
+.home-grid--primary .home-card--capture .home-capture-input-row input {
+  padding: 10px 14px;
+}
+
+.home-grid--primary .home-card--capture .home-capture-send {
+  width: 40px;
+  height: 40px;
+  flex-basis: 40px;
+}
+
+.home-grid--primary .home-card--capture .home-capture-recent {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.home-grid--primary .home-card--capture .home-capture-recent::-webkit-scrollbar {
+  display: none;
+}
+
+.home-grid--primary .home-card--capture .home-capture-mood {
+  padding-top: 10px;
+}
 
 /* ---------- Focus log ----------
    Data-hygiene card: retroactive focus entry plus calendar-derived suggestions.
@@ -1312,17 +1362,220 @@
 
 .home-grid--primary .home-card--anchor .home-anchor-body {
   flex: 1;
-  justify-content: center;
+  min-height: 0;
+  justify-content: flex-start;
   gap: 12px;
 }
 
 .home-grid--primary .home-card--anchor .home-anchor-quote {
-  font-size: 26px;
+  font-size: 22px;
   line-height: 1.3;
 }
 
 .home-grid--primary .home-card--anchor .home-anchor-quote.is-empty {
-  font-size: 22px;
+  font-size: 20px;
+}
+
+/* Review block — outcome chips + a notes journal, kept against the anchor. */
+.home-anchor-review {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 9px;
+  min-height: 0;
+  margin-top: 2px;
+}
+
+.home-anchor-outcomes {
+  display: flex;
+  gap: 6px;
+}
+
+.home-anchor-outcome {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid rgba(26, 31, 29, 0.14);
+  border-radius: 999px;
+  background: rgba(23, 27, 21, 0.025);
+  color: #4a544e;
+  font-size: 10.5px;
+  font-weight: 750;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.12s ease;
+}
+
+.home-anchor-outcome:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.home-anchor-outcome:active {
+  transform: scale(0.96);
+}
+
+.home-anchor-outcome.is-active {
+  border-color: transparent;
+  color: #fff;
+}
+
+.home-anchor-outcome--achieved.is-active { background: #5f8a6e; }
+.home-anchor-outcome--partial.is-active { background: #a9822f; }
+.home-anchor-outcome--missed.is-active { background: #b06b6b; }
+
+/* Notes — a small journal block with an explicit Edit / Save / Cancel flow,
+   never a bare always-live textarea. The written note reads back in the same
+   Playfair italic as the anchor quote, like a diary line. */
+.home-anchor-note {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(26, 31, 29, 0.12);
+  border-radius: 14px;
+  background: rgba(23, 27, 21, 0.02);
+}
+
+.home-anchor-note-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.home-anchor-note-label {
+  color: rgba(23, 28, 25, 0.6);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.home-anchor-note-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border: 1px solid rgba(26, 31, 29, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  color: #3c4a3f;
+  font-size: 9.5px;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.16s ease, transform 0.12s ease;
+}
+
+.home-anchor-note-btn:hover {
+  background: #fff;
+}
+
+.home-anchor-note-btn:active {
+  transform: scale(0.94);
+}
+
+.home-anchor-note-text {
+  margin: 0;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 13.5px;
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.5;
+  color: #2b352f;
+  white-space: pre-wrap;
+  scrollbar-width: none;
+}
+
+.home-anchor-note-text::-webkit-scrollbar {
+  display: none;
+}
+
+.home-anchor-note-placeholder {
+  flex: 1;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 12.5px;
+  font-style: italic;
+  color: rgba(23, 28, 25, 0.45);
+  cursor: text;
+}
+
+.home-anchor-note-input {
+  flex: 1;
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 10px;
+  border: 1px solid rgba(26, 31, 29, 0.16);
+  border-radius: 11px;
+  background: #fff;
+  color: #17211c;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 13px;
+  font-style: italic;
+  line-height: 1.45;
+  resize: none;
+}
+
+.home-anchor-note-input::placeholder {
+  color: rgba(23, 28, 25, 0.5);
+}
+
+.home-anchor-note-input:focus {
+  outline: none;
+  border-color: rgba(26, 31, 29, 0.34);
+}
+
+.home-anchor-note-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.home-anchor-note-save,
+.home-anchor-note-cancel {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.16s ease;
+}
+
+.home-anchor-note-save {
+  border: 0;
+  background: #202321;
+  color: #fff;
+}
+
+.home-anchor-note-save:hover {
+  background: #2c302d;
+}
+
+.home-anchor-note-cancel {
+  border: 1px solid rgba(26, 31, 29, 0.16);
+  background: transparent;
+  color: #4a544e;
+}
+
+.home-anchor-note-cancel:hover {
+  background: rgba(23, 27, 21, 0.04);
+}
+
+.home-anchor-note-save:active,
+.home-anchor-note-cancel:active {
+  transform: scale(0.95);
 }
 
 .home-grid--primary .home-card--anchor .home-anchor-foot {
@@ -1346,9 +1599,7 @@
    scrolls inside the card instead of stretching the row. */
 
 .home-grid--primary .home-card--tasks {
-  height: 400px;
-  padding: 22px 22px 16px;
-  gap: 12px;
+  padding-bottom: 16px;
 }
 
 .home-tasks-open {
@@ -2864,6 +3115,15 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .home-grid--primary .home-card {
+    height: auto;
+  }
+
+  .home-grid--primary .home-card--hero,
+  .home-grid--primary .home-card--tasks {
+    min-height: 320px;
+  }
+
   .home-grid--primary .home-card--anchor,
   .home-grid--primary .home-card--capture,
   .home-grid--primary .home-card--hero,
@@ -3129,9 +3389,14 @@
     line-height: 1.34;
   }
 
-  .home-grid--primary .home-card--tasks {
+  .home-grid--primary .home-card {
     height: auto;
-    max-height: 420px;
+    min-height: 0;
+  }
+
+  .home-grid--primary .home-card--hero,
+  .home-grid--primary .home-card--tasks {
+    max-height: 460px;
   }
 
   .home-rollup-grid {

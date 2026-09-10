@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { CheckSquare, Droplets, Lightbulb, MessageCircle, Moon, Plus, Trophy, Utensils } from 'lucide-react'
-import type { DailyTask, SleepEntryPayload } from '../../../lib/api'
+import type { DailyTask, MindAnchorOutcome, SleepEntryPayload } from '../../../lib/api'
 import type { FocusLogPayload } from '../../../types/focus'
 import { focusService } from '../../../services/focus-service'
 import { learningsService } from '../../../services/learnings-service'
@@ -439,6 +439,32 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
     [todayAnchor, home],
   )
 
+  // Notes / outcome ride on the same INTENTION entry — they can only attach once
+  // an anchor exists, and every write carries the current text + tag through so
+  // it never clears them.
+  const handleSaveAnchorMeta = useCallback(
+    async (patch: { note?: string; outcome?: MindAnchorOutcome | '' }) => {
+      if (!todayAnchor) return
+      setAnchorSaving(true)
+      try {
+        const res = await mindService.updateEntry(todayAnchor.id, {
+          text: todayAnchor.text ?? '',
+          type: 'INTENTION',
+          valueTag: todayAnchor.valueTag,
+          date: home.today,
+          ...patch,
+        })
+        if (res.error) throw new Error(res.error.message)
+        await home.reloadAnchors()
+      } catch {
+        toast.error('Could not save that — try again.')
+      } finally {
+        setAnchorSaving(false)
+      }
+    },
+    [todayAnchor, home],
+  )
+
   const handleLogSleep = useCallback(
     async (payload: SleepEntryPayload) => {
       try {
@@ -521,8 +547,11 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
       <div className="home-grid home-grid--primary">
         <TodaysAnchorCard
           intention={todayAnchor?.text ?? ''}
+          note={todayAnchor?.note ?? ''}
+          outcome={todayAnchor?.outcome ?? null}
           saving={anchorSaving}
           onSave={handleSaveAnchor}
+          onSaveMeta={handleSaveAnchorMeta}
         />
 
         <QuickCaptureCard

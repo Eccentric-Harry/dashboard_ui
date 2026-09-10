@@ -7,6 +7,7 @@ export type {
   MindValueTag,
   MindDistortionTag,
   MindEntryPayload,
+  MindAnchorOutcome,
   MindStatusPayload,
   DailyLog,
   // Triage lanes and the shapes hanging off them.

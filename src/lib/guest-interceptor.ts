@@ -171,6 +171,8 @@ interface GuestMindEntry {
   spiral?: { solvableIn24h?: boolean | null; returnedToTaskId?: string | null; durationSeconds?: number | null } | null;
   reviewDate?: string | null;
   wasParked?: boolean;
+  note?: string | null;
+  outcome?: string | null;
   date: string;
   createdAt: string;
   resolvedAt?: string | null;
@@ -569,6 +571,8 @@ export function enableGuestInterceptor() {
             if (body.type) entry.type = body.type;
             if (body.valueTag !== undefined) entry.valueTag = body.valueTag;
             if (body.pinned !== undefined) entry.pinned = body.pinned;
+            if (body.note !== undefined) entry.note = body.note?.trim() || null;
+            if (body.outcome !== undefined) entry.outcome = body.outcome ? String(body.outcome).toUpperCase() : null;
           }
           return respondWith({ data: entry ?? null });
         }
@@ -584,6 +588,8 @@ export function enableGuestInterceptor() {
             status: 'OPEN',
             valueTag: body.valueTag ?? null,
             pinned: body.pinned ?? false,
+            note: body.note?.trim() || null,
+            outcome: body.outcome ? String(body.outcome).toUpperCase() : null,
             date: body.date || guestToday,
             createdAt: new Date().toISOString(),
           };

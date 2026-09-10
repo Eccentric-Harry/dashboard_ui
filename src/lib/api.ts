@@ -1701,6 +1701,10 @@ export interface MindEntry {
   reviewDate?: string | null;
   /** True once this entry has ever been PARKED — unlike reviewDate, this never clears on resurface. */
   wasParked?: boolean;
+  /** INTENTION (Home anchor) only — freeform notes kept against the day's one thing. */
+  note?: string | null;
+  /** INTENTION only — how the anchor landed; null until the user records it. */
+  outcome?: MindAnchorOutcome | null;
   date: string;
   createdAt?: string;
   resolvedAt?: string | null;
@@ -1753,12 +1757,19 @@ export interface MindSummary {
   moodScore: number | null;
 }
 
+/** How a Home anchor (INTENTION) landed, once the user records it. */
+export type MindAnchorOutcome = 'ACHIEVED' | 'PARTIAL' | 'MISSED';
+
 export interface MindEntryPayload {
   text: string;
   type?: MindEntryType;
   valueTag?: MindValueTag | null;
   pinned?: boolean;
   date?: string;
+  /** INTENTION only — freeform notes kept against the day's anchor. */
+  note?: string | null;
+  /** INTENTION only — send '' to clear. */
+  outcome?: MindAnchorOutcome | '' | null;
 }
 
 export interface MindStatusPayload {

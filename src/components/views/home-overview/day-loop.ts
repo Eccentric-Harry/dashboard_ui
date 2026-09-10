@@ -145,7 +145,7 @@ function fuelMetric(meal: MealQualityDay | null): LoopMetric {
   if (mealsLogged <= 0) {
     return {
       id: 'fuel',
-      label: 'Fuel quality',
+      label: 'Fuel',
       ratio: 0,
       done: false,
       display: 'No meals',
@@ -163,7 +163,7 @@ function fuelMetric(meal: MealQualityDay | null): LoopMetric {
 
   return {
     id: 'fuel',
-    label: 'Fuel quality',
+    label: 'Fuel',
     ratio,
     done: ratio >= 1,
     display: meal?.letter ? `${meal.letter} avg` : 'Ungraded',

@@ -140,14 +140,12 @@ function HomeHeader({ dateIso, onQuickAdd, signals }: HomeHeaderProps) {
   return (
     <header className="home-header">
       <div className="home-header-greeting">
-        <span className="home-header-eyebrow">Your day at a glance</span>
-        <span className="home-header-date">
-          <em>{weekday},</em> {monthDay}
-        </span>
         <strong>
           {greeting}, {name}
         </strong>
-        <span className="home-header-line">{dailyLine}</span>
+        <span className="home-header-line">
+          <em>{weekday}, {monthDay}</em> · {dailyLine}
+        </span>
       </div>
 
       <div className="home-header-actions">
