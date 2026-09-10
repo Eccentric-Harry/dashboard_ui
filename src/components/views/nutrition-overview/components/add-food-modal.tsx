@@ -2,9 +2,10 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { X, Loader2, ClipboardCheck, ClipboardPaste, Camera, CheckCircle, AlertTriangle, RotateCcw, Upload, Wifi, Bell, Scan, Shield, TrendingUp, Sparkles, Copy, ChevronLeft, ChevronRight, ChevronDown, ImagePlus } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
-import type { MealAnalysisApiResponse, ClinicalFlag, IngredientBreakdown } from '../../../../lib/api'
+import type { MealAnalysisApiResponse, ClinicalFlag, IngredientBreakdown, Prompt } from '../../../../lib/api'
 import { nutritionService } from '../../../../services/nutrition-service'
 import { useNotifications } from '../../../../store/notification-store'
+import { usePromptsStore } from '../../../../store/prompts-store'
 import { normalizeMealGrade } from './meal-grade'
 import { NUTRILOG_PROMPT } from './nutrilog-prompt'
 import { confirmCloseIfDirty } from '../../../../lib/modal-utils'
@@ -190,6 +191,11 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
   const { backgroundScans, startBackgroundScan, desktopEnabled, toggleDesktopNotifications } = useNotifications()
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null)
 
+  // Prompts library — the "Copy AI prompt" button hands the user their own
+  // saved "food_log" prompt (Prompts tab) rather than a hard-coded string.
+  const promptsData = usePromptsStore.use.prompts()
+  const promptsActions = usePromptsStore.use.actions()
+
   // Tab state
   const [activeTab, setActiveTab] = useState<'manual' | 'ai'>('manual')
 
@@ -201,9 +207,9 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
   const [date, setDate] = useState(selectedDate)
   const [jsonPayload, setJsonPayload] = useState('')
   const [jsonPreview, setJsonPreview] = useState<JsonParseResult | null>(null)
-  // JSON import is a power-user path — collapsed by default so the plain
-  // food fields stay the first thing you see.
-  const [showJsonImport, setShowJsonImport] = useState(false)
+  // "Import from AI" is the promoted primary path — it leads the form and
+  // starts expanded; the plain manual fields sit below it as the fallback.
+  const [showJsonImport, setShowJsonImport] = useState(true)
 
   // The push-alert nudge is advice, not a gate — let it be dismissed.
   const [alertDismissed, setAlertDismissed] = useState(false)
@@ -230,6 +236,11 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
   const galleryInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
+    if (isOpen && !promptsData.loaded && !promptsData.loading) {
+      // Warm the Prompts cache on open so "Copy AI prompt" can resolve the
+      // user's "food_log" prompt without an awaited fetch inside the click.
+      promptsActions.loadPrompts()
+    }
     if (isOpen && isEdit && initialData) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setMealType(initialData.mealType)
@@ -250,7 +261,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       setDate(selectedDate)
       setJsonPayload('')
       setJsonPreview(null)
-      setShowJsonImport(false)
+      setShowJsonImport(true)
       setActiveTab('manual')
       // Reset AI state
       setAiPhase('input')
@@ -395,10 +406,31 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
     }
   }
 
+  // Matches the Prompts-library entry titled "food_log" (case/space/hyphen
+  // insensitive). Guarded against non-array payloads (guest mode returns {}).
+  const findFoodLogPrompt = (list: unknown): Prompt | undefined =>
+    Array.isArray(list)
+      ? (list as Prompt[]).find(
+          p => p?.title?.trim().toLowerCase().replace(/[\s-]+/g, '_') === 'food_log',
+        )
+      : undefined
+
   const handleCopyPrompt = async () => {
+    // Prefer the user's own "food_log" prompt from the Prompts library; fall
+    // back to the built-in NutriLog calibration if they haven't saved one.
+    let prompt = findFoodLogPrompt(promptsData.data)
+    if (!prompt && !promptsData.loaded) {
+      const res = await promptsActions.loadPrompts()
+      prompt = findFoodLogPrompt(res?.data)
+    }
+    const text = prompt?.content?.trim() || NUTRILOG_PROMPT
     try {
-      await navigator.clipboard.writeText(NUTRILOG_PROMPT)
-      toast.success('Analysis prompt copied — paste it into your AI chatbot')
+      await navigator.clipboard.writeText(text)
+      toast.success(
+        prompt
+          ? 'Copied your "food_log" prompt — paste it into your AI chatbot'
+          : 'No "food_log" prompt found — copied the default analysis prompt',
+      )
     } catch {
       toast.error('Clipboard unavailable — copy the prompt manually')
     }
@@ -622,6 +654,71 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
         {/* ═══════════════ MANUAL TAB ═══════════════ */}
         {activeTab === 'manual' && (
           <form onSubmit={handleSubmit} className="add-tx-form" style={{ flex: 1, overflowY: 'auto', paddingRight: '6px' }}>
+            {/* "Import from AI" — promoted to the top as the primary logging
+                path; the manual fields below are the fallback. Starts expanded. */}
+            <div className="af-json-import-block af-json-import-block--lead">
+              <button
+                type="button"
+                className={`af-json-toggle-btn ${jsonPreview?.ok ? 'has-import' : ''}`}
+                onClick={() => setShowJsonImport(v => !v)}
+                aria-expanded={showJsonImport}
+                id="af-json-toggle-btn"
+              >
+                {jsonPreview?.ok ? <CheckCircle size={12} /> : <Sparkles size={12} />}
+                <span>{jsonPreview?.ok ? `JSON imported · ${jsonPreview.parsed.description || 'meal'}` : 'Import from AI — paste JSON from an AI chatbot'}</span>
+                <ChevronDown size={13} className={`af-json-toggle-chevron ${showJsonImport ? 'open' : ''}`} />
+              </button>
+
+              {showJsonImport && (
+                <div className="form-group af-json-import-panel">
+                  <div className="af-json-head">
+                    <label>Import from AI (paste JSON)</label>
+                    <div className="af-json-head-actions">
+                      <button
+                        type="button"
+                        className="af-json-paste-btn"
+                        onClick={handleCopyPrompt}
+                        id="af-json-copy-prompt-btn"
+                      >
+                        <Copy size={12} />
+                        Copy AI prompt
+                      </button>
+                      <button
+                        type="button"
+                        className="af-json-paste-btn"
+                        onClick={handlePasteFromClipboard}
+                        id="af-json-paste-btn"
+                      >
+                        <ClipboardPaste size={12} />
+                        Paste from clipboard
+                      </button>
+                    </div>
+                  </div>
+                  <p className="af-json-hint">
+                    Copy the prompt into any AI chatbot with your meal, then paste its JSON back here — it autofills the fields below.
+                  </p>
+                  <textarea
+                    className="json-textarea"
+                    placeholder='{&#10;  "description": "Lemon Rice",&#10;  "calories": 472,&#10;  "proteinGrams": 10,&#10;  "mealType": "Lunch",&#10;  "mealItems": [ ... ],&#10;  "totalSummary": { ... }&#10;}'
+                    value={jsonPayload}
+                    onChange={(e) => applyJsonText(e.target.value)}
+                    aria-label="AI meal JSON payload"
+                    autoFocus
+                  />
+                  {jsonPreview && (
+                    jsonPreview.ok ? (
+                      <JsonPreviewStrip parsed={jsonPreview.parsed} />
+                    ) : (
+                      <div className="af-json-preview error" role="alert">
+                        <AlertTriangle size={13} />
+                        <span>{jsonPreview.error}</span>
+                      </div>
+                    )
+                  )}
+                </div>
+              )}
+            </div>
+
             <div className="form-group">
               <label>Food Name</label>
               <input
@@ -629,7 +726,6 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                 placeholder="e.g. Paneer Sandwich, Salad..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                autoFocus
               />
             </div>
 
@@ -662,71 +758,6 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                   value={calories} onChange={(e) => setCalories(e.target.value)}
                 />
               </div>
-            </div>
-
-            {/* JSON import — a power-user shortcut, tucked behind a disclosure so
-                the plain fields above stay the primary, uncluttered path. */}
-            <div className="af-json-import-block">
-              <button
-                type="button"
-                className={`af-json-toggle-btn ${jsonPreview?.ok ? 'has-import' : ''}`}
-                onClick={() => setShowJsonImport(v => !v)}
-                aria-expanded={showJsonImport}
-                id="af-json-toggle-btn"
-              >
-                {jsonPreview?.ok ? <CheckCircle size={12} /> : <Sparkles size={12} />}
-                <span>{jsonPreview?.ok ? `JSON imported · ${jsonPreview.parsed.description || 'meal'}` : 'Have JSON from an AI chatbot? Paste it instead'}</span>
-                <ChevronDown size={13} className={`af-json-toggle-chevron ${showJsonImport ? 'open' : ''}`} />
-              </button>
-
-              {showJsonImport && (
-                <div className="form-group af-json-import-panel">
-                  <div className="af-json-head">
-                    <label>Import from AI (paste JSON)</label>
-                    <div className="af-json-head-actions">
-                      <button
-                        type="button"
-                        className="af-json-paste-btn"
-                        onClick={handleCopyPrompt}
-                        id="af-json-copy-prompt-btn"
-                      >
-                        <Copy size={12} />
-                        Copy AI prompt
-                      </button>
-                      <button
-                        type="button"
-                        className="af-json-paste-btn"
-                        onClick={handlePasteFromClipboard}
-                        id="af-json-paste-btn"
-                      >
-                        <ClipboardPaste size={12} />
-                        Paste from clipboard
-                      </button>
-                    </div>
-                  </div>
-                  <p className="af-json-hint">
-                    Copy the prompt into any AI chatbot with your meal, then paste its JSON back here — it autofills the fields above.
-                  </p>
-                  <textarea
-                    className="json-textarea"
-                    placeholder='{&#10;  "description": "Lemon Rice",&#10;  "calories": 472,&#10;  "proteinGrams": 10,&#10;  "mealType": "Lunch",&#10;  "mealItems": [ ... ],&#10;  "totalSummary": { ... }&#10;}'
-                    value={jsonPayload}
-                    onChange={(e) => applyJsonText(e.target.value)}
-                    aria-label="AI meal JSON payload"
-                    autoFocus
-                  />
-                  {jsonPreview && (
-                    jsonPreview.ok ? (
-                      <JsonPreviewStrip parsed={jsonPreview.parsed} />
-                    ) : (
-                      <div className="af-json-preview error" role="alert">
-                        <AlertTriangle size={13} />
-                        <span>{jsonPreview.error}</span>
-                      </div>
-                    )
-                  )}
-                </div>
-              )}
             </div>
 
             {error && <p className="add-tx-error">{error}</p>}

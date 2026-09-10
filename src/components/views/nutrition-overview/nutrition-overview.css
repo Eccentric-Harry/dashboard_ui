@@ -2855,10 +2855,18 @@
   line-height: 1.5;
 }
 
-/* Disclosure toggle that reveals the JSON import panel — collapsed by
-   default so the manual fields are the first thing a user sees. */
+/* Disclosure toggle that reveals the JSON import panel. */
 .af-json-import-block {
   margin-top: 4px;
+}
+
+/* "Import from AI" promoted to the top of the Add-Food form as the primary
+   path — starts expanded, divided from the manual fields below it. */
+.af-json-import-block--lead {
+  margin-top: 0;
+  margin-bottom: 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(16, 19, 18, 0.07);
 }
 
 .af-json-toggle-btn {
