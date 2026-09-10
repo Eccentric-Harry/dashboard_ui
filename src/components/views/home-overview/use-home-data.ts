@@ -130,7 +130,10 @@ export function useHomeData(): HomeData {
     await Promise.allSettled([
       settle<NutritionSummary>(nutritionService.getSummary(today) as Promise<{ data?: NutritionSummary; error?: unknown }>, setNutrition),
       settle<HydrationData>(nutritionService.getHydration(today), setHydration),
-      settle<DailyTask[]>(tasksService.getTasksRange(windowStart, today), setTasks),
+      // End date runs past today so the Tasks card can show upcoming pending
+      // items, not just today's + overdue. Every other consumer of this slice
+      // filters by date, so the wider window is inert for them.
+      settle<DailyTask[]>(tasksService.getTasksRange(windowStart, addDaysIso(today, 21)), setTasks),
       settle<CalendarItem[]>(calendarService.getItemsForRange(today, today), setCalendarToday),
       settle<SleepEntry[]>(sleepService.getEntries(windowStart, today), setSleep),
       settle<FocusDaySummary[]>(focusService.getHistory(windowStart, today), setFocus),

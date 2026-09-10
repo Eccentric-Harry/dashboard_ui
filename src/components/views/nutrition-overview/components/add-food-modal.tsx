@@ -208,8 +208,10 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
   const [jsonPayload, setJsonPayload] = useState('')
   const [jsonPreview, setJsonPreview] = useState<JsonParseResult | null>(null)
   // "Import from AI" is the promoted primary path — it leads the form and
-  // starts expanded; the plain manual fields sit below it as the fallback.
+  // starts expanded; the plain manual fields sit below it, collapsed, as the
+  // fallback (auto-opened once a JSON paste autofills them for review).
   const [showJsonImport, setShowJsonImport] = useState(true)
+  const [showManualFields, setShowManualFields] = useState(false)
 
   // The push-alert nudge is advice, not a gate — let it be dismissed.
   const [alertDismissed, setAlertDismissed] = useState(false)
@@ -251,6 +253,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       setJsonPayload('')
       setJsonPreview(null)
       setShowJsonImport(false)
+      setShowManualFields(true)
       setActiveTab('manual')
       setCurrentTaskId(null)
     } else if (isOpen && !isEdit) {
@@ -262,6 +265,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       setJsonPayload('')
       setJsonPreview(null)
       setShowJsonImport(true)
+      setShowManualFields(false)
       setActiveTab('manual')
       // Reset AI state
       setAiPhase('input')
@@ -383,13 +387,14 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
     const result = parseMealJson(trimmed)
     setJsonPreview(result)
     if (result.ok) {
-      // Autofill the visible fields so the user can review/override
+      // Autofill the manual fields and reveal them so the user can review/override
       const p = result.parsed
       if (p.description) setDescription(p.description)
       if (p.calories !== undefined) setCalories(String(p.calories))
       if (p.proteinGrams !== undefined) setProteinGrams(String(p.proteinGrams))
       if (p.mealType) setMealType(p.mealType)
       if (p.date) setDate(p.date)
+      setShowManualFields(true)
     }
   }
 
@@ -719,59 +724,79 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
               )}
             </div>
 
-            <div className="form-group">
-              <label>Food Name</label>
-              <input
-                type="text"
-                placeholder="e.g. Paneer Sandwich, Salad..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
+            {/* Manual detail fields — collapsed by default; "Import from AI"
+                above is the primary path. Auto-opens after a JSON paste. */}
+            <div className="af-json-import-block af-manual-fields-block">
+              <button
+                type="button"
+                className="af-json-toggle-btn"
+                onClick={() => setShowManualFields(v => !v)}
+                aria-expanded={showManualFields}
+                id="af-manual-fields-toggle-btn"
+              >
+                <ClipboardCheck size={12} />
+                <span>Or enter the details manually</span>
+                <ChevronDown size={13} className={`af-json-toggle-chevron ${showManualFields ? 'open' : ''}`} />
+              </button>
 
-            <div className="form-row-macros">
-              <div className="form-group" style={{ flex: 1 }}>
-                <label>Meal Type</label>
-                <select value={mealType} onChange={e => setMealType(e.target.value)}>
-                  <option value="" disabled>Select…</option>
-                  {MEAL_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Date</label>
-                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-              </div>
-            </div>
+              {showManualFields && (
+                <div className="af-manual-fields-panel">
+                  <div className="form-group">
+                    <label>Food Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Paneer Sandwich, Salad..."
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                    />
+                  </div>
 
-            <div className="form-row-macros">
-              <div className="form-group">
-                <label>Protein (g)</label>
-                <input
-                  type="number" min="0" step="0.01" placeholder="0.00"
-                  value={proteinGrams} onChange={(e) => setProteinGrams(e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label>Calories (kcal)</label>
-                <input
-                  type="number" min="0" placeholder="0"
-                  value={calories} onChange={(e) => setCalories(e.target.value)}
-                />
-              </div>
+                  <div className="form-row-macros">
+                    <div className="form-group" style={{ flex: 1 }}>
+                      <label>Meal Type</label>
+                      <select value={mealType} onChange={e => setMealType(e.target.value)}>
+                        <option value="" disabled>Select…</option>
+                        {MEAL_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Date</label>
+                      <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                    </div>
+                  </div>
+
+                  <div className="form-row-macros">
+                    <div className="form-group">
+                      <label>Protein (g)</label>
+                      <input
+                        type="number" min="0" step="0.01" placeholder="0.00"
+                        value={proteinGrams} onChange={(e) => setProteinGrams(e.target.value)}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Calories (kcal)</label>
+                      <input
+                        type="number" min="0" placeholder="0"
+                        value={calories} onChange={(e) => setCalories(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="af-live-macro-preview">
+                    <div className="af-macro-preview-item">
+                      <span className="af-macro-label">Calories</span>
+                      <span className="af-macro-value">{calories || '0'} <em>kcal</em></span>
+                    </div>
+                    <div className="af-macro-preview-item">
+                      <span className="af-macro-label">Protein</span>
+                      <span className="af-macro-value">{proteinGrams || '0'} <em>g</em></span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {error && <p className="add-tx-error">{error}</p>}
-
-            <div className="af-live-macro-preview">
-              <div className="af-macro-preview-item">
-                <span className="af-macro-label">Calories</span>
-                <span className="af-macro-value">{calories || '0'} <em>kcal</em></span>
-              </div>
-              <div className="af-macro-preview-item">
-                <span className="af-macro-label">Protein</span>
-                <span className="af-macro-value">{proteinGrams || '0'} <em>g</em></span>
-              </div>
-            </div>
 
             <button type="submit" className="add-tx-submit af-submit-btn" disabled={loading}>
               {loading ? <Loader2 className="spinner" size={18} /> : <><CheckCircle size={16} />Save Food</>}

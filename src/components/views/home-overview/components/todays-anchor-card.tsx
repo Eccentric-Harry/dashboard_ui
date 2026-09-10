@@ -34,6 +34,7 @@ function TodaysAnchorCard({ intention, saving, onSave }: TodaysAnchorCardProps) 
 
   return (
     <section className="home-card home-card--anchor" aria-label="Today's anchor">
+      <Anchor className="home-card-glyph" aria-hidden="true" />
       <span className="home-anchor-ic" aria-hidden="true">
         <Anchor size={16} strokeWidth={2.2} />
       </span>
@@ -72,6 +73,10 @@ function TodaysAnchorCard({ intention, saving, onSave }: TodaysAnchorCardProps) 
             <Pencil size={11} strokeWidth={2.4} className="home-anchor-pencil" aria-hidden="true" />
           </button>
         )}
+
+        <p className="home-anchor-foot">
+          {intention ? 'Everything else bends around this.' : 'Name it and the day has a spine.'}
+        </p>
       </div>
     </section>
   )

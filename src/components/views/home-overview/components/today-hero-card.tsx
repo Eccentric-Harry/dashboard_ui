@@ -154,7 +154,6 @@ function TodayHeroCard({
               <span key={i} className="home-skel" style={{ height: 54, borderRadius: 16 }} />
             ))}
           </div>
-          <span className="home-skel home-next-strip-skel" />
         </div>
       </section>
     )
@@ -167,7 +166,6 @@ function TodayHeroCard({
     .filter((item) => !item.cancelled && !item.completed && item.startTime && item.startTime >= nowHm)
     .sort((a, b) => (a.startTime ?? '').localeCompare(b.startTime ?? ''))
   const nextEvent = upcoming[0]
-  const laterCount = Math.max(upcoming.length - 1, 0)
 
   const openRoute: Record<LoopMetricId, () => void> = {
     sleep: onLogSleep,
@@ -235,32 +233,6 @@ function TodayHeroCard({
             <LoopRow key={metric.id} metric={metric} onClick={openRoute[metric.id]} />
           ))}
         </div>
-
-        {/* Full-width agenda strip — title gets its own line so long event
-            names ellipsize instead of crushing the time label. */}
-        <button type="button" className="home-next-strip" onClick={() => onNavigate('/calendar')}>
-          <span className="home-next-ic" aria-hidden="true">
-            <CalendarClock size={14} />
-          </span>
-          <span className="home-next-text">
-            {nextEvent ? (
-              <>
-                <small>
-                  Up next · {formatTimeLabel(nextEvent.startTime)}
-                  {nextEvent.endTime ? ` – ${formatTimeLabel(nextEvent.endTime)}` : ''}
-                </small>
-                <b>{nextEvent.title}</b>
-              </>
-            ) : (
-              <>
-                <small>Today's runway</small>
-                <b>Nothing scheduled — open space ahead</b>
-              </>
-            )}
-          </span>
-          {laterCount > 0 && <span className="home-next-more">+{laterCount} later</span>}
-          <ArrowRight className="home-next-go" size={15} aria-hidden="true" />
-        </button>
       </div>
     </section>
   )

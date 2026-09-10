@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { CheckSquare, Droplets, Lightbulb, MessageCircle, Moon, Plus, Trophy, Utensils } from 'lucide-react'
-import type { SleepEntryPayload } from '../../../lib/api'
+import type { DailyTask, SleepEntryPayload } from '../../../lib/api'
 import type { FocusLogPayload } from '../../../types/focus'
 import { focusService } from '../../../services/focus-service'
 import { learningsService } from '../../../services/learnings-service'
@@ -23,6 +23,7 @@ import { FocusLogCard } from './components/focus-log-card'
 import { TrendsCard } from './components/trends-card'
 import { QuickCaptureCard } from './components/quick-capture-card'
 import type { QuickCaptureMode, RecentCapture } from './components/quick-capture-card'
+import { PendingTasksCard } from './components/pending-tasks-card'
 import { WeekRollupCard } from './components/week-rollup-card'
 import { buildDayRecords, countActiveDays, focusCoverage, generateInsights, INSIGHT_WINDOW_DAYS } from './insights-engine'
 import { promoteForHome } from '../../../lib/insights/engine'
@@ -264,7 +265,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
       }))
     return [...fromTasks, ...fromMind]
       .sort((a, b) => b.at.localeCompare(a.at))
-      .slice(0, 4)
+      .slice(0, 3)
   }, [todayTasks, home.mindEntries.data, home.today])
 
   const isFirstRun =
@@ -346,6 +347,23 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
       } catch {
         toast.error('Could not save that — try again.')
         throw new Error('capture failed')
+      }
+    },
+    [home],
+  )
+
+  const handleToggleTask = useCallback(
+    async (task: DailyTask) => {
+      if (!task.id) return
+      try {
+        const res = await tasksService.toggleTask(task.id, task.date)
+        if (res.error) throw new Error(res.error.message)
+        toast.success(task.completed ? 'Back on the list.' : 'Nice — one off the list.')
+        window.dispatchEvent(new CustomEvent('calendar-updated'))
+        void home.refetch()
+      } catch {
+        toast.error('Could not update that task — try again.')
+        throw new Error('toggle failed')
       }
     },
     [home],
@@ -497,11 +515,22 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
         </section>
       )}
 
-      <div className="home-grid">
+      {/* Primary bento — the four things the day is run from, on the Nutrition
+          route's even 12-col rhythm (7 + 5, 7 + 5): anchor + capture, then the
+          day loop + what's pending. Everything else drops to the grid below. */}
+      <div className="home-grid home-grid--primary">
         <TodaysAnchorCard
           intention={todayAnchor?.text ?? ''}
           saving={anchorSaving}
           onSave={handleSaveAnchor}
+        />
+
+        <QuickCaptureCard
+          onCapture={handleCapture}
+          focusRequest={captureRequest}
+          moodScore={todayMood}
+          onMood={handleMood}
+          recentCaptures={recentCaptures}
         />
 
         <TodayHeroCard
@@ -520,14 +549,16 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           onCelebrate={fireConfetti}
         />
 
-        <QuickCaptureCard
-          onCapture={handleCapture}
-          focusRequest={captureRequest}
-          moodScore={todayMood}
-          onMood={handleMood}
-          recentCaptures={recentCaptures}
+        <PendingTasksCard
+          loading={home.loading}
+          today={home.today}
+          tasks={home.tasks.data}
+          onToggle={handleToggleTask}
+          onNavigate={onNavigate}
         />
+      </div>
 
+      <div className="home-grid home-grid--rest">
         <SleepCard
           loading={home.loading}
           failed={home.sleep.failed}

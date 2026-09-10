@@ -2869,6 +2869,19 @@
   border-bottom: 1px solid rgba(16, 19, 18, 0.07);
 }
 
+/* Manual detail fields — collapsed by default beneath the AI import block. */
+.af-manual-fields-block {
+  margin-top: 0;
+}
+
+.af-manual-fields-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 14px;
+  animation: af-fade-up 0.2s ease;
+}
+
 .af-json-toggle-btn {
   display: flex;
   align-items: center;
@@ -3266,14 +3279,21 @@
 }
 
 /* Primary submit button — shared by the manual Save and AI Analyse actions
-   so both render at an identical full-width 48px size. */
+   so both render at an identical full-width size. flex-shrink: 0 keeps it from
+   being squashed when it sits in the scrollable .add-tx-form flex column. */
 .af-submit-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: 8px;
   width: 100%;
-  height: 48px;
+  height: 52px;
+  flex-shrink: 0;
+  margin-top: 8px;
+  border-radius: 14px !important;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   background: #101312 !important;
   color: #ffffff !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;

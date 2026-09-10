@@ -442,12 +442,12 @@
 
 .home-card--hero {
   grid-column: span 4;
-  padding: 22px 24px 16px;
+  padding: 22px 24px;
   gap: 0;
 }
 
 .home-hero-head {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .home-hero-head .ntr-eyebrow {
@@ -462,25 +462,22 @@
 .home-hero-panel {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(180px, 210px) minmax(0, 1fr);
-  /* The panel grows to fill the card (its row height is set by whatever card
-     sits beside it), and all of that growth lands on the ring/tiles row — the
-     agenda strip keeps its own height. Paired with align-items: stretch, the
-     tile stack always matches the gauge column instead of leaving dead air. */
+  grid-template-columns: minmax(136px, 168px) minmax(0, 1fr);
+  /* One row (the agenda strip moved out to the Tasks card). align-items:
+     stretch keeps the signal rows matched to the gauge column's height. */
   flex: 1;
-  grid-template-rows: minmax(0, 1fr) auto;
-  gap: 16px 28px;
+  gap: 14px 20px;
   align-items: stretch;
-  padding: 20px 22px 18px;
+  padding: 18px 20px;
   border-radius: 22px;
-  /* periwinkle — swapped with the sleep card, which now carries the cool
-     blue; the dark ink arc and domain accents still lead the color story */
-  background: linear-gradient(160deg, #e9ebfb 0%, #d9dcf7 58%, #c9cdf1 100%);
+  /* Flat lavender — the tinted stat panel inside a white card, same idea as
+     /nutrition's lime panel but a single solid fill, no gradient. */
+  background: #eceefb;
   overflow: hidden;
 }
 
 .home-hero-panel.is-skeleton {
-  background: linear-gradient(160deg, rgba(233, 235, 251, 0.7), rgba(201, 205, 241, 0.4));
+  background: #eff0f8;
 }
 
 /* Loop closed for the day — a slow gold sheen sweeps the panel once,
@@ -512,17 +509,8 @@
   to { background-position: -30% 0; }
 }
 
-/* soft moon-glow motif in the panel corner — Home's answer to the leaf/moon */
 .home-hero-panel::after {
-  content: '';
-  position: absolute;
-  right: -34px;
-  bottom: -46px;
-  width: 210px;
-  height: 210px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.4), transparent 68%);
-  pointer-events: none;
+  content: none;
 }
 
 .home-hero-gauge-col {
@@ -532,7 +520,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 7px;
 }
 
 /* ---------- The loop arc ----------
@@ -546,9 +534,14 @@
 }
 
 .home-loop-arc svg {
-  width: min(100%, 208px);
+  width: min(100%, 156px);
   height: auto;
   overflow: visible;
+}
+
+.home-loop-track,
+.home-loop-fill {
+  stroke-width: 13;
 }
 
 .home-loop-track {
@@ -587,7 +580,7 @@
 }
 
 .home-loop-arc-center strong {
-  font-size: 34px;
+  font-size: 27px;
   font-weight: 700;
   letter-spacing: -0.05em;
   line-height: 1;
@@ -595,7 +588,7 @@
 
 .home-loop-arc-center small {
   color: rgba(23, 27, 21, 0.62);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
 }
 
@@ -660,64 +653,54 @@
   color: var(--ntr-lime);
 }
 
-/* Four loop signals in a 2×2 grid beside the ring — side by side pairs, not
-   stacked full-width rows. Four tiles divide the 2 columns evenly (unlike the
-   old five-signal layout, which needed an odd tile spanning the full row), so
-   the grid can stretch both rows to the gauge column's height with no orphan
-   tile and no leftover gap under the last row. */
+/* Four loop signals as full-width stacked rows beside the ring — the same
+   grammar as /nutrition's Protein / Carbs / Fat rows: label left, value right,
+   progress bar below. Full width means the value never has to truncate. */
 .home-card--hero .ntr-hero-macros {
   position: relative;
   z-index: 1;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-rows: minmax(0, 1fr);
-  align-content: stretch;
+  display: flex;
+  flex-direction: column;
   gap: 8px;
   height: 100%;
 }
 
 .home-card--hero .ntr-macro-row {
   cursor: pointer;
+  flex: 1;
   justify-content: center;
-  padding: 14px 16px;
-  gap: 9px;
-  background: rgba(255, 255, 255, 0.5);
+  padding: 10px 14px;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.66);
   transition: background-color 0.18s ease, transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .home-card--hero .ntr-macro-row:hover {
-  background: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.9);
 }
 
-/* Label above value, not side by side — the tile is half-width now, and a
-   left/right split at this width crushes the value against the label. */
 .home-card--hero .ntr-macro-header {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 5px;
+  gap: 12px;
 }
 
 .home-card--hero .ntr-macro-header strong {
-  font-size: 17px;
-  letter-spacing: -0.02em;
+  flex-shrink: 0;
+  font-size: 14px;
+  letter-spacing: -0.01em;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
 }
 
 .home-card--hero .ntr-macro-header strong em {
-  font-size: 11px;
+  font-size: 10.5px;
 }
 
-/* A touch heavier than Nutrition's 5px: four tiles carry the whole panel here */
 .home-card--hero .ntr-macro-bar {
-  height: 6px;
+  height: 5px;
 }
 
 /* Tactile press — every loop row responds to the tap */
 .home-card--hero .ntr-macro-row:active {
-  transform: scale(0.955);
+  transform: scale(0.985);
 }
 
 .home-card--hero .ntr-macro-header p {
@@ -907,6 +890,26 @@
 .home-card--capture { grid-column: span 2; }
 .home-card--rollup { grid-column: span 6; }
 .home-card--focuslog { grid-column: span 6; }
+
+/* ---------- Primary bento ----------
+   The four cards the day is actually run from, on the Nutrition route's even
+   12-col rhythm: two rows of a 7 + 5 pair. Grid stretch pairs each row to a
+   shared height, so it reads as evenly filled the way /nutrition does rather
+   than one tall card next to a short one. */
+.home-grid--primary {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 18px;
+  align-items: stretch;
+}
+
+.home-grid--rest {
+  margin-top: 18px;
+}
+
+.home-grid--primary .home-card--anchor { grid-column: span 5; flex-direction: column; }
+.home-grid--primary .home-card--capture { grid-column: span 7; }
+.home-grid--primary .home-card--hero { grid-column: span 7; }
+.home-grid--primary .home-card--tasks { grid-column: span 5; }
 
 /* ---------- Focus log ----------
    Data-hygiene card: retroactive focus entry plus calendar-derived suggestions.
@@ -1282,6 +1285,324 @@
   font-size: 10.5px;
   font-weight: 700;
   cursor: pointer;
+}
+
+.home-anchor-foot {
+  display: none;
+}
+
+/* ---------- Today's anchor — bento variant ----------
+   In the primary grid the anchor is a full card paired with Quick Capture, not
+   the old slim strip. It becomes a calm pull-quote: icon disc up top, the
+   intention set large and centred in the card's height, a quiet footer line so
+   the extra room reads as deliberate rather than empty. */
+
+.home-grid--primary .home-card--anchor {
+  align-items: stretch;
+  gap: 14px;
+  padding: 24px 26px;
+}
+
+.home-grid--primary .home-card--anchor .home-anchor-ic {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  border-radius: 14px;
+}
+
+.home-grid--primary .home-card--anchor .home-anchor-body {
+  flex: 1;
+  justify-content: center;
+  gap: 12px;
+}
+
+.home-grid--primary .home-card--anchor .home-anchor-quote {
+  font-size: 26px;
+  line-height: 1.3;
+}
+
+.home-grid--primary .home-card--anchor .home-anchor-quote.is-empty {
+  font-size: 22px;
+}
+
+.home-grid--primary .home-card--anchor .home-anchor-foot {
+  display: block;
+  margin: 0;
+  color: rgba(23, 28, 25, 0.5);
+  font-size: 11.5px;
+  font-weight: 600;
+  font-style: italic;
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.home-grid--primary .home-card--anchor .home-anchor-edit {
+  flex-wrap: wrap;
+}
+
+/* ---------- Pending tasks card ----------
+   The fourth bento cell: what's overdue, due today, or coming up soon, pulled
+   from the /tasks route. Structure mirrors the Nutrition "Today's Meals" card —
+   a stat strip, then a scrolling list at a fixed card height so a long backlog
+   scrolls inside the card instead of stretching the row. */
+
+.home-grid--primary .home-card--tasks {
+  height: 400px;
+  padding: 22px 22px 16px;
+  gap: 12px;
+}
+
+.home-tasks-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 6px 11px;
+  border: 1px solid rgba(26, 31, 29, 0.14);
+  border-radius: 999px;
+  background: rgba(23, 27, 21, 0.025);
+  color: #2b352f;
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.home-tasks-open:hover {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.home-tasks-open:active {
+  transform: scale(0.96);
+}
+
+/* Overdue / Today / Upcoming counts — the Nutrition meals accent panel, tinted
+   to Home's lavender family. */
+.home-tasks-accent {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 12px 16px;
+  border-radius: 18px;
+  background: linear-gradient(120deg, #eef0fb 0%, #e4e7f7 100%);
+}
+
+.home-tasks-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.home-tasks-stat strong {
+  font-size: 22px;
+  font-weight: 750;
+  letter-spacing: -0.035em;
+  color: #17211c;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.home-tasks-stat span {
+  color: rgba(23, 28, 25, 0.55);
+  font-size: 8.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.home-tasks-stat.is-watch strong {
+  color: #9a5a10;
+}
+
+.home-tasks-sep {
+  width: 1px;
+  height: 30px;
+  flex-shrink: 0;
+  background: rgba(23, 27, 21, 0.1);
+}
+
+.home-tasks-list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0 -4px;
+  padding: 0 4px;
+  scrollbar-width: none;
+}
+
+.home-tasks-list::-webkit-scrollbar {
+  display: none;
+}
+
+.home-task-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 11px;
+  padding: 11px 4px;
+  border-bottom: 1px solid var(--ntr-line);
+}
+
+.home-task-row:last-child {
+  border-bottom: none;
+}
+
+.home-task-check {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(26, 31, 29, 0.24);
+  border-radius: 7px;
+  background: #fff;
+  color: transparent;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, transform 0.14s ease;
+}
+
+.home-task-check:hover:not(:disabled) {
+  border-color: #5f8a6e;
+  background: rgba(95, 138, 110, 0.12);
+  color: #5f8a6e;
+}
+
+.home-task-check:active:not(:disabled) {
+  transform: scale(0.88);
+}
+
+.home-task-check:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.home-task-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.home-task-body b {
+  overflow: hidden;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: #17211c;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-task-body:hover b {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.home-task-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.home-task-due {
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.home-task-due--overdue {
+  background: rgba(241, 105, 119, 0.14);
+  color: #a63d4a;
+}
+
+.home-task-due--today {
+  background: rgba(77, 86, 174, 0.14);
+  color: #4d56ae;
+}
+
+.home-task-due--upcoming {
+  background: rgba(23, 27, 21, 0.06);
+  color: rgba(23, 28, 25, 0.55);
+}
+
+.home-task-cat {
+  overflow: hidden;
+  color: rgba(23, 28, 25, 0.5);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-tasks-empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 20px;
+  text-align: center;
+}
+
+.home-tasks-empty svg {
+  color: #5f8a6e;
+}
+
+.home-tasks-empty p {
+  margin: 0;
+  color: #17211c;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.home-tasks-empty span {
+  max-width: 30ch;
+  color: rgba(23, 28, 25, 0.55);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.home-tasks-foot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 10px;
+  border: 0;
+  border-radius: 12px;
+  background: rgba(23, 27, 21, 0.035);
+  color: #2b352f;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+
+.home-tasks-foot:hover {
+  background: rgba(23, 27, 21, 0.06);
+}
+
+.home-tasks-foot svg {
+  color: rgba(23, 28, 25, 0.5);
 }
 
 /* ---------- Sleep card ----------
@@ -2530,14 +2851,32 @@
 /* iPads in landscape keep the desktop hero+capture pairing; only true
    portrait/tablet widths stack to full-width cards. */
 @media (max-width: 1024px) {
-  .home-card--anchor,
-  .home-card--hero,
   .home-card--sleep,
   .home-card--insights,
   .home-card--trends,
-  .home-card--capture,
   .home-card--focuslog {
     grid-column: span 6;
+  }
+
+  /* Primary bento collapses to a single stacked column — the 7 + 5 pairing
+     needs the desktop width to stay legible. */
+  .home-grid--primary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .home-grid--primary .home-card--anchor,
+  .home-grid--primary .home-card--capture,
+  .home-grid--primary .home-card--hero,
+  .home-grid--primary .home-card--tasks {
+    grid-column: 1 / -1;
+  }
+
+  .home-grid--primary .home-card--anchor {
+    align-items: flex-start;
+  }
+
+  .home-grid--primary .home-card--anchor .home-anchor-body {
+    justify-content: flex-start;
   }
 }
 
@@ -2725,23 +3064,20 @@
     font-size: 28px;
   }
 
-  /* The 2×2 grid holds on phones too — just at its own height, since the
-     panel stacks to one column here and there's no gauge row to match. */
   .home-card--hero .ntr-hero-macros {
     width: 100%;
     height: auto;
-    grid-auto-rows: auto;
     gap: 7px;
   }
 
   .home-card--hero .ntr-macro-row {
     flex: none;
-    padding: 11px 12px;
+    padding: 10px 12px;
     gap: 7px;
   }
 
   .home-card--hero .ntr-macro-header strong {
-    font-size: 15px;
+    font-size: 14px;
   }
 
   .home-next-strip {
@@ -2786,6 +3122,16 @@
   .home-anchor-quote {
     font-size: 16.5px;
     line-height: 1.34;
+  }
+
+  .home-grid--primary .home-card--anchor .home-anchor-quote {
+    font-size: 19px;
+    line-height: 1.34;
+  }
+
+  .home-grid--primary .home-card--tasks {
+    height: auto;
+    max-height: 420px;
   }
 
   .home-rollup-grid {
