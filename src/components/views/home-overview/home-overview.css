@@ -1594,12 +1594,19 @@
 
 /* ---------- Pending tasks card ----------
    The fourth bento cell: what's overdue, due today, or coming up soon, pulled
-   from the /tasks route. Structure mirrors the Nutrition "Today's Meals" card —
-   a stat strip, then a scrolling list at a fixed card height so a long backlog
-   scrolls inside the card instead of stretching the row. */
+   from the /tasks route. A quiet count strip, grouped rows with a rounded
+   hover surface, and a ghost link out — the list scrolls inside the fixed
+   card height so a long backlog never stretches the row.
+   Per-bucket accent: overdue rose, today periwinkle, upcoming slate-grey. */
+
+.home-card--tasks {
+  --tk-overdue: #c0596e;
+  --tk-today: #4d56ae;
+  --tk-upcoming: #7f86a2;
+}
 
 .home-grid--primary .home-card--tasks {
-  padding-bottom: 16px;
+  padding-bottom: 14px;
 }
 
 .home-tasks-open {
@@ -1607,34 +1614,37 @@
   align-items: center;
   gap: 4px;
   flex-shrink: 0;
-  padding: 6px 11px;
-  border: 1px solid rgba(26, 31, 29, 0.14);
+  padding: 6px 12px;
+  border: 1px solid rgba(26, 31, 29, 0.12);
   border-radius: 999px;
-  background: rgba(23, 27, 21, 0.025);
-  color: #2b352f;
-  font-size: 10.5px;
-  font-weight: 700;
+  background: rgba(255, 255, 255, 0.6);
+  color: #3c4a3f;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .home-tasks-open:hover {
-  background: rgba(255, 255, 255, 0.85);
+  background: #fff;
+  border-color: rgba(26, 31, 29, 0.2);
 }
 
 .home-tasks-open:active {
   transform: scale(0.96);
 }
 
-/* Overdue / Today / Upcoming counts — the Nutrition meals accent panel, tinted
-   to Home's lavender family. */
+/* Count strip — three cells; the most urgent non-empty one lifts onto a white
+   pill so the eye lands there first. */
 .home-tasks-accent {
   display: flex;
-  align-items: center;
-  gap: 0;
-  padding: 12px 16px;
+  align-items: stretch;
+  gap: 6px;
+  padding: 7px;
   border-radius: 18px;
-  background: linear-gradient(120deg, #eef0fb 0%, #e4e7f7 100%);
+  background: linear-gradient(120deg, #edeffb 0%, #e3e6f6 100%);
 }
 
 .home-tasks-stat {
@@ -1642,36 +1652,52 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
+  padding: 8px 4px 7px;
+  border-radius: 13px;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
 }
 
+.home-tasks-stat > i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--tk-dot, rgba(23, 27, 21, 0.25));
+}
+
+.home-tasks-stat--overdue { --tk-dot: var(--tk-overdue); }
+.home-tasks-stat--today { --tk-dot: var(--tk-today); }
+.home-tasks-stat--upcoming { --tk-dot: var(--tk-upcoming); }
+
 .home-tasks-stat strong {
-  font-size: 22px;
+  font-size: 21px;
   font-weight: 750;
   letter-spacing: -0.035em;
-  color: #17211c;
+  color: rgba(23, 33, 28, 0.4);
   font-variant-numeric: tabular-nums;
-  line-height: 1;
+  line-height: 1.05;
 }
 
 .home-tasks-stat span {
-  color: rgba(23, 28, 25, 0.55);
-  font-size: 8.5px;
+  color: rgba(23, 28, 25, 0.5);
+  font-size: 8px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.09em;
 }
 
-.home-tasks-stat.is-watch strong {
-  color: #9a5a10;
+/* Non-zero buckets get their real ink; the leading one gets the pill. */
+.home-tasks-stat.has-items strong { color: #17211c; }
+.home-tasks-stat--overdue.has-items strong { color: var(--tk-overdue); }
+.home-tasks-stat--today.has-items strong { color: var(--tk-today); }
+
+.home-tasks-stat.is-lead {
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(23, 27, 21, 0.05), 0 6px 16px rgba(46, 60, 80, 0.1);
 }
 
-.home-tasks-sep {
-  width: 1px;
-  height: 30px;
-  flex-shrink: 0;
-  background: rgba(23, 27, 21, 0.1);
-}
+.home-tasks-stat.is-lead strong { color: #17211c; }
+.home-tasks-stat--overdue.is-lead strong { color: var(--tk-overdue); }
 
 .home-tasks-list {
   display: flex;
@@ -1679,8 +1705,8 @@
   flex-direction: column;
   min-height: 0;
   overflow-y: auto;
-  margin: 0 -4px;
-  padding: 0 4px;
+  margin: 0 -6px;
+  padding: 2px 6px 0;
   scrollbar-width: none;
 }
 
@@ -1688,41 +1714,64 @@
   display: none;
 }
 
-.home-task-row {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 11px;
-  padding: 11px 4px;
-  border-bottom: 1px solid var(--ntr-line);
+.home-tasks-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.home-task-row:last-child {
-  border-bottom: none;
+.home-tasks-group {
+  margin: 10px 4px 3px;
+  color: rgba(23, 28, 25, 0.4);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.home-tasks-rows > .home-tasks-group:first-child {
+  margin-top: 2px;
+}
+
+.home-task-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  padding: 8px;
+  border-radius: 12px;
+  transition: background 0.16s ease;
+}
+
+.home-task-row:hover {
+  background: rgba(23, 27, 21, 0.035);
 }
 
 .home-task-check {
   display: grid;
   place-items: center;
-  width: 20px;
-  height: 20px;
+  width: 19px;
+  height: 19px;
   flex-shrink: 0;
-  border: 1.5px solid rgba(26, 31, 29, 0.24);
-  border-radius: 7px;
+  border: 1.5px solid rgba(26, 31, 29, 0.22);
+  border-radius: 50%;
   background: #fff;
   color: transparent;
   cursor: pointer;
-  transition: border-color 0.18s ease, background 0.18s ease, transform 0.14s ease;
+  transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease, transform 0.14s ease;
 }
 
 .home-task-check:hover:not(:disabled) {
   border-color: #5f8a6e;
-  background: rgba(95, 138, 110, 0.12);
-  color: #5f8a6e;
+  background: #5f8a6e;
+  color: #fff;
 }
 
 .home-task-check:active:not(:disabled) {
-  transform: scale(0.88);
+  transform: scale(0.85);
 }
 
 .home-task-check:disabled {
@@ -1745,59 +1794,74 @@
 .home-task-body b {
   overflow: hidden;
   font-size: 12.5px;
-  font-weight: 650;
+  font-weight: 600;
   color: #17211c;
+  letter-spacing: -0.005em;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.home-task-body:hover b {
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }
 
 .home-task-meta {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   min-width: 0;
 }
 
 .home-task-due {
   flex-shrink: 0;
-  padding: 2px 7px;
-  border-radius: 999px;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: 9.5px;
+  font-weight: 750;
+  letter-spacing: 0.02em;
   white-space: nowrap;
 }
 
-.home-task-due--overdue {
-  background: rgba(241, 105, 119, 0.14);
-  color: #a63d4a;
-}
+.home-task-due--overdue { color: var(--tk-overdue); }
+.home-task-due--today { color: var(--tk-today); }
+.home-task-due--upcoming { color: rgba(23, 28, 25, 0.5); }
 
-.home-task-due--today {
-  background: rgba(77, 86, 174, 0.14);
-  color: #4d56ae;
-}
-
-.home-task-due--upcoming {
-  background: rgba(23, 27, 21, 0.06);
-  color: rgba(23, 28, 25, 0.55);
+.home-task-dot {
+  width: 3px;
+  height: 3px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(23, 28, 25, 0.28);
 }
 
 .home-task-cat {
   overflow: hidden;
-  color: rgba(23, 28, 25, 0.5);
-  font-size: 9.5px;
+  color: rgba(23, 28, 25, 0.45);
+  font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.home-task-go {
+  flex-shrink: 0;
+  color: rgba(23, 27, 21, 0.22);
+  opacity: 0;
+  transform: translateX(-3px);
+  transition: opacity 0.16s ease, transform 0.16s ease, color 0.16s ease;
+}
+
+.home-task-row:hover .home-task-go {
+  opacity: 1;
+  transform: translateX(0);
+  color: rgba(23, 27, 21, 0.5);
+}
+
+/* Fills the space under a short list without a dead gap. */
+.home-tasks-tail {
+  margin: 12px 6px 4px;
+  padding-top: 11px;
+  border-top: 1px dashed rgba(26, 31, 29, 0.13);
+  color: rgba(23, 28, 25, 0.4);
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 11.5px;
+  font-style: italic;
 }
 
 .home-tasks-empty {
@@ -1806,54 +1870,63 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 24px 20px;
+  gap: 9px;
+  padding: 20px;
   text-align: center;
 }
 
-.home-tasks-empty svg {
+.home-tasks-empty-ic {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(95, 138, 110, 0.12);
   color: #5f8a6e;
 }
 
 .home-tasks-empty p {
   margin: 0;
   color: #17211c;
-  font-size: 14px;
-  font-weight: 700;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 15px;
+  font-weight: 600;
   letter-spacing: -0.01em;
 }
 
 .home-tasks-empty span {
-  max-width: 30ch;
-  color: rgba(23, 28, 25, 0.55);
-  font-size: 12px;
+  max-width: 28ch;
+  color: rgba(23, 28, 25, 0.52);
+  font-size: 11.5px;
   font-weight: 600;
   line-height: 1.45;
 }
 
+/* Ghost link — no slab, just text that leans in on hover. */
 .home-tasks-foot {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 7px;
   flex-shrink: 0;
-  padding: 10px;
+  margin-top: 4px;
+  padding: 9px;
   border: 0;
-  border-radius: 12px;
-  background: rgba(23, 27, 21, 0.035);
-  color: #2b352f;
-  font-size: 11px;
-  font-weight: 700;
+  border-top: 1px solid var(--ntr-line);
+  border-radius: 0;
+  background: none;
+  color: rgba(23, 28, 25, 0.55);
+  font-size: 10.5px;
+  font-weight: 750;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
   cursor: pointer;
-  transition: background 0.18s ease;
+  transition: color 0.18s ease, gap 0.18s ease;
 }
 
 .home-tasks-foot:hover {
-  background: rgba(23, 27, 21, 0.06);
-}
-
-.home-tasks-foot svg {
-  color: rgba(23, 28, 25, 0.5);
+  color: #17211c;
+  gap: 10px;
 }
 
 /* ---------- Sleep card ----------
