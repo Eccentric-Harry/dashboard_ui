@@ -1476,17 +1476,20 @@
   transform: scale(0.94);
 }
 
+/* Notes read in Outfit — the loaded geometric sans — not the Playfair italic
+   of the quote above, so the journal entry looks written rather than framed:
+   an even, low-contrast text face at a relaxed measure. */
 .home-anchor-note-text {
   margin: 0;
   overflow-y: auto;
   flex: 1;
   min-height: 0;
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 13.5px;
-  font-style: italic;
-  font-weight: 500;
-  line-height: 1.5;
-  color: #2b352f;
+  font-family: 'Outfit', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.62;
+  letter-spacing: 0.005em;
+  color: #37423a;
   white-space: pre-wrap;
   scrollbar-width: none;
 }
@@ -1501,10 +1504,11 @@
   border: 0;
   background: none;
   text-align: left;
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 12.5px;
-  font-style: italic;
-  color: rgba(23, 28, 25, 0.45);
+  font-family: 'Outfit', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+  color: rgba(23, 28, 25, 0.42);
   cursor: text;
 }
 
@@ -1512,15 +1516,16 @@
   flex: 1;
   width: 100%;
   min-height: 52px;
-  padding: 8px 10px;
+  padding: 8px 11px;
   border: 1px solid rgba(26, 31, 29, 0.16);
   border-radius: 11px;
   background: #fff;
-  color: #17211c;
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 13px;
-  font-style: italic;
-  line-height: 1.45;
+  color: #1f2a22;
+  font-family: 'Outfit', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 0.005em;
   resize: none;
 }
 
@@ -3190,6 +3195,12 @@
 
   .home-grid--primary .home-card {
     height: auto;
+    overflow: visible;
+  }
+
+  .home-grid--primary .home-tasks-list,
+  .home-grid--primary .home-card--capture .home-capture-recent {
+    overflow: visible;
   }
 
   .home-grid--primary .home-card--hero,
@@ -3372,8 +3383,8 @@
   }
 
   .home-hero-panel {
-    padding: 16px 12px 12px;
-    gap: 14px;
+    padding: 16px 14px 14px;
+    gap: 12px;
     /* minmax(0,…) so a long nowrap event title can't inflate the track */
     grid-template-columns: minmax(0, 1fr);
     justify-items: stretch;
@@ -3381,20 +3392,21 @@
 
   .home-hero-gauge-col {
     justify-self: center;
+    gap: 6px;
   }
 
   .home-loop-arc svg {
-    width: min(100%, 168px);
+    width: min(100%, 138px);
   }
 
-  /* Thinner ring at phone size — 15 reads heavy against a 168px arc */
+  /* Thinner ring at phone size */
   .home-loop-track,
   .home-loop-fill {
     stroke-width: 12;
   }
 
   .home-loop-arc-center strong {
-    font-size: 28px;
+    font-size: 25px;
   }
 
   .home-card--hero .ntr-hero-macros {
@@ -3462,14 +3474,46 @@
     line-height: 1.34;
   }
 
-  .home-grid--primary .home-card {
-    height: auto;
-    min-height: 0;
-  }
-
+  /* Stacked single column — cards flow to their natural height and the page
+     scrolls. The desktop fixed height + inner scroll + overflow clip all have
+     to come off here, or the day-loop rows and the tasks tail get chopped and
+     the flex:1 fill regions leave a void inside a now-taller card. */
+  .home-grid--primary .home-card,
   .home-grid--primary .home-card--hero,
   .home-grid--primary .home-card--tasks {
-    max-height: 460px;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .home-grid--primary .home-tasks-list,
+  .home-grid--primary .home-card--capture .home-capture-recent {
+    flex: 0 0 auto;
+    overflow: visible;
+  }
+
+  .home-grid--primary .home-card--capture .home-capture-mood {
+    margin-top: 12px;
+  }
+
+  .home-grid--primary .home-card--anchor .home-anchor-review,
+  .home-grid--primary .home-card--anchor .home-anchor-note {
+    flex: 0 0 auto;
+  }
+
+  .home-grid--primary .home-card--anchor .home-anchor-note-text,
+  .home-grid--primary .home-card--anchor .home-anchor-note-input {
+    flex: 0 0 auto;
+    min-height: 60px;
+  }
+
+  .home-card--hero .ntr-hero-macros {
+    flex: 0 0 auto;
+  }
+
+  .home-card--hero .ntr-macro-row {
+    flex: 0 0 auto;
   }
 
   .home-rollup-grid {
