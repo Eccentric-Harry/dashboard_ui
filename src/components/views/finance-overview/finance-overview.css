@@ -529,7 +529,13 @@
 
 .finance-subscription-list > div {
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) auto minmax(0, 56px) 26px;
+  /* Last track is `auto`, not a fixed 26px: the delete button only renders in
+     edit mode, and a fixed track keeps reserving that width (plus its gap)
+     as dead space after the Pay button on every other row — most visible on
+     a full-width mobile card where nothing else is competing for it. `auto`
+     collapses to 0 when nothing occupies it and grows to the delete button's
+     24px only while editing. */
+  grid-template-columns: 32px minmax(0, 1fr) auto minmax(0, 56px) auto;
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
@@ -1659,18 +1665,25 @@
   color: #1a8b30;
 }
 
-.form-row {
+/* Scoped under .add-tx-form: `.form-row` is also a global class in
+   tasks-overview.css (`display: flex`, no scoping there either) — same
+   specificity, so whichever file happens to load later in the bundle wins
+   the cascade. That's how Date/Category ended up stacked instead of side by
+   side: tasks' flex rule was winning here. Scoping to .add-tx-form raises
+   this to two classes, which reliably beats the bare one regardless of
+   import order. */
+.add-tx-form .form-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
 }
 
-.add-tx-category-date-row {
+.add-tx-form .add-tx-category-date-row {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: end;
 }
 
-.add-tx-category-date-row .form-group {
+.add-tx-form .add-tx-category-date-row .form-group {
   min-width: 0;
 }
 
@@ -2072,14 +2085,14 @@
     padding: 20px !important;
   }
 
-  .form-row {
+  .add-tx-form .form-row {
     display: grid;
     grid-template-columns: 1fr;
     gap: 16px;
     width: 100%;
   }
 
-  .add-tx-category-date-row {
+  .add-tx-form .add-tx-category-date-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
@@ -2087,8 +2100,8 @@
     align-items: start;
   }
 
-  .add-tx-category-date-row input,
-  .add-tx-category-date-row select {
+  .add-tx-form .add-tx-category-date-row input,
+  .add-tx-form .add-tx-category-date-row select {
     padding-left: 12px;
     padding-right: 34px;
     font-size: 13px;
