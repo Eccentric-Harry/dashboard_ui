@@ -3215,6 +3215,16 @@
     grid-column: 1 / -1;
   }
 
+  /* Stacked order: Anchor, Capture, then Tasks before the Day loop — what's
+     still owed today reads before the loop score that depends on it. */
+  .home-grid--primary .home-card--tasks {
+    order: 2;
+  }
+
+  .home-grid--primary .home-card--hero {
+    order: 3;
+  }
+
   .home-grid--primary .home-card--anchor {
     align-items: flex-start;
   }
@@ -3412,17 +3422,45 @@
   .home-card--hero .ntr-hero-macros {
     width: 100%;
     height: auto;
-    gap: 7px;
+    gap: 6px;
+  }
+
+  /* Nutrition's own ≤768px rule turns .ntr-macro-header into a stacked
+     column (label line, then a big value line) — right for its 3 narrow
+     macro chips, way too tall for Home's 4 full-width signal rows. Put it
+     back to the label-left/value-right line every other breakpoint uses,
+     just smaller, so a phone gets four compact rows instead of four tiles. */
+  .home-card--hero .ntr-macro-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
   }
 
   .home-card--hero .ntr-macro-row {
     flex: none;
-    padding: 10px 12px;
-    gap: 7px;
+    padding: 8px 10px;
+    gap: 5px;
+  }
+
+  .home-card--hero .ntr-macro-header p {
+    font-size: 10.5px;
   }
 
   .home-card--hero .ntr-macro-header strong {
-    font-size: 14px;
+    flex-shrink: 0;
+    font-size: 12.5px;
+  }
+
+  /* Nutrition hides the target/sub amount at this width; Home's tiles need
+     it (it's half the number — "8h 00m" alone says nothing without "/7h 30m"). */
+  .home-card--hero .ntr-macro-header strong em {
+    display: inline;
+    font-size: 9.5px;
+  }
+
+  .home-card--hero .ntr-macro-bar {
+    height: 4px;
   }
 
   .home-next-strip {
