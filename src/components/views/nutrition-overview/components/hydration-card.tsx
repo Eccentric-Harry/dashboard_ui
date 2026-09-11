@@ -5,7 +5,7 @@ import { nutritionService } from '../../../../services/nutrition-service'
 import type { HydrationData } from '../../../../lib/api'
 import { useDashboard } from '../../../../store/dashboard-store'
 
-const TARGET_ML = 4000
+const TARGET_ML = 3000
 const GLASS_ML = 250
 // pace window: hydration expected linearly between 07:00 and 23:00
 const PACE_START_MIN = 7 * 60

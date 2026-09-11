@@ -871,8 +871,8 @@ export function enableGuestInterceptor() {
         return {
           date: day.date,
           waterIntakeMl: Math.round(totalMl),
-          targetMl: 4000,
-          progress: Math.min(100, Math.round((totalMl / 4000) * 100)),
+          targetMl: 3000,
+          progress: Math.min(100, Math.round((totalMl / 3000) * 100)),
         };
       });
 
@@ -906,9 +906,9 @@ export function enableGuestInterceptor() {
       return respondWith({
         data: {
           waterIntakeMl: Math.round(totalMl),
-          targetMl: 4000,
+          targetMl: 3000,
           date: dateParam,
-          progress: Math.min(100, Math.round((totalMl / 4000) * 100))
+          progress: Math.min(100, Math.round((totalMl / 3000) * 100))
         }
       });
     }
