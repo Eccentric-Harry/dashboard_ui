@@ -2004,26 +2004,12 @@
     display: none;
   }
 
-  /* Balance keeps its lead billing on mobile by spanning the full width; the
-     three supporting tiles fall into a 2-up grid beneath it. */
-  .finance-balance-card {
-    grid-column: 1 / -1;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    min-height: 100px;
-  }
-
-  .finance-balance-card strong {
-    font-size: 30px;
-  }
-
-  .finance-balance-icon {
-    margin: 0 auto 12px;
-  }
-
+  /* A plain 2x2, matching /workouts' `.workouts-stat-card` treatment: four
+     equal tiles, none spanning full width. Balance previously kept lead
+     billing by spanning the top row on its own (with the odd-one-out metric
+     tile then stranded full-width at the bottom) — three row heights of
+     scrolling for four numbers. Uniform sizing reads as a cleaner set. */
+  .finance-balance-card,
   .finance-metric-card {
     grid-column: unset;
     width: 100%;
@@ -2034,12 +2020,11 @@
     min-height: 100px;
   }
 
-  /* An odd number of metric tiles leaves the last one stranded beside a hole —
-     let it run the full width so the block ends on a clean edge. Counting is
-     against all row children, and the full-width balance card is the 1st, so a
-     stranded tile is the one landing on an even index. */
-  .finance-stats-row > :last-child:nth-child(even) {
-    grid-column: 1 / -1;
+  /* Uniform 20px for both, set once in the second `max-width: 768px` block
+     below (line ~2685) — not repeated here. */
+
+  .finance-balance-icon {
+    margin: 0 auto 12px;
   }
 
   .finance-metric-icon {
