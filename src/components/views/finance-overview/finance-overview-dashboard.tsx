@@ -224,20 +224,6 @@ function FinanceOverviewDashboard() {
         progress: budget > 0 ? totalExpense / budget : 0,
         progressTone: budgetSubtitleTone,
         useRing: true,
-        // The route's verdict, in one word. Pace — not raw spend — decides it:
-        // being 60% through the budget is fine on the 20th and alarming on the
-        // 3rd, so the comparison is against how far through the month you are.
-        mood: (() => {
-          const spentShare = budget > 0 ? totalExpense / budget : 0
-          const monthShare = daysInMonth > 0 ? daysElapsed / daysInMonth : 0
-          if (spentShare > 1) return { label: 'Over budget', tone: 'over' as const }
-          // Only meaningful once a little of the month has actually elapsed —
-          // on day 1 every non-zero spend outruns the pace and would cry wolf.
-          if (monthShare > 0.15 && spentShare > monthShare * 1.15) {
-            return { label: 'Ahead of pace', tone: 'watch' as const }
-          }
-          return { label: 'Cruising', tone: 'good' as const }
-        })(),
       },
       {
         label: 'Monthly Expenses',

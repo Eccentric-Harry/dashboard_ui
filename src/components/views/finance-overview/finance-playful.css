@@ -652,6 +652,21 @@
     padding: 14px 15px 13px;
   }
 
+  /* The desktop redesign (section 3 above) deliberately left-aligns these
+     for the "Balance owns the size and the alignment" hierarchy — on a
+     phone the tiles stack 2-up with plenty of width each, and centred reads
+     calmer/more consistent with every other stat block in the app. */
+  .finance-balance-card,
+  .finance-metric-card {
+    align-items: center;
+    text-align: center;
+  }
+
+  .finance-balance-icon,
+  .finance-metric-icon {
+    margin: 0 auto 12px;
+  }
+
   /* Bottom-anchoring exists to align four labels across one wide row. Stacked
      2-up on a phone the tiles are much taller than their content, so the same
      `margin-top: auto` opens a ~90px void between icon and label. There is no
