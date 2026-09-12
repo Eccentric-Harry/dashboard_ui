@@ -444,6 +444,205 @@
   margin: 0 0 2px;
 }
 
+.home-hero-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.home-loop-info-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: none;
+  background: var(--ntr-cream, #f0efe6);
+  color: var(--ntr-ink-soft);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.home-loop-info-btn:hover,
+.home-loop-info-btn[aria-expanded='true'] {
+  background: var(--ntr-lime-soft);
+  color: var(--ntr-lime-deep);
+}
+
+/* ---------- Loop info modal ----------
+   Portaled to <body> (see LoopInfoPanel), so it centers on the viewport
+   rather than squeezing into the hero card's corner. */
+.home-loop-info-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(16, 19, 18, 0.32);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: home-loop-info-backdrop-in 0.15s ease-out;
+}
+
+@keyframes home-loop-info-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.home-loop-info-panel {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  max-height: min(520px, 80vh);
+  overflow-y: auto;
+  padding: 22px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 24px 64px rgba(23, 27, 21, 0.22);
+  animation: home-loop-info-in 0.18s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+@keyframes home-loop-info-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.home-loop-info-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+/* This modal is portaled to document.body (see LoopInfoPanel), which is OUTSIDE
+   .home-dashboard's DOM subtree — so its --ntr-* custom properties (defined at
+   the top of this file, scoped to .home-dashboard) don't cascade in here. Every
+   color below is a literal value for that reason, mirroring the same values
+   Home's tokens resolve to, not a var() reference. */
+.home-loop-info-head p {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: 18px;
+  font-weight: 650;
+  color: #171b15;
+}
+
+.home-loop-info-head button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: none;
+  background: rgba(16, 19, 18, 0.05);
+  color: #6b7165;
+  cursor: pointer;
+}
+
+.home-loop-info-head button:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.home-loop-info-panel ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.home-loop-info-panel li {
+  padding: 10px 4px;
+  border-bottom: 1px solid #eae9e0;
+}
+
+.home-loop-info-panel li:last-child {
+  border-bottom: none;
+  padding-bottom: 2px;
+}
+
+.home-loop-info-row-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 6px;
+}
+
+.home-loop-info-row-head strong {
+  flex: 1;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #171b15;
+}
+
+.home-loop-info-pct {
+  font-size: 12px;
+  font-weight: 800;
+  color: #6b7165;
+  font-variant-numeric: tabular-nums;
+}
+
+.home-loop-info-panel li.is-done .home-loop-info-pct {
+  color: #4a7a52;
+}
+
+.home-loop-info-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: #e9ebfb;
+  color: #4d56ae;
+}
+
+.home-loop-info-bar {
+  display: block;
+  height: 4px;
+  border-radius: 999px;
+  background: #eae9e0;
+  overflow: hidden;
+  margin-bottom: 7px;
+}
+
+.home-loop-info-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: #4d56ae;
+}
+
+.home-loop-info-panel li.is-done .home-loop-info-bar i {
+  background: #4a7a52;
+}
+
+.home-loop-info-panel li p {
+  margin: 0;
+  padding-left: 27px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #6b7165;
+}
+
+.home-loop-info-foot {
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid #eae9e0;
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: #6b7165;
+  font-style: italic;
+}
+
 /* Overdue status pill — the only red in the hero, and the loudest thing in it */
 .home-pill-urgent {
   background: #c03546;
@@ -1268,6 +1467,15 @@
   cursor: pointer;
 }
 
+/* In the bento layout the quote is the card's one real occupant — let it grow
+   into the space a note/outcome journal would otherwise leave empty, instead
+   of sitting pinned to the top with dead air below. */
+.home-grid--primary .home-card--anchor .home-anchor-display {
+  flex: 1;
+  align-items: center;
+  min-height: 0;
+}
+
 .home-anchor-quote {
   /* Wraps rather than ellipsising. This is the one thing the user committed to
      today — truncating it to "Fix @Transaction…" makes the card unreadable at
@@ -1368,22 +1576,29 @@
 }
 
 .home-grid--primary .home-card--anchor .home-anchor-quote {
-  font-size: 22px;
-  line-height: 1.3;
+  font-size: 30px;
+  line-height: 1.35;
 }
 
 .home-grid--primary .home-card--anchor .home-anchor-quote.is-empty {
-  font-size: 20px;
+  font-size: 24px;
 }
 
-/* Review block — outcome chips + a notes journal, kept against the anchor. */
+/* Review block — outcome chips + a notes journal, kept against the anchor.
+   Sized to its own content by default so the quote above (flex: 1) is the one
+   that absorbs any leftover height; it only claims a share of that space
+   itself once a note is actually open, so the note box has room to grow. */
 .home-anchor-review {
   display: flex;
-  flex: 1;
+  flex: 0 0 auto;
   flex-direction: column;
   gap: 9px;
   min-height: 0;
   margin-top: 2px;
+}
+
+.home-anchor-review:has(.home-anchor-note) {
+  flex: 1;
 }
 
 .home-anchor-outcomes {
@@ -1498,29 +1713,6 @@
   display: none;
 }
 
-/* Collapsed state: no note yet, not editing. A single quiet line rather than
-   the full bordered journal box — that box only earns its place once there's
-   something to read or write. */
-.home-anchor-note-add {
-  display: inline-flex;
-  align-self: flex-start;
-  align-items: center;
-  gap: 5px;
-  padding: 0;
-  border: 0;
-  background: none;
-  font-size: 11px;
-  font-weight: 650;
-  letter-spacing: 0.01em;
-  color: rgba(23, 28, 25, 0.42);
-  cursor: pointer;
-  transition: color 0.16s ease;
-}
-
-.home-anchor-note-add:hover {
-  color: #3c4a3f;
-}
-
 .home-anchor-note-input {
   flex: 1;
   width: 100%;
@@ -1590,6 +1782,19 @@
 .home-anchor-note-save:active,
 .home-anchor-note-cancel:active {
   transform: scale(0.95);
+}
+
+/* Header's "Add a note" trigger — the same quiet pill sleep-card and finance
+   cards use for their header actions, just sized down to sit next to a plain
+   eyebrow rather than a title. */
+.home-anchor-body .home-card-head {
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.home-anchor-body .home-card-head .home-btn-quiet {
+  padding: 5px 11px;
+  font-size: 10px;
 }
 
 .home-grid--primary .home-card--anchor .home-anchor-foot {

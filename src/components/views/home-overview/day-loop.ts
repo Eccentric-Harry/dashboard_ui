@@ -140,6 +140,21 @@ function waterMetric(ml: number, targetMl: number): LoopMetric {
  * A day with meals but no grades falls back to coverage at a neutral B-ish quality,
  * so logging still registers instead of reading as a zero.
  */
+export interface FuelBreakdown {
+  quality: number
+  coverage: number
+  qualitySource: 'graded' | 'assumed'
+}
+
+/** The quality/coverage split behind the fuel ratio — for surfacing the "why" in UI, not for scoring (fuelMetric owns that). */
+export function fuelBreakdown(meal: MealQualityDay | null): FuelBreakdown | null {
+  const mealsLogged = meal?.mealsLogged ?? 0
+  if (mealsLogged <= 0) return null
+  const coverage = clamp01(mealsLogged / MEAL_COVERAGE_TARGET)
+  const quality = meal?.averagePoints != null ? qualityFromPoints(meal.averagePoints) : QUALITY_AT_POINTS[3]
+  return { quality, coverage, qualitySource: meal?.averagePoints != null ? 'graded' : 'assumed' }
+}
+
 function fuelMetric(meal: MealQualityDay | null): LoopMetric {
   const mealsLogged = meal?.mealsLogged ?? 0
   if (mealsLogged <= 0) {

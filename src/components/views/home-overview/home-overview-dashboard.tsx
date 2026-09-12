@@ -215,6 +215,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
     [home.anchors.data, home.today],
   )
 
+
   // ---- The four day-loop signals ----
   // Sleep comes straight off today's DayRecord, the same row the trends and
   // insights read, so the hero can't disagree with the cards below it; water and

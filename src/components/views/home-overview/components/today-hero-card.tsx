@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   AlertTriangle,
   ArrowRight,
@@ -6,8 +7,10 @@ import {
   CheckSquare,
   Droplets,
   Flame as FocusFlame,
+  Info,
   Moon,
   Utensils,
+  X,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { CalendarItem, DailyTask, HydrationData } from '../../../../lib/api'
@@ -15,9 +18,9 @@ import type { AppPath } from '../../../dashboard/quantified-self-dashboard/data'
 import { cn } from '../../../../lib/utils'
 import { useCountUp } from '../../../../hooks/use-count-up'
 import type { MealQualityDay } from '../home-types'
-import { formatTimeLabel } from '../home-types'
+import { formatMinutes, formatTimeLabel, MEAL_COVERAGE_TARGET, SLEEP_TARGET_MINUTES } from '../home-types'
 import type { LoopMetric, LoopMetricId } from '../day-loop'
-import { buildDayLoop, loopClosedCount, loopScore, nextLoopNudge } from '../day-loop'
+import { buildDayLoop, fuelBreakdown, loopClosedCount, loopScore, nextLoopNudge } from '../day-loop'
 import { LoopArc } from './loop-arc'
 
 type TodayHeroCardProps = {
@@ -96,6 +99,110 @@ function LoopRow({ metric, onClick }: { metric: LoopMetric; onClick: () => void 
   )
 }
 
+const LOOP_LABELS: Record<LoopMetricId, string> = {
+  sleep: 'Sleep',
+  water: 'Water',
+  fuel: 'Fuel',
+  tasks: 'Tasks',
+}
+
+/**
+ * Live, per-metric "why is it at this %" line, built from the same numbers already
+ * on the tile — this is what actually answers "I logged X, why isn't this full",
+ * instead of a generic paragraph that goes stale the moment the numbers move.
+ */
+function describeLoopRow(metric: LoopMetric, meal: MealQualityDay | null): string {
+  if (metric.id === 'sleep') {
+    if (metric.empty) return "Not logged yet — log last night's sleep to count it."
+    return `${metric.display} logged, vs a ${formatMinutes(SLEEP_TARGET_MINUTES)} target.`
+  }
+  if (metric.id === 'water') {
+    if (metric.empty) return 'Nothing logged yet — tap the tile to add a glass.'
+    return `${metric.display}${metric.sub ?? ''} logged today.`
+  }
+  if (metric.id === 'fuel') {
+    const breakdown = fuelBreakdown(meal)
+    if (!breakdown) return 'No meals logged yet — grades come from your meal scans.'
+    const qualityPct = Math.round(breakdown.quality * 100)
+    const coveragePct = Math.round(breakdown.coverage * 100)
+    const mealsLogged = meal?.mealsLogged ?? 0
+    const qualityClause =
+      breakdown.qualitySource === 'graded'
+        ? `${meal?.letter} average is worth ${qualityPct}% quality`
+        : `no meals graded yet, so quality defaults to ${qualityPct}%`
+    return `${qualityClause}, × ${mealsLogged}/${MEAL_COVERAGE_TARGET} meals logged (${coveragePct}% coverage) = ${Math.round(metric.ratio * 100)}%. A better average, not just more meals, is what closes this.`
+  }
+  if (metric.empty) return "Nothing planned yet — add a task to open this up."
+  return `${metric.display}${metric.sub ?? ''} today.`
+}
+
+/**
+ * Modal explaining how the ring and the four tiles under it are actually scored —
+ * live numbers, not a generic blurb. Portaled to <body> (like ConfirmDialog) so it
+ * centers on the viewport instead of squeezing into the hero card's corner.
+ */
+function LoopInfoPanel({
+  metrics,
+  meal,
+  onClose,
+}: {
+  metrics: LoopMetric[]
+  meal: MealQualityDay | null
+  onClose: () => void
+}) {
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [onClose])
+
+  return createPortal(
+    <div className="home-loop-info-backdrop" onClick={onClose}>
+      <div
+        className="home-loop-info-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label="How today's loop is scored"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="home-loop-info-head">
+          <p>How today's loop is scored</p>
+          <button type="button" aria-label="Close" onClick={onClose}>
+            <X size={14} strokeWidth={2.5} />
+          </button>
+        </div>
+        <ul>
+          {metrics.map((metric) => {
+            const Icon = LOOP_ICONS[metric.id]
+            const pct = Math.round(metric.ratio * 100)
+            return (
+              <li key={metric.id} className={cn(metric.done && 'is-done')}>
+                <div className="home-loop-info-row-head">
+                  <span className="home-loop-info-icon" aria-hidden="true">
+                    <Icon size={12} strokeWidth={2.5} />
+                  </span>
+                  <strong>{LOOP_LABELS[metric.id]}</strong>
+                  <span className="home-loop-info-pct">{pct}%</span>
+                </div>
+                <span className="home-loop-info-bar" aria-hidden="true">
+                  <i style={{ width: `${Math.min(Math.max(pct, 0), 100)}%` }} />
+                </span>
+                <p>{describeLoopRow(metric, meal)}</p>
+              </li>
+            )
+          })}
+        </ul>
+        <p className="home-loop-info-foot">
+          The ring is the plain average of all four — it closes for the day only once every tile does.
+        </p>
+      </div>
+    </div>,
+    document.body,
+  )
+}
+
 function TodayHeroCard({
   loading,
   calendarItems,
@@ -113,6 +220,8 @@ function TodayHeroCard({
 }: TodayHeroCardProps) {
   const tasksDone = (todayTasks ?? []).filter((t) => t.completed).length
   const tasksTotal = (todayTasks ?? []).length
+
+  const [showInfo, setShowInfo] = useState(false)
 
   // The loop is computed unconditionally so the celebration effect below can watch
   // it even while the skeleton is showing.
@@ -183,22 +292,36 @@ function TodayHeroCard({
         </div>
         {/* No focus-session pill here — the running state already shows on the
             gauge button, so a second copy just repeats itself. */}
-        {overdueCount > 0 ? (
-          <span className="ntr-pill dark home-pill-urgent">
-            <AlertTriangle size={12} strokeWidth={2.5} />
-            {overdueCount} overdue
-          </span>
-        ) : nextEvent ? (
-          <span className="ntr-pill dark">
-            <CalendarClock size={12} strokeWidth={2.5} />
-            Next · {formatTimeLabel(nextEvent.startTime)}
-          </span>
-        ) : (
-          <span className="ntr-pill dark">
-            <CheckSquare size={12} strokeWidth={2.5} />
-            All caught up
-          </span>
-        )}
+        <div className="home-hero-head-actions">
+          <button
+            type="button"
+            className="home-loop-info-btn"
+            aria-label="How the loop is scored"
+            aria-expanded={showInfo}
+            onClick={() => setShowInfo((v) => !v)}
+          >
+            <Info size={13} strokeWidth={2.5} />
+          </button>
+          {showInfo && (
+            <LoopInfoPanel metrics={metrics} meal={mealQuality} onClose={() => setShowInfo(false)} />
+          )}
+          {overdueCount > 0 ? (
+            <span className="ntr-pill dark home-pill-urgent">
+              <AlertTriangle size={12} strokeWidth={2.5} />
+              {overdueCount} overdue
+            </span>
+          ) : nextEvent ? (
+            <span className="ntr-pill dark">
+              <CalendarClock size={12} strokeWidth={2.5} />
+              Next · {formatTimeLabel(nextEvent.startTime)}
+            </span>
+          ) : (
+            <span className="ntr-pill dark">
+              <CheckSquare size={12} strokeWidth={2.5} />
+              All caught up
+            </span>
+          )}
+        </div>
       </div>
 
       <div className={cn('home-hero-panel', dayScore >= 100 && 'is-complete')}>

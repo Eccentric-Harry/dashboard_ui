@@ -87,10 +87,18 @@ function TodaysAnchorCard({ intention, note, outcome, saving, onSave, onSaveMeta
       </span>
 
       <div className="home-anchor-body">
-        <span className="home-card-eyebrow">
-          Today's anchor
-          {saving && <em className="home-anchor-saving">saving</em>}
-        </span>
+        <div className="home-card-head">
+          <span className="home-card-eyebrow">
+            Today's anchor
+            {saving && <em className="home-anchor-saving">saving</em>}
+          </span>
+          {intention && !note && !isNoteEditing && (
+            <button type="button" className="home-btn-quiet" onClick={startNoteEdit}>
+              <Pencil size={11} strokeWidth={2.5} />
+              Add a note
+            </button>
+          )}
+        </div>
 
         {isEditing ? (
           <div className="home-anchor-edit">
@@ -179,12 +187,7 @@ function TodaysAnchorCard({ intention, note, outcome, saving, onSave, onSaveMeta
                   <p className="home-anchor-note-text">{note}</p>
                 )}
               </div>
-            ) : (
-              <button type="button" className="home-anchor-note-add" onClick={startNoteEdit}>
-                <Pencil size={11} strokeWidth={2.5} />
-                Add a note
-              </button>
-            )}
+            ) : null}
           </div>
         ) : (
           <p className="home-anchor-foot">Name it and the day has a spine.</p>
