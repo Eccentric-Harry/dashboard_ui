@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts';
 import {
   X, Clock, Pencil, LogOut, Mail, Globe, Bell,
   Activity, Target, Plus, Calendar, RefreshCw,
   Cake, PersonStanding, Ruler, Weight, Footprints,
-  HeartPulse, CalendarDays, Sparkle, Leaf, ShieldAlert
+  HeartPulse, CalendarDays, Sparkle, Leaf, ShieldAlert, Zap
 } from 'lucide-react';
 import type { UserProfile, GoogleSyncStatus } from '../../lib/api';
 import { userService } from '../../services/user-service';
@@ -107,6 +108,10 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
   const [saving, setSaving] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  // Recharts needs a real layout pass before it can measure its container —
+  // rendering the Pie on the very first frame produces a 0×0 chart on some
+  // browsers. Same guard the nutrition/finance intelligence cards use.
+  const [isMounted, setIsMounted] = useState(false);
 
   // Google Calendar Sync States
   const [syncStatus, setSyncStatus] = useState<GoogleSyncStatus | null>(null);
@@ -134,6 +139,11 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
   const [customConditionInput, setCustomConditionInput] = useState('');
 
 
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     async function loadProfile() {
@@ -383,7 +393,7 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
   return (
     <>
       <main className="dashboard-shell">
-        <div className="dashboard-stage" aria-label="User Profile">
+        <div className="dashboard-stage profile-stage" aria-label="User Profile">
           <SideRail activePath={activePath} onNavigate={onNavigate} />
           <TopChip />
 
@@ -650,21 +660,49 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                               {getBmiStatus(profile?.bmi)}
                             </span>
                           </div>
-                          <div className="energy-stats">
-                            <div className="energy-row">
-                              <span className="lbl">TDEE</span>
-                              <span className="val">
-                                {profile?.tdee ? Math.round(profile.tdee).toLocaleString() : '—'} <span className="unit">kcal</span>
-                              </span>
+                          {/* TDEE/BMR as raw numbers duplicated the Energy Balance
+                              panel below, which already shows both plus how BMR
+                              splits from activity — so only the placeholder shows
+                              here when that panel has nothing to render (no
+                              physicalMetrics yet). */}
+                          {(!profile?.bmr || !profile?.tdee) && (
+                            <div className="energy-stats">
+                              <div className="energy-row">
+                                <span className="lbl">TDEE</span>
+                                <span className="val">—</span>
+                              </div>
+                              <div className="energy-row">
+                                <span className="lbl">BMR</span>
+                                <span className="val">—</span>
+                              </div>
                             </div>
-                            <div className="energy-row">
-                              <span className="lbl">BMR</span>
-                              <span className="val">
-                                {profile?.bmr ? Math.round(profile.bmr).toLocaleString() : '—'} <span className="unit">kcal</span>
-                              </span>
-                            </div>
-                          </div>
+                          )}
                         </div>
+                        {(() => {
+                          const bmr = profile?.bmr;
+                          const tdee = profile?.tdee;
+                          if (!bmr || !tdee || tdee <= bmr) return null;
+                          const activity = tdee - bmr;
+                          const bmrPct = Math.round((bmr / tdee) * 100);
+                          const activityPct = 100 - bmrPct;
+                          return (
+                            <div className="energy-balance">
+                              <div className="energy-balance-head">
+                                <Zap size={12} strokeWidth={2.4} />
+                                <span>Energy balance</span>
+                                <span className="energy-balance-total">{Math.round(tdee).toLocaleString()} kcal/day</span>
+                              </div>
+                              <div className="energy-balance-track">
+                                <span className="energy-balance-seg seg-bmr" style={{ width: `${bmrPct}%` }} />
+                                <span className="energy-balance-seg seg-activity" style={{ width: `${activityPct}%` }} />
+                              </div>
+                              <div className="energy-balance-legend">
+                                <span><i className="seg-bmr" />Resting (BMR) · {Math.round(bmr).toLocaleString()} kcal ({bmrPct}%)</span>
+                                <span><i className="seg-activity" />Activity · {Math.round(activity).toLocaleString()} kcal ({activityPct}%)</span>
+                              </div>
+                            </div>
+                          );
+                        })()}
                         {(() => {
                           const bmi = profile?.bmi;
                           if (!bmi || bmi <= 0) return null;
@@ -719,49 +757,55 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                           const carbPct = calcCal > 0 ? Math.round((calcCarb * 4 / calcCal) * 100) : 0;
                           const fatPct = calcCal > 0 ? Math.max(0, 100 - protPct - carbPct) : 0;
 
+                          if (calcCal <= 0) {
+                            return <p className="profile-metric-empty">No nutrition targets calculated yet</p>;
+                          }
+
+                          const macroRingData = [
+                            { name: 'Protein', grams: calcProt, pct: protPct, color: '#e08b8b' },
+                            { name: 'Carbs', grams: calcCarb, pct: carbPct, color: '#7fa8c9' },
+                            { name: 'Fats', grams: calcFat, pct: fatPct, color: '#dcc27a' },
+                          ];
+
                           return (
-                            <>
-                              <div className="macro-split-bar" aria-hidden="true">
-                                <span className="split protein" style={{ width: `${protPct}%` }} />
-                                <span className="split carbs" style={{ width: `${carbPct}%` }} />
-                                <span className="split fat" style={{ width: `${fatPct}%` }} />
-                              </div>
-                            <div className="nutrition-macros-grid">
-                              <div className="macro-bar-item protein">
-                                <div className="macro-info">
-                                  <span className="macro-name">Protein</span>
-                                  <span className="macro-gram">
-                                    {calcProt ?? '—'}g <span className="pct-label">({protPct}%)</span>
-                                  </span>
-                                </div>
-                                <div className="macro-progress-track">
-                                  <div className="macro-progress-fill" style={{ width: `${protPct}%` }}></div>
-                                </div>
-                              </div>
-                              <div className="macro-bar-item carbs">
-                                <div className="macro-info">
-                                  <span className="macro-name">Carbs</span>
-                                  <span className="macro-gram">
-                                    {calcCarb ?? '—'}g <span className="pct-label">({carbPct}%)</span>
-                                  </span>
-                                </div>
-                                <div className="macro-progress-track">
-                                  <div className="macro-progress-fill" style={{ width: `${carbPct}%` }}></div>
-                                </div>
-                              </div>
-                              <div className="macro-bar-item fat">
-                                <div className="macro-info">
-                                  <span className="macro-name">Fats</span>
-                                  <span className="macro-gram">
-                                    {calcFat ?? '—'}g <span className="pct-label">({fatPct}%)</span>
-                                  </span>
-                                </div>
-                                <div className="macro-progress-track">
-                                  <div className="macro-progress-fill" style={{ width: `${fatPct}%` }}></div>
+                            <div className="profile-macro-ring">
+                              <div className="profile-macro-ring-chart">
+                                {isMounted && (
+                                  <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
+                                    <PieChart>
+                                      <Pie
+                                        data={macroRingData}
+                                        dataKey="pct"
+                                        nameKey="name"
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius="64%"
+                                        outerRadius="92%"
+                                        stroke="none"
+                                        isAnimationActive={false}
+                                      >
+                                        {macroRingData.map((seg) => (
+                                          <Cell key={seg.name} fill={seg.color} />
+                                        ))}
+                                      </Pie>
+                                    </PieChart>
+                                  </ResponsiveContainer>
+                                )}
+                                <div className="profile-macro-ring-center">
+                                  <b>{protPct}%</b>
+                                  <span>protein</span>
                                 </div>
                               </div>
+                              <ul className="profile-macro-ring-legend">
+                                {macroRingData.map((seg) => (
+                                  <li key={seg.name}>
+                                    <i style={{ background: seg.color }} />
+                                    <span>{seg.name}</span>
+                                    <b>{seg.grams}g <em>({seg.pct}%)</em></b>
+                                  </li>
+                                ))}
+                              </ul>
                             </div>
-                            </>
                           );
                         })()}
                       </div>

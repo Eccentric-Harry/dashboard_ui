@@ -2,9 +2,52 @@
 /* Profile View — single-viewport glass profile card       */
 /* ═══════════════════════════════════════════════════════ */
 
+/* Every other route hardcodes `inset: 20px 58px 12px 206px` on its own
+   container class — these two custom properties are that same top/bottom as an
+   overridable default (20px / 12px) rather than a third copy of the magic
+   numbers. Profile is the only route that shrinks them; nothing about any
+   other route's CSS has to change for that fallback to stay accurate. */
+.dashboard-stage.profile-stage {
+  --profile-inset-top: 10px;
+  --profile-inset-bottom: 6px;
+}
+
+/* Desktop only. The shared `.dashboard-stage` runs 900–1200px tall, which
+   Finance/Home/Nutrition fill but Profile does not: measured, its columns need
+   747px (identity) and 699px (metrics), so everything above that was dead air.
+   `min-height` has to be overridden alongside `height` — the shared rule sets
+   both, and its 900px min was quietly re-inflating the stage on its own.
+
+   The stage can't go below 850px: `.side-rail` is absolutely positioned at
+   top:161px + height:675px = 836px and the stage's `overflow: hidden` clips it
+   any shorter. But that rail is floating chrome, not card content — so rather
+   than let it dictate the panel's height, the card stops stretching to fill the
+   stage and takes its own content height instead (`align-items: center` on the
+   container, which is the flex parent of `.profile-shell-card`). The leftover
+   becomes page background above and below a compact card, which reads as
+   ordinary margin, instead of dead air inside it.
+
+   Scoped to ≥1025px because this selector outranks the tablet and mobile
+   `.dashboard-stage` rules, and tablet scales the stage assuming exactly 900px. */
+@media (min-width: 1025px) {
+  .dashboard-stage.profile-stage {
+    /* Tracks the viewport again now that the card no longer stretches to fill
+       it — otherwise the stage stopped at its 850px floor and every extra pixel
+       of a taller screen pooled underneath, leaving the card riding high. The
+       floor stays 850px for the rail; the 1000px cap keeps the card from
+       drifting into the middle of a very tall screen. */
+    height: clamp(850px, calc(100vh - 16px), 1000px);
+    min-height: 850px;
+  }
+
+  .profile-container {
+    align-items: center;
+  }
+}
+
 .profile-container {
   position: absolute;
-  inset: 20px 58px 12px 206px;
+  inset: var(--profile-inset-top, 20px) 58px var(--profile-inset-bottom, 12px) 206px;
   z-index: 2;
   display: flex;
   color: #101312;
@@ -523,13 +566,27 @@
   color: #101312;
 }
 
+/* Rows used to be `minmax(0, 1fr) auto` — on any viewport taller than the
+   cards' natural content (nearly always, since this route is a single fixed
+   glass panel), that 1fr row stretched the BMI and Nutrition cards to fill
+   whatever height was left, and their content just centered inside the
+   oversized box. Content-sized rows plus `align-content: start` let the grid
+   sit at its natural height instead, so any leftover space collects once
+   below the whole grid rather than as dead air inside every card. */
 .metrics-grid {
-  flex: 1;
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr) auto;
-  gap: 14px;
+  grid-template-rows: auto auto;
+  align-content: start;
+  gap: 16px;
+  /* Auto margins center the grid in whatever height is left under the header
+     once the rows above stopped force-stretching to fill it — on a tall
+     viewport that reads as a deliberately balanced panel instead of a data
+     block glued to the top with a void below it. They collapse to 0 on their
+     own once content plus the header exceeds the column's height, so the
+     `overflow-y: auto` scroll still kicks in normally on short viewports. */
+  margin-block: auto;
 }
 
 .metric-card {
@@ -539,10 +596,10 @@
   box-shadow:
     0 12px 32px rgba(0, 0, 0, 0.04),
     inset 0 1px 1px rgba(255, 255, 255, 0.55);
-  padding: 18px 20px;
+  padding: 22px 24px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 18px;
   box-sizing: border-box;
   min-height: 0;
 }
@@ -571,11 +628,10 @@
 
 /* ── BMI & energy card ── */
 .status-body {
-  flex: 1;
   display: flex;
   align-items: center;
   justify-content: space-evenly;
-  gap: 16px;
+  gap: 18px;
   min-height: 0;
 }
 
@@ -587,8 +643,8 @@
 }
 
 .bmi-ring {
-  width: 92px;
-  height: 92px;
+  width: 104px;
+  height: 104px;
   border-radius: 50%;
   border: 5px solid #9aa39d;
   display: flex;
@@ -606,7 +662,7 @@
 .bmi-ring.status-obese { border-color: #cf7a7a; }
 
 .bmi-number {
-  font-size: 22px;
+  font-size: 25px;
   font-weight: 750;
   color: #101312;
   letter-spacing: -0.02em;
@@ -671,11 +727,11 @@
   background: rgba(255, 255, 255, 0.66);
   border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 14px;
-  padding: 8px 14px;
+  padding: 10px 16px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  min-width: 110px;
+  gap: 3px;
+  min-width: 120px;
 }
 
 .energy-row .lbl {
@@ -768,13 +824,13 @@
   align-items: center;
   background: rgba(255, 255, 255, 0.72);
   border: 1px solid rgba(255, 255, 255, 0.6);
-  padding: 10px 12px;
+  padding: 16px 12px;
   border-radius: 16px;
   text-align: center;
 }
 
 .kcal-val {
-  font-size: 23px;
+  font-size: 27px;
   font-weight: 800;
   color: #101312;
   letter-spacing: -0.02em;
@@ -795,81 +851,166 @@
   letter-spacing: 0.06em;
 }
 
-.macro-split-bar {
+/* Macro composition donut — same ring-plus-legend shape as Nutrition's own
+   ".ntr-intel-ring" so a chart introduced here reads as the same visual
+   language as the rest of the app, not a one-off. */
+.profile-macro-ring {
   display: flex;
-  height: 9px;
-  border-radius: 5px;
-  overflow: hidden;
-  gap: 2px;
-}
-
-.macro-split-bar .split {
-  height: 100%;
-  border-radius: 3px;
-  min-width: 4px;
-}
-
-.macro-split-bar .split.protein { background: #e08b8b; }
-.macro-split-bar .split.carbs   { background: #7fa8c9; }
-.macro-split-bar .split.fat     { background: #dcc27a; }
-
-.nutrition-macros-grid {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-evenly;
-  gap: 8px;
-  min-height: 0;
-}
-
-.macro-bar-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.macro-info {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
 }
 
-.macro-name {
-  font-size: 11.5px;
+.profile-macro-ring-chart {
+  position: relative;
+  width: 108px;
+  height: 108px;
+  flex: 0 0 108px;
+}
+
+.profile-macro-ring-center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+
+.profile-macro-ring-center b {
+  font-size: 18px;
+  font-weight: 800;
+  color: #101312;
+}
+
+.profile-macro-ring-center span {
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7d8a82;
+}
+
+.profile-macro-ring-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-width: 140px;
+  flex: 1;
+}
+
+.profile-macro-ring-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
   font-weight: 600;
   color: #3c4741;
 }
 
-.macro-gram {
-  font-size: 11.5px;
-  font-weight: 700;
+.profile-macro-ring-legend li i {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  flex: 0 0 9px;
+}
+
+.profile-macro-ring-legend li b {
+  margin-left: auto;
+  font-weight: 750;
   color: #101312;
 }
 
-.macro-gram .pct-label {
-  font-size: 10px;
-  color: #7d8a82;
+.profile-macro-ring-legend li b em {
+  font-style: normal;
   font-weight: 500;
-  margin-left: 3px;
+  color: #7d8a82;
+  margin-left: 2px;
 }
 
-.macro-progress-track {
-  height: 6px;
-  width: 100%;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 3px;
+.profile-metric-empty {
+  margin: 0;
+  font-size: 11.5px;
+  color: #7d8a82;
+}
+
+/* ── Energy balance bar (BMR vs. activity burn) ── */
+.energy-balance {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 14px;
+}
+
+.energy-balance-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #526057;
+}
+
+.energy-balance-head svg {
+  color: #7d8a82;
+}
+
+.energy-balance-total {
+  margin-left: auto;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #101312;
+}
+
+.energy-balance-track {
+  display: flex;
+  height: 8px;
+  border-radius: 4px;
   overflow: hidden;
-  border: 1px solid rgba(16, 19, 18, 0.03);
+  gap: 2px;
 }
 
-.macro-progress-fill {
+.energy-balance-seg {
   height: 100%;
-  border-radius: 3px;
 }
 
-.protein .macro-progress-fill { background: #e08b8b; } /* desaturated coral */
-.carbs .macro-progress-fill { background: #7fa8c9; }   /* desaturated sky */
-.fat .macro-progress-fill { background: #dcc27a; }     /* desaturated honey */
+.energy-balance-seg.seg-bmr { background: #8fb89e; }
+.energy-balance-seg.seg-activity { background: #7fa8c9; }
+
+.energy-balance-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #526057;
+}
+
+.energy-balance-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.energy-balance-legend i {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  flex: 0 0 7px;
+}
+
+.energy-balance-legend i.seg-bmr { background: #8fb89e; }
+.energy-balance-legend i.seg-activity { background: #7fa8c9; }
 
 /* ── Google Calendar sync strip ── */
 .sync-card-content {
@@ -1286,6 +1427,32 @@
 
   .status-body {
     justify-content: space-around;
+  }
+
+  .profile-macro-ring {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .profile-macro-ring-legend {
+    width: 100%;
+  }
+
+  .profile-macro-ring-legend li {
+    justify-content: center;
+  }
+
+  .profile-macro-ring-legend li b {
+    margin-left: 6px;
+  }
+
+  .energy-balance-head {
+    flex-wrap: wrap;
+  }
+
+  .energy-balance-total {
+    margin-left: 0;
+    width: 100%;
   }
 
   .sync-status-row {
