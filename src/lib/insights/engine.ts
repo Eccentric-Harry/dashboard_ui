@@ -244,9 +244,33 @@ export function pickTop(insights: Insight[], max: number): Insight[] {
 /**
  * The subset worth bubbling up to Home: urgent findings always qualify;
  * otherwise only high-confidence ones. Capped at `max` across domains.
+ *
+ * Diversified one-per-domain first: Finance's rules fire reliably almost every
+ * day (a budget projection or a no-spend streak nearly always clears the
+ * high-confidence bar), so a plain global top-`max` slice tended to hand it
+ * both promoted slots and squeeze Nutrition/Mind out entirely even when they
+ * had a qualifying finding too. Only once every domain has had a turn do
+ * remaining slots fill from the overall ranking.
  */
 export function promoteForHome(insights: Insight[], max = 2): Insight[] {
-  return rankInsights(
+  const eligible = rankInsights(
     insights.filter((i) => i.sentiment === 'urgent' || i.confidence === 'high'),
-  ).slice(0, max)
+  )
+
+  const result: Insight[] = []
+  const usedDomains = new Set<InsightDomain>()
+  for (const insight of eligible) {
+    if (result.length >= max) break
+    if (usedDomains.has(insight.domain)) continue
+    usedDomains.add(insight.domain)
+    result.push(insight)
+  }
+  if (result.length < max) {
+    for (const insight of eligible) {
+      if (result.length >= max) break
+      if (result.includes(insight)) continue
+      result.push(insight)
+    }
+  }
+  return result
 }

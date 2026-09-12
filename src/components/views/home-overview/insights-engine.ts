@@ -12,6 +12,7 @@ import type {
   DailyTask,
   FocusDaySummary,
   LearningsSummary,
+  MindAnchorOutcome,
   MindEntry,
   SleepEntry,
   StravaActivity,
@@ -172,6 +173,8 @@ interface InsightContext {
   spending: SpendingSummary | null
   workoutStreakWeeks: number
   learningStreakDays: number
+  /** All-time INTENTION (anchor) entries — filtered to the reporting window internally. */
+  anchorEntries: MindEntry[]
 }
 
 const SENTIMENT_RANK: Record<InsightSentiment, number> = {
@@ -233,6 +236,7 @@ export function generateInsights(
   push(proteinVsFocus(records, ctx.proteinGoal))
   push(thoughtsVsOverdue(records))
   push(thoughtsVsSleep(records))
+  push(anchorPatterns(ctx.anchorEntries, records))
 
   insights.sort(
     (a, b) => SENTIMENT_RANK[b.sentiment] - SENTIMENT_RANK[a.sentiment] || b.effect - a.effect,
@@ -246,6 +250,20 @@ export function generateInsights(
       visible = [...visible.slice(0, MAX_VISIBLE_INSIGHTS - 1), rankedPositive]
     }
   }
+
+  // Finance's rules clear their bar almost every day (there's always a budget
+  // pace or a no-spend streak to report), so left unchecked the digest reads
+  // as a finance column with a "Patterns" label on it. If every visible card
+  // still comes from one domain after the checks above, swap the weakest one
+  // for the strongest candidate from a different domain — mood, workouts, or
+  // an anchor streak — when the fuller candidate list actually has one.
+  const domains = new Set(visible.map((i) => i.domain))
+  if (domains.size === 1 && insights.length > visible.length) {
+    const onlyDomain = domains.values().next().value
+    const alt = insights.find((i) => !visible.includes(i) && i.domain !== onlyDomain)
+    if (alt) visible = [...visible.slice(0, MAX_VISIBLE_INSIGHTS - 1), alt]
+  }
+
   return visible.slice(0, MAX_VISIBLE_INSIGHTS)
 }
 
@@ -490,6 +508,72 @@ function proteinVsFocus(records: DayRecord[], proteinGoal: number | null): Insig
     metric: { value: hitFocus, unit: 'min', delta: hitFocus - missedFocus, deltaDir: 'up' },
     spark: paired.map((p) => p.proteinGrams as number),
   })
+}
+
+/**
+ * Today's Anchor outcomes (Achieved/Partial/Missed) over the window — a streak
+ * of follow-through if one's running, otherwise a hit-rate read once enough
+ * anchors have been scored. `anchorEntries` is fetched all-time by the caller,
+ * so it's filtered down to the reporting window here.
+ */
+function anchorPatterns(anchorEntries: MindEntry[], records: DayRecord[]): Insight | null {
+  const dates = records.map((r) => r.date)
+  const dateSet = new Set(dates)
+  const byDate = new Map(
+    anchorEntries.filter((e) => dateSet.has(e.date)).map((e) => [e.date, e]),
+  )
+  const week = [...byDate.values()]
+  const scored = week.filter((e): e is MindEntry & { outcome: MindAnchorOutcome } => e.outcome != null)
+  if (scored.length < MIN_BUCKET_DAYS + 1) return null
+
+  // Consecutive "Achieved" days counting back from the most recent day in the
+  // window — breaks on the first day that's Partial, Missed, or never scored.
+  let streak = 0
+  for (let i = dates.length - 1; i >= 0; i--) {
+    if (byDate.get(dates[i])?.outcome !== 'ACHIEVED') break
+    streak++
+  }
+  if (streak >= 3) {
+    return makeInsight({
+      id: 'anchor-streak',
+      icon: 'streak',
+      sentiment: 'positive',
+      title: `${streak}-day anchor streak — you've followed through on your one thing every day this stretch.`,
+      detail: `${streak} consecutive days marked "Achieved" out of the last ${dates.length}.`,
+      sampleDays: dates.length,
+      effect: Math.min(1, streak / 7),
+      metric: { value: streak, unit: 'days' },
+    })
+  }
+
+  const achieved = scored.filter((e) => e.outcome === 'ACHIEVED').length
+  const missed = scored.filter((e) => e.outcome === 'MISSED').length
+  const rate = achieved / scored.length
+  if (rate >= 0.7) {
+    return makeInsight({
+      id: 'anchor-rate',
+      icon: 'streak',
+      sentiment: 'positive',
+      title: `You hit ${achieved} of ${scored.length} anchors this week — solid follow-through on the one thing that mattered each day.`,
+      detail: `${achieved} achieved, ${missed} missed, out of ${scored.length} scored anchors this week.`,
+      sampleDays: dates.length,
+      effect: rate * 0.5,
+      metric: { value: achieved, unit: `/${scored.length}` },
+    })
+  }
+  if (missed / scored.length >= 0.5) {
+    return makeInsight({
+      id: 'anchor-missed',
+      icon: 'streak',
+      sentiment: 'watch',
+      title: `${missed} of ${scored.length} anchors missed this week — a smaller one tomorrow might stick better.`,
+      detail: `${achieved} achieved, ${missed} missed, out of ${scored.length} scored anchors this week.`,
+      sampleDays: dates.length,
+      effect: (missed / scored.length) * 0.5,
+      metric: { value: missed, unit: `/${scored.length}` },
+    })
+  }
+  return null
 }
 
 /** The digest should never be all-negative: always try to surface one genuine win. */

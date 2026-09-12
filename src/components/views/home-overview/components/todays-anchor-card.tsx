@@ -137,51 +137,54 @@ function TodaysAnchorCard({ intention, note, outcome, saving, onSave, onSaveMeta
               ))}
             </div>
 
-            <div className="home-anchor-note">
-              <div className="home-anchor-note-head">
-                <span className="home-anchor-note-label">Notes</span>
-                {!isNoteEditing && (
-                  <button type="button" className="home-anchor-note-btn" onClick={startNoteEdit}>
-                    <Pencil size={11} strokeWidth={2.5} />
-                    {note ? 'Edit' : 'Add'}
-                  </button>
+            {isNoteEditing || note ? (
+              <div className="home-anchor-note">
+                <div className="home-anchor-note-head">
+                  <span className="home-anchor-note-label">Notes</span>
+                  {!isNoteEditing && (
+                    <button type="button" className="home-anchor-note-btn" onClick={startNoteEdit}>
+                      <Pencil size={11} strokeWidth={2.5} />
+                      Edit
+                    </button>
+                  )}
+                </div>
+
+                {isNoteEditing ? (
+                  <>
+                    <textarea
+                      ref={noteRef}
+                      className="home-anchor-note-input"
+                      value={noteDraft}
+                      maxLength={500}
+                      rows={3}
+                      placeholder="Context, blockers, or how it went…"
+                      onChange={(e) => setNoteDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') cancelNote()
+                        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) saveNote()
+                      }}
+                    />
+                    <div className="home-anchor-note-actions">
+                      <button type="button" className="home-anchor-note-save" onClick={saveNote}>
+                        <Check size={12} strokeWidth={2.8} />
+                        Save
+                      </button>
+                      <button type="button" className="home-anchor-note-cancel" onClick={cancelNote}>
+                        <X size={12} strokeWidth={2.8} />
+                        Cancel
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <p className="home-anchor-note-text">{note}</p>
                 )}
               </div>
-
-              {isNoteEditing ? (
-                <>
-                  <textarea
-                    ref={noteRef}
-                    className="home-anchor-note-input"
-                    value={noteDraft}
-                    maxLength={500}
-                    rows={3}
-                    placeholder="Context, blockers, or how it went…"
-                    onChange={(e) => setNoteDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Escape') cancelNote()
-                      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) saveNote()
-                    }}
-                  />
-                  <div className="home-anchor-note-actions">
-                    <button type="button" className="home-anchor-note-save" onClick={saveNote}>
-                      <Check size={12} strokeWidth={2.8} />
-                      Save
-                    </button>
-                    <button type="button" className="home-anchor-note-cancel" onClick={cancelNote}>
-                      <X size={12} strokeWidth={2.8} />
-                      Cancel
-                    </button>
-                  </div>
-                </>
-              ) : note ? (
-                <p className="home-anchor-note-text">{note}</p>
-              ) : (
-                <button type="button" className="home-anchor-note-placeholder" onClick={startNoteEdit}>
-                  Jot down context, blockers, or how it went…
-                </button>
-              )}
-            </div>
+            ) : (
+              <button type="button" className="home-anchor-note-add" onClick={startNoteEdit}>
+                <Pencil size={11} strokeWidth={2.5} />
+                Add a note
+              </button>
+            )}
           </div>
         ) : (
           <p className="home-anchor-foot">Name it and the day has a spine.</p>

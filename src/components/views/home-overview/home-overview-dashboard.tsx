@@ -180,10 +180,19 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           spending: home.spending.data,
           workoutStreakWeeks: home.workoutStats.data?.currentStreakWeeks ?? 0,
           learningStreakDays: home.learnings.data?.stats?.streakDays ?? 0,
+          anchorEntries: home.anchors.data ?? [],
         },
         promotedInsights,
       ),
-    [weekRecords, home.nutrition.data, home.spending.data, home.workoutStats.data, home.learnings.data, promotedInsights],
+    [
+      weekRecords,
+      home.nutrition.data,
+      home.spending.data,
+      home.workoutStats.data,
+      home.learnings.data,
+      home.anchors.data,
+      promotedInsights,
+    ],
   )
 
   const todayRecord = dayRecords[dayRecords.length - 1]
