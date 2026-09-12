@@ -651,6 +651,24 @@
     padding: 14px 15px 13px;
   }
 
+  /* The accent panel (finance-overview.css) carries its own 15px horizontal
+     padding on top of the card's, so a 150px-wide 2x2 tile was left with only
+     ~88px for the numeral — narrower than "₹24,50,800" at 20px, which wrapped
+     mid-digit ("₹24,50,8" / "00"). Tightening both layers of padding on mobile
+     gets a real 7-figure balance back on one line without shrinking the type
+     any further. */
+  .finance-balance-card,
+  .finance-metric-card {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .finance-balance-card .finance-accent-panel,
+  .finance-metric-card .finance-accent-panel {
+    padding-left: 9px;
+    padding-right: 9px;
+  }
+
   /* The desktop redesign (section 3 above) deliberately left-aligns these
      for the "Balance owns the size and the alignment" hierarchy — on a
      phone the tiles stack 2-up with plenty of width each, and centred reads
