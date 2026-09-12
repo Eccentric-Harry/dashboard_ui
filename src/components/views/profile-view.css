@@ -9,7 +9,10 @@
    other route's CSS has to change for that fallback to stay accurate. */
 .dashboard-stage.profile-stage {
   --profile-inset-top: 10px;
-  --profile-inset-bottom: 6px;
+  /* 14px, not 12px, is deliberate: it puts the container's bottom edge at
+     850 − 14 = 836px, exactly where `.side-rail` ends. See the bottom-alignment
+     note below. */
+  --profile-inset-bottom: 14px;
 }
 
 /* Desktop only. The shared `.dashboard-stage` runs 900–1200px tall, which
@@ -31,17 +34,25 @@
    `.dashboard-stage` rules, and tablet scales the stage assuming exactly 900px. */
 @media (min-width: 1025px) {
   .dashboard-stage.profile-stage {
-    /* Tracks the viewport again now that the card no longer stretches to fill
-       it — otherwise the stage stopped at its 850px floor and every extra pixel
-       of a taller screen pooled underneath, leaving the card riding high. The
-       floor stays 850px for the rail; the 1000px cap keeps the card from
-       drifting into the middle of a very tall screen. */
-    height: clamp(850px, calc(100vh - 16px), 1000px);
+    /* Fixed, not viewport-tracking: the card's bottom is pinned to the rail's
+       bottom (below), and the rail sits at a fixed offset from the stage top,
+       so a stage that grew with the screen would just drag the pair upward.
+       Vertical placement is handled by the margin instead. */
+    height: 850px;
     min-height: 850px;
+    /* Centers the *card* — not the stage — in the viewport. The card occupies
+       80–836px within the stage, so its midpoint is 458px down; parking that at
+       50svh keeps it optically centred at any height, and the max() collapses
+       the margin to 0 on screens too short to spare it (no new scrollbar). */
+    margin-top: max(0px, calc(50svh - 458px));
   }
 
+  /* Bottom-aligned so the card's lower edge meets `.side-rail`'s. The rail ends
+     836px below the stage top and the container now ends there too, which puts
+     the card at 80–836px: same baseline as the rail, at every viewport height.
+     Centring it instead left the rail hanging ~31px below the card. */
   .profile-container {
-    align-items: center;
+    align-items: flex-end;
   }
 }
 
