@@ -393,27 +393,27 @@
    above since both are "recurring, informational" rather than good/bad news. */
 .finance-dashboard .fin-intel-tile--forecast.tone-good {
   background: var(--fin-tint-sage);
-  border-color: rgba(93, 138, 112, 0.22);
+  border-color: transparent;
 }
 
 .finance-dashboard .fin-intel-tile--forecast.tone-over {
   background: var(--fin-tint-blush);
-  border-color: rgba(192, 72, 63, 0.2);
+  border-color: transparent;
 }
 
 .finance-dashboard .fin-intel-tile--forecast.tone-neutral {
   background: var(--fin-tint-blue);
-  border-color: rgba(96, 130, 156, 0.2);
+  border-color: transparent;
 }
 
 .finance-dashboard .fin-intel-tile--subs {
   background: var(--fin-tint-amber);
-  border-color: rgba(168, 118, 31, 0.2);
+  border-color: transparent;
 }
 
 .finance-dashboard .fin-intel-tile--lending {
   background: var(--fin-tint-blue);
-  border-color: rgba(96, 130, 156, 0.2);
+  border-color: transparent;
 }
 
 .finance-dashboard .fin-intel-tile-main {

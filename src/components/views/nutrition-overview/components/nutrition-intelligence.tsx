@@ -227,6 +227,7 @@ function NutritionIntelligence() {
 
   const { gap, split, adherence, weeks, leaderboard, insights } = derived
   const listInsights = insights.filter((i) => i.id !== 'ntr-protein-gap')
+  const hasSideStack = Boolean(split) || Boolean(weeks)
   const pctOfGoal = gap ? Math.round((gap.avg7 / gap.goal) * 100) : null
   const onTrack = pctOfGoal != null && pctOfGoal >= 95
 
@@ -324,6 +325,7 @@ function NutritionIntelligence() {
         )}
 
         {/* ── Macro composition ring + week-over-week ── */}
+        {hasSideStack && (
         <div className="ntr-intel-side-stack">
           {split && (
             <article className="ntr-card ntr-intel-ring">
@@ -401,9 +403,10 @@ function NutritionIntelligence() {
             </article>
           )}
         </div>
+        )}
 
         {/* ── Adherence bars ── */}
-        <article className="ntr-card ntr-intel-heatmap">
+        <article className={cn('ntr-card ntr-intel-heatmap', !hasSideStack && 'ntr-intel-heatmap--paired')}>
           <div className="ntr-intel-heat-head">
             <p className="ntr-eyebrow">Goal adherence · last 14 days</p>
             <div className="ntr-intel-heat-legend">

@@ -54,7 +54,7 @@
 
 .nutrition-dashboard.ntr .ntr-intel-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
   gap: 14px;
 }
 
@@ -64,9 +64,19 @@
   grid-column: 1 / -1;
 }
 
+/* No macro-ring/week-over-week side stack to fill the second column —
+   let the adherence card sit beside the hero instead of leaving it blank. */
+.nutrition-dashboard.ntr .ntr-intel-grid > .ntr-intel-heatmap.ntr-intel-heatmap--paired {
+  grid-column: auto;
+}
+
 @media (max-width: 900px) {
   .nutrition-dashboard.ntr .ntr-intel-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .nutrition-dashboard.ntr .ntr-intel-grid > .ntr-intel-heatmap.ntr-intel-heatmap--paired {
+    grid-column: 1 / -1;
   }
 }
 
