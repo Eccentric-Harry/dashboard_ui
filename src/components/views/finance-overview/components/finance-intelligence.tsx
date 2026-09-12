@@ -464,7 +464,7 @@ function FinanceIntelligence({
         {/* ── Side column: projection, subscriptions, lending ── */}
         <div className="fin-intel-side">
           {burndown && burndown.isCurrentMonth && forecast && (
-            <article className={`fin-intel-tile tone-${projectedTone}`}>
+            <article className={`fin-intel-tile fin-intel-tile--forecast tone-${projectedTone}`}>
               <p className="fin-intel-eyebrow">Month-end forecast</p>
               <div className="fin-intel-tile-main">
                 <b>{inr(burndown.projectedTotal)}</b>
@@ -481,7 +481,7 @@ function FinanceIntelligence({
           )}
 
           {subs && (
-            <article className="fin-intel-tile">
+            <article className="fin-intel-tile fin-intel-tile--subs">
               <p className="fin-intel-eyebrow">Subscription radar</p>
               <div className="fin-intel-tile-main">
                 <b>{inr(subs.monthlyTotal)}</b>
@@ -507,7 +507,7 @@ function FinanceIntelligence({
           )}
 
           {exposure && (
-            <article className="fin-intel-tile">
+            <article className="fin-intel-tile fin-intel-tile--lending">
               <p className="fin-intel-eyebrow">Lending exposure</p>
               <div className="fin-intel-lending">
                 <div>

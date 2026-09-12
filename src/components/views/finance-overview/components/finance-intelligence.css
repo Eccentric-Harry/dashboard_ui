@@ -9,6 +9,13 @@
   grid-column: 1 / -1;
   grid-row: 2; /* the route grid places cards by explicit row */
   padding: 20px 22px;
+  /* Same four hues as the stat rail above (.finance-stats-row), reused here so
+     the chart panel and side tiles read as part of one palette instead of the
+     rail being the only spot on the route with any color. */
+  --fin-tint-sage: linear-gradient(150deg, #eff5ec 0%, #e2eddf 55%, #d1e4ce 100%);
+  --fin-tint-amber: linear-gradient(150deg, #fbf6ec 0%, #f3ead9 55%, #e9dbbe 100%);
+  --fin-tint-blue: linear-gradient(150deg, #f4f8fb 0%, #e6eff6 55%, #d4e3ee 100%);
+  --fin-tint-blush: linear-gradient(150deg, #fdf4f3 0%, #f8e7e5 55%, #f0d6d3 100%);
 }
 
 .finance-dashboard .fin-intel-glyph {
@@ -207,7 +214,20 @@
 
 .finance-dashboard .fin-intel-chart {
   height: 208px;
-  margin: 0 0 0 -6px;
+  margin: 10px 0 0;
+  padding: 12px 12px 2px 6px;
+  border-radius: 18px;
+  /* The burn-down was the largest patch of dead-white in the section — a plot
+     floating on the same surface as the card around it. A soft sage wash (the
+     same hue Total Balance uses above, since this chart is the same "how am I
+     doing with money" story) gives it a home without competing with the line
+     and fill it already carries. */
+  background: linear-gradient(
+    165deg,
+    rgba(233, 242, 230, 0.85) 0%,
+    rgba(216, 232, 212, 0.5) 55%,
+    rgba(216, 232, 212, 0) 100%
+  );
 }
 
 /* Chart header: the legend used to sit *under* the plot, so the reader met three
@@ -364,6 +384,36 @@
   border-radius: 16px;
   border: 1px solid rgba(23, 28, 25, 0.07);
   background: rgba(255, 255, 255, 0.7);
+}
+
+/* Each tile takes one of the rail's four hues, so the column reads as three
+   small members of the same family rather than three identical white boxes.
+   Forecast's hue follows its tone (it already carries a semantic verdict);
+   subscriptions and lending are fixed, matching Avg/day and Monthly Budget
+   above since both are "recurring, informational" rather than good/bad news. */
+.finance-dashboard .fin-intel-tile--forecast.tone-good {
+  background: var(--fin-tint-sage);
+  border-color: rgba(93, 138, 112, 0.22);
+}
+
+.finance-dashboard .fin-intel-tile--forecast.tone-over {
+  background: var(--fin-tint-blush);
+  border-color: rgba(192, 72, 63, 0.2);
+}
+
+.finance-dashboard .fin-intel-tile--forecast.tone-neutral {
+  background: var(--fin-tint-blue);
+  border-color: rgba(96, 130, 156, 0.2);
+}
+
+.finance-dashboard .fin-intel-tile--subs {
+  background: var(--fin-tint-amber);
+  border-color: rgba(168, 118, 31, 0.2);
+}
+
+.finance-dashboard .fin-intel-tile--lending {
+  background: var(--fin-tint-blue);
+  border-color: rgba(96, 130, 156, 0.2);
 }
 
 .finance-dashboard .fin-intel-tile-main {
