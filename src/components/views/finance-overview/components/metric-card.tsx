@@ -49,6 +49,12 @@ function MetricCard({ metric, loading = false, onEdit, stagger = 0 }: MetricCard
         ? 'watch'
         : 'good'
 
+  // The accent panel's hue is the tile's own verdict, not its position in the
+  // row. subtitleTone is the verdict-bearing field — `tone` only says whether
+  // the figure is money in or money out, which is fixed per tile and would put
+  // Monthly Expenses permanently in the "bad" colour.
+  const panelTone = metric.subtitleTone ?? metric.tone
+
   const MoodIcon = metric.mood ? MOOD_ICON[metric.mood.tone] : null
 
   return (
@@ -56,8 +62,20 @@ function MetricCard({ metric, loading = false, onEdit, stagger = 0 }: MetricCard
       className={`finance-card finance-metric-card${showRing ? ' has-ring' : ''}`}
       style={{ '--i': stagger } as CSSProperties}
     >
-      <div className={`finance-metric-icon ${metric.tone}`}>
-        <Icon size={15} strokeWidth={2.2} />
+      {/* Icon and label share one header row, so the white area above the panel
+          reads as a caption rather than as empty card. A tile that tracks
+          progress puts its ring in the icon slot — for the budget the ring *is*
+          the glyph, and a generic target icon beside it was saying less than
+          the arc was. */}
+      <div className="finance-tile-head">
+        {showRing && !loading ? (
+          <MoodRing progress={metric.progress ?? 0} tone={ringTone} size={38} />
+        ) : (
+          <div className={`finance-metric-icon ${metric.tone}`}>
+            <Icon size={15} strokeWidth={2.2} />
+          </div>
+        )}
+        <p>{metric.label}</p>
       </div>
       {onEdit && (
         <button
@@ -70,19 +88,13 @@ function MetricCard({ metric, loading = false, onEdit, stagger = 0 }: MetricCard
           <Pencil size={12} strokeWidth={2.2} />
         </button>
       )}
-      <p>{metric.label}</p>
       {loading ? (
-        <div className="skeleton-shimmer skeleton-rect" style={{ width: '85px', height: '18px', marginTop: '6px', borderRadius: '4px' }} />
+        <div className="finance-accent-panel is-neutral">
+          <div className="skeleton-shimmer skeleton-rect" style={{ width: '85px', height: '18px', borderRadius: '4px' }} />
+        </div>
       ) : (
-        <>
-          {showRing ? (
-            <div className="fin-metric-row">
-              <strong>{displayValue}</strong>
-              <MoodRing progress={metric.progress ?? 0} tone={ringTone} />
-            </div>
-          ) : (
-            <strong>{displayValue}</strong>
-          )}
+        <div className={`finance-accent-panel is-${panelTone}`}>
+          <strong>{displayValue}</strong>
 
           {/* The flat meter survives for any tile that tracks progress but
               hasn't opted into the ring — nothing currently does, but removing
@@ -112,7 +124,7 @@ function MetricCard({ metric, loading = false, onEdit, stagger = 0 }: MetricCard
               {metric.mood.label}
             </span>
           )}
-        </>
+        </div>
       )}
     </section>
   )

@@ -274,9 +274,20 @@ function FinanceIntelligence({
         {/* ── Flagship: safe to spend + burn-down ── */}
         {burndown && (
           <div className="fin-intel-hero">
+            {/* Eyebrow stays on the white surface and everything it introduces —
+                the figure, the pace line, the burn-down — sits together on one
+                accent panel. That is /nutrition's Daily Nutrition card: eyebrow
+                and headline on white, then a single lime panel holding the
+                gauge and all three macro bars. The chart used to carry its own
+                sage wash while the route's most important number sat bare on
+                white, which had the emphasis exactly inverted. */}
+            <p className="fin-intel-eyebrow">
+              {burndown.isCurrentMonth ? 'Safe to spend today' : `${monthName} recap`}
+            </p>
+
+            <div className="fin-intel-hero-panel">
             {burndown.isCurrentMonth ? (
               <>
-                <p className="fin-intel-eyebrow">Safe to spend today</p>
                 <div className="fin-intel-big">
                   <strong>{inr(heroValue)}</strong>
                   <span className="fin-intel-big-unit">/ day · {burndown.daysLeft} days left</span>
@@ -289,16 +300,13 @@ function FinanceIntelligence({
                 </p>
               </>
             ) : (
-              <>
-                <p className="fin-intel-eyebrow">{monthName} recap</p>
-                <div className="fin-intel-big">
-                  <strong>{inr(burndown.spent)}</strong>
-                  <span className="fin-intel-big-unit">
-                    of {inr(burndown.budget)} budget ·{' '}
-                    {burndown.spent <= burndown.budget ? 'stayed under' : 'went over'}
-                  </span>
-                </div>
-              </>
+              <div className="fin-intel-big">
+                <strong>{inr(burndown.spent)}</strong>
+                <span className="fin-intel-big-unit">
+                  of {inr(burndown.budget)} budget ·{' '}
+                  {burndown.spent <= burndown.budget ? 'stayed under' : 'went over'}
+                </span>
+              </div>
             )}
 
             <div className="fin-intel-chart-head">
@@ -320,14 +328,17 @@ function FinanceIntelligence({
                     margin={{ top: 18, right: 48, left: 0, bottom: 0 }}
                   >
                     <defs>
-                      {/* Sage rather than neutral grey: a grey wash over the warm
-                          hero panel greys the whole chart down, where the green
-                          reads as part of the route's palette and gives the
-                          curve some body instead of a bare line. */}
+                      {/* Accumulated spend darkens; the unmeasured future lightens
+                          (see the ReferenceArea below). Reading the two washes as
+                          opposites is the point. A white fill was tried here when
+                          the panel was a heavier green and it now glares against
+                          the muted eucalyptus — so the fill is a deepened version
+                          of the panel's own hue, which keeps the near-black curve
+                          on top as the highest-contrast thing in the plot. */}
                       <linearGradient id="finActualFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#5d8a70" stopOpacity={0.26} />
-                        <stop offset="60%" stopColor="#5d8a70" stopOpacity={0.09} />
-                        <stop offset="100%" stopColor="#5d8a70" stopOpacity={0} />
+                        <stop offset="0%" stopColor="#2c4835" stopOpacity={0.2} />
+                        <stop offset="60%" stopColor="#2c4835" stopOpacity={0.07} />
+                        <stop offset="100%" stopColor="#2c4835" stopOpacity={0} />
                       </linearGradient>
                     </defs>
 
@@ -336,18 +347,20 @@ function FinanceIntelligence({
                         you could see it rising but not read *how much* off it. */}
                     <CartesianGrid
                       vertical={false}
-                      stroke="rgba(23, 28, 25, 0.07)"
+                      stroke="rgba(23, 28, 25, 0.11)"
                       strokeDasharray="0"
                     />
 
-                    {/* The part of the month that hasn't happened yet, washed back
-                        so "measured" and "projected" are distinguishable at a glance
-                        rather than only by the dash pattern of a thin line. */}
+                    {/* The part of the month that hasn't happened yet, lifted
+                        toward white — the opposite direction to the spend fill, so
+                        "measured" and "projected" separate by value and not only by
+                        the dash pattern of a thin line. An ink wash was used when
+                        this plot sat on white; on a tint it just muddies the hue. */}
                     {burndown.isCurrentMonth && burndown.daysElapsed < burndown.points.length && (
                       <ReferenceArea
                         x1={burndown.daysElapsed}
                         x2={burndown.points.length}
-                        fill="rgba(23, 28, 25, 0.035)"
+                        fill="rgba(255, 255, 255, 0.3)"
                         stroke="none"
                       />
                     )}
@@ -358,7 +371,7 @@ function FinanceIntelligence({
                       tickLine={false}
                       tickMargin={8}
                       ticks={[1, 5, 10, 15, 20, 25, burndown.points.length]}
-                      tick={{ fill: 'rgba(23, 28, 25, 0.42)', fontSize: 9.5, fontWeight: 650 }}
+                      tick={{ fill: 'rgba(23, 28, 25, 0.72)', fontSize: 9.5, fontWeight: 650 }}
                     />
                     <YAxis
                       width={46}
@@ -367,7 +380,7 @@ function FinanceIntelligence({
                       ticks={yTicks}
                       domain={[0, yMax]}
                       tickFormatter={compactInr}
-                      tick={{ fill: 'rgba(23, 28, 25, 0.42)', fontSize: 9.5, fontWeight: 650 }}
+                      tick={{ fill: 'rgba(23, 28, 25, 0.72)', fontSize: 9.5, fontWeight: 650 }}
                     />
                     <Tooltip
                       content={<BurndownTooltip monthKey={selectedMonthKey} />}
@@ -380,12 +393,12 @@ function FinanceIntelligence({
                         started fast. */}
                     <ReferenceLine
                       y={burndown.budget}
-                      stroke="rgba(23, 28, 25, 0.34)"
+                      stroke="rgba(23, 28, 25, 0.46)"
                       strokeDasharray="4 4"
                       label={{
                         position: 'right',
                         value: 'budget',
-                        fill: 'rgba(23, 28, 25, 0.5)',
+                        fill: 'rgba(23, 28, 25, 0.74)',
                         fontSize: 9,
                         fontWeight: 800,
                         letterSpacing: '0.06em',
@@ -398,12 +411,12 @@ function FinanceIntelligence({
                     {burndown.isCurrentMonth && (
                       <ReferenceLine
                         x={burndown.daysElapsed}
-                        stroke="rgba(23, 28, 25, 0.28)"
+                        stroke="rgba(23, 28, 25, 0.4)"
                         strokeWidth={1}
                         label={{
                           position: 'top',
                           value: 'today',
-                          fill: 'rgba(23, 28, 25, 0.5)',
+                          fill: 'rgba(23, 28, 25, 0.74)',
                           fontSize: 9,
                           fontWeight: 800,
                           letterSpacing: '0.06em',
@@ -414,7 +427,7 @@ function FinanceIntelligence({
                     <Line
                       type="linear"
                       dataKey="ideal"
-                      stroke="rgba(23, 28, 25, 0.24)"
+                      stroke="rgba(23, 28, 25, 0.36)"
                       strokeWidth={1.4}
                       dot={false}
                       activeDot={false}
@@ -455,6 +468,7 @@ function FinanceIntelligence({
                 </ResponsiveContainer>
               )}
             </div>
+            </div>
             {safeToSpend?.sentiment === 'urgent' && (
               <p className="fin-intel-alert">{safeToSpend.title}</p>
             )}
@@ -466,27 +480,35 @@ function FinanceIntelligence({
           {burndown && burndown.isCurrentMonth && forecast && (
             <article className={`fin-intel-tile fin-intel-tile--forecast tone-${projectedTone}`}>
               <p className="fin-intel-eyebrow">Month-end forecast</p>
-              <div className="fin-intel-tile-main">
-                <b>{inr(burndown.projectedTotal)}</b>
-                <span className="fin-intel-delta">
-                  {projectedTone === 'neutral'
-                    ? 'right on budget'
-                    : projectedTone === 'good'
-                      ? `${inr(projectedDelta)} under budget`
-                      : `${inr(-projectedDelta)} over budget`}
-                </span>
+              <div className="fin-intel-panel">
+                <div className="fin-intel-tile-main">
+                  <b>{inr(burndown.projectedTotal)}</b>
+                  <span className="fin-intel-delta">
+                    {projectedTone === 'neutral'
+                      ? 'right on budget'
+                      : projectedTone === 'good'
+                        ? `${inr(projectedDelta)} under budget`
+                        : `${inr(-projectedDelta)} over budget`}
+                  </span>
+                </div>
+                <small>{forecast.sampleWindow}</small>
               </div>
-              <small>{forecast.sampleWindow}</small>
             </article>
           )}
 
           {subs && (
             <article className="fin-intel-tile fin-intel-tile--subs">
               <p className="fin-intel-eyebrow">Subscription radar</p>
-              <div className="fin-intel-tile-main">
-                <b>{inr(subs.monthlyTotal)}</b>
-                <span>/mo · {subs.count} active</span>
+              <div className="fin-intel-panel">
+                <div className="fin-intel-tile-main">
+                  <b>{inr(subs.monthlyTotal)}</b>
+                  <span>/mo · {subs.count} active</span>
+                </div>
               </div>
+              {/* Renewals stay on the white surface below the panel, the way
+                  /nutrition's meal rows sit under its stat rail — a list is a
+                  list, and putting it on the colour too would turn the whole
+                  tile back into a wash. */}
               {subs.dueThisWeek.length > 0 ? (
                 <ul className="fin-intel-renewals">
                   {subs.dueThisWeek.map((s) => (
@@ -509,19 +531,24 @@ function FinanceIntelligence({
           {exposure && (
             <article className="fin-intel-tile fin-intel-tile--lending">
               <p className="fin-intel-eyebrow">Lending exposure</p>
-              <div className="fin-intel-lending">
-                <div>
-                  <small>owed to you</small>
-                  <b>{inr(exposure.owedTotal)}</b>
-                  <small>
-                    {exposure.owedCount} pending
-                    {exposure.overdueCount > 0 ? ` · ${exposure.overdueCount} overdue` : ''}
-                  </small>
-                </div>
-                <div>
-                  <small>you owe</small>
-                  <b>{inr(exposure.owingTotal)}</b>
-                  <small>repayments pending</small>
+              <div className="fin-intel-panel">
+                {/* Two figures as translucent-white chips on the panel, the same
+                    construction as /nutrition's TODAY / DAILY AVG / ON TRACK
+                    chips on its lime strip. */}
+                <div className="fin-intel-lending">
+                  <div className="fin-intel-lend-chip">
+                    <small>owed to you</small>
+                    <b>{inr(exposure.owedTotal)}</b>
+                    <small>
+                      {exposure.owedCount} pending
+                      {exposure.overdueCount > 0 ? ` · ${exposure.overdueCount} overdue` : ''}
+                    </small>
+                  </div>
+                  <div className="fin-intel-lend-chip">
+                    <small>you owe</small>
+                    <b>{inr(exposure.owingTotal)}</b>
+                    <small>repayments pending</small>
+                  </div>
                 </div>
               </div>
             </article>

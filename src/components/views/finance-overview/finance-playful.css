@@ -111,14 +111,14 @@
   margin: 0 0 12px;
 }
 
-/* The label + value block is pushed to the foot of the card, so the four tiles
-   share one baseline no matter how much the icon above them differs. Budget
-   carries the most content (ring row, subtitle, mood chip) and would otherwise
-   ride ~30px higher than its neighbours. */
+/* The label now reads as an eyebrow directly under the icon, and it is the
+   accent panel that takes `margin-top: auto` (see .finance-accent-panel) — so
+   the four tiles still share one baseline at the panel's top edge, which is
+   where the eye actually measures them now that the numbers live in there. */
 .finance-balance-card p,
 .finance-metric-card p {
-  margin-top: auto;
-  padding-top: 10px;
+  margin-top: 0;
+  padding-top: 0;
 }
 
 /* Hero numerals. Tabular figures matter more here than anywhere else in the
@@ -264,16 +264,6 @@
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
   color: rgba(23, 28, 25, 0.72);
-}
-
-/* The budget tile puts the ring beside the number instead of stacking a bar
-   underneath it, which buys back the vertical space the ring costs. */
-.finance-metric-card.has-ring .fin-metric-row {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
 }
 
 /* ── 4. Section headings ─────────────────────────────────────────────────────

@@ -10,6 +10,40 @@
   --fin-ink-soft: #6b7165;
   --fin-ink-faint: #99a096;
 
+  /* Accent-panel tints. Colour belongs to a panel inside a white card, never to
+     the card — see the stat-tile block below. Semantics: sage = on track,
+     cream = watch, blush = over, porcelain = informational fact.
+
+     Flat, not gradient. A gradient fading to near-white at one corner is what
+     made these read as a wash: the panel had no single colour, so it looked
+     like the card discolouring rather than an object placed on it.
+     /nutrition's lime panel is one confident colour edge to edge, and that is
+     what gives it its presence.
+
+     A tonal set, not four picked colours: one lightness (L* ~84) and one low
+     chroma (C* 11-15) across four hues. Equal lightness and chroma is what makes a palette
+     read as a system — vary both and you get four unrelated crayons.
+
+     Chroma is the control that matters here, not lightness. An earlier pass
+     sat at C* 16-32 and read as candy: those were mid-light but highly
+     saturated, which is the combination that looks playful rather than
+     considered. Every other surface in this app lives at C* 3-7, and
+     /nutrition's lime is a deliberate C* 66 brand outlier; panels on a finance
+     route belong nearer the quiet end. Halving the chroma while holding
+     lightness keeps all four numerals above 11:1 against the route's ink.
+
+     Hues chosen for what they have to say, in their muted register: eucalyptus
+     rather than spring green, oat rather than butter, terracotta rather than
+     salmon, slate rather than sky. Clay sits one step darker (L* 82) because
+     it is the only one carrying bad news. */
+  --fin-accent-sage: #bfd8c4;  /* eucalyptus — on track   L*84 C*14 */
+  --fin-accent-sand: #e5d1b9;  /* oat        — watch      L*85 C*15 */
+  --fin-accent-slate: #bfd5e4; /* slate      — fact       L*84 C*11 */
+  --fin-accent-clay: #eac3bf;  /* terracotta — over       L*82 C*15 */
+  /* Sub-stat chips sitting on an accent panel, as /nutrition's TODAY / DAILY
+     AVG / ON TRACK chips sit on its lime panel. */
+  --fin-chip: rgba(255, 255, 255, 0.52);
+
   position: absolute;
   inset: 20px 58px 12px 206px;
   z-index: 2;
@@ -154,61 +188,98 @@
   text-align: center;
 }
 
-/* ── Stat-tile identity ───────────────────────────────────────────────────
-   The colour goes on an *inset panel*, not on the card — this is the signature
-   move of the design system and the piece finance was missing. /nutrition is
-   white card → inset `.ntr-gauge-panel` (radius 22, saturated lime); /home is
-   card → inset `.home-hero-panel` (radius 22, periwinkle). The white margin
-   around the panel is what frames the colour and makes it read as a deliberate
-   object; painting the same gradient edge-to-edge on the card instead just
-   tints the whole surface and reads as a stain.
+/* ── Stat-tile identity: white card → accent panel ────────────────────────
+   /nutrition's signature move, which this route now follows: the card stays
+   white and the colour sits on one panel *that holds the number*. The earlier
+   attempt here inset a decorative wash 8px from the card edge, which read as a
+   box drawn inside a box, four in a row — so it was replaced by tinting the
+   whole card, which read as a stain. Neither is what the reference does.
 
-   Done with a pseudo-element so no card markup changes: content is lifted above
-   it by the `> *` rules below.
+   The fix is the panel having a job. Icon and label stay on white as a header;
+   the panel underneath carries the value, meter and verdict. That's the
+   relationship in /nutrition's Weekly Protein card (eyebrow and pill on white,
+   756g in the lime panel) — a header above an object, not a frame around a
+   wash.
 
-   Hues are Home's own panels (.home-hero-panel, .home-sleep-accent,
-   .home-activity-latest) at Home's actual saturation. An earlier pass tried
-   full-saturation grass-green/amber/red with invented hues and read as a
-   different, louder design system; reverted.
-
-   Addressed by child position, not :nth-of-type — the balance card is also a
-   <section>, so type-counting silently shifts every tint one tile along and
-   leaves the last one untinted. Children 2-4 are the three metric tiles. */
-/* The tint used to sit on a panel inset 8px from the card edge, so each tile
-   read as a rounded box drawn inside another rounded box — four of them in a
-   row, and the first thing the eye counted on this route was containers. The
-   tint now *is* the tile: one surface, one radius, and the white card is only
-   the hairline holding it. */
-.finance-stats-row > *::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
+   Hue is semantic rather than positional. Position-keyed tints meant four
+   different hues every month no matter what the numbers said; keyed to the
+   tile's own tone, a healthy month reads mostly sage with one accent, so the
+   colour is telling you something. */
+/* The ring sits in the glyph slot at 38px, where the default 10.5px label
+   crowds the arc once the figure reaches three digits ("344%"). */
+.finance-tile-head .fin-ring .fin-ring-label {
+  font-size: 8.5px;
+  letter-spacing: -0.03em;
 }
 
-/* Balance — .home-activity-latest sage, verbatim. */
-.finance-stats-row > :nth-child(1)::before {
-  background: linear-gradient(150deg, #eff5ec 0%, #e2eddf 55%, #d1e4ce 100%);
+/* Header: glyph above eyebrow. Tried inline first — at the row's real tile
+   width (~187px at a 1120px viewport, inner width ~147px) a 26px glyph plus the
+   edit pencil's reserved 22px leaves ~90px, and "MONTHLY EXPENSES" needs ~100px
+   even at 9.5px. Stacking gives the label the full width at every breakpoint
+   instead of ellipsing it on the narrow ones. */
+.finance-tile-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 12px;
 }
 
-.finance-stats-row > :nth-child(2)::before {
-  background: linear-gradient(150deg, #fbf6ec 0%, #f3ead9 55%, #e9dbbe 100%);
+.finance-tile-head p {
+  margin: 0 !important;
+  padding: 0 !important;
+  max-width: 100%;
 }
 
-/* .home-sleep-accent porcelain-blue, verbatim. */
-.finance-stats-row > :nth-child(3)::before {
-  background: linear-gradient(150deg, #f4f8fb 0%, #e6eff6 55%, #d4e3ee 100%);
+.finance-tile-head .finance-metric-icon,
+.finance-tile-head .finance-balance-icon {
+  flex: none;
+  margin: 0;
 }
 
-.finance-stats-row > :nth-child(4)::before {
-  background: linear-gradient(150deg, #fdf4f3 0%, #f8e7e5 55%, #f0d6d3 100%);
+.finance-tile-head .fin-ring {
+  flex: none;
 }
 
-.finance-metric-card > *,
-.finance-balance-card > * {
+.finance-accent-panel {
   position: relative;
-  z-index: 1;
+  /* The tiles are flex columns aligned to flex-start, so the panel has to be
+     told to fill the row — left to itself it shrink-wraps the numeral and reads
+     as a highlighter pen rather than a panel. */
+  width: 100%;
+  align-self: stretch;
+  box-sizing: border-box;
+  margin-top: auto;
+  /* Equal floor across the rail. The panels are bottom-anchored, so without a
+     floor their top edges ran ragged — Total Balance is one line, Net Saved is
+     a value plus a two-line subtitle — and four mismatched tops read as a
+     layout accident rather than a set. */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 78px;
+  padding: 12px 15px 13px;
+  border-radius: 18px;
+  background: var(--fin-accent-sage);
+}
+
+/* One flat colour per verdict. */
+.finance-accent-panel.is-positive {
+  background: var(--fin-accent-sage);
+}
+
+.finance-accent-panel.is-warning {
+  background: var(--fin-accent-sand);
+}
+
+.finance-accent-panel.is-negative {
+  background: var(--fin-accent-clay);
+}
+
+.finance-accent-panel.is-neutral {
+  background: var(--fin-accent-slate);
 }
 
 .finance-balance-card:hover {
@@ -217,16 +288,20 @@
 
 .finance-balance-card p {
   margin: 0 0 10px;
-  color: #202621;
-  font-size: 11px;
-  font-weight: 700;
+  color: var(--fin-ink-faint);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
+/* Balance is the route's anchor figure — it carries the widest tile and the
+   largest numeral, the way /nutrition's 756g leads its panel. */
 .finance-balance-card strong {
   display: block;
-  font-size: 27px;
-  font-weight: 600;
-  line-height: 1;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.02;
   letter-spacing: -0.045em;
   color: #101312;
   font-variant-numeric: tabular-nums;
@@ -328,18 +403,23 @@
   color: #b0555d;
 }
 
+/* Eyebrow, matching /nutrition's `.ntr-eyebrow` — the label's job is to name
+   the tile quietly from the white header, not to compete with the figure in the
+   panel below it. */
 .finance-metric-card p {
   margin: 0 0 10px;
-  color: #202621;
-  font-size: 11px;
-  font-weight: 700;
+  color: var(--fin-ink-faint);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .finance-metric-card strong {
   display: block;
-  font-size: 22px;
-  font-weight: 600;
-  line-height: 1;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.05;
   letter-spacing: -0.04em;
   color: #101312;
   /* Tabular figures keep the four tiles' numbers optically aligned as values
@@ -362,23 +442,24 @@
   letter-spacing: 0.01em;
 }
 
-/* Deepened for the tinted panels: the previous values were picked against white
-   and lost their contrast once the tiles took real colour — amber-on-amber for
-   the pace subtitle was the worst of it. */
+/* Deepened again for the flat accent panels. Every value here is measured
+   against the panel it actually lands on rather than against white: at the
+   previous depths these 11px subtitles sat at 3.5-4.2:1 on their own tints,
+   which is under AA. These clear 5:1 with the hue intact. */
 .finance-metric-subtitle--positive {
-  color: #2e6b41;
+  color: #265a37; /* 5.32:1 on --fin-accent-sage */
 }
 
 .finance-metric-subtitle--warning {
-  color: #8a5009;
+  color: #7a4508; /* 5.28:1 on --fin-accent-sand */
 }
 
 .finance-metric-subtitle--negative {
-  color: #b23a44;
+  color: #8d1f29; /* 5.53:1 on --fin-accent-clay */
 }
 
 .finance-metric-subtitle--neutral {
-  color: rgba(23, 28, 25, 0.62);
+  color: rgba(23, 28, 25, 0.72); /* 5.1:1 on any of the four */
 }
 
 

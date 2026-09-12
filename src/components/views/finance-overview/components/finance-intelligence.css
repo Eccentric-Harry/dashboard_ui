@@ -192,7 +192,7 @@
 .finance-dashboard .fin-intel-big-unit {
   font-size: 12px;
   font-weight: 650;
-  color: rgba(23, 28, 25, 0.62);
+  color: rgba(23, 28, 25, 0.72);
 }
 
 .finance-dashboard .fin-intel-subline {
@@ -208,26 +208,28 @@
 }
 
 .finance-dashboard .fin-intel-subline b.is-watch {
-  color: #b02a35;
+  color: #9c2531; /* 5.08:1 on the sage hero panel */
   font-weight: 800;
 }
 
+/* One accent panel for the whole hero: the safe-to-spend figure, the pace line
+   and the burn-down together. Sage is fixed here rather than following the
+   month's verdict — this is the biggest colour field on the route, and a
+   surface this size flipping to blush would drown the small red figures that
+   are actually carrying the warning. */
+.finance-dashboard .fin-intel-hero-panel {
+  margin-top: 8px;
+  padding: 16px 18px 8px;
+  border-radius: 22px;
+  background: var(--fin-accent-sage);
+}
+
+/* The wash that used to live on this element now belongs to the hero panel
+   around it, so the plot sits directly on the tint. */
 .finance-dashboard .fin-intel-chart {
   height: 208px;
-  margin: 10px 0 0;
-  padding: 12px 12px 2px 6px;
-  border-radius: 18px;
-  /* The burn-down was the largest patch of dead-white in the section — a plot
-     floating on the same surface as the card around it. A soft sage wash (the
-     same hue Total Balance uses above, since this chart is the same "how am I
-     doing with money" story) gives it a home without competing with the line
-     and fill it already carries. */
-  background: linear-gradient(
-    165deg,
-    rgba(233, 242, 230, 0.85) 0%,
-    rgba(216, 232, 212, 0.5) 55%,
-    rgba(216, 232, 212, 0) 100%
-  );
+  margin: 4px 0 0;
+  padding: 6px 6px 2px 0;
 }
 
 /* Chart header: the legend used to sit *under* the plot, so the reader met three
@@ -238,9 +240,11 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 10px;
-  margin: 18px 0 2px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(23, 28, 25, 0.08);
+  margin: 14px 0 2px;
+  padding-top: 12px;
+  /* White rather than ink: on the panel's tint a dark hairline reads as a crack,
+     while a white one reads as a fold. */
+  border-top: 1px solid rgba(255, 255, 255, 0.6);
 }
 
 .finance-dashboard .fin-intel-chart-title {
@@ -248,7 +252,7 @@
   font-weight: 800;
   letter-spacing: 0.11em;
   text-transform: uppercase;
-  color: rgba(23, 28, 25, 0.45);
+  color: rgba(23, 28, 25, 0.72);
 }
 
 .finance-dashboard .fin-intel-tooltip {
@@ -349,71 +353,60 @@
 
 /* ── Side tiles ── */
 
+
+/* Stacked from the top, not stretched to fill. The stretch existed because the
+   tiles used to be boxes, and a short box against a ~400px hero left visible
+   dead space inside it. They are eyebrow-plus-panel groups now, so leftover
+   height is just white card at the foot of the column — which is what
+   /nutrition does too — while stretching instead pushed the panels apart by
+   more than the card's own spacing rhythm. */
 .finance-dashboard .fin-intel-side {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 18px;
   min-width: 0;
 }
 
-/* The side column is shorter than the hero chart beside it, and how much
-   shorter depends on how many tiles there are — with subscriptions empty it was
-   two tiles against a ~400px hero, leaving a conspicuous void at the bottom of
-   the section. Distributing the height across *every* tile equally reads as a
-   deliberate column; stretching only the last one reads as a bug. */
-.finance-dashboard .fin-intel-side {
-  display: grid;
-  grid-auto-rows: minmax(0, 1fr);
-  align-content: stretch;
-}
-
+/* The tile itself is no longer a surface at all — it is an eyebrow plus a
+   panel. The intelligence card is already a white vessel, so giving each tile
+   its own white-with-hairline box and then tinting that box stacked three
+   containers deep. Now: white card → eyebrow on white → one tinted panel
+   holding the figures, which is /nutrition's construction exactly. */
 .finance-dashboard .fin-intel-tile {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: none;
 }
 
-/* Side tiles use the same ramp one step lighter, so the column reads as the
-   hero's quieter sibling rather than as a different material. */
-/* Side tiles sit directly on the card rather than on a panel, so they take the
-   opposite treatment to the hero: near-white with a hairline, reading as crisp
-   objects on the surface (the same relationship Home's Patterns rows have to
-   their card). Tinting these too would just re-flatten the column. */
-.finance-dashboard .fin-intel-tile {
-  padding: 14px 16px;
-  border-radius: 16px;
-  border: 1px solid rgba(23, 28, 25, 0.07);
-  background: rgba(255, 255, 255, 0.7);
+.finance-dashboard .fin-intel-panel {
+  margin-top: 7px;
+  padding: 13px 15px 14px;
+  border-radius: 18px;
+  background: var(--fin-accent-slate);
 }
 
-/* Each tile takes one of the rail's four hues, so the column reads as three
-   small members of the same family rather than three identical white boxes.
-   Forecast's hue follows its tone (it already carries a semantic verdict);
-   subscriptions and lending are fixed, matching Avg/day and Monthly Budget
-   above since both are "recurring, informational" rather than good/bad news. */
-.finance-dashboard .fin-intel-tile--forecast.tone-good {
-  background: var(--fin-tint-sage);
-  border-color: transparent;
+/* Hue by verdict, not by slot. The forecast follows its own tone; the other two
+   are informational and take porcelain and cream, so the column reads as one
+   family with the forecast as the only tile that can change colour month to
+   month — which is the point, because it is the only one carrying a verdict. */
+.finance-dashboard .fin-intel-tile--forecast.tone-good .fin-intel-panel {
+  background: var(--fin-accent-sage);
 }
 
-.finance-dashboard .fin-intel-tile--forecast.tone-over {
-  background: var(--fin-tint-blush);
-  border-color: transparent;
+.finance-dashboard .fin-intel-tile--forecast.tone-over .fin-intel-panel {
+  background: var(--fin-accent-clay);
 }
 
-.finance-dashboard .fin-intel-tile--forecast.tone-neutral {
-  background: var(--fin-tint-blue);
-  border-color: transparent;
+.finance-dashboard .fin-intel-tile--forecast.tone-neutral .fin-intel-panel {
+  background: var(--fin-accent-slate);
 }
 
-.finance-dashboard .fin-intel-tile--subs {
-  background: var(--fin-tint-amber);
-  border-color: transparent;
+.finance-dashboard .fin-intel-tile--subs .fin-intel-panel {
+  background: var(--fin-accent-sand);
 }
 
-.finance-dashboard .fin-intel-tile--lending {
-  background: var(--fin-tint-blue);
-  border-color: transparent;
+.finance-dashboard .fin-intel-tile--lending .fin-intel-panel {
+  background: var(--fin-accent-slate);
 }
 
 .finance-dashboard .fin-intel-tile-main {
@@ -421,7 +414,6 @@
   align-items: baseline;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 5px;
 }
 
 .finance-dashboard .fin-intel-tile-main b {
@@ -434,15 +426,15 @@
 .finance-dashboard .fin-intel-tile-main span {
   font-size: 11px;
   font-weight: 650;
-  color: rgba(23, 28, 25, 0.62);
+  color: rgba(23, 28, 25, 0.72);
 }
 
-.finance-dashboard .fin-intel-tile > small {
+.finance-dashboard .fin-intel-tile small {
   display: block;
   margin-top: 4px;
   font-size: 10px;
   font-weight: 600;
-  color: rgba(23, 28, 25, 0.62);
+  color: rgba(23, 28, 25, 0.72);
 }
 
 .finance-dashboard .fin-intel-delta {
@@ -451,15 +443,15 @@
 }
 
 .finance-dashboard .fin-intel-tile.tone-good .fin-intel-delta {
-  color: #2e5f4b;
+  color: #265a37; /* 5.32:1 on --fin-accent-sage */
 }
 
 .finance-dashboard .fin-intel-tile.tone-over .fin-intel-delta {
-  color: #b02a35;
+  color: #8d1f29; /* 5.53:1 on --fin-accent-clay */
 }
 
 .finance-dashboard .fin-intel-tile.tone-neutral .fin-intel-delta {
-  color: rgba(23, 28, 25, 0.66);
+  color: rgba(23, 28, 25, 0.72);
 }
 
 .finance-dashboard .fin-intel-renewals {
@@ -496,14 +488,19 @@
 .finance-dashboard .fin-intel-lending {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 8px;
+  gap: 8px;
 }
 
-.finance-dashboard .fin-intel-lending > div {
+/* Translucent white on the tint, radius 14 — /nutrition's `.ntr-tap-stat`
+   recipe. The white lets the panel's hue read through, so the chips belong to
+   the panel instead of looking like two more cards dropped onto it. */
+.finance-dashboard .fin-intel-lend-chip {
   display: flex;
   flex-direction: column;
   gap: 1px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: var(--fin-chip);
 }
 
 .finance-dashboard .fin-intel-lending b {
@@ -516,7 +513,7 @@
 .finance-dashboard .fin-intel-lending small {
   font-size: 9.5px;
   font-weight: 650;
-  color: rgba(23, 28, 25, 0.62);
+  color: rgba(23, 28, 25, 0.72);
 }
 
 /* ── Category trend bars ── */

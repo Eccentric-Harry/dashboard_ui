@@ -14,8 +14,11 @@ function BalanceSummaryCard({ balance, loading = false, onEdit }: BalanceSummary
 
   return (
     <section className="finance-card finance-balance-card">
-      <div className="finance-balance-icon">
-        <Wallet size={15} strokeWidth={2.2} />
+      <div className="finance-tile-head">
+        <div className="finance-balance-icon">
+          <Wallet size={15} strokeWidth={2.2} />
+        </div>
+        <p>Total Balance</p>
       </div>
       {onEdit && (
         <button
@@ -28,12 +31,13 @@ function BalanceSummaryCard({ balance, loading = false, onEdit }: BalanceSummary
           <Pencil size={12} strokeWidth={2.2} />
         </button>
       )}
-      <p>Total Balance</p>
-      {loading ? (
-        <div className="skeleton-shimmer skeleton-rect" style={{ width: '90px', height: '18px', marginTop: '6px', borderRadius: '4px' }} />
-      ) : (
-        <strong>₹{Math.round(animated).toLocaleString('en-IN')}</strong>
-      )}
+      <div className="finance-accent-panel is-positive">
+        {loading ? (
+          <div className="skeleton-shimmer skeleton-rect" style={{ width: '90px', height: '18px', borderRadius: '4px' }} />
+        ) : (
+          <strong>₹{Math.round(animated).toLocaleString('en-IN')}</strong>
+        )}
+      </div>
     </section>
   )
 }
