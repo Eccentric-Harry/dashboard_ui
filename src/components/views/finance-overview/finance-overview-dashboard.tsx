@@ -232,7 +232,10 @@ function FinanceOverviewDashboard() {
         change: '',
         tone: 'negative' as const,
         icon: ArrowUpRight,
-        subtitle: `${txCount} transaction${txCount === 1 ? '' : 's'}`,
+        // Transaction count already appears in the header and Recent
+        // Transactions — this tile earns its keep with the per-transaction
+        // average instead of repeating the same count a third time.
+        subtitle: txCount > 0 ? `${inr(totalExpense / txCount)} avg/transaction` : undefined,
         // A count is a fact, not good news — green here read as a value judgment.
         subtitleTone: 'neutral' as const,
       },

@@ -356,6 +356,10 @@ function SubscriptionsCard({ transactions, onRefresh, onCelebrate, stagger = 0 }
           if (subscription.billingDate) {
             const date = new Date(subscription.billingDate);
             renewsText = `Renews on ${getOrdinalNum(date.getDate())}`;
+          } else if (isPaid) {
+            // No billing date on file — say so explicitly instead of leaving
+            // the row blank next to ones that do show a date.
+            renewsText = 'Paid this cycle';
           }
 
           return (

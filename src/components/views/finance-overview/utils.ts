@@ -28,6 +28,7 @@ export const CATEGORY_COLORS: Record<string, string> = {
   'Lending': '#7a74a8',        // muted violet
   'Loan Recovery': '#4f8a9a',  // dusty teal
   'Shopping': '#b1935a',       // warm ochre
+  'Groceries': '#8c9153',      // olive — previously hashed to a teal too close to Transport
   'Transport': '#5d87ad',      // slate blue
   'Cycling': '#b57f5f',        // terracotta
   'Entertainment': '#a1739b',  // mauve

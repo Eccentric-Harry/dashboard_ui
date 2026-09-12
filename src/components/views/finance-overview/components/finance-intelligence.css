@@ -208,7 +208,7 @@
 }
 
 .finance-dashboard .fin-intel-subline b.is-watch {
-  color: #8a5009;
+  color: #b02a35;
   font-weight: 800;
 }
 
@@ -647,9 +647,11 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* MoM movement is context, not judgment: up = amber watch, down = green */
+/* Spending more is the worse outcome, spending less is the better one — the
+   colour should say that at a glance, matching the same red/green the
+   forecast tile already uses for over/under budget. */
 .finance-dashboard .fin-intel-trend-delta.up {
-  color: #8a5009;
+  color: #b02a35;
 }
 
 .finance-dashboard .fin-intel-trend-delta.down {
