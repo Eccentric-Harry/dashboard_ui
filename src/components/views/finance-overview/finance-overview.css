@@ -2681,10 +2681,10 @@
     gap: 10px;
   }
 
-  .finance-balance-card strong,
-  .finance-metric-card strong {
-    font-size: 20px;
-  }
+  /* Sizing for both is set once, in finance-playful.css's later
+     `max-width: 760px` block — that sheet loads after this one and wins any
+     tie, so a copy here would be dead weight that just documents stale
+     intent. */
 
   .finance-spending-body {
     grid-template-columns: 1fr;

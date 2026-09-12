@@ -631,10 +631,19 @@
 /* ── 11. Mobile ──────────────────────────────────────────────────────────────
    The stat rail reflows to 2×2 at the existing breakpoint, where a 30px hero
    numeral no longer fits its tile. Keeping the left alignment but dialling the
-   size back preserves the hierarchy without overflow. */
+   size back preserves the hierarchy without overflow.
+
+   This file loads after finance-overview.css and wins any tie at the same
+   specificity, so the size for *both* tile types has to be set here — a
+   second, lower-priority copy in finance-overview.css's own mobile block is
+   dead code that only documents the intent, and previously held a different
+   (never-applied) value, which is its own trap: sizing looked fixed there but
+   the number kept wrapping onto two lines because this rule was the one
+   actually winning. */
 @media (max-width: 760px) {
-  .finance-balance-card strong {
-    font-size: 24px;
+  .finance-balance-card strong,
+  .finance-metric-card strong {
+    font-size: 20px;
   }
 
   .finance-balance-card,
