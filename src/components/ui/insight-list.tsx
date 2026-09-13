@@ -29,8 +29,8 @@ import {
   Wallet,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import type { Insight, InsightIcon } from '../../lib/insights/engine'
-import { cn } from '../../lib/utils'
+import type { Insight, InsightIcon } from '@/lib/insights/engine'
+import { cn } from '@/lib/utils'
 import './insight-list.css'
 
 const ICONS: Record<InsightIcon, LucideIcon> = {

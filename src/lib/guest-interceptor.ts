@@ -16,7 +16,7 @@ import {
   dummySliceRepayments,
   dummyStravaActivities,
   dummyStravaStats,
-} from '../data/dummydata';
+} from '../mocks/dummy-data';
 
 const originalFetch = window.fetch;
 let calendarItems = [...dummyCalendarItems];

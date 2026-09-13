@@ -81,9 +81,18 @@ function applyAppearance(state: AppearanceState) {
   root.dataset.surface = state.surfaceStyle;
   if (dark) root.dataset.theme = 'dark';
   else delete root.dataset.theme;
-  document
-    .querySelector('meta[name="theme-color"]')
-    ?.setAttribute('content', dark ? THEME_COLOR.dark : THEME_COLOR[state.surfaceStyle]);
+  setThemeColor(dark ? THEME_COLOR.dark : THEME_COLOR[state.surfaceStyle]);
+}
+
+// Android's standalone PWA doesn't reliably repaint the status bar when the
+// existing meta's content attribute changes, so swap in a fresh element.
+function setThemeColor(color: string) {
+  const current = document.querySelector('meta[name="theme-color"]');
+  const meta = document.createElement('meta');
+  meta.name = 'theme-color';
+  meta.content = color;
+  if (current) current.replaceWith(meta);
+  else document.head.appendChild(meta);
 }
 
 // Crossfade the whole page rather than snapping every surface at once.

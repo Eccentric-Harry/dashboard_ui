@@ -15,7 +15,7 @@
 //
 // Only low-chroma colours are touched; real hues (accents, category colours,
 // status tints) pass through. Page canvas, blur and textures live in
-// src/solid-surface.css.
+// src/styles/solid-surface.css.
 import type { AtRule, Declaration, PluginCreator, Rule } from 'postcss'
 
 export type Rgba = [number, number, number, number]
