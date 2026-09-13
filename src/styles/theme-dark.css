@@ -106,6 +106,25 @@
   box-shadow: var(--dk-shadow);
 }
 
+/* On mobile .side-rail is only the invisible wrapper around two floating islands
+   (route dock + quick-add). The desktop surface above would wrap both in one
+   shared pill, so the islands carry their own surfaces instead. */
+@media (max-width: 768px) {
+  :root[data-theme='dark'] .side-rail {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  :root[data-theme='dark'] .rail-nav-mobile,
+  :root[data-theme='dark'] .side-rail .rail-add-fab {
+    border: 1px solid var(--dk-line);
+    background: var(--dk-surface);
+    box-shadow: var(--dk-shadow);
+    color: var(--dk-ink);
+  }
+}
+
 :root[data-theme='dark'] .side-rail button {
   color: var(--dk-ink-2);
 }
