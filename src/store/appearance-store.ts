@@ -84,15 +84,18 @@ function applyAppearance(state: AppearanceState) {
   setThemeColor(dark ? THEME_COLOR.dark : THEME_COLOR[state.surfaceStyle]);
 }
 
-// Android's standalone PWA doesn't reliably repaint the status bar when the
-// existing meta's content attribute changes, so swap in a fresh element.
+// The status bar of an installed Android PWA is painted from this meta. Update it
+// in place: swapping the element out leaves a moment with no theme-color, and
+// Chrome falls back to the manifest's theme_color and can stay there — which is
+// how dark mode ended up under a light status bar.
 function setThemeColor(color: string) {
-  const current = document.querySelector('meta[name="theme-color"]');
-  const meta = document.createElement('meta');
-  meta.name = 'theme-color';
-  meta.content = color;
-  if (current) current.replaceWith(meta);
-  else document.head.appendChild(meta);
+  let meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+  if (!meta) {
+    meta = document.createElement('meta');
+    meta.name = 'theme-color';
+    document.head.appendChild(meta);
+  }
+  if (meta.content !== color) meta.setAttribute('content', color);
 }
 
 // Crossfade the whole page rather than snapping every surface at once.

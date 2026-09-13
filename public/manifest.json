@@ -2,11 +2,12 @@
   "name": "Personal Dashboard",
   "short_name": "Dashboard",
   "description": "Your personal health, finance, and productivity dashboard",
+  "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#dfe4df",
-  "theme_color": "#dfe4df",
+  "background_color": "#0c0d0f",
+  "theme_color": "#0c0d0f",
   "icons": [
     {
       "src": "/logo-192.png",
