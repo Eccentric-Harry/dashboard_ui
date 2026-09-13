@@ -31,3 +31,48 @@
 :root[data-surface='solid'] .finance-dashboard {
   --fin-grain: none;
 }
+
+/* ─── Home overview: restore contrast lost when translucent chips land on an
+   opaque white card ───────────────────────────────────────────────────────
+   home-overview's outer cards are already solid white in both modes, so the
+   near-white nested fills (loop rows, the Open pill, the anchor edit input)
+   that the generic rewrite above flattens toward #fff nearly disappear here.
+   Give them a real grey fill + hairline instead of a barely-there tint, and
+   darken the handful of low-opacity ink labels that read as too faint on a
+   plain white card without glass's blur to add apparent depth. */
+:root[data-surface='solid'] .home-card--hero .ntr-macro-row {
+  background: #eef0f4;
+  border: 1px solid rgba(23, 27, 21, 0.08);
+}
+
+:root[data-surface='solid'] .home-card--hero .ntr-macro-row:hover {
+  background: #e4e7ee;
+}
+
+:root[data-surface='solid'] .home-tasks-open {
+  background: #eef0f4;
+  border-color: rgba(23, 27, 21, 0.14);
+  color: #253026;
+}
+
+:root[data-surface='solid'] .home-tasks-open:hover {
+  background: #e4e7ee;
+  border-color: rgba(23, 27, 21, 0.22);
+}
+
+:root[data-surface='solid'] .home-anchor-edit input {
+  background: #f1f2f5;
+  border-color: rgba(26, 31, 29, 0.22);
+}
+
+:root[data-surface='solid'] .home-anchor-saving,
+:root[data-surface='solid'] .home-anchor-quote.is-empty,
+:root[data-surface='solid'] .home-card--hero .ntr-macro-row.is-empty .ntr-macro-header strong,
+:root[data-surface='solid'] .home-tasks-stat:not(.has-items) strong,
+:root[data-surface='solid'] .home-tasks-stat span,
+:root[data-surface='solid'] .home-tasks-group,
+:root[data-surface='solid'] .home-task-due--upcoming,
+:root[data-surface='solid'] .home-task-cat,
+:root[data-surface='solid'] .home-capture-recent-time {
+  color: rgba(23, 28, 25, 0.62);
+}
