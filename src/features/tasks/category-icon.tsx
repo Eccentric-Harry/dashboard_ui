@@ -1,3 +1,4 @@
+import { createElement } from 'react'
 import type { LucideIcon, LucideProps } from 'lucide-react'
 import {
   BookOpen,
@@ -76,6 +77,7 @@ function iconFor(category: string): LucideIcon {
 }
 
 export function CategoryIcon({ category, ...props }: LucideProps & { category: string }) {
-  const Icon = iconFor(category)
-  return <Icon {...props} />
+  // createElement rather than `const Icon = …; <Icon />`: the icon is looked up,
+  // not defined, per render, but the lint rule can't tell the two apart.
+  return createElement(iconFor(category), props)
 }

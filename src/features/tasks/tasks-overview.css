@@ -2568,3 +2568,49 @@ select.form-input {
 .assignee-avatar.dummy:nth-child(2) {
   background-image: url('https://i.pravatar.cc/100?img=44');
 }
+
+/* ── Balanced list columns ──
+   Two flex columns replace CSS multi-column (see tasks-list-view.tsx). The
+   last card in each column stretches so both end on one line — no void under
+   the shorter column. Phones collapse to one stack in the original order. */
+.tasks-list-view--cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 16px;
+  column-count: auto;
+}
+
+.tasks-list-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.tasks-list-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.tasks-list-col > .tasks-list-cell:last-child {
+  flex: 1;
+}
+
+.tasks-list-cell > .tg {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .tasks-list-view--cols {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tasks-list-col {
+    display: contents;
+  }
+}

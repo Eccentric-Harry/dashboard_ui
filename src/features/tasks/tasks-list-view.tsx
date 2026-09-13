@@ -1,4 +1,4 @@
-import { useState, useMemo, type CSSProperties } from 'react'
+import { Fragment, useState, useMemo, type CSSProperties, type ReactNode } from 'react'
 import { Check, Clock, CheckSquare, ChevronDown, CalendarDays } from 'lucide-react'
 import type { DailyTask } from '@/lib/api'
 import { getTagColor } from '@/lib/tag-colors'
@@ -77,6 +77,27 @@ const byUrgency = (a: DailyTask, b: DailyTask) => {
 /** Most recently due first, so the freshest wins lead the completed list. */
 const byRecent = (a: DailyTask, b: DailyTask) => (b.date || '').localeCompare(a.date || '')
 
+/**
+ * How much a list matters, independent of how late it is: 0 core work and
+ * wellbeing, 1 everyday life (and any custom category), 2 leisure.
+ */
+const CORE = /^(work|career|learning|study|health|mind|finance|fitness|projects?|development|frontend|backend|devops)$/
+const LEISURE = /movie|film|show|series|anime|game|entertain|watch/
+
+function importanceTier(category: string): number {
+  const key = category.trim().toLowerCase()
+  if (CORE.test(key)) return 0
+  if (LEISURE.test(key)) return 2
+  return 1
+}
+
+const CANONICAL = ['work', 'career', 'learning', 'health', 'mind', 'finance', 'fitness', 'projects', 'personal', 'general']
+
+function canonicalRank(category: string): number {
+  const i = CANONICAL.indexOf(category.trim().toLowerCase())
+  return i === -1 ? CANONICAL.length : i
+}
+
 const DONE_PAGE = 10
 const RING_R = 14
 const RING_C = 2 * Math.PI * RING_R
@@ -129,19 +150,26 @@ export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: Tasks
   // Lists with open work lead (most overdue first); lists with nothing left
   // leave the grid entirely and collapse onto one "Completed" shelf.
   const { openGroups, doneGroups } = useMemo(() => {
-    const definedOrder = ['Work', 'Learning', 'Personal', 'General']
-    const rank = (cat: string) => {
-      const i = definedOrder.indexOf(cat)
-      return cat === 'Movies' ? 99 : i === -1 ? 50 : i
-    }
     const stats = (cat: string) => ({
       open: groupedTasks[cat].filter((t) => !t.completed).length,
       overdue: groupedTasks[cat].filter(isOverdue).length,
+      dueToday: groupedTasks[cat].filter((t) => dueInfo(t)?.tone === 'today').length,
     })
     const cats = Object.keys(groupedTasks)
-    const open = cats.filter((c) => stats(c).open > 0).sort((a, b) =>
-      stats(b).overdue - stats(a).overdue || rank(a) - rank(b) || a.localeCompare(b),
-    )
+    // Importance first, urgency second: three overdue films must not outrank a
+    // work deadline. Within a tier, the list with more late (then due-today)
+    // work leads, then the canonical order, then name.
+    const open = cats.filter((c) => stats(c).open > 0).sort((a, b) => {
+      const sa = stats(a)
+      const sb = stats(b)
+      return (
+        importanceTier(a) - importanceTier(b) ||
+        sb.overdue - sa.overdue ||
+        sb.dueToday - sa.dueToday ||
+        canonicalRank(a) - canonicalRank(b) ||
+        a.localeCompare(b)
+      )
+    })
     const done = cats.filter((c) => stats(c).open === 0).sort((a, b) =>
       groupedTasks[b].length - groupedTasks[a].length || a.localeCompare(b),
     )
@@ -204,58 +232,80 @@ export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: Tasks
     )
   }
 
-  return (
-    <div className="tasks-list-view">
-      {openGroups.map((category) => {
-        const list = groupedTasks[category]
-        const pending = list.filter((t) => !t.completed).sort(byUrgency)
-        const completed = list.filter((t) => t.completed).sort(byRecent)
-        const overdue = pending.filter(isOverdue).length
-        const pct = Math.round((completed.length / list.length) * 100)
-        const isCollapsed = !!collapsed[category]
-        const doneVisible = !!showDone[category]
+  // Two explicit columns instead of CSS multi-column. The browser can't split
+  // a card across columns, so one long list left a void under the shorter
+  // column. Cards are dealt, in priority order, into whichever column is
+  // shorter by an estimate of their height, and the last card in each column
+  // stretches so both columns end on the same line.
+  const cards: { key: string; weight: number; node: ReactNode }[] = []
 
-        return (
-          <section
-            key={category}
-            className={`tg${isCollapsed ? ' is-collapsed' : ''}`}
-            style={{ '--cat': getTagColor(category).dot } as CSSProperties}
+  openGroups.forEach((category) => {
+    const list = groupedTasks[category]
+    const pending = list.filter((t) => !t.completed).sort(byUrgency)
+    const completed = list.filter((t) => t.completed).sort(byRecent)
+    const overdue = pending.filter(isOverdue).length
+    const pct = Math.round((completed.length / list.length) * 100)
+    const isCollapsed = collapsed[category]
+    const doneVisible = showDone[category]
+
+    const weight = 1.2 + (isCollapsed
+      ? 0
+      : pending.length + (doneVisible ? completed.length : 0) + (completed.length > 0 ? 0.5 : 0))
+
+    cards.push({
+      key: category,
+      weight,
+      node: (
+        <section
+          className={`tg${isCollapsed ? ' is-collapsed' : ''}`}
+          style={{ '--cat': getTagColor(category).dot } as CSSProperties}
+        >
+          <button
+            type="button"
+            className="tg-head"
+            onClick={() => setCollapsed((prev) => ({ ...prev, [category]: !isCollapsed }))}
+            aria-expanded={!isCollapsed}
           >
-            <button
-              type="button"
-              className="tg-head"
-              onClick={() => setCollapsed((prev) => ({ ...prev, [category]: !isCollapsed }))}
-              aria-expanded={!isCollapsed}
-            >
-              <ProgressRing pct={pct} category={category} />
-              <span className="tg-title">{category}</span>
-              {overdue > 0 && <span className="tg-overdue">{overdue} overdue</span>}
-              <span className="tg-count" aria-label={`${pending.length} open`}>{pending.length}</span>
-              <ChevronDown size={15} className="tg-chev" aria-hidden="true" />
-            </button>
+            <ProgressRing pct={pct} category={category} />
+            <span className="tg-title">{category}</span>
+            {overdue > 0 && <span className="tg-overdue">{overdue} overdue</span>}
+            <span className="tg-count" aria-label={`${pending.length} open`}>{pending.length}</span>
+            <ChevronDown size={15} className="tg-chev" aria-hidden="true" />
+          </button>
 
-            {!isCollapsed && (
-              <>
-                <ul className="tg-rows">
-                  {pending.map(renderTask)}
-                  {doneVisible && completed.map(renderTask)}
-                </ul>
-                {completed.length > 0 && (
-                  <button
-                    type="button"
-                    className="tg-more"
-                    onClick={() => setShowDone((prev) => ({ ...prev, [category]: !doneVisible }))}
-                  >
-                    {doneVisible ? 'Hide completed' : `${completed.length} completed`}
-                  </button>
-                )}
-              </>
-            )}
-          </section>
-        )
-      })}
+          {!isCollapsed && (
+            <>
+              <ul className="tg-rows">
+                {pending.map(renderTask)}
+                {doneVisible && completed.map(renderTask)}
+              </ul>
+              {completed.length > 0 && (
+                <button
+                  type="button"
+                  className="tg-more"
+                  onClick={() => setShowDone((prev) => ({ ...prev, [category]: !doneVisible }))}
+                >
+                  {doneVisible ? 'Hide completed' : `${completed.length} completed`}
+                </button>
+              )}
+            </>
+          )}
+        </section>
+      ),
+    })
+  })
 
-      {doneGroups.length > 0 && (
+  if (doneGroups.length > 0) {
+    const shelfWeight = 1 + doneGroups.reduce((sum, category) => {
+      const open = shelfOpen[category]
+      const shown = Math.min(groupedTasks[category].length, shelfLimit[category] ?? DONE_PAGE)
+      return sum + 0.75 + (open ? shown : 0)
+    }, 0)
+
+    cards.push({
+      key: '__completed',
+      weight: shelfWeight,
+      node: (
         <section className="tg tg--shelf" aria-label="Completed lists">
           <div className="tg-shelf-head">
             <span className="tg-title">Completed</span>
@@ -264,7 +314,7 @@ export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: Tasks
           <ul className="tg-shelf-list">
             {doneGroups.map((category) => {
               const completed = [...groupedTasks[category]].sort(byRecent)
-              const isOpen = !!shelfOpen[category]
+              const isOpen = shelfOpen[category]
               const limit = shelfLimit[category] ?? DONE_PAGE
               return (
                 <li key={category} style={{ '--cat': getTagColor(category).dot } as CSSProperties}>
@@ -302,6 +352,32 @@ export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: Tasks
             })}
           </ul>
         </section>
+      ),
+    })
+  }
+
+  const columns: { card: (typeof cards)[number]; order: number }[][] = [[], []]
+  const heights = [0, 0]
+  cards.forEach((card, order) => {
+    const col = heights[0] <= heights[1] ? 0 : 1
+    columns[col].push({ card, order })
+    heights[col] += card.weight + 0.6
+  })
+
+  return (
+    <div className="tasks-list-view tasks-list-view--cols">
+      {columns.map((col, i) =>
+        col.length === 0 ? null : (
+          <div key={i} className="tasks-list-col">
+            {col.map(({ card, order }) => (
+              // `order` restores the original priority order on phones, where
+              // the columns dissolve into a single stack.
+              <div key={card.key} className="tasks-list-cell" style={{ order }}>
+                <Fragment>{card.node}</Fragment>
+              </div>
+            ))}
+          </div>
+        ),
       )}
     </div>
   )
