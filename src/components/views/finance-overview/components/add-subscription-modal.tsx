@@ -123,7 +123,7 @@ export function AddSubscriptionModal({ isOpen, onClose, onSuccess }: AddSubscrip
           <button
             type="submit"
             className="add-tx-submit"
-            style={{ borderRadius: '10px', backgroundColor: '#121c17' }}
+            style={{ borderRadius: '10px', backgroundColor: 'var(--inline-inverse, #121c17)' }}
             disabled={loading}
           >
             {loading ? <Loader2 className="spinner" size={18} /> : 'Save Subscription'}

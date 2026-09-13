@@ -72,13 +72,13 @@ export function UpdateEmbedModal({ isOpen, onClose, onSuccess }: UpdateEmbedModa
               placeholder='Paste Strava embed HTML here...'
               style={{ height: '120px', resize: 'vertical' }}
             />
-            <p style={{ fontSize: '10px', color: 'rgba(0,0,0,0.6)', marginTop: '8px', lineHeight: '1.4' }}>
+            <p style={{ fontSize: '10px', color: 'var(--inline-ink-soft, rgba(0,0,0,0.6))', marginTop: '8px', lineHeight: '1.4' }}>
               <strong>Tip:</strong> For private or "Followers Only" activities, you <em>must</em> paste the full embed snippet from the Strava website (Share &gt; Embed on Blog) to include the required security token. Just pasting the activity URL will result in a 403 error.
             </p>
           </div>
 
           <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-            <button type="button" className="workouts-btn-secondary" onClick={handleGuardedClose} style={{ flex: 1, height: '40px', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', background: 'transparent', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}>Cancel</button>
+            <button type="button" className="workouts-btn-secondary" onClick={handleGuardedClose} style={{ flex: 1, height: '40px', borderRadius: '12px', border: '1px solid var(--inline-line, rgba(0,0,0,0.1))', background: 'transparent', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}>Cancel</button>
             <button type="submit" className="workouts-form-submit" disabled={loading || !embedHtml.trim()} style={{ flex: 2, margin: 0 }}>
               {loading ? 'Updating...' : 'Pin Activity'}
             </button>

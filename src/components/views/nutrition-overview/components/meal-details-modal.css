@@ -278,8 +278,9 @@
   align-items: center;
   gap: 14px;
   padding: 14px 16px;
-  border: 1px solid;
+  border: 1px solid var(--grade-border);
   border-radius: 18px;
+  background: var(--grade-bg);
 }
 
 .ntr-detail-grade-letter {
@@ -290,6 +291,7 @@
   place-items: center;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.75);
+  color: var(--grade-ink);
   font-family: 'Playfair Display', Georgia, serif;
   font-size: 26px;
   font-weight: 750;
@@ -297,6 +299,7 @@
 
 .ntr-detail-grade-hero strong {
   display: block;
+  color: var(--grade-ink);
   font-size: 14px;
   font-weight: 750;
 }
@@ -605,6 +608,12 @@
   border-radius: 999px;
   font-size: 11.5px;
   font-weight: 800;
+}
+
+.ntr-insight-grade[style*='--grade-ink'] {
+  border-color: var(--grade-border);
+  background: var(--grade-bg);
+  color: var(--grade-ink);
 }
 
 .ntr-insight-summary {

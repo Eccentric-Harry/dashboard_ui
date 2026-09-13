@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, type CSSProperties } from 'react'
 import { X, Loader2, ClipboardCheck, ClipboardPaste, Camera, CheckCircle, AlertTriangle, RotateCcw, Upload, Wifi, Bell, Scan, Shield, TrendingUp, Sparkles, Copy, ChevronLeft, ChevronRight, ChevronDown, ImagePlus } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
@@ -810,7 +810,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
             {/* ── Phase 1: Input ──────────────────────────── */}
             {aiPhase === 'input' && (
               <form onSubmit={handleAiSubmit} className="add-tx-form" style={{ gap: 0, flex: 1, overflowY: 'auto', paddingRight: '6px' }}>
-                <p style={{ fontSize: '13px', color: 'rgba(16,19,18,0.5)', margin: '0 0 16px', lineHeight: 1.5 }}>
+                <p className="af-ai-intro">
                   Upload a photo or describe your meal — AI identifies every item and calculates full clinical nutrition.
                 </p>
 
@@ -1223,7 +1223,7 @@ function JsonPreviewStrip({ parsed }: { parsed: ParsedMealJson }) {
         {grade && (
           <span
             className="af-json-grade"
-            style={{ backgroundColor: grade.bg, color: grade.ink, borderColor: grade.border }}
+            style={{ '--grade-ink': grade.ink, '--grade-bg': grade.bg, '--grade-border': grade.border } as CSSProperties}
           >
             Grade {grade.letter}
           </span>

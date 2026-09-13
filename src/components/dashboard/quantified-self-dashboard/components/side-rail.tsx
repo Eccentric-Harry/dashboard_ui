@@ -66,7 +66,6 @@ function SideRail({ activePath, onNavigate }: DashboardStageProps) {
               key={label}
               type="button"
               aria-label={label}
-              title={label}
               aria-current={to && activePath === to ? 'page' : undefined}
               className={btnClassName}
               onClick={to ? () => onNavigate(to) : undefined}
@@ -119,7 +118,6 @@ function SideRail({ activePath, onNavigate }: DashboardStageProps) {
           type="button"
           className="rail-spiral-btn"
           aria-label="Spiral breaker"
-          title="Spiral breaker"
           onClick={() => spiralActions.open()}
         >
           <LifeBuoy size={16} />

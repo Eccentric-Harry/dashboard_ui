@@ -167,7 +167,7 @@ function PromptsOverviewDashboard() {
       <div className="prompts-dashboard-grid">
         <div className="prompts-card prompts-list-wrap">
           <div className="prompts-search">
-            <Search size={16} color="rgba(16, 19, 18, 0.5)" />
+            <Search size={16} color="var(--inline-ink-soft, rgba(16, 19, 18, 0.5))" />
             <input 
               type="text" 
               placeholder="Search prompts..." 
@@ -226,7 +226,7 @@ function PromptsOverviewDashboard() {
           {isEditing ? (
             <>
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'rgba(16, 19, 18, 0.6)', marginBottom: '8px' }}>Prompt Title <span style={{ color: '#d44752' }}>*</span></label>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--inline-ink-soft, rgba(16, 19, 18, 0.6))', marginBottom: '8px' }}>Prompt Title <span style={{ color: '#d44752' }}>*</span></label>
                 <input 
                   type="text" 
                   className="prompt-title-input" 
@@ -236,7 +236,7 @@ function PromptsOverviewDashboard() {
                 />
               </div>
               <div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'rgba(16, 19, 18, 0.6)', marginBottom: '8px' }}>Content <span style={{ color: '#d44752' }}>*</span></label>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--inline-ink-soft, rgba(16, 19, 18, 0.6))', marginBottom: '8px' }}>Content <span style={{ color: '#d44752' }}>*</span></label>
                 <textarea 
                   className="prompt-content-input" 
                   placeholder="Write your prompt content here..."

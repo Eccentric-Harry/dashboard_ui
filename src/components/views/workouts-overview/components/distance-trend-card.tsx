@@ -66,20 +66,20 @@ function DistanceTrendCard({ activities, loading }: DistanceTrendCardProps) {
             <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="distGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3dc152" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#3dc152" stopOpacity={0.02} />
+                  <stop offset="5%" stopColor="var(--wk-chart-line, #3dc152)" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="var(--wk-chart-line, #3dc152)" stopOpacity={0.02} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(20,24,22,0.06)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--wk-chart-grid, rgba(20,24,22,0.06))" />
               <XAxis
                 dataKey="date"
-                tick={{ fontSize: 9, fill: 'rgba(23,28,25,0.45)', fontWeight: 700 }}
+                tick={{ fontSize: 9, fill: 'var(--wk-chart-tick, rgba(23,28,25,0.45))', fontWeight: 700 }}
                 tickLine={false}
                 axisLine={false}
                 interval="preserveStartEnd"
               />
               <YAxis
-                tick={{ fontSize: 9, fill: 'rgba(23,28,25,0.45)', fontWeight: 700 }}
+                tick={{ fontSize: 9, fill: 'var(--wk-chart-tick, rgba(23,28,25,0.45))', fontWeight: 700 }}
                 tickLine={false}
                 axisLine={false}
                 unit=" km"
@@ -88,11 +88,11 @@ function DistanceTrendCard({ activities, loading }: DistanceTrendCardProps) {
               <Area
                 type="monotone"
                 dataKey="distance"
-                stroke="#3dc152"
+                stroke="var(--wk-chart-line, #3dc152)"
                 strokeWidth={2.5}
                 fill="url(#distGrad)"
-                dot={{ r: 3, fill: '#3dc152', stroke: '#fff', strokeWidth: 2 }}
-                activeDot={{ r: 5, fill: '#3dc152', stroke: '#fff', strokeWidth: 2 }}
+                dot={{ r: 3, fill: 'var(--wk-chart-line, #3dc152)', stroke: 'var(--wk-chart-dot-ring, #fff)', strokeWidth: 2 }}
+                activeDot={{ r: 5, fill: 'var(--wk-chart-line, #3dc152)', stroke: 'var(--wk-chart-dot-ring, #fff)', strokeWidth: 2 }}
               />
             </AreaChart>
           </ResponsiveContainer>

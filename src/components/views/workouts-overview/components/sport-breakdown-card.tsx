@@ -115,8 +115,8 @@ function SportBreakdownCard({ stats, loading }: SportBreakdownCardProps) {
                         const cy = vb?.cy ?? 0
                         return (
                           <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central">
-                            <tspan x={cx} y={cy - 2} style={{ fontSize: '52px', fontWeight: 900, fill: '#111514', letterSpacing: '-0.04em' }}>{totalSessions}</tspan>
-                            <tspan x={cx} y={cy + 24} style={{ fontSize: '12px', fontWeight: 800, fill: 'rgba(23, 28, 25, 0.35)', letterSpacing: '0.2em' }}>SESSIONS</tspan>
+                            <tspan x={cx} y={cy - 2} style={{ fontSize: '52px', fontWeight: 900, fill: 'var(--wk-donut-value, #111514)', letterSpacing: '-0.04em' }}>{totalSessions}</tspan>
+                            <tspan x={cx} y={cy + 24} style={{ fontSize: '12px', fontWeight: 800, fill: 'var(--wk-donut-label, rgba(23, 28, 25, 0.35))', letterSpacing: '0.2em' }}>SESSIONS</tspan>
                           </text>
                         )
                       }}

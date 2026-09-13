@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import type { DailyTask } from '../../../lib/api'
 import { getTagColor } from '../../../lib/tag-colors'
+import { toneStyle } from '../../../lib/tone'
 
 type TaskCategory = 'Work' | 'Learning' | 'Fitness' | 'Shopping' | 'Chores' | 'Finance' | 'Personal' | 'General' | 'Movies'
 
@@ -207,13 +208,13 @@ export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: Tasks
                   )}
 
                   {isOverdueTask && (
-                    <span className="k-tag sla" style={{ background: 'rgba(212, 71, 82, 0.1)', color: '#d44752' }}>
+                    <span className="k-tag sla" style={toneStyle({ hue: '#d44752', bg: 'rgba(212, 71, 82, 0.1)', ink: '#d44752' })}>
                       Overdue
                     </span>
                   )}
 
                   {task.createdAt && (
-                    <span className="k-tag id" style={{ background: 'rgba(16,19,18,0.03)', color: 'rgba(16,19,18,0.35)', fontSize: 9 }}>
+                    <span className="k-tag id" style={{ background: 'var(--inline-fill, rgba(16,19,18,0.03))', color: 'var(--inline-ink-faint, rgba(16,19,18,0.35))', fontSize: 9 }}>
                       Created {new Date(task.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </span>
                   )}

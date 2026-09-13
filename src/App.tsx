@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import toast, { Toaster, resolveValue } from 'react-hot-toast'
 import { Info, Check, AlertTriangle, AlertCircle, Loader2, X } from 'lucide-react'
 
@@ -24,6 +24,7 @@ import { subscribeToActiveRequests } from './lib/api'
 import { resolveAuthGate } from './services/http/axios-client'
 import { userService } from './services/user-service'
 import { dashboardActions } from './store/dashboard-store'
+import { appearanceActions } from './store/appearance-store'
 import { focusActions } from './store/focus-store'
 import { notificationActions, useNotifications } from './store/notification-store'
 import { OverlayLoader } from './components/ui/OverlayLoader'
@@ -150,6 +151,11 @@ function App() {
     }
     return new URLSearchParams(window.location.search)
   })
+
+  // Layout effect so a route that flips the theme never paints a frame in the old one.
+  useLayoutEffect(() => {
+    appearanceActions.syncActivePath(pathname)
+  }, [pathname])
 
   const [activeRequests, setActiveRequests] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(true)

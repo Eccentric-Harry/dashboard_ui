@@ -16,10 +16,10 @@ const QUALITY_LABELS = ['Rough', 'Poor', 'Okay', 'Good', 'Great'] as const
 
 /* Slate-blue bar fills — deeper as the night gets closer to target,
    so the chart itself reads "how good was the week" at a glance. */
-const BAR_ON_TARGET = '#6d9cbe'
-const BAR_UNDER = '#a9c6da'
-const BAR_LAST_NIGHT = '#43799e'
-const BAR_MISSING = 'rgba(30, 61, 82, 0.1)'
+const BAR_ON_TARGET = 'var(--home-sleep-bar-on, #6d9cbe)'
+const BAR_UNDER = 'var(--home-sleep-bar-under, #a9c6da)'
+const BAR_LAST_NIGHT = 'var(--home-sleep-bar-last, #43799e)'
+const BAR_MISSING = 'var(--home-sleep-bar-missing, rgba(30, 61, 82, 0.1))'
 
 type SleepCardProps = {
   loading: boolean
@@ -377,18 +377,18 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
                       axisLine={false}
                       tickLine={false}
                       interval={0}
-                      tick={{ fill: 'rgba(23, 27, 21, 0.42)', fontSize: 10, fontWeight: 650 }}
+                      tick={{ fill: 'var(--home-chart-tick, rgba(23, 27, 21, 0.42))', fontSize: 10, fontWeight: 650 }}
                     />
                     <YAxis hide domain={[0, chartMax]} />
-                    <Tooltip content={makeSleepTooltip(today)} cursor={{ fill: 'rgba(30, 61, 82, 0.05)' }} />
+                    <Tooltip content={makeSleepTooltip(today)} cursor={{ fill: 'var(--home-sleep-cursor, rgba(30, 61, 82, 0.05))' }} />
                     <ReferenceLine
                       y={SLEEP_TARGET_MINUTES}
-                      stroke="rgba(30, 61, 82, 0.3)"
+                      stroke="var(--home-sleep-guide, rgba(30, 61, 82, 0.3))"
                       strokeDasharray="5 6"
                       label={{
                         position: 'insideTopRight',
                         value: `TARGET ${SLEEP_TARGET_HOURS}H`,
-                        fill: 'rgba(30, 61, 82, 0.45)',
+                        fill: 'var(--home-sleep-guide-label, rgba(30, 61, 82, 0.45))',
                         fontSize: 8.5,
                         fontWeight: 800,
                         letterSpacing: '0.06em',

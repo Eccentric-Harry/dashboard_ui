@@ -338,7 +338,7 @@ export function AddTransactionModal({
             <button
               type="submit"
               className="add-tx-submit"
-              style={{ borderRadius: '10px', backgroundColor: '#121c17' }}
+              style={{ borderRadius: '10px', backgroundColor: 'var(--inline-inverse, #121c17)' }}
               disabled={loading}
             >
               {loading ? <Loader2 className="spinner" size={18} /> : 'Save Transaction'}
@@ -404,9 +404,9 @@ export function AddTransactionModal({
                   minHeight: '80px',
                   padding: '12px',
                   borderRadius: '12px',
-                  background: 'rgba(255, 255, 255, 0.5)',
-                  border: '1px solid rgba(22, 28, 24, 0.12)',
-                  color: '#101312',
+                  background: 'var(--inline-fill, rgba(255, 255, 255, 0.5))',
+                  border: '1px solid var(--inline-line, rgba(22, 28, 24, 0.12))',
+                  color: 'var(--inline-ink, #101312)',
                   fontSize: '13px',
                   fontFamily: 'inherit',
                   resize: 'vertical',
@@ -420,7 +420,7 @@ export function AddTransactionModal({
             <button
               type="submit"
               className="add-tx-submit"
-              style={{ borderRadius: '10px', backgroundColor: '#121c17' }}
+              style={{ borderRadius: '10px', backgroundColor: 'var(--inline-inverse, #121c17)' }}
               disabled={loading}
             >
               {loading ? <Loader2 className="spinner" size={18} /> : 'Save Record'}

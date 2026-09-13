@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import {
   ArrowLeft,
   Sparkles,
@@ -204,13 +204,13 @@ export function MealDetailsModal({ open, onClose, entry, onEdit }: MealDetailsMo
               {grade && (
                 <div
                   className="ntr-detail-grade-hero"
-                  style={{ backgroundColor: grade.bg, borderColor: grade.border }}
+                  style={{ '--grade-ink': grade.ink, '--grade-bg': grade.bg, '--grade-border': grade.border } as CSSProperties}
                 >
-                  <span className="ntr-detail-grade-letter" style={{ color: grade.ink }}>
+                  <span className="ntr-detail-grade-letter">
                     {grade.letter}
                   </span>
                   <div>
-                    <strong style={{ color: grade.ink }}>{grade.label} meal quality</strong>
+                    <strong>{grade.label} meal quality</strong>
                     {hasScore && <small>Score {Math.round(overallScore)}/100</small>}
                   </div>
                 </div>
@@ -367,7 +367,7 @@ export function MealDetailsModal({ open, onClose, entry, onEdit }: MealDetailsMo
                         className="ntr-insight-grade"
                         style={
                           grade
-                            ? { backgroundColor: grade.bg, color: grade.ink, borderColor: grade.border }
+                            ? ({ '--grade-ink': grade.ink, '--grade-bg': grade.bg, '--grade-border': grade.border } as CSSProperties)
                             : undefined
                         }
                       >

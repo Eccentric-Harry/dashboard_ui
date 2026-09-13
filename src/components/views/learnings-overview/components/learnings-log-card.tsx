@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, type CSSProperties } from 'react'
 import { BookOpen, ChevronLeft, ChevronRight, Edit2, Pencil, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import type { LearningLog } from '../../../../lib/api'
 import { learningsService } from '../../../../services/learnings-service'
 import { ConfirmDialog } from '../../../ui/confirm-dialog'
-import { extractNotionUrl, getCategoryStyle, parseIsoDate } from '../learnings-utils'
+import { extractNotionUrl, getConsistentColor, parseIsoDate } from '../learnings-utils'
 
 interface LearningsLogCardProps {
   refreshKey: number
@@ -95,14 +95,9 @@ export function LearningsLogCard({
         </div>
         <button
           type="button"
-          className="learnings-icon-btn"
+          className={`learnings-icon-btn${isEditMode ? ' is-active' : ''}`}
           onClick={() => setIsEditMode(!isEditMode)}
           title="Toggle edit mode"
-          style={
-            isEditMode
-              ? { background: 'rgba(26, 122, 74, 0.1)', color: '#1a7a4a', borderColor: 'rgba(26, 122, 74, 0.2)' }
-              : undefined
-          }
         >
           <Edit2 size={14} />
         </button>
@@ -140,7 +135,7 @@ export function LearningsLogCard({
           }}
         >
           {paginated.map((log) => {
-            const badge = getCategoryStyle(log.category)
+            const tone = getConsistentColor(log.category)
             const notionUrl = log.notionUrl || extractNotionUrl(log.description)
             const isOnlyNotion = notionUrl && log.description.trim() === notionUrl
 
@@ -152,30 +147,10 @@ export function LearningsLogCard({
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
-                      <span
-                        style={{
-                          display: 'inline-block',
-                          fontSize: 9,
-                          fontWeight: 700,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.04em',
-                          padding: '2px 6px',
-                          borderRadius: 6,
-                          backgroundColor: badge.bg,
-                          color: badge.color,
-                          border: badge.border,
-                        }}
-                      >
+                      <span className="learnings-cat-badge" style={{ '--cat-tone': tone } as CSSProperties}>
                         {log.category}
                       </span>
-                      <span
-                        style={{
-                          fontSize: 10,
-                          fontWeight: 600,
-                          color: 'rgba(23, 28, 25, 0.45)',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
+                      <span className="learnings-log-date">
                         {formatFriendlyDate(log.date)}
                       </span>
                     </div>
@@ -221,7 +196,7 @@ export function LearningsLogCard({
                     </div>
                   </div>
 
-                  <h4 style={{ fontSize: 13, fontWeight: 650, margin: '4px 0 0', color: '#101312', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                  <h4 className="learnings-log-title">
                     {log.title}
                   </h4>
                   {!isOnlyNotion && log.description && (
@@ -230,7 +205,6 @@ export function LearningsLogCard({
                       style={{
                         fontSize: 11,
                         lineHeight: 1.4,
-                        color: '#4a5550',
                         margin: 0,
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',

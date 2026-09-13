@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, type CSSProperties } from 'react'
 import { Check, Loader2, ChevronLeft, ChevronRight, Pencil, Trash2, DollarSign } from 'lucide-react'
 import toast from 'react-hot-toast'
 import type { LendingRecord } from '../../../../lib/api'
+import { toneStyle } from '../../../../lib/tone'
 import { financeService } from '../../../../services/finance-service'
 
 interface LendingCardProps {
@@ -153,7 +154,7 @@ export function LendingCard({ refreshKey, onEditClick, onDeleteClick, onRefreshT
           <p>{pendingCount} pending repayments</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <strong style={{ color: totalPendingVal > 0 ? '#8b5cf6' : 'inherit' }}>
+          <strong style={totalPendingVal > 0 ? toneStyle({ hue: '#8b5cf6', ink: '#8b5cf6' }) : { color: 'inherit' }}>
             {totalPendingFormatted}
           </strong>
           <button 
@@ -162,7 +163,7 @@ export function LendingCard({ refreshKey, onEditClick, onDeleteClick, onRefreshT
             aria-label="Toggle edit mode"
             type="button"
             style={{ 
-              background: isEditMode ? 'rgba(20, 24, 22, 0.06)' : 'transparent', 
+              background: isEditMode ? 'var(--inline-fill, rgba(20, 24, 22, 0.06))' : 'transparent', 
               padding: '0', 
               borderRadius: '8px',
               width: '32px',
@@ -184,7 +185,7 @@ export function LendingCard({ refreshKey, onEditClick, onDeleteClick, onRefreshT
 
       <div className="finance-lending-list" style={{ minHeight: '264px' }}>
         {paginatedRecords.length === 0 ? (
-          <div style={{ display: 'grid', placeItems: 'center', flex: 1, height: '100%', color: 'rgba(23, 28, 25, 0.45)', fontSize: '12px' }}>
+          <div style={{ display: 'grid', placeItems: 'center', flex: 1, height: '100%', color: 'var(--inline-ink-faint, rgba(23, 28, 25, 0.45))', fontSize: '12px' }}>
             No lending records found
           </div>
         ) : (
@@ -198,7 +199,9 @@ export function LendingCard({ refreshKey, onEditClick, onDeleteClick, onRefreshT
 
             return (
               <div key={item.id} className={isPaid ? 'paid' : ''}>
-                <span className="repayment-icon" style={{ background: isPaid ? 'rgba(50, 169, 71, 0.1)' : 'rgba(139, 92, 246, 0.1)', color: isPaid ? '#32a947' : '#8b5cf6' }}>
+                <span className="repayment-icon" style={toneStyle(isPaid
+                  ? { hue: '#32a947', bg: 'rgba(50, 169, 71, 0.1)', ink: '#32a947' }
+                  : { hue: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)', ink: '#8b5cf6' })}>
                   <DollarSign size={16} />
                 </span>
 
@@ -209,7 +212,7 @@ export function LendingCard({ refreshKey, onEditClick, onDeleteClick, onRefreshT
                     {formattedDueDate && (
                       <>
                         <span style={{ opacity: 0.5 }}>•</span>
-                        <span style={{ color: !isPaid && item.dueDate && new Date(item.dueDate).getTime() < nowTime ? '#d83542' : 'inherit' }}>
+                        <span style={!isPaid && item.dueDate && new Date(item.dueDate).getTime() < nowTime ? toneStyle({ hue: '#d83542', ink: '#d83542' }) : { color: 'inherit' }}>
                           Due: {formattedDueDate}
                         </span>
                       </>

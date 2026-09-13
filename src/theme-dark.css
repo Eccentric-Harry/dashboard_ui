@@ -1,0 +1,867 @@
+/* ─── Dark theme ──────────────────────────────────────────────────────────
+   Applied as data-theme="dark" on <html> by store/appearance-store.ts, only on
+   routes listed in DARK_THEME_ROUTES. Most colours
+   are derived at build time by config/postcss-dark-theme.ts; this file holds the
+   tokens plus the calls a per-colour mapping can't make — accent slabs, text on
+   the accent, overlays, imagery, charts. Every selector starts with
+   :root[data-theme] so it outranks both a source rule and its derived sibling.
+   Rationale and token table: design/DARK_MODE_PLAN.md. */
+
+:root[data-theme='dark'] {
+  --dk-canvas: #0c0d0f;
+  --dk-surface: #16181b;
+  --dk-raised: #1f2125;
+  --dk-overlay: #25282d;
+  --dk-line: rgba(255, 255, 255, 0.07);
+  --dk-line-strong: rgba(255, 255, 255, 0.12);
+  --dk-wash: rgba(255, 255, 255, 0.04);
+  --dk-wash-strong: rgba(255, 255, 255, 0.075);
+  --dk-ink: #eceef0;
+  --dk-ink-2: #a8adb3;
+  --dk-ink-3: #858b92;
+  --dk-accent: #cfe965;
+  --dk-on-accent: #14160f;
+  --dk-danger: #f28b95;
+  --dk-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --dk-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045), 0 1px 2px rgba(0, 0, 0, 0.45), 0 16px 40px rgba(0, 0, 0, 0.3);
+  --dk-glow-lime: radial-gradient(120% 95% at 0% 0%, rgba(207, 233, 101, 0.15), transparent 62%);
+  --dk-panel: linear-gradient(160deg, #202327 0%, #1a1c20 100%);
+
+  /* Inline-style colours in TSX are written as var(--inline-*, <light literal>);
+     light mode renders the literal, dark picks these up. */
+  --inline-ink: var(--dk-ink);
+  --inline-ink-soft: var(--dk-ink-2);
+  --inline-ink-faint: var(--dk-ink-3);
+  --inline-fill: var(--dk-wash-strong);
+  --inline-line: var(--dk-line-strong);
+  --inline-overlay: var(--dk-overlay);
+  --inline-inverse: var(--dk-ink);
+  --inline-danger: var(--dk-danger);
+
+  color-scheme: dark;
+  color: var(--dk-ink);
+  background: var(--dk-canvas);
+}
+
+/* ── Canvas: one flat near-black. Ambient radials were tried and dropped: they
+   read as a neon corner glow, and because body and the shell each painted their
+   own copy, the page showed a visible seam where the shell ended. ── */
+
+:root[data-theme='dark'] body,
+:root[data-theme='dark'] .app-shell,
+:root[data-theme='dark'] .dashboard-shell {
+  background: var(--dk-canvas);
+}
+
+:root[data-theme='dark'] .dashboard-stage {
+  background: transparent;
+}
+
+/* ── Cards: every top-level card is the same solid surface. Glass cards derive
+   to a translucent white, which picks up whatever sits behind it and reads as a
+   grey-yellow wash next to solid cards. Nested rows keep their washes. ── */
+
+:root[data-theme='dark'] .finance-subscription-card,
+:root[data-theme='dark'] .workouts-card,
+:root[data-theme='dark'] .learnings-card,
+:root[data-theme='dark'] .learnings-stat-card,
+:root[data-theme='dark'] .routine-navigator,
+:root[data-theme='dark'] .focus-canvas,
+:root[data-theme='dark'] .prompts-card {
+  background: var(--dk-surface) !important;
+  border-color: var(--dk-line) !important;
+}
+
+/* Inline tone chips (lib/tone.ts): the light literals are var() fallbacks; here
+   each chip derives a wash, lifted ink and border from its own --chip-hue. */
+:root[data-theme='dark'] [style*='--chip-hue:'] {
+  --chip-surface: color-mix(in srgb, var(--chip-hue) 20%, transparent);
+  --chip-ink: color-mix(in oklab, var(--chip-hue), #fff 42%);
+  --chip-line: color-mix(in srgb, var(--chip-hue) 34%, transparent);
+}
+
+/* The white "cutout" ring drawn around selected chips becomes the surface. */
+:root[data-theme='dark'] {
+  --ring-cutout: var(--dk-surface);
+}
+
+/* Glass has nothing to frost on a near-black canvas. Modal scrims keep theirs. */
+:root[data-theme='dark'] *:not([class*='overlay']):not([class*='backdrop']),
+:root[data-theme='dark'] *::before,
+:root[data-theme='dark'] *::after {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+:root[data-theme='dark'] ::selection {
+  background: rgba(207, 233, 101, 0.28);
+  color: var(--dk-ink);
+}
+
+/* ── App chrome ─────────────────────────────────────────────────────────── */
+
+:root[data-theme='dark'] .side-rail {
+  border: 1px solid var(--dk-line);
+  background: var(--dk-surface);
+  box-shadow: var(--dk-shadow);
+}
+
+:root[data-theme='dark'] .side-rail button {
+  color: var(--dk-ink-2);
+}
+
+:root[data-theme='dark'] .side-rail button.active,
+:root[data-theme='dark'] .side-rail button.muted {
+  background: var(--dk-wash-strong);
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .rail-avatar {
+  border-color: var(--dk-raised);
+}
+
+:root[data-theme='dark'] .nc-overlay {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+:root[data-theme='dark'] .nc-panel {
+  border-color: var(--dk-line-strong);
+  background: var(--dk-overlay);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 32px 80px rgba(0, 0, 0, 0.6),
+    0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* ══ Nutrition ═══════════════════════════════════════════════════════════ */
+
+:root[data-theme='dark'] .nutrition-dashboard.ntr {
+  --ntr-ink: var(--dk-ink);
+  --ntr-ink-soft: var(--dk-ink-2);
+  --ntr-ink-faint: var(--dk-ink-3);
+  --ntr-card: var(--dk-surface);
+  --ntr-line: var(--dk-line);
+  --ntr-lime: #cfe965;
+  --ntr-lime-deep: #b8d35c;
+  --ntr-lime-soft: rgba(207, 233, 101, 0.1);
+  --ntr-cream: var(--dk-raised);
+  --ntr-cream-deep: #d6b67e;
+  --ntr-sky: rgba(120, 165, 210, 0.13);
+  --ntr-sky-deep: #9cc2e4;
+  --ntr-aqua: #62bba8;
+  --ntr-aqua-deep: #7dcdb9;
+  --ntr-aqua-soft: rgba(61, 158, 140, 0.16);
+  --ntr-apricot: rgba(230, 168, 92, 0.14);
+  --ntr-apricot-deep: #e4b077;
+  --ntr-shadow: var(--dk-shadow);
+
+  /* Recharts reads these through fill="var(--…)"; light values are the fallbacks in TSX */
+  --ntr-chart-tick: rgba(236, 238, 240, 0.45);
+  --ntr-chart-label: rgba(236, 238, 240, 0.55);
+  --ntr-chart-label-soft: rgba(236, 238, 240, 0.45);
+  --ntr-chart-guide: rgba(255, 255, 255, 0.24);
+  --ntr-chart-guide-soft: rgba(255, 255, 255, 0.14);
+  --ntr-chart-cursor: rgba(255, 255, 255, 0.18);
+  --ntr-chart-hover-fill: rgba(255, 255, 255, 0.05);
+  --ntr-chart-empty: rgba(255, 255, 255, 0.07);
+  --ntr-chart-today: rgba(236, 238, 240, 0.6);
+  --ntr-chart-dot: #14160f;
+  --ntr-chart-dot-ring: #eceef0;
+  --ntr-chart-line-start: #dff08f;
+  --ntr-chart-line: #b8d35c;
+  --ntr-chart-mixed: #b5a687;
+  --ntr-chart-calories: #e8a266;
+  /* Misses go neutral: a translucent hue over graphite turns olive/brown mud. */
+  --ntr-chart-calories-miss: rgba(236, 238, 240, 0.16);
+  --ntr-chart-protein-miss: rgba(236, 238, 240, 0.16);
+
+  color: var(--ntr-ink);
+}
+
+/* ── Hero: the lime slab becomes a graphite panel lit by lime; the accent moves
+   onto the data (arc, badge, protein bar) instead of covering the card. ── */
+
+:root[data-theme='dark'] .ntr-gauge-panel {
+  background: var(--dk-glow-lime), var(--dk-panel);
+  box-shadow: inset 0 0 0 1px rgba(207, 233, 101, 0.1), var(--dk-highlight);
+}
+
+:root[data-theme='dark'] .ntr-gauge-panel.over {
+  background:
+    radial-gradient(120% 95% at 0% 0%, rgba(236, 176, 96, 0.16), transparent 62%),
+    var(--dk-panel);
+  box-shadow: inset 0 0 0 1px rgba(236, 176, 96, 0.12), var(--dk-highlight);
+}
+
+:root[data-theme='dark'] .ntr-gauge .track,
+:root[data-theme='dark'] .ntr-gauge-panel.over .ntr-gauge .track {
+  stroke: rgba(255, 255, 255, 0.08);
+}
+
+/* No drop-shadow glow here: a filter on the dash-animated path stops Chromium
+   repainting the arc until something else forces a paint. */
+:root[data-theme='dark'] .ntr-gauge .value {
+  stroke: var(--dk-accent);
+}
+
+:root[data-theme='dark'] .ntr-gauge-panel.over .ntr-gauge .value {
+  stroke: #ecb060;
+}
+
+:root[data-theme='dark'] .ntr-gauge .tip-halo {
+  fill: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .ntr-gauge .tip {
+  fill: var(--dk-on-accent);
+}
+
+:root[data-theme='dark'] .ntr-gauge-badge {
+  background: var(--dk-accent);
+  color: var(--dk-on-accent);
+}
+
+:root[data-theme='dark'] .ntr-gauge-badge.over {
+  background: #ecb060;
+  color: #1d1409;
+}
+
+:root[data-theme='dark'] .ntr-macro-row {
+  background: var(--dk-wash);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+:root[data-theme='dark'] .ntr-macro-row.active,
+:root[data-theme='dark'] .ntr-macro-row:hover {
+  background: var(--dk-wash-strong);
+}
+
+:root[data-theme='dark'] .ntr-macro-bar,
+:root[data-theme='dark'] .ntr-tile-bar,
+:root[data-theme='dark'] .ntr-map-bar {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme='dark'] .ntr-macro-row.tone-lime .ntr-macro-bar i {
+  background: var(--dk-accent);
+}
+
+:root[data-theme='dark'] .ntr-macro-row.tone-sky .ntr-macro-bar i {
+  background: #7fb2dc;
+}
+
+:root[data-theme='dark'] .ntr-macro-row.tone-apricot .ntr-macro-bar i {
+  background: #e2a45e;
+}
+
+/* ── Weekly protein + today's meals accent panels ── */
+
+:root[data-theme='dark'] .ntr-trend-accent-panel {
+  background: var(--dk-glow-lime), var(--dk-panel);
+  box-shadow: inset 0 0 0 1px rgba(207, 233, 101, 0.1), var(--dk-highlight);
+}
+
+/* Nutrition-only: Home reuses .ntr-tap-* with its own lavender accent. */
+:root[data-theme='dark'] .nutrition-dashboard .ntr-tap-big strong {
+  color: var(--dk-accent);
+}
+
+:root[data-theme='dark'] .ntr-tap-stat {
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+:root[data-theme='dark'] .ntr-meals-accent-panel {
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.035) 0%, rgba(207, 233, 101, 0.07) 100%);
+  box-shadow: inset 0 0 0 1px var(--dk-line);
+}
+
+:root[data-theme='dark'] .ntr-map-sep {
+  background: var(--dk-line-strong);
+}
+
+/* ── Anything sitting on lime takes the on-accent ink ── */
+
+:root[data-theme='dark'] .ntr-pill.lime,
+:root[data-theme='dark'] .ntr-soft-btn:hover:not(:disabled),
+:root[data-theme='dark'] .ntr-pgn button:hover:not(:disabled),
+:root[data-theme='dark'] .nutrition-dashboard.ntr .ntr-intel-rank {
+  color: var(--dk-on-accent);
+}
+
+:root[data-theme='dark'] .ntr-hydro-btns .ntr-soft-btn:hover:not(:disabled) {
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .ntr-streak-pill {
+  background: var(--dk-accent);
+  color: var(--dk-on-accent);
+}
+
+:root[data-theme='dark'] .ntr-streak-pill svg {
+  color: var(--dk-on-accent);
+}
+
+:root[data-theme='dark'] .ntr-icon-btn.active,
+:root[data-theme='dark'] .af-meal-toggle.active,
+:root[data-theme='dark'] .ntr-detail-type-pill,
+:root[data-theme='dark'] .ntr-detail-tab.active {
+  border-color: var(--dk-accent);
+  background: var(--dk-accent);
+  color: var(--dk-on-accent);
+}
+
+/* "+" disc on the Add meal / Quick add pills sits on the route accent. */
+:root[data-theme='dark'] .ntr-add-ic {
+  color: var(--dk-on-accent);
+}
+
+/* Segmented Manual/AI and Task/Learning toggles: the active slider was deriving
+   darker than its track, which reads as a sunken tab. Lift it above the track. */
+:root[data-theme='dark'] .type-toggle-slider {
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+:root[data-theme='dark'] .ntr-trend-tooltip {
+  border: 1px solid var(--dk-line-strong);
+  background: var(--dk-overlay);
+  color: var(--dk-accent);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Hydration ── */
+
+:root[data-theme='dark'] .ntr-hydro-cell-fill {
+  background: linear-gradient(180deg, #8dbbe3 0%, #5b8dbd 100%);
+}
+
+:root[data-theme='dark'] .ntr-hydro-cell.full .ntr-hydro-cell-fill {
+  background: linear-gradient(180deg, #92bfe6 0%, #5687b8 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* ── Meals + history ── */
+
+:root[data-theme='dark'] .ntr-meal-row.clickable:hover,
+:root[data-theme='dark'] .ntr-day-entry:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+:root[data-theme='dark'] .ntr-day-card {
+  background: var(--dk-wash);
+  box-shadow: inset 0 0 0 1px var(--dk-line);
+}
+
+:root[data-theme='dark'] .ntr-day-entry {
+  border-bottom-color: var(--dk-line);
+}
+
+:root[data-theme='dark'] .ntr-day-totals span,
+:root[data-theme='dark'] .ntr-pgn.mini button {
+  background: var(--dk-wash-strong);
+  color: var(--dk-ink);
+}
+
+/* Food photos are shot on white plates; dim them a touch so they don't glow. */
+:root[data-theme='dark'] .ntr-meal-thumb {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+:root[data-theme='dark'] .ntr-meal-thumb img {
+  filter: brightness(0.9) saturate(0.95);
+}
+
+:root[data-theme='dark'] .ntr-meal-tag {
+  border-color: color-mix(in srgb, var(--meal-tone, #8b9187) 32%, transparent);
+  background: color-mix(in srgb, var(--meal-tone, #8b9187) 16%, transparent);
+  color: color-mix(in oklab, var(--meal-tone, #8b9187) 55%, #fff);
+}
+
+:root[data-theme='dark'] .ntr-meal-tag--quiet {
+  border-color: transparent;
+}
+
+:root[data-theme='dark'] .ntr-grade-badge,
+:root[data-theme='dark'] .ntr-insight-grade[style*='--grade-ink'],
+:root[data-theme='dark'] .af-json-grade[style*='--grade-ink'] {
+  border-color: color-mix(in srgb, var(--grade-ink) 45%, transparent);
+  background: color-mix(in srgb, var(--grade-ink) 22%, transparent);
+  color: color-mix(in oklab, var(--grade-ink) 45%, #fff);
+}
+
+:root[data-theme='dark'] .ntr-detail-grade-hero {
+  border-color: color-mix(in srgb, var(--grade-ink) 38%, transparent);
+  background: color-mix(in srgb, var(--grade-ink) 16%, transparent);
+}
+
+:root[data-theme='dark'] .ntr-detail-grade-letter,
+:root[data-theme='dark'] .ntr-detail-grade-hero strong {
+  color: color-mix(in oklab, var(--grade-ink) 45%, #fff);
+}
+
+/* ── Intelligence ── */
+
+:root[data-theme='dark'] .nutrition-dashboard.ntr .ntr-intel-hero {
+  background:
+    radial-gradient(90% 80% at 100% 100%, rgba(207, 233, 101, 0.08), transparent 60%),
+    var(--dk-surface);
+}
+
+:root[data-theme='dark'] .nutrition-dashboard.ntr .ntr-intel-glyph {
+  color: rgba(207, 233, 101, 0.045);
+}
+
+:root[data-theme='dark'] .nutrition-dashboard.ntr .ntr-intel-tooltip {
+  border-color: var(--dk-line-strong);
+  background: var(--dk-overlay);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+}
+
+:root[data-theme='dark'] .nutrition-dashboard.ntr .ntr-intel-heat-legend i.calories {
+  background: var(--ntr-chart-calories);
+}
+
+:root[data-theme='dark'] .nutrition-dashboard.ntr .ntr-intel-heat-legend i.protein {
+  background: var(--ntr-chart-line);
+}
+
+/* ══ Profile ═════════════════════════════════════════════════════════════ */
+
+:root[data-theme='dark'] .profile-shell-card {
+  border-color: var(--dk-line);
+  background: var(--dk-surface);
+  box-shadow: var(--dk-shadow);
+}
+
+:root[data-theme='dark'] .profile-identity {
+  border-right-color: var(--dk-line);
+}
+
+/* Both columns share one flat surface — the old darker well behind the metrics
+   read as a fade across the card. Every tier below is a solid step, never a
+   translucent white wash: surface → raised (cards, identity tiles) → overlay
+   (tiles nested inside a raised card). */
+:root[data-theme='dark'] .profile-metrics {
+  background: transparent;
+}
+
+:root[data-theme='dark'] .metric-card {
+  border-color: var(--dk-line);
+  background: var(--dk-raised);
+  box-shadow: var(--dk-highlight);
+}
+
+:root[data-theme='dark'] .bio-tile,
+:root[data-theme='dark'] .fitness-row,
+:root[data-theme='dark'] .identity-since,
+:root[data-theme='dark'] .identity-logout-btn {
+  border-color: var(--dk-line);
+  background: var(--dk-raised);
+  box-shadow: none;
+}
+
+:root[data-theme='dark'] .nutrition-kcal,
+:root[data-theme='dark'] .energy-balance,
+:root[data-theme='dark'] .energy-row,
+:root[data-theme='dark'] .bmi-gauge,
+:root[data-theme='dark'] .sync-details-panel {
+  border-color: var(--dk-line);
+  background: var(--dk-overlay);
+  box-shadow: none;
+}
+
+:root[data-theme='dark'] .bmi-ring {
+  background: var(--dk-surface);
+  box-shadow: none;
+}
+
+:root[data-theme='dark'] .identity-edit-btn {
+  background: var(--dk-ink);
+  color: var(--dk-on-accent);
+}
+
+/* Edit sheet: an opaque overlay tier over a dark scrim, so the page behind
+   can't read through the form. */
+:root[data-theme='dark'] .profile-modal-overlay {
+  background: rgba(0, 0, 0, 0.66);
+}
+
+:root[data-theme='dark'] .profile-modal-card {
+  border-color: var(--dk-line-strong);
+  background: var(--dk-surface);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 32px 80px rgba(0, 0, 0, 0.6), 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+:root[data-theme='dark'] .profile-modal-header,
+:root[data-theme='dark'] .profile-modal-footer {
+  border-color: var(--dk-line);
+}
+
+:root[data-theme='dark'] .identity-avatar {
+  border-color: var(--dk-line-strong);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+:root[data-theme='dark'] .identity-notif-badge {
+  border-color: var(--dk-surface);
+  background: var(--dk-accent);
+  color: var(--dk-on-accent);
+}
+
+:root[data-theme='dark'] .bio-tile-icon.tint-yellow {
+  background: rgba(207, 233, 101, 0.14);
+  color: var(--dk-accent);
+}
+
+:root[data-theme='dark'] .identity-edit-btn:hover {
+  background: #ffffff;
+}
+
+:root[data-theme='dark'] .bmi-gauge-marker {
+  border-color: var(--dk-raised);
+}
+
+@media (max-width: 1024px) {
+  :root[data-theme='dark'] .profile-identity {
+    border-bottom-color: var(--dk-line);
+  }
+}
+
+/* ══ Shared: insight rows + mood check-in ═══════════════════════════════ */
+
+/* Gradient icon badges were pastel tiles; on graphite they become washes of
+   their sentiment hue with a lifted glyph, like every other chip. */
+:root[data-theme='dark'] .ins-row-icon {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06), 0 3px 8px -3px rgba(0, 0, 0, 0.5);
+}
+
+:root[data-theme='dark'] .ins-row--positive .ins-row-icon {
+  background: linear-gradient(150deg, rgba(110, 190, 145, 0.26), rgba(110, 190, 145, 0.1));
+  color: #8fd0aa;
+}
+
+:root[data-theme='dark'] .ins-row--neutral .ins-row-icon {
+  background: linear-gradient(150deg, rgba(140, 150, 230, 0.26), rgba(140, 150, 230, 0.1));
+  color: #aeb5f2;
+}
+
+:root[data-theme='dark'] .ins-row--watch .ins-row-icon {
+  background: linear-gradient(150deg, rgba(230, 170, 80, 0.26), rgba(230, 170, 80, 0.1));
+  color: #eab66c;
+}
+
+:root[data-theme='dark'] .ins-row--urgent .ins-row-icon {
+  background: linear-gradient(150deg, rgba(235, 110, 120, 0.26), rgba(235, 110, 120, 0.1));
+  color: #f29aa3;
+}
+
+/* Mood faces (Home + Mind) and the sleep-quality scale share one ramp. The
+   pastel discs become washes of one cool→lime hue ramp, brightest at "great". */
+:root[data-theme='dark'] :is(.home-face-btn, .mind-face-btn) {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme='dark'] :is(.home-face-btn--1, .mind-face-btn--1, .q-1) { background: rgba(150, 160, 190, 0.22); }
+:root[data-theme='dark'] :is(.home-face-btn--2, .mind-face-btn--2, .q-2) { background: rgba(140, 180, 172, 0.22); }
+:root[data-theme='dark'] :is(.home-face-btn--3, .mind-face-btn--3, .q-3) { background: rgba(160, 196, 150, 0.24); }
+:root[data-theme='dark'] :is(.home-face-btn--4, .mind-face-btn--4, .q-4) { background: rgba(186, 216, 128, 0.26); }
+:root[data-theme='dark'] :is(.home-face-btn--5, .mind-face-btn--5, .q-5) { background: rgba(207, 233, 101, 0.32); }
+
+:root[data-theme='dark'] :is(.home-face-btn, .mind-face-btn).is-active {
+  border-color: rgba(207, 233, 101, 0.5);
+  box-shadow: 0 0 0 3px var(--dk-surface), 0 0 0 5px rgba(207, 233, 101, 0.4), 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* ══ Home ════════════════════════════════════════════════════════════════
+   Home's accent is lavender (--ntr-lime is #bcc3f2 on .home-dashboard, which
+   the derived pass keeps). Same grammar as Nutrition: tinted slabs become
+   graphite panels lit by their hue. */
+
+:root[data-theme='dark'] .home-dashboard {
+  --home-chart-tick: rgba(236, 238, 240, 0.45);
+  --home-sleep-bar-on: #7fb0d8;
+  --home-sleep-bar-under: #4f6f88;
+  --home-sleep-bar-last: #b3d6f0;
+  --home-sleep-bar-missing: rgba(255, 255, 255, 0.07);
+  --home-sleep-cursor: rgba(255, 255, 255, 0.05);
+  --home-sleep-guide: rgba(160, 200, 230, 0.3);
+  --home-sleep-guide-label: rgba(160, 200, 230, 0.6);
+}
+
+:root[data-theme='dark'] .home-hero-panel,
+:root[data-theme='dark'] .home-hero-panel.is-skeleton {
+  /* Flat: a corner glow here read as a smudge in dark. */
+  background: var(--dk-raised);
+  box-shadow: inset 0 0 0 1px rgba(188, 195, 242, 0.1), var(--dk-highlight);
+}
+
+/* background-image only: the sheen animates background-position, which the
+   shorthand would reset. */
+:root[data-theme='dark'] .home-hero-panel.is-complete::before {
+  background-image: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.12) 48%, transparent 66%);
+}
+
+:root[data-theme='dark'] .home-loop-track {
+  stroke: rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme='dark'] .home-anchor-ic,
+:root[data-theme='dark'] .home-next-ic {
+  background: var(--dk-raised);
+  box-shadow: inset 0 0 0 1px var(--dk-line-strong);
+}
+
+:root[data-theme='dark'] .home-anchor-ic {
+  color: var(--dk-accent);
+}
+
+:root[data-theme='dark'] .home-sleep-accent {
+  background: radial-gradient(120% 95% at 0% 0%, rgba(120, 165, 210, 0.16), transparent 62%), var(--dk-panel);
+  box-shadow: inset 0 0 0 1px rgba(120, 165, 210, 0.12), var(--dk-highlight);
+}
+
+:root[data-theme='dark'] .home-sleep-tooltip,
+:root[data-theme='dark'] .home-trend-tip {
+  border: 1px solid var(--dk-line-strong);
+  background: var(--dk-overlay);
+  color: var(--dk-ink-2);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+}
+
+:root[data-theme='dark'] .home-sleep-tooltip small {
+  color: var(--dk-ink-3);
+}
+
+:root[data-theme='dark'] .home-trend-tip b {
+  color: var(--dk-ink);
+}
+
+/* Tint chips derive from each domain's (already lifted) accent. */
+:root[data-theme='dark'] .home-trend-tile {
+  --trend-tint: color-mix(in srgb, var(--trend-accent) 22%, transparent);
+}
+
+:root[data-theme='dark'] .home-rollup-tile {
+  --rollup-tint: color-mix(in srgb, var(--rollup-accent) 22%, transparent);
+}
+
+:root[data-theme='dark'] :is(.home-trend-ic, .home-rollup-ic) {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+:root[data-theme='dark'] .home-trend-dot {
+  stroke: var(--dk-surface);
+}
+
+:root[data-theme='dark'] .home-loop-info-panel {
+  border-color: var(--dk-line-strong);
+  background: var(--dk-overlay);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 24px 64px rgba(0, 0, 0, 0.6);
+}
+
+:root[data-theme='dark'] .home-loop-info-icon {
+  background: rgba(188, 195, 242, 0.16);
+  color: #bcc3f2;
+}
+
+/* ══ Mind ════════════════════════════════════════════════════════════════
+   "One desaturated tint per card" survives as a corner glow, badge and
+   watermark on graphite. Butter leans lime so the anchor card never reads as
+   olive. Crimson stays confined to the SOS surface (derived). */
+
+:root[data-theme='dark'] .mind-dashboard {
+  --mind-chart-tick: rgba(236, 238, 240, 0.45);
+  --mind-chart-cursor: rgba(255, 255, 255, 0.05);
+  --mind-chart-bar: rgba(170, 178, 240, 0.6);
+}
+
+:root[data-theme='dark'] .mind-card {
+  border-color: var(--dk-line);
+  background: var(--dk-surface);
+  box-shadow: var(--dk-shadow);
+}
+
+:root[data-theme='dark'] .mind-tint-lavender { --mind-tint: 150, 158, 232; }
+:root[data-theme='dark'] .mind-tint-sage { --mind-tint: 118, 190, 150; }
+:root[data-theme='dark'] .mind-tint-butter { --mind-tint: 200, 226, 110; }
+:root[data-theme='dark'] .mind-tint-peach { --mind-tint: 232, 170, 128; }
+:root[data-theme='dark'] .mind-tint-mist { --mind-tint: 128, 176, 204; }
+:root[data-theme='dark'] .mind-tint-rose { --mind-tint: 226, 138, 176; }
+
+:root[data-theme='dark'] :is(.mind-tint-lavender, .mind-tint-sage, .mind-tint-butter, .mind-tint-peach, .mind-tint-mist, .mind-tint-rose) {
+  background: radial-gradient(130% 90% at 0% 0%, rgba(var(--mind-tint), 0.11), transparent 58%), var(--dk-surface);
+  box-shadow: inset 0 0 0 1px rgba(var(--mind-tint), 0.09), var(--dk-shadow);
+}
+
+:root[data-theme='dark'] :is(.mind-tint-lavender, .mind-tint-sage, .mind-tint-butter, .mind-tint-peach, .mind-tint-mist, .mind-tint-rose) .mind-card-icon {
+  background: rgba(var(--mind-tint), 0.16);
+  color: rgb(var(--mind-tint));
+}
+
+:root[data-theme='dark'] :is(.mind-tint-lavender, .mind-tint-sage, .mind-tint-butter, .mind-tint-peach, .mind-tint-mist, .mind-tint-rose) .mind-card-watermark {
+  color: rgb(var(--mind-tint));
+  opacity: 0.06;
+}
+
+:root[data-theme='dark'] .mind-win-star {
+  background: var(--dk-accent);
+  color: var(--dk-on-accent);
+}
+
+/* ══ Learnings ═══════════════════════════════════════════════════════════ */
+
+/* Category tones are mid-dark earth colours; liftTone() in learnings-utils
+   mixes in this much white for the donut segments. */
+:root[data-theme='dark'] .learnings-dashboard {
+  --tone-lift: 38%;
+}
+
+:root[data-theme='dark'] .learnings-cat-badge {
+  border-color: color-mix(in srgb, var(--cat-tone) 34%, transparent);
+  background: color-mix(in srgb, var(--cat-tone) 18%, transparent);
+  color: color-mix(in oklab, var(--cat-tone), #fff 45%);
+}
+
+:root[data-theme='dark'] .lo-cat-row-icon {
+  background: color-mix(in srgb, var(--cat-tone) 20%, transparent);
+  color: color-mix(in oklab, var(--cat-tone), #fff 40%);
+}
+
+:root[data-theme='dark'] .lo-cat-row-fill {
+  background: color-mix(in oklab, var(--cat-tone), #fff 30%);
+}
+
+:root[data-theme='dark'] .lo-cat-tooltip-value {
+  color: color-mix(in oklab, var(--cat-tone, #eceef0), #fff 40%);
+}
+
+:root[data-theme='dark'] .learnings-stat-icon--week {
+  border-color: rgba(207, 233, 101, 0.2);
+  background: rgba(207, 233, 101, 0.14);
+  color: var(--dk-accent);
+}
+
+:root[data-theme='dark'] .focus-block-fullscreen-backdrop {
+  background: rgba(12, 13, 15, 0.97);
+}
+
+/* ══ Finance ═════════════════════════════════════════════════════════════
+   The verdict panels (sage / oat / slate / terracotta) keep their semantics as
+   washes of their hue; the burn-down hero gets the lit-graphite treatment
+   because it is the route's largest colour field. */
+
+:root[data-theme='dark'] .finance-dashboard {
+  --fin-accent-sage: rgba(120, 190, 145, 0.16);
+  --fin-accent-sand: rgba(214, 176, 130, 0.16);
+  --fin-accent-slate: rgba(130, 170, 205, 0.16);
+  --fin-accent-clay: rgba(226, 140, 132, 0.18);
+  --fin-chip: rgba(255, 255, 255, 0.06);
+
+  --fin-chart-fill: #9fd1b0;
+  --fin-chart-grid: rgba(255, 255, 255, 0.08);
+  --fin-chart-future: rgba(255, 255, 255, 0.04);
+  --fin-chart-tick: rgba(236, 238, 240, 0.6);
+  --fin-chart-cursor: rgba(255, 255, 255, 0.2);
+  --fin-chart-budget: rgba(236, 238, 240, 0.45);
+  --fin-chart-label: rgba(236, 238, 240, 0.7);
+  --fin-chart-today: rgba(236, 238, 240, 0.4);
+  --fin-chart-ideal: rgba(236, 238, 240, 0.3);
+  --fin-chart-good: #7dc39d;
+  --fin-chart-over: #ee8a8f;
+  --fin-chart-line: #eceef0;
+  --fin-chart-dot-ring: #1f2226;
+}
+
+:root[data-theme='dark'] .finance-dashboard .fin-intel {
+  --fin-tint-sage: linear-gradient(150deg, rgba(120, 190, 145, 0.14), rgba(120, 190, 145, 0.04));
+  --fin-tint-amber: linear-gradient(150deg, rgba(214, 176, 130, 0.14), rgba(214, 176, 130, 0.04));
+  --fin-tint-blue: linear-gradient(150deg, rgba(130, 170, 205, 0.14), rgba(130, 170, 205, 0.04));
+  --fin-tint-blush: linear-gradient(150deg, rgba(226, 140, 132, 0.14), rgba(226, 140, 132, 0.04));
+}
+
+/* Ledger row icons read --row-accent-soft, a pastel computed in TSX. */
+:root[data-theme='dark'] .finance-transaction-merchant > span {
+  background: color-mix(in srgb, var(--row-accent, #8b9187) 20%, transparent);
+  color: color-mix(in oklab, var(--row-accent, #8b9187), #fff 42%);
+}
+
+:root[data-theme='dark'] .finance-dashboard .fin-intel-hero-panel {
+  background: var(--dk-raised);
+  box-shadow: inset 0 0 0 1px rgba(120, 190, 145, 0.1), var(--dk-highlight);
+}
+
+/* ══ Workouts ════════════════════════════════════════════════════════════ */
+
+:root[data-theme='dark'] .workouts-dashboard {
+  --wk-chart-grid: rgba(255, 255, 255, 0.06);
+  --wk-chart-tick: rgba(236, 238, 240, 0.45);
+  --wk-chart-line: #6fd37f;
+  --wk-chart-dot-ring: #16181b;
+  --wk-donut-value: #eceef0;
+  --wk-donut-label: rgba(236, 238, 240, 0.45);
+}
+
+/* Home "Latest activity": its source sage wash fades in from a corner. Flat in dark. */
+:root[data-theme='dark'] .home-activity-latest {
+  background: var(--dk-raised);
+}
+
+/* ══ Calendar ════════════════════════════════════════════════════════════ */
+
+/* The teal "upcoming task" slab becomes graphite lit by teal. The source rule
+   is !important throughout, so this has to be too. */
+:root[data-theme='dark'] .quick-reminder-card {
+  background: var(--dk-raised) !important;
+  color: var(--dk-ink) !important;
+  box-shadow: inset 0 0 0 1px rgba(45, 180, 165, 0.16), var(--dk-highlight) !important;
+}
+
+/* Routine cards carry a pastel --card-bg inline (from the preview/tag colour).
+   In dark, ignore that pastel and tint a raised graphite by --card-color
+   instead, so every event hue stays legible without a light slab. The
+   glassmorphic source rules are !important, so these must be too. */
+:root[data-theme='dark'] .routine-card {
+  background: color-mix(in srgb, var(--card-color, #1d4ed8) 10%, var(--dk-raised)) !important;
+  border: 1px solid color-mix(in srgb, var(--card-color, #1d4ed8) 26%, var(--dk-line)) !important;
+  box-shadow: var(--dk-highlight) !important;
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .routine-card:hover {
+  background: color-mix(in srgb, var(--card-color, #1d4ed8) 15%, var(--dk-raised)) !important;
+  border-color: color-mix(in srgb, var(--card-color, #1d4ed8) 40%, var(--dk-line)) !important;
+}
+
+:root[data-theme='dark'] .routine-card.is-active {
+  background: color-mix(in srgb, var(--card-color, #1d4ed8) 20%, var(--dk-raised)) !important;
+  border-color: color-mix(in srgb, var(--card-color, #1d4ed8) 58%, var(--dk-line)) !important;
+  box-shadow: 0 12px 32px color-mix(in srgb, var(--card-color, #1d4ed8) 14%, transparent), var(--dk-highlight) !important;
+}
+
+:root[data-theme='dark'] .routine-card-icon,
+:root[data-theme='dark'] .routine-card.is-active .routine-card-icon {
+  background: color-mix(in srgb, var(--card-color, #1d4ed8) 24%, var(--dk-surface)) !important;
+  color: color-mix(in srgb, var(--card-color, #1d4ed8) 55%, #ffffff) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme='dark'] .focus-summary-card {
+  background: radial-gradient(120% 95% at 0% 0%, color-mix(in srgb, var(--focus-color, #1d4ed8) 22%, transparent), transparent 62%), var(--dk-panel) !important;
+  border-color: color-mix(in srgb, var(--focus-color, #1d4ed8) 30%, var(--dk-line)) !important;
+  box-shadow: var(--dk-highlight) !important;
+}
+
+:root[data-theme='dark'] .focus-icon {
+  background: color-mix(in srgb, var(--focus-color, #1d4ed8) 24%, var(--dk-surface)) !important;
+  border-color: var(--dk-line) !important;
+  color: color-mix(in srgb, var(--focus-color, #1d4ed8) 55%, #ffffff) !important;
+}
+
+/* The date-picker popover borrows .learnings-card's translucent glass; with no
+   blur behind it in dark, the queue underneath would read straight through. */
+:root[data-theme='dark'] .learnings-header-calendar {
+  border-color: var(--dk-line-strong);
+  background: var(--dk-overlay);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 24px 56px rgba(0, 0, 0, 0.55);
+}

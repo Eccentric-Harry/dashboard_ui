@@ -18,7 +18,7 @@
 // src/solid-surface.css.
 import type { AtRule, Declaration, PluginCreator, Rule } from 'postcss'
 
-type Rgba = [number, number, number, number]
+export type Rgba = [number, number, number, number]
 type Role = 'fill' | 'line' | 'ink'
 
 const SCOPE = '[data-surface="solid"]'
@@ -117,7 +117,7 @@ const solidSurface: PluginCreator<void> = () => ({
   postcssPlugin: 'solid-surface',
   Once(root) {
     root.walkRules((rule) => {
-      if (rule.selector.includes('data-surface')) return
+      if (/data-(?:surface|theme)/.test(rule.selector)) return
       const parent = rule.parent
       if (parent?.type === 'atrule' && /keyframes$/i.test((parent as AtRule).name)) return
 
@@ -146,4 +146,4 @@ const solidSurface: PluginCreator<void> = () => ({
 })
 solidSurface.postcss = true
 
-export { solidSurface }
+export { formatColor, parseColor, solidSurface }

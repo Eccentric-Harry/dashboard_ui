@@ -34,9 +34,9 @@ const CustomTooltip = ({ active, payload }: any) => {
       <div 
         className="finance-chart-tooltip" 
         style={{ 
-          background: 'rgba(255, 255, 255, 0.95)', 
+          background: 'var(--inline-overlay, rgba(255, 255, 255, 0.95))', 
           backdropFilter: 'blur(8px)',
-          border: '1px solid rgba(0, 0, 0, 0.08)',
+          border: '1px solid var(--inline-line, rgba(0, 0, 0, 0.08))',
           padding: '12px 16px', 
           borderRadius: '16px', 
           boxShadow: '0 12px 30px rgba(0, 0, 0, 0.15)',
@@ -44,9 +44,9 @@ const CustomTooltip = ({ active, payload }: any) => {
           position: 'relative'
         }}
       >
-        <p className="label" style={{ fontWeight: 700, margin: 0, color: '#101312', fontSize: '13px' }}>{data.label}</p>
-        <p className="amount" style={{ fontWeight: 800, margin: '4px 0 0', color: '#101312', fontSize: '16px' }}>₹{data.rawAmount.toLocaleString()}</p>
-        <p className="share" style={{ fontWeight: 600, margin: '4px 0 0', color: 'rgba(23, 28, 25, 0.5)', fontSize: '11px' }}>{data.share} of total</p>
+        <p className="label" style={{ fontWeight: 700, margin: 0, color: 'var(--inline-ink, #101312)', fontSize: '13px' }}>{data.label}</p>
+        <p className="amount" style={{ fontWeight: 800, margin: '4px 0 0', color: 'var(--inline-ink, #101312)', fontSize: '16px' }}>₹{data.rawAmount.toLocaleString()}</p>
+        <p className="share" style={{ fontWeight: 600, margin: '4px 0 0', color: 'var(--inline-ink-soft, rgba(23, 28, 25, 0.5))', fontSize: '11px' }}>{data.share} of total</p>
       </div>
     )
   }
@@ -246,12 +246,12 @@ function SpendingOverviewCard({
               height: '28px',
               padding: '0 10px',
               borderRadius: '11px',
-              background: 'rgba(255, 255, 255, 0.56)',
-              color: '#111514',
+              background: 'var(--inline-fill, rgba(255, 255, 255, 0.56))',
+              color: 'var(--inline-ink, #111514)',
               fontSize: '10px',
               fontWeight: 700,
               border: 'none',
-              boxShadow: 'inset 0 0 0 1px rgba(20, 24, 22, 0.05)',
+              boxShadow: 'inset 0 0 0 1px var(--inline-line, rgba(20, 24, 22, 0.05))',
               outline: 'none',
               cursor: 'pointer'
             }}
@@ -325,10 +325,10 @@ function SpendingOverviewCard({
               textAlign: 'center',
               pointerEvents: 'none'
             }}>
-              <span style={{ display: 'block', fontSize: '14px', color: 'rgba(23, 28, 25, 0.46)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>
+              <span style={{ display: 'block', fontSize: '14px', color: 'var(--inline-ink-soft, rgba(23, 28, 25, 0.46))', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>
                 {centerIndex !== -1 ? spendingData.categories[centerIndex].label : 'Total'}
               </span>
-              <b style={{ display: 'block', fontSize: '28px', color: '#101312', marginTop: '4px', fontWeight: 800 }}>
+              <b style={{ display: 'block', fontSize: '28px', color: 'var(--inline-ink, #101312)', marginTop: '4px', fontWeight: 800 }}>
                 {centerIndex !== -1
                   ? `₹${spendingData.categories[centerIndex].rawAmount.toLocaleString()}`
                   : `₹${spendingData.total.toLocaleString()}`

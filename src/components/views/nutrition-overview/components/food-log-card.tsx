@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { CalendarDays, Flame, Wheat, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useDashboard } from '../../../../store/dashboard-store'
 import { sortFoodEntries } from './food-icon-helper'
@@ -208,13 +208,13 @@ function DailyLogCardInstance({ dateValue, entries, totalProtein, totalCalories,
               <div className="ntr-meal-info">
                 <b title={description}>{description}</b>
                 <div className="ntr-meal-tag-row">
-                  <span className="ntr-meal-tag" style={{ color: tone, borderColor: `${tone}40`, backgroundColor: `${tone}10` }}>
+                  <span className="ntr-meal-tag ntr-meal-tag--quiet" style={{ '--meal-tone': tone } as CSSProperties}>
                     {mealType}
                   </span>
                   {grade && (
                     <span
                       className="ntr-grade-badge"
-                      style={{ backgroundColor: grade.bg, color: grade.ink, borderColor: grade.border }}
+                      style={{ '--grade-ink': grade.ink, '--grade-bg': grade.bg, '--grade-border': grade.border } as CSSProperties}
                       title={`Meal quality: ${grade.label}`}
                     >
                       {grade.letter}

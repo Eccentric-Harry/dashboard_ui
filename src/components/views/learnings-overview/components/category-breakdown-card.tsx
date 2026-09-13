@@ -1,9 +1,9 @@
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback, useMemo, type CSSProperties } from 'react'
 import { PieChart as PieIcon, X } from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import type { LearningLog } from '../../../../lib/api'
 import { learningsService } from '../../../../services/learnings-service'
-import { getConsistentColor, getIconForCategory } from '../learnings-utils'
+import { getConsistentColor, getIconForCategory, liftTone } from '../learnings-utils'
 
 interface CategoryBreakdownCardProps {
   refreshKey: number
@@ -14,19 +14,9 @@ const CustomChartTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload as { name: string; value: number; color?: string }
     return (
-      <div
-        style={{
-          background: '#ffffff',
-          border: '1px solid rgba(0, 0, 0, 0.08)',
-          padding: '10px 14px',
-          borderRadius: '14px',
-          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
-          zIndex: 9999,
-          position: 'relative',
-        }}
-      >
-        <p style={{ fontWeight: 700, margin: 0, color: '#101312', fontSize: '11px' }}>{data.name}</p>
-        <p style={{ fontWeight: 800, margin: '2px 0 0', color: data.color || '#101312', fontSize: '14px' }}>{data.value} logs</p>
+      <div className="lo-cat-tooltip" style={data.color ? ({ '--cat-tone': data.color } as CSSProperties) : undefined}>
+        <p className="lo-cat-tooltip-name">{data.name}</p>
+        <p className="lo-cat-tooltip-value">{data.value} logs</p>
       </div>
     )
   }
@@ -120,7 +110,7 @@ export function CategoryBreakdownCard({ refreshKey }: CategoryBreakdownCardProps
     <section className="learnings-card lo-cat-card">
       <p className="learnings-card-eyebrow">Distribution</p>
       <h3 className="learnings-card-title">
-        <PieIcon size={15} style={{ display: 'inline', marginRight: 6, verticalAlign: -2, color: '#1a7a4a' }} />
+        <PieIcon size={15} className="lo-cat-title-icon" style={{ display: 'inline', marginRight: 6, verticalAlign: -2 }} />
         Learning Categories
       </h3>
 
@@ -181,7 +171,7 @@ export function CategoryBreakdownCard({ refreshKey }: CategoryBreakdownCardProps
                                 ? 1
                                 : 0.45
                         }
-                        style={{ cursor: 'pointer', outline: 'none', transition: 'fill-opacity 0.2s ease' }}
+                        style={{ fill: liftTone(entry.color), cursor: 'pointer', outline: 'none', transition: 'fill-opacity 0.2s ease' }}
                       />
                     ))}
                   </Pie>
@@ -215,7 +205,7 @@ export function CategoryBreakdownCard({ refreshKey }: CategoryBreakdownCardProps
                     className={`lo-cat-row ${isSelected ? 'is-selected' : ''}`}
                     style={{ opacity: isDimmed ? 0.45 : 1 }}
                   >
-                    <span className="lo-cat-row-icon" style={{ backgroundColor: `${color}14`, color }}>
+                    <span className="lo-cat-row-icon" style={{ '--cat-tone': color } as CSSProperties}>
                       <Icon size={13} strokeWidth={2.4} />
                     </span>
                     <span className="lo-cat-row-body">
@@ -226,7 +216,7 @@ export function CategoryBreakdownCard({ refreshKey }: CategoryBreakdownCardProps
                         </span>
                       </span>
                       <span className="lo-cat-row-track">
-                        <span className="lo-cat-row-fill" style={{ width: `${percentage}%`, background: color }} />
+                        <span className="lo-cat-row-fill" style={{ width: `${percentage}%`, '--cat-tone': color } as CSSProperties} />
                       </span>
                     </span>
                   </button>

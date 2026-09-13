@@ -13,6 +13,7 @@ import { TasksCalendarView } from './tasks-calendar-view'
 import { TasksDetailPanel } from './tasks-detail-panel'
 import avatarImage from '../../../assets/reference-crops/avatar_luffy.png'
 import { getTagColor } from '../../../lib/tag-colors'
+import { toneStyle } from '../../../lib/tone'
 import type { AppPath } from '../../dashboard/quantified-self-dashboard/data'
 
 type ViewMode = 'list' | 'kanban' | 'calendar'
@@ -341,7 +342,7 @@ export function TasksDashboard(_props: TasksDashboardProps) {
         {/* Row 1: Search & Avatar */}
         <div className="tasks-search-avatar-row">
             <div className="tasks-search-wrap">
-              <Search size={16} color="rgba(16,19,18,0.4)" />
+              <Search size={16} color="var(--inline-ink-faint, rgba(16,19,18,0.4))" />
               <input
                 type="text"
                 className="tasks-search-input"
@@ -715,8 +716,8 @@ export function TasksDashboard(_props: TasksDashboardProps) {
                         const categoryInfo = getTagColor(actualCategory)
                         return (
                           <span className="k-tag dept" style={{ 
-                            background: categoryInfo.bg, 
-                            color: categoryInfo.text 
+                            ...toneStyle({ hue: categoryInfo.dot, bg: categoryInfo.bg }), 
+                            color: `var(--chip-ink, ${categoryInfo.text})` 
                           }}>
                             <span className="dot" style={{ background: categoryInfo.dot, width: 6, height: 6, borderRadius: '50%', display: 'inline-block' }} />
                             {actualCategory}

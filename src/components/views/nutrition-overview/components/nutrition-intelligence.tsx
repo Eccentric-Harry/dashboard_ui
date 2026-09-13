@@ -234,13 +234,13 @@ function NutritionIntelligence() {
   const ringData = split
     ? split.carbsPct != null
       ? [
-          { name: 'Protein', value: split.proteinPct, color: '#8aa832' },
-          { name: 'Carbs', value: split.carbsPct, color: '#5d87ad' },
-          { name: 'Fat', value: split.fatPct ?? 0, color: '#bd8a44' },
+          { name: 'Protein', value: split.proteinPct, color: 'var(--ntr-lime-deep)' },
+          { name: 'Carbs', value: split.carbsPct, color: 'var(--ntr-sky-deep)' },
+          { name: 'Fat', value: split.fatPct ?? 0, color: 'var(--ntr-apricot-deep)' },
         ]
       : [
-          { name: 'Protein', value: split.proteinPct, color: '#8aa832' },
-          { name: 'Carbs & Fat', value: 100 - split.proteinPct, color: '#c3b18a' },
+          { name: 'Protein', value: split.proteinPct, color: 'var(--ntr-lime-deep)' },
+          { name: 'Carbs & Fat', value: 100 - split.proteinPct, color: 'var(--ntr-chart-mixed, #c3b18a)' },
         ]
     : []
 
@@ -290,20 +290,20 @@ function NutritionIntelligence() {
                       axisLine={false}
                       tickLine={false}
                       interval={1}
-                      tick={{ fill: 'rgba(23, 27, 21, 0.45)', fontSize: 9, fontWeight: 650 }}
+                      tick={{ fill: 'var(--ntr-chart-tick, rgba(23, 27, 21, 0.45))', fontSize: 9, fontWeight: 650 }}
                     />
                     <Tooltip
                       content={<CHART_TOOLTIP />}
-                      cursor={{ stroke: 'rgba(23, 27, 21, 0.14)', strokeWidth: 1, strokeDasharray: '4 5' }}
+                      cursor={{ stroke: 'var(--ntr-chart-cursor, rgba(23, 27, 21, 0.14))', strokeWidth: 1, strokeDasharray: '4 5' }}
                     />
                     <ReferenceLine
                       y={gap.goal}
-                      stroke="rgba(23, 27, 21, 0.3)"
+                      stroke="var(--ntr-chart-guide, rgba(23, 27, 21, 0.3))"
                       strokeDasharray="5 6"
                       label={{
                         position: 'insideTopRight',
                         value: `GOAL ${gap.goal}G`,
-                        fill: 'rgba(23, 27, 21, 0.5)',
+                        fill: 'var(--ntr-chart-label, rgba(23, 27, 21, 0.5))',
                         fontSize: 8.5,
                         fontWeight: 800,
                         letterSpacing: '0.06em',
@@ -312,7 +312,7 @@ function NutritionIntelligence() {
                     <Area
                       type="monotone"
                       dataKey="grams"
-                      stroke="#7e9c2c"
+                      stroke="var(--ntr-chart-line, #7e9c2c)"
                       strokeWidth={2.2}
                       fill="url(#intelProteinFill)"
                       isAnimationActive={isMounted && !window.matchMedia('(prefers-reduced-motion: reduce)').matches}
@@ -570,16 +570,16 @@ function AdherenceBars({
                 hide
                 domain={[0, (max: number) => Math.max(max, calorieTarget ?? 0) * 1.15]}
               />
-              <Tooltip content={<CALORIE_TOOLTIP />} cursor={{ fill: 'rgba(23, 27, 21, 0.05)' }} />
+              <Tooltip content={<CALORIE_TOOLTIP />} cursor={{ fill: 'var(--ntr-chart-hover-fill, rgba(23, 27, 21, 0.05))' }} />
               {calorieTarget && (
                 <ReferenceLine
                   y={calorieTarget}
-                  stroke="rgba(23, 27, 21, 0.32)"
+                  stroke="var(--ntr-chart-guide, rgba(23, 27, 21, 0.32))"
                   strokeDasharray="5 5"
                   label={{
                     position: 'insideTopRight',
                     value: `TARGET ${calorieTarget}`,
-                    fill: 'rgba(23, 27, 21, 0.5)',
+                    fill: 'var(--ntr-chart-label, rgba(23, 27, 21, 0.5))',
                     fontSize: 8.5,
                     fontWeight: 800,
                     letterSpacing: '0.06em',
@@ -590,8 +590,8 @@ function AdherenceBars({
                 {days.map((d) => (
                   <Cell
                     key={d.date}
-                    fill={!d.logged ? 'rgba(23, 27, 21, 0.08)' : d.calorieHit === false ? 'rgba(224, 149, 76, 0.42)' : '#e0954c'}
-                    stroke={d.date === today ? 'rgba(23, 27, 21, 0.4)' : 'none'}
+                    fill={!d.logged ? 'var(--ntr-chart-empty, rgba(23, 27, 21, 0.08))' : d.calorieHit === false ? 'var(--ntr-chart-calories-miss, rgba(224, 149, 76, 0.42))' : 'var(--ntr-chart-calories, #e0954c)'}
+                    stroke={d.date === today ? 'var(--ntr-chart-today, rgba(23, 27, 21, 0.4))' : 'none'}
                     strokeWidth={d.date === today ? 1.5 : 0}
                   />
                 ))}
@@ -617,22 +617,22 @@ function AdherenceBars({
                 tickLine={false}
                 interval={1}
                 tickFormatter={(v: string) => shortDay(v)[0]}
-                tick={{ fill: 'rgba(23, 27, 21, 0.45)', fontSize: 9, fontWeight: 650 }}
+                tick={{ fill: 'var(--ntr-chart-tick, rgba(23, 27, 21, 0.45))', fontSize: 9, fontWeight: 650 }}
               />
               <YAxis
                 hide
                 domain={[0, (max: number) => Math.max(max, proteinGoal ?? 0) * 1.15]}
               />
-              <Tooltip content={<PROTEIN_TOOLTIP />} cursor={{ fill: 'rgba(23, 27, 21, 0.05)' }} />
+              <Tooltip content={<PROTEIN_TOOLTIP />} cursor={{ fill: 'var(--ntr-chart-hover-fill, rgba(23, 27, 21, 0.05))' }} />
               {proteinGoal && (
                 <ReferenceLine
                   y={proteinGoal}
-                  stroke="rgba(23, 27, 21, 0.32)"
+                  stroke="var(--ntr-chart-guide, rgba(23, 27, 21, 0.32))"
                   strokeDasharray="5 5"
                   label={{
                     position: 'insideTopRight',
                     value: `GOAL ${proteinGoal}G`,
-                    fill: 'rgba(23, 27, 21, 0.5)',
+                    fill: 'var(--ntr-chart-label, rgba(23, 27, 21, 0.5))',
                     fontSize: 8.5,
                     fontWeight: 800,
                     letterSpacing: '0.06em',
@@ -643,8 +643,8 @@ function AdherenceBars({
                 {days.map((d) => (
                   <Cell
                     key={d.date}
-                    fill={!d.logged ? 'rgba(23, 27, 21, 0.08)' : d.proteinHit === false ? 'rgba(126, 156, 44, 0.38)' : '#7e9c2c'}
-                    stroke={d.date === today ? 'rgba(23, 27, 21, 0.4)' : 'none'}
+                    fill={!d.logged ? 'var(--ntr-chart-empty, rgba(23, 27, 21, 0.08))' : d.proteinHit === false ? 'var(--ntr-chart-protein-miss, rgba(126, 156, 44, 0.38))' : 'var(--ntr-chart-line, #7e9c2c)'}
+                    stroke={d.date === today ? 'var(--ntr-chart-today, rgba(23, 27, 21, 0.4))' : 'none'}
                     strokeWidth={d.date === today ? 1.5 : 0}
                   />
                 ))}

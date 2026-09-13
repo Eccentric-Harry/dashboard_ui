@@ -71,7 +71,7 @@ export function EditBalanceModal({ isOpen, currentBalance, onClose, onSuccess }:
         </button>
 
         <h2 style={{ fontSize: '22px', marginBottom: '6px' }}>Update Total Balance</h2>
-        <p style={{ fontSize: '12px', color: '#526057', marginBottom: '22px', lineHeight: 1.45 }}>
+        <p style={{ fontSize: '12px', color: 'var(--inline-ink-soft, #526057)', marginBottom: '22px', lineHeight: 1.45 }}>
           Set your current cash balance. Income and expenses you log will adjust it automatically from here.
         </p>
 
@@ -96,7 +96,7 @@ export function EditBalanceModal({ isOpen, currentBalance, onClose, onSuccess }:
           <button
             type="submit"
             className="add-tx-submit"
-            style={{ borderRadius: '10px', backgroundColor: '#121c17' }}
+            style={{ borderRadius: '10px', backgroundColor: 'var(--inline-inverse, #121c17)' }}
             disabled={loading}
           >
             {loading ? <Loader2 className="spinner" size={18} /> : 'Save Balance'}

@@ -16,8 +16,8 @@ const FALLBACK_PROTEIN_TARGET = 100
 function CustomTooltip({ active, payload, label }: any) {
   if (active && payload && payload.length) {
     return (
-      <div style={{ background: '#171b15', padding: '6px 10px', borderRadius: '10px', color: '#a8f0b4', fontSize: '12px', fontWeight: 650, boxShadow: '0 6px 16px rgba(23, 27, 21, 0.2)' }}>
-        <p style={{ margin: 0 }}>{`${label}: ${payload[0].value}g`}</p>
+      <div className="ntr-trend-tooltip">
+        <p>{`${label}: ${payload[0].value}g`}</p>
       </div>
     )
   }
@@ -172,7 +172,7 @@ function ProteinTrendCard() {
     return (
       <g key={`dot-${index}`}>
         <circle cx={cx} cy={cy} r={9} fill="#cfe965" opacity={0.55} />
-        <circle cx={cx} cy={cy} r={4.5} fill="#171b15" stroke="#ffffff" strokeWidth={2} />
+        <circle cx={cx} cy={cy} r={4.5} fill="var(--ntr-chart-dot, #171b15)" stroke="var(--ntr-chart-dot-ring, #ffffff)" strokeWidth={2} />
       </g>
     )
   }
@@ -218,8 +218,8 @@ function ProteinTrendCard() {
                   <stop offset="95%" stopColor="#cfe965" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="colorGramsStroke" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#b5d94c" />
-                  <stop offset="100%" stopColor="#7e9c2c" />
+                  <stop offset="0%" stopColor="var(--ntr-chart-line-start, #b5d94c)" />
+                  <stop offset="100%" stopColor="var(--ntr-chart-line, #7e9c2c)" />
                 </linearGradient>
               </defs>
               <XAxis
@@ -227,11 +227,11 @@ function ProteinTrendCard() {
                 axisLine={false}
                 tickLine={false}
                 interval={0}
-                tick={{ fill: 'rgba(23, 27, 21, 0.42)', fontSize: 10, fontWeight: 650 }}
+                tick={{ fill: 'var(--ntr-chart-tick, rgba(23, 27, 21, 0.42))', fontSize: 10, fontWeight: 650 }}
                 padding={{ left: 14, right: 14 }}
               />
-              <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(23, 27, 21, 0.14)', strokeWidth: 1, strokeDasharray: '4 5' }} />
-              <ReferenceLine y={proteinTarget} stroke="rgba(23, 27, 21, 0.16)" strokeDasharray="5 6" label={{ position: 'insideTopRight', value: `TARGET ${proteinTarget}G`, fill: 'rgba(23, 27, 21, 0.38)', fontSize: 8.5, fontWeight: 800, letterSpacing: '0.06em' }} />
+              <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'var(--ntr-chart-cursor, rgba(23, 27, 21, 0.14))', strokeWidth: 1, strokeDasharray: '4 5' }} />
+              <ReferenceLine y={proteinTarget} stroke="var(--ntr-chart-guide-soft, rgba(23, 27, 21, 0.16))" strokeDasharray="5 6" label={{ position: 'insideTopRight', value: `TARGET ${proteinTarget}G`, fill: 'var(--ntr-chart-label-soft, rgba(23, 27, 21, 0.38))', fontSize: 8.5, fontWeight: 800, letterSpacing: '0.06em' }} />
               <Area
                 type="natural"
                 dataKey="grams"
@@ -239,7 +239,7 @@ function ProteinTrendCard() {
                 strokeWidth={2.5}
                 fillOpacity={1}
                 fill="url(#colorGramsArea)"
-                activeDot={{ r: 5, fill: '#171b15', stroke: '#cfe965', strokeWidth: 3 }}
+                activeDot={{ r: 5, fill: 'var(--ntr-chart-dot, #171b15)', stroke: '#cfe965', strokeWidth: 3 }}
                 dot={renderEndDot}
               />
             </AreaChart>
