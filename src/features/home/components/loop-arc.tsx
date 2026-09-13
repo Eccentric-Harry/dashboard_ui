@@ -1,5 +1,5 @@
 import { useEffect, useId, useState } from 'react'
-import { useCountUp } from '../../../../hooks/use-count-up'
+import { useCountUp } from '@/hooks/use-count-up'
 
 /**
  * The day loop, drawn as one continuous arc.

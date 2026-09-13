@@ -15,8 +15,8 @@ import {
   LayoutDashboard,
   Film
 } from 'lucide-react'
-import type { DailyTask } from '../../../lib/api'
-import { getTagColor } from '../../../lib/tag-colors'
+import type { DailyTask } from '@/lib/api'
+import { getTagColor } from '@/lib/tag-colors'
 
 type TaskCategory = 'Work' | 'Learning' | 'Fitness' | 'Shopping' | 'Chores' | 'Finance' | 'Personal' | 'General' | 'Movies'
 
