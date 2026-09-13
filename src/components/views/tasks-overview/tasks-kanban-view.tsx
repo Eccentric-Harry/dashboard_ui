@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { Plus, MoreHorizontal, Clock, Pencil, Check, Trash2 } from 'lucide-react'
 import type { DailyTask } from '../../../lib/api'
 import { getTagColor } from '../../../lib/tag-colors'
+import { toneStyle } from '../../../lib/tone'
 import avatar1 from '../../../assets/avatars/avatar1.png'
 import avatar2 from '../../../assets/avatars/avatar2.png'
 import avatar3 from '../../../assets/avatars/avatar3.png'
@@ -124,12 +125,12 @@ export function TasksKanbanView({ tasks, onSelect, onStatusChange, onAddTask, on
             <div className="col-info">
               <span className="col-bar" style={{ background: col.dot }} />
               <h4>{col.label}</h4>
-              <span className="kanban-count-badge" style={{ background: col.countBg, color: col.countColor }}>
+              <span className="kanban-count-badge" style={toneStyle({ hue: col.dot, bg: col.countBg, ink: col.countColor })}>
                 {grouped[col.key].length}
               </span>
             </div>
             <button type="button" className="kanban-add-btn" onClick={onAddTask}>
-              <Plus size={14} color="rgba(16,19,18,0.4)" />
+              <Plus size={14} color="var(--inline-ink-faint, rgba(16,19,18,0.4))" />
             </button>
           </div>
           <div 
@@ -141,7 +142,7 @@ export function TasksKanbanView({ tasks, onSelect, onStatusChange, onAddTask, on
             {grouped[col.key].length === 0 ? (
               <div className="kanban-empty-dropzone" onClick={onAddTask} style={{ cursor: 'pointer' }}>
                 <div className="empty-plus">
-                  <Plus size={20} color="rgba(16,19,18,0.3)" strokeWidth={1.5} />
+                  <Plus size={20} color="var(--inline-ink-faint, rgba(16,19,18,0.3))" strokeWidth={1.5} />
                 </div>
                 <span>Drag and drop task here to start</span>
               </div>
@@ -176,7 +177,7 @@ export function TasksKanbanView({ tasks, onSelect, onStatusChange, onAddTask, on
                     </div>
                     
                     <div className="kanban-card-tags">
-                      <span className="k-tag dept" style={{ background: categoryInfo.bg, color: categoryInfo.text }}>
+                      <span className="k-tag dept" style={toneStyle({ hue: categoryInfo.dot, bg: categoryInfo.bg, ink: categoryInfo.text })}>
                         <span className="dot" style={{ background: categoryInfo.dot, width: 6, height: 6, borderRadius: '50%', display: 'inline-block' }} />
                         {category}
                       </span>
@@ -197,7 +198,7 @@ export function TasksKanbanView({ tasks, onSelect, onStatusChange, onAddTask, on
                           </span>
                         )}
                         {isOverdue && (
-                          <span className="k-tag sla" style={{ background: 'rgba(212, 71, 82, 0.1)', color: '#d44752' }}>
+                          <span className="k-tag sla" style={toneStyle({ hue: '#d44752', bg: 'rgba(212, 71, 82, 0.1)', ink: '#d44752' })}>
                             Overdue
                           </span>
                         )}
@@ -231,7 +232,7 @@ export function TasksKanbanView({ tasks, onSelect, onStatusChange, onAddTask, on
                           }
                         }}
                       >
-                        <MoreHorizontal size={14} color="rgba(16,19,18,0.4)" />
+                        <MoreHorizontal size={14} color="var(--inline-ink-faint, rgba(16,19,18,0.4))" />
                       </div>
                       <div className="kanban-assignees">
                         <div className="assignee-avatar" style={{ zIndex: 3, backgroundImage: `url(${firstAvatar})` }} />

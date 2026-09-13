@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { CalendarCheck, ChevronDown, X, Plus, ArrowUpRight, ArrowDownLeft } from 'lucide-react'
 import type { DailyFinancialLog } from '../../../../lib/api'
 import { getConsistentColor, getIconForCategory } from '../utils'
+import { toneStyle } from '../../../../lib/tone'
 import { isStandalone } from '../../../../lib/utils'
 import { MiniMonth } from '../../../ui/mini-month'
 
@@ -311,7 +312,7 @@ function FinanceHeader({ onAddClick, logs, selectedDate, onDateChange }: Finance
                     {pickedDateTransactions.length === 0 ? (
                       <p style={{
                         textAlign: 'center',
-                        color: 'rgba(23, 28, 25, 0.5)',
+                        color: 'var(--inline-ink-soft, rgba(23, 28, 25, 0.5))',
                         fontSize: '13px',
                         padding: '24px 0',
                         margin: 0,
@@ -323,8 +324,8 @@ function FinanceHeader({ onAddClick, logs, selectedDate, onDateChange }: Finance
                           <div className="finance-transaction-row" key={`${merchant}-${detail}-${index}`} role="row" style={{ cursor: 'default' }}>
                             <div className="finance-transaction-merchant" role="cell">
                               <span style={{ 
-                                background: getPastelBG(getConsistentColor(category)), 
-                                color: getConsistentColor(category),
+                                ...toneStyle({ hue: getConsistentColor(category), bg: getPastelBG(getConsistentColor(category)) }), 
+                                color: `var(--chip-ink, ${getConsistentColor(category)})`,
                                 border: 'none',
                                 borderRadius: '12px',
                                 boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)',
@@ -342,9 +343,9 @@ function FinanceHeader({ onAddClick, logs, selectedDate, onDateChange }: Finance
                             </div>
                             <div className="finance-transaction-category" role="cell">
                               <em style={{ 
-                                backgroundColor: `${getConsistentColor(category)}15`, 
-                                color: getConsistentColor(category),
-                                border: `1px solid ${getConsistentColor(category)}30`,
+                                ...toneStyle({ hue: getConsistentColor(category), bg: `${getConsistentColor(category)}15` }), 
+                                color: `var(--chip-ink, ${getConsistentColor(category)})`,
+                                border: `1px solid var(--chip-line, ${getConsistentColor(category)}30)`,
                                 padding: '5px 10px',
                                 borderRadius: '8px',
                                 fontSize: '9px',
@@ -364,7 +365,7 @@ function FinanceHeader({ onAddClick, logs, selectedDate, onDateChange }: Finance
                               <strong className={tone} style={{
                                 fontSize: '13px',
                                 fontWeight: 800,
-                                color: tone === 'income' ? '#1a8b30' : '#d83542',
+                                ...toneStyle({ hue: tone === 'income' ? '#1a8b30' : '#d83542', ink: tone === 'income' ? '#1a8b30' : '#d83542' }),
                               }}>
                                 {amount}
                               </strong>

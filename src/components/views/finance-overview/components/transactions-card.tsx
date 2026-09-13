@@ -158,7 +158,7 @@ function TransactionsCard({
           aria-label="Toggle edit mode"
           aria-pressed={isEditMode}
           style={{
-            background: isEditMode ? 'rgba(20, 24, 22, 0.06)' : 'transparent',
+            background: isEditMode ? 'var(--inline-fill, rgba(20, 24, 22, 0.06))' : 'transparent',
             padding: '0',
             borderRadius: '8px',
             width: '32px',
@@ -176,11 +176,6 @@ function TransactionsCard({
         </button>
       </div>
       <div className="finance-transaction-table" role="table" aria-label="Recent transactions">
-        <div className="finance-transaction-row header" role="row">
-          <span role="columnheader">Merchant</span>
-          <span role="columnheader">Category</span>
-          <span role="columnheader">Amount (INR)</span>
-        </div>
         <div className="finance-transaction-list" role="rowgroup">
           {loading ? (
             Array.from({ length: 5 }).map((_, idx) => (
@@ -189,11 +184,8 @@ function TransactionsCard({
                   <div className="skeleton-shimmer skeleton-circle" style={{ width: '30px', height: '30px', borderRadius: '50%' }} />
                   <div style={{ flex: 1, marginLeft: '11px' }}>
                     <div className="skeleton-shimmer skeleton-rect" style={{ width: '120px', height: '12px', borderRadius: '3px' }} />
-                    <div className="skeleton-shimmer skeleton-rect" style={{ width: '60px', height: '8px', marginTop: '6px', borderRadius: '2px' }} />
+                    <div className="skeleton-shimmer skeleton-rect" style={{ width: '90px', height: '8px', marginTop: '6px', borderRadius: '2px' }} />
                   </div>
-                </div>
-                <div className="finance-transaction-category" role="cell">
-                  <div className="skeleton-shimmer skeleton-rect" style={{ width: '80px', height: '18px', borderRadius: '9999px' }} />
                 </div>
                 <div className="finance-transaction-amount-group" role="cell">
                   <div className="skeleton-shimmer skeleton-rect" style={{ width: '60px', height: '14px', borderRadius: '3px' }} />
@@ -238,13 +230,16 @@ function TransactionsCard({
                         <span>
                           <Icon size={14} strokeWidth={2.3} />
                         </span>
+                        {/* Category rides in the subline instead of its own
+                            column: a fixed middle column left a wide void between
+                            the merchant and the amount on a full-width card. */}
                         <p>
                           <b>{merchant}</b>
-                          <small>{detail}</small>
+                          <small className="fin-tx-sub">
+                            <em className="fin-tx-cat">{category}</em>
+                            {detail && <span className="fin-tx-time">{detail}</span>}
+                          </small>
                         </p>
-                      </div>
-                      <div className="finance-transaction-category" role="cell">
-                        <em>{category}</em>
                       </div>
                       <div className="finance-transaction-amount-group" role="cell">
                         <strong className={tone}>

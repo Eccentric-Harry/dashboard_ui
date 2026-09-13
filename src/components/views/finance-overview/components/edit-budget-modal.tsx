@@ -68,7 +68,7 @@ export function EditBudgetModal({ isOpen, currentBudget, onClose, onSuccess }: E
         </button>
 
         <h2 style={{ fontSize: '22px', marginBottom: '6px' }}>Set Monthly Budget</h2>
-        <p style={{ fontSize: '12px', color: '#526057', marginBottom: '22px', lineHeight: 1.45 }}>
+        <p style={{ fontSize: '12px', color: 'var(--inline-ink-soft, #526057)', marginBottom: '22px', lineHeight: 1.45 }}>
           Your monthly spending limit. The home dashboard will show what percentage of this you've used so far.
         </p>
 
@@ -94,7 +94,7 @@ export function EditBudgetModal({ isOpen, currentBudget, onClose, onSuccess }: E
           <button
             type="submit"
             className="add-tx-submit"
-            style={{ borderRadius: '10px', backgroundColor: '#121c17' }}
+            style={{ borderRadius: '10px', backgroundColor: 'var(--inline-inverse, #121c17)' }}
             disabled={loading}
           >
             {loading ? <Loader2 className="spinner" size={18} /> : 'Save Budget'}

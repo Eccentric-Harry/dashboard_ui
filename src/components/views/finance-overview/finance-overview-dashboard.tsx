@@ -263,8 +263,14 @@ function FinanceOverviewDashboard() {
               // Time, not date: the ledger now groups rows under a day header,
               // so repeating "8/3/2026" on every row under "TODAY" spent a line
               // of each row restating what the header already said. The clock
-              // time is the detail that header can't carry.
-              detail: new Date(tx.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              // time is the detail that header can't carry. Entries saved without a
+              // time land on local midnight; "12:00 AM" on those is noise, not data.
+              detail: (() => {
+                const at = new Date(tx.timestamp)
+                return at.getHours() === 0 && at.getMinutes() === 0
+                  ? ''
+                  : at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              })(),
               category: category,
               amount: `${isIncome ? '+' : '-'}₹${tx.amount.toLocaleString()}`,
               tone: isIncome ? 'income' : 'expense',

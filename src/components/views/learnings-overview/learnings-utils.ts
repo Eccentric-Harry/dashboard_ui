@@ -113,11 +113,7 @@ export function getConsistentColor(category: string) {
   return colors[Math.abs(hash) % colors.length]
 }
 
-export function getCategoryStyle(category: string) {
-  const tone = getConsistentColor(category)
-  return {
-    bg: `${tone}10`, // 10% opacity
-    color: tone,
-    border: `1px solid ${tone}24`, // 15% opacity
-  }
+/** A category tone the dark theme can lighten through --tone-lift (theme-dark.css). */
+export function liftTone(tone: string) {
+  return `color-mix(in oklab, ${tone}, #fff var(--tone-lift, 0%))`
 }

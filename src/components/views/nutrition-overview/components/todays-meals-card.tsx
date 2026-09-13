@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, type CSSProperties } from 'react'
 import { ChevronRight, Pencil, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { sortFoodEntries } from './food-icon-helper'
@@ -175,14 +175,14 @@ function TodaysMealsCard({ onEdit, onSelectEntry }: TodaysMealsCardProps) {
                 <span className="ntr-meal-tag-row">
                   <span
                     className="ntr-meal-tag"
-                    style={{ backgroundColor: `${tone}14`, color: tone, border: `1px solid ${tone}2e` }}
+                    style={{ '--meal-tone': tone } as CSSProperties}
                   >
                     {mealType}
                   </span>
                   {grade && (
                     <span
                       className="ntr-grade-badge"
-                      style={{ backgroundColor: grade.bg, color: grade.ink, borderColor: grade.border }}
+                      style={{ '--grade-ink': grade.ink, '--grade-bg': grade.bg, '--grade-border': grade.border } as CSSProperties}
                       title={`Meal quality: ${grade.label}`}
                     >
                       {grade.letter}

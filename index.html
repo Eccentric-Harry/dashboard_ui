@@ -11,11 +11,21 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="theme-color" content="#dfe4df" />
   <script>
-    // Apply the glass/solid surface preference before first paint (see src/store/appearance-store.ts).
+    // Apply surface + theme preferences before first paint (see src/store/appearance-store.ts).
+    // Dark only lands on routes reviewed for it — keep this list in sync with DARK_THEME_ROUTES.
     try {
+      var root = document.documentElement;
+      var themeMeta = document.querySelector('meta[name="theme-color"]');
       if (localStorage.getItem('surfaceStyle') === 'solid') {
-        document.documentElement.dataset.surface = 'solid';
-        document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f5f6f8');
+        root.dataset.surface = 'solid';
+        themeMeta.setAttribute('content', '#f5f6f8');
+      }
+      var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      var path = (standalone && localStorage.getItem('pwa_last_path')) || location.pathname;
+      if (path === '/') path = '/home';
+      if (localStorage.getItem('themePreference') === 'dark' && ['/home', '/nutrition', '/finance', '/learnings', '/tasks', '/workouts', '/calendar', '/calender', '/prompts', '/people', '/profile', '/mind'].indexOf(path) !== -1) {
+        root.dataset.theme = 'dark';
+        themeMeta.setAttribute('content', '#0c0d0f');
       }
     } catch (e) {}
   </script>

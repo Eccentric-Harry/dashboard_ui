@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { X, Check, Plus, Trash2, Clock, CalendarDays, Circle, MoreHorizontal, Pencil } from 'lucide-react'
 import type { DailyTask } from '../../../lib/api'
 import { getTagColor } from '../../../lib/tag-colors'
+import { toneStyle } from '../../../lib/tone'
 
 interface SubTask {
   id?: string
@@ -135,7 +136,7 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate, 
               }
             }}
             aria-label="More options"
-            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(16,19,18,0.4)', borderRadius: 6 }}
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--inline-ink-faint, rgba(16,19,18,0.4))', borderRadius: 6 }}
           >
             <MoreHorizontal size={14} />
           </button>
@@ -149,28 +150,28 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate, 
             <h2 className="tasks-detail-title">{task.title}</h2>
 
             <div className="tasks-detail-meta-tags">
-              <span className="k-tag" style={{ background: categoryInfo.bg, color: categoryInfo.text }}>
+              <span className="k-tag" style={toneStyle({ hue: categoryInfo.dot, bg: categoryInfo.bg, ink: categoryInfo.text })}>
                 <span className="dot" style={{ background: categoryInfo.dot, width: 6, height: 6, borderRadius: '50%', display: 'inline-block' }} />
                 {category}
               </span>
-              <span className="k-tag id" style={{ background: '#f3f4f6', color: '#4b5563' }}>
+              <span className="k-tag id" style={toneStyle({ hue: '#4b5563', bg: '#f3f4f6', ink: '#4b5563' })}>
                 <Circle size={10} />
                 {task.status === 'TODO' ? 'To Do' : task.status === 'IN_PROGRESS' ? 'In Progress' : task.status === 'DONE' ? 'Done' : (task.completed ? 'Done' : 'To Do')}
               </span>
               {task.date && (
-                <span className="k-tag id" style={{ background: '#f3f4f6', color: '#4b5563' }}>
+                <span className="k-tag id" style={toneStyle({ hue: '#4b5563', bg: '#f3f4f6', ink: '#4b5563' })}>
                   <CalendarDays size={10} />
                   {formatFriendlyDate(task.date)}
                 </span>
               )}
               {task.scheduledTime && (
-                <span className="k-tag time" style={{ background: '#f3e8ff', color: '#7e22ce' }}>
+                <span className="k-tag time" style={toneStyle({ hue: '#7e22ce', bg: '#f3e8ff', ink: '#7e22ce' })}>
                   <Clock size={10} />
                   {task.scheduledTime}
                 </span>
               )}
               {task.completed && (
-                <span className="k-tag sla sla-done" style={{ background: '#d1fae5', color: '#047857' }}>
+                <span className="k-tag sla sla-done" style={toneStyle({ hue: '#047857', bg: '#d1fae5', ink: '#047857' })}>
                   <Check size={10} />
                   Completed
                 </span>
@@ -178,7 +179,7 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate, 
               {tags.map((t) => {
                 const colors = getTagColor(t)
                 return (
-                  <span key={t} className="k-tag" style={{ background: colors.bg, color: colors.text }}>
+                  <span key={t} className="k-tag" style={toneStyle({ hue: colors.dot, bg: colors.bg, ink: colors.text })}>
                     {t}
                     <button type="button" className="tasks-tag-remove" aria-label="Remove tag" onClick={() => {
                       const newArr = tags.filter(x => x !== t)
@@ -225,7 +226,7 @@ export function TasksDetailPanel({ task, onClose, onToggle, onDelete, onUpdate, 
               <div className="tasks-detail-section-label">Checklist</div>
               {subtasks.length === 0 ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <p style={{ fontSize: 13, color: 'rgba(16,19,18,0.35)', margin: 0 }}>
+                  <p style={{ fontSize: 13, color: 'var(--inline-ink-faint, rgba(16,19,18,0.35))', margin: 0 }}>
                     No subtasks yet
                   </p>
                   {!isAddingSubtask && (

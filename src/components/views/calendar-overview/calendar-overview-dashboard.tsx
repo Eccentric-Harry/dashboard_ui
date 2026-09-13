@@ -201,8 +201,9 @@ function getEventStyleClasses(item: CalendarItem) {
   
   return {
     style: {
-      backgroundColor: bgSubtle,
-      color: '#1e293b',
+      '--chip-hue': formattedColor,
+      backgroundColor: `var(--chip-surface, ${bgSubtle})`,
+      color: 'var(--chip-ink, #1e293b)',
       fontWeight: '600',
       borderRadius: '8px',
       border: 'none',
@@ -1243,9 +1244,10 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                                     fontWeight: '700',
                                     border: 'none',
                                     cursor: 'pointer',
+                                    ...({ '--chip-hue': cardStyles.style['--chip-hue'] } as React.CSSProperties),
                                     backgroundColor: cardStyles.style.backgroundColor,
                                     color: cardStyles.style.color,
-                                    boxShadow: isActive ? `0 0 0 2px #ffffff, 0 0 0 4px ${displayColorForItem(item)}` : 'none',
+                                    boxShadow: isActive ? `0 0 0 2px var(--ring-cutout, #ffffff), 0 0 0 4px ${displayColorForItem(item)}` : 'none',
                                     zIndex: isActive ? 2 : 1,
                                   }}
                                 >
@@ -1305,7 +1307,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                                   left: left,
                                   ...cardStyles.style,
                                   ...(isActive ? {
-                                    boxShadow: `0 0 0 2px #ffffff, 0 0 0 4px ${displayColorForItem(item)}`,
+                                    boxShadow: `0 0 0 2px var(--ring-cutout, #ffffff), 0 0 0 4px ${displayColorForItem(item)}`,
                                     zIndex: 11,
                                   } : {})
                                 } as React.CSSProperties}
@@ -2322,12 +2324,12 @@ function CalendarItemModal({
                 />
               </div>
 
-              <label className="calendar-checkbox-row" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', fontWeight: 700, color: 'rgba(16, 19, 18, 0.5)', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '4px' }}>
+              <label className="calendar-checkbox-row" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', fontWeight: 700, color: 'var(--inline-ink-soft, rgba(16, 19, 18, 0.5))', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '4px' }}>
                 <input 
                   type="checkbox" 
                   checked={completed} 
                   onChange={(e) => setCompleted(e.target.checked)} 
-                  style={{ width: '16px', height: '16px', borderRadius: '4px', accentColor: '#101312', cursor: 'pointer' }}
+                  style={{ width: '16px', height: '16px', borderRadius: '4px', accentColor: 'var(--inline-ink, #101312)', cursor: 'pointer' }}
                 />
                 Completed
               </label>
@@ -2351,11 +2353,11 @@ function CalendarItemModal({
                   <RoutineIcon size={16} />
                 </span>
                 <div className="routine-card-copy" style={{ display: 'grid', gap: '2px', flex: 1, minWidth: 0 }}>
-                  <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(16, 19, 18, 0.4)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--inline-ink-faint, rgba(16, 19, 18, 0.4))', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     {getFormattedTimeRange()}
                   </span>
-                  <strong style={{ fontSize: '13.5px', fontWeight: 700, color: '#101312', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title || 'Untitled Routine'}</strong>
-                  <p style={{ margin: 0, fontSize: '11.5px', color: 'rgba(16, 19, 18, 0.55)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <strong style={{ fontSize: '13.5px', fontWeight: 700, color: 'var(--inline-ink, #101312)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title || 'Untitled Routine'}</strong>
+                  <p style={{ margin: 0, fontSize: '11.5px', color: 'var(--inline-ink-soft, rgba(16, 19, 18, 0.55))', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {notes || 'No description provided.'}
                   </p>
                 </div>

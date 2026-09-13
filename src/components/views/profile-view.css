@@ -865,11 +865,19 @@
 /* Macro composition donut — same ring-plus-legend shape as Nutrition's own
    ".ntr-intel-ring" so a chart introduced here reads as the same visual
    language as the rest of the app, not a one-off. */
+/* Ring beside legend when the card is wide enough; on a narrow card the legend
+   drops below as a full-width row and the ring centres above it — the old
+   left-aligned wrap parked the ring alone with dead space beside it. The pair
+   also takes the card's leftover height so the Nutrition card doesn't end in a
+   void next to the taller BMI card. */
 .profile-macro-ring {
+  flex: 1;
   display: flex;
-  align-items: center;
-  gap: 18px;
   flex-wrap: wrap;
+  align-items: center;
+  align-content: center;
+  justify-content: center;
+  gap: 16px;
 }
 
 .profile-macro-ring-chart {
@@ -909,8 +917,8 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  min-width: 140px;
-  flex: 1;
+  min-width: 0;
+  flex: 1 1 150px;
 }
 
 .profile-macro-ring-legend li {
@@ -931,6 +939,7 @@
 
 .profile-macro-ring-legend li b {
   margin-left: auto;
+  white-space: nowrap;
   font-weight: 750;
   color: #101312;
 }
@@ -959,10 +968,15 @@
   border-radius: 14px;
 }
 
+/* Label and total each stay on one line; on a narrow card the total drops to
+   its own row instead of both breaking mid-phrase ("Energy / balance",
+   "2,911 / kcal/day"), which left ragged gaps beside them. */
 .energy-balance-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: 2px 6px;
+  white-space: nowrap;
   font-size: 10px;
   font-weight: 750;
   letter-spacing: 0.06em;

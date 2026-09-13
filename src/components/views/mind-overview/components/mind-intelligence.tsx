@@ -138,10 +138,10 @@ function MindIntelligenceCard({ entries, radar, ledger }: MindIntelligenceCardPr
                       tickLine={false}
                       tickFormatter={shortDay}
                       interval={2}
-                      tick={{ fill: 'rgba(16, 19, 18, 0.45)', fontSize: 9, fontWeight: 600 }}
+                      tick={{ fill: 'var(--mind-chart-tick, rgba(16, 19, 18, 0.45))', fontSize: 9, fontWeight: 600 }}
                     />
-                    <Tooltip content={<TREND_TOOLTIP />} cursor={{ fill: 'rgba(16, 19, 18, 0.05)' }} />
-                    <Bar dataKey="captured" radius={[4, 4, 0, 0]} fill="rgba(65, 74, 120, 0.55)" />
+                    <Tooltip content={<TREND_TOOLTIP />} cursor={{ fill: 'var(--mind-chart-cursor, rgba(16, 19, 18, 0.05))' }} />
+                    <Bar dataKey="captured" radius={[4, 4, 0, 0]} fill="var(--mind-chart-bar, rgba(65, 74, 120, 0.55))" />
                   </BarChart>
                 </ResponsiveContainer>
               )}

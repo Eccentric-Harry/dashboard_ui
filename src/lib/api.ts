@@ -32,74 +32,6 @@ export type { StravaActivity, StravaActivityStats };
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api/v1';
 
-export async function fetchDashboardData(date?: string) {
-  const query = date ? `?date=${date}` : '';
-  const response = await fetch(`${API_BASE_URL}/dashboard${query}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch dashboard data');
-  }
-  return response.json();
-}
-
-export async function fetchNutritionSummary(date?: string) {
-  const query = date ? `?date=${date}` : '';
-  const response = await fetch(`${API_BASE_URL}/dashboard/nutrition-summary${query}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch nutrition summary');
-  }
-  return response.json();
-}
-
-export async function fetchFoodEntries(days?: number, startDate?: string, endDate?: string, mealType?: string) {
-  const params = new URLSearchParams();
-  if (days) params.append('days', days.toString());
-  if (startDate) params.append('startDate', startDate);
-  if (endDate) params.append('endDate', endDate);
-  if (mealType) params.append('mealType', mealType);
-  
-  const query = params.toString() ? `?${params.toString()}` : '';
-  const response = await fetch(`${API_BASE_URL}/health/food${query}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch food entries');
-  }
-  return response.json();
-}
-
-export async function addFoodEntry(data: { description: string; calories: number; proteinGrams: number; mealType: string; date: string }) {
-  const response = await fetch(`${API_BASE_URL}/health/food`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Failed to add food entry: ${errorText}`);
-  }
-  return response.json();
-}
-
-export async function updateFoodEntry(mealId: string, entryId: string, data: { description: string; calories: number; proteinGrams: number; mealType: string; date: string }) {
-  const response = await fetch(`${API_BASE_URL}/health/food/${mealId}/meal/${entryId}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to update food entry');
-  }
-  return response.json();
-}
-
-export async function deleteFoodEntry(mealId: string, entryId: string) {
-  const response = await fetch(`${API_BASE_URL}/health/food/${mealId}/meal/${entryId}`, {
-    method: 'DELETE',
-  });
-  if (!response.ok) {
-    throw new Error('Failed to delete food entry');
-  }
-  return response.json();
-}
-
 
 // ─── Gemini AI Meal Analysis (Stage 2 Clinical Assessment Schema) ──────────
 
@@ -310,7 +242,7 @@ export async function analyzeMeal(
   date: string,
   // Sized to the server's stage budget with room for one fallback attempt:
   // extraction 75s + narrative 45s, each able to fail over to the secondary provider
-  // (~45s), lands a worst case near 210s. 180s cut into that and surfaced as a
+  // (~45s), lands the worst case near 210s. 180s cut into that and surfaced as a
   // spurious timeout on slow analyses that were in fact still running server-side.
   timeoutMs = 240000
 ): Promise<{ data: MealAnalysisApiResponse }> {
@@ -385,52 +317,6 @@ export async function analyzeMeal(
   throw new Error('Analysis timed out while waiting for the result')
 }
 
-export async function fetchSpendingSummary(month?: string) {
-  const query = month ? `?month=${month}` : '';
-  const response = await fetch(`${API_BASE_URL}/dashboard/spending-summary${query}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch spending summary');
-  }
-  return response.json();
-}
-
-export async function fetchSubscriptions() {
-  const response = await fetch(`${API_BASE_URL}/subscriptions`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch subscriptions');
-  }
-  return response.json();
-}
-
-export async function addSubscription(data: { name: string; cost: number; billingDate?: string }) {
-  const response = await fetch(`${API_BASE_URL}/subscriptions`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to add subscription');
-  }
-  return response.json();
-}
-
-export async function deleteSubscription(id: string) {
-  const response = await fetch(`${API_BASE_URL}/subscriptions/${id}`, {
-    method: 'DELETE',
-  });
-  if (!response.ok) {
-    throw new Error('Failed to delete subscription');
-  }
-}
-
-
-export async function fetchWorkoutsData() {
-  const response = await fetch(`${API_BASE_URL}/workouts`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch workouts data');
-  }
-  return response.json();
-}
 
 export interface HydrationData {
   id?: string;
@@ -439,220 +325,6 @@ export interface HydrationData {
   targetMl: number;
   progress: number;
   notes?: string;
-}
-
-export async function fetchHydration(date?: string) {
-  const query = date ? `?date=${date}` : '';
-  const response = await fetch(`${API_BASE_URL}/health/hydration${query}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch hydration data');
-  }
-  return response.json();
-}
-
-/** One hydration record per day over the window — powers the hydration insight rule. */
-export async function fetchHydrationRange(days?: number, startDate?: string, endDate?: string) {
-  const params = new URLSearchParams();
-  if (startDate) params.append('startDate', startDate);
-  if (endDate) params.append('endDate', endDate);
-  if (!startDate && days) params.append('days', days.toString());
-  const query = params.toString() ? `?${params.toString()}` : '';
-  const response = await fetch(`${API_BASE_URL}/health/hydration/range${query}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch hydration range');
-  }
-  return response.json();
-}
-
-export async function addWaterIntake(amount: number, date?: string) {
-  const params = new URLSearchParams();
-  params.append('amount', amount.toString());
-  if (date) params.append('date', date);
-  
-  const response = await fetch(`${API_BASE_URL}/health/hydration/add?${params.toString()}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-  });
-  if (!response.ok) {
-    throw new Error('Failed to add water intake');
-  }
-  return response.json();
-}
-
-export async function updateHydration(id: string, data: { waterIntakeMl: number; targetMl?: number; notes?: string; date: string }) {
-  const response = await fetch(`${API_BASE_URL}/health/hydration/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to update hydration');
-  }
-  return response.json();
-}
-
-export async function fetchDailyFinanceLogs(days?: number) {
-  const query = days ? `?days=${days}` : '';
-  const response = await fetch(`${API_BASE_URL}/finance/daily-logs${query}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch daily finance logs');
-  }
-  return response.json();
-}
-
-export async function addTransaction(data: { description: string; amount: number; category: string; type: string; date: string }) {
-  const response = await fetch(`${API_BASE_URL}/finance/transactions`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to add transaction');
-  }
-  return response.json();
-}
-
-export async function updateTransaction(id: string, data: { description: string; amount: number; category: string; type: string; date: string }) {
-  const response = await fetch(`${API_BASE_URL}/finance/transactions/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to update transaction');
-  }
-  return response.json();
-}
-
-export async function deleteTransaction(id: string) {
-  const response = await fetch(`${API_BASE_URL}/finance/transactions/${id}`, {
-    method: 'DELETE',
-  });
-  if (!response.ok) {
-    throw new Error('Failed to delete transaction');
-  }
-  // Delete typically returns 204 No Content, so we don't try to parse JSON.
-}
-
-// ─── Finance Account (Total Balance) ─────────────────────────────────
-export async function fetchFinanceAccount(): Promise<{ data: FinanceAccount }> {
-  const response = await fetch(`${API_BASE_URL}/finance/account`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch finance account');
-  }
-  return response.json();
-}
-
-export async function updateFinanceBalance(balance: number): Promise<{ data: FinanceAccount }> {
-  const response = await fetch(`${API_BASE_URL}/finance/account/balance`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ balance }),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to update balance');
-  }
-  return response.json();
-}
-
-export async function fetchFinanceBudget(): Promise<{ data: FinanceAccount }> {
-  const response = await fetch(`${API_BASE_URL}/finance/budget`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch budget');
-  }
-  return response.json();
-}
-
-export async function updateFinanceBudget(monthlyBudget: number): Promise<{ data: FinanceAccount }> {
-  const response = await fetch(`${API_BASE_URL}/finance/budget`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ monthlyBudget }),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to update budget');
-  }
-  return response.json();
-}
-
-export async function fetchSliceRepayments() {
-  const response = await fetch(`${API_BASE_URL}/finance/slice-repayments`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch Slice repayments');
-  }
-  return response.json();
-}
-
-// ─── Strava Activities ───────────────────────────────────────────────
-
-export async function fetchStravaActivities() {
-  const response = await fetch(`${API_BASE_URL}/workouts/activities`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch Strava activities');
-  }
-  return response.json();
-}
-
-export async function fetchStravaActivityStats() {
-  const response = await fetch(`${API_BASE_URL}/workouts/activities/stats`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch Strava activity stats');
-  }
-  return response.json();
-}
-
-export async function createStravaActivity(data: {
-  activityName: string;
-  sportType: string;
-  distanceKm: number;
-  movingTime: string;
-  elevationGainMeters: number;
-  date: string;
-  stravaEmbedId?: string;
-  stravaToken?: string;
-}) {
-  const response = await fetch(`${API_BASE_URL}/workouts/activities`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to create Strava activity');
-  }
-  return response.json();
-}
-
-export async function importStravaJson(payload: unknown) {
-  const response = await fetch(`${API_BASE_URL}/workouts/import/strava`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to import Strava JSON');
-  }
-  return response.json();
-}
-
-export async function fetchFeaturedStravaEmbed() {
-  const response = await fetch(`${API_BASE_URL}/workouts/featured-embed`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch featured Strava embed');
-  }
-  const result = await response.json();
-  return result.data;
-}
-
-export async function updateFeaturedStravaEmbed(data: { id: string; token?: string }) {
-  const response = await fetch(`${API_BASE_URL}/workouts/featured-embed`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to update featured Strava embed');
-  }
-  return response.json();
 }
 
 // ─── Learnings API ───────────────────────────────────────────────────
@@ -665,57 +337,6 @@ export interface LearningLog {
   date: string; // YYYY-MM-DD
   notionUrl?: string;
   createdAt?: string;
-}
-
-export async function fetchLearnings(date?: string) {
-  const query = date ? `?date=${date}` : '';
-  const response = await fetch(`${API_BASE_URL}/learnings${query}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch learnings');
-  }
-  return response.json();
-}
-
-export async function fetchLearningsForRange(startDate: string, endDate: string) {
-  const response = await fetch(`${API_BASE_URL}/learnings/range?startDate=${startDate}&endDate=${endDate}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch learnings in range');
-  }
-  return response.json();
-}
-
-export async function addLearning(data: Omit<LearningLog, 'id'>) {
-  const response = await fetch(`${API_BASE_URL}/learnings`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to add learning');
-  }
-  return response.json();
-}
-
-export async function updateLearning(id: string, data: Omit<LearningLog, 'id'>) {
-  const response = await fetch(`${API_BASE_URL}/learnings/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to update learning');
-  }
-  return response.json();
-}
-
-export async function deleteLearning(id: string) {
-  const response = await fetch(`${API_BASE_URL}/learnings/${id}`, {
-    method: 'DELETE',
-  });
-  if (!response.ok) {
-    throw new Error('Failed to delete learning');
-  }
-  return response.json();
 }
 
 // ─── Learnings Summary & Tasks ───────────────────────────────────────
@@ -755,15 +376,6 @@ export interface LearningsSummary {
   stats: LearningsStatsSummary;
 }
 
-export async function fetchLearningsSummary(date?: string) {
-  const query = date ? `?date=${date}` : '';
-  const response = await fetch(`${API_BASE_URL}/dashboard/learnings-summary${query}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch learnings summary');
-  }
-  return response.json();
-}
-
 export interface SubTask {
   id?: string;
   text: string;
@@ -787,72 +399,6 @@ export interface DailyTask {
   subtasks?: SubTask[];
   tags?: string[];
 }
-
-export async function fetchTasks(date?: string) {
-  const query = date ? `?date=${date}` : '';
-  const response = await fetch(`${API_BASE_URL}/learnings/tasks${query}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch tasks');
-  }
-  return response.json();
-}
-
-export async function fetchTasksForRange(startDate: string, endDate: string) {
-  const response = await fetch(
-    `${API_BASE_URL}/learnings/tasks/range?startDate=${startDate}&endDate=${endDate}`,
-  );
-  if (!response.ok) {
-    throw new Error('Failed to fetch tasks in range');
-  }
-  return response.json();
-}
-
-export async function addTask(data: Omit<DailyTask, 'id'>) {
-  const response = await fetch(`${API_BASE_URL}/learnings/tasks`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to add task');
-  }
-  return response.json();
-}
-
-export async function updateTask(id: string, data: Omit<DailyTask, 'id'>) {
-  const response = await fetch(`${API_BASE_URL}/learnings/tasks/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to update task');
-  }
-  return response.json();
-}
-
-export async function toggleTask(id: string, date?: string) {
-  const query = date ? `?date=${date}` : '';
-  const response = await fetch(`${API_BASE_URL}/learnings/tasks/${id}/toggle${query}`, {
-    method: 'PATCH',
-  });
-  if (!response.ok) {
-    throw new Error('Failed to toggle task');
-  }
-  return response.json();
-}
-
-export async function deleteTask(id: string) {
-  const response = await fetch(`${API_BASE_URL}/learnings/tasks/${id}`, {
-    method: 'DELETE',
-  });
-  if (!response.ok) {
-    throw new Error('Failed to delete task');
-  }
-  return response.json();
-}
-
-// ─── Calendar API ───────────────────────────────────────────────────
 
 export type CalendarItemType = 'TASK' | 'EVENT' | 'REMINDER' | 'MILESTONE';
 export type CalendarRecurrence = 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY';
@@ -901,73 +447,6 @@ export type CalendarItemPayload = {
   recurrenceUntil?: string;
 };
 
-export async function fetchCalendarItemsForRange(startDate: string, endDate: string) {
-  const response = await fetch(
-    `${API_BASE_URL}/calendar/items/range?startDate=${startDate}&endDate=${endDate}`,
-  );
-  if (!response.ok) {
-    throw new Error('Failed to fetch calendar items');
-  }
-  return response.json();
-}
-
-export async function createCalendarItem(data: CalendarItemPayload) {
-  const response = await fetch(`${API_BASE_URL}/calendar/items`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to create calendar item');
-  }
-  return response.json();
-}
-
-export async function updateCalendarItem(id: string, data: CalendarItemPayload) {
-  const response = await fetch(`${API_BASE_URL}/calendar/items/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to update calendar item');
-  }
-  return response.json();
-}
-
-export async function toggleCalendarItem(id: string, date?: string) {
-  const query = date ? `?date=${date}` : '';
-  const response = await fetch(`${API_BASE_URL}/calendar/items/${id}/toggle${query}`, {
-    method: 'PATCH',
-  });
-  if (!response.ok) {
-    throw new Error('Failed to toggle calendar item');
-  }
-  return response.json();
-}
-
-export async function toggleCancelCalendarItem(id: string, date?: string) {
-  const query = date ? `?date=${date}` : '';
-  const response = await fetch(`${API_BASE_URL}/calendar/items/${id}/toggle-cancel${query}`, {
-    method: 'PATCH',
-  });
-  if (!response.ok) {
-    throw new Error('Failed to toggle calendar item cancellation');
-  }
-  return response.json();
-}
-
-export async function deleteCalendarItem(id: string, date?: string) {
-  const query = date ? `?date=${date}` : '';
-  const response = await fetch(`${API_BASE_URL}/calendar/items/${id}${query}`, {
-    method: 'DELETE',
-  });
-  if (!response.ok) {
-    throw new Error('Failed to delete calendar item');
-  }
-  return response.json();
-}
-
 export interface DailyLog {
   id?: string;
   date?: string;
@@ -976,15 +455,6 @@ export interface DailyLog {
   moodScore?: number | null;
   moodNote?: string | null;
 }
-
-export async function fetchDailyLogRange(startDate: string, endDate: string): Promise<ApiEnvelope<DailyLog[]>> {
-  const response = await fetch(`${API_BASE_URL}/daily-log/range?startDate=${startDate}&endDate=${endDate}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch daily logs in range');
-  }
-  return response.json();
-}
-
 // ─── Sleep API ────────────────────────────────────────────────────────
 // Mirrors the `sleep_logs` collection + SleepController. One entry per night,
 // keyed by the wake-up date. TODO: wearable sync will populate source: 'wearable'.
@@ -1013,48 +483,6 @@ export interface SleepEntryPayload {
   source?: SleepSource;
 }
 
-export async function fetchSleepEntries(startDate: string, endDate: string): Promise<ApiEnvelope<SleepEntry[]>> {
-  const response = await fetch(`${API_BASE_URL}/sleep?startDate=${startDate}&endDate=${endDate}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch sleep entries');
-  }
-  return response.json();
-}
-
-export async function logSleep(payload: SleepEntryPayload): Promise<ApiEnvelope<SleepEntry>> {
-  const response = await fetch(`${API_BASE_URL}/sleep`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to log sleep');
-  }
-  return response.json();
-}
-
-export async function updateSleepEntry(id: string, payload: SleepEntryPayload): Promise<ApiEnvelope<SleepEntry>> {
-  const response = await fetch(`${API_BASE_URL}/sleep/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to update sleep entry');
-  }
-  return response.json();
-}
-
-export async function deleteSleepEntry(id: string): Promise<ApiEnvelope<null>> {
-  const response = await fetch(`${API_BASE_URL}/sleep/${id}`, {
-    method: 'DELETE',
-  });
-  if (!response.ok) {
-    throw new Error('Failed to delete sleep entry');
-  }
-  return response.json();
-}
-
 // ─── Focus history (per-day completed minutes) ───────────────────────
 
 export interface FocusDaySummary {
@@ -1065,56 +493,6 @@ export interface FocusDaySummary {
   timerMinutes?: number;
   manualMinutes?: number;
   calendarMinutes?: number;
-}
-
-export async function fetchFocusHistory(startDate: string, endDate: string): Promise<ApiEnvelope<FocusDaySummary[]>> {
-  const response = await fetch(`${API_BASE_URL}/focus/history?startDate=${startDate}&endDate=${endDate}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch focus history');
-  }
-  return response.json();
-}
-
-// ─── Web Push Notification API ────────────────────────────────────────
-
-export async function fetchVapidPublicKey(): Promise<string> {
-  const response = await fetch(`${API_BASE_URL}/push/public-key`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch VAPID public key');
-  }
-  const result = await response.json();
-  return result.data;
-}
-
-export interface PushSubscriptionPayload {
-  endpoint: string;
-  p256dh: string;
-  auth: string;
-  timezone: string;
-}
-
-export async function subscribeDevice(payload: PushSubscriptionPayload) {
-  const response = await fetch(`${API_BASE_URL}/push/subscribe`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to register device subscription');
-  }
-  return response.json();
-}
-
-export async function unsubscribeDevice(endpoint: string) {
-  const response = await fetch(
-    `${API_BASE_URL}/push/unsubscribe?endpoint=${encodeURIComponent(endpoint)}`,
-    {
-      method: 'POST',
-    },
-  );
-  if (!response.ok) {
-    throw new Error('Failed to unregister device subscription');
-  }
 }
 
 
@@ -1135,80 +513,6 @@ export interface LearningPursuit {
   steps: PursuitStep[];
 }
 
-export async function fetchPursuits(): Promise<{ data: LearningPursuit[] }> {
-  const response = await fetch(`${API_BASE_URL}/pursuits`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch learning pursuits');
-  }
-  return response.json();
-}
-
-export async function createPursuit(data: { title: string; category: string; steps: string[] }): Promise<{ data: LearningPursuit }> {
-  const response = await fetch(`${API_BASE_URL}/pursuits`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to create learning pursuit');
-  }
-  return response.json();
-}
-
-export async function togglePursuitStep(id: string, stepId: string): Promise<{ data: LearningPursuit }> {
-  const response = await fetch(`${API_BASE_URL}/pursuits/${id}/steps/${stepId}`, {
-    method: 'PATCH',
-  });
-  if (!response.ok) {
-    throw new Error('Failed to toggle step completion');
-  }
-  return response.json();
-}
-
-export async function deletePursuit(id: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/pursuits/${id}`, {
-    method: 'DELETE',
-  });
-  if (!response.ok) {
-    throw new Error('Failed to delete learning pursuit');
-  }
-}
-
-export async function updatePursuit(id: string, data: { title: string; category: string }): Promise<{ data: LearningPursuit }> {
-  const response = await fetch(`${API_BASE_URL}/pursuits/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to update learning pursuit');
-  }
-  return response.json();
-}
-
-export async function deletePursuitStep(id: string, stepId: string): Promise<{ data: LearningPursuit }> {
-  const response = await fetch(`${API_BASE_URL}/pursuits/${id}/steps/${stepId}`, {
-    method: 'DELETE',
-  });
-  if (!response.ok) {
-    throw new Error('Failed to delete subtask step');
-  }
-  return response.json();
-}
-
-export async function updatePursuitStep(id: string, stepId: string, text: string): Promise<{ data: LearningPursuit }> {
-  const response = await fetch(`${API_BASE_URL}/pursuits/${id}/steps/${stepId}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text }),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to update subtask step');
-  }
-  return response.json();
-}
-
-
 // ─── Focus Session API ─────────────────────────────────────────────────
 
 export interface FocusSession {
@@ -1221,111 +525,6 @@ export interface FocusSession {
   endTime?: string;
   remainingSecondsOnPause?: number;
 }
-
-export async function fetchCurrentSession(): Promise<{ data: FocusSession | null }> {
-  const response = await fetch(`${API_BASE_URL}/focus/current`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch current focus session');
-  }
-  return response.json();
-}
-
-export async function startFocusSession(activePursuit: string, durationMinutes: number): Promise<{ data: FocusSession }> {
-  const response = await fetch(`${API_BASE_URL}/focus/start`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ activePursuit, durationMinutes }),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to start focus session');
-  }
-  return response.json();
-}
-
-export async function pauseFocusSession(): Promise<{ data: FocusSession }> {
-  const response = await fetch(`${API_BASE_URL}/focus/pause`, { method: 'POST' });
-  if (!response.ok) {
-    throw new Error('Failed to pause focus session');
-  }
-  return response.json();
-}
-
-export async function resumeFocusSession(): Promise<{ data: FocusSession }> {
-  const response = await fetch(`${API_BASE_URL}/focus/resume`, { method: 'POST' });
-  if (!response.ok) {
-    throw new Error('Failed to resume focus session');
-  }
-  return response.json();
-}
-
-export async function cancelFocusSession(): Promise<{ data: FocusSession }> {
-  const response = await fetch(`${API_BASE_URL}/focus/cancel`, { method: 'POST' });
-  if (!response.ok) {
-    throw new Error('Failed to cancel focus session');
-  }
-  return response.json();
-}
-
-export async function completeFocusSession(): Promise<{ data: FocusSession }> {
-  const response = await fetch(`${API_BASE_URL}/focus/complete`, { method: 'POST' });
-  if (!response.ok) {
-    throw new Error('Failed to complete focus session');
-  }
-  return response.json();
-}
-// ─── Lending Records API ─────────────────────────────────────────────
-
-export async function fetchLendingRecords(): Promise<{ data: LendingRecord[] }> {
-  const response = await fetch(`${API_BASE_URL}/finance/lending`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch lending records');
-  }
-  return response.json();
-}
-
-export async function addLendingRecord(data: Omit<LendingRecord, 'id'>): Promise<{ data: LendingRecord }> {
-  const response = await fetch(`${API_BASE_URL}/finance/lending`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to add lending record');
-  }
-  return response.json();
-}
-
-export async function updateLendingRecord(id: string, data: Omit<LendingRecord, 'id'>): Promise<{ data: LendingRecord }> {
-  const response = await fetch(`${API_BASE_URL}/finance/lending/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to update lending record');
-  }
-  return response.json();
-}
-
-export async function toggleLendingRecordStatus(id: string): Promise<{ data: LendingRecord }> {
-  const response = await fetch(`${API_BASE_URL}/finance/lending/${id}/toggle`, {
-    method: 'PATCH',
-  });
-  if (!response.ok) {
-    throw new Error('Failed to toggle lending record status');
-  }
-  return response.json();
-}
-
-export async function deleteLendingRecord(id: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/finance/lending/${id}`, {
-    method: 'DELETE',
-  });
-  if (!response.ok) {
-    throw new Error('Failed to delete lending record');
-  }
-}
-
 // ─── Prompts API ─────────────────────────────────────────────────────
 
 export interface Prompt {
@@ -1336,47 +535,6 @@ export interface Prompt {
   tags?: string[];
   createdAt: string;
   updatedAt: string;
-}
-
-export async function fetchPrompts(): Promise<{ data: Prompt[] }> {
-  const response = await fetch(`${API_BASE_URL}/prompts`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch prompts');
-  }
-  return response.json();
-}
-
-export async function createPrompt(data: { title: string; content: string; category?: string; tags?: string[] }): Promise<{ data: Prompt }> {
-  const response = await fetch(`${API_BASE_URL}/prompts`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to create prompt');
-  }
-  return response.json();
-}
-
-export async function updatePrompt(id: string, data: { title: string; content: string; category?: string; tags?: string[] }): Promise<{ data: Prompt }> {
-  const response = await fetch(`${API_BASE_URL}/prompts/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to update prompt');
-  }
-  return response.json();
-}
-
-export async function deletePrompt(id: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/prompts/${id}`, {
-    method: 'DELETE',
-  });
-  if (!response.ok) {
-    throw new Error('Failed to delete prompt');
-  }
 }
 
 // Global active-GET request tracking for the route navigation loader. The counter
@@ -1442,40 +600,6 @@ if (typeof window !== 'undefined') {
   };
 }
 
-export async function verifyPasscode(passcode: string) {
-  const response = await fetch(`${API_BASE_URL}/auth/verify`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ passcode }),
-  });
-  return response.json();
-}
-
-export async function loginUser(username: string, passcode: string) {
-  const response = await fetch(`${API_BASE_URL}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, passcode }),
-  });
-  if (!response.ok) {
-    const errData = await response.json().catch(() => ({}));
-    throw new Error(errData?.data?.message || 'Invalid username or passcode');
-  }
-  return response.json();
-}
-
-export async function signupUser(username: string, displayName: string, passcode: string) {
-  const response = await fetch(`${API_BASE_URL}/auth/signup`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, displayName, passcode }),
-  });
-  if (!response.ok) {
-    const errData = await response.json().catch(() => ({}));
-    throw new Error(errData?.data?.message || 'Signup failed. Username might be taken.');
-  }
-  return response.json();
-}
 
 export interface PhysicalMetrics {
   age?: number;
@@ -1520,26 +644,6 @@ export interface UserProfile {
   tdee?: number;
 }
 
-export async function getUserProfile(): Promise<{ data: UserProfile }> {
-  const response = await fetch(`${API_BASE_URL}/users/profile`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch user profile');
-  }
-  return response.json();
-}
-
-export async function updateUserProfile(data: Partial<UserProfile>): Promise<{ data: UserProfile }> {
-  const response = await fetch(`${API_BASE_URL}/users/profile`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to update user profile');
-  }
-  return response.json();
-}
-
 export interface GoogleCalendarAccount {
   email: string;
   lastSyncedAt?: string;
@@ -1552,66 +656,11 @@ export interface GoogleSyncStatus {
   accounts: GoogleCalendarAccount[];
 }
 
-export async function fetchGoogleSyncStatus(): Promise<{ data: GoogleSyncStatus }> {
-  const response = await fetch(`${API_BASE_URL}/google-calendar/auth/status`);
-  if (!response.ok) throw new Error('Failed to fetch Google Sync status');
-  return response.json();
-}
-
-export async function fetchGoogleAuthUrl(): Promise<{ data: { url: string } }> {
-  const response = await fetch(`${API_BASE_URL}/google-calendar/auth/url`);
-  if (!response.ok) throw new Error('Failed to fetch Google Auth URL');
-  return response.json();
-}
-
-export async function disconnectGoogleCalendar(email?: string): Promise<{ data: { status: string } }> {
-  const url = email
-    ? `${API_BASE_URL}/google-calendar/auth/disconnect?email=${encodeURIComponent(email)}`
-    : `${API_BASE_URL}/google-calendar/auth/disconnect`;
-  const response = await fetch(url, { method: 'POST' });
-  if (!response.ok) throw new Error('Failed to disconnect Google Calendar');
-  return response.json();
-}
-
-export async function triggerGoogleSync(email?: string): Promise<{ data: { status: string } }> {
-  const url = email
-    ? `${API_BASE_URL}/google-calendar/sync?email=${encodeURIComponent(email)}`
-    : `${API_BASE_URL}/google-calendar/sync`;
-  const response = await fetch(url, { method: 'POST' });
-  if (!response.ok) throw new Error('Failed to trigger Google sync');
-  return response.json();
-}
-
-export async function pushLocalEventsToGoogle(email?: string): Promise<{ data: { status: string; totalPushed: number; byAccount: Record<string, number> } }> {
-  const url = email
-    ? `${API_BASE_URL}/google-calendar/push-local?email=${encodeURIComponent(email)}`
-    : `${API_BASE_URL}/google-calendar/push-local`;
-  const response = await fetch(url, { method: 'POST' });
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw new Error((body?.data?.error) ?? 'Failed to push local events to Google Calendar');
-  }
-  return response.json();
-}
-
-
 
 
 // ─── Mind (mental wellness) ────────────────────────────────────────────────
 // Mirrors the `mind_entries` collection + MindController. Canonical types live here;
 // mind-types.ts re-exports them alongside its UI constants.
-
-export interface ApiMeta {
-  requestId: string;
-  timestamp: string;
-  source: string;
-}
-
-export interface ApiEnvelope<T> {
-  data: T;
-  meta: ApiMeta;
-}
-
 export type MindEntryType =
   | 'THOUGHT'
   | 'WIN'
@@ -1811,94 +860,6 @@ export interface MindSpiralPayload {
   date?: string;
 }
 
-export async function fetchMindEntries(type?: MindEntryType, status?: MindEntryStatus): Promise<ApiEnvelope<MindEntry[]>> {
-  const params = new URLSearchParams();
-  if (type) params.append('type', type);
-  if (status) params.append('status', status);
-  const query = params.toString() ? `?${params.toString()}` : '';
-  const response = await fetch(`${API_BASE_URL}/mind/entries${query}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch mind entries');
-  }
-  return response.json();
-}
-
-export async function fetchMindSummary(date?: string): Promise<ApiEnvelope<MindSummary>> {
-  const query = date ? `?date=${date}` : '';
-  const response = await fetch(`${API_BASE_URL}/mind/summary${query}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch mind summary');
-  }
-  return response.json();
-}
-
-export async function createMindEntry(payload: MindEntryPayload): Promise<ApiEnvelope<MindEntry>> {
-  const response = await fetch(`${API_BASE_URL}/mind/entries`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to create mind entry');
-  }
-  return response.json();
-}
-
-export async function updateMindEntry(id: string, payload: MindEntryPayload): Promise<ApiEnvelope<MindEntry>> {
-  const response = await fetch(`${API_BASE_URL}/mind/entries/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to update mind entry');
-  }
-  return response.json();
-}
-
-export async function updateMindStatus(id: string, payload: MindStatusPayload): Promise<ApiEnvelope<MindEntry>> {
-  const response = await fetch(`${API_BASE_URL}/mind/entries/${id}/status`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to update mind entry status');
-  }
-  return response.json();
-}
-
-export async function convertMindEntry(id: string): Promise<ApiEnvelope<MindEntry>> {
-  const response = await fetch(`${API_BASE_URL}/mind/entries/${id}/convert`, {
-    method: 'POST',
-  });
-  if (!response.ok) {
-    throw new Error('Failed to convert mind entry to a task');
-  }
-  return response.json();
-}
-
-export async function deleteMindEntry(id: string): Promise<ApiEnvelope<null>> {
-  const response = await fetch(`${API_BASE_URL}/mind/entries/${id}`, {
-    method: 'DELETE',
-  });
-  if (!response.ok) {
-    throw new Error('Failed to delete mind entry');
-  }
-  return response.json();
-}
-
-export async function saveMindMood(date: string, moodScore: number, moodNote?: string): Promise<ApiEnvelope<DailyLog>> {
-  const response = await fetch(`${API_BASE_URL}/mind/mood?date=${date}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ moodScore, moodNote }),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to save mood');
-  }
-  return response.json();
-}
 
 export interface SleepLog {
   id?: string;
@@ -1908,33 +869,4 @@ export interface SleepLog {
   durationMinutes: number;
   notes?: string;
   createdAt?: string;
-}
-
-export async function addSleepLog(data: {
-  date: string;
-  bedTime: string;
-  wakeTime: string;
-  durationMinutes: number;
-  notes?: string;
-}): Promise<ApiEnvelope<SleepLog>> {
-  const response = await fetch(`${API_BASE_URL}/health/sleep`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to log sleep');
-  }
-  return response.json();
-}
-
-export async function fetchSleepLogs(days?: number): Promise<ApiEnvelope<SleepLog[]>> {
-  const params = new URLSearchParams();
-  if (days) params.append('days', days.toString());
-  const query = params.toString() ? `?${params.toString()}` : '';
-  const response = await fetch(`${API_BASE_URL}/health/sleep${query}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch sleep logs');
-  }
-  return response.json();
 }

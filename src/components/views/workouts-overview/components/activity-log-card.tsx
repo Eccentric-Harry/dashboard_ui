@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Footprints, Bike, PersonStanding, Zap, ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react'
 import type { StravaActivity } from '../../../../lib/api'
+import { toneStyle } from '../../../../lib/tone'
 
 type ActivityLogCardProps = {
   activities: StravaActivity[]
@@ -34,41 +35,41 @@ function ActivityLogCard({ activities, loading, onEdit, onDelete }: ActivityLogC
     switch (sportType) {
       case 'Run':
         return {
-          background: '#eafaf1',
-          color: '#16a34a',
+          ...toneStyle({ hue: '#16a34a', bg: '#eafaf1' }),
+          color: 'var(--chip-ink, #16a34a)',
           border: 'none',
           borderRadius: '10px',
           boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
         }
       case 'Ride':
         return {
-          background: '#e6f0ff',
-          color: '#2563eb',
+          ...toneStyle({ hue: '#2563eb', bg: '#e6f0ff' }),
+          color: 'var(--chip-ink, #2563eb)',
           border: 'none',
           borderRadius: '10px',
           boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
         }
       case 'Walk':
         return {
-          background: '#fff4e6',
-          color: '#d97706',
+          ...toneStyle({ hue: '#d97706', bg: '#fff4e6' }),
+          color: 'var(--chip-ink, #d97706)',
           border: 'none',
           borderRadius: '10px',
           boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
         }
       case 'E-Bike Ride':
         return {
-          background: '#f5f2ff',
-          color: '#7c3aed',
+          ...toneStyle({ hue: '#7c3aed', bg: '#f5f2ff' }),
+          color: 'var(--chip-ink, #7c3aed)',
           border: 'none',
           borderRadius: '10px',
           boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
         }
       default:
         return {
-          background: 'rgba(107, 114, 128, 0.12)',
-          color: '#4b5563',
-          border: '1px solid rgba(107, 114, 128, 0.25)',
+          ...toneStyle({ hue: '#4b5563', bg: 'rgba(107, 114, 128, 0.12)' }),
+          color: 'var(--chip-ink, #4b5563)',
+          border: '1px solid var(--chip-line, rgba(107, 114, 128, 0.25))',
           borderRadius: '10px',
           boxShadow: 'none'
         }
@@ -129,7 +130,7 @@ function ActivityLogCard({ activities, loading, onEdit, onDelete }: ActivityLogC
           onClick={() => setIsEditMode(!isEditMode)}
           aria-label="Toggle edit mode"
           style={{ 
-            background: isEditMode ? 'rgba(20, 24, 22, 0.06)' : 'transparent', 
+            background: isEditMode ? 'var(--inline-fill, rgba(20, 24, 22, 0.06))' : 'transparent', 
             padding: '0', 
             borderRadius: '8px', 
             border: 'none', 
@@ -218,8 +219,8 @@ function ActivityLogCard({ activities, loading, onEdit, onDelete }: ActivityLogC
                         <span className="mobile-only">
                           {' · '}
                           <span style={{ 
-                            color: '#ca8a04', 
-                            background: '#fef9c3', 
+                            ...toneStyle({ hue: '#ca8a04', ink: '#ca8a04' }), 
+                            background: 'var(--chip-surface, #fef9c3)', 
                             padding: '1px 5px', 
                             borderRadius: '4px', 
                             fontWeight: 700,
@@ -235,8 +236,8 @@ function ActivityLogCard({ activities, loading, onEdit, onDelete }: ActivityLogC
                   <span>{activity.distanceKm.toFixed(2)} km</span>
                   <span className="mobile-hide">
                     <span style={{ 
-                      color: '#ca8a04', 
-                      background: '#fef9c3', 
+                      ...toneStyle({ hue: '#ca8a04', ink: '#ca8a04' }), 
+                      background: 'var(--chip-surface, #fef9c3)', 
                       padding: '4px 8px', 
                       borderRadius: '6px', 
                       fontWeight: 700,
@@ -266,8 +267,8 @@ function ActivityLogCard({ activities, loading, onEdit, onDelete }: ActivityLogC
                               placeItems: 'center',
                               border: '0',
                               borderRadius: '6px',
-                              background: 'rgba(23, 28, 25, 0.05)',
-                              color: 'rgba(23, 28, 25, 0.7)',
+                              background: 'var(--inline-fill, rgba(23, 28, 25, 0.05))',
+                              color: 'var(--inline-ink-soft, rgba(23, 28, 25, 0.7))',
                               cursor: 'pointer',
                               transition: 'background 0.2s, color 0.2s',
                               boxShadow: 'none',
@@ -276,12 +277,12 @@ function ActivityLogCard({ activities, loading, onEdit, onDelete }: ActivityLogC
                               padding: '0',
                             }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.background = 'rgba(23, 28, 25, 0.1)'
-                              e.currentTarget.style.color = 'rgba(23, 28, 25, 0.9)'
+                              e.currentTarget.style.background = 'var(--inline-fill, rgba(23, 28, 25, 0.1))'
+                              e.currentTarget.style.color = 'var(--inline-ink, rgba(23, 28, 25, 0.9))'
                             }}
                             onMouseLeave={(e) => {
-                              e.currentTarget.style.background = 'rgba(23, 28, 25, 0.05)'
-                              e.currentTarget.style.color = 'rgba(23, 28, 25, 0.7)'
+                              e.currentTarget.style.background = 'var(--inline-fill, rgba(23, 28, 25, 0.05))'
+                              e.currentTarget.style.color = 'var(--inline-ink-soft, rgba(23, 28, 25, 0.7))'
                             }}
                           >
                             <Pencil size={12} />
@@ -300,7 +301,7 @@ function ActivityLogCard({ activities, loading, onEdit, onDelete }: ActivityLogC
                               border: '0',
                               borderRadius: '6px',
                               background: 'rgba(239, 68, 68, 0.08)',
-                              color: '#dc2626',
+                              color: 'var(--inline-danger, #dc2626)',
                               cursor: 'pointer',
                               transition: 'background 0.2s, color 0.2s',
                               boxShadow: 'none',
@@ -310,11 +311,11 @@ function ActivityLogCard({ activities, loading, onEdit, onDelete }: ActivityLogC
                             }}
                             onMouseEnter={(e) => {
                               e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'
-                              e.currentTarget.style.color = '#b91c1c'
+                              e.currentTarget.style.color = 'var(--inline-danger, #b91c1c)'
                             }}
                             onMouseLeave={(e) => {
                               e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)'
-                              e.currentTarget.style.color = '#dc2626'
+                              e.currentTarget.style.color = 'var(--inline-danger, #dc2626)'
                             }}
                           >
                             <Trash2 size={12} />

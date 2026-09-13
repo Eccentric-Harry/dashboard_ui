@@ -766,13 +766,16 @@
   margin-top: 3px;
 }
 
+/* --grade-* come from meal-grade.ts via inline style so the theme can re-tone them */
 .ntr-grade-badge {
   display: inline-grid;
   width: 18px;
   height: 18px;
   place-items: center;
-  border: 1px solid;
+  border: 1px solid var(--grade-border);
   border-radius: 999px;
+  background: var(--grade-bg);
+  color: var(--grade-ink);
   font-size: 10px;
   font-weight: 800;
   line-height: 1;
@@ -814,15 +817,24 @@
   white-space: nowrap;
 }
 
+/* --meal-tone is the meal type's hue, set inline */
 .ntr-meal-tag {
   display: inline-block;
   margin-top: 3px;
   padding: 2px 8px;
+  border: 1px solid color-mix(in srgb, var(--meal-tone, #8b9187) 18%, transparent);
   border-radius: 999px;
+  background: color-mix(in srgb, var(--meal-tone, #8b9187) 8%, transparent);
+  color: var(--meal-tone, #8b9187);
   font-size: 9.5px;
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
+}
+
+.ntr-meal-tag--quiet {
+  border: 0;
+  background: color-mix(in srgb, var(--meal-tone, #8b9187) 6%, transparent);
 }
 
 .ntr-meal-stats {
@@ -874,6 +886,20 @@
   min-width: 0;
   margin-top: 14px;
   margin-left: -12px;
+}
+
+.ntr-trend-tooltip {
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: #171b15;
+  color: #a8f0b4;
+  font-size: 12px;
+  font-weight: 650;
+  box-shadow: 0 6px 16px rgba(23, 27, 21, 0.2);
+}
+
+.ntr-trend-tooltip p {
+  margin: 0;
 }
 
 /* ── Hydration card ─────────────────────────────────────────────── */
@@ -1677,6 +1703,12 @@
   font-size: 13px;
   color: var(--ntr-ink-soft);
 }
+.af-ai-intro {
+  margin: 0 0 16px;
+  color: rgba(16, 19, 18, 0.5);
+  font-size: 13px;
+  line-height: 1.5;
+}
 .af-meal-toggles {
   display: flex;
   flex-wrap: wrap;
@@ -1700,6 +1732,12 @@
   background: var(--ntr-ink);
   color: var(--ntr-lime);
   border-color: var(--ntr-ink);
+}
+/* Grade chip in the JSON-paste preview; --grade-* set inline from meal-grade.ts */
+.af-json-grade[style*='--grade-ink'] {
+  border-color: var(--grade-border);
+  background: var(--grade-bg);
+  color: var(--grade-ink);
 }
 .af-live-macro-preview {
   display: flex;

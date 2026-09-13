@@ -336,9 +336,9 @@ function FinanceIntelligence({
                           of the panel's own hue, which keeps the near-black curve
                           on top as the highest-contrast thing in the plot. */}
                       <linearGradient id="finActualFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#2c4835" stopOpacity={0.2} />
-                        <stop offset="60%" stopColor="#2c4835" stopOpacity={0.07} />
-                        <stop offset="100%" stopColor="#2c4835" stopOpacity={0} />
+                        <stop offset="0%" stopColor="var(--fin-chart-fill, #2c4835)" stopOpacity={0.2} />
+                        <stop offset="60%" stopColor="var(--fin-chart-fill, #2c4835)" stopOpacity={0.07} />
+                        <stop offset="100%" stopColor="var(--fin-chart-fill, #2c4835)" stopOpacity={0} />
                       </linearGradient>
                     </defs>
 
@@ -347,7 +347,7 @@ function FinanceIntelligence({
                         you could see it rising but not read *how much* off it. */}
                     <CartesianGrid
                       vertical={false}
-                      stroke="rgba(23, 28, 25, 0.11)"
+                      stroke="var(--fin-chart-grid, rgba(23, 28, 25, 0.11))"
                       strokeDasharray="0"
                     />
 
@@ -360,7 +360,7 @@ function FinanceIntelligence({
                       <ReferenceArea
                         x1={burndown.daysElapsed}
                         x2={burndown.points.length}
-                        fill="rgba(255, 255, 255, 0.3)"
+                        fill="var(--fin-chart-future, rgba(255, 255, 255, 0.3))"
                         stroke="none"
                       />
                     )}
@@ -371,7 +371,7 @@ function FinanceIntelligence({
                       tickLine={false}
                       tickMargin={8}
                       ticks={[1, 5, 10, 15, 20, 25, burndown.points.length]}
-                      tick={{ fill: 'rgba(23, 28, 25, 0.72)', fontSize: 9.5, fontWeight: 650 }}
+                      tick={{ fill: 'var(--fin-chart-tick, rgba(23, 28, 25, 0.72))', fontSize: 9.5, fontWeight: 650 }}
                     />
                     <YAxis
                       width={46}
@@ -380,11 +380,11 @@ function FinanceIntelligence({
                       ticks={yTicks}
                       domain={[0, yMax]}
                       tickFormatter={compactInr}
-                      tick={{ fill: 'rgba(23, 28, 25, 0.72)', fontSize: 9.5, fontWeight: 650 }}
+                      tick={{ fill: 'var(--fin-chart-tick, rgba(23, 28, 25, 0.72))', fontSize: 9.5, fontWeight: 650 }}
                     />
                     <Tooltip
                       content={<BurndownTooltip monthKey={selectedMonthKey} />}
-                      cursor={{ stroke: 'rgba(23, 28, 25, 0.22)', strokeWidth: 1 }}
+                      cursor={{ stroke: 'var(--fin-chart-cursor, rgba(23, 28, 25, 0.22))', strokeWidth: 1 }}
                     />
 
                     {/* Budget line, labelled on the right where it terminates. The
@@ -393,12 +393,12 @@ function FinanceIntelligence({
                         started fast. */}
                     <ReferenceLine
                       y={burndown.budget}
-                      stroke="rgba(23, 28, 25, 0.46)"
+                      stroke="var(--fin-chart-budget, rgba(23, 28, 25, 0.46))"
                       strokeDasharray="4 4"
                       label={{
                         position: 'right',
                         value: 'budget',
-                        fill: 'rgba(23, 28, 25, 0.74)',
+                        fill: 'var(--fin-chart-label, rgba(23, 28, 25, 0.74))',
                         fontSize: 9,
                         fontWeight: 800,
                         letterSpacing: '0.06em',
@@ -411,12 +411,12 @@ function FinanceIntelligence({
                     {burndown.isCurrentMonth && (
                       <ReferenceLine
                         x={burndown.daysElapsed}
-                        stroke="rgba(23, 28, 25, 0.4)"
+                        stroke="var(--fin-chart-today, rgba(23, 28, 25, 0.4))"
                         strokeWidth={1}
                         label={{
                           position: 'top',
                           value: 'today',
-                          fill: 'rgba(23, 28, 25, 0.74)',
+                          fill: 'var(--fin-chart-label, rgba(23, 28, 25, 0.74))',
                           fontSize: 9,
                           fontWeight: 800,
                           letterSpacing: '0.06em',
@@ -427,7 +427,7 @@ function FinanceIntelligence({
                     <Line
                       type="linear"
                       dataKey="ideal"
-                      stroke="rgba(23, 28, 25, 0.36)"
+                      stroke="var(--fin-chart-ideal, rgba(23, 28, 25, 0.36))"
                       strokeWidth={1.4}
                       dot={false}
                       activeDot={false}
@@ -437,7 +437,7 @@ function FinanceIntelligence({
                       <Line
                         type="linear"
                         dataKey="forecast"
-                        stroke={projectedTone === 'over' ? '#c0323d' : '#4b7a63'}
+                        stroke={projectedTone === 'over' ? 'var(--fin-chart-over, #c0323d)' : 'var(--fin-chart-good, #4b7a63)'}
                         strokeWidth={1.8}
                         strokeDasharray="4 5"
                         dot={false}
@@ -448,11 +448,11 @@ function FinanceIntelligence({
                     <Area
                       type="monotone"
                       dataKey="actual"
-                      stroke="#232b26"
+                      stroke="var(--fin-chart-line, #232b26)"
                       strokeWidth={2.2}
                       fill="url(#finActualFill)"
                       dot={false}
-                      activeDot={{ r: 4, fill: '#232b26', stroke: '#fff', strokeWidth: 2 }}
+                      activeDot={{ r: 4, fill: 'var(--fin-chart-line, #232b26)', stroke: 'var(--fin-chart-dot-ring, #fff)', strokeWidth: 2 }}
                       isAnimationActive={false}
                     />
                     {/* Where you actually stand right now. */}
@@ -460,8 +460,8 @@ function FinanceIntelligence({
                       x={burndown.daysElapsed}
                       y={burndown.spent}
                       r={3.5}
-                      fill="#232b26"
-                      stroke="#ffffff"
+                      fill="var(--fin-chart-line, #232b26)"
+                      stroke="var(--fin-chart-dot-ring, #ffffff)"
                       strokeWidth={2}
                     />
                   </ComposedChart>

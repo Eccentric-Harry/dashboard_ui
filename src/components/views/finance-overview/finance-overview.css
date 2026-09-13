@@ -1415,6 +1415,83 @@
   gap: 4px;
 }
 
+/* ── Recent Transactions: two-cell rows, two-column days ──
+   The card spans the whole grid, and a Merchant | Category | Amount table
+   stretched to that width left a ~400px void between the merchant and the
+   category/amount pair, plus a card nearly as tall as the viewport. The
+   category now sits in the subline, rows are just "who" and "how much", and
+   once the card is wide enough the day groups flow into two balanced columns
+   — about half the height, with no dead band. Scoped to this card: the
+   picked-date popover in the header reuses the row classes with its own
+   category cell. */
+.finance-transactions-card {
+  container-type: inline-size;
+}
+
+.finance-transactions-card .finance-transaction-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.finance-transactions-card .finance-transaction-merchant small.fin-tx-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.fin-tx-cat {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  color: rgba(23, 28, 25, 0.62);
+  font-style: normal;
+  font-weight: 600;
+}
+
+.fin-tx-cat::before {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--row-accent, rgba(23, 28, 25, 0.3));
+}
+
+.fin-tx-time {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fin-tx-time::before {
+  content: '·';
+  margin-right: 6px;
+}
+
+@container (min-width: 640px) {
+  .finance-transactions-card .finance-transaction-list {
+    display: block;
+    column-count: 2;
+    column-gap: 32px;
+    column-rule: 1px solid rgba(23, 28, 25, 0.06);
+  }
+
+  /* A day never splits across columns, and spacing moves below each group so
+     the tops of both columns line up. Sticky headers don't behave inside a
+     multi-column box, and the card doesn't scroll anyway. */
+  .finance-transactions-card .fin-day-group {
+    break-inside: avoid;
+    margin: 0 0 10px;
+  }
+
+  .finance-transactions-card .fin-day-head {
+    position: static;
+    padding-top: 4px;
+  }
+}
+
 .finance-transaction-action-btn {
   background: transparent;
   border: none;

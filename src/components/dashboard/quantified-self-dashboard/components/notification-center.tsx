@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Bell, BellOff, Calendar, CheckSquare, Trophy, Eye, EyeOff, Clock, Loader2, RefreshCw, Terminal, LogOut, Layers, Square } from 'lucide-react';
+import { X, Bell, BellOff, Calendar, CheckSquare, Trophy, Eye, EyeOff, Clock, Loader2, RefreshCw, Terminal, LogOut, Layers, Square, Moon, Sun } from 'lucide-react';
 import { useNotifications } from '../../../../store/notification-store';
-import { useAppearanceStore } from '../../../../store/appearance-store';
+import { DARK_THEME_ROUTES, useAppearanceStore } from '../../../../store/appearance-store';
 import type { AppPath } from '../data';
 import { ConfirmDialog } from '../../../ui/confirm-dialog';
 
@@ -26,7 +26,9 @@ function NotificationCenter({ onNavigate }: NotificationCenterProps) {
   } = useNotifications();
 
   const surfaceStyle = useAppearanceStore.use.surfaceStyle();
-  const { toggleSurfaceStyle } = useAppearanceStore.use.actions();
+  const themePreference = useAppearanceStore.use.themePreference();
+  const activePath = useAppearanceStore.use.activePath();
+  const { toggleSurfaceStyle, toggleTheme } = useAppearanceStore.use.actions();
 
   const panelRef = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState<'refresh' | 'toggle' | null>(null);
@@ -114,6 +116,18 @@ function NotificationCenter({ onNavigate }: NotificationCenterProps) {
       color: 'var(--qa-indigo)',
       bg: 'var(--qa-indigo-bg)',
       onClick: toggleSurfaceStyle,
+    },
+    {
+      key: 'theme',
+      icon: themePreference === 'dark' ? <Moon size={18} /> : <Sun size={18} />,
+      label: themePreference === 'dark' ? 'Dark' : 'Light',
+      hint: !DARK_THEME_ROUTES.has(activePath)
+        ? "Dark theme isn't available on this page yet"
+        : themePreference === 'dark' ? 'Switch to light theme' : 'Switch to dark theme',
+      color: 'var(--qa-indigo)',
+      bg: 'var(--qa-indigo-bg)',
+      active: themePreference === 'dark',
+      onClick: toggleTheme,
     },
     {
       key: 'logout',

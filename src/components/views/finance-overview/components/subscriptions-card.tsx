@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useCallback, type CSSProperties } from 'r
 import { Check, Loader2, Pencil, Plus, Trash2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import type { SubscriptionDTO } from '../../../../lib/api'
+import { toneStyle } from '../../../../lib/tone'
 import { financeService } from '../../../../services/finance-service'
 import { AddSubscriptionModal } from './add-subscription-modal'
 
@@ -79,8 +80,7 @@ function SubscriptionsCard({ transactions, onRefresh, onCelebrate, stagger = 0 }
     const s = service.toLowerCase()
     if (s.includes('youtube')) {
       return {
-        background: '#ffebee',
-        color: '#ef4444',
+        ...toneStyle({ hue: '#ef4444', bg: '#ffebee', ink: '#ef4444' }),
         border: 'none',
         borderRadius: '10px',
         boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
@@ -88,8 +88,7 @@ function SubscriptionsCard({ transactions, onRefresh, onCelebrate, stagger = 0 }
     }
     if (s.includes('netflix')) {
       return {
-        background: '#040303ff',
-        color: '#ac0810ff',
+        ...toneStyle({ hue: '#ac0810', bg: '#040303ff', ink: '#ac0810ff' }),
         border: 'none',
         borderRadius: '10px',
         boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
@@ -97,8 +96,7 @@ function SubscriptionsCard({ transactions, onRefresh, onCelebrate, stagger = 0 }
     }
     if (s.includes('jio')) {
       return {
-        background: '#e6eeff',
-        color: '#0f3cc9',
+        ...toneStyle({ hue: '#0f3cc9', bg: '#e6eeff', ink: '#0f3cc9' }),
         border: 'none',
         borderRadius: '10px',
         boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
@@ -106,8 +104,7 @@ function SubscriptionsCard({ transactions, onRefresh, onCelebrate, stagger = 0 }
     }
     if (s.includes('spotify')) {
       return {
-        background: '#eafaf1',
-        color: '#1db954',
+        ...toneStyle({ hue: '#1db954', bg: '#eafaf1', ink: '#1db954' }),
         border: 'none',
         borderRadius: '10px',
         boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
@@ -115,8 +112,7 @@ function SubscriptionsCard({ transactions, onRefresh, onCelebrate, stagger = 0 }
     }
     if (s.includes('amazon')) {
       return {
-        background: '#fff8e7',
-        color: '#ff9900',
+        ...toneStyle({ hue: '#ff9900', bg: '#fff8e7', ink: '#ff9900' }),
         border: 'none',
         borderRadius: '10px',
         boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
@@ -124,8 +120,7 @@ function SubscriptionsCard({ transactions, onRefresh, onCelebrate, stagger = 0 }
     }
     if (s.includes('disney') || s.includes('hotstar')) {
       return {
-        background: '#e6f7ff',
-        color: '#0747a6',
+        ...toneStyle({ hue: '#0747a6', bg: '#e6f7ff', ink: '#0747a6' }),
         border: 'none',
         borderRadius: '10px',
         boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
@@ -133,8 +128,7 @@ function SubscriptionsCard({ transactions, onRefresh, onCelebrate, stagger = 0 }
     }
     if (s.includes('apple') || s.includes('icloud')) {
       return {
-        background: '#f0f0f5',
-        color: '#555555',
+        ...toneStyle({ hue: '#8e8e99', bg: '#f0f0f5', ink: '#555555' }),
         border: 'none',
         borderRadius: '10px',
         boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
@@ -142,8 +136,7 @@ function SubscriptionsCard({ transactions, onRefresh, onCelebrate, stagger = 0 }
     }
     if (s.includes('notion')) {
       return {
-        background: '#f0f0f0',
-        color: '#111111',
+        ...toneStyle({ hue: '#9a9a9a', bg: '#f0f0f0', ink: '#111111' }),
         border: 'none',
         borderRadius: '10px',
         boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
@@ -151,16 +144,14 @@ function SubscriptionsCard({ transactions, onRefresh, onCelebrate, stagger = 0 }
     }
     if (s.includes('claude') || s.includes('anthropic')) {
       return {
-        background: '#fff0eb',
-        color: '#d97757',
+        ...toneStyle({ hue: '#d97757', bg: '#fff0eb', ink: '#d97757' }),
         border: 'none',
         borderRadius: '10px',
         boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
       }
     }
     return {
-      background: '#f5f2ff',
-      color: '#8b5cf6',
+      ...toneStyle({ hue: '#8b5cf6', bg: '#f5f2ff', ink: '#8b5cf6' }),
       border: 'none',
       borderRadius: '10px',
       boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
