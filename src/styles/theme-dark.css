@@ -1124,6 +1124,114 @@
   color: color-mix(in oklab, var(--cat), #fff 30%);
 }
 
+:root[data-theme='dark'] .tg-icon {
+  color: color-mix(in oklab, var(--cat), #fff 30%);
+}
+
+/* Add/Edit task modal: an opaque graphite sheet over a dark scrim. Fields sit
+   one tier up with a readable edge; focus is lit in the app's lime. Save is a
+   control *of* the surface (graphite + lime rim), not a white slab; disabled
+   is plainly muted rather than half-transparent. */
+:root[data-theme='dark'] .tasks-add-modal-overlay {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+:root[data-theme='dark'] .tasks-add-entry-modal {
+  border-color: var(--dk-line-strong);
+  background: var(--dk-surface);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 32px 80px rgba(0, 0, 0, 0.6);
+}
+
+:root[data-theme='dark'] .tasks-add-entry-modal .modal-header h3 {
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .tasks-add-entry-modal .close-modal-btn {
+  background: var(--dk-wash-strong);
+  color: var(--dk-ink-2);
+}
+
+:root[data-theme='dark'] .tasks-add-entry-modal .close-modal-btn:hover {
+  background: var(--dk-overlay);
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .tasks-modal-form-col {
+  border-right-color: var(--dk-line);
+}
+
+:root[data-theme='dark'] .tasks-add-entry-modal .form-group label,
+:root[data-theme='dark'] .tasks-add-entry-modal .preview-label,
+:root[data-theme='dark'] .tasks-add-entry-modal .modal-last-updated {
+  color: var(--dk-ink-3);
+}
+
+:root[data-theme='dark'] .tasks-add-entry-modal .form-input {
+  border-color: var(--dk-line-strong);
+  background-color: var(--dk-raised);
+  color: var(--dk-ink);
+  color-scheme: dark;
+}
+
+:root[data-theme='dark'] .tasks-add-entry-modal .form-input::placeholder {
+  color: var(--dk-ink-3);
+}
+
+:root[data-theme='dark'] .tasks-add-entry-modal .form-input:hover:not(:focus) {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+:root[data-theme='dark'] .tasks-add-entry-modal .form-input:focus {
+  border-color: rgba(207, 233, 101, 0.45);
+  box-shadow: 0 0 0 3px rgba(207, 233, 101, 0.12);
+}
+
+:root[data-theme='dark'] .tasks-add-entry-modal select.form-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23858b92' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
+:root[data-theme='dark'] .tasks-add-entry-modal select.form-input option {
+  background: var(--dk-raised);
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .tasks-add-entry-modal .input-icon {
+  color: var(--dk-ink-3);
+}
+
+:root[data-theme='dark'] .tasks-add-entry-modal .modal-btn-cancel {
+  border-color: var(--dk-line-strong);
+  background: transparent;
+  color: var(--dk-ink-2);
+}
+
+:root[data-theme='dark'] .tasks-add-entry-modal .modal-btn-cancel:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: var(--dk-wash);
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .tasks-add-entry-modal .modal-btn-save {
+  border: 1px solid rgba(207, 233, 101, 0.35);
+  background: #2a2d33;
+  color: var(--dk-ink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+:root[data-theme='dark'] .tasks-add-entry-modal .modal-btn-save:hover:not(:disabled) {
+  border-color: rgba(207, 233, 101, 0.55);
+  background: #30343a;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 12px 26px rgba(0, 0, 0, 0.5);
+}
+
+:root[data-theme='dark'] .tasks-add-entry-modal .modal-btn-save:disabled {
+  border-color: var(--dk-line);
+  background: var(--dk-wash);
+  color: var(--dk-ink-3);
+  box-shadow: none;
+  opacity: 1;
+}
+
 :root[data-theme='dark'] .tasks-avatar-btn {
   box-shadow: 0 0 0 2px var(--dk-line-strong), 0 4px 12px rgba(0, 0, 0, 0.4);
 }

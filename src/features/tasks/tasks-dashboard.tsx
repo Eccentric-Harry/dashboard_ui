@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { Plus, Search, List, Columns3, CalendarDays, X, Clock, Briefcase, BookOpen, Dumbbell, ShoppingCart, Home, DollarSign, User, Hash, LayoutDashboard, Tag, Film } from 'lucide-react'
+import { Plus, Search, List, Columns3, CalendarDays, X, Clock, Tag } from 'lucide-react'
 import toast from 'react-hot-toast'
 import type { DailyTask } from '@/lib/api'
 import { tasksService } from '@/services/tasks-service'
@@ -11,6 +11,7 @@ import { TasksListView } from './tasks-list-view'
 import { TasksKanbanView } from './tasks-kanban-view'
 import { TasksCalendarView } from './tasks-calendar-view'
 import { TasksDetailPanel } from './tasks-detail-panel'
+import { CategoryIcon } from './category-icon'
 import avatarImage from '@/assets/reference-crops/avatar_luffy.png'
 import { getAvatarImage } from '@/lib/avatar'
 import { getTagColor } from '@/lib/tag-colors'
@@ -29,22 +30,9 @@ const CATEGORIES: { key: string; label: string }[] = [
   { key: 'General', label: 'General' },
 ]
 
-const getCategoryIcon = (cat: string, color: string, size = 12) => {
-  const props = { size, color }
-  switch (cat) {
-    case 'Work': return <Briefcase {...props} />
-    case 'Learning': return <BookOpen {...props} />
-    case 'Fitness': return <Dumbbell {...props} />
-    case 'Shopping': return <ShoppingCart {...props} />
-    case 'Chores': return <Home {...props} />
-    case 'Finance': return <DollarSign {...props} />
-    case 'Personal': return <User {...props} />
-    case 'Movies': return <Film {...props} />
-    case 'General': return <Hash {...props} />
-    case 'Dashboard': return <LayoutDashboard {...props} />
-    default: return <Hash {...props} />
-  }
-}
+const getCategoryIcon = (cat: string, color: string, size = 12) => (
+  <CategoryIcon category={cat} size={size} color={color} />
+)
 
 type TasksDashboardProps = {
   searchParams?: URLSearchParams
@@ -733,7 +721,7 @@ export function TasksDashboard({ onNavigate }: TasksDashboardProps) {
                             ...toneStyle({ hue: categoryInfo.dot, bg: categoryInfo.bg }), 
                             color: `var(--chip-ink, ${categoryInfo.text})` 
                           }}>
-                            <span className="dot" style={{ background: categoryInfo.dot, width: 6, height: 6, borderRadius: '50%', display: 'inline-block' }} />
+                            <CategoryIcon category={actualCategory} size={11} strokeWidth={2.4} />
                             {actualCategory}
                           </span>
                         )
@@ -749,9 +737,9 @@ export function TasksDashboard({ onNavigate }: TasksDashboardProps) {
                           </span>
                         )}
                         {modalFormDate && (
-                          <span className="k-tag sla">
-                            <span className="flag">⚑</span>
-                            {modalFormDate.slice(5).replace('-', '/')}
+                          <span className="k-tag id">
+                            <CalendarDays size={10} style={{ marginRight: 2 }} />
+                            {new Date(`${modalFormDate}T00:00:00`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                           </span>
                         )}
                       </div>

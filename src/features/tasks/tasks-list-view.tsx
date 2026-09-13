@@ -2,6 +2,7 @@ import { useState, useMemo, type CSSProperties } from 'react'
 import { Check, Clock, CheckSquare, ChevronDown, CalendarDays } from 'lucide-react'
 import type { DailyTask } from '@/lib/api'
 import { getTagColor } from '@/lib/tag-colors'
+import { CategoryIcon } from './category-icon'
 
 type TaskCategory = 'Work' | 'Learning' | 'Fitness' | 'Shopping' | 'Chores' | 'Finance' | 'Personal' | 'General' | 'Movies'
 
@@ -77,24 +78,27 @@ const byUrgency = (a: DailyTask, b: DailyTask) => {
 const byRecent = (a: DailyTask, b: DailyTask) => (b.date || '').localeCompare(a.date || '')
 
 const DONE_PAGE = 10
-const RING_R = 8
+const RING_R = 14
 const RING_C = 2 * Math.PI * RING_R
 
-/** Things-style progress ring beside the list title — fills as tasks close. */
-function ProgressRing({ pct }: { pct: number }) {
+/** The list's icon inside a Things-style progress ring that fills as tasks close. */
+function ProgressRing({ pct, category }: { pct: number; category: string }) {
   return (
-    <svg className="tg-ring" viewBox="0 0 22 22" aria-hidden="true">
-      <circle cx="11" cy="11" r={RING_R} className="tg-ring-track" />
-      <circle
-        cx="11"
-        cy="11"
-        r={RING_R}
-        className="tg-ring-fill"
-        strokeDasharray={RING_C}
-        strokeDashoffset={RING_C * (1 - pct / 100)}
-        transform="rotate(-90 11 11)"
-      />
-    </svg>
+    <span className="tg-ring-wrap" aria-hidden="true">
+      <svg className="tg-ring" viewBox="0 0 32 32">
+        <circle cx="16" cy="16" r={RING_R} className="tg-ring-track" />
+        <circle
+          cx="16"
+          cy="16"
+          r={RING_R}
+          className="tg-ring-fill"
+          strokeDasharray={RING_C}
+          strokeDashoffset={RING_C * (1 - pct / 100)}
+          transform="rotate(-90 16 16)"
+        />
+      </svg>
+      <CategoryIcon category={category} size={14} strokeWidth={2.2} className="tg-icon" />
+    </span>
   )
 }
 
@@ -223,7 +227,7 @@ export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: Tasks
               onClick={() => setCollapsed((prev) => ({ ...prev, [category]: !isCollapsed }))}
               aria-expanded={!isCollapsed}
             >
-              <ProgressRing pct={pct} />
+              <ProgressRing pct={pct} category={category} />
               <span className="tg-title">{category}</span>
               {overdue > 0 && <span className="tg-overdue">{overdue} overdue</span>}
               <span className="tg-count" aria-label={`${pending.length} open`}>{pending.length}</span>
@@ -271,7 +275,7 @@ export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: Tasks
                     aria-expanded={isOpen}
                   >
                     <span className="tg-shelf-dot" aria-hidden="true">
-                      <Check size={10} strokeWidth={3.4} />
+                      <CategoryIcon category={category} size={13} strokeWidth={2.2} />
                     </span>
                     <span className="tg-shelf-name">{category}</span>
                     <span className="tg-count">{completed.length}</span>
