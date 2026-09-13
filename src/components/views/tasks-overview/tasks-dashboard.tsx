@@ -12,6 +12,7 @@ import { TasksKanbanView } from './tasks-kanban-view'
 import { TasksCalendarView } from './tasks-calendar-view'
 import { TasksDetailPanel } from './tasks-detail-panel'
 import avatarImage from '../../../assets/reference-crops/avatar_luffy.png'
+import { getAvatarImage } from '../../../lib/avatar'
 import { getTagColor } from '../../../lib/tag-colors'
 import { toneStyle } from '../../../lib/tone'
 import type { AppPath } from '../../dashboard/quantified-self-dashboard/data'
@@ -50,8 +51,16 @@ type TasksDashboardProps = {
   onNavigate?: (pathname: AppPath, search?: string) => void
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function TasksDashboard(_props: TasksDashboardProps) {
+export function TasksDashboard({ onNavigate }: TasksDashboardProps) {
+  // Header avatar mirrors the side rail: the same stored preset, refreshed when
+  // the profile is saved.
+  const [avatarPreset, setAvatarPreset] = useState(() => localStorage.getItem('avatarUrl') || 'luffy')
+  useEffect(() => {
+    const sync = () => setAvatarPreset(localStorage.getItem('avatarUrl') || 'luffy')
+    window.addEventListener('profile-updated', sync)
+    return () => window.removeEventListener('profile-updated', sync)
+  }, [])
+
   // Task list server state comes from the tasks store; UI/filter state stays local.
   const tasksState = useTasksStore.use.tasks()
   const tasksActions = useTasksStore.use.actions()
@@ -380,15 +389,20 @@ export function TasksDashboard(_props: TasksDashboardProps) {
                 </button>
               </div>
 
-              <button type="button" className="tasks-add-btn-primary" onClick={() => setModalMode('add')}>
-                <Plus size={14} strokeWidth={2.5} />
-                <span>New Task</span>
+              <button type="button" className="tasks-add-btn-primary add-pill" onClick={() => setModalMode('add')}>
+                <span className="add-pill-ic"><Plus size={16} strokeWidth={2.75} /></span>
+                <span>Add task</span>
               </button>
             </div>
 
-            <div className="tasks-avatar-container">
-              <img src={avatarImage} alt="User" />
-            </div>
+            <button
+              type="button"
+              className="tasks-avatar-container tasks-avatar-btn"
+              onClick={() => onNavigate?.('/profile')}
+              aria-label="Open profile"
+            >
+              <img src={getAvatarImage(avatarPreset)} alt="" />
+            </button>
           </div>
 
         {/* Row 2: Filters */}

@@ -152,12 +152,12 @@ function HomeHeader({ dateIso, onQuickAdd, signals }: HomeHeaderProps) {
         <div className="home-quick-add" ref={menuRef}>
           <button
             type="button"
-            className="ntr-add-btn home-quick-add-btn"
+            className="ntr-add-btn home-quick-add-btn add-pill"
             aria-haspopup="menu"
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((open) => !open)}
           >
-            <span className="ntr-add-ic">
+            <span className="ntr-add-ic add-pill-ic">
               <Plus size={16} strokeWidth={2.75} />
             </span>
             Quick add

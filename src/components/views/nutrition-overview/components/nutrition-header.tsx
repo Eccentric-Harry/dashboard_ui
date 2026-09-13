@@ -388,8 +388,8 @@ function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
 
       <div className="ntr-header-right">
         {onAddClick && (
-          <button type="button" onClick={onAddClick} className="ntr-add-btn">
-            <span className="ntr-add-ic">
+          <button type="button" onClick={onAddClick} className="ntr-add-btn add-pill">
+            <span className="ntr-add-ic add-pill-ic">
               <Plus size={16} strokeWidth={2.75} />
             </span>
             Add meal

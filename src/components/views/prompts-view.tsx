@@ -159,8 +159,9 @@ function PromptsOverviewDashboard() {
     <section className="prompts-dashboard" aria-label="Prompts overview dashboard">
       <div className="prompts-header">
         <h1>Prompts Library</h1>
-        <button className="prompts-add-btn" onClick={handleCreateNew}>
-          <Plus size={16} /> <span>Add Prompt</span>
+        <button type="button" className="prompts-add-btn add-pill" onClick={handleCreateNew}>
+          <span className="add-pill-ic"><Plus size={16} strokeWidth={2.75} /></span>
+          <span>Add prompt</span>
         </button>
       </div>
 

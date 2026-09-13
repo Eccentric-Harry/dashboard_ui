@@ -182,14 +182,13 @@
    onto the data (arc, badge, protein bar) instead of covering the card. ── */
 
 :root[data-theme='dark'] .ntr-gauge-panel {
-  background: var(--dk-glow-lime), var(--dk-panel);
+  background: var(--dk-raised);
   box-shadow: inset 0 0 0 1px rgba(207, 233, 101, 0.1), var(--dk-highlight);
 }
 
 :root[data-theme='dark'] .ntr-gauge-panel.over {
   background:
-    radial-gradient(120% 95% at 0% 0%, rgba(236, 176, 96, 0.16), transparent 62%),
-    var(--dk-panel);
+    var(--dk-raised);
   box-shadow: inset 0 0 0 1px rgba(236, 176, 96, 0.12), var(--dk-highlight);
 }
 
@@ -257,7 +256,7 @@
 /* ── Weekly protein + today's meals accent panels ── */
 
 :root[data-theme='dark'] .ntr-trend-accent-panel {
-  background: var(--dk-glow-lime), var(--dk-panel);
+  background: var(--dk-raised);
   box-shadow: inset 0 0 0 1px rgba(207, 233, 101, 0.1), var(--dk-highlight);
 }
 
@@ -314,6 +313,33 @@
 /* "+" disc on the Add meal / Quick add pills sits on the route accent. */
 :root[data-theme='dark'] .ntr-add-ic {
   color: var(--dk-on-accent);
+}
+
+/* Shared add pill (index.css): the ink pill inverts to a light pill so it stays
+   the loudest control on graphite; the lime disc keeps dark ink. */
+@media (min-width: 769px) {
+  :root[data-theme='dark'] .add-pill.add-pill,
+  :root[data-theme='dark'] .add-pill.add-pill:hover {
+    background: var(--dk-ink) !important;
+    color: var(--dk-on-accent) !important;
+  }
+
+  :root[data-theme='dark'] .add-pill.add-pill {
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.6) !important;
+  }
+
+  :root[data-theme='dark'] .add-pill.add-pill:hover {
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.7) !important;
+  }
+
+  :root[data-theme='dark'] .add-pill.add-pill:focus-visible {
+    outline-color: var(--dk-ink);
+  }
+
+  :root[data-theme='dark'] .add-pill .add-pill-ic {
+    background: var(--dk-accent);
+    color: var(--dk-on-accent);
+  }
 }
 
 /* Segmented Manual/AI and Task/Learning toggles: the active slider was deriving
@@ -403,9 +429,7 @@
 /* ── Intelligence ── */
 
 :root[data-theme='dark'] .nutrition-dashboard.ntr .ntr-intel-hero {
-  background:
-    radial-gradient(90% 80% at 100% 100%, rgba(207, 233, 101, 0.08), transparent 60%),
-    var(--dk-surface);
+  background: var(--dk-surface);
 }
 
 :root[data-theme='dark'] .nutrition-dashboard.ntr .ntr-intel-glyph {
@@ -603,7 +627,21 @@
 }
 
 :root[data-theme='dark'] .home-loop-track {
-  stroke: rgba(255, 255, 255, 0.08);
+  stroke: rgba(188, 195, 242, 0.1);
+}
+
+/* The ink ring inverted to plain off-white read as black-and-white next to the
+   coloured tiles. In dark it becomes Home's lavender flowing into the sky blue
+   of the sleep/water bars. Stops are read by the <linearGradient> in
+   loop-arc.tsx; light mode's fallbacks keep it ink. No glow filter: a filter on
+   a dash-animated path stalls Chromium repaints. */
+:root[data-theme='dark'] .home-loop-arc {
+  --loop-stop-a: #c4b5fd;
+  --loop-stop-b: #7dd3fc;
+}
+
+:root[data-theme='dark'] .home-loop-fill {
+  opacity: 1;
 }
 
 :root[data-theme='dark'] .home-anchor-ic,
@@ -805,6 +843,286 @@
 /* Home "Latest activity": its source sage wash fades in from a corner. Flat in dark. */
 :root[data-theme='dark'] .home-activity-latest {
   background: var(--dk-raised);
+}
+
+/* ══ Learnings: focus session widget ═════════════════════════════════════
+   Tiers on the card surface: field/segment track = raised, active segment =
+   one step above it. Emerald accents are lifted so they read on graphite. */
+
+:root[data-theme='dark'] .fbw-head-ic {
+  background: rgba(120, 200, 150, 0.14);
+  color: #8fd4a8;
+}
+
+:root[data-theme='dark'] .fbw-eyebrow,
+:root[data-theme='dark'] .fbw-label,
+:root[data-theme='dark'] .fbw-time-sub {
+  color: var(--dk-ink-3);
+}
+
+:root[data-theme='dark'] .fbw-title,
+:root[data-theme='dark'] .fbw-time {
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .fbw-icon-btn {
+  border-color: var(--dk-line-strong);
+  background: var(--dk-raised);
+  color: var(--dk-ink-2);
+}
+
+:root[data-theme='dark'] .fbw-icon-btn:hover {
+  background: var(--dk-overlay);
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .fbw-select {
+  border-color: var(--dk-line-strong);
+  background: var(--dk-raised);
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .fbw-select:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+:root[data-theme='dark'] .fbw-select svg {
+  color: var(--dk-ink-3);
+}
+
+:root[data-theme='dark'] .fbw-menu {
+  border-color: var(--dk-line-strong);
+  background: var(--dk-overlay);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+}
+
+:root[data-theme='dark'] .fbw-menu-item {
+  color: var(--dk-ink-2);
+}
+
+:root[data-theme='dark'] .fbw-menu-item:hover {
+  background: var(--dk-wash-strong);
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .fbw-menu-item.is-active,
+:root[data-theme='dark'] .fbw-status.is-running {
+  background: rgba(120, 200, 150, 0.14);
+  color: #8fd4a8;
+}
+
+:root[data-theme='dark'] .fbw-menu-item.is-add {
+  color: #8fd4a8;
+}
+
+:root[data-theme='dark'] .fbw-menu-divider {
+  background: var(--dk-line);
+}
+
+:root[data-theme='dark'] .fbw-menu-input {
+  border-color: var(--dk-line-strong);
+  background: var(--dk-raised);
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .fbw-menu-input:focus {
+  border-color: #8fd4a8;
+}
+
+:root[data-theme='dark'] .fbw-menu-set {
+  background: var(--dk-ink);
+  color: var(--dk-on-accent);
+}
+
+:root[data-theme='dark'] .fbw-segment {
+  background: var(--dk-raised);
+}
+
+:root[data-theme='dark'] .fbw-seg {
+  color: var(--dk-ink-3);
+}
+
+:root[data-theme='dark'] .fbw-seg:hover {
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .fbw-seg.is-active {
+  background: #2e3137;
+  color: var(--dk-ink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+:root[data-theme='dark'] .fbw-seg.is-editing {
+  background: #2e3137;
+  box-shadow: 0 0 0 1.5px #8fd4a8;
+}
+
+:root[data-theme='dark'] .fbw-seg-input {
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .fbw-status.is-paused {
+  background: rgba(226, 182, 92, 0.15);
+  color: #e2b65c;
+}
+
+:root[data-theme='dark'] .fbw-cta {
+  background: var(--dk-ink);
+  color: var(--dk-on-accent);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.55);
+}
+
+:root[data-theme='dark'] .fbw-cta:hover:not(:disabled) {
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.65);
+}
+
+:root[data-theme='dark'] .fbw-cta-ic {
+  background: var(--dk-accent);
+  color: var(--dk-on-accent);
+}
+
+:root[data-theme='dark'] .fbw-cta.is-secondary {
+  background: var(--dk-wash-strong);
+  color: var(--dk-ink);
+  box-shadow: none;
+}
+
+:root[data-theme='dark'] .fbw-cta.is-secondary .fbw-cta-ic {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .fbw-links {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+:root[data-theme='dark'] .fbw-link {
+  color: var(--dk-ink-3);
+}
+
+:root[data-theme='dark'] .fbw-link:hover {
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .fbw-link.is-danger {
+  color: var(--dk-danger);
+}
+
+:root[data-theme='dark'] .fbw-icon-btn:focus-visible,
+:root[data-theme='dark'] .fbw-select:focus-visible,
+:root[data-theme='dark'] .fbw-seg:focus-visible,
+:root[data-theme='dark'] .fbw-cta:focus-visible,
+:root[data-theme='dark'] .fbw-link:focus-visible,
+:root[data-theme='dark'] .fbw-menu-item:focus-visible {
+  outline-color: #8fd4a8;
+}
+
+/* ══ Tasks ═══════════════════════════════════════════════════════════════ */
+
+/* List view: each group's --cat hue is lifted toward white for glyphs and
+   mixed into transparency for washes, the same treatment as tone chips. */
+:root[data-theme='dark'] .tasks-group-icon {
+  background: color-mix(in srgb, var(--cat) 22%, transparent);
+  color: color-mix(in oklab, var(--cat), #fff 38%);
+}
+
+:root[data-theme='dark'] .tasks-group-title {
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .tasks-group-sub,
+:root[data-theme='dark'] .task-added {
+  color: var(--dk-ink-3);
+}
+
+:root[data-theme='dark'] .tasks-accordion-header:hover {
+  background: var(--dk-wash);
+}
+
+:root[data-theme='dark'] .tasks-accordion-header .tasks-accordion-chevron {
+  color: var(--dk-ink-3);
+}
+
+:root[data-theme='dark'] .tasks-group-alert,
+:root[data-theme='dark'] .task-chip.due-overdue {
+  background: rgba(242, 139, 149, 0.14);
+  color: var(--dk-danger);
+}
+
+:root[data-theme='dark'] .tasks-group-progress {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+:root[data-theme='dark'] .tasks-group-progress i {
+  background: color-mix(in oklab, var(--cat), #fff 22%);
+}
+
+:root[data-theme='dark'] .tasks-accordion-group.is-all-done .tasks-group-progress i {
+  background: color-mix(in srgb, var(--cat) 50%, var(--dk-raised));
+}
+
+:root[data-theme='dark'] .tasks-list-card {
+  border-bottom-color: var(--dk-line);
+}
+
+:root[data-theme='dark'] .tasks-list-card.is-overdue::before {
+  background: var(--dk-danger);
+}
+
+:root[data-theme='dark'] .tasks-list-card.is-today::before {
+  background: #e2b65c;
+}
+
+:root[data-theme='dark'] .task-list-check {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+:root[data-theme='dark'] .task-list-check:hover {
+  border-color: color-mix(in oklab, var(--cat), #fff 30%);
+  background: color-mix(in srgb, var(--cat) 16%, transparent);
+}
+
+:root[data-theme='dark'] .task-list-check.checked {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--cat) 24%, transparent);
+  color: color-mix(in oklab, var(--cat), #fff 40%);
+}
+
+:root[data-theme='dark'] .task-chip {
+  background: var(--dk-wash-strong);
+  color: var(--dk-ink-2);
+}
+
+:root[data-theme='dark'] .task-chip.due-today {
+  background: rgba(226, 182, 92, 0.15);
+  color: #e2b65c;
+}
+
+:root[data-theme='dark'] .task-chip.due-soon {
+  background: rgba(120, 165, 230, 0.15);
+  color: #9dbcf0;
+}
+
+:root[data-theme='dark'] .task-chip.due-done {
+  background: transparent;
+  color: var(--dk-ink-3);
+}
+
+:root[data-theme='dark'] .task-chip.tag {
+  border-color: var(--dk-line-strong);
+  background: transparent;
+}
+
+:root[data-theme='dark'] .tasks-avatar-btn {
+  box-shadow: 0 0 0 2px var(--dk-line-strong), 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+:root[data-theme='dark'] .tasks-avatar-btn:hover {
+  box-shadow: 0 0 0 2px var(--dk-ink-3), 0 8px 18px rgba(0, 0, 0, 0.5);
+}
+
+:root[data-theme='dark'] .tasks-avatar-btn:focus-visible {
+  outline-color: var(--dk-ink);
 }
 
 /* ══ Calendar ════════════════════════════════════════════════════════════ */

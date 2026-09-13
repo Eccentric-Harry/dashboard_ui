@@ -2774,3 +2774,82 @@ button {
     left: 100%;
   }
 }
+
+/* ── Shared "add" pill ──────────────────────────────────────────────────────
+   Every route's primary create action: ink pill, lime "+" disc, "Add …" label.
+   Routes had drifted into six versions at four heights, so the same action
+   looked different on every page. Each button keeps its route class for the
+   phone layouts, where these are hidden in favour of the dock's quick-add
+   bubble; the shared look applies from tablet up. The doubled class and
+   !important outrank the route rules, several of which are !important
+   themselves. Dark mode: theme-dark.css. */
+@media (min-width: 769px) {
+  .add-pill.add-pill {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    width: auto;
+    min-width: 0;
+    height: 42px;
+    padding: 0 18px 0 5px !important;
+    border: 0 !important;
+    border-radius: 999px !important;
+    background: #171b15 !important;
+    color: #ffffff !important;
+    font-family: inherit;
+    font-size: 13px !important;
+    font-weight: 650 !important;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: 0 10px 24px rgba(23, 27, 21, 0.22) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  .add-pill.add-pill:hover {
+    background: #171b15 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 14px 30px rgba(23, 27, 21, 0.26) !important;
+  }
+
+  .add-pill.add-pill:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  .add-pill.add-pill:focus-visible {
+    outline: 2px solid #171b15;
+    outline-offset: 3px;
+  }
+
+  .add-pill .add-pill-ic {
+    display: grid;
+    flex: none;
+    width: 32px;
+    height: 32px;
+    place-items: center;
+    border-radius: 999px;
+    background: #cfe965;
+    color: #171b15;
+  }
+
+  .add-pill .add-pill-ic svg {
+    width: 16px !important;
+    height: 16px !important;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .add-pill:hover .add-pill-ic svg {
+    transform: rotate(90deg);
+  }
+}
+
+@media (min-width: 769px) and (prefers-reduced-motion: reduce) {
+  .add-pill.add-pill:hover,
+  .add-pill:hover .add-pill-ic svg {
+    transform: none;
+  }
+}

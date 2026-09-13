@@ -387,10 +387,10 @@ function FinanceHeader({ onAddClick, logs, selectedDate, onDateChange }: Finance
           <button
             type="button"
             onClick={onAddClick}
-            className="finance-add-btn"
+            className="finance-add-btn add-pill"
           >
-            <Plus size={14} strokeWidth={3} />
-            <span>Add</span>
+            <span className="add-pill-ic"><Plus size={16} strokeWidth={2.75} /></span>
+            <span>Add transaction</span>
           </button>
         </div>
       )}

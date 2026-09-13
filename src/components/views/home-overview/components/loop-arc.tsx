@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { useCountUp } from '../../../../hooks/use-count-up'
 
 /**
@@ -53,6 +53,8 @@ function LoopArc({ score, centerSub, description }: LoopArcProps) {
   }, [])
 
   const drawn = mounted ? Math.min(Math.max(score / 100, 0), 1) : 0
+  // One gradient per ring; useId's colons would break the url(#…) reference.
+  const gradientId = `loop-fill-${useId().replace(/:/g, '')}`
 
   return (
     <div
@@ -61,10 +63,20 @@ function LoopArc({ score, centerSub, description }: LoopArcProps) {
       aria-label={`${score}% ${centerSub}.${description ? ` ${description}` : ''}`}
     >
       <svg viewBox="0 0 200 200" aria-hidden="true">
+        <defs>
+          {/* Stops fall back to the light-mode ink; dark mode sets
+              --loop-stop-a/b (theme-dark.css). Horizontal, so the colour travels
+              with the sweep from bottom-left over the top to bottom-right. */}
+          <linearGradient id={gradientId} gradientUnits="userSpaceOnUse" x1="20" y1="100" x2="180" y2="100">
+            <stop offset="0%" style={{ stopColor: 'var(--loop-stop-a, #171b15)' }} />
+            <stop offset="100%" style={{ stopColor: 'var(--loop-stop-b, #171b15)' }} />
+          </linearGradient>
+        </defs>
         <path d={TRACK} className="home-loop-track" />
         <path
           d={TRACK}
           className="home-loop-fill"
+          style={{ stroke: `url(#${gradientId})` }}
           strokeDasharray={LENGTH}
           strokeDashoffset={LENGTH * (1 - drawn)}
         />

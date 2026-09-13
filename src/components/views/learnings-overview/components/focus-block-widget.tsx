@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { Play, Pause, Minimize2, Timer } from 'lucide-react'
+import { Play, Pause, Minimize2, Maximize2, Timer, ChevronDown } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useFocusStore, focusActions } from '../../../../store/focus-store'
 
@@ -38,6 +38,7 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
   const [actionLoading, setActionLoading] = useState(false)
   const [showActivityPicker, setShowActivityPicker] = useState(false)
   const [customActivity, setCustomActivity] = useState('')
+  const [editActivity, setEditActivity] = useState(false)
 
   const prevStatusRef = useRef(session?.status)
 
@@ -158,70 +159,85 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
 
   return (
     <>
-      <div className={`learnings-card rounded-3xl p-6 flex flex-col transition-all duration-300 ${isRunning ? 'focus-active-pulse' : ''}`}>
-        {/* Row 1: Header & Expand Toggle */}
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-xs font-semibold tracking-wider text-gray-400">FOCUS SESSION</p>
-            <div className="flex items-center gap-2 mt-0.5">
-              <Timer size={18} className="text-[#1a7a4a]" strokeWidth={2} />
-              <h3 className="text-lg font-bold text-black">Deep Work Focus</h3>
-            </div>
+      {/* Compact card. Every row shares one left edge and one grid: the length
+          choices are a 4-cell segmented control so "Custom" can't wrap onto a
+          line of its own, and the pursuit is a real field rather than bare text. */}
+      <div className={`learnings-card fbw${isRunning ? ' focus-active-pulse is-running' : ''}${isPaused ? ' is-paused' : ''}`}>
+        <div className="fbw-head">
+          <span className="fbw-head-ic" aria-hidden="true">
+            <Timer size={16} strokeWidth={2.2} />
+          </span>
+          <div className="fbw-head-text">
+            <p className="fbw-eyebrow">Focus session</p>
+            <h3 className="fbw-title">Deep Work Focus</h3>
           </div>
           <button
+            type="button"
             onClick={() => setIsExpanded(v => !v)}
-            className="focus-block-expand-btn"
+            className="fbw-icon-btn"
             aria-label="Enter fullscreen focus mode"
           >
-            <span className="text-lg leading-none font-light">⤢</span>
+            <Maximize2 size={14} strokeWidth={2.2} />
           </button>
         </div>
 
-        {/* Row 2: Active Pursuit Dropdown */}
-        <div className="mt-4">
-          <p className="text-xs font-semibold tracking-wider text-gray-400 mb-1.5">ACTIVE PURSUIT</p>
-          <div className="relative">
+        <div className="fbw-field">
+          <p className="fbw-label">Active pursuit</p>
+          <div className="fbw-picker">
             <button
-              onClick={() => setShowActivityPicker(v => !v)}
-              className="w-full flex items-center justify-between px-0 py-1.5 text-base font-medium text-slate-800 bg-transparent border-none focus:outline-none"
+              type="button"
+              onClick={() => { setShowActivityPicker(v => !v); setEditActivity(false) }}
+              className="fbw-select"
+              aria-haspopup="listbox"
+              aria-expanded={showActivityPicker}
             >
               <span>{activity}</span>
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-gray-400">
-                <path d="M3.5 5.25L7 8.75L10.5 5.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <ChevronDown size={15} strokeWidth={2.2} className={showActivityPicker ? 'is-open' : ''} />
             </button>
             {showActivityPicker && (
-              <div className="absolute top-full left-0 mt-1 bg-white border border-neutral-100 rounded-xl shadow-lg z-30 overflow-hidden p-1 flex flex-col gap-0.5 min-w-[170px]">
+              <div className="fbw-menu" role="listbox" aria-label="Active pursuit">
                 {PRESET_ACTIVITIES.map(a => (
                   <button
                     key={a}
-                    onClick={() => { setActivity(a); setShowActivityPicker(false); setCustomActivity('') }}
-                    className={`w-full px-3 py-2 text-sm text-left rounded-lg font-medium transition-colors ${activity === a && !customActivity ? 'bg-emerald-50 text-emerald-700' : 'text-neutral-600 hover:bg-neutral-50'}`}
+                    type="button"
+                    role="option"
+                    aria-selected={activity === a}
+                    onClick={() => { setActivity(a); setShowActivityPicker(false); setEditActivity(false); setCustomActivity('') }}
+                    className={`fbw-menu-item${activity === a ? ' is-active' : ''}`}
                   >
                     {a}
                   </button>
                 ))}
-                <div className="border-t border-neutral-100 my-0.5" />
-                {customActivity ? (
+                <div className="fbw-menu-divider" />
+                {editActivity ? (
                   <form
-                    onSubmit={(e) => { e.preventDefault(); if (customActivity.trim()) { setActivity(customActivity.trim()); setShowActivityPicker(false) } }}
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      const name = customActivity.trim()
+                      if (name) { setActivity(name); setShowActivityPicker(false); setEditActivity(false) }
+                    }}
                     onClick={(e) => e.stopPropagation()}
-                    className="flex items-center gap-1 p-1"
+                    className="fbw-menu-form"
                   >
                     <input
-                      type="text" placeholder="Name..." value={customActivity}
+                      type="text"
+                      placeholder="Pursuit name…"
+                      value={customActivity}
                       onChange={(e) => setCustomActivity(e.target.value)}
-                      className="flex-1 px-2 py-1 text-xs border border-neutral-200 rounded-lg focus:outline-none focus:border-emerald-600 text-neutral-800"
+                      onKeyDown={(e) => { if (e.key === 'Escape') setEditActivity(false) }}
+                      className="fbw-menu-input"
+                      aria-label="Custom pursuit name"
                       autoFocus
                     />
-                    <button type="submit" className="px-2 py-1 text-[10px] font-bold bg-emerald-700 text-white rounded-lg hover:bg-emerald-800">Set</button>
+                    <button type="submit" className="fbw-menu-set">Set</button>
                   </form>
                 ) : (
                   <button
-                    onClick={(e) => { e.stopPropagation(); setCustomActivity('') }}
-                    className="w-full px-3 py-2 text-sm text-left text-emerald-600 hover:bg-emerald-50/50 rounded-lg font-semibold transition-colors"
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setEditActivity(true) }}
+                    className="fbw-menu-item is-add"
                   >
-                    + Custom
+                    + Custom pursuit
                   </button>
                 )}
               </div>
@@ -229,109 +245,103 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
           </div>
         </div>
 
-        {/* Row 3: Session Length Selectors */}
         {isIdle && (
-          <div className="mt-5">
-            <p className="text-xs font-semibold tracking-wider text-gray-400 mb-2">SESSION LENGTH</p>
-            <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="fbw-field">
+            <p className="fbw-label">Session length</p>
+            <div className="fbw-segment" role="radiogroup" aria-label="Session length">
               {DURATIONS.map(d => (
                 <button
                   key={d}
+                  type="button"
+                  role="radio"
+                  aria-checked={duration === d && !editCustom}
                   onClick={() => { setDuration(d); setEditCustom(false) }}
-                  className={`px-4 py-1.5 rounded-full text-[13px] font-medium transition-all ${
-                    duration === d && !editCustom
-                      ? 'focus-liquid-btn'
-                      : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200/60'
-                  }`}
+                  className={`fbw-seg${duration === d && !editCustom ? ' is-active' : ''}`}
                 >
                   {d}m
                 </button>
               ))}
               {editCustom ? (
                 <form
-                  onSubmit={(e) => { e.preventDefault(); const v = parseInt(customMin, 10); if (v > 0) { setDuration(v); setEditCustom(false); setCustomMin('') } }}
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    const v = parseInt(customMin, 10)
+                    if (v > 0) { setDuration(v); setEditCustom(false); setCustomMin('') }
+                  }}
                   onClick={(e) => e.stopPropagation()}
-                  className="inline-flex"
+                  className="fbw-seg is-editing"
                 >
                   <input
-                    type="number" min="1" max="360" placeholder="min"
+                    type="number"
+                    min="1"
+                    max="360"
+                    placeholder="min"
                     value={customMin}
                     onChange={(e) => setCustomMin(e.target.value)}
-                    className="w-14 px-2 py-1.5 text-sm border border-gray-200 rounded-full focus:outline-none focus:border-gray-400 text-gray-800 text-center bg-white"
+                    onKeyDown={(e) => { if (e.key === 'Escape') setEditCustom(false) }}
+                    onBlur={() => { if (!customMin) setEditCustom(false) }}
+                    className="fbw-seg-input"
+                    aria-label="Custom length in minutes"
                     autoFocus
                   />
                 </form>
               ) : (
                 <button
                   type="button"
+                  role="radio"
+                  aria-checked={!DURATIONS.includes(duration)}
                   onClick={() => setEditCustom(true)}
-                  className="px-4 py-1.5 rounded-full text-[13px] font-medium bg-white text-gray-600 hover:bg-gray-50 border border-gray-200/60 transition-all"
+                  className={`fbw-seg${!DURATIONS.includes(duration) ? ' is-active' : ''}`}
                 >
-                  + Custom
+                  {DURATIONS.includes(duration) ? 'Custom' : `${duration}m`}
                 </button>
               )}
             </div>
           </div>
         )}
 
-        {/* Row 4: Main Timer Display — flex-1 centers it in remaining space */}
-        <div className="flex-1 flex items-center justify-center py-5 text-center min-h-[96px]">
-          <span className="text-6xl font-light font-mono text-gray-800 tracking-tight tabular-nums slashed-zero leading-none">
-            {timerDisplay}
-          </span>
+        <div className="fbw-timer">
+          {(isRunning || isPaused) && (
+            <span className={`fbw-status ${isRunning ? 'is-running' : 'is-paused'}`}>
+              <i aria-hidden="true" />
+              {isRunning ? 'Focusing' : 'Paused'}
+            </span>
+          )}
+          <span className="fbw-time">{timerDisplay}</span>
+          {isIdle && <span className="fbw-time-sub">{duration} min of {activity}</span>}
         </div>
 
-        {/* Row 5: Action CTA Button */}
-        <div>
+        <div className="fbw-actions">
           {isIdle && (
-            <button
-              onClick={handleStart}
-              disabled={actionLoading}
-              className="w-full flex items-center justify-center gap-2.5 rounded-full py-3 text-sm font-semibold focus-liquid-btn transition-all disabled:opacity-50 active:scale-[0.98]"
-            >
-              <Play size={16} fill="currentColor" /> {actionLoading ? 'Starting...' : 'Start Session'}
+            <button type="button" onClick={handleStart} disabled={actionLoading} className="fbw-cta">
+              <span className="fbw-cta-ic"><Play size={12} fill="currentColor" strokeWidth={0} /></span>
+              {actionLoading ? 'Starting…' : 'Start session'}
             </button>
           )}
           {isRunning && (
-            <button
-              onClick={handlePause}
-              disabled={actionLoading}
-              className="w-full flex items-center justify-center gap-2.5 rounded-full py-3 text-sm font-semibold focus-liquid-btn shadow-sm transition-all disabled:opacity-50 active:scale-[0.98]"
-            >
-              <Pause size={16} fill="currentColor" /> {actionLoading ? 'Pausing...' : 'Pause Session'}
+            <button type="button" onClick={handlePause} disabled={actionLoading} className="fbw-cta is-secondary">
+              <span className="fbw-cta-ic"><Pause size={12} fill="currentColor" strokeWidth={0} /></span>
+              {actionLoading ? 'Pausing…' : 'Pause session'}
             </button>
           )}
           {isPaused && (
-            <button
-              onClick={handleResume}
-              disabled={actionLoading}
-              className="w-full flex items-center justify-center gap-2.5 rounded-full py-3 text-sm font-semibold focus-liquid-btn transition-all disabled:opacity-50 active:scale-[0.98]"
-            >
-              <Play size={16} fill="currentColor" /> {actionLoading ? 'Resuming...' : 'Resume Session'}
+            <button type="button" onClick={handleResume} disabled={actionLoading} className="fbw-cta">
+              <span className="fbw-cta-ic"><Play size={12} fill="currentColor" strokeWidth={0} /></span>
+              {actionLoading ? 'Resuming…' : 'Resume session'}
             </button>
           )}
+          {(isRunning || isPaused) && (
+            <div className="fbw-links">
+              <button type="button" onClick={handleReset} disabled={actionLoading} className="fbw-link">
+                Reset
+              </button>
+              <span aria-hidden="true">·</span>
+              <button type="button" onClick={handleEndAndSave} disabled={actionLoading} className="fbw-link is-danger">
+                End &amp; save
+              </button>
+            </div>
+          )}
         </div>
-
-        {/* Reset/End for active sessions */}
-        {(isRunning || isPaused) && (
-          <div className="flex items-center justify-center gap-3 mt-3">
-            <button
-              onClick={handleReset}
-              disabled={actionLoading}
-              className="text-xs font-medium text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
-            >
-              Reset
-            </button>
-            <span className="text-gray-200 select-none">·</span>
-            <button
-              onClick={handleEndAndSave}
-              disabled={actionLoading}
-              className="text-xs font-medium text-red-400 hover:text-red-600 transition-colors disabled:opacity-50"
-            >
-              End & Save
-            </button>
-          </div>
-        )}
       </div>
 
       {isExpanded && createPortal(

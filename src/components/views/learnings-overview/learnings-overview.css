@@ -1632,3 +1632,466 @@
     width: 100%;
   }
 }
+
+/* ─── Focus session widget (compact card) ───
+   Rebuilt on one grid. Before, the header glyph was a text "⤢", the pursuit
+   was unbordered text flush against the card edge, the length pills were
+   free-floating chips that wrapped "+ Custom" onto its own row, and the timer
+   and CTA sat on different centre lines. Every row now shares the card's left
+   edge; lengths are a 4-cell segmented control; the CTA matches the app-wide
+   add pill (ink pill, lime disc). Dark mode: theme-dark.css. */
+
+.learnings-card.fbw {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 22px;
+  border-radius: 24px;
+  transition: box-shadow 0.3s ease;
+}
+
+.fbw-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.fbw-head-ic {
+  display: grid;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 11px;
+  background: rgba(26, 122, 74, 0.1);
+  color: #1a7a4a;
+}
+
+.fbw-head-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.fbw-eyebrow,
+.fbw-label {
+  margin: 0;
+  color: rgba(16, 19, 18, 0.45);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.fbw-title {
+  margin: 1px 0 0;
+  color: #101312;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.fbw-icon-btn {
+  display: grid;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid rgba(16, 19, 18, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.7);
+  color: rgba(16, 19, 18, 0.55);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.fbw-icon-btn:hover {
+  background: #ffffff;
+  color: #101312;
+}
+
+.fbw-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.fbw-picker {
+  position: relative;
+}
+
+.fbw-select {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  height: 40px;
+  padding: 0 12px 0 14px;
+  border: 1px solid rgba(16, 19, 18, 0.1);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.7);
+  color: #101312;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.fbw-select:hover {
+  border-color: rgba(16, 19, 18, 0.2);
+}
+
+.fbw-select span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fbw-select svg {
+  flex: none;
+  color: rgba(16, 19, 18, 0.45);
+  transition: transform 0.2s ease;
+}
+
+.fbw-select svg.is-open {
+  transform: rotate(180deg);
+}
+
+.fbw-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  left: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 5px;
+  border: 1px solid rgba(16, 19, 18, 0.08);
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 16px 40px rgba(16, 19, 18, 0.14);
+}
+
+.fbw-menu-item {
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: rgba(16, 19, 18, 0.7);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.fbw-menu-item:hover {
+  background: rgba(16, 19, 18, 0.05);
+  color: #101312;
+}
+
+.fbw-menu-item.is-active {
+  background: rgba(26, 122, 74, 0.1);
+  color: #1a7a4a;
+}
+
+.fbw-menu-item.is-add {
+  color: #1a7a4a;
+}
+
+.fbw-menu-divider {
+  height: 1px;
+  margin: 3px 4px;
+  background: rgba(16, 19, 18, 0.07);
+}
+
+.fbw-menu-form {
+  display: flex;
+  gap: 6px;
+  padding: 3px;
+}
+
+.fbw-menu-input {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid rgba(16, 19, 18, 0.14);
+  border-radius: 9px;
+  background: #ffffff;
+  color: #101312;
+  font: inherit;
+  font-size: 12.5px;
+}
+
+.fbw-menu-input:focus {
+  outline: none;
+  border-color: #1a7a4a;
+}
+
+.fbw-menu-set {
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 9px;
+  background: #171b15;
+  color: #ffffff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fbw-segment {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 3px;
+  padding: 3px;
+  border-radius: 12px;
+  background: rgba(16, 19, 18, 0.05);
+}
+
+.fbw-seg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  height: 34px;
+  margin: 0;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: rgba(16, 19, 18, 0.6);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.fbw-seg:hover {
+  color: #101312;
+}
+
+.fbw-seg.is-active {
+  background: #ffffff;
+  color: #101312;
+  box-shadow: 0 1px 3px rgba(16, 19, 18, 0.1), 0 0 0 1px rgba(16, 19, 18, 0.04);
+}
+
+.fbw-seg.is-editing {
+  padding: 0;
+  background: #ffffff;
+  box-shadow: 0 0 0 1.5px #1a7a4a;
+  cursor: text;
+}
+
+.fbw-seg-input {
+  width: 100%;
+  height: 100%;
+  padding: 0 6px;
+  border: 0;
+  background: transparent;
+  color: #101312;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 650;
+  text-align: center;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.fbw-seg-input:focus {
+  outline: none;
+}
+
+.fbw-seg-input::-webkit-inner-spin-button,
+.fbw-seg-input::-webkit-outer-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+.fbw-timer {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 104px;
+  padding: 2px 0;
+}
+
+.fbw-time {
+  color: #101312;
+  font-size: 54px;
+  font-weight: 300;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.fbw-time-sub {
+  max-width: 100%;
+  overflow: hidden;
+  color: rgba(16, 19, 18, 0.45);
+  font-size: 11.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fbw-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.fbw-status i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.fbw-status.is-running {
+  background: rgba(26, 122, 74, 0.1);
+  color: #1a7a4a;
+}
+
+.fbw-status.is-running i {
+  animation: fbwBlink 1.6s ease-in-out infinite;
+}
+
+.fbw-status.is-paused {
+  background: rgba(217, 164, 65, 0.15);
+  color: #8a6212;
+}
+
+@keyframes fbwBlink {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.fbw-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fbw-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 46px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  background: #171b15;
+  color: #ffffff;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 650;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(23, 27, 21, 0.2);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.15s ease;
+}
+
+.fbw-cta:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(23, 27, 21, 0.26);
+}
+
+.fbw-cta:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+}
+
+.fbw-cta:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.fbw-cta-ic {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border-radius: 50%;
+  background: #cfe965;
+  color: #171b15;
+}
+
+.fbw-cta.is-secondary {
+  background: rgba(16, 19, 18, 0.06);
+  color: #101312;
+  box-shadow: none;
+}
+
+.fbw-cta.is-secondary .fbw-cta-ic {
+  background: rgba(16, 19, 18, 0.1);
+  color: #101312;
+}
+
+.fbw-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: rgba(16, 19, 18, 0.25);
+  font-size: 12px;
+}
+
+.fbw-link {
+  padding: 2px 4px;
+  border: 0;
+  background: transparent;
+  color: rgba(16, 19, 18, 0.5);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.fbw-link:hover {
+  color: #101312;
+}
+
+.fbw-link.is-danger {
+  color: #c2414d;
+}
+
+.fbw-link.is-danger:hover {
+  color: #a3303b;
+}
+
+.fbw-icon-btn:focus-visible,
+.fbw-select:focus-visible,
+.fbw-seg:focus-visible,
+.fbw-cta:focus-visible,
+.fbw-link:focus-visible,
+.fbw-menu-item:focus-visible {
+  outline: 2px solid #1a7a4a;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fbw-status.is-running i {
+    animation: none;
+  }
+}

@@ -1165,11 +1165,11 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
             <div className="stage-actions-group">
               <button
                 type="button"
-                className="create-event-btn"
+                className="create-event-btn add-pill"
                 onClick={() => setModal({ open: true, date: selectedDate })}
               >
-                <Plus size={14} />
-                <span className="create-event-text-desktop">Create event</span>
+                <span className="add-pill-ic"><Plus size={16} strokeWidth={2.75} /></span>
+                <span className="create-event-text-desktop">Add event</span>
                 <span className="create-event-text-ipad">Add</span>
               </button>
               <button

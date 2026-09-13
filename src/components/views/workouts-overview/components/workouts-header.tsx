@@ -12,9 +12,9 @@ function WorkoutsHeader({ onAddClick }: WorkoutsHeaderProps) {
         <h1>Workouts</h1>
       </div>
       <div className="workouts-header-actions">
-        <button className="workouts-add-btn" onClick={onAddClick} type="button">
-          <Plus size={14} strokeWidth={2.5} />
-          <span>Record Activity</span>
+        <button className="workouts-add-btn add-pill" onClick={onAddClick} type="button">
+          <span className="add-pill-ic"><Plus size={16} strokeWidth={2.75} /></span>
+          <span>Add activity</span>
         </button>
       </div>
     </header>

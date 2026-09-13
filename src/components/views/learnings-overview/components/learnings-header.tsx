@@ -110,9 +110,9 @@ export function LearningsHeader({
       </div>
 
       <div className="learnings-header-actions">
-        <button type="button" className="learnings-add-btn primary" onClick={onAddEntry}>
-          <Plus size={14} strokeWidth={3} />
-          <span>Add</span>
+        <button type="button" className="learnings-add-btn primary add-pill" onClick={onAddEntry}>
+          <span className="add-pill-ic"><Plus size={16} strokeWidth={2.75} /></span>
+          <span>Add entry</span>
         </button>
       </div>
 
