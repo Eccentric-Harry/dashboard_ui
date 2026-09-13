@@ -1,0 +1,103 @@
+import { BookOpen, Flame, GraduationCap, Target } from 'lucide-react'
+import type { LearningsSummary } from '@/lib/api'
+
+interface LearningsStatsRowProps {
+  summary: LearningsSummary | null
+  loading?: boolean
+  refreshKey?: number
+}
+
+export function LearningsStatsRow({ summary, loading }: LearningsStatsRowProps) {
+  const stats = summary?.stats
+  const timeline = summary?.timeline || []
+  const last7Days = timeline.slice(-7)
+  const weeklyEntries = last7Days.reduce((acc, day) => acc + (day.learningsCount ?? 0) + (day.tasksCompleted ?? 0), 0)
+
+  const items = [
+    {
+      label: 'Learnings',
+      value: loading ? (
+        <span className="skeleton-rect skeleton-shimmer" style={{ width: '40px', height: '22px', display: 'inline-block', verticalAlign: 'middle', borderRadius: '4px' }} />
+      ) : String(stats?.totalLearningsCount ?? 0),
+      hint: 'total logged',
+      icon: BookOpen,
+      tone: 'learnings' as const,
+    },
+    {
+      label: 'Streak',
+      value: loading ? (
+        <span className="skeleton-rect skeleton-shimmer" style={{ width: '40px', height: '22px', display: 'inline-block', verticalAlign: 'middle', borderRadius: '4px' }} />
+      ) : String(stats?.streakDays ?? 0),
+      hint: 'day run',
+      icon: Flame,
+      tone: 'streak' as const,
+    },
+    {
+      label: 'Pursuits',
+      value: loading ? (
+        <span className="skeleton-rect skeleton-shimmer" style={{ width: '40px', height: '22px', display: 'inline-block', verticalAlign: 'middle', borderRadius: '4px' }} />
+      ) : String(stats?.totalPursuitsCount ?? 0),
+      hint: 'active',
+      icon: GraduationCap,
+      tone: 'pursuits' as const,
+    },
+    {
+      label: 'This week',
+      value: loading ? (
+        <span className="skeleton-rect skeleton-shimmer" style={{ width: '40px', height: '22px', display: 'inline-block', verticalAlign: 'middle', borderRadius: '4px' }} />
+      ) : String(weeklyEntries),
+      hint: 'entries',
+      icon: Target,
+      tone: 'week' as const,
+    },
+  ]
+
+  return (
+    <div className="learnings-stats-row" aria-live="polite">
+      {items.map((item) => {
+        const Icon = item.icon
+        return (
+          <div key={item.label} className={`learnings-stat-card learnings-stat-card--${item.tone}`}>
+            <div className={`learnings-stat-icon learnings-stat-icon--${item.tone}`}>
+              <Icon size={16} strokeWidth={2.2} />
+            </div>
+            <div className="learnings-stat-body">
+              <p>{item.label}</p>
+              <strong>
+                {item.value}
+                <small>{item.hint}</small>
+              </strong>
+            </div>
+            {item.tone === 'week' && !loading && last7Days.length > 0 && (
+              <div className="learnings-weekly-dots">
+                {last7Days.map((day, idx) => {
+                  const parts = day.date.split('-')
+                  const dateObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
+                  const weekday = dateObj.toLocaleDateString('en-US', { weekday: 'narrow' })
+                  const isActive = (day.learningsCount ?? 0) > 0 || (day.tasksCompleted ?? 0) > 0
+                  const tooltipText = `${day.date}: ${day.learningsCount ?? 0} learnings, ${day.tasksCompleted ?? 0} tasks done`
+                  return (
+                    <div key={idx} className="weekly-dot-col" title={tooltipText}>
+                      <span className="weekly-dot-label">{weekday}</span>
+                      <span className={`weekly-dot ${isActive ? 'is-active' : ''}`} />
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+            {item.tone === 'week' && loading && (
+              <div className="learnings-weekly-dots">
+                {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((weekday, idx) => (
+                  <div key={idx} className="weekly-dot-col">
+                    <span className="weekly-dot-label" style={{ opacity: 0.5 }}>{weekday}</span>
+                    <span className="weekly-dot skeleton-circle skeleton-shimmer" style={{ width: '7px', height: '7px', display: 'block', borderWidth: 0 }} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}

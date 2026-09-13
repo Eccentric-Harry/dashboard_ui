@@ -22,7 +22,7 @@
 //
 // Cascade: same :where() trick as postcss-solid-surface.ts. Register this plugin
 // *before* solidSurface so the dark sibling lands after the solid one and wins
-// when both attributes are set. Hand-tuned exceptions live in src/theme-dark.css.
+// when both attributes are set. Hand-tuned exceptions live in src/styles/theme-dark.css.
 import type { AtRule, Declaration, PluginCreator, Rule } from 'postcss'
 import { formatColor, parseColor, type Rgba } from './postcss-solid-surface'
 

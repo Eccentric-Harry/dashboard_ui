@@ -7,7 +7,7 @@ import type { AxiosError, AxiosResponse } from 'axios';
 import { axiosClient } from './axios-client';
 import { buildAPI } from '../api-config';
 import type { ApiEndpoint } from '../api-config';
-import type { ApiEnvelope, ApiError, SafeResult } from '../../types/api';
+import type { ApiEnvelope, ApiError, SafeResult } from '@/types/api';
 
 export interface RequestOptions<P = unknown, B = unknown> {
   params?: P; // path params consumed by url(params)
