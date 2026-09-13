@@ -1758,6 +1758,12 @@
   border-color: #202321;
 }
 
+.medical-pill-select--custom {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
 .custom-condition-add {
   display: flex;
   gap: 8px;

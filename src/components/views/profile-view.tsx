@@ -379,6 +379,10 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
     }
   };
 
+  const handleRemoveCustomCondition = (cond: string) => {
+    setMedicalConditions(medicalConditions.filter((c) => c !== cond));
+  };
+
   const formatLastUpdated = (dateStr?: string) => {
     if (!dateStr) return 'Last updated: Just now';
     const date = new Date(dateStr);
@@ -1120,6 +1124,25 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                             );
                           })}
                         </div>
+
+                        {medicalConditions.filter((cond) => !PRESET_CONDITIONS.includes(cond)).length > 0 && (
+                          <div className="medical-checkbox-grid">
+                            {medicalConditions
+                              .filter((cond) => !PRESET_CONDITIONS.includes(cond))
+                              .map((cond) => (
+                                <button
+                                  type="button"
+                                  key={cond}
+                                  className="medical-pill-select selected medical-pill-select--custom"
+                                  onClick={() => handleRemoveCustomCondition(cond)}
+                                  title="Remove"
+                                >
+                                  {cond}
+                                  <X size={11} />
+                                </button>
+                              ))}
+                          </div>
+                        )}
 
                         <div className="custom-condition-add">
                           <input
