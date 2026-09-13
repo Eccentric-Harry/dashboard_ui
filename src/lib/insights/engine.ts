@@ -62,6 +62,8 @@ export interface InsightMetric {
 export interface InsightAction {
   label: string
   route: string
+  /** Optional query string ("?edit=budget") for a deep link into the route. */
+  search?: string
 }
 
 export interface Insight {
@@ -80,6 +82,8 @@ export interface Insight {
   /** e.g. "based on 6 of 7 days" / "last 30 days". */
   sampleWindow: string
   action?: InsightAction
+  /** A second, lighter-weight action — e.g. "see why" next to a direct fix. */
+  secondaryAction?: InsightAction
   confidence: InsightConfidence
   /** Normalized |effect| used only for ranking within a sentiment tier. */
   effect: number

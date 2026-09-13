@@ -102,6 +102,18 @@ function FinanceOverviewDashboard() {
     };
   }, []);
 
+  // Deep link from Home's urgent budget insight: `?edit=budget` opens the budget
+  // editor straight away, then drops the flag so a reload doesn't reopen it.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('edit') !== 'budget') return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsEditBudgetOpen(true)
+    params.delete('edit')
+    const rest = params.toString()
+    window.history.replaceState(window.history.state, '', `${window.location.pathname}${rest ? `?${rest}` : ''}`)
+  }, [])
+
   useEffect(() => {
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search)

@@ -1,11 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts';
-import {
-  X, Clock, Pencil, LogOut, Mail, Globe, Bell,
-  Activity, Target, Plus, Calendar, RefreshCw,
-  Cake, PersonStanding, Ruler, Weight, Footprints,
-  HeartPulse, CalendarDays, Sparkle, Leaf, ShieldAlert, Zap
-} from 'lucide-react';
+import { X, Clock, Pencil, LogOut, Mail, Globe, Activity, Target, Plus, Calendar, RefreshCw, Cake, PersonStanding, Ruler, Weight, Footprints, HeartPulse, CalendarDays, Sparkle, Leaf, ShieldAlert, Zap } from 'lucide-react';
 import type { UserProfile, GoogleSyncStatus } from '@/lib/api';
 import { userService } from '@/services/user-service';
 import { calendarService } from '@/services/calendar-service';
@@ -13,7 +8,6 @@ import { SideRail } from '@/components/layout/side-rail';
 import { TopChip } from '@/components/layout/top-chip';
 import type { AppPath } from '@/app/routes';
 import toast from 'react-hot-toast';
-import { useNotifications } from '@/store/notification-store';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { getAvatarImage, avatarPresets } from '@/lib/avatar';
 import { confirmCloseIfDirty } from '@/lib/modal-utils';
@@ -85,24 +79,23 @@ const GOAL_LABELS: Record<string, { label: string; delta: string }> = {
   GAIN_MUSCLE: { label: 'Gain Muscle', delta: '+300 kcal/day' },
 };
 
-function getBmiStatus(bmi?: number): string {
-  if (!bmi || bmi <= 0) return '—';
-  if (bmi < 18.5) return 'Underweight';
-  if (bmi < 25.0) return 'Normal';
-  if (bmi < 30.0) return 'Overweight';
-  return 'Obese';
-}
-
-function getBmiStatusClass(bmi?: number): string {
-  if (!bmi || bmi <= 0) return 'none';
-  if (bmi < 18.5) return 'underweight';
-  if (bmi < 25.0) return 'normal';
-  if (bmi < 30.0) return 'overweight';
-  return 'obese';
+/**
+ * BMI band with a soft zone either side of the healthy range. A 25.3 is about a
+ * kilo past the ceiling — "Slightly above" in a neutral tone, not an amber
+ * "Overweight" alarm. The label escalates only once the value is meaningfully
+ * outside the range (≥27 or <17).
+ */
+function bmiStatus(bmi?: number): { label: string; cls: string } {
+  if (!bmi || bmi <= 0) return { label: '—', cls: 'none' };
+  if (bmi < 17) return { label: 'Underweight', cls: 'underweight' };
+  if (bmi < 18.5) return { label: 'Slightly under', cls: 'near' };
+  if (bmi < 25) return { label: 'Healthy', cls: 'normal' };
+  if (bmi < 27) return { label: 'Slightly above', cls: 'near' };
+  if (bmi < 30) return { label: 'Overweight', cls: 'overweight' };
+  return { label: 'Obese', cls: 'obese' };
 }
 
 export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps) {
-  const { unreadCount, setIsOpen } = useNotifications();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -481,17 +474,6 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                           alt={displayName || 'Profile avatar'}
                           className="identity-avatar"
                         />
-                        <button
-                          type="button"
-                          className="identity-notif-btn"
-                          onClick={() => setIsOpen(true)}
-                          aria-label="Open notifications"
-                        >
-                          <Bell size={13} />
-                          {unreadCount > 0 && (
-                            <span className="identity-notif-badge">{unreadCount}</span>
-                          )}
-                        </button>
                       </div>
                       <div className="identity-titles">
                         <h2 className="identity-name">{displayName || 'Your Name'}</h2>
@@ -520,7 +502,12 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                       </span>
                     </div>
 
-                    {bio && <p className="identity-bio">{bio}</p>}
+                    {bio && (
+                      <div className="identity-bio-block">
+                        <h4 className="identity-section-title">About</h4>
+                        <p className="identity-bio">{bio}</p>
+                      </div>
+                    )}
 
                     <div className="identity-section">
                       <h4 className="identity-section-title">Biometrics</h4>
@@ -645,6 +632,16 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                     <header className="metrics-header">
                       <p>Health & Performance</p>
                       <h2>Calculated Targets & Metrics</h2>
+                      {(profile?.updatedAt || profile?.createdAt) && (
+                        <span className="metrics-updated">
+                          Recalculated from the biometrics you saved on{' '}
+                          {new Date(profile?.updatedAt || profile?.createdAt || '').toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </span>
+                      )}
                     </header>
 
                     <div className="metrics-grid">
@@ -654,34 +651,60 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                           <Activity size={15} />
                           <span>BMI & BMR Status</span>
                         </div>
-                        <div className="status-body">
-                          <div className="bmi-ring-wrap">
-                            <div className={`bmi-ring status-${getBmiStatusClass(profile?.bmi)}`}>
-                              <span className="bmi-number">{profile?.bmi ?? '—'}</span>
-                              <span className="bmi-caption">BMI</span>
+                        {(() => {
+                          // One BMI read: the number and its label sit on the scale they
+                          // came from. A separate ring restated the same value in a
+                          // second shape directly above it.
+                          const bmi = profile?.bmi;
+                          const status = bmiStatus(bmi);
+                          const pct = bmi && bmi > 0 ? Math.min(100, Math.max(0, ((bmi - 14) / (40 - 14)) * 100)) : null;
+                          const heightCm = profile?.physicalMetrics?.height;
+                          const hM = heightCm ? heightCm / 100 : 0;
+                          const idealLow = hM ? Math.round(18.5 * hM * hM) : 0;
+                          const idealHigh = hM ? Math.round(24.9 * hM * hM) : 0;
+                          return (
+                            <div className="bmi-gauge bmi-summary">
+                              <div className="bmi-summary-top">
+                                <span className="bmi-number">{bmi ?? '—'}</span>
+                                <span className="bmi-caption">BMI</span>
+                                <span className={`bmi-badge status-${status.cls}`}>{status.label}</span>
+                              </div>
+                              {pct !== null && (
+                                <>
+                                  <div className="bmi-gauge-track">
+                                    <span className="bmi-gauge-zone zone-under" />
+                                    <span className="bmi-gauge-zone zone-normal" />
+                                    <span className="bmi-gauge-zone zone-over" />
+                                    <span className="bmi-gauge-zone zone-obese" />
+                                    <span className="bmi-gauge-marker" style={{ left: `${pct}%` }} />
+                                  </div>
+                                  <div className="bmi-gauge-labels">
+                                    <span>18.5</span>
+                                    <span>25</span>
+                                    <span>30</span>
+                                  </div>
+                                </>
+                              )}
+                              {idealLow > 0 && (
+                                <p className="bmi-gauge-hint">
+                                  Healthy weight range for your height: <strong>{idealLow}–{idealHigh} kg</strong>
+                                </p>
+                              )}
                             </div>
-                            <span className={`bmi-badge status-${getBmiStatusClass(profile?.bmi)}`}>
-                              {getBmiStatus(profile?.bmi)}
-                            </span>
+                          );
+                        })()}
+                        {(!profile?.bmr || !profile?.tdee) && (
+                          <div className="energy-stats">
+                            <div className="energy-row">
+                              <span className="lbl">TDEE</span>
+                              <span className="val">—</span>
+                            </div>
+                            <div className="energy-row">
+                              <span className="lbl">BMR</span>
+                              <span className="val">—</span>
+                            </div>
                           </div>
-                          {/* TDEE/BMR as raw numbers duplicated the Energy Balance
-                              panel below, which already shows both plus how BMR
-                              splits from activity — so only the placeholder shows
-                              here when that panel has nothing to render (no
-                              physicalMetrics yet). */}
-                          {(!profile?.bmr || !profile?.tdee) && (
-                            <div className="energy-stats">
-                              <div className="energy-row">
-                                <span className="lbl">TDEE</span>
-                                <span className="val">—</span>
-                              </div>
-                              <div className="energy-row">
-                                <span className="lbl">BMR</span>
-                                <span className="val">—</span>
-                              </div>
-                            </div>
-                          )}
-                        </div>
+                        )}
                         {(() => {
                           const bmr = profile?.bmr;
                           const tdee = profile?.tdee;
@@ -704,36 +727,6 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                                 <span><i className="seg-bmr" />Resting (BMR) · {Math.round(bmr).toLocaleString()} kcal ({bmrPct}%)</span>
                                 <span><i className="seg-activity" />Activity · {Math.round(activity).toLocaleString()} kcal ({activityPct}%)</span>
                               </div>
-                            </div>
-                          );
-                        })()}
-                        {(() => {
-                          const bmi = profile?.bmi;
-                          if (!bmi || bmi <= 0) return null;
-                          const pct = Math.min(100, Math.max(0, ((bmi - 14) / (40 - 14)) * 100));
-                          const heightCm = profile?.physicalMetrics?.height;
-                          const hM = heightCm ? heightCm / 100 : 0;
-                          const idealLow = hM ? Math.round(18.5 * hM * hM) : 0;
-                          const idealHigh = hM ? Math.round(24.9 * hM * hM) : 0;
-                          return (
-                            <div className="bmi-gauge">
-                              <div className="bmi-gauge-track">
-                                <span className="bmi-gauge-zone zone-under" />
-                                <span className="bmi-gauge-zone zone-normal" />
-                                <span className="bmi-gauge-zone zone-over" />
-                                <span className="bmi-gauge-zone zone-obese" />
-                                <span className="bmi-gauge-marker" style={{ left: `${pct}%` }} />
-                              </div>
-                              <div className="bmi-gauge-labels">
-                                <span>18.5</span>
-                                <span>25</span>
-                                <span>30</span>
-                              </div>
-                              {idealLow > 0 && (
-                                <p className="bmi-gauge-hint">
-                                  Healthy weight range for your height: <strong>{idealLow}–{idealHigh} kg</strong>
-                                </p>
-                              )}
                             </div>
                           );
                         })()}
@@ -814,7 +807,15 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                         })()}
                       </div>
 
-                      {/* Google Calendar sync — horizontal strip */}
+                    </div>
+
+                    {/* Integrations sit apart from the health metrics they have nothing to do with. */}
+                    <section className="profile-integrations" aria-label="Integrations">
+                      <header className="metrics-header">
+                        <p>Settings</p>
+                        <h2>Integrations</h2>
+                      </header>
+                      {/* Google Calendar sync */}
                       <div className="metric-card card-sync">
                         <div className="metric-card-head">
                           <Calendar size={15} />
@@ -884,7 +885,7 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                           </div>
                         )}
                       </div>
-                    </div>
+                    </section>
                   </section>
 
                 </div>

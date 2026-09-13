@@ -86,7 +86,9 @@ function FocusLogCard({
       <header className="home-card-head">
         <div>
           <span className="home-card-eyebrow">Focus log</span>
-          <h2 className="home-card-title">Work the timer missed</h2>
+          <h2 className="home-card-title">
+            {coverage.logged === 0 ? 'Focus tracking is ready when you are' : 'Work the timer missed'}
+          </h2>
         </div>
         <button type="button" className="home-btn-quiet" onClick={() => setFormOpen((o) => !o)}>
           {formOpen ? <X size={13} /> : <Plus size={13} />}
@@ -101,6 +103,12 @@ function FocusLogCard({
             <span key={i} className={cn('home-focus-tick', i < coverage.logged && 'is-logged')} />
           ))}
         </div>
+        {coverage.logged === 0 ? (
+          <p>
+            Log a block by hand or confirm one from your calendar — a few days in, it starts
+            showing up in your trends and patterns.
+          </p>
+        ) : (
         <p>
           <strong>
             {coverage.logged}/{coverage.total} days
@@ -113,6 +121,7 @@ function FocusLogCard({
             </>
           )}
         </p>
+        )}
       </div>
 
       {formOpen && (

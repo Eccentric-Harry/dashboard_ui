@@ -160,7 +160,10 @@ function WeekRollupCard({
     },
   ]
 
-  const allZero = tiles.every((t) => t.isZero)
+  // Focus stays off the strip until it has ever been logged in the window — the
+  // Focus log card owns that empty state, so a third "—" adds nothing.
+  const visibleTiles = tiles.filter((t) => t.id !== 'focus' || focus > 0 || prevFocus > 0)
+  const allZero = visibleTiles.every((t) => t.isZero)
 
   return (
     <section className="home-card home-card--rollup" aria-label="This week">
@@ -184,7 +187,7 @@ function WeekRollupCard({
         </div>
       ) : (
         <div className="home-rollup-grid">
-          {tiles.map((tile) => (
+          {visibleTiles.map((tile) => (
             <article
               key={tile.id}
               className={cn(
@@ -199,7 +202,7 @@ function WeekRollupCard({
                 {tile.icon}
               </span>
               <b>{tile.value}</b>
-              {tile.delta && (
+              {tile.delta && !tile.isZero && (
                 <span className={cn('home-rollup-delta', `tone-${tile.delta.tone}`)}>{tile.delta.text}</span>
               )}
               <small>{tile.label}</small>

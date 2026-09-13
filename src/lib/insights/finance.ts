@@ -337,7 +337,8 @@ function safeToSpendRule(input: FinanceEngineInput, burndown: Burndown | null): 
       detail,
       metric: { value: Math.round(-left), unit: '₹ over' },
       sampleWindow,
-      action: { label: 'Review this month’s spending', route: '/finance' },
+      action: { label: 'Adjust budget', route: '/finance', search: '?edit=budget' },
+      secondaryAction: { label: 'Review this month’s spending', route: '/finance' },
       confidence: 'high',
       effect: Math.min(1, -left / budget + 0.5),
     }
@@ -404,7 +405,9 @@ function forecastRule(input: FinanceEngineInput, burndown: Burndown | null): Ins
     detail,
     metric: { value: Math.round(projectedTotal), unit: '₹', delta: Math.round(-delta), deltaDir: 'up' },
     sampleWindow,
-    action: { label: 'See where it’s going', route: '/finance' },
+    // The one urgent card gets a direct fix, with the look-around as the lighter option.
+    action: { label: 'Adjust budget', route: '/finance', search: '?edit=budget' },
+    secondaryAction: { label: 'See where it’s going', route: '/finance' },
     confidence: confidenceFrom(daysElapsed, -delta / budget),
     effect: Math.min(1, -delta / budget),
   }

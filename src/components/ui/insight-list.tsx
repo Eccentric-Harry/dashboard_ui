@@ -29,7 +29,7 @@ import {
   Wallet,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import type { Insight, InsightIcon } from '@/lib/insights/engine'
+import type { Insight, InsightAction, InsightIcon } from '@/lib/insights/engine'
 import { cn } from '@/lib/utils'
 import './insight-list.css'
 
@@ -86,7 +86,7 @@ function RowSpark({ values }: { values: number[] }) {
 type InsightListProps = {
   insights: Insight[]
   /** Invoked for an insight's action pill; the caller decides how to navigate/scroll. */
-  onAction?: (insight: Insight) => void
+  onAction?: (insight: Insight, action: InsightAction) => void
   className?: string
 }
 
@@ -143,9 +143,18 @@ function InsightList({ insights, onAction, className }: InsightListProps) {
                   <button
                     type="button"
                     className="ins-row-action"
-                    onClick={() => onAction(insight)}
+                    onClick={() => onAction(insight, insight.action!)}
                   >
                     {insight.action.label} →
+                  </button>
+                )}
+                {insight.secondaryAction && onAction && (
+                  <button
+                    type="button"
+                    className="ins-row-action is-secondary"
+                    onClick={() => onAction(insight, insight.secondaryAction!)}
+                  >
+                    {insight.secondaryAction.label}
                   </button>
                 )}
               </div>

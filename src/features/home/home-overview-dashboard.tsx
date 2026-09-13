@@ -31,6 +31,7 @@ import { financeInsights } from '@/lib/insights/finance'
 import { buildMindDays, mindInsights } from '@/lib/insights/mind'
 import { nutritionDaysFromSummary, nutritionInsights } from '@/lib/insights/nutrition'
 import { lastNDates, WATER_QUICK_ADD_ML } from './home-types'
+import { summarizeSleep } from './sleep-summary'
 import { HOME_WINDOW_DAYS, useHomeData } from './use-home-data'
 import '../nutrition/nutrition-redesign.css'
 import './home-overview.css'
@@ -82,12 +83,16 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
   const weekDates = useMemo(() => lastNDates(INSIGHT_WINDOW_DAYS, home.today), [home.today])
   const windowDates = useMemo(() => lastNDates(HOME_WINDOW_DAYS, home.today), [home.today])
 
+  // Sleep is read once, here, and every surface (Day Loop, Sleep card, trends,
+  // rollup, header) consumes this — see sleep-summary.ts for why.
+  const sleepSummary = useMemo(() => summarizeSleep(home.sleep.data, home.today), [home.sleep.data, home.today])
+
   // The 14-day cross-domain series every derived view (insights, momentum) reads from.
   const dayRecords = useMemo(
     () =>
       buildDayRecords({
         days: windowDates,
-        sleep: home.sleep.data,
+        sleep: sleepSummary.entries,
         focus: home.focus.data,
         moods: home.moods.data,
         tasks: home.tasks.data,
@@ -99,7 +104,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
       }),
     [
       windowDates,
-      home.sleep.data,
+      sleepSummary.entries,
       home.focus.data,
       home.moods.data,
       home.tasks.data,
@@ -476,9 +481,11 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
   )
 
   const handleLogSleep = useCallback(
-    async (payload: SleepEntryPayload) => {
+    async (payload: SleepEntryPayload, entryId?: string) => {
       try {
-        const res = await sleepService.logEntry(payload)
+        const res = entryId
+          ? await sleepService.updateEntry(entryId, payload)
+          : await sleepService.logEntry(payload)
         if (res.error) throw new Error(res.error.message)
         await home.reloadSleep()
         toast.success('Night logged. Sleep well tonight too.')
@@ -579,8 +586,12 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           overdueCount={overdueCount}
           hydration={home.hydration.data}
           focusRunning={focusSession?.status === 'RUNNING'}
-          sleepMinutesToday={todayRecord?.sleepMinutes ?? null}
+          sleepMinutesToday={sleepSummary.lastNight?.durationMinutes ?? null}
           mealQuality={mealQualityToday}
+          anchor={todayAnchor?.text ?? ''}
+          onOpenAnchor={() =>
+            document.querySelector('.home-card--anchor')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }
           onAddWater={() => void handleAddWater()}
           onStartFocus={() => onNavigate('/learnings')}
           onLogSleep={() => handleQuickAdd('sleep')}
@@ -601,7 +612,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
         <SleepCard
           loading={home.loading}
           failed={home.sleep.failed}
-          entries={home.sleep.data}
+          summary={sleepSummary}
           today={home.today}
           openFormNonce={sleepFormNonce}
           onLog={handleLogSleep}

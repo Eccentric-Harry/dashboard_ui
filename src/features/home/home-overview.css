@@ -643,9 +643,75 @@
   font-style: italic;
 }
 
-/* Overdue status pill — the only red in the hero, and the loudest thing in it */
-.home-pill-urgent {
-  background: #c03546;
+/* Overdue badge — one visual language wherever "overdue" appears on Home:
+   the rose dot + text the Tasks card's count strip uses. */
+.home-dashboard {
+  --home-overdue: #c0596e;
+}
+
+.home-overdue-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 8px;
+  border-radius: 999px;
+  background: var(--home-overdue-bg, rgba(192, 89, 110, 0.12));
+  color: var(--home-overdue);
+  font-size: 11px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.home-overdue-badge i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Today's anchor, pinned to the loop it's meant to give a spine to. */
+.home-hero-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.home-hero-anchor {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 1px 8px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--home-hero-anchor-bg, rgba(77, 86, 174, 0.1));
+  color: #4d56ae;
+  font: inherit;
+  cursor: pointer;
+}
+
+.home-hero-anchor:hover {
+  background: var(--home-hero-anchor-bg-hover, rgba(77, 86, 174, 0.16));
+}
+
+.home-hero-anchor-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-sleep-quality-why {
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(30, 61, 82, 0.08);
+  font-style: normal;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .home-hero-panel {
@@ -1157,7 +1223,7 @@
 }
 
 .home-grid--primary .home-card--capture .home-capture-mood {
-  padding-top: 10px;
+  padding: 10px 12px;
 }
 
 /* ---------- Focus log ----------
@@ -1826,7 +1892,7 @@
    Per-bucket accent: overdue rose, today periwinkle, upcoming slate-grey. */
 
 .home-card--tasks {
-  --tk-overdue: #c0596e;
+  --tk-overdue: var(--home-overdue, #c0596e);
   --tk-today: #4d56ae;
   --tk-upcoming: #7f86a2;
 }
@@ -3139,6 +3205,8 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
 /* Mood check-in — pins to the capture card's footer, filling what used to
    be dead space. Faces reuse the Mind route's check-in language via the
    .home-face-* classes defined in the header section above. */
+/* Its own inset panel rather than a dashed rule: mood is a check-in, not a
+   capture, so it reads as a separate module sharing the card. */
 .home-capture-mood {
   display: flex;
   align-items: center;
@@ -3146,8 +3214,10 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
   gap: 12px;
   flex-wrap: wrap;
   margin-top: auto;
-  padding-top: 14px;
-  border-top: 1px dashed rgba(26, 31, 29, 0.16);
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: var(--home-capture-mood-bg, rgba(122, 99, 184, 0.07));
+  box-shadow: inset 0 0 0 1px var(--home-capture-mood-ring, rgba(122, 99, 184, 0.12));
 }
 
 .home-capture-mood-text {
@@ -3278,9 +3348,16 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
 .home-rollup--sleep { --rollup-accent: #2c5c78; --rollup-tint: #d7e6f0; }
 .home-rollup--spend { --rollup-accent: #2c7264; --rollup-tint: #d8ece7; }
 
-/* Zeros stay grey and quiet — never green, never alarming */
+/* Zeros stay grey and quiet — never green, never alarming. Muted as a whole
+   tile (no tint, light dash) so the eye goes to real stats first. */
+.home-rollup-tile.is-quiet {
+  background: rgba(23, 27, 21, 0.025);
+  opacity: 0.62;
+}
+
 .home-rollup-tile.is-quiet b {
   color: rgba(23, 28, 25, 0.42);
+  font-weight: 500;
 }
 
 .home-rollup-tile.is-quiet .home-rollup-ic {

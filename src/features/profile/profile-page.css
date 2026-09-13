@@ -1948,3 +1948,71 @@
   cursor: not-allowed;
 }
 
+
+/* ── Profile review pass ──────────────────────────────────────────────────
+   · Bio carries an "About" caption so a one-word bio isn't mistaken for a team
+     name or plan tier.
+   · The metrics header states which save the calculations come from.
+   · BMI is one read: number, label and scale together (the separate ring
+     restated the same value). Near the healthy range the label is neutral.
+   · Google Calendar lives in its own Integrations section, not the health grid. */
+.identity-bio-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.metrics-updated {
+  display: block;
+  margin-top: 4px;
+  color: rgba(23, 28, 25, 0.5);
+  font-size: 11px;
+  font-weight: 550;
+}
+
+.bmi-summary {
+  gap: 8px;
+  padding: 14px 16px;
+}
+
+.bmi-summary-top {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.bmi-summary-top .bmi-number {
+  font-size: 28px;
+}
+
+.bmi-summary-top .bmi-caption {
+  margin: 0;
+}
+
+.bmi-summary-top .bmi-badge {
+  align-self: center;
+  margin-left: auto;
+}
+
+.bmi-badge.status-near {
+  background: rgba(16, 19, 18, 0.05);
+  color: #526057;
+  border: 1px solid rgba(16, 19, 18, 0.1);
+}
+
+.profile-integrations {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(16, 19, 18, 0.07);
+}
+
+.profile-integrations .metrics-header h2 {
+  font-size: 15px;
+}
+
+.profile-integrations .card-sync {
+  grid-column: auto;
+}

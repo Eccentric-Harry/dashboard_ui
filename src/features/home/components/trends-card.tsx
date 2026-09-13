@@ -171,6 +171,10 @@ function TrendsCard({ loading, records }: TrendsCardProps) {
       trend: hasData ? halfTrend(series) : null,
     }
   })
+    // Focus is opt-in logging: until a single day exists, an empty tile just
+    // repeats the Focus log card's own empty state. The other vitals keep their
+    // quiet tile — an unlogged night is still worth noticing.
+    .filter((tile) => tile.id !== 'focus' || tile.hasData)
 
   const anyData = tiles.some((t) => t.hasData)
 

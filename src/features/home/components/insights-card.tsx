@@ -10,7 +10,7 @@ type InsightsCardProps = {
   insights: Insight[]
   activeDays: number
   onRefresh: () => void
-  onNavigate?: (pathname: ActionRoute) => void
+  onNavigate?: (pathname: ActionRoute, search?: string) => void
 }
 
 function InsightsCard({ loading, insights, activeDays, onRefresh, onNavigate }: InsightsCardProps) {
@@ -46,7 +46,7 @@ function InsightsCard({ loading, insights, activeDays, onRefresh, onNavigate }: 
       ) : (
         <InsightList
           insights={insights}
-          onAction={(insight: Insight) => onNavigate?.(insight.action!.route as ActionRoute)}
+          onAction={(_insight: Insight, action) => onNavigate?.(action.route as ActionRoute, action.search)}
         />
       )}
     </section>

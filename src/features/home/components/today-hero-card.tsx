@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
-  AlertTriangle,
+  Anchor,
   ArrowRight,
   CalendarClock,
   CheckSquare,
@@ -22,6 +22,7 @@ import { formatMinutes, formatTimeLabel, MEAL_COVERAGE_TARGET, SLEEP_TARGET_MINU
 import type { LoopMetric, LoopMetricId } from '../day-loop'
 import { buildDayLoop, fuelBreakdown, loopClosedCount, loopScore, nextLoopNudge } from '../day-loop'
 import { LoopArc } from './loop-arc'
+import { OverdueBadge } from './overdue-badge'
 
 type TodayHeroCardProps = {
   loading: boolean
@@ -34,6 +35,9 @@ type TodayHeroCardProps = {
   sleepMinutesToday: number | null
   /** Today's meal-quality aggregate from the nutrition summary. */
   mealQuality: MealQualityDay | null
+  /** Today's anchor text ('' when unset) — pinned atop the loop once named. */
+  anchor: string
+  onOpenAnchor: () => void
   onAddWater: () => void
   onStartFocus: () => void
   onLogSleep: () => void
@@ -212,6 +216,8 @@ function TodayHeroCard({
   focusRunning,
   sleepMinutesToday,
   mealQuality,
+  anchor,
+  onOpenAnchor,
   onAddWater,
   onStartFocus,
   onLogSleep,
@@ -287,7 +293,24 @@ function TodayHeroCard({
     <section className="home-card home-card--hero" aria-label="Today at a glance">
       <div className="ntr-card-head home-hero-head">
         <div>
-          <p className="ntr-eyebrow">Today · Day loop</p>
+          {/* Once named, the anchor takes the eyebrow's place — pinned to the loop
+              it gives a spine to, without adding height to a fixed-size card. */}
+          {anchor ? (
+            <p className="ntr-eyebrow home-hero-eyebrow">
+              Today ·
+              <button
+                type="button"
+                className="home-hero-anchor"
+                onClick={onOpenAnchor}
+                aria-label={`Today's anchor: ${anchor}. Edit it.`}
+              >
+                <Anchor size={10} strokeWidth={2.6} aria-hidden="true" />
+                <span className="home-hero-anchor-text">{anchor}</span>
+              </button>
+            </p>
+          ) : (
+            <p className="ntr-eyebrow">Today · Day loop</p>
+          )}
           <h2>{loopPhrase(dayScore, now.getHours())}</h2>
         </div>
         {/* No focus-session pill here — the running state already shows on the
@@ -306,10 +329,7 @@ function TodayHeroCard({
             <LoopInfoPanel metrics={metrics} meal={mealQuality} onClose={() => setShowInfo(false)} />
           )}
           {overdueCount > 0 ? (
-            <span className="ntr-pill dark home-pill-urgent">
-              <AlertTriangle size={12} strokeWidth={2.5} />
-              {overdueCount} overdue
-            </span>
+            <OverdueBadge count={overdueCount} />
           ) : nextEvent ? (
             <span className="ntr-pill dark">
               <CalendarClock size={12} strokeWidth={2.5} />

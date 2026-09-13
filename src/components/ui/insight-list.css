@@ -296,6 +296,16 @@
   box-shadow: 0 6px 14px rgba(23, 27, 21, 0.22);
 }
 
+.ins-row-action.is-secondary {
+  background: transparent;
+  color: var(--ins-action-secondary, #2b352f);
+  box-shadow: inset 0 0 0 1px var(--ins-action-secondary-ring, rgba(23, 27, 21, 0.18));
+}
+
+.ins-row-action.is-secondary:hover {
+  box-shadow: inset 0 0 0 1px var(--ins-action-secondary-ring-hover, rgba(23, 27, 21, 0.32));
+}
+
 .ins-row-detail {
   padding: 9px 12px;
   border-radius: 12px;

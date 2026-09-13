@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Moon, Plus, Sunrise, Trophy, Waves } from 'lucide-react'
 import { Bar, BarChart, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import type { SleepEntry, SleepEntryPayload } from '@/lib/api'
+import type { SleepEntryPayload } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import {
   formatMinutes,
@@ -11,6 +11,7 @@ import {
   SLEEP_TARGET_MINUTES,
   weekdayLetter,
 } from '../home-types'
+import type { HomeSleepEntry, SleepSummary } from '../sleep-summary'
 
 const QUALITY_LABELS = ['Rough', 'Poor', 'Okay', 'Good', 'Great'] as const
 
@@ -24,10 +25,12 @@ const BAR_MISSING = 'var(--home-sleep-bar-missing, rgba(30, 61, 82, 0.1))'
 type SleepCardProps = {
   loading: boolean
   failed: boolean
-  entries: SleepEntry[] | null
+  /** Shared, date-attributed sleep read — the same one the Day Loop and trends use. */
+  summary: SleepSummary
   today: string
   openFormNonce?: number
-  onLog: (payload: SleepEntryPayload) => Promise<void>
+  /** `entryId` is set when saving should move an existing entry rather than create one. */
+  onLog: (payload: SleepEntryPayload, entryId?: string) => Promise<void>
   onRetry: () => void
 }
 
@@ -43,22 +46,46 @@ type SleepPoint = {
 }
 
 /** Quality as a labelled 5-segment meter — a bare colored dot read as
-    decoration and needed a hover to mean anything. */
-function QualityMeter({ quality }: { quality?: number | null }) {
+    decoration and needed a hover to mean anything. Quality is the user's own
+    rating, not a score derived from duration, so it says "Rated" and carries a
+    short reason when it's low — otherwise "Poor" next to 8h looks like a bug. */
+function QualityMeter({ quality, reason }: { quality?: number | null; reason?: string | null }) {
   const label = quality ? QUALITY_LABELS[quality - 1] : 'Not rated'
   return (
     <span
       className={cn('home-sleep-quality', !quality && 'is-unrated')}
-      aria-label={`Sleep quality: ${label}`}
+      aria-label={`Sleep quality: ${quality ? `you rated it ${label}` : label}${reason ? ` — ${reason}` : ''}`}
+      title={quality ? 'Your own rating from when you logged the night' : undefined}
     >
       <span className="home-sleep-quality-meter" aria-hidden="true">
         {[1, 2, 3, 4, 5].map((step) => (
           <i key={step} className={cn(quality != null && step <= quality && 'is-on')} />
         ))}
       </span>
-      {label}
+      {quality ? `Rated ${label}` : label}
+      {reason && <em className="home-sleep-quality-why">{reason}</em>}
     </span>
   )
+}
+
+const clockMinutes = (t: string) => {
+  const [h, m] = t.split(':').map(Number)
+  return Number.isNaN(h) || Number.isNaN(m) ? null : h * 60 + m
+}
+
+/** Why a low rating might be low, from what the entry actually carries — never invented. */
+function qualityReason(entry: HomeSleepEntry, avgBedtime: string | null): string | null {
+  if (!entry.quality || entry.quality > 2) return null
+  const note = entry.note?.trim()
+  if (note) return note.length > 40 ? `${note.slice(0, 39).trim()}…` : note
+  const bed = entry.bedtime ? clockMinutes(entry.bedtime) : null
+  const avg = avgBedtime ? clockMinutes(avgBedtime) : null
+  if (bed != null && avg != null) {
+    const raw = Math.abs(bed - avg)
+    if (Math.min(raw, 1440 - raw) >= 60) return 'irregular bedtime'
+  }
+  if (entry.durationMinutes < SLEEP_TARGET_MINUTES) return 'short of target'
+  return 'full length — add a note on why'
 }
 
 /** Mean of "HH:MM" clock times around an anchor hour, so 23:50 and 00:20
@@ -109,7 +136,7 @@ function makeSleepTooltip(today: string) {
   }
 }
 
-function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRetry }: SleepCardProps) {
+function SleepCard({ loading, failed, summary, today, openFormNonce, onLog, onRetry }: SleepCardProps) {
   const [formOpen, setFormOpen] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
 
@@ -130,7 +157,7 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
   const [saving, setSaving] = useState(false)
 
   const week = useMemo(() => lastNDates(7, today), [today])
-  const byDate = useMemo(() => new Map((entries ?? []).map((e) => [e.date, e])), [entries])
+  const { byDate, lastNight, latest, week: loggedThisWeek, avgMinutes, avgVsTargetMinutes } = summary
 
   // Fresh open always starts on today; picking a different date re-syncs
   // the fields below to whatever (if anything) is already logged for it.
@@ -152,25 +179,9 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formOpen, date])
 
-  const lastNight = byDate.get(today) ?? null
-  const latest = lastNight ?? (entries && entries.length > 0 ? entries[entries.length - 1] : null)
-
-  const loggedThisWeek = useMemo(
-    () => week.map((d) => byDate.get(d)).filter((e): e is SleepEntry => Boolean(e)),
-    [week, byDate],
-  )
-  const avgMinutes =
-    loggedThisWeek.length > 0
-      ? Math.round(loggedThisWeek.reduce((sum, e) => sum + e.durationMinutes, 0) / loggedThisWeek.length)
-      : null
-  const debtMinutes =
-    loggedThisWeek.length > 0
-      ? loggedThisWeek.reduce((sum, e) => sum + (SLEEP_TARGET_MINUTES - e.durationMinutes), 0)
-      : null
-
   const series = useMemo<SleepPoint[]>(
     () =>
-      week.map((date) => {
+      week.map((date): SleepPoint => {
         const entry = byDate.get(date)
         return {
           day: weekdayLetter(date),
@@ -204,7 +215,9 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
     return { avgBed, avgWake, best, swing }
   }, [loggedThisWeek])
 
-  const chartMax = Math.max(SLEEP_TARGET_MINUTES, ...loggedThisWeek.map((e) => e.durationMinutes)) + 60
+  const qualityWhy = latest ? qualityReason(latest, facts?.avgBed ?? null) : null
+
+  const chartMax =Math.max(SLEEP_TARGET_MINUTES, ...loggedThisWeek.map((e) => e.durationMinutes)) + 60
 
   const barFill = (point: SleepPoint): string => {
     if (point.minutes == null) return BAR_MISSING
@@ -216,14 +229,20 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
     if (saving) return
     setSaving(true)
     try {
-      await onLog({
-        date,
-        bedtime,
-        wakeTime,
-        quality,
-        note: note.trim() || undefined,
-        source: 'manual',
-      })
+      // An entry re-attributed to this date still sits on another one in storage;
+      // update it in place so saving moves it instead of leaving a duplicate night.
+      const existing = byDate.get(date)
+      await onLog(
+        {
+          date,
+          bedtime,
+          wakeTime,
+          quality,
+          note: note.trim() || undefined,
+          source: 'manual',
+        },
+        existing && existing.storedDate !== date ? existing.id : undefined,
+      )
       setFormOpen(false)
       setNote('')
     } finally {
@@ -237,7 +256,7 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
       <header className="home-card-head">
         <div>
           <span className="home-card-eyebrow">Sleep</span>
-          <h2 className="home-card-title">Last night</h2>
+          <h2 className="home-card-title">{lastNight || !latest ? 'Last night' : 'Latest night'}</h2>
         </div>
         {!loading && !failed && (
           <button
@@ -270,25 +289,27 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
               <div className="ntr-tap-big">
                 <strong>{formatMinutes(latest.durationMinutes)}</strong>
                 <small>
-                  {latest.date === today ? 'last night' : `latest · ${latest.date}`}
+                  {latest.date === today ? 'last night' : `latest · ${shortDayLabel(latest.date)}`}
                   {' · '}
                   {latest.bedtime} → {latest.wakeTime}
                 </small>
               </div>
-              <QualityMeter quality={latest.quality} />
+              <QualityMeter quality={latest.quality} reason={qualityWhy} />
               <div className="ntr-tap-stats">
                 <div className="ntr-tap-stat">
                   <span>avg week</span>
                   <b>{avgMinutes != null ? formatMinutes(avgMinutes) : '—'}</b>
                 </div>
+                {/* Average night against the nightly target. This used to sum each
+                    night's surplus across the week, so +48m/night read as "+4h 45m". */}
                 <div className="ntr-tap-stat">
-                  <span>vs {SLEEP_TARGET_HOURS}h</span>
-                  <b className={cn(debtMinutes != null && debtMinutes > 0 && 'is-watch')}>
-                    {debtMinutes == null
+                  <span>vs {SLEEP_TARGET_HOURS}h / night</span>
+                  <b className={cn(avgVsTargetMinutes != null && avgVsTargetMinutes < 0 && 'is-watch')}>
+                    {avgVsTargetMinutes == null
                       ? '—'
-                      : debtMinutes > 0
-                        ? `−${formatMinutes(debtMinutes)}`
-                        : `+${formatMinutes(Math.abs(debtMinutes))}`}
+                      : avgVsTargetMinutes === 0
+                        ? 'on target'
+                        : `${avgVsTargetMinutes > 0 ? '+' : '−'}${formatMinutes(Math.abs(avgVsTargetMinutes))}`}
                   </b>
                 </div>
                 <div className="ntr-tap-stat">
@@ -312,7 +333,9 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
             <div className="home-sleep-form">
               <div className="home-sleep-form-row">
                 <label>
-                  <span>Night of</span>
+                  {/* The backend keys a night by the date you woke up — "Night of"
+                      read as the bedtime date and filed last night under yesterday. */}
+                  <span>Woke up on</span>
                   <input
                     type="date"
                     value={date}
@@ -367,7 +390,7 @@ function SleepCard({ loading, failed, entries, today, openFormNonce, onLog, onRe
             </div>
           )}
 
-          {(entries?.length ?? 0) > 0 && (
+          {summary.entries.length > 0 && (
             <div className="home-sleep-chart" role="img" aria-label="Sleep duration bars for the last 7 nights">
               {isMounted && (
                 <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>

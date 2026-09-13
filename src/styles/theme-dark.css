@@ -550,6 +550,20 @@
   background: #ffffff;
 }
 
+:root[data-theme='dark'] .bmi-badge.status-near {
+  border-color: var(--dk-line-strong);
+  background: var(--dk-wash-strong);
+  color: var(--dk-ink-2);
+}
+
+:root[data-theme='dark'] .metrics-updated {
+  color: var(--dk-ink-3);
+}
+
+:root[data-theme='dark'] .profile-integrations {
+  border-top-color: var(--dk-line);
+}
+
 :root[data-theme='dark'] .bmi-gauge-marker {
   border-color: var(--dk-raised);
 }
@@ -1249,7 +1263,7 @@
 /* The teal "upcoming task" slab becomes graphite lit by teal. The source rule
    is !important throughout, so this has to be too. */
 :root[data-theme='dark'] .quick-reminder-card {
-  padding: 16px 16px 14px 18px !important;
+  padding: 18px 18px 16px !important;
   border: 1px solid var(--dk-line) !important;
   background: var(--dk-raised) !important;
   color: var(--dk-ink) !important;
@@ -1257,28 +1271,34 @@
   min-height: 0 !important;
 }
 
-/* The teal ring framed the whole card; the event's own colour now lives in a
-   slim bar on the leading edge (--rc-accent, set inline per event). */
+/* No edge bar or ring: the card is a plain raised surface, and the event's
+   own colour (--rc-accent, set inline per event) is carried by a small lit dot
+   beside the eyebrow — enough to tell events apart without framing the card. */
 :root[data-theme='dark'] .quick-reminder-card:hover {
   transform: none;
 }
 
 :root[data-theme='dark'] .quick-reminder-card::before {
-  content: '';
-  position: absolute;
-  top: 16px;
-  bottom: 16px;
-  left: 0;
-  width: 3px;
-  border-radius: 0 3px 3px 0;
-  background: color-mix(in oklab, var(--rc-accent, #2dd4bf), #fff 20%);
+  content: none;
 }
 
 :root[data-theme='dark'] .reminder-eyebrow {
+  gap: 8px;
+  margin-bottom: 8px;
   color: var(--dk-ink-3);
   font-weight: 650;
   letter-spacing: 0.08em;
   opacity: 1;
+}
+
+:root[data-theme='dark'] .reminder-eyebrow::before {
+  content: '';
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--rc-accent, #2dd4bf), #fff 15%);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--rc-accent, #2dd4bf) 22%, transparent);
 }
 
 :root[data-theme='dark'] .upcoming-carousel-controls {

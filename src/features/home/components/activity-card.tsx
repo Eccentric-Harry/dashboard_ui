@@ -15,7 +15,7 @@ import type { LucideIcon } from 'lucide-react'
 import type { StravaActivity, StravaActivityStats } from '@/lib/api'
 import type { AppPath } from '@/app/routes'
 import { cn } from '@/lib/utils'
-import { formatMinutes } from '../home-types'
+import { formatMinutes, formatTimeLabel } from '../home-types'
 
 type ActivityCardProps = {
   loading: boolean
@@ -67,6 +67,15 @@ function whenLabel(dateIso: string, today: string): string {
   const weekday = date.toLocaleDateString('en', { weekday: 'short' })
   const day = date.toLocaleDateString('en', { day: 'numeric', month: 'short' })
   return diffDays < 7 ? `${weekday} · ${day}` : day
+}
+
+/** Strava hands back a full ISO instant ("2026-09-12T11:27:11Z"); manual entries a bare "HH:mm". Both → "4:57 PM". */
+function startTimeLabel(value?: string): string {
+  if (!value) return ''
+  if (!value.includes('T')) return formatTimeLabel(value)
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 }
 
 function ActivityCard({
@@ -170,7 +179,7 @@ function ActivityCard({
                 <b>{latest.activityName}</b>
                 <small>
                   {whenLabel(latest.date, today)}
-                  {latest.startTime ? ` · ${latest.startTime}` : ''}
+                  {startTimeLabel(latest.startTime) ? ` · ${startTimeLabel(latest.startTime)}` : ''}
                 </small>
               </span>
               <span className="home-activity-sport">{latest.sportType}</span>
