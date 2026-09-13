@@ -2505,6 +2505,11 @@ button {
     background: #f0f1f6;
   }
 
+  /* /profile variant: the page already shows the avatar, so the chip is a bell. */
+  .mobile-profile-trigger.is-bell {
+    color: #101312;
+  }
+
   .mobile-profile-avatar {
     width: 100%;
     height: 100%;

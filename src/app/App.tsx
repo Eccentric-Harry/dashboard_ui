@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useState } from 'react'
 import toast, { Toaster, resolveValue } from 'react-hot-toast'
-import { Info, Check, AlertTriangle, AlertCircle, Loader2, X } from 'lucide-react'
+import { Info, Check, AlertTriangle, AlertCircle, Loader2, X, Bell } from 'lucide-react'
 
 import { HomeOverview } from '../features/home/home-page'
 import { normalizePathname, type AppPath } from './routes'
@@ -42,7 +42,7 @@ if (isGuest) {
 
 function MobileProfileTrigger({ onNavigate, activePath }: { onNavigate: (path: AppPath) => void; activePath: AppPath }) {
   const [avatar, setAvatar] = useState(() => localStorage.getItem('avatarUrl') || 'luffy');
-  const { unreadCount } = useNotifications();
+  const { unreadCount, isOpen, setIsOpen } = useNotifications();
 
   useEffect(() => {
     const handleUpdate = () => {
@@ -56,8 +56,24 @@ function MobileProfileTrigger({ onNavigate, activePath }: { onNavigate: (path: A
     onNavigate('/profile');
   };
 
+  // On /profile the avatar is already the page's hero, but this chip is the only
+  // way into notifications on mobile (the dock has no bell) — so it stays, as a
+  // bell that opens the notification center instead of navigating to itself.
   if (activePath === '/profile') {
-    return null;
+    return (
+      <button
+        type="button"
+        className="mobile-profile-trigger is-bell"
+        onClick={() => setIsOpen(!isOpen)}
+        aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
+        aria-expanded={isOpen}
+      >
+        <Bell size={19} strokeWidth={2.2} aria-hidden="true" />
+        {unreadCount > 0 && (
+          <span className="mobile-notification-badge">{unreadCount}</span>
+        )}
+      </button>
+    );
   }
 
   return (
