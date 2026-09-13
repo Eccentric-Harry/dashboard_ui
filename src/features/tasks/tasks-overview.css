@@ -981,242 +981,322 @@
   transform: rotate(180deg);
 }
 
-/* ─── List view: character pass ───
-   Every group was an identical white box with a grey "n / n done" pill, every
-   due date was the same red chip, and a "Created …" chip sat on every row — so
-   nothing on the page said what needed attention. Now:
-   · each group carries its category hue (icon tile, check, progress bar);
-   · the header states open vs done and flags overdue work;
-   · rows get an urgency rail and one due chip whose colour means something;
-   · the creation date is quiet text, not a chip.
-   Overrides the base list rules above by source order. */
+/* ─── List view ───────────────────────────────────────────────────────────
+   Modelled on Things 3 and Linear: rows are plain text on the card — no
+   dividers, rails or chips — and only lift on hover/selection. Each list shows
+   progress as a small ring beside its title instead of a full-width bar.
+   Colour is reserved for meaning: the category hue on the ring and checkbox,
+   red/amber/blue on due text only when the date matters. Lists with nothing
+   open leave the grid for one compact "Completed" shelf. */
 
 .tasks-list-view {
-  column-gap: 14px;
+  column-gap: 16px;
 }
 
-.tasks-accordion-group {
+.tg {
   --cat: #6b7280;
-  margin-bottom: 14px;
-  padding: 0;
+  display: inline-block;
+  width: 100%;
+  margin: 0 0 16px;
+  padding: 6px;
+  border: 1px solid rgba(16, 19, 18, 0.06);
   border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(16, 19, 18, 0.03);
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  box-sizing: border-box;
 }
 
-.tasks-accordion-header {
+.tg-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   width: 100%;
-  gap: 12px;
-  margin: 0;
-  padding: 14px 16px 12px;
-  border-bottom: none;
+  padding: 10px 10px 8px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
   color: inherit;
   font: inherit;
   text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
 }
 
-.tasks-accordion-header:hover {
-  opacity: 1;
-  background: rgba(16, 19, 18, 0.025);
+.tg-head:hover {
+  background: rgba(16, 19, 18, 0.03);
 }
 
-.tasks-accordion-header:focus-visible {
-  outline: 2px solid var(--cat);
-  outline-offset: -2px;
-  border-radius: 18px;
+.tg.is-collapsed .tg-head {
+  padding-bottom: 10px;
 }
 
-.tasks-accordion-group.is-collapsed .tasks-accordion-header {
-  padding-bottom: 12px;
-}
-
-.tasks-group-icon {
-  display: grid;
+.tg-ring {
   flex: none;
-  width: 32px;
-  height: 32px;
-  place-items: center;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--cat) 13%, #ffffff);
-  color: var(--cat);
+  width: 20px;
+  height: 20px;
 }
 
-.tasks-group-titles {
-  display: flex;
+.tg-ring circle {
+  fill: none;
+  stroke-width: 2.6;
+}
+
+.tg-ring-track {
+  stroke: color-mix(in srgb, var(--cat) 22%, transparent);
+}
+
+.tg-ring-fill {
+  stroke: var(--cat);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.4s ease;
+}
+
+.tg-title {
   flex: 1;
-  flex-direction: column;
-  gap: 1px;
   min-width: 0;
-}
-
-.tasks-group-title {
+  overflow: hidden;
   color: #101312;
-  font-size: 13.5px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 650;
   letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.tasks-group-sub {
-  color: rgba(16, 19, 18, 0.48);
-  font-size: 10.5px;
+.tg-overdue {
+  flex: none;
+  color: #c2414d;
+  font-size: 11px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.tg-count {
+  flex: none;
+  min-width: 18px;
+  color: rgba(16, 19, 18, 0.4);
+  font-size: 12px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
-.tasks-group-alert {
+.tg-chev {
   flex: none;
-  padding: 3px 8px;
-  border-radius: 999px;
-  background: rgba(212, 71, 82, 0.1);
-  color: #b83a45;
-  font-size: 10px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
+  color: rgba(16, 19, 18, 0.3);
+  transition: transform 0.2s ease;
 }
 
-.tasks-accordion-header .tasks-accordion-chevron {
-  flex: none;
-  color: rgba(16, 19, 18, 0.35);
+.tg.is-collapsed .tg-head .tg-chev {
+  transform: rotate(-90deg);
 }
 
-.tasks-group-progress {
-  height: 3px;
-  margin: 0 16px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: rgba(16, 19, 18, 0.06);
-}
-
-.tasks-group-progress i {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--cat);
-  transition: width 0.3s ease;
-}
-
-.tasks-accordion-group.is-all-done .tasks-group-progress i {
-  background: color-mix(in srgb, var(--cat) 45%, #ffffff);
-}
-
-.tasks-accordion-group.is-collapsed .tasks-group-progress {
-  margin-bottom: 14px;
-}
-
-.tasks-accordion-content {
-  margin-top: 6px;
-  padding: 0 8px 8px;
+.tg-rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0 0 4px;
+  list-style: none;
 }
 
 /* Rows */
 
-.tasks-list-card {
-  position: relative;
+.tr {
+  display: flex;
+  align-items: flex-start;
   gap: 11px;
-  padding: 10px 10px 10px 12px;
-  border-bottom-color: rgba(16, 19, 18, 0.07);
+  padding: 9px 10px;
+  border-radius: 11px;
+  cursor: pointer;
+  transition: background 0.15s ease;
 }
 
-.tasks-list-card::before {
-  content: '';
-  position: absolute;
-  top: 10px;
-  bottom: 10px;
-  left: 0;
-  width: 3px;
-  border-radius: 0 3px 3px 0;
-  background: transparent;
+.tr:hover {
+  background: rgba(16, 19, 18, 0.035);
 }
 
-.tasks-list-card.is-overdue::before {
-  background: #d44752;
+.tr.is-selected {
+  background: color-mix(in srgb, var(--cat) 9%, transparent);
 }
 
-.tasks-list-card.is-today::before {
-  background: #d9a441;
-}
-
-.tasks-list-card.is-completed .task-list-body {
-  opacity: 0.7;
-}
-
-.task-list-check {
+.tr-check {
+  display: grid;
+  flex: none;
   width: 18px;
   height: 18px;
-  border: 1.5px solid rgba(16, 19, 18, 0.22);
-  border-radius: 6px;
+  margin-top: 1px;
+  padding: 0;
+  place-items: center;
+  border: 1.5px solid rgba(16, 19, 18, 0.25);
+  border-radius: 50%;
+  background: transparent;
+  color: #ffffff;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 
-.task-list-check:hover {
+.tr-check:hover {
   border-color: var(--cat);
-  background: color-mix(in srgb, var(--cat) 10%, transparent);
+  background: color-mix(in srgb, var(--cat) 12%, transparent);
 }
 
-.task-list-check.checked {
-  border-color: transparent;
-  background: color-mix(in srgb, var(--cat) 16%, transparent);
-  color: var(--cat);
+.tr.is-done .tr-check {
+  border-color: var(--cat);
+  background: var(--cat);
 }
 
-.task-list-title {
-  margin-bottom: 5px;
+.tr-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.tr-title {
+  color: #101312;
   font-size: 13px;
+  font-weight: 550;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
-.tasks-list-card.is-completed .task-list-title {
-  margin-bottom: 2px;
+.tr.is-done .tr-title {
+  color: rgba(16, 19, 18, 0.4);
+  text-decoration: line-through;
+  text-decoration-color: rgba(16, 19, 18, 0.25);
 }
 
-.task-list-meta {
-  gap: 5px 6px;
+.tr-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  color: rgba(16, 19, 18, 0.45);
+  font-size: 11px;
+  font-weight: 550;
+  font-variant-numeric: tabular-nums;
 }
 
-.task-chip {
+.tr-meta > span {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  height: 19px;
-  padding: 0 7px;
-  border-radius: 6px;
-  background: rgba(16, 19, 18, 0.05);
-  color: rgba(16, 19, 18, 0.62);
-  font-size: 10px;
-  font-weight: 650;
-  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
-.task-chip.due-overdue {
-  background: rgba(212, 71, 82, 0.1);
-  color: #b83a45;
+.tr-due.is-overdue {
+  color: #c2414d;
+  font-weight: 650;
 }
 
-.task-chip.due-today {
-  background: rgba(217, 164, 65, 0.16);
-  color: #8a6212;
+.tr-due.is-today {
+  color: #a86e10;
+  font-weight: 650;
 }
 
-.task-chip.due-soon {
-  background: rgba(70, 132, 255, 0.1);
+.tr-due.is-soon {
   color: #2f5fb8;
 }
 
-.task-chip.due-done {
-  height: auto;
-  padding: 0;
+.tg-more {
+  display: flex;
+  align-items: center;
+  margin: 0 4px 4px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 9px;
   background: transparent;
-  color: rgba(16, 19, 18, 0.4);
+  color: rgba(16, 19, 18, 0.45);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
-.task-chip.tag {
-  border: 1px solid rgba(16, 19, 18, 0.1);
-  background: transparent;
+.tg-more:hover {
+  background: rgba(16, 19, 18, 0.04);
+  color: #101312;
 }
 
-.task-added {
-  margin-left: 2px;
-  color: rgba(16, 19, 18, 0.36);
-  font-size: 10px;
+/* Completed shelf */
+
+.tg-shelf-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px 6px;
+}
+
+.tg-shelf-list {
+  margin: 0;
+  padding: 0 0 2px;
+  list-style: none;
+}
+
+.tg-shelf-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.tg-shelf-row:hover {
+  background: rgba(16, 19, 18, 0.035);
+}
+
+.tg-shelf-dot {
+  display: grid;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--cat) 18%, transparent);
+  color: var(--cat);
+}
+
+.tg-shelf-name {
+  flex: 1;
+  min-width: 0;
+  color: rgba(16, 19, 18, 0.7);
+  font-size: 13px;
   font-weight: 550;
-  white-space: nowrap;
+}
+
+.tg-shelf-row .tg-chev {
+  transform: rotate(-90deg);
+}
+
+.tg-shelf-row[aria-expanded='true'] .tg-chev {
+  transform: none;
+}
+
+.tg-rows--nested {
+  padding: 0 0 4px 18px;
+}
+
+.tg-more--nested {
+  margin-left: 22px;
+}
+
+.tg-head:focus-visible,
+.tr-check:focus-visible,
+.tg-more:focus-visible,
+.tg-shelf-row:focus-visible {
+  outline: 2px solid var(--cat, #101312);
+  outline-offset: 2px;
 }
 
 /* Header avatar is the profile entry point, so it reads as a control. */

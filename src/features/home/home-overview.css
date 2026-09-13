@@ -1482,11 +1482,17 @@
      exactly the width it matters most. A slightly taller strip is the cheaper
      trade. `anywhere` covers long unbroken tokens (@Transactional, URLs). */
   overflow-wrap: anywhere;
-  font-family: 'Playfair Display', Georgia, serif;
+  /* The route's sans, upright. Italic Playfair read as a pull-quote ornament;
+     this is a commitment the user typed, so it is set like a headline — tight
+     tracking, balanced wrap, opening quote hung into the margin where supported. */
+  font-family: inherit;
   font-size: 19px;
-  font-weight: 600;
-  font-style: italic;
-  letter-spacing: -0.01em;
+  font-weight: 650;
+  font-style: normal;
+  letter-spacing: -0.022em;
+  line-height: 1.28;
+  text-wrap: pretty;
+  hanging-punctuation: first;
   color: #17211c;
 }
 
@@ -1576,8 +1582,9 @@
 }
 
 .home-grid--primary .home-card--anchor .home-anchor-quote {
-  font-size: 30px;
-  line-height: 1.35;
+  font-size: 28px;
+  line-height: 1.22;
+  letter-spacing: -0.03em;
 }
 
 .home-grid--primary .home-card--anchor .home-anchor-quote.is-empty {
@@ -1917,6 +1924,35 @@
 
 .home-tasks-stat.is-lead strong { color: #17211c; }
 .home-tasks-stat--overdue.is-lead strong { color: var(--tk-overdue); }
+
+/* The stats are filters: tap one to show only that bucket, tap it again to
+   show everything. The selected one keeps the white pill and adds a ring in
+   its own dot colour, so "filtered" never reads the same as the default
+   "most urgent" highlight. */
+button.home-tasks-stat {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.home-tasks-stat.is-active {
+  background: #fff;
+  box-shadow: inset 0 0 0 1.5px var(--tk-dot, rgba(23, 27, 21, 0.3)), 0 6px 16px rgba(46, 60, 80, 0.1);
+}
+
+.home-tasks-stat.is-active strong { color: #17211c; }
+.home-tasks-stat--overdue.is-active strong { color: var(--tk-overdue); }
+
+.home-tasks-stat:focus-visible {
+  outline: 2px solid var(--tk-dot, #17211c);
+  outline-offset: 2px;
+}
 
 .home-tasks-list {
   display: flex;

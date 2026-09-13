@@ -1,20 +1,5 @@
 import { useState, useMemo, type CSSProperties } from 'react'
-import {
-  Check,
-  Clock,
-  CheckSquare,
-  ChevronDown,
-  Briefcase,
-  BookOpen,
-  Dumbbell,
-  ShoppingCart,
-  Home,
-  DollarSign,
-  User,
-  Hash,
-  LayoutDashboard,
-  Film
-} from 'lucide-react'
+import { Check, Clock, CheckSquare, ChevronDown, CalendarDays } from 'lucide-react'
 import type { DailyTask } from '@/lib/api'
 import { getTagColor } from '@/lib/tag-colors'
 
@@ -56,10 +41,9 @@ const isOverdue = (task: DailyTask) => {
 type DueTone = 'overdue' | 'today' | 'soon' | 'later' | 'done'
 
 /**
- * One due chip that says what the date *means*. Every date used to render as the
- * same red ⚑ chip — a task due next month looked exactly as alarming as one
- * three weeks late — with a separate "Overdue" chip bolted on. Red is now
- * reserved for work that is actually late.
+ * The due date as plain meta text whose colour means something: red only for
+ * work that is actually late, amber for today, blue for tomorrow, muted
+ * otherwise. No chip — a filled pill on every row made every date shout.
  */
 function dueInfo(task: DailyTask): { tone: DueTone; label: string } | null {
   if (!task.date) return null
@@ -89,6 +73,31 @@ const byUrgency = (a: DailyTask, b: DailyTask) => {
   return (a.date || '').localeCompare(b.date || '')
 }
 
+/** Most recently due first, so the freshest wins lead the completed list. */
+const byRecent = (a: DailyTask, b: DailyTask) => (b.date || '').localeCompare(a.date || '')
+
+const DONE_PAGE = 10
+const RING_R = 8
+const RING_C = 2 * Math.PI * RING_R
+
+/** Things-style progress ring beside the list title — fills as tasks close. */
+function ProgressRing({ pct }: { pct: number }) {
+  return (
+    <svg className="tg-ring" viewBox="0 0 22 22" aria-hidden="true">
+      <circle cx="11" cy="11" r={RING_R} className="tg-ring-track" />
+      <circle
+        cx="11"
+        cy="11"
+        r={RING_R}
+        className="tg-ring-fill"
+        strokeDasharray={RING_C}
+        strokeDashoffset={RING_C * (1 - pct / 100)}
+        transform="rotate(-90 11 11)"
+      />
+    </svg>
+  )
+}
+
 interface TasksListViewProps {
   tasks: DailyTask[]
   selectedTask: DailyTask | null
@@ -96,82 +105,43 @@ interface TasksListViewProps {
   onToggle: (task: DailyTask) => void
 }
 
-const COMPLETED_PREVIEW_COUNT = 3
-
-const getCategoryIcon = (cat: string, size = 15) => {
-  const props = { size, strokeWidth: 2.2 }
-  switch (cat) {
-    case 'Work': return <Briefcase {...props} />
-    case 'Learning': return <BookOpen {...props} />
-    case 'Fitness': return <Dumbbell {...props} />
-    case 'Shopping': return <ShoppingCart {...props} />
-    case 'Chores': return <Home {...props} />
-    case 'Finance': return <DollarSign {...props} />
-    case 'Personal': return <User {...props} />
-    case 'Movies': return <Film {...props} />
-    case 'General': return <Hash {...props} />
-    case 'Dashboard': return <LayoutDashboard {...props} />
-    default: return <Hash {...props} />
-  }
-}
-
 export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: TasksListViewProps) {
-  // Only explicit user choices are stored; a group with nothing open starts
-  // collapsed until the user opens it.
-  const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({})
-  const [completedExpanded, setCompletedExpanded] = useState<Record<string, boolean>>({})
-
-  const toggleCompleted = (category: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setCompletedExpanded((prev) => ({
-      ...prev,
-      [category]: !prev[category]
-    }))
-  }
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+  const [showDone, setShowDone] = useState<Record<string, boolean>>({})
+  // Completed lists on the shelf: which are open, and how many rows each shows.
+  const [shelfOpen, setShelfOpen] = useState<Record<string, boolean>>({})
+  const [shelfLimit, setShelfLimit] = useState<Record<string, number>>({})
 
   const groupedTasks = useMemo(() => {
     const groups: Record<string, DailyTask[]> = {}
     tasks.forEach((task) => {
       const storedCategory = task.category as string | undefined
-      const detected = detectCategory(task.title)
-      const category = storedCategory || detected || 'General'
-      if (!groups[category]) {
-        groups[category] = []
-      }
-      groups[category].push(task)
+      const category = storedCategory || detectCategory(task.title) || 'General'
+      ;(groups[category] ??= []).push(task)
     })
     return groups
   }, [tasks])
 
-  // Groups that need attention lead: anything overdue, then anything open. A
-  // category with every task done drops to the end instead of holding the top
-  // slot on the strength of its name.
-  const sortedCategories = useMemo(() => {
+  // Lists with open work lead (most overdue first); lists with nothing left
+  // leave the grid entirely and collapse onto one "Completed" shelf.
+  const { openGroups, doneGroups } = useMemo(() => {
     const definedOrder = ['Work', 'Learning', 'Personal', 'General']
-    const stats = (cat: string) => {
-      const list = groupedTasks[cat]
-      return {
-        open: list.filter((t) => !t.completed).length,
-        overdue: list.filter(isOverdue).length,
-      }
+    const rank = (cat: string) => {
+      const i = definedOrder.indexOf(cat)
+      return cat === 'Movies' ? 99 : i === -1 ? 50 : i
     }
-
-    return Object.keys(groupedTasks).sort((a, b) => {
-      const sa = stats(a)
-      const sb = stats(b)
-      if ((sa.open > 0) !== (sb.open > 0)) return sa.open > 0 ? -1 : 1
-      if (sa.overdue !== sb.overdue) return sb.overdue - sa.overdue
-
-      if (a === 'Movies') return 1
-      if (b === 'Movies') return -1
-
-      const indexA = definedOrder.indexOf(a)
-      const indexB = definedOrder.indexOf(b)
-      if (indexA !== -1 && indexB !== -1) return indexA - indexB
-      if (indexA !== -1) return -1
-      if (indexB !== -1) return 1
-      return a.localeCompare(b)
+    const stats = (cat: string) => ({
+      open: groupedTasks[cat].filter((t) => !t.completed).length,
+      overdue: groupedTasks[cat].filter(isOverdue).length,
     })
+    const cats = Object.keys(groupedTasks)
+    const open = cats.filter((c) => stats(c).open > 0).sort((a, b) =>
+      stats(b).overdue - stats(a).overdue || rank(a) - rank(b) || a.localeCompare(b),
+    )
+    const done = cats.filter((c) => stats(c).open === 0).sort((a, b) =>
+      groupedTasks[b].length - groupedTasks[a].length || a.localeCompare(b),
+    )
+    return { openGroups: open, doneGroups: done }
   }, [groupedTasks])
 
   if (tasks.length === 0) {
@@ -183,149 +153,152 @@ export function TasksListView({ tasks, selectedTask, onSelect, onToggle }: Tasks
     )
   }
 
+  const renderTask = (task: DailyTask) => {
+    const due = dueInfo(task)
+    const isSelected = selectedTask?.id === task.id
+    const showTime = !task.completed && task.scheduledTime
+    const tags = task.completed ? [] : task.tags ?? []
+
+    return (
+      <li
+        key={task.id}
+        className={`tr${task.completed ? ' is-done' : ''}${isSelected ? ' is-selected' : ''}`}
+        onClick={() => onSelect(task)}
+      >
+        <button
+          type="button"
+          className="tr-check"
+          onClick={(e) => { e.stopPropagation(); onToggle(task) }}
+          aria-label={task.completed ? 'Mark incomplete' : 'Mark complete'}
+        >
+          {task.completed && <Check size={10} strokeWidth={3.4} />}
+        </button>
+
+        <div className="tr-body">
+          <span className="tr-title">{task.title}</span>
+          {(due || showTime || tags.length > 0) && (
+            <span className="tr-meta">
+              {due && (
+                <span className={`tr-due is-${due.tone}`}>
+                  <CalendarDays size={11} strokeWidth={2.2} aria-hidden="true" />
+                  {due.label}
+                </span>
+              )}
+              {showTime && (
+                <span className="tr-time">
+                  <Clock size={11} strokeWidth={2.2} aria-hidden="true" />
+                  {task.scheduledTime}
+                </span>
+              )}
+              {tags.map((tag) => (
+                <span key={tag} className="tr-tag">#{tag}</span>
+              ))}
+            </span>
+          )}
+        </div>
+      </li>
+    )
+  }
+
   return (
     <div className="tasks-list-view">
-      {sortedCategories.map((category) => {
-        const categoryTasks = groupedTasks[category]
-        const categoryInfo = getTagColor(category)
-
-        const pendingTasks = categoryTasks.filter((t) => !t.completed).sort(byUrgency)
-        const completedTasks = categoryTasks.filter((t) => t.completed)
-        const overdueCount = pendingTasks.filter(isOverdue).length
-        const totalCount = categoryTasks.length
-        const allDone = pendingTasks.length === 0
-        const donePct = totalCount > 0 ? Math.round((completedTasks.length / totalCount) * 100) : 0
-
-        const isCollapsed = collapsedCategories[category] ?? allDone
-        const isCompletedExpanded = completedExpanded[category]
-
-        // If all tasks are done, show first 3 as preview; otherwise show all pending + collapsible completed
-        const previewCompleted = allDone
-          ? completedTasks.slice(0, COMPLETED_PREVIEW_COUNT)
-          : (isCompletedExpanded ? completedTasks : [])
-        const hiddenCompletedCount = allDone
-          ? completedTasks.length - COMPLETED_PREVIEW_COUNT
-          : completedTasks.length
-
-        const summary = allDone
-          ? `All ${totalCount} done`
-          : `${pendingTasks.length} open · ${completedTasks.length} done`
-
-        const renderTask = (task: DailyTask) => {
-          const due = dueInfo(task)
-          const isSelected = selectedTask?.id === task.id
-          const className = [
-            'tasks-list-card',
-            task.completed && 'is-completed',
-            isSelected && 'is-selected',
-            due?.tone === 'overdue' && 'is-overdue',
-            due?.tone === 'today' && 'is-today',
-          ].filter(Boolean).join(' ')
-
-          return (
-            <div key={task.id} className={className} onClick={() => onSelect(task)}>
-              <button
-                type="button"
-                className={`task-list-check ${task.completed ? 'checked' : ''}`}
-                onClick={(e) => { e.stopPropagation(); onToggle(task) }}
-                aria-label={task.completed ? 'Mark incomplete' : 'Mark complete'}
-              >
-                {task.completed && <Check size={11} strokeWidth={3} />}
-              </button>
-
-              <div className="task-list-body">
-                <div className="task-list-title">{task.title}</div>
-                <div className="task-list-meta">
-                  {due && <span className={`task-chip due-${due.tone}`}>{due.label}</span>}
-
-                  {!task.completed && task.scheduledTime && (
-                    <span className="task-chip">
-                      <Clock size={10} strokeWidth={2.4} />
-                      {task.scheduledTime}
-                    </span>
-                  )}
-
-                  {!task.completed && task.tags?.map((tag) => (
-                    <span key={tag} className="task-chip tag">#{tag}</span>
-                  ))}
-
-                  {!task.completed && task.createdAt && (
-                    <span className="task-added">
-                      added {new Date(task.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          )
-        }
+      {openGroups.map((category) => {
+        const list = groupedTasks[category]
+        const pending = list.filter((t) => !t.completed).sort(byUrgency)
+        const completed = list.filter((t) => t.completed).sort(byRecent)
+        const overdue = pending.filter(isOverdue).length
+        const pct = Math.round((completed.length / list.length) * 100)
+        const isCollapsed = !!collapsed[category]
+        const doneVisible = !!showDone[category]
 
         return (
           <section
             key={category}
-            className={`tasks-accordion-group ${isCollapsed ? 'is-collapsed' : ''} ${allDone ? 'is-all-done' : ''}`}
-            style={{ '--cat': categoryInfo.dot } as CSSProperties}
+            className={`tg${isCollapsed ? ' is-collapsed' : ''}`}
+            style={{ '--cat': getTagColor(category).dot } as CSSProperties}
           >
             <button
               type="button"
-              className="tasks-accordion-header"
-              onClick={() => setCollapsedCategories((prev) => ({ ...prev, [category]: !isCollapsed }))}
+              className="tg-head"
+              onClick={() => setCollapsed((prev) => ({ ...prev, [category]: !isCollapsed }))}
               aria-expanded={!isCollapsed}
             >
-              <span className="tasks-group-icon">{getCategoryIcon(category)}</span>
-              <span className="tasks-group-titles">
-                <span className="tasks-group-title">{category}</span>
-                <span className="tasks-group-sub">{summary}</span>
-              </span>
-              {overdueCount > 0 && <span className="tasks-group-alert">{overdueCount} overdue</span>}
-              <ChevronDown size={16} className={`tasks-accordion-chevron ${isCollapsed ? 'is-collapsed' : ''}`} />
+              <ProgressRing pct={pct} />
+              <span className="tg-title">{category}</span>
+              {overdue > 0 && <span className="tg-overdue">{overdue} overdue</span>}
+              <span className="tg-count" aria-label={`${pending.length} open`}>{pending.length}</span>
+              <ChevronDown size={15} className="tg-chev" aria-hidden="true" />
             </button>
 
-            <div
-              className="tasks-group-progress"
-              role="progressbar"
-              aria-label={`${category} progress`}
-              aria-valuenow={donePct}
-              aria-valuemin={0}
-              aria-valuemax={100}
-            >
-              <i style={{ width: `${donePct}%` }} />
-            </div>
-
-            <div className={`tasks-accordion-content ${isCollapsed ? 'is-collapsed' : ''}`}>
-              {!allDone && pendingTasks.map(renderTask)}
-              {previewCompleted.map(renderTask)}
-
-              {allDone && hiddenCompletedCount > 0 && (
-                <button
-                  type="button"
-                  className="tasks-completed-toggle"
-                  onClick={(e) => toggleCompleted(category, e)}
-                >
-                  <ChevronDown size={12} className={isCompletedExpanded ? 'rotate-180' : ''} />
-                  {isCompletedExpanded
-                    ? `Hide ${hiddenCompletedCount} completed`
-                    : `Show ${hiddenCompletedCount} more completed`}
-                </button>
-              )}
-              {allDone && isCompletedExpanded && completedTasks.slice(COMPLETED_PREVIEW_COUNT).map(renderTask)}
-
-              {!allDone && completedTasks.length > 0 && (
-                <button
-                  type="button"
-                  className="tasks-completed-toggle"
-                  onClick={(e) => toggleCompleted(category, e)}
-                >
-                  <ChevronDown size={12} className={isCompletedExpanded ? 'rotate-180' : ''} />
-                  {isCompletedExpanded
-                    ? `Hide ${completedTasks.length} completed`
-                    : `${completedTasks.length} completed`}
-                </button>
-              )}
-            </div>
+            {!isCollapsed && (
+              <>
+                <ul className="tg-rows">
+                  {pending.map(renderTask)}
+                  {doneVisible && completed.map(renderTask)}
+                </ul>
+                {completed.length > 0 && (
+                  <button
+                    type="button"
+                    className="tg-more"
+                    onClick={() => setShowDone((prev) => ({ ...prev, [category]: !doneVisible }))}
+                  >
+                    {doneVisible ? 'Hide completed' : `${completed.length} completed`}
+                  </button>
+                )}
+              </>
+            )}
           </section>
         )
       })}
+
+      {doneGroups.length > 0 && (
+        <section className="tg tg--shelf" aria-label="Completed lists">
+          <div className="tg-shelf-head">
+            <span className="tg-title">Completed</span>
+            <span className="tg-count">{doneGroups.length} {doneGroups.length === 1 ? 'list' : 'lists'}</span>
+          </div>
+          <ul className="tg-shelf-list">
+            {doneGroups.map((category) => {
+              const completed = [...groupedTasks[category]].sort(byRecent)
+              const isOpen = !!shelfOpen[category]
+              const limit = shelfLimit[category] ?? DONE_PAGE
+              return (
+                <li key={category} style={{ '--cat': getTagColor(category).dot } as CSSProperties}>
+                  <button
+                    type="button"
+                    className="tg-shelf-row"
+                    onClick={() => setShelfOpen((prev) => ({ ...prev, [category]: !isOpen }))}
+                    aria-expanded={isOpen}
+                  >
+                    <span className="tg-shelf-dot" aria-hidden="true">
+                      <Check size={10} strokeWidth={3.4} />
+                    </span>
+                    <span className="tg-shelf-name">{category}</span>
+                    <span className="tg-count">{completed.length}</span>
+                    <ChevronDown size={15} className="tg-chev" aria-hidden="true" />
+                  </button>
+                  {isOpen && (
+                    <>
+                      <ul className="tg-rows tg-rows--nested">
+                        {completed.slice(0, limit).map(renderTask)}
+                      </ul>
+                      {completed.length > limit && (
+                        <button
+                          type="button"
+                          className="tg-more tg-more--nested"
+                          onClick={() => setShelfLimit((prev) => ({ ...prev, [category]: limit + DONE_PAGE * 2 }))}
+                        >
+                          Show more · {completed.length - limit} left
+                        </button>
+                      )}
+                    </>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        </section>
+      )}
     </div>
   )
 }

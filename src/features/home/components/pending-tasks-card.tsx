@@ -37,6 +37,8 @@ function dueLabel(iso: string, today: string, bucket: Bucket): string {
 
 function PendingTasksCard({ loading, today, tasks, onToggle, onNavigate }: PendingTasksCardProps) {
   const [busyId, setBusyId] = useState<string | null>(null)
+  // Tapping a stat narrows the list to that bucket; tapping it again clears.
+  const [filter, setFilter] = useState<Bucket | null>(null)
 
   const { rows, counts } = useMemo(() => {
     const order: Record<Bucket, number> = { overdue: 0, today: 1, upcoming: 2 }
@@ -96,6 +98,7 @@ function PendingTasksCard({ loading, today, tasks, onToggle, onNavigate }: Pendi
   const total = rows.length
   // Which stat to spotlight: the most urgent non-empty bucket.
   const lead: Bucket = counts.overdue > 0 ? 'overdue' : counts.today > 0 ? 'today' : 'upcoming'
+  const visibleRows = filter ? rows.filter((r) => r.bucket === filter) : rows
 
   return (
     <section className="home-card home-card--tasks" aria-label="Pending tasks">
@@ -117,27 +120,38 @@ function PendingTasksCard({ loading, today, tasks, onToggle, onNavigate }: Pendi
         </button>
       </header>
 
-      <div className="home-tasks-accent" role="list">
+      <div className="home-tasks-accent" role="group" aria-label="Filter tasks">
         {(['overdue', 'today', 'upcoming'] as Bucket[]).map((b) => (
-          <div
+          <button
             key={b}
-            role="listitem"
+            type="button"
+            aria-pressed={filter === b}
+            onClick={() => setFilter((f) => (f === b ? null : b))}
             className={cn(
               'home-tasks-stat',
               `home-tasks-stat--${b}`,
               counts[b] > 0 && 'has-items',
-              counts[b] > 0 && lead === b && 'is-lead',
+              filter === b && 'is-active',
+              filter === null && counts[b] > 0 && lead === b && 'is-lead',
             )}
           >
             <i aria-hidden="true" />
             <strong>{counts[b]}</strong>
             <span>{b === 'upcoming' ? 'Upcoming' : BUCKET_LABEL[b]}</span>
-          </div>
+          </button>
         ))}
       </div>
 
       <div className="home-tasks-list">
-        {total === 0 ? (
+        {filter && visibleRows.length === 0 ? (
+          <div className="home-tasks-empty">
+            <span className="home-tasks-empty-ic" aria-hidden="true">
+              <CheckCircle2 size={22} strokeWidth={2} />
+            </span>
+            <p>No {filter === 'upcoming' ? 'upcoming' : BUCKET_LABEL[filter].toLowerCase()} tasks.</p>
+            <span>Tap {filter === 'upcoming' ? 'Upcoming' : BUCKET_LABEL[filter]} again to see everything.</span>
+          </div>
+        ) : total === 0 ? (
           <div className="home-tasks-empty">
             <span className="home-tasks-empty-ic" aria-hidden="true">
               <CheckCircle2 size={22} strokeWidth={2} />
@@ -147,8 +161,8 @@ function PendingTasksCard({ loading, today, tasks, onToggle, onNavigate }: Pendi
           </div>
         ) : (
           <ul className="home-tasks-rows">
-            {rows.map(({ task, bucket }, i) => {
-              const showGroup = i === 0 || rows[i - 1].bucket !== bucket
+            {visibleRows.map(({ task, bucket }, i) => {
+              const showGroup = i === 0 || visibleRows[i - 1].bucket !== bucket
               return (
                 <Fragment key={task.id ?? `${task.title}-${i}`}>
                   {showGroup && (
@@ -185,7 +199,7 @@ function PendingTasksCard({ loading, today, tasks, onToggle, onNavigate }: Pendi
                 </Fragment>
               )
             })}
-            {total <= 4 && (
+            {!filter && total <= 4 && (
               <li className="home-tasks-tail" aria-hidden="true">
                 Nothing else due in the next three weeks.
               </li>

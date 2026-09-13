@@ -3362,6 +3362,18 @@
 
 /* Full View Popup Modal styles */
 .focus-canvas.is-full-view-active {
+  /* Full view renders outside .calendar-dashboard, where the timeline metrics
+     are declared, so they have to be re-declared here — without them the day
+     header's `var(--cal-time-gutter) repeat(…)` columns are invalid and the
+     2-Day header cards stack vertically. Keep in sync with the block at the
+     top of this file. */
+  --cal-time-gutter: 56px;
+  --cal-col-gap: 12px;
+  --cal-grid-inset-left: 12px;
+  --cal-grid-inset-right: 24px;
+  --cal-grid-pad-top: 24px;
+  --cal-hour-label-gap: 12px;
+
   position: fixed;
   top: 0;
   left: 0;
@@ -4367,3 +4379,179 @@ body.calendar-modal-open .mobile-profile-trigger {
   display: none !important;
 }
 
+
+/* ── Stage toolbar ────────────────────────────────────────────────────────
+   Date navigator, view switcher and actions shared one flex row inside a
+   ~550px stage: it overflowed, clipped "Add event" against the card edge and
+   left no breathing room between groups. On a narrow stage the row becomes
+   two: date + actions on top, the view switcher as a full-width segmented
+   control beneath. A wide stage (expanded view) returns to one row. Phones keep
+   their own stacked layout (≤600px rules above). */
+.calendar-main-stage {
+  container-type: inline-size;
+  container-name: cal-stage;
+}
+
+@media (min-width: 601px) {
+  .stage-navigation-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'date actions'
+      'views views';
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-right: 0;
+  }
+
+  .date-range-navigator {
+    grid-area: date;
+    min-width: 0;
+    gap: 6px;
+  }
+
+  .range-title {
+    min-width: 0;
+    padding: 0 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .stage-actions-group {
+    grid-area: actions;
+    gap: 8px;
+  }
+
+  .view-switcher-tabs {
+    grid-area: views;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .view-tab {
+    padding: 7px 12px;
+    text-align: center;
+  }
+
+  .calendar-expand-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+  }
+}
+
+@container cal-stage (min-width: 760px) {
+  .stage-navigation-row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: 'date views actions';
+  }
+
+  .view-switcher-tabs {
+    display: flex;
+    justify-self: center;
+  }
+}
+
+/* ── Sidebar: mini calendar accordion ── */
+.sidebar-month-card.is-collapsed {
+  padding: 6px !important;
+  margin-bottom: 14px;
+}
+
+.sidebar-month-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 6px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #18181b;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.sidebar-month-toggle:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.sidebar-month-toggle:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
+}
+
+.sidebar-month-toggle-ic {
+  display: grid;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 9px;
+  background: rgba(13, 148, 136, 0.1);
+  color: #0f766e;
+}
+
+.sidebar-month-toggle-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.sidebar-month-toggle-text b {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.sidebar-month-toggle-text small {
+  overflow: hidden;
+  color: #71717a;
+  font-size: 11px;
+  font-weight: 550;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-month-body {
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(0, 0, 0, 0.06);
+}
+
+/* ── Sidebar: today's event actions ──
+   Two unlabeled 28px icon circles read as decoration; they are the card's only
+   actions, so they are now labelled pills that share the footer. */
+.upcoming-carousel-controls {
+  margin-left: auto;
+}
+
+.reminder-actions {
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.reminder-actions button {
+  flex: 1;
+  gap: 6px;
+  width: auto;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.reminder-actions button:hover {
+  transform: none;
+}
+
+.reminder-footer .avatar-stack + .reminder-actions button {
+  flex: none;
+}

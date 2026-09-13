@@ -315,30 +315,38 @@
   color: var(--dk-on-accent);
 }
 
-/* Shared add pill (index.css): the ink pill inverts to a light pill so it stays
-   the loudest control on graphite; the lime disc keeps dark ink. */
+/* Shared add pill (index.css). An inverted white pill with a solid neon disc
+   read as a sticker on top of the page. In dark it is a control *of* the
+   surface: graphite one step above the card, a hairline edge, and the accent
+   kept to a tinted "+" — lime shows up as a rim only on hover/focus. */
 @media (min-width: 769px) {
-  :root[data-theme='dark'] .add-pill.add-pill,
-  :root[data-theme='dark'] .add-pill.add-pill:hover {
-    background: var(--dk-ink) !important;
-    color: var(--dk-on-accent) !important;
-  }
-
   :root[data-theme='dark'] .add-pill.add-pill {
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background: #24272c !important;
+    color: var(--dk-ink) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 20px rgba(0, 0, 0, 0.35) !important;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
   }
 
   :root[data-theme='dark'] .add-pill.add-pill:hover {
-    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.7) !important;
+    border-color: rgba(207, 233, 101, 0.35) !important;
+    background: #2a2d33 !important;
+    color: var(--dk-ink) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 12px 26px rgba(0, 0, 0, 0.45) !important;
   }
 
   :root[data-theme='dark'] .add-pill.add-pill:focus-visible {
-    outline-color: var(--dk-ink);
+    outline: 2px solid rgba(207, 233, 101, 0.6);
   }
 
   :root[data-theme='dark'] .add-pill .add-pill-ic {
-    background: var(--dk-accent);
-    color: var(--dk-on-accent);
+    background: rgba(207, 233, 101, 0.14);
+    box-shadow: inset 0 0 0 1px rgba(207, 233, 101, 0.22);
+    color: var(--dk-accent);
+  }
+
+  :root[data-theme='dark'] .add-pill:hover .add-pill-ic {
+    background: rgba(207, 233, 101, 0.2);
   }
 }
 
@@ -624,6 +632,10 @@
    shorthand would reset. */
 :root[data-theme='dark'] .home-hero-panel.is-complete::before {
   background-image: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.12) 48%, transparent 66%);
+}
+
+:root[data-theme='dark'] button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
+  background: var(--dk-wash);
 }
 
 :root[data-theme='dark'] .home-loop-track {
@@ -966,22 +978,30 @@
   color: #e2b65c;
 }
 
+/* Start session: the card's primary action, carried by weight and a lit edge
+   rather than a white slab. Same grammar as the add pill, at full width. */
 :root[data-theme='dark'] .fbw-cta {
-  background: var(--dk-ink);
-  color: var(--dk-on-accent);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(207, 233, 101, 0.22);
+  background: #24272c;
+  color: var(--dk-ink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 10px 24px rgba(0, 0, 0, 0.4);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
 }
 
 :root[data-theme='dark'] .fbw-cta:hover:not(:disabled) {
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.65);
+  border-color: rgba(207, 233, 101, 0.45);
+  background: #2a2d33;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 14px 30px rgba(0, 0, 0, 0.5);
 }
 
 :root[data-theme='dark'] .fbw-cta-ic {
-  background: var(--dk-accent);
-  color: var(--dk-on-accent);
+  background: rgba(207, 233, 101, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(207, 233, 101, 0.28);
+  color: var(--dk-accent);
 }
 
 :root[data-theme='dark'] .fbw-cta.is-secondary {
+  border-color: var(--dk-line-strong);
   background: var(--dk-wash-strong);
   color: var(--dk-ink);
   box-shadow: none;
@@ -1019,98 +1039,89 @@
 
 /* ══ Tasks ═══════════════════════════════════════════════════════════════ */
 
-/* List view: each group's --cat hue is lifted toward white for glyphs and
-   mixed into transparency for washes, the same treatment as tone chips. */
-:root[data-theme='dark'] .tasks-group-icon {
-  background: color-mix(in srgb, var(--cat) 22%, transparent);
-  color: color-mix(in oklab, var(--cat), #fff 38%);
+/* List view: plain rows on the card surface; the category hue is lifted toward
+   white for strokes and glyphs and mixed into transparency for washes. */
+:root[data-theme='dark'] .tg {
+  border-color: var(--dk-line);
+  background: var(--dk-surface);
+  box-shadow: none;
 }
 
-:root[data-theme='dark'] .tasks-group-title {
-  color: var(--dk-ink);
-}
-
-:root[data-theme='dark'] .tasks-group-sub,
-:root[data-theme='dark'] .task-added {
-  color: var(--dk-ink-3);
-}
-
-:root[data-theme='dark'] .tasks-accordion-header:hover {
+:root[data-theme='dark'] .tg-head:hover,
+:root[data-theme='dark'] .tr:hover,
+:root[data-theme='dark'] .tg-shelf-row:hover {
   background: var(--dk-wash);
 }
 
-:root[data-theme='dark'] .tasks-accordion-header .tasks-accordion-chevron {
+:root[data-theme='dark'] .tg-title,
+:root[data-theme='dark'] .tr-title {
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .tg-count,
+:root[data-theme='dark'] .tr-meta,
+:root[data-theme='dark'] .tg-chev,
+:root[data-theme='dark'] .tg-more {
   color: var(--dk-ink-3);
 }
 
-:root[data-theme='dark'] .tasks-group-alert,
-:root[data-theme='dark'] .task-chip.due-overdue {
-  background: rgba(242, 139, 149, 0.14);
+:root[data-theme='dark'] .tg-more:hover {
+  background: var(--dk-wash);
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .tg-ring-track {
+  stroke: color-mix(in srgb, var(--cat) 26%, transparent);
+}
+
+:root[data-theme='dark'] .tg-ring-fill {
+  stroke: color-mix(in oklab, var(--cat), #fff 25%);
+}
+
+:root[data-theme='dark'] .tg-overdue,
+:root[data-theme='dark'] .tr-due.is-overdue {
   color: var(--dk-danger);
 }
 
-:root[data-theme='dark'] .tasks-group-progress {
-  background: rgba(255, 255, 255, 0.07);
+:root[data-theme='dark'] .tr-due.is-today {
+  color: #e2b65c;
 }
 
-:root[data-theme='dark'] .tasks-group-progress i {
-  background: color-mix(in oklab, var(--cat), #fff 22%);
+:root[data-theme='dark'] .tr-due.is-soon {
+  color: #9dbcf0;
 }
 
-:root[data-theme='dark'] .tasks-accordion-group.is-all-done .tasks-group-progress i {
-  background: color-mix(in srgb, var(--cat) 50%, var(--dk-raised));
+:root[data-theme='dark'] .tr.is-selected {
+  background: color-mix(in srgb, var(--cat) 14%, transparent);
 }
 
-:root[data-theme='dark'] .tasks-list-card {
-  border-bottom-color: var(--dk-line);
+:root[data-theme='dark'] .tr-check {
+  border-color: rgba(255, 255, 255, 0.22);
 }
 
-:root[data-theme='dark'] .tasks-list-card.is-overdue::before {
-  background: var(--dk-danger);
-}
-
-:root[data-theme='dark'] .tasks-list-card.is-today::before {
-  background: #e2b65c;
-}
-
-:root[data-theme='dark'] .task-list-check {
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-:root[data-theme='dark'] .task-list-check:hover {
+:root[data-theme='dark'] .tr-check:hover {
   border-color: color-mix(in oklab, var(--cat), #fff 30%);
   background: color-mix(in srgb, var(--cat) 16%, transparent);
 }
 
-:root[data-theme='dark'] .task-list-check.checked {
+:root[data-theme='dark'] .tr.is-done .tr-check {
   border-color: transparent;
-  background: color-mix(in srgb, var(--cat) 24%, transparent);
-  color: color-mix(in oklab, var(--cat), #fff 40%);
+  background: color-mix(in oklab, var(--cat), #fff 15%);
+  color: var(--dk-canvas);
 }
 
-:root[data-theme='dark'] .task-chip {
-  background: var(--dk-wash-strong);
+:root[data-theme='dark'] .tr.is-done .tr-title {
+  color: var(--dk-ink-3);
+  text-decoration-color: rgba(255, 255, 255, 0.2);
+}
+
+:root[data-theme='dark'] .tg-shelf-name {
   color: var(--dk-ink-2);
 }
 
-:root[data-theme='dark'] .task-chip.due-today {
-  background: rgba(226, 182, 92, 0.15);
-  color: #e2b65c;
-}
-
-:root[data-theme='dark'] .task-chip.due-soon {
-  background: rgba(120, 165, 230, 0.15);
-  color: #9dbcf0;
-}
-
-:root[data-theme='dark'] .task-chip.due-done {
-  background: transparent;
-  color: var(--dk-ink-3);
-}
-
-:root[data-theme='dark'] .task-chip.tag {
-  border-color: var(--dk-line-strong);
-  background: transparent;
+:root[data-theme='dark'] .tg-shelf-dot {
+  background: color-mix(in srgb, var(--cat) 22%, transparent);
+  color: color-mix(in oklab, var(--cat), #fff 30%);
 }
 
 :root[data-theme='dark'] .tasks-avatar-btn {
@@ -1130,9 +1141,133 @@
 /* The teal "upcoming task" slab becomes graphite lit by teal. The source rule
    is !important throughout, so this has to be too. */
 :root[data-theme='dark'] .quick-reminder-card {
+  padding: 16px 16px 14px 18px !important;
+  border: 1px solid var(--dk-line) !important;
   background: var(--dk-raised) !important;
   color: var(--dk-ink) !important;
-  box-shadow: inset 0 0 0 1px rgba(45, 180, 165, 0.16), var(--dk-highlight) !important;
+  box-shadow: var(--dk-highlight) !important;
+  min-height: 0 !important;
+}
+
+/* The teal ring framed the whole card; the event's own colour now lives in a
+   slim bar on the leading edge (--rc-accent, set inline per event). */
+:root[data-theme='dark'] .quick-reminder-card:hover {
+  transform: none;
+}
+
+:root[data-theme='dark'] .quick-reminder-card::before {
+  content: '';
+  position: absolute;
+  top: 16px;
+  bottom: 16px;
+  left: 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: color-mix(in oklab, var(--rc-accent, #2dd4bf), #fff 20%);
+}
+
+:root[data-theme='dark'] .reminder-eyebrow {
+  color: var(--dk-ink-3);
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  opacity: 1;
+}
+
+:root[data-theme='dark'] .upcoming-carousel-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--dk-wash-strong);
+}
+
+:root[data-theme='dark'] .carousel-arrow {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--dk-ink-2);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+:root[data-theme='dark'] .carousel-arrow:hover:not(:disabled) {
+  background: var(--dk-wash-strong);
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .carousel-arrow:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+:root[data-theme='dark'] .carousel-index {
+  min-width: 26px;
+  color: var(--dk-ink-2);
+  font-size: 10.5px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+:root[data-theme='dark'] .reminder-title {
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .reminder-time-row {
+  margin-bottom: 14px;
+  color: var(--dk-ink-2);
+  opacity: 1;
+}
+
+:root[data-theme='dark'] .reminder-actions .btn-decline {
+  background: transparent;
+  color: var(--dk-ink-2);
+  box-shadow: inset 0 0 0 1px var(--dk-line-strong);
+}
+
+:root[data-theme='dark'] .reminder-actions .btn-decline:hover {
+  background: var(--dk-wash);
+  color: var(--dk-ink);
+  transform: none;
+}
+
+:root[data-theme='dark'] .reminder-actions .btn-accept {
+  background: color-mix(in srgb, var(--rc-accent, #2dd4bf) 18%, transparent);
+  color: color-mix(in oklab, var(--rc-accent, #2dd4bf), #fff 45%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--rc-accent, #2dd4bf) 38%, transparent);
+}
+
+:root[data-theme='dark'] .reminder-actions .btn-accept:hover {
+  background: color-mix(in srgb, var(--rc-accent, #2dd4bf) 26%, transparent);
+  transform: none;
+}
+
+/* Mini calendar accordion header */
+:root[data-theme='dark'] .sidebar-month-toggle {
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .sidebar-month-toggle:hover {
+  background: var(--dk-wash);
+}
+
+:root[data-theme='dark'] .sidebar-month-toggle-ic {
+  background: rgba(45, 180, 165, 0.14);
+  color: #6fd3c5;
+}
+
+:root[data-theme='dark'] .sidebar-month-toggle-text small {
+  color: var(--dk-ink-3);
+}
+
+:root[data-theme='dark'] .sidebar-month-body {
+  border-top-color: var(--dk-line);
 }
 
 /* Routine cards carry a pastel --card-bg inline (from the preview/tag colour).

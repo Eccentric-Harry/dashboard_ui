@@ -519,6 +519,24 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     return true
   })
   const [filterMenuOpen, setFilterMenuOpen] = useState(false)
+  // The month grid is the tallest block in the sidebar and pushed Google
+  // Calendar below the fold. Collapsed by default; the choice is remembered.
+  const [monthOpen, setMonthOpen] = useState(() => {
+    try {
+      return localStorage.getItem('calendarMiniMonthOpen') === 'true'
+    } catch {
+      return false
+    }
+  })
+  const toggleMonthOpen = () => {
+    const next = !monthOpen
+    setMonthOpen(next)
+    try {
+      localStorage.setItem('calendarMiniMonthOpen', String(next))
+    } catch {
+      // storage blocked — the toggle still works for this visit
+    }
+  }
   const [colorEditModalOpen, setColorEditModalOpen] = useState(false)
   const [colorEditDraft, setColorEditDraft] = useState<Record<string, string>>({})
   const [isFullView, setIsFullView] = useState(false)
@@ -1549,14 +1567,36 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
             </div>
           </div>
 
-          {/* Mini Calendar Widget */}
-          <div className="sidebar-month-card">
-            <MiniMonth
-              selectedDate={selectedDate}
-              onSelect={handleDateSelect}
-              allowFuture
-              highlightedRange={viewType === 'weekly' ? twoDays.map((d) => toISODate(d)) : undefined}
-            />
+          {/* Mini Calendar Widget — accordion, collapsed by default */}
+          <div className={`sidebar-month-card${monthOpen ? '' : ' is-collapsed'}`}>
+            <button
+              type="button"
+              className="sidebar-month-toggle"
+              onClick={toggleMonthOpen}
+              aria-expanded={monthOpen}
+              aria-controls="sidebar-month-body"
+            >
+              <span className="sidebar-month-toggle-ic" aria-hidden="true">
+                <CalendarDays size={15} strokeWidth={2.2} />
+              </span>
+              <span className="sidebar-month-toggle-text">
+                <b>Calendar</b>
+                <small>
+                  {parseISODate(selectedDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                </small>
+              </span>
+              <ChevronDown size={14} className={`accordion-chevron ${monthOpen ? 'open' : ''}`} />
+            </button>
+            {monthOpen && (
+              <div id="sidebar-month-body" className="sidebar-month-body">
+                <MiniMonth
+                  selectedDate={selectedDate}
+                  onSelect={handleDateSelect}
+                  allowFuture
+                  highlightedRange={viewType === 'weekly' ? twoDays.map((d) => toISODate(d)) : undefined}
+                />
+              </div>
+            )}
           </div>
 
           {/* Dynamic Upcoming/Live Card */}
@@ -1571,7 +1611,8 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                 style={{
                   background: `linear-gradient(135deg, ${categoryColor}, ${categoryColor})`,
                   boxShadow: `0 10px 25px ${categoryColor}40`,
-                }}
+                  '--rc-accent': categoryColor,
+                } as React.CSSProperties}
               >
                 <div className="reminder-eyebrow">
                   {sidebarLabel}
@@ -1625,7 +1666,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                     <button
                       type="button"
                       className="btn-decline"
-                      aria-label="Decline"
+                      aria-label={sidebarItem.id === 'mock-meeting' ? 'Decline' : 'Skip'}
                       onClick={() => {
                         if (sidebarItem.id !== 'mock-meeting') {
                           handleToggleCancel(sidebarItem)
@@ -1634,12 +1675,13 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                         }
                       }}
                     >
-                      <X size={13} />
+                      <X size={13} strokeWidth={2.4} />
+                      <span>{sidebarItem.id === 'mock-meeting' ? 'Decline' : 'Skip'}</span>
                     </button>
                     <button
                       type="button"
                       className="btn-accept"
-                      aria-label="Accept"
+                      aria-label={sidebarItem.id === 'mock-meeting' ? 'Accept' : 'Done'}
                       onClick={() => {
                         if (sidebarItem.id !== 'mock-meeting') {
                           handleToggle(sidebarItem)
@@ -1648,7 +1690,8 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                         }
                       }}
                     >
-                      <Check size={13} />
+                      <Check size={13} strokeWidth={2.6} />
+                      <span>{sidebarItem.id === 'mock-meeting' ? 'Accept' : 'Done'}</span>
                     </button>
                   </div>
                 </div>
