@@ -10,6 +10,15 @@
   <meta name="apple-mobile-web-app-title" content="Dashboard" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="theme-color" content="#dfe4df" />
+  <script>
+    // Apply the glass/solid surface preference before first paint (see src/store/appearance-store.ts).
+    try {
+      if (localStorage.getItem('surfaceStyle') === 'solid') {
+        document.documentElement.dataset.surface = 'solid';
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f5f6f8');
+      }
+    } catch (e) {}
+  </script>
   <link rel="apple-touch-icon" href="/logo-192.png" />
   <link rel="manifest" href="/manifest.json" />
   <link rel="preconnect" href="https://fonts.googleapis.com">

@@ -1,0 +1,33 @@
+/* ─── Solid surface mode ──────────────────────────────────────────────────
+   Toggled from the notification center (store/appearance-store.ts), applied as
+   data-surface="solid" on <html>. Colour rewrites for every stylesheet are
+   derived at build time by config/postcss-solid-surface.ts; this file holds
+   only what a per-colour rewrite can't express: the page canvas, the removal of
+   blur/texture, and the ambient glows. Selectors here carry an extra attribute
+   of specificity so they win over the derived rules regardless of load order. */
+
+:root {
+  --solid-canvas: #f5f6f8;
+}
+
+:root[data-surface='solid'],
+:root[data-surface='solid'] body,
+:root[data-surface='solid'] .app-shell,
+:root[data-surface='solid'] .dashboard-shell,
+:root[data-surface='solid'] .dashboard-stage {
+  background: var(--solid-canvas);
+}
+
+/* Solid means opaque: no frosted blur anywhere (also a real paint-cost win on
+   low-end mobiles, where 100+ stacked backdrop-filters are expensive). */
+:root[data-surface='solid'] *,
+:root[data-surface='solid'] *::before,
+:root[data-surface='solid'] *::after {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Finance's papery grain only exists to give glass some tooth. */
+:root[data-surface='solid'] .finance-dashboard {
+  --fin-grain: none;
+}

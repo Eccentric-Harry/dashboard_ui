@@ -2096,6 +2096,7 @@ button {
   --qa-amber: #d97706; --qa-amber-bg: rgba(217,119,6,0.10);
   --qa-teal: #0891b2; --qa-teal-bg: rgba(8,145,178,0.10);
   --qa-red: #dc2626; --qa-red-bg: rgba(220,38,38,0.10);
+  --qa-indigo: #4f46e5; --qa-indigo-bg: rgba(79,70,229,0.10);
   --qa-muted: #526057; --qa-muted-bg: rgba(82,96,87,0.08);
 }
 

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Bell, BellOff, Calendar, CheckSquare, Trophy, Eye, EyeOff, Clock, Loader2, RefreshCw, Terminal, LogOut } from 'lucide-react';
+import { X, Bell, BellOff, Calendar, CheckSquare, Trophy, Eye, EyeOff, Clock, Loader2, RefreshCw, Terminal, LogOut, Layers, Square } from 'lucide-react';
 import { useNotifications } from '../../../../store/notification-store';
+import { useAppearanceStore } from '../../../../store/appearance-store';
 import type { AppPath } from '../data';
 import { ConfirmDialog } from '../../../ui/confirm-dialog';
 
@@ -23,6 +24,9 @@ function NotificationCenter({ onNavigate }: NotificationCenterProps) {
     clearAllNotifications,
     toggleDesktopNotifications,
   } = useNotifications();
+
+  const surfaceStyle = useAppearanceStore.use.surfaceStyle();
+  const { toggleSurfaceStyle } = useAppearanceStore.use.actions();
 
   const panelRef = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState<'refresh' | 'toggle' | null>(null);
@@ -103,6 +107,15 @@ function NotificationCenter({ onNavigate }: NotificationCenterProps) {
       onClick: toggleFinanceGrids,
     },
     {
+      key: 'surface',
+      icon: surfaceStyle === 'solid' ? <Square size={18} /> : <Layers size={18} />,
+      label: surfaceStyle === 'solid' ? 'Solid UI' : 'Glass UI',
+      hint: surfaceStyle === 'solid' ? 'Switch to glass surfaces' : 'Switch to solid white surfaces',
+      color: 'var(--qa-indigo)',
+      bg: 'var(--qa-indigo-bg)',
+      onClick: toggleSurfaceStyle,
+    },
+    {
       key: 'logout',
       icon: <LogOut size={18} />,
       label: 'Log Out',
@@ -160,7 +173,7 @@ function NotificationCenter({ onNavigate }: NotificationCenterProps) {
                 className={`nc-qa-btn${action.active ? ' nc-qa-btn--active' : ''}`}
                 style={{ '--qa-color': action.color, '--qa-bg': action.bg } as React.CSSProperties}
                 onClick={action.onClick}
-                title={action.label}
+                title={'hint' in action ? action.hint : action.label}
               >
                 <span className="nc-qa-icon">{action.icon}</span>
                 <span className="nc-qa-label">{action.label}</span>
