@@ -139,13 +139,17 @@ function HomeHeader({ dateIso, onQuickAdd, signals }: HomeHeaderProps) {
 
   return (
     <header className="home-header">
+      {/* The Nutrition header grammar: caps date eyebrow, one serif title with an
+          italic lead-in, then the day's line in quiet sans — three distinct
+          weights instead of two lines of the same serif. */}
       <div className="home-header-greeting">
-        <strong>
-          {greeting}, {name}
-        </strong>
-        <span className="home-header-line">
-          <em>{weekday}, {monthDay}</em> · {dailyLine}
-        </span>
+        <p className="home-header-eyebrow">
+          {weekday} · {monthDay}
+        </p>
+        <h1 className="home-header-title">
+          <em>{greeting},</em> {name}
+        </h1>
+        <span className="home-header-line">{dailyLine}</span>
       </div>
 
       <div className="home-header-actions">

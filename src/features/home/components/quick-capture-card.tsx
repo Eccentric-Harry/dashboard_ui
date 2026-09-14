@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { CheckSquare, Inbox, MessageCircle, PenLine, Send, Trophy } from 'lucide-react'
+import { CheckSquare, Inbox, MessageCircle, Send, Trophy } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatRelativeTime } from '../home-types'
@@ -117,7 +117,6 @@ function QuickCaptureCard({
 
   return (
     <section className="home-card home-card--capture" aria-label="Quick capture">
-      <PenLine className="home-card-glyph" aria-hidden="true" />
       <header className="home-card-head">
         <div>
           <span className="home-card-eyebrow">Quick capture</span>

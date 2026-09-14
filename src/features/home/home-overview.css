@@ -70,8 +70,8 @@
   gap: 16px;
   flex-wrap: wrap;
   max-width: var(--home-max);
-  margin: 0 auto 12px;
-  padding: 0 8px 0 2px;
+  margin: 0 auto 20px;
+  padding: 4px 8px 0 2px;
 }
 
 .home-header-greeting {
@@ -80,27 +80,40 @@
   min-width: 0;
 }
 
-.home-header-greeting strong {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 23px;
+/* Nutrition's header grammar (.ntr-eyebrow / .ntr-title): a caps date eyebrow,
+   one serif title with an italic lead-in, then the day's line in quiet sans.
+   The old italic-serif meta line was a second voice in the title's own face,
+   which is what made the top of the page read as busy. */
+.home-header-eyebrow {
+  margin: 0 0 7px;
+  color: rgba(23, 28, 25, 0.55);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.home-header-title {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: 30px;
   font-weight: 600;
   letter-spacing: -0.015em;
-  line-height: 1.1;
+  line-height: 1.08;
   color: #17211c;
 }
 
-/* Weekday + daily line folded into one quiet meta row under the greeting. */
-.home-header-line {
-  margin-top: 3px;
-  color: rgba(23, 28, 25, 0.62);
-  font-size: 12px;
+.home-header-title em {
   font-style: italic;
-  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 550;
 }
 
-.home-header-line em {
-  font-style: italic;
-  color: rgba(23, 33, 28, 0.8);
+.home-header-line {
+  margin-top: 7px;
+  color: rgba(23, 28, 25, 0.62);
+  font-size: 12.5px;
+  font-weight: 550;
+  letter-spacing: 0.005em;
 }
 
 .home-header-actions {
@@ -669,40 +682,6 @@
   background: currentColor;
 }
 
-/* Today's anchor, pinned to the loop it's meant to give a spine to. */
-.home-hero-eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  min-width: 0;
-}
-
-.home-hero-anchor {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  min-width: 0;
-  max-width: 100%;
-  padding: 1px 8px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--home-hero-anchor-bg, rgba(77, 86, 174, 0.1));
-  color: #4d56ae;
-  font: inherit;
-  cursor: pointer;
-}
-
-.home-hero-anchor:hover {
-  background: var(--home-hero-anchor-bg-hover, rgba(77, 86, 174, 0.16));
-}
-
-.home-hero-anchor-text {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .home-sleep-quality-why {
   margin-left: 6px;
   padding: 1px 7px;
@@ -1147,11 +1126,7 @@
 .home-card--focuslog { grid-column: span 6; }
 
 /* ---------- Primary bento ----------
-   The four cards the day is actually run from, on the Nutrition route's even
-   12-col rhythm: two rows of a 7 + 5 pair. Grid stretch pairs each row to a
-   shared height, so it reads as evenly filled the way /nutrition does rather
-   than one tall card next to a short one. */
-/* Four equal cards — a plain 2 × 2 of identical-width cells (Anchor | Capture,
+   Four equal cards — a plain 2 × 2 of identical-width cells (Anchor | Capture,
    Day loop | Tasks). Grid `align-items: stretch` keeps each row's pair the same
    height; a long list inside a card scrolls within that height. */
 .home-grid--primary {
@@ -1169,8 +1144,6 @@
 .home-grid--primary .home-card {
   grid-column: auto;
 }
-
-.home-grid--primary .home-card--anchor { flex-direction: column; }
 
 /* Each card sizes to its content, and grid `align-items: stretch` pulls the
    shorter card in a row up to its partner's height — so the four read as one
@@ -1473,41 +1446,28 @@
 }
 
 /* ---------- Today's anchor ----------
-   A slim full-width strip above the hero — the day's single intention, mirrored
-   from /mind's anchor card. Deliberately slim: it is a statement, not a panel,
-   and anything taller pushes the hero below the fold — but it wraps rather than
-   truncating, because an unreadable anchor defeats the card.
+   Top-left bento cell, paired with Quick capture: the day's single intention,
+   mirrored from /mind's anchor card. It takes the same head grammar as its
+   three neighbours (caps eyebrow + serif title, the title reflecting the
+   outcome), then one inset panel the intention owns — the Nutrition hero's
+   "tinted panel inside a card". Anchor disc + the intention set as a headline,
+   vertically centred in the space, with the notes journal and the outcome
+   control pinned beneath. The panel is what makes the card's height read as
+   deliberate; a bare quote floating in the card read as empty. The intention
+   wraps rather than truncating — an unreadable anchor defeats the card. */
 
-   Porcelain-sage, not the old butter tint: that gradient was the only yellow-
-   green surface on the route and read as washed-out against the #dfe4df page
-   while fighting the periwinkle hero directly beneath it. This echoes the base
-   sage instead, so the strip separates by lightness rather than by hue — the
-   near-black icon disc and its #eaff28 glyph stay the one accent here. */
+.home-grid--primary .home-card--anchor {
+  gap: 12px;
+}
 
-.home-card--anchor {
-  flex-direction: row;
+.home-card--anchor .home-card-head {
   align-items: center;
-  gap: 13px;
-  padding: 14px 18px;
 }
 
-.home-anchor-ic {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
-  border-radius: 12px;
-  background: rgba(23, 27, 21, 0.9);
-  color: #eaff28;
-}
-
-.home-anchor-body {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
+.home-card--anchor .home-card-head .home-btn-quiet {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  font-size: 10.5px;
 }
 
 .home-anchor-saving {
@@ -1519,57 +1479,109 @@
   letter-spacing: 0.06em;
 }
 
+.home-anchor-panel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  padding: 16px;
+  border-radius: 22px;
+  /* Porcelain within the pastel family — separates from the white card by
+     lightness, leaving the near-black disc as the one strong mark. */
+  background: #f3f4ef;
+  box-shadow: inset 0 0 0 1px rgba(23, 27, 21, 0.045);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.home-anchor-panel::-webkit-scrollbar {
+  display: none;
+}
+
+.home-anchor-main {
+  display: flex;
+  position: relative;
+  flex: 1;
+  /* Top-aligned, not centred in the panel's full height — a headline sitting
+     at the top of a tall box reads as composed; dead-centred in empty space
+     read as an error state with nothing to look at above or below it. */
+  align-items: flex-start;
+  gap: 16px;
+  min-height: 0;
+  padding-top: 2px;
+}
+
+/* A large, faint anchor watermark in the panel's corner — the same device
+   every other Home card uses (.home-card-glyph) to keep an otherwise plain
+   surface from reading as empty. Scoped to the panel (not the whole card) so
+   it never sits behind the notes/outcome controls, and hidden in dark mode by
+   the existing .home-card-glyph rule. */
+.home-anchor-watermark {
+  position: absolute;
+  right: -10px;
+  bottom: -14px;
+  width: 96px;
+  height: 96px;
+  color: rgba(23, 27, 21, 0.05);
+  pointer-events: none;
+}
+
+.home-anchor-ic {
+  display: grid;
+  position: relative;
+  z-index: 1;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  border-radius: 15px;
+  background: rgba(23, 27, 21, 0.9);
+  color: #eaff28;
+}
+
 .home-anchor-display {
   display: flex;
+  position: relative;
+  z-index: 1;
+  flex: 1;
   /* Top-aligned so the pencil stays beside the first line once the quote wraps */
   align-items: flex-start;
   gap: 8px;
-  width: 100%;
   min-width: 0;
-  padding: 0;
+  padding: 3px 0 0;
   border: 0;
   background: none;
+  color: inherit;
   text-align: left;
   cursor: pointer;
 }
 
-/* In the bento layout the quote is the card's one real occupant — let it grow
-   into the space a note/outcome journal would otherwise leave empty, instead
-   of sitting pinned to the top with dead air below. */
-.home-grid--primary .home-card--anchor .home-anchor-display {
-  flex: 1;
-  align-items: center;
-  min-height: 0;
-}
-
+/* Playfair Display, upright — the same serif the card's own title is set in
+   just above, so the two read as one voice instead of a serif heading over a
+   plain-sans headline. Upright rather than italic: this is a commitment the
+   user typed, not a pull-quote ornament (the small watermark behind it does
+   the "quote card" work instead). `anywhere` covers long unbroken tokens. */
 .home-anchor-quote {
-  /* Wraps rather than ellipsising. This is the one thing the user committed to
-     today — truncating it to "Fix @Transaction…" makes the card unreadable at
-     exactly the width it matters most. A slightly taller strip is the cheaper
-     trade. `anywhere` covers long unbroken tokens (@Transactional, URLs). */
   overflow-wrap: anywhere;
-  /* The route's sans, upright. Italic Playfair read as a pull-quote ornament;
-     this is a commitment the user typed, so it is set like a headline — tight
-     tracking, balanced wrap, opening quote hung into the margin where supported. */
-  font-family: inherit;
-  font-size: 19px;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: 29px;
   font-weight: 650;
   font-style: normal;
-  letter-spacing: -0.022em;
-  line-height: 1.28;
-  text-wrap: pretty;
-  hanging-punctuation: first;
+  letter-spacing: -0.012em;
+  line-height: 1.26;
+  text-wrap: balance;
   color: #17211c;
 }
 
 .home-anchor-quote.is-empty {
-  font-style: normal;
-  font-size: 17px;
+  font-weight: 600;
   color: rgba(23, 28, 25, 0.42);
 }
 
 .home-anchor-pencil {
   flex-shrink: 0;
+  margin-top: 11px;
   color: rgba(23, 27, 21, 0.32);
   opacity: 0;
   transition: opacity 0.2s ease;
@@ -1582,19 +1594,22 @@
 
 .home-anchor-edit {
   display: flex;
+  flex: 1;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  min-width: 0;
 }
 
 .home-anchor-edit input {
   flex: 1;
   min-width: 0;
-  padding: 6px 12px;
+  padding: 9px 14px;
   border: 1px solid rgba(26, 31, 29, 0.16);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.82);
+  background: #fff;
   color: #17211c;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
 }
 
@@ -1608,101 +1623,57 @@
   align-items: center;
   gap: 5px;
   flex-shrink: 0;
-  padding: 6px 12px;
+  padding: 8px 13px;
+  border: 0;
   border-radius: 999px;
   background: #202321;
   color: #fff;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
   cursor: pointer;
 }
 
-.home-anchor-foot {
-  display: none;
-}
-
-/* ---------- Today's anchor — bento variant ----------
-   In the primary grid the anchor is a full card paired with Quick Capture, not
-   the old slim strip. It becomes a calm pull-quote: icon disc up top, the
-   intention set large and centred in the card's height, a quiet footer line so
-   the extra room reads as deliberate rather than empty. */
-
-.home-grid--primary .home-card--anchor {
-  align-items: stretch;
-  gap: 14px;
-  padding: 24px 26px;
-}
-
-.home-grid--primary .home-card--anchor .home-anchor-ic {
-  width: 40px;
-  height: 40px;
-  flex: 0 0 40px;
-  border-radius: 14px;
-}
-
-.home-grid--primary .home-card--anchor .home-anchor-body {
-  flex: 1;
-  min-height: 0;
-  justify-content: flex-start;
-  gap: 12px;
-}
-
-.home-grid--primary .home-card--anchor .home-anchor-quote {
-  font-size: 28px;
-  line-height: 1.22;
-  letter-spacing: -0.03em;
-}
-
-.home-grid--primary .home-card--anchor .home-anchor-quote.is-empty {
-  font-size: 24px;
-}
-
-/* Review block — outcome chips + a notes journal, kept against the anchor.
-   Sized to its own content by default so the quote above (flex: 1) is the one
-   that absorbs any leftover height; it only claims a share of that space
-   itself once a note is actually open, so the note box has room to grow. */
-.home-anchor-review {
-  display: flex;
-  flex: 0 0 auto;
-  flex-direction: column;
-  gap: 9px;
-  min-height: 0;
-  margin-top: 2px;
-}
-
-.home-anchor-review:has(.home-anchor-note) {
-  flex: 1;
-}
-
+/* How it landed — one segmented control rather than three loose pills. */
 .home-anchor-outcomes {
   display: flex;
-  gap: 6px;
+  flex: none;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid rgba(26, 31, 29, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.75);
 }
 
 .home-anchor-outcome {
   flex: 1;
-  padding: 6px 8px;
-  border: 1px solid rgba(26, 31, 29, 0.14);
+  padding: 7px 8px;
+  border: 0;
   border-radius: 999px;
-  background: rgba(23, 27, 21, 0.025);
+  background: transparent;
   color: #4a544e;
-  font-size: 10.5px;
-  font-weight: 750;
+  font-size: 11px;
+  font-weight: 700;
   letter-spacing: 0.01em;
+  white-space: nowrap;
   cursor: pointer;
-  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.12s ease;
+  transition: background 0.16s ease, color 0.16s ease, transform 0.12s ease;
 }
 
-.home-anchor-outcome:hover {
-  background: rgba(255, 255, 255, 0.9);
+.home-anchor-outcome:hover:not(.is-active) {
+  background: rgba(23, 27, 21, 0.05);
+  color: #17211c;
 }
 
 .home-anchor-outcome:active {
   transform: scale(0.96);
 }
 
+.home-anchor-outcome:focus-visible {
+  outline: 2px solid rgba(86, 95, 184, 0.5);
+  outline-offset: 1px;
+}
+
 .home-anchor-outcome.is-active {
-  border-color: transparent;
   color: #fff;
 }
 
@@ -1710,19 +1681,25 @@
 .home-anchor-outcome--partial.is-active { background: #a9822f; }
 .home-anchor-outcome--missed.is-active { background: #b06b6b; }
 
-/* Notes — a small journal block with an explicit Edit / Save / Cancel flow,
-   never a bare always-live textarea. The written note reads back in the same
-   Playfair italic as the anchor quote, like a diary line. */
+.home-anchor-foot {
+  flex: none;
+  margin: 0;
+  color: rgba(23, 28, 25, 0.5);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+/* Notes — a small journal block inside the panel with an explicit Edit / Save /
+   Cancel flow, never a bare always-live textarea. */
 .home-anchor-note {
   display: flex;
-  flex: 1;
+  flex: none;
   flex-direction: column;
   gap: 6px;
-  min-height: 0;
-  padding: 10px 12px;
-  border: 1px solid rgba(26, 31, 29, 0.12);
+  padding: 9px 12px 10px;
+  border: 1px solid rgba(26, 31, 29, 0.08);
   border-radius: 14px;
-  background: rgba(23, 27, 21, 0.02);
+  background: rgba(255, 255, 255, 0.7);
 }
 
 .home-anchor-note-head {
@@ -1764,14 +1741,13 @@
   transform: scale(0.94);
 }
 
-/* Notes read in Outfit — the loaded geometric sans — not the Playfair italic
-   of the quote above, so the journal entry looks written rather than framed:
-   an even, low-contrast text face at a relaxed measure. */
+/* Notes read in Outfit — an even, low-contrast text face at a relaxed measure,
+   so the journal entry looks written rather than framed. Three lines, then it
+   scrolls, so a long note never shoves the outcome control out of the card. */
 .home-anchor-note-text {
+  max-height: 4.9em;
   margin: 0;
   overflow-y: auto;
-  flex: 1;
-  min-height: 0;
   font-family: 'Outfit', 'Inter', ui-sans-serif, system-ui, sans-serif;
   font-size: 12.5px;
   font-weight: 400;
@@ -1787,7 +1763,6 @@
 }
 
 .home-anchor-note-input {
-  flex: 1;
   width: 100%;
   min-height: 52px;
   padding: 8px 11px;
@@ -1855,33 +1830,6 @@
 .home-anchor-note-save:active,
 .home-anchor-note-cancel:active {
   transform: scale(0.95);
-}
-
-/* Header's "Add a note" trigger — the same quiet pill sleep-card and finance
-   cards use for their header actions, just sized down to sit next to a plain
-   eyebrow rather than a title. */
-.home-anchor-body .home-card-head {
-  align-items: center;
-  margin-bottom: 2px;
-}
-
-.home-anchor-body .home-card-head .home-btn-quiet {
-  padding: 5px 11px;
-  font-size: 10px;
-}
-
-.home-grid--primary .home-card--anchor .home-anchor-foot {
-  display: block;
-  margin: 0;
-  color: rgba(23, 28, 25, 0.5);
-  font-size: 11.5px;
-  font-weight: 600;
-  font-style: italic;
-  font-family: 'Playfair Display', Georgia, serif;
-}
-
-.home-grid--primary .home-card--anchor .home-anchor-edit {
-  flex-wrap: wrap;
 }
 
 /* ---------- Pending tasks card ----------
@@ -3230,10 +3178,9 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
 .home-capture-mood-text p {
   margin: 0;
   color: #2b352f;
-  font-family: 'Playfair Display', Georgia, serif;
   font-size: 13.5px;
-  font-style: italic;
-  font-weight: 600;
+  font-weight: 650;
+  letter-spacing: -0.01em;
 }
 
 .home-capture-mood-faces {
@@ -3253,6 +3200,16 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
   0%, 100% { box-shadow: 0 0 0 0 rgba(122, 99, 184, 0); }
   25% { box-shadow: 0 0 0 6px rgba(122, 99, 184, 0.16); }
   70% { box-shadow: 0 0 0 6px rgba(122, 99, 184, 0.1); }
+}
+
+/* Nothing captured yet: a quiet dashed well filling the list's share of the
+   card, instead of one line of text over dead space. */
+.home-capture-recent-empty {
+  flex: 1;
+  justify-content: center;
+  min-height: 56px;
+  border: 1px dashed rgba(26, 31, 29, 0.14);
+  border-radius: 14px;
 }
 
 /* ---------- Week rollup ----------
@@ -3542,6 +3499,14 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
     grid-column: 1 / -1;
   }
 
+  .home-grid--primary .home-anchor-panel {
+    overflow: visible;
+  }
+
+  .home-grid--primary .home-anchor-main {
+    min-height: 96px;
+  }
+
   /* Stacked order: Anchor, Capture, then Tasks before the Day loop — what's
      still owed today reads before the loop score that depends on it. */
   .home-grid--primary .home-card--tasks {
@@ -3550,14 +3515,6 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
 
   .home-grid--primary .home-card--hero {
     order: 3;
-  }
-
-  .home-grid--primary .home-card--anchor {
-    align-items: flex-start;
-  }
-
-  .home-grid--primary .home-card--anchor .home-anchor-body {
-    justify-content: flex-start;
   }
 }
 
@@ -3689,8 +3646,8 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
     padding-right: 0;
   }
 
-  .home-header-greeting strong {
-    font-size: 24px;
+  .home-header-title {
+    font-size: 26px;
   }
 
   /* Quick add lives in the FAB on mobile — hide it from the header */
@@ -3823,20 +3780,21 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  /* Phones: top-align the icon so it sits beside the first line once the
-     intention wraps, rather than floating mid-block on a 2–3 line anchor. */
-  .home-card--anchor {
-    align-items: flex-start;
+  .home-anchor-ic {
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
+    border-radius: 12px;
   }
 
   .home-anchor-quote {
-    font-size: 16.5px;
-    line-height: 1.34;
+    font-size: 22px;
+    line-height: 1.32;
   }
 
-  .home-grid--primary .home-card--anchor .home-anchor-quote {
-    font-size: 19px;
-    line-height: 1.34;
+  .home-anchor-watermark {
+    width: 76px;
+    height: 76px;
   }
 
   /* Stacked single column — cards flow to their natural height and the page
@@ -3856,21 +3814,6 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
   .home-grid--primary .home-card--capture .home-capture-recent {
     flex: 0 0 auto;
     overflow: visible;
-  }
-
-  .home-grid--primary .home-card--capture .home-capture-mood {
-    margin-top: 12px;
-  }
-
-  .home-grid--primary .home-card--anchor .home-anchor-review,
-  .home-grid--primary .home-card--anchor .home-anchor-note {
-    flex: 0 0 auto;
-  }
-
-  .home-grid--primary .home-card--anchor .home-anchor-note-text,
-  .home-grid--primary .home-card--anchor .home-anchor-note-input {
-    flex: 0 0 auto;
-    min-height: 60px;
   }
 
   .home-card--hero .ntr-hero-macros {

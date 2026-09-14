@@ -26,8 +26,6 @@ interface FinanceState {
   dailyLogs: RemoteDataStatus<DailyFinancialLog[]>;
   account: RemoteDataStatus<FinanceAccount | null>;
   budget: RemoteDataStatus<FinanceAccount | null>;
-  // Commitments — read by both their own cards and the intelligence panel, so they
-  // are fetched once here instead of once per consumer.
   subscriptions: RemoteDataStatus<SubscriptionDTO[]>;
   lending: RemoteDataStatus<LendingRecord[]>;
   repayments: RemoteDataStatus<RepaymentInstallment[]>;

@@ -640,10 +640,23 @@
 
 /* ══ Home ════════════════════════════════════════════════════════════════
    Home's accent is lavender (--ntr-lime is #bcc3f2 on .home-dashboard, which
-   the derived pass keeps). Same grammar as Nutrition: tinted slabs become
-   graphite panels lit by their hue. */
+   the derived pass keeps). The dark pass follows the usual dark-dashboard
+   rules: elevation by surface steps (card → raised → control) and hairlines
+   rather than shadows, which vanish on near-black; one desaturated accent
+   spent on the data (ring, today count, send, active states), never on slabs;
+   no white controls — anything interactive is a graphite step above its
+   surface; and no decorative watermarks competing with content. */
 
 :root[data-theme='dark'] .home-dashboard {
+  --home-accent: #bcc3f2;
+  --home-accent-ink: #d3d7f8;
+  --home-accent-wash: rgba(188, 195, 242, 0.12);
+  --home-accent-line: rgba(188, 195, 242, 0.26);
+  --home-control: #25282d;
+  --home-control-hover: #2c2f35;
+  --home-overdue: #f28b95;
+  --home-overdue-bg: rgba(242, 139, 149, 0.12);
+
   --home-chart-tick: rgba(236, 238, 240, 0.45);
   --home-sleep-bar-on: #7fb0d8;
   --home-sleep-bar-under: #4f6f88;
@@ -653,6 +666,152 @@
   --home-sleep-guide: rgba(160, 200, 230, 0.3);
   --home-sleep-guide-label: rgba(160, 200, 230, 0.6);
 }
+
+/* ── Page header ── */
+
+:root[data-theme='dark'] .home-header-eyebrow { color: var(--dk-ink-3); }
+:root[data-theme='dark'] .home-header-title { color: var(--dk-ink); }
+:root[data-theme='dark'] .home-header-line { color: var(--dk-ink-2); }
+
+/* ── Cards: one surface and a hairline; hover brightens the hairline instead
+   of deepening a shadow nobody can see. Watermark glyphs go — at dark contrast
+   they read as stray shapes and collided with the controls beneath them. ── */
+
+:root[data-theme='dark'] .home-card {
+  border-color: var(--dk-line);
+  background: var(--dk-surface);
+  box-shadow: var(--dk-highlight);
+}
+
+:root[data-theme='dark'] .home-card:hover {
+  border-color: var(--dk-line-strong);
+  box-shadow: var(--dk-highlight);
+}
+
+:root[data-theme='dark'] .home-card-glyph {
+  display: none;
+}
+
+/* The anchor panel's watermark sits inside its own bounded surface — nothing
+   below it to collide with — so unlike the card-level glyphs above it stays,
+   tinted with Home's accent instead of the near-black light-mode ink. */
+:root[data-theme='dark'] .home-anchor-watermark {
+  color: rgba(188, 195, 242, 0.07);
+}
+
+:root[data-theme='dark'] .home-card-eyebrow { color: var(--dk-ink-3); }
+:root[data-theme='dark'] .home-card-title { color: var(--dk-ink); }
+
+:root[data-theme='dark'] :is(.home-btn-quiet, .home-tasks-open, .home-anchor-note-btn) {
+  border: 1px solid var(--dk-line-strong);
+  background: transparent;
+  color: var(--dk-ink-2);
+}
+
+:root[data-theme='dark'] :is(.home-btn-quiet, .home-tasks-open, .home-anchor-note-btn):hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: var(--dk-wash-strong);
+  color: var(--dk-ink);
+}
+
+/* ── Anchor strip ── */
+
+:root[data-theme='dark'] .home-anchor-ic {
+  background: var(--home-accent-wash);
+  box-shadow: inset 0 0 0 1px var(--home-accent-line);
+  color: var(--home-accent);
+}
+
+:root[data-theme='dark'] .home-next-ic {
+  background: var(--dk-raised);
+  box-shadow: inset 0 0 0 1px var(--dk-line-strong);
+}
+
+:root[data-theme='dark'] .home-anchor-quote { color: var(--dk-ink); }
+
+:root[data-theme='dark'] :is(.home-anchor-quote.is-empty, .home-anchor-foot, .home-anchor-saving, .home-anchor-pencil) {
+  color: var(--dk-ink-3);
+}
+
+/* The intention's panel: one step above the card, lit by Home's lavender at
+   the edge — the same treatment as the Day loop panel below it. */
+:root[data-theme='dark'] .home-anchor-panel {
+  background: var(--dk-raised);
+  box-shadow: inset 0 0 0 1px rgba(188, 195, 242, 0.1), var(--dk-highlight);
+}
+
+/* Segmented track sits back down to the card surface, so it reads as inset. */
+:root[data-theme='dark'] .home-anchor-outcomes {
+  border-color: var(--dk-line);
+  background: var(--dk-surface);
+}
+
+:root[data-theme='dark'] .home-anchor-outcome { color: var(--dk-ink-2); }
+
+:root[data-theme='dark'] .home-anchor-outcome:hover:not(.is-active) {
+  background: var(--dk-wash-strong);
+  color: var(--dk-ink);
+}
+
+/* Outcomes keep their meaning as a wash of their hue with lifted ink — solid
+   sage / amber / rose slabs were the loudest thing on the strip. */
+:root[data-theme='dark'] .home-anchor-outcome--achieved.is-active {
+  background: rgba(120, 190, 145, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(120, 190, 145, 0.3);
+  color: #a3dbb8;
+}
+
+:root[data-theme='dark'] .home-anchor-outcome--partial.is-active {
+  background: rgba(230, 180, 90, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(230, 180, 90, 0.3);
+  color: #eec27a;
+}
+
+:root[data-theme='dark'] .home-anchor-outcome--missed.is-active {
+  background: rgba(235, 120, 130, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(235, 120, 130, 0.3);
+  color: #f29aa3;
+}
+
+:root[data-theme='dark'] .home-anchor-note {
+  border-color: var(--dk-line);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+:root[data-theme='dark'] .home-anchor-note-label { color: var(--dk-ink-3); }
+:root[data-theme='dark'] .home-anchor-note-text { color: var(--dk-ink-2); }
+
+:root[data-theme='dark'] :is(.home-anchor-edit input, .home-anchor-note-input) {
+  border-color: var(--dk-line-strong);
+  background: var(--dk-surface);
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] :is(.home-anchor-edit input, .home-anchor-note-input):focus {
+  border-color: var(--home-accent-line);
+  box-shadow: 0 0 0 3px var(--home-accent-wash);
+}
+
+:root[data-theme='dark'] .home-anchor-note-input::placeholder { color: var(--dk-ink-3); }
+
+:root[data-theme='dark'] :is(.home-anchor-done, .home-anchor-note-save) {
+  border: 1px solid var(--home-accent-line);
+  background: var(--home-accent-wash);
+  color: var(--home-accent-ink);
+}
+
+:root[data-theme='dark'] :is(.home-anchor-done, .home-anchor-note-save):hover {
+  background: rgba(188, 195, 242, 0.2);
+}
+
+:root[data-theme='dark'] .home-anchor-note-cancel {
+  border-color: var(--dk-line-strong);
+  color: var(--dk-ink-2);
+}
+
+:root[data-theme='dark'] .home-anchor-note-cancel:hover { background: var(--dk-wash); }
+
+/* ── Day loop ── */
 
 :root[data-theme='dark'] .home-hero-panel,
 :root[data-theme='dark'] .home-hero-panel.is-skeleton {
@@ -667,8 +826,22 @@
   background-image: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.12) 48%, transparent 66%);
 }
 
-:root[data-theme='dark'] button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
-  background: var(--dk-wash);
+:root[data-theme='dark'] .home-loop-info-btn {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--dk-line-strong);
+  color: var(--dk-ink-3);
+}
+
+:root[data-theme='dark'] .home-loop-info-btn:hover,
+:root[data-theme='dark'] .home-loop-info-btn[aria-expanded='true'] {
+  background: var(--home-accent-wash);
+  color: var(--home-accent);
+}
+
+:root[data-theme='dark'] .home-card--hero .ntr-pill.dark {
+  background: var(--dk-wash-strong);
+  box-shadow: inset 0 0 0 1px var(--dk-line);
+  color: var(--dk-ink-2);
 }
 
 :root[data-theme='dark'] .home-loop-track {
@@ -689,15 +862,227 @@
   opacity: 1;
 }
 
-:root[data-theme='dark'] .home-anchor-ic,
-:root[data-theme='dark'] .home-next-ic {
-  background: var(--dk-raised);
-  box-shadow: inset 0 0 0 1px var(--dk-line-strong);
+:root[data-theme='dark'] .home-loop-arc-center strong { color: var(--dk-ink); }
+
+:root[data-theme='dark'] :is(.home-loop-arc-center small, .home-loop-count) {
+  color: var(--dk-ink-3);
 }
 
-:root[data-theme='dark'] .home-anchor-ic {
-  color: var(--dk-accent);
+:root[data-theme='dark'] .home-loop-count strong { color: var(--dk-ink); }
+
+/* The nudge CTA was an off-white pill with a drop shadow — the brightest object
+   on the page. A graphite control with a lavender glyph instead. */
+:root[data-theme='dark'] .home-hero-focus-btn,
+:root[data-theme='dark'] .home-hero-focus-btn:hover,
+:root[data-theme='dark'] .home-hero-focus-btn:active {
+  box-shadow: none;
 }
+
+:root[data-theme='dark'] .home-hero-focus-btn {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--home-control);
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .home-hero-focus-btn:hover {
+  border-color: var(--home-accent-line);
+  background: var(--home-control-hover);
+}
+
+:root[data-theme='dark'] .home-hero-focus-btn svg { color: var(--home-accent); }
+
+/* Loop rows sit one step above the panel. The four signal hues are lifted to
+   read on graphite and pulled apart so sleep and water aren't the same blue. */
+:root[data-theme='dark'] .home-card--hero .ntr-macro-row {
+  background: var(--dk-wash);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.045);
+}
+
+:root[data-theme='dark'] .home-card--hero .ntr-macro-row:hover { background: var(--dk-wash-strong); }
+:root[data-theme='dark'] .home-card--hero .ntr-macro-header p { color: var(--dk-ink-2); }
+:root[data-theme='dark'] .home-card--hero .ntr-macro-header strong { color: var(--dk-ink); }
+:root[data-theme='dark'] .home-card--hero .ntr-macro-header strong em { color: var(--dk-ink-3); }
+
+:root[data-theme='dark'] .home-card--hero .ntr-macro-row.is-empty .ntr-macro-header strong {
+  color: var(--dk-ink-3);
+  font-weight: 600;
+}
+
+:root[data-theme='dark'] .home-loop--sleep { --home-loop-color: #a5b4f0; }
+:root[data-theme='dark'] .home-loop--water { --home-loop-color: #7cc3e3; }
+:root[data-theme='dark'] .home-loop--fuel { --home-loop-color: #c3da72; }
+:root[data-theme='dark'] .home-loop--tasks { --home-loop-color: #8fcfa6; }
+
+/* ── Tasks ── */
+
+:root[data-theme='dark'] .home-card--tasks {
+  --tk-overdue: var(--home-overdue);
+  --tk-today: var(--home-accent);
+  --tk-upcoming: #9aa1b5;
+}
+
+:root[data-theme='dark'] .home-tasks-accent {
+  background: var(--dk-raised);
+  box-shadow: inset 0 0 0 1px var(--dk-line), var(--dk-highlight);
+}
+
+/* The lead bucket lifted onto a white pill with a drop shadow, which derived
+   to a sunken grey tile. Here it is one surface step up, no shadow. */
+:root[data-theme='dark'] .home-tasks-stat.is-lead {
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+:root[data-theme='dark'] .home-tasks-stat.is-active {
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--tk-dot) 60%, transparent);
+}
+
+:root[data-theme='dark'] button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
+  background: var(--dk-wash);
+}
+
+:root[data-theme='dark'] .home-tasks-stat strong { color: rgba(236, 238, 240, 0.32); }
+
+:root[data-theme='dark'] .home-tasks-stat:is(.has-items, .is-lead, .is-active) strong { color: var(--dk-ink); }
+:root[data-theme='dark'] .home-tasks-stat--today.has-items strong { color: var(--tk-today); }
+:root[data-theme='dark'] .home-tasks-stat--overdue:is(.has-items, .is-lead, .is-active) strong { color: var(--tk-overdue); }
+
+:root[data-theme='dark'] .home-tasks-stat span { color: var(--dk-ink-3); }
+
+:root[data-theme='dark'] .home-tasks-group { color: var(--dk-ink-3); }
+:root[data-theme='dark'] .home-task-row:hover { background: var(--dk-wash); }
+:root[data-theme='dark'] .home-task-body b { color: var(--dk-ink); }
+
+:root[data-theme='dark'] :is(.home-task-due--upcoming, .home-task-cat, .home-task-go) {
+  color: var(--dk-ink-3);
+}
+
+:root[data-theme='dark'] .home-task-row:hover .home-task-go { color: var(--dk-ink-2); }
+:root[data-theme='dark'] .home-task-dot { background: rgba(255, 255, 255, 0.22); }
+
+:root[data-theme='dark'] .home-task-check {
+  border-color: rgba(255, 255, 255, 0.24);
+  background: transparent;
+}
+
+:root[data-theme='dark'] .home-task-check:hover:not(:disabled) {
+  border-color: #8fcfa6;
+  background: #8fcfa6;
+  color: #10170f;
+}
+
+:root[data-theme='dark'] .home-tasks-foot {
+  border-top-color: var(--dk-line);
+  color: var(--dk-ink-3);
+}
+
+:root[data-theme='dark'] .home-tasks-foot:hover { color: var(--dk-ink); }
+
+:root[data-theme='dark'] .home-tasks-tail {
+  border-top-color: rgba(255, 255, 255, 0.1);
+  color: var(--dk-ink-3);
+}
+
+:root[data-theme='dark'] .home-tasks-empty p { color: var(--dk-ink); }
+:root[data-theme='dark'] .home-tasks-empty span { color: var(--dk-ink-3); }
+
+/* ── Quick capture ── */
+
+:root[data-theme='dark'] .home-capture-modes {
+  border-color: var(--dk-line);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+:root[data-theme='dark'] .home-capture-mode { color: var(--dk-ink-2); }
+
+:root[data-theme='dark'] .home-capture-mode:hover:not(.is-active) {
+  background: var(--dk-wash-strong);
+  color: var(--dk-ink);
+}
+
+/* Active segment: a graphite step up, not the white slab it derived to. */
+:root[data-theme='dark'] .home-capture-mode.is-active {
+  background: var(--home-control-hover);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 1px 2px rgba(0, 0, 0, 0.4);
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .home-capture-mode.is-active svg { color: var(--home-accent); }
+
+:root[data-theme='dark'] .home-capture-input-row input {
+  border-color: var(--dk-line-strong);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .home-capture-input-row input::placeholder { color: var(--dk-ink-3); }
+
+:root[data-theme='dark'] .home-capture-input-row input:focus-visible {
+  outline: none;
+  border-color: var(--home-accent-line);
+  box-shadow: 0 0 0 3px var(--home-accent-wash);
+}
+
+/* Send is the card's one accent: lavender once there is something to send, a
+   quiet wash until then (the disabled grey disc read as broken). */
+:root[data-theme='dark'] .home-capture-send,
+:root[data-theme='dark'] .home-capture-send:hover:not(:disabled),
+:root[data-theme='dark'] .home-capture-send:active:not(:disabled) {
+  box-shadow: none;
+}
+
+:root[data-theme='dark'] .home-capture-send {
+  background: var(--home-accent);
+  color: #171a2e;
+}
+
+:root[data-theme='dark'] .home-capture-send:hover:not(:disabled) { background: var(--home-accent-ink); }
+
+:root[data-theme='dark'] .home-capture-send:disabled {
+  background: var(--dk-wash-strong);
+  color: var(--dk-ink-3);
+  opacity: 1;
+}
+
+:root[data-theme='dark'] .home-capture-hint { color: var(--dk-ink-3); }
+
+:root[data-theme='dark'] .home-capture-recent-item { background: var(--dk-wash); }
+:root[data-theme='dark'] .home-capture-recent-ic { box-shadow: none; }
+
+:root[data-theme='dark'] .home-capture-recent-item--task .home-capture-recent-ic {
+  background: rgba(120, 190, 145, 0.16);
+  color: #a3dbb8;
+}
+
+:root[data-theme='dark'] .home-capture-recent-item--thought .home-capture-recent-ic {
+  background: rgba(125, 180, 225, 0.16);
+  color: #a2cbee;
+}
+
+:root[data-theme='dark'] .home-capture-recent-item--win .home-capture-recent-ic {
+  background: rgba(230, 180, 90, 0.16);
+  color: #eec27a;
+}
+
+:root[data-theme='dark'] .home-capture-recent-text { color: var(--dk-ink-2); }
+
+:root[data-theme='dark'] :is(.home-capture-recent-time, .home-capture-recent-empty) {
+  color: var(--dk-ink-3);
+}
+
+:root[data-theme='dark'] .home-capture-recent-empty {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme='dark'] .home-capture-mood {
+  background: var(--dk-raised);
+  box-shadow: inset 0 0 0 1px var(--dk-line);
+}
+
+:root[data-theme='dark'] .home-capture-mood-text p { color: var(--dk-ink); }
+
+/* ── Rest of the page ── */
 
 :root[data-theme='dark'] .home-sleep-accent {
   background: radial-gradient(120% 95% at 0% 0%, rgba(120, 165, 210, 0.16), transparent 62%), var(--dk-panel);

@@ -560,9 +560,9 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
         </section>
       )}
 
-      {/* Primary bento — the four things the day is run from, on the Nutrition
-          route's even 12-col rhythm (7 + 5, 7 + 5): anchor + capture, then the
-          day loop + what's pending. Everything else drops to the grid below. */}
+      {/* Primary bento — the four things the day is run from, as an even 2 × 2:
+          Anchor | Capture, then Day loop | Tasks. Everything else drops to the
+          grid below. On ≤1024px the CSS stacks Anchor, Capture, Tasks, Loop. */}
       <div className="home-grid home-grid--primary">
         <TodaysAnchorCard
           intention={todayAnchor?.text ?? ''}
@@ -590,10 +590,6 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           focusRunning={focusSession?.status === 'RUNNING'}
           sleepMinutesToday={sleepSummary.lastNight?.durationMinutes ?? null}
           mealQuality={mealQualityToday}
-          anchor={todayAnchor?.text ?? ''}
-          onOpenAnchor={() =>
-            document.querySelector('.home-card--anchor')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-          }
           onAddWater={() => void handleAddWater()}
           onStartFocus={() => onNavigate('/learnings')}
           onLogSleep={() => handleQuickAdd('sleep')}
