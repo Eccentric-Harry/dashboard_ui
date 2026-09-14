@@ -1,0 +1,361 @@
+/* Study-queue pursuit tiles, the milestone bar and the plan sheet (learnings). Light
+   values only — dark overrides are hand-tuned in src/styles/theme-dark.css. */
+
+/* ── Pursuit tile ── */
+.plan-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 14px 6px;
+  border: 1px solid rgba(20, 24, 22, 0.07);
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.plan-tile:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.045);
+}
+
+.plan-tile-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.plan-tile-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.plan-tile-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.35;
+  letter-spacing: -0.005em;
+  color: #101312;
+}
+
+.plan-tile-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: rgba(16, 19, 18, 0.5);
+  font-variant-numeric: tabular-nums;
+}
+
+.plan-tile-meta i {
+  font-style: normal;
+  opacity: 0.5;
+}
+
+.plan-tile-next {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  font-size: 11.5px;
+  color: #3b4540;
+}
+
+.plan-tile-next svg {
+  flex-shrink: 0;
+  color: #1a7a4a;
+}
+
+.plan-tile-next-label {
+  flex-shrink: 0;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(16, 19, 18, 0.45);
+}
+
+.plan-tile-next-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plan-tile-open {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  margin-top: 2px;
+  padding: 9px 2px 8px;
+  border: 0;
+  border-top: 1px solid rgba(20, 24, 22, 0.06);
+  background: transparent;
+  color: #2b3430;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.plan-tile-open:hover {
+  color: #1a7a4a;
+}
+
+.plan-tile-open-count {
+  margin-left: auto;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: rgba(16, 19, 18, 0.42);
+  font-variant-numeric: tabular-nums;
+}
+
+.plan-tile-open-chevron {
+  color: rgba(16, 19, 18, 0.35);
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.plan-tile-open:hover .plan-tile-open-chevron {
+  color: #1a7a4a;
+  transform: translateX(2px);
+}
+
+/* ── Milestone bar ── */
+.plan-milestones {
+  display: flex;
+  gap: 3px;
+  width: 100%;
+}
+
+.plan-milestone {
+  position: relative;
+  flex-basis: 0;
+  min-width: 10px;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: rgba(18, 29, 21, 0.08);
+}
+
+.plan-milestone i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--fill, 0%);
+  border-radius: inherit;
+  background: #1a7a4a;
+  transition: width 0.4s ease;
+}
+
+.plan-milestone.is-current {
+  background: rgba(26, 122, 74, 0.2);
+}
+
+.plan-milestones.is-large .plan-milestone {
+  height: 8px;
+  border-radius: 4px;
+}
+
+/* ── Plan sheet ── */
+.plan-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1040;
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px;
+  background: rgba(223, 228, 223, 0.3);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  animation: plan-fade 0.18s ease-out;
+}
+
+.plan-sheet {
+  display: flex;
+  flex-direction: column;
+  width: min(520px, 100%);
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 24px;
+  background: linear-gradient(170deg, rgba(255, 255, 255, 0.97), rgba(242, 246, 241, 0.95)), #f7f9f6;
+  box-shadow: 0 28px 70px rgba(45, 60, 48, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  color: #101312;
+  animation: plan-slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.plan-sheet-grabber {
+  display: none;
+}
+
+.plan-sheet-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 22px 22px 14px;
+}
+
+.plan-sheet-heading {
+  min-width: 0;
+}
+
+.plan-sheet-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 5px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #1a7a4a;
+}
+
+.plan-sheet-title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+
+.plan-sheet-goal {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #526057;
+}
+
+.plan-sheet-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+  gap: 8px;
+  padding: 0 22px;
+}
+
+.plan-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(20, 24, 22, 0.06);
+}
+
+.plan-stat-value {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #101312;
+  font-variant-numeric: tabular-nums;
+}
+
+.plan-stat-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(16, 19, 18, 0.5);
+}
+
+.plan-sheet-progress {
+  padding: 14px 22px 12px;
+}
+
+.plan-sheet-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px 16px 24px;
+  border-top: 1px solid rgba(20, 24, 22, 0.06);
+}
+
+@keyframes plan-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes plan-slide-in {
+  from { opacity: 0; transform: translateX(32px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes plan-slide-up {
+  from { opacity: 0; transform: translateY(48px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Phones: bottom sheet with a grabber. */
+@media (max-width: 640px) {
+  .plan-sheet-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .plan-sheet {
+    width: 100%;
+    height: auto;
+    max-height: 92vh;
+    border-radius: 24px 24px 0 0;
+    animation: plan-slide-up 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .plan-sheet-grabber {
+    display: block;
+    width: 36px;
+    height: 4px;
+    margin: 8px auto 0;
+    border-radius: 999px;
+    background: rgba(16, 19, 18, 0.18);
+  }
+
+  .plan-sheet-header {
+    padding: 12px 16px 12px;
+  }
+
+  .plan-sheet-stats,
+  .plan-sheet-progress {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  /* Keep the stats on one row however many are shown. */
+  .plan-sheet-stats {
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-template-columns: none;
+    gap: 6px;
+  }
+
+  .plan-stat {
+    padding: 8px 9px;
+    border-radius: 12px;
+  }
+
+  .plan-stat-value {
+    font-size: 14px;
+  }
+
+  .plan-stat-label {
+    font-size: 9.5px;
+  }
+
+  .plan-sheet-body {
+    padding: 8px 10px calc(20px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plan-sheet,
+  .plan-sheet-backdrop {
+    animation: none;
+  }
+}

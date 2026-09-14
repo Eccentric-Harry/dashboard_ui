@@ -25,6 +25,10 @@ export const API_DELETE_PURSUIT: ApiEndpoint<{ id: string }> = {
   url: ({ id }) => `/pursuits/${id}`,
   method: 'delete',
 };
+export const API_SET_PRIMARY_PURSUIT: ApiEndpoint<{ id: string }> = {
+  url: ({ id }) => `/pursuits/${id}/primary`,
+  method: 'put',
+};
 export const API_ADD_PURSUIT_STEP: ApiEndpoint<{ id: string }> = {
   url: ({ id }) => `/pursuits/${id}/steps`,
   method: 'post',

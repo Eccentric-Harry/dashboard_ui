@@ -17,10 +17,12 @@ import {
   dummyStravaActivities,
   dummyStravaStats,
 } from '../mocks/dummy-data';
-import type { PursuitStepInput } from '@/types/learnings';
+import type { LearningPursuit, PursuitStep, PursuitStepInput } from '@/types/learnings';
 import {
   addStepInPursuit,
   deleteStepInPursuit,
+  findStepById,
+  patchStepInPursuit,
   stepsFromInputs,
   toggleStepInPursuit,
 } from '@/features/learnings/pursuit-tree';
@@ -1070,11 +1072,26 @@ export function resolveGuestRequest(request: GuestRequest): GuestResponse | null
     const stepMatch = urlStr.match(/\/pursuits\/([^/?]+)\/steps(?:\/([^/?]+))?/);
     const stepPursuit = stepMatch ? dummyPursuits.find(p => p.id === stepMatch[1]) : undefined;
 
+    // Guest edits live in the in-memory dataset for the session, so the re-fetch after a
+    // mutation shows them. A finished pursuit leaves the queue, as it does on the server.
+    const promoteGuestPrimary = () => {
+      if (dummyPursuits.length > 0 && !dummyPursuits.some(p => p.isPrimary)) dummyPursuits[0].isPrimary = true;
+    };
+    const commitGuestPursuit = (updated: LearningPursuit) => {
+      const index = dummyPursuits.findIndex(p => p.id === updated.id);
+      if (index >= 0) {
+        if (updated.status === 'COMPLETED') dummyPursuits.splice(index, 1);
+        else dummyPursuits[index] = updated;
+        promoteGuestPrimary();
+      }
+      return updated;
+    };
+
     // Add a step / sub-step
     if (method === 'POST' && stepMatch) {
       if (!stepPursuit) return respondWith({ data: dummyPursuits[0] });
       const step = { id: guestId(), text: String(body.text || '').trim(), isCompleted: false, children: [] };
-      return respondWith({ data: addStepInPursuit(stepPursuit, step, body.parentId || undefined) });
+      return respondWith({ data: commitGuestPursuit(addStepInPursuit(stepPursuit, step, body.parentId || undefined)) });
     }
 
     if (method === 'POST') {
@@ -1088,29 +1105,64 @@ export function resolveGuestRequest(request: GuestRequest): GuestResponse | null
         category: body.category || 'Development',
         notionUrl: 'https://notion.so/guest-pursuit',
         status: 'ACTIVE' as const,
+        goal: body.goal || null,
+        isPrimary: !dummyPursuits.some(p => p.isPrimary),
         steps: stepsFromInputs(inputs, guestId),
       };
+      dummyPursuits.push(newPursuit);
       return respondWith({ data: newPursuit });
     }
 
     if (method === 'PATCH') {
       // Toggle step completion — return the pursuit to match API contract
       if (stepPursuit && stepMatch?.[2]) {
-        return respondWith({ data: toggleStepInPursuit(stepPursuit, stepMatch[2]) });
+        return respondWith({ data: commitGuestPursuit(toggleStepInPursuit(stepPursuit, stepMatch[2])) });
       }
       return respondWith({ data: dummyPursuits[0] });
     }
 
     if (method === 'DELETE' && stepPursuit && stepMatch?.[2]) {
-      return respondWith({ data: deleteStepInPursuit(stepPursuit, stepMatch[2]) });
+      return respondWith({ data: commitGuestPursuit(deleteStepInPursuit(stepPursuit, stepMatch[2])) });
     }
 
+    // Main pursuit — kept on the in-memory dataset so GET reflects it for the session.
+    const primaryMatch = urlStr.match(/\/pursuits\/([^/?]+)\/primary/);
+    if (method === 'PUT' && primaryMatch) {
+      dummyPursuits.forEach(p => { p.isPrimary = p.id === primaryMatch[1]; });
+      return respondWith({ data: dummyPursuits.find(p => p.id === primaryMatch[1]) ?? dummyPursuits[0] });
+    }
+
+    // Partial step update: text / estimate (0 clears) / resume note / takeaways ('' clears)
+    if (method === 'PUT' && stepPursuit && stepMatch?.[2]) {
+      const patch: Partial<PursuitStep> = {};
+      if (typeof body.text === 'string') patch.text = body.text.trim();
+      if (typeof body.estimateMinutes === 'number') patch.estimateMinutes = body.estimateMinutes || null;
+      if (typeof body.resumeNote === 'string') patch.resumeNote = body.resumeNote.trim() || null;
+      if (typeof body.takeaways === 'string') patch.takeaways = body.takeaways.trim() || null;
+      return respondWith({ data: commitGuestPursuit(patchStepInPursuit(stepPursuit, stepMatch[2], patch)) });
+    }
+
+    const pursuitIdMatch = urlStr.match(/\/pursuits\/([^/?]+)/);
+    const targetPursuit = pursuitIdMatch ? dummyPursuits.find(p => p.id === pursuitIdMatch[1]) : undefined;
+
     if (method === 'PUT') {
-      const body = JSON.parse(typeof request.body === 'string' ? request.body : '{}');
-      return respondWith({ data: { ...dummyPursuits[0], ...body } });
+      if (!targetPursuit) return respondWith({ data: { ...dummyPursuits[0], ...body } });
+      return respondWith({
+        data: commitGuestPursuit({
+          ...targetPursuit,
+          title: body.title ?? targetPursuit.title,
+          category: body.category ?? targetPursuit.category,
+          goal: body.goal !== undefined ? body.goal || null : targetPursuit.goal,
+        }),
+      });
     }
 
     if (method === 'DELETE') {
+      const index = targetPursuit ? dummyPursuits.indexOf(targetPursuit) : -1;
+      if (index >= 0) {
+        dummyPursuits.splice(index, 1);
+        promoteGuestPrimary();
+      }
       return respondWith({ success: true });
     }
 
@@ -1139,6 +1191,8 @@ export function resolveGuestRequest(request: GuestRequest): GuestResponse | null
       const session = {
         id: `focus-guest-${Date.now()}`,
         activePursuit: body.activePursuit || 'Coding',
+        pursuitId: body.pursuitId ?? null,
+        stepId: body.stepId ?? null,
         durationMinutes: body.durationMinutes || 25,
         status: 'RUNNING',
         startTime: now.toISOString(),
@@ -1182,8 +1236,22 @@ export function resolveGuestRequest(request: GuestRequest): GuestResponse | null
     }
 
     if (method === 'POST' && urlStr.includes('/complete')) {
+      const body = JSON.parse(typeof request.body === 'string' ? request.body : '{}');
       const stored = getSession();
-      const session = stored ? { ...stored, status: 'COMPLETED' } : null;
+      const early = Number(body.minutes);
+      const session = stored
+        ? {
+            ...stored,
+            status: 'COMPLETED',
+            durationMinutes: early > 0 ? Math.max(1, Math.min(early, stored.durationMinutes)) : stored.durationMinutes,
+          }
+        : null;
+      // Same credit the server gives a step-linked session, on the in-memory dataset.
+      if (session?.pursuitId && session.stepId) {
+        const pursuit = dummyPursuits.find(p => p.id === session.pursuitId);
+        const step = pursuit ? findStepById(pursuit.steps, session.stepId) : null;
+        if (step) step.spentMinutes = (step.spentMinutes ?? 0) + session.durationMinutes;
+      }
       localStorage.removeItem(LS_KEY);
       return respondWith({ data: session });
     }

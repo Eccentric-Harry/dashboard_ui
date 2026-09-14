@@ -38,6 +38,8 @@ export interface UserProfile {
   height?: number;
   targetCalories?: number;
   targetProtein?: number;
+  /** "About me as a learner" — written via PUT /users/profile/learner only. */
+  learnerProfile?: string | null;
   timezone?: string;
   workingHours?: string;
   title?: string;

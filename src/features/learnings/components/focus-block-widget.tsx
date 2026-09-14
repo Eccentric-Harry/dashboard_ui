@@ -3,6 +3,9 @@ import { createPortal } from 'react-dom'
 import { Play, Pause, Minimize2, Maximize2, Timer, ChevronDown } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useFocusStore, focusActions } from '@/store/focus-store'
+import { useLearningsStore } from '@/store/learnings-store'
+import { SessionWrapUpModal } from './session-wrap-up-modal'
+import { findStepById } from '../pursuit-tree'
 
 export interface FocusSessionState {
   isCounting: boolean
@@ -12,7 +15,11 @@ export interface FocusSessionState {
 
 interface FocusBlockWidgetProps {
   onSessionComplete: (durationMinutes: number, activityType: string) => void
+  /** A wrap-up changed a pursuit (a step may have finished it), so the route should re-sync. */
+  onPursuitsChanged?: () => void
 }
+
+type WrapUpTarget = { pursuitId: string; stepId: string; minutes: number }
 
 const PRESET_ACTIVITIES = ['Coding', 'DSA/LeetCode', 'Reading Notes']
 const DURATIONS = [25, 45, 60]
@@ -25,10 +32,13 @@ function formatTime(ms: number): string {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 }
 
-export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
+export function FocusBlockWidget({ onSessionComplete, onPursuitsChanged }: FocusBlockWidgetProps) {
   const session = useFocusStore.use.session()
   const remainingSeconds = useFocusStore.use.remainingSeconds()
-  const { start, pause, resume, cancel } = focusActions
+  const { start, pause, resume, cancel, complete } = focusActions
+  const pursuits = useLearningsStore.use.pursuits().data
+  const { loadPursuits } = useLearningsStore.use.actions()
+  const [wrapUp, setWrapUp] = useState<WrapUpTarget | null>(null)
 
   const [isExpanded, setIsExpanded] = useState(false)
   const [activity, setActivity] = useState(PRESET_ACTIVITIES[0])
@@ -59,8 +69,15 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
   }, [session?.id])
 
   useEffect(() => {
-    if (session?.status === 'COMPLETED' && prevStatusRef.current === 'RUNNING') {
+    const wasActive = prevStatusRef.current === 'RUNNING' || prevStatusRef.current === 'PAUSED'
+    if (session?.status === 'COMPLETED' && wasActive) {
       onSessionComplete(session.durationMinutes, session.activePursuit)
+      if (session.pursuitId && session.stepId) {
+        // The server credited these minutes to the step: pull them in, then ask how it went.
+        void loadPursuits()
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setWrapUp({ pursuitId: session.pursuitId, stepId: session.stepId, minutes: session.durationMinutes })
+      }
     }
     prevStatusRef.current = session?.status ?? undefined
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -69,6 +86,10 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
   const isRunning = session?.status === 'RUNNING'
   const isPaused = session?.status === 'PAUSED'
   const isIdle = !session || session.status === 'IDLE' || session.status === 'COMPLETED'
+  const linkedPursuit = session?.pursuitId ? pursuits.find((p) => p.id === session.pursuitId) : undefined
+  const linkedStep = linkedPursuit && session?.stepId ? findStepById(linkedPursuit.steps, session.stepId) : null
+  const wrapUpPursuit = wrapUp ? pursuits.find((p) => p.id === wrapUp.pursuitId) : undefined
+  const wrapUpStep = wrapUpPursuit && wrapUp ? findStepById(wrapUpPursuit.steps, wrapUp.stepId) : null
   const timerDisplay = isIdle
     ? formatTime(duration * 60 * 1000)
     : formatTime(remainingSeconds)
@@ -104,8 +125,8 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
     setActionLoading(true)
     try {
       const elapsedMins = Math.max(1, Math.round((session?.durationMinutes ?? duration) - remainingSeconds / 60000))
-      await cancel()
-      onSessionComplete(elapsedMins, activity)
+      // Completing (not cancelling) keeps the minutes in focus history and credits a linked step.
+      await complete(elapsedMins)
       toast.success(`Logged ${elapsedMins}m focus session. Well done!`)
     } finally {
       setActionLoading(false)
@@ -308,6 +329,9 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
             </span>
           )}
           <span className="fbw-time">{timerDisplay}</span>
+          {!isIdle && linkedStep && (
+            <span className="fbw-linked-step" title={linkedStep.text}>{linkedStep.text}</span>
+          )}
           {isIdle && <span className="fbw-time-sub">{duration} min of {activity}</span>}
         </div>
 
@@ -378,6 +402,20 @@ export function FocusBlockWidget({ onSessionComplete }: FocusBlockWidgetProps) {
           </div>
         </div>,
         document.body
+      )}
+
+      {wrapUp && wrapUpPursuit && wrapUpStep && (
+        <SessionWrapUpModal
+          pursuit={wrapUpPursuit}
+          step={wrapUpStep}
+          minutes={wrapUp.minutes}
+          onClose={() => setWrapUp(null)}
+          onSaved={() => {
+            setWrapUp(null)
+            void loadPursuits()
+            onPursuitsChanged?.()
+          }}
+        />
       )}
     </>
   )

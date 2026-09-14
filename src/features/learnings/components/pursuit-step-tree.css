@@ -1,0 +1,409 @@
+/* Nested step checklist inside a study-queue pursuit. Light values only — the
+   dark twin is derived by config/postcss-dark-theme.ts. */
+
+.pursuit-step-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pursuit-step-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.pursuit-step-list.is-nested {
+  position: relative;
+  margin-left: 26px;
+  padding-left: 10px;
+}
+
+/* Guide line under the parent's checkbox. */
+.pursuit-step-list.is-nested::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  bottom: 6px;
+  left: 0;
+  width: 1px;
+  background: rgba(20, 24, 22, 0.09);
+}
+
+.pursuit-step-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  min-height: 30px;
+  padding: 4px 4px 4px 0;
+  border-radius: 10px;
+  transition: background 0.12s ease;
+}
+
+.pursuit-step-row:hover {
+  background: rgba(18, 29, 21, 0.03);
+}
+
+.pursuit-step-fold,
+.pursuit-step-fold-spacer {
+  flex-shrink: 0;
+  width: 16px;
+  height: 20px;
+}
+
+.pursuit-step-fold {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: rgba(16, 19, 18, 0.4);
+  cursor: pointer;
+}
+
+.pursuit-step-fold:hover {
+  color: #101312;
+  background: rgba(18, 29, 21, 0.06);
+}
+
+.pursuit-step-fold svg {
+  transition: transform 0.18s ease;
+}
+
+.pursuit-step-fold.is-open svg {
+  transform: rotate(90deg);
+}
+
+.pursuit-step-check {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  padding: 0;
+  border: 1.5px solid rgba(16, 19, 18, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.pursuit-step-check:hover {
+  border-color: #1a7a4a;
+}
+
+.pursuit-step-check.is-checked {
+  border-color: #1a7a4a;
+  background: #1a7a4a;
+  box-shadow: 0 2px 8px rgba(26, 122, 74, 0.28);
+}
+
+/* Parent with some sub-steps done: a progress arc drawn as a ring. */
+.pursuit-step-check.is-partial::before {
+  content: '';
+  position: absolute;
+  inset: -1.5px;
+  border-radius: 999px;
+  background: conic-gradient(#1a7a4a calc(var(--pct, 0) * 1%), transparent 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px));
+}
+
+.pursuit-step-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-top: 1px;
+}
+
+.pursuit-step-text {
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: #2b3430;
+  overflow-wrap: anywhere;
+  transition: color 0.18s ease;
+}
+
+.pursuit-step.is-depth-0 > .pursuit-step-row .pursuit-step-text {
+  font-weight: 600;
+  color: #101312;
+}
+
+.pursuit-step.is-depth-2 > .pursuit-step-row .pursuit-step-text {
+  font-size: 12px;
+}
+
+.pursuit-step-note {
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: #6b766f;
+}
+
+.pursuit-step-row.is-done .pursuit-step-text {
+  color: rgba(16, 19, 18, 0.4);
+  text-decoration: line-through;
+  text-decoration-color: rgba(16, 19, 18, 0.25);
+}
+
+.pursuit-step-row.is-done .pursuit-step-note {
+  color: rgba(16, 19, 18, 0.32);
+}
+
+.pursuit-step-count {
+  flex-shrink: 0;
+  margin-top: 2px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(18, 29, 21, 0.05);
+  color: rgba(16, 19, 18, 0.5);
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.pursuit-step-count.is-done {
+  background: #e3f1e8;
+  color: #1a6a41;
+}
+
+.pursuit-step-actions {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.pursuit-step-row:hover .pursuit-step-actions,
+.pursuit-step-row:focus-within .pursuit-step-actions {
+  opacity: 1;
+}
+
+.pursuit-step-actions button,
+.pursuit-step-edit button,
+.pursuit-step-add-form button {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(16, 19, 18, 0.42);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.pursuit-step-actions button:hover,
+.pursuit-step-edit button:hover,
+.pursuit-step-add-form button:hover:not(:disabled) {
+  background: rgba(18, 29, 21, 0.07);
+  color: #101312;
+}
+
+.pursuit-step-actions button.is-danger:hover {
+  background: rgba(241, 105, 119, 0.12);
+  color: #c24552;
+}
+
+.pursuit-step-edit button[type='button']:first-of-type,
+.pursuit-step-add-form button[type='submit'] {
+  color: #1a7a4a;
+}
+
+.pursuit-step-add-form button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.pursuit-step-edit,
+.pursuit-step-add-form {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.pursuit-step-add-form {
+  padding: 3px 4px 3px 2px;
+}
+
+.pursuit-step-add-glyph {
+  flex-shrink: 0;
+  margin: 0 4px;
+  color: rgba(16, 19, 18, 0.3);
+}
+
+.pursuit-step-edit input,
+.pursuit-step-add-form input {
+  flex: 1;
+  min-width: 0;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid rgba(26, 122, 74, 0.32);
+  border-radius: 8px;
+  background: #ffffff;
+  color: #101312;
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+}
+
+.pursuit-step-add-root {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 4px 0 0 22px;
+  padding: 3px 8px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: rgba(16, 19, 18, 0.45);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.pursuit-step-add-root:hover {
+  background: rgba(26, 122, 74, 0.08);
+  color: #1a7a4a;
+}
+
+.pursuit-step-empty {
+  font-size: 11px;
+  font-style: italic;
+  color: rgba(16, 19, 18, 0.4);
+}
+
+@media (hover: none) {
+  .pursuit-step-actions {
+    opacity: 1;
+  }
+}
+
+/* ── Time and "Up next" markers ── */
+.pursuit-step-estimate {
+  flex-shrink: 0;
+  margin-top: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(16, 19, 18, 0.42);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* The step Up next points at: a soft filled pill, an accent dot in its checkbox and a
+   bolder label — state carried by fill and weight rather than an edge stripe. */
+.pursuit-step-row.is-current {
+  background: rgba(26, 122, 74, 0.07);
+  box-shadow: 0 0 0 1px rgba(26, 122, 74, 0.1);
+}
+
+.pursuit-step-row.is-current:hover {
+  background: rgba(26, 122, 74, 0.1);
+}
+
+.pursuit-step-row.is-current .pursuit-step-check {
+  border-color: #1a7a4a;
+}
+
+.pursuit-step-row.is-current .pursuit-step-check::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #1a7a4a;
+}
+
+.pursuit-step-row.is-current .pursuit-step-text {
+  font-weight: 600;
+  color: #101312;
+}
+
+.pursuit-step-next-tag {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  height: 18px;
+  margin-top: 1px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: rgba(26, 122, 74, 0.12);
+  color: #1a6a41;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pursuit-step-edit select {
+  flex-shrink: 0;
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid rgba(20, 24, 22, 0.14);
+  border-radius: 8px;
+  background: #ffffff;
+  color: #101312;
+  font: inherit;
+  font-size: 11px;
+}
+
+.pursuit-step-actions button.is-ai:hover {
+  background: rgba(26, 122, 74, 0.08);
+  color: #1a7a4a;
+}
+
+/* Everything to the right of the step text. */
+.pursuit-step-meta {
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+/* Phones: the text keeps the full row; tag, time and actions sit on a line beneath it,
+   aligned with the text instead of squeezing it into a narrow column. */
+@media (max-width: 640px) {
+  .pursuit-step-row {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+
+  .pursuit-step-body,
+  .pursuit-step-edit {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .pursuit-step-meta {
+    flex-basis: 100%;
+    align-items: center;
+    padding-left: 46px;
+  }
+
+  .pursuit-step-meta .pursuit-step-estimate,
+  .pursuit-step-meta .pursuit-step-count,
+  .pursuit-step-meta .pursuit-step-next-tag {
+    margin-top: 0;
+  }
+
+  .pursuit-step-actions {
+    margin-left: auto;
+  }
+}

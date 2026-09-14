@@ -6,11 +6,19 @@ export interface FocusSession {
   id: string;
   userId?: string;
   activePursuit: string;
+  /** Present when the session was started on a pursuit step; minutes are credited there. */
+  pursuitId?: string | null;
+  stepId?: string | null;
   durationMinutes: number;
   status: FocusSessionStatus;
   startTime?: string;
   endTime?: string;
   remainingSecondsOnPause?: number;
+}
+
+export interface FocusStepLink {
+  pursuitId: string;
+  stepId: string;
 }
 
 /** Per-day completed focus minutes. */

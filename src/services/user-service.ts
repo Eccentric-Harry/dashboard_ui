@@ -7,9 +7,12 @@ import * as E from './endpoints/user-endpoints';
 export interface UserServiceInterface {
   getProfile(): Promise<SafeResult<UserProfile>>;
   updateProfile(payload: Partial<UserProfile>): Promise<SafeResult<UserProfile>>;
+  updateLearnerProfile(learnerProfile: string): Promise<SafeResult<UserProfile>>;
 }
 
 export const userService: UserServiceInterface = {
   getProfile: () => instance.safeCall<UserProfile>(E.API_GET_USER_PROFILE),
   updateProfile: (payload) => instance.safeCall<UserProfile>(E.API_UPDATE_USER_PROFILE, { body: payload }),
+  updateLearnerProfile: (learnerProfile) =>
+    instance.safeCall<UserProfile>(E.API_UPDATE_LEARNER_PROFILE, { body: { learnerProfile } }),
 };

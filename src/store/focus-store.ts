@@ -8,7 +8,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { createSelectors } from './zustand-utils';
-import type { FocusSession } from '../types/focus';
+import type { FocusSession, FocusStepLink } from '../types/focus';
 import { focusService } from '../services/focus-service';
 
 interface FocusState {
@@ -21,7 +21,9 @@ interface FocusState {
 interface FocusActions {
   actions: {
     setFocusMode: (open: boolean) => void;
-    start: (pursuit: string, duration: number) => Promise<void>;
+    start: (pursuit: string, duration: number, link?: FocusStepLink) => Promise<void>;
+    /** Ends the session now and records `minutes` as its real length ("End & save"). */
+    complete: (minutes: number) => Promise<void>;
     pause: () => Promise<void>;
     resume: () => Promise<void>;
     cancel: () => Promise<void>;
@@ -116,8 +118,8 @@ const useFocusStoreBase = create<FocusStore>()(
             }
             set((s) => { s.isFetching = false; });
           },
-          start: async (pursuit, duration) => {
-            const res = await focusService.startSession(pursuit, duration);
+          start: async (pursuit, duration, link) => {
+            const res = await focusService.startSession(pursuit, duration, link);
             if (res.error || !res.data) return;
             set((s) => {
               s.session = res.data ?? null;
@@ -136,6 +138,19 @@ const useFocusStoreBase = create<FocusStore>()(
             if (res.error || !res.data) return;
             set((s) => { s.session = res.data ?? null; });
             manageTicking(res.data);
+          },
+          complete: async (minutes) => {
+            stopTicking();
+            const res = await focusService.completeSession(minutes);
+            if (res.error) return;
+            set((s) => {
+              if (s.session) {
+                s.session.status = 'COMPLETED';
+                s.session.durationMinutes = minutes;
+                s.session.endTime = undefined;
+              }
+              s.remainingSeconds = 0;
+            });
           },
           cancel: async () => {
             await focusService.cancelSession();

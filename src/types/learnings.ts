@@ -54,6 +54,16 @@ export interface PursuitStep {
   text: string;
   note?: string | null;
   isCompleted: boolean;
+  /** ISO instant a leaf was ticked. */
+  completedAt?: string | null;
+  /** Planned minutes for a leaf; parents sum their leaves (see pursuit-tree.ts). */
+  estimateMinutes?: number | null;
+  /** Minutes logged against this step by step-linked focus sessions. */
+  spentMinutes?: number;
+  /** Where the learner stopped last time. */
+  resumeNote?: string | null;
+  /** Key takeaways captured from study sessions. */
+  takeaways?: string | null;
   /** Absent on pursuits stored before nesting existed. */
   children?: PursuitStep[];
 }
@@ -65,6 +75,9 @@ export interface LearningPursuit {
   title: string;
   category: string;
   notionUrl: string;
+  goal?: string | null;
+  /** The single main pursuit the Next-up panel works from. */
+  isPrimary?: boolean;
   status: LearningPursuitStatus;
   steps: PursuitStep[];
 }
@@ -75,12 +88,14 @@ export type LearningRequest = Omit<LearningLog, 'id'>;
 export interface PursuitStepInput {
   text: string;
   note?: string;
+  estimateMinutes?: number;
   children?: PursuitStepInput[];
 }
 
 export interface CreatePursuitRequest {
   title: string;
   category: string;
+  goal?: string;
   steps: PursuitStepInput[];
 }
 
@@ -93,4 +108,17 @@ export interface AddPursuitStepRequest {
 export interface UpdatePursuitRequest {
   title: string;
   category: string;
+  /** Omit to leave unchanged; empty string clears. */
+  goal?: string;
+}
+
+/** Partial step update — omitted fields are left unchanged. */
+export interface UpdatePursuitStepRequest {
+  text?: string;
+  /** 0 clears the estimate. */
+  estimateMinutes?: number;
+  /** Empty string clears. */
+  resumeNote?: string;
+  /** Empty string clears. */
+  takeaways?: string;
 }

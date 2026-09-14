@@ -1,0 +1,808 @@
+/* Create-pursuit modal (learnings). Light values only — the dark twin is derived
+   by config/postcss-dark-theme.ts (`-backdrop` → scrim, `-modal` → overlay). */
+
+.pursuit-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background-color: rgba(223, 228, 223, 0.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: pursuit-fade-in 0.18s ease-out;
+}
+
+.pursuit-modal {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 640px;
+  max-height: min(88vh, 820px);
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  border-radius: 24px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.95), rgba(240, 245, 239, 0.9)), #f7f9f6;
+  box-shadow: 0 28px 64px rgba(45, 60, 48, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  color: #101312;
+  overflow: hidden;
+  animation: pursuit-zoom-in 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pursuit-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 22px 24px 14px;
+}
+
+.pursuit-eyebrow {
+  margin: 0 0 2px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #1a7a4a;
+}
+
+.pursuit-modal-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.pursuit-close {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(18, 29, 21, 0.06);
+  color: rgba(16, 19, 18, 0.62);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.pursuit-close:hover {
+  background: rgba(18, 29, 21, 0.11);
+  color: #101312;
+}
+
+/* ── Mode toggle ── */
+.pursuit-mode-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin: 0 24px 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: rgba(18, 29, 21, 0.06);
+}
+
+.pursuit-mode-toggle button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #526057;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.pursuit-mode-toggle button.is-active {
+  background: #ffffff;
+  color: #101312;
+  box-shadow: 0 2px 8px rgba(45, 60, 48, 0.1);
+}
+
+/* ── Body ── */
+.pursuit-modal-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 24px 18px;
+  display: flex;
+  flex-direction: column;
+}
+
+.pursuit-label {
+  display: block;
+  margin: 14px 0 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(16, 19, 18, 0.55);
+}
+
+.pursuit-optional {
+  margin-left: 4px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: rgba(16, 19, 18, 0.38);
+}
+
+.pursuit-input,
+.pursuit-reply-input,
+.pursuit-prompt-preview {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(20, 24, 22, 0.1);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #101312;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.pursuit-input {
+  height: 38px;
+  padding: 0 12px;
+}
+
+.pursuit-input.is-title {
+  height: 42px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.pursuit-input + .pursuit-input {
+  margin-top: 8px;
+}
+
+.pursuit-chip-row + .pursuit-input {
+  margin-top: 8px;
+}
+
+.pursuit-input:focus,
+.pursuit-reply-input:focus {
+  border-color: rgba(26, 122, 74, 0.45);
+  background: #ffffff;
+}
+
+.pursuit-input::placeholder,
+.pursuit-reply-input::placeholder {
+  color: rgba(16, 19, 18, 0.34);
+}
+
+.pursuit-field-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+.pursuit-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pursuit-chip {
+  height: 28px;
+  padding: 0 11px;
+  border: 1px solid rgba(20, 24, 22, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.6);
+  color: #526057;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.pursuit-chip:hover {
+  border-color: rgba(20, 24, 22, 0.2);
+  color: #101312;
+}
+
+.pursuit-chip.is-selected {
+  border-color: rgba(26, 122, 74, 0.35);
+  background: #e3f1e8;
+  color: #1a6a41;
+}
+
+/* ── AI steps ── */
+.pursuit-ai-step {
+  padding: 16px;
+  border: 1px solid rgba(20, 24, 22, 0.07);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.pursuit-ai-step + .pursuit-ai-step {
+  margin-top: 12px;
+}
+
+.pursuit-ai-step-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.pursuit-ai-step-head h3 {
+  margin: 1px 0 2px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.pursuit-ai-step-head p {
+  margin: 0;
+  font-size: 12px;
+  color: #526057;
+}
+
+.pursuit-ai-step-num {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #101312;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.pursuit-prompt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.pursuit-btn-primary,
+.pursuit-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 11px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 650;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
+}
+
+.pursuit-btn-primary {
+  border: 0;
+  background: #101312;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(16, 19, 18, 0.2);
+}
+
+.pursuit-btn-primary:hover:not(:disabled) {
+  background: #26302a;
+  transform: translateY(-1px);
+}
+
+.pursuit-btn-primary:disabled {
+  opacity: 0.4;
+  cursor: default;
+  box-shadow: none;
+}
+
+.pursuit-btn-ghost {
+  border: 1px solid rgba(20, 24, 22, 0.1);
+  background: transparent;
+  color: #526057;
+}
+
+.pursuit-btn-ghost:hover {
+  background: rgba(18, 29, 21, 0.05);
+  color: #101312;
+}
+
+.pursuit-btn-ghost svg {
+  transition: transform 0.2s ease;
+}
+
+.pursuit-btn-ghost.is-open svg {
+  transform: rotate(180deg);
+}
+
+.pursuit-prompt-preview {
+  margin-top: 10px;
+  padding: 10px 12px;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  line-height: 1.55;
+  color: #3b4540;
+  background: rgba(244, 247, 243, 0.9);
+}
+
+.pursuit-reply-input {
+  margin-top: 12px;
+  padding: 10px 12px;
+  resize: vertical;
+  min-height: 120px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.pursuit-parse-status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pursuit-parse-status svg {
+  flex-shrink: 0;
+}
+
+.pursuit-parse-status.is-error {
+  align-items: flex-start;
+  color: #c24552;
+}
+
+.pursuit-parse-status.is-error svg {
+  margin-top: 2px;
+}
+
+.pursuit-parse-status.is-ok {
+  color: #1a7a4a;
+  margin: 0;
+}
+
+.pursuit-parse-status strong {
+  color: #101312;
+}
+
+.pursuit-parse-status span {
+  color: #526057;
+  font-weight: 500;
+}
+
+.pursuit-parse-ok {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 10px 10px 10px 12px;
+  border-radius: 12px;
+  background: #eaf4ed;
+}
+
+/* ── Review ── */
+.pursuit-import-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px 9px 12px;
+  border-radius: 12px;
+  background: #eaf4ed;
+  color: #1a6a41;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pursuit-import-banner span {
+  flex: 1;
+}
+
+.pursuit-import-banner button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.7);
+  color: #1a6a41;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.pursuit-import-warnings {
+  margin: 8px 0 0;
+  padding: 8px 12px 8px 26px;
+  border-radius: 10px;
+  background: #fbf4e4;
+  color: #7a5b1c;
+  font-size: 11.5px;
+}
+
+.pursuit-steps-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.pursuit-steps-meta {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(16, 19, 18, 0.45);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Outline editor ── */
+.pursuit-outline {
+  border: 1px solid rgba(20, 24, 22, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.55);
+  overflow: hidden;
+}
+
+.pursuit-outline-list {
+  list-style: none;
+  margin: 0;
+  padding: 6px 0;
+}
+
+.pursuit-outline-row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 3px 8px 3px calc(12px + var(--outline-depth, 0) * 24px);
+}
+
+/* Guide line tying nested rows back to their parent column. */
+.pursuit-outline-row:not(.is-depth-0)::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(22px + (var(--outline-depth) - 1) * 24px);
+  width: 1px;
+  background: rgba(20, 24, 22, 0.1);
+}
+
+.pursuit-outline-marker {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 32px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #1a7a4a;
+  font-variant-numeric: tabular-nums;
+}
+
+.pursuit-outline-row:not(.is-depth-0) .pursuit-outline-marker::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(26, 122, 74, 0.55);
+}
+
+.pursuit-outline-row.is-depth-2 .pursuit-outline-marker::before {
+  width: 4px;
+  height: 4px;
+  border: 0;
+  background: rgba(16, 19, 18, 0.3);
+}
+
+.pursuit-outline-fields {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pursuit-outline-input,
+.pursuit-outline-note {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: #101312;
+  font: inherit;
+  outline: none;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.pursuit-outline-input {
+  height: 32px;
+  padding: 0 8px;
+  font-size: 13px;
+}
+
+.pursuit-outline-row.is-depth-0 .pursuit-outline-input {
+  font-weight: 600;
+}
+
+.pursuit-outline-row.is-depth-2 .pursuit-outline-input {
+  font-size: 12.5px;
+  color: #3b4540;
+}
+
+.pursuit-outline-note {
+  height: 26px;
+  margin-bottom: 2px;
+  padding: 0 8px;
+  font-size: 11.5px;
+  color: #526057;
+}
+
+.pursuit-outline-input:hover,
+.pursuit-outline-note:hover {
+  background: rgba(18, 29, 21, 0.035);
+}
+
+.pursuit-outline-input:focus,
+.pursuit-outline-note:focus {
+  border-color: rgba(26, 122, 74, 0.35);
+  background: #ffffff;
+}
+
+.pursuit-outline-input::placeholder,
+.pursuit-outline-note::placeholder {
+  color: rgba(16, 19, 18, 0.3);
+}
+
+.pursuit-outline-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 32px;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.pursuit-outline-row:hover .pursuit-outline-actions,
+.pursuit-outline-row:focus-within .pursuit-outline-actions {
+  opacity: 1;
+}
+
+.pursuit-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: rgba(16, 19, 18, 0.45);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.pursuit-icon-btn:hover:not(:disabled) {
+  background: rgba(18, 29, 21, 0.07);
+  color: #101312;
+}
+
+.pursuit-icon-btn.is-active {
+  color: #1a7a4a;
+}
+
+.pursuit-icon-btn.is-danger:hover:not(:disabled) {
+  background: rgba(241, 105, 119, 0.12);
+  color: #c24552;
+}
+
+.pursuit-icon-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.pursuit-outline-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 10px 8px 12px;
+  border-top: 1px solid rgba(20, 24, 22, 0.06);
+}
+
+.pursuit-outline-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #1a7a4a;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.pursuit-outline-add:hover:not(:disabled) {
+  background: rgba(26, 122, 74, 0.08);
+}
+
+.pursuit-outline-hint {
+  font-size: 10.5px;
+  color: rgba(16, 19, 18, 0.42);
+  text-align: right;
+}
+
+.pursuit-outline-hint kbd {
+  padding: 1px 4px;
+  border: 1px solid rgba(20, 24, 22, 0.12);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.7);
+  font-family: inherit;
+  font-size: 9.5px;
+  font-weight: 600;
+}
+
+/* ── Footer ── */
+.pursuit-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 24px 16px;
+  border-top: 1px solid rgba(20, 24, 22, 0.07);
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.pursuit-footer-hint,
+.pursuit-footer-error {
+  margin: 0;
+  font-size: 11.5px;
+}
+
+.pursuit-footer-hint {
+  color: rgba(16, 19, 18, 0.45);
+}
+
+.pursuit-footer-error {
+  color: #c24552;
+  font-weight: 600;
+}
+
+.pursuit-footer-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+@keyframes pursuit-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pursuit-zoom-in {
+  from { opacity: 0; transform: scale(0.97) translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (min-width: 560px) {
+  .pursuit-field-grid {
+    grid-template-columns: auto 1fr;
+    gap: 18px;
+  }
+}
+
+/* Touch screens have no hover: keep row actions visible. */
+@media (hover: none) {
+  .pursuit-outline-actions {
+    opacity: 1;
+  }
+
+  .pursuit-outline-hint {
+    display: none;
+  }
+}
+
+/* Phones: bottom sheet. */
+@media (max-width: 640px) {
+  .pursuit-modal-backdrop {
+    place-items: end stretch;
+    padding: 0;
+  }
+
+  .pursuit-modal {
+    max-width: none;
+    max-height: 92vh;
+    border-radius: 24px 24px 0 0;
+    animation: pursuit-sheet-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .pursuit-modal-header,
+  .pursuit-modal-body {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .pursuit-mode-toggle {
+    margin: 0 16px 4px;
+  }
+
+  .pursuit-modal-footer {
+    padding: 10px 16px calc(12px + env(safe-area-inset-bottom));
+  }
+
+  .pursuit-footer-hint {
+    display: none;
+  }
+
+  .pursuit-footer-actions {
+    flex: 1;
+    justify-content: flex-end;
+  }
+
+  .pursuit-outline-row {
+    padding-left: calc(6px + var(--outline-depth, 0) * 16px);
+    gap: 4px;
+  }
+
+  .pursuit-outline-row:not(.is-depth-0)::before {
+    left: calc(16px + (var(--outline-depth) - 1) * 16px);
+  }
+
+  .pursuit-icon-btn {
+    width: 22px;
+  }
+}
+
+@keyframes pursuit-sheet-up {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+/* ── Outline time estimates ── */
+.pursuit-outline-estimate {
+  flex-shrink: 0;
+  align-self: flex-start;
+  min-width: 52px;
+  height: 24px;
+  margin-top: 4px;
+  padding: 0 6px;
+  border: 1px solid rgba(20, 24, 22, 0.1);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.75);
+  color: #526057;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  text-align-last: center;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.pursuit-outline-estimate.is-empty {
+  border-style: dashed;
+  color: rgba(16, 19, 18, 0.35);
+}
+
+.pursuit-outline-estimate.is-sum {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-color: transparent;
+  background: transparent;
+  color: rgba(16, 19, 18, 0.42);
+  cursor: default;
+}

@@ -37,6 +37,7 @@ interface UserActions {
     /** Resolves with the loaded profile, or null if the read failed. */
     loadProfile: () => Promise<UserProfile | null>;
     saveProfile: (payload: Partial<UserProfile>) => Promise<SafeResult<UserProfile>>;
+    saveLearnerProfile: (learnerProfile: string) => Promise<SafeResult<UserProfile>>;
   };
 }
 
@@ -64,6 +65,17 @@ const useUserStoreBase = create<UserStore>()(
               state.profile.hasErrors = false;
             });
             publishIdentity(saved);
+          }
+          return res;
+        },
+        saveLearnerProfile: async (learnerProfile) => {
+          const res = await userService.updateLearnerProfile(learnerProfile);
+          const saved = res.data;
+          if (!res.error && saved) {
+            set((state) => {
+              if (state.profile.data) state.profile.data.learnerProfile = saved.learnerProfile ?? null;
+              else state.profile.data = saved;
+            });
           }
           return res;
         },

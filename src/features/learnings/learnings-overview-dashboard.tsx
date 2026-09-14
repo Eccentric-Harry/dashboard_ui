@@ -127,7 +127,7 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
         </div>
 
         <div className="lo-focus-wrap">
-          <FocusBlockWidget onSessionComplete={handleSessionComplete} />
+          <FocusBlockWidget onSessionComplete={handleSessionComplete} onPursuitsChanged={handleRefresh} />
         </div>
 
         {/* Row 3: Category Distribution + Journal */}

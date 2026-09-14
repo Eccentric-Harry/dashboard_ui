@@ -1,21 +1,32 @@
 import React, { useState, useEffect } from 'react'
-import { GraduationCap, Plus, ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react'
+import { GraduationCap, Plus, ChevronLeft, ChevronRight, Pencil, Trash2, Star, ListTree, CornerDownRight } from 'lucide-react'
 import type { LearningPursuit, PursuitStep } from '@/types/learnings'
 import { learningsService } from '@/services/learnings-service'
 import { useLearningsStore } from '@/store/learnings-store'
+import { useFocusStore, focusActions } from '@/store/focus-store'
 import { isAwaitingData } from '@/store/zustand-utils'
+import { cn } from '@/lib/utils'
 import { toast } from 'react-hot-toast'
 import { CreatePursuitModal } from './create-pursuit-modal'
+import { LearnWithAiModal } from './learn-with-ai-modal'
+import { PursuitMilestoneBar } from './pursuit-milestone-bar'
+import { PursuitNextUp } from './pursuit-next-up'
+import { PursuitPlanSheet } from './pursuit-plan-sheet'
+import type { StepEditPatch } from './pursuit-step-tree'
 import { PURSUIT_CATEGORIES } from '../pursuit-import'
-import { PursuitStepTree } from './pursuit-step-tree'
 import {
   countLeaves,
   countSteps,
   childrenOf,
   deleteStepInPursuit,
-  renameStepInPursuit,
+  findNextStep,
+  findPrimaryPursuit,
+  formatMinutes,
+  patchStepInPursuit,
+  sumEstimates,
   toggleStepInPursuit,
 } from '../pursuit-tree'
+import './pursuit-plan.css'
 
 const NotionIcon = () => (
   <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" stroke="currentColor" strokeWidth="0.8" aria-hidden="true" className="shrink-0 transition-transform duration-200 group-hover:scale-110">
@@ -28,13 +39,21 @@ interface ActiveStudyQueueProps {
   onRefresh?: () => void
 }
 
+type StepPatch = Partial<StepEditPatch> & { resumeNote?: string }
+
+const TRACKS_PAGE_SIZE = 3
+
 export function ActiveStudyQueue({ onRefresh }: ActiveStudyQueueProps = {}) {
   const pursuitsState = useLearningsStore.use.pursuits()
   const { loadPursuits, applyPursuits } = useLearningsStore.use.actions()
+  const focusSession = useFocusStore.use.session()
   const tracks = pursuitsState.data
   const isLoading = isAwaitingData(pursuitsState) && tracks.length === 0
 
   const [isCreating, setIsCreating] = useState(false)
+  const [tutorTarget, setTutorTarget] = useState<{ pursuitId: string; stepId: string } | null>(null)
+  // The pursuit whose full plan is open in the side sheet.
+  const [planPursuitId, setPlanPursuitId] = useState<string | null>(null)
 
   // Edit Pursuit State
   const [editingPursuitId, setEditingPursuitId] = useState<string | null>(null)
@@ -45,15 +64,22 @@ export function ActiveStudyQueue({ onRefresh }: ActiveStudyQueueProps = {}) {
 
   // Pagination State
   const [page, setPage] = useState(1)
-  const TRACKS_PAGE_SIZE = 2 // Match expanded display height
 
   useEffect(() => {
     if (pursuitsState.hasErrors) toast.error('Could not load pursuits.')
   }, [pursuitsState.hasErrors])
 
-  const totalPages = Math.max(1, Math.ceil(tracks.length / TRACKS_PAGE_SIZE))
+  // The main pursuit leads the list; the rest keep their order.
+  const orderedTracks = [...tracks].sort((a, b) => Number(Boolean(b.isPrimary)) - Number(Boolean(a.isPrimary)))
+  const primary = findPrimaryPursuit(orderedTracks)
+  const next = primary ? findNextStep(primary.steps ?? []) : null
+  const sessionActive = focusSession?.status === 'RUNNING' || focusSession?.status === 'PAUSED'
+  const tutorPursuit = tutorTarget ? tracks.find((t) => t.id === tutorTarget.pursuitId) : undefined
+  const planPursuit = planPursuitId ? tracks.find((t) => t.id === planPursuitId) : undefined
+
+  const totalPages = Math.max(1, Math.ceil(orderedTracks.length / TRACKS_PAGE_SIZE))
   const start = (page - 1) * TRACKS_PAGE_SIZE
-  const paginatedTracks = tracks.slice(start, start + TRACKS_PAGE_SIZE)
+  const paginatedTracks = orderedTracks.slice(start, start + TRACKS_PAGE_SIZE)
 
   // Auto-adjust page if list shrinks
   useEffect(() => {
@@ -88,10 +114,21 @@ export function ActiveStudyQueue({ onRefresh }: ActiveStudyQueueProps = {}) {
     }
   }
 
-  const handleRenameStep = async (pursuitId: string, stepId: string, text: string) => {
-    updateTrack(pursuitId, (track) => renameStepInPursuit(track, stepId, text))
+  const handleEditStep = async (pursuitId: string, stepId: string, patch: StepPatch) => {
+    updateTrack(pursuitId, (track) =>
+      patchStepInPursuit(track, stepId, {
+        ...(patch.text !== undefined ? { text: patch.text } : {}),
+        ...(patch.estimateMinutes !== undefined ? { estimateMinutes: patch.estimateMinutes } : {}),
+        ...(patch.resumeNote !== undefined ? { resumeNote: patch.resumeNote || null } : {}),
+      })
+    )
     try {
-      const res = await learningsService.updatePursuitStep(pursuitId, stepId, text)
+      const res = await learningsService.updatePursuitStep(pursuitId, stepId, {
+        text: patch.text,
+        // The API clears an estimate with 0.
+        estimateMinutes: patch.estimateMinutes === undefined ? undefined : patch.estimateMinutes ?? 0,
+        resumeNote: patch.resumeNote,
+      })
       if (res.error) throw new Error(res.error.message)
     } catch (err) {
       console.error('Failed to update step:', err)
@@ -128,6 +165,29 @@ export function ActiveStudyQueue({ onRefresh }: ActiveStudyQueueProps = {}) {
     const saved = res.data
     updateTrack(pursuitId, () => saved)
     return true
+  }
+
+  const handleSetPrimary = async (id: string) => {
+    applyPursuits((prev) => prev.map((t) => ({ ...t, isPrimary: t.id === id })))
+    setPage(1)
+    try {
+      const res = await learningsService.setPrimaryPursuit(id)
+      if (res.error) throw new Error(res.error.message)
+      toast.success('Now your main pursuit')
+    } catch (err) {
+      console.error('Failed to set main pursuit:', err)
+      toast.error('Failed to set main pursuit')
+      loadPursuits()
+    }
+  }
+
+  const handleStartFocus = async (pursuit: LearningPursuit, stepId: string, minutes: number) => {
+    if (sessionActive) {
+      toast.error('A focus session is already running — finish or reset it first.')
+      return
+    }
+    await focusActions.start(pursuit.title, minutes, { pursuitId: pursuit.id, stepId })
+    document.querySelector('.lo-focus-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   }
 
   // Edit Pursuit Handlers
@@ -179,12 +239,13 @@ export function ActiveStudyQueue({ onRefresh }: ActiveStudyQueueProps = {}) {
   const handleDeletePursuitClick = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
     if (window.confirm('Are you sure you want to delete this pursuit?')) {
-      // Optimistically remove
+      // Optimistically remove; the server promotes another main pursuit if needed.
       applyPursuits((prev) => prev.filter((t) => t.id !== id))
       try {
         const res = await learningsService.deletePursuit(id)
         if (res.error) throw new Error(res.error.message)
         toast.success('Pursuit deleted')
+        loadPursuits()
         if (onRefresh) onRefresh()
       } catch (err) {
         console.error('Failed to delete pursuit:', err)
@@ -196,7 +257,7 @@ export function ActiveStudyQueue({ onRefresh }: ActiveStudyQueueProps = {}) {
 
   const handlePursuitCreated = (created: LearningPursuit) => {
     applyPursuits((prev) => [...prev, created])
-    setPage(Math.ceil((tracks.length + 1) / TRACKS_PAGE_SIZE))
+    setPage(created.isPrimary ? 1 : Math.ceil((tracks.length + 1) / TRACKS_PAGE_SIZE))
     toast.success('Added pursuit & created Notion page!')
     if (onRefresh) onRefresh()
   }
@@ -222,33 +283,44 @@ export function ActiveStudyQueue({ onRefresh }: ActiveStudyQueueProps = {}) {
       </div>
 
       {isCreating && <CreatePursuitModal onClose={() => setIsCreating(false)} onCreated={handlePursuitCreated} />}
+      {planPursuit && (
+        <PursuitPlanSheet
+          pursuit={planPursuit}
+          isMain={planPursuit.id === primary?.id}
+          currentStepId={findNextStep(planPursuit.steps ?? [])?.step.id}
+          onClose={() => setPlanPursuitId(null)}
+          onToggle={(stepId) => handleToggleStep(planPursuit.id, stepId)}
+          onEdit={(stepId, patch) => handleEditStep(planPursuit.id, stepId, patch)}
+          onDelete={(step) => handleDeleteStep(planPursuit.id, step)}
+          onAdd={(text, parentId) => handleAddStep(planPursuit.id, text, parentId)}
+          onLearn={(stepId) => setTutorTarget({ pursuitId: planPursuit.id, stepId })}
+        />
+      )}
+      {tutorTarget && tutorPursuit && (
+        <LearnWithAiModal pursuit={tutorPursuit} stepId={tutorTarget.stepId} onClose={() => setTutorTarget(null)} />
+      )}
+
+      {!isLoading && primary && next && (
+        <PursuitNextUp
+          key={next.step.id}
+          pursuit={primary}
+          next={next}
+          isFocusing={sessionActive && focusSession?.stepId === next.step.id}
+          onStartFocus={(minutes) => handleStartFocus(primary, next.step.id, minutes)}
+          onLearn={() => setTutorTarget({ pursuitId: primary.id, stepId: next.step.id })}
+          onMarkDone={() => handleToggleStep(primary.id, next.step.id)}
+          onSaveResumeNote={(note) => handleEditStep(primary.id, next.step.id, { resumeNote: note })}
+        />
+      )}
 
       {isLoading ? (
         <div className="flex flex-col gap-3 flex-1 overflow-y-auto">
-          {Array.from({ length: TRACKS_PAGE_SIZE }).map((_, idx) => (
-            <div
-              key={idx}
-              className="bg-white border border-gray-100/80 rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,0.02)]"
-            >
-              <div className="flex justify-between items-center mb-2.5">
-                <span className="skeleton-rect skeleton-shimmer" style={{ width: 68, height: 16, borderRadius: 6 }} />
-                <span className="skeleton-circle skeleton-shimmer" style={{ width: 20, height: 20 }} />
-              </div>
-              <div className="mb-3">
-                <span className="skeleton-rect skeleton-shimmer" style={{ width: idx === 0 ? '75%' : '60%', height: 16 }} />
-              </div>
-              <div className="flex items-center justify-between gap-4 mt-4">
-                <span className="skeleton-rect skeleton-shimmer" style={{ flex: 1, height: 6, borderRadius: 3 }} />
-                <span className="skeleton-rect skeleton-shimmer" style={{ width: 45, height: 12 }} />
-              </div>
-              <div className="mt-4 border-t border-gray-50 pt-3 flex flex-col gap-3">
-                {Array.from({ length: idx === 0 ? 3 : 2 }).map((_, stepIdx) => (
-                  <div key={stepIdx} className="flex items-start gap-2.5 py-0.5">
-                    <span className="skeleton-circle skeleton-shimmer" style={{ width: 18, height: 18, flexShrink: 0, marginTop: 1 }} />
-                    <span className="skeleton-rect skeleton-shimmer" style={{ width: stepIdx === 0 ? '45%' : stepIdx === 1 ? '65%' : '35%', height: 12, marginTop: 4 }} />
-                  </div>
-                ))}
-              </div>
+          {Array.from({ length: 2 }).map((_, idx) => (
+            <div key={idx} className="plan-tile">
+              <span className="skeleton-rect skeleton-shimmer" style={{ width: 68, height: 16, borderRadius: 6 }} />
+              <span className="skeleton-rect skeleton-shimmer" style={{ width: idx === 0 ? '75%' : '60%', height: 16 }} />
+              <span className="skeleton-rect skeleton-shimmer" style={{ width: '100%', height: 6, borderRadius: 3 }} />
+              <span className="skeleton-rect skeleton-shimmer" style={{ width: '40%', height: 12, marginBottom: 8 }} />
             </div>
           ))}
         </div>
@@ -268,26 +340,45 @@ export function ActiveStudyQueue({ onRefresh }: ActiveStudyQueueProps = {}) {
             </div>
           ) : (
             paginatedTracks.map((track) => {
-              const { done: completedSteps, total: totalSteps } = countLeaves(track.steps ?? [])
-              const percentage = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0
+              const steps = track.steps ?? []
+              const { done, total } = countLeaves(steps)
+              const percentage = total > 0 ? Math.round((done / total) * 100) : 0
+              const remaining = sumEstimates(steps, true)
+              const isMain = track.id === primary?.id
+              const trackNext = isMain ? next : findNextStep(steps)
 
               return (
-                <div
-                  key={track.id}
-                  className="group relative bg-white border border-gray-100/80 rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.04)] transition-all duration-200"
-                >
-                  {/* Category Badge & Notion Icon & Actions */}
-                  <div className="flex justify-between items-center mb-1.5" onClick={(e) => e.stopPropagation()}>
-                    <span className="text-[9px] font-bold text-[#1a7a4a] bg-emerald-50 px-2 py-0.5 rounded-md uppercase tracking-wider">
-                      {track.category}
-                    </span>
+                <article key={track.id} className={cn('plan-tile', isMain && 'is-main')}>
+                  <div className="plan-tile-top">
+                    <div className="plan-tile-tags">
+                      <span className="text-[9px] font-bold text-[#1a7a4a] bg-emerald-50 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                        {track.category}
+                      </span>
+                      {isMain && tracks.length > 1 && (
+                        <span className="pursuit-main-badge">
+                          <Star size={8} fill="currentColor" strokeWidth={0} />
+                          Main
+                        </span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-1.5">
                       {editingPursuitId !== track.id && (
                         <>
+                          {!isMain && (
+                            <button
+                              onClick={() => handleSetPrimary(track.id)}
+                              className="w-6 h-6 rounded-full bg-gray-50 hover:bg-neutral-200 flex items-center justify-center text-neutral-500 hover:text-black transition-colors"
+                              title="Make this your main pursuit"
+                              aria-label="Make this your main pursuit"
+                            >
+                              <Star size={11} />
+                            </button>
+                          )}
                           <button
                             onClick={(e) => handleStartEditPursuit(e, track)}
                             className="w-6 h-6 rounded-full bg-gray-50 hover:bg-neutral-200 flex items-center justify-center text-neutral-500 hover:text-black transition-colors"
                             title="Edit pursuit name/category"
+                            aria-label="Edit pursuit name and category"
                           >
                             <Pencil size={11} />
                           </button>
@@ -295,6 +386,7 @@ export function ActiveStudyQueue({ onRefresh }: ActiveStudyQueueProps = {}) {
                             onClick={(e) => handleDeletePursuitClick(e, track.id)}
                             className="w-6 h-6 rounded-full bg-gray-50 hover:bg-red-50 flex items-center justify-center text-neutral-500 hover:text-red-600 transition-colors"
                             title="Delete pursuit"
+                            aria-label="Delete pursuit"
                           >
                             <Trash2 size={11} />
                           </button>
@@ -306,30 +398,28 @@ export function ActiveStudyQueue({ onRefresh }: ActiveStudyQueueProps = {}) {
                         rel="noopener noreferrer"
                         className="w-6 h-6 rounded-full bg-gray-100 hover:bg-neutral-200 flex items-center justify-center text-black hover:text-[#1a7a4a] transition-colors"
                         title="Open deep-dive note in Notion"
+                        aria-label="Open deep-dive note in Notion"
                       >
                         <NotionIcon />
                       </a>
                     </div>
                   </div>
 
-                  {/* Title or Edit Title input */}
                   {editingPursuitId === track.id ? (
                     <form
                       onSubmit={(e) => handleSaveEditPursuit(e, track.id)}
                       onClick={(e) => e.stopPropagation()}
-                      className="flex flex-col gap-2 mt-1 mb-2 bg-gray-50/50 p-2.5 rounded-xl border border-gray-100"
+                      className="flex flex-col gap-2 bg-gray-50/50 p-2.5 rounded-xl border border-gray-100"
                     >
-                      <div>
-                        <input
-                          type="text"
-                          value={editTitle}
-                          onChange={(e) => setEditTitle(e.target.value)}
-                          className="w-full text-xs p-2 rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-[#1a7a4a]"
-                          required
-                          placeholder="Pursuit Title"
-                          autoFocus
-                        />
-                      </div>
+                      <input
+                        type="text"
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        className="w-full text-xs p-2 rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-[#1a7a4a]"
+                        required
+                        placeholder="Pursuit Title"
+                        autoFocus
+                      />
                       <div className="flex flex-col gap-2">
                         <div className="flex justify-between items-center gap-2">
                           <select
@@ -383,50 +473,39 @@ export function ActiveStudyQueue({ onRefresh }: ActiveStudyQueueProps = {}) {
                       </div>
                     </form>
                   ) : (
-                    <div className="mb-2">
-                      <h4 className="text-sm font-semibold text-gray-900 leading-snug pr-4">
-                        {track.title}
-                      </h4>
-                    </div>
+                    <h4 className="plan-tile-title">{track.title}</h4>
                   )}
 
-                  {/* Progress Bar & Status — counts leaf steps, so nesting doesn't double-count */}
-                  <div className="flex items-center justify-between gap-4 mt-2">
-                    <div className="flex-1">
-                      <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                        <div
-                          className="bg-[#1a7a4a] h-1.5 rounded-full transition-all duration-500"
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <span className="text-[10px] font-bold text-gray-400 font-mono">
-                        {completedSteps}/{totalSteps} done
-                      </span>
-                      {percentage < 100 ? (
-                        <span className="text-[10px] font-bold text-[#1a7a4a] bg-emerald-50 px-1.5 py-0.5 rounded">
-                          {percentage}%
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
-                          Done
-                        </span>
-                      )}
-                    </div>
+                  <PursuitMilestoneBar steps={steps} currentStepId={trackNext?.step.id} />
+
+                  <div className="plan-tile-meta">
+                    <span>{done}/{total} steps</span>
+                    <i aria-hidden="true">·</i>
+                    <span>{percentage}%</span>
+                    {remaining.minutes > 0 && (
+                      <>
+                        <i aria-hidden="true">·</i>
+                        <span>≈{formatMinutes(remaining.minutes)} left</span>
+                      </>
+                    )}
                   </div>
 
-                  {/* Nested steps checklist */}
-                  <div className="mt-3 border-t border-gray-50 pt-2">
-                    <PursuitStepTree
-                      pursuit={track}
-                      onToggle={(stepId) => handleToggleStep(track.id, stepId)}
-                      onRename={(stepId, text) => handleRenameStep(track.id, stepId, text)}
-                      onDelete={(step) => handleDeleteStep(track.id, step)}
-                      onAdd={(text, parentId) => handleAddStep(track.id, text, parentId)}
-                    />
-                  </div>
-                </div>
+                  {/* The main pursuit's next step already leads the card in Up next. */}
+                  {!isMain && trackNext && (
+                    <p className="plan-tile-next">
+                      <CornerDownRight size={12} />
+                      <span className="plan-tile-next-label">Next</span>
+                      <span className="plan-tile-next-text" title={trackNext.step.text}>{trackNext.step.text}</span>
+                    </p>
+                  )}
+
+                  <button type="button" className="plan-tile-open" onClick={() => setPlanPursuitId(track.id)}>
+                    <ListTree size={13} />
+                    View plan
+                    <span className="plan-tile-open-count">{countSteps(steps)} steps</span>
+                    <ChevronRight size={13} className="plan-tile-open-chevron" />
+                  </button>
+                </article>
               )
             })
           )}

@@ -19,12 +19,11 @@
   --dk-ink: #eceef0;
   --dk-ink-2: #a8adb3;
   --dk-ink-3: #858b92;
-  --dk-accent: #cfe965;
-  --dk-on-accent: #14160f;
+  --dk-accent: #8fd4a8;
+  --dk-on-accent: #10170f;
   --dk-danger: #f28b95;
   --dk-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.05);
   --dk-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045), 0 1px 2px rgba(0, 0, 0, 0.45), 0 16px 40px rgba(0, 0, 0, 0.3);
-  --dk-glow-lime: radial-gradient(120% 95% at 0% 0%, rgba(207, 233, 101, 0.15), transparent 62%);
   --dk-panel: linear-gradient(160deg, #202327 0%, #1a1c20 100%);
 
   /* Inline-style colours in TSX are written as var(--inline-*, <light literal>);
@@ -94,7 +93,7 @@
 }
 
 :root[data-theme='dark'] ::selection {
-  background: rgba(207, 233, 101, 0.28);
+  background: rgba(143, 212, 168, 0.28);
   color: var(--dk-ink);
 }
 
@@ -160,9 +159,9 @@
   --ntr-ink-faint: var(--dk-ink-3);
   --ntr-card: var(--dk-surface);
   --ntr-line: var(--dk-line);
-  --ntr-lime: #cfe965;
-  --ntr-lime-deep: #b8d35c;
-  --ntr-lime-soft: rgba(207, 233, 101, 0.1);
+  --ntr-lime: #8fd4a8;
+  --ntr-lime-deep: #73be91;
+  --ntr-lime-soft: rgba(143, 212, 168, 0.1);
   --ntr-cream: var(--dk-raised);
   --ntr-cream-deep: #d6b67e;
   --ntr-sky: rgba(120, 165, 210, 0.13);
@@ -184,10 +183,10 @@
   --ntr-chart-hover-fill: rgba(255, 255, 255, 0.05);
   --ntr-chart-empty: rgba(255, 255, 255, 0.07);
   --ntr-chart-today: rgba(236, 238, 240, 0.6);
-  --ntr-chart-dot: #14160f;
+  --ntr-chart-dot: #10170f;
   --ntr-chart-dot-ring: #eceef0;
-  --ntr-chart-line-start: #dff08f;
-  --ntr-chart-line: #b8d35c;
+  --ntr-chart-line-start: #c1e7cf;
+  --ntr-chart-line: #73be91;
   --ntr-chart-mixed: #b5a687;
   --ntr-chart-calories: #e8a266;
   /* Misses go neutral: a translucent hue over graphite turns olive/brown mud. */
@@ -202,7 +201,7 @@
 
 :root[data-theme='dark'] .ntr-gauge-panel {
   background: var(--dk-raised);
-  box-shadow: inset 0 0 0 1px rgba(207, 233, 101, 0.1), var(--dk-highlight);
+  box-shadow: inset 0 0 0 1px rgba(143, 212, 168, 0.1), var(--dk-highlight);
 }
 
 :root[data-theme='dark'] .ntr-gauge-panel.over {
@@ -276,7 +275,7 @@
 
 :root[data-theme='dark'] .ntr-trend-accent-panel {
   background: var(--dk-raised);
-  box-shadow: inset 0 0 0 1px rgba(207, 233, 101, 0.1), var(--dk-highlight);
+  box-shadow: inset 0 0 0 1px rgba(143, 212, 168, 0.1), var(--dk-highlight);
 }
 
 /* Nutrition-only: Home reuses .ntr-tap-* with its own lavender accent. */
@@ -290,7 +289,7 @@
 }
 
 :root[data-theme='dark'] .ntr-meals-accent-panel {
-  background: linear-gradient(120deg, rgba(255, 255, 255, 0.035) 0%, rgba(207, 233, 101, 0.07) 100%);
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.035) 0%, rgba(143, 212, 168, 0.07) 100%);
   box-shadow: inset 0 0 0 1px var(--dk-line);
 }
 
@@ -348,24 +347,24 @@
   }
 
   :root[data-theme='dark'] .add-pill.add-pill:hover {
-    border-color: rgba(207, 233, 101, 0.35) !important;
+    border-color: rgba(143, 212, 168, 0.35) !important;
     background: #2a2d33 !important;
     color: var(--dk-ink) !important;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 12px 26px rgba(0, 0, 0, 0.45) !important;
   }
 
   :root[data-theme='dark'] .add-pill.add-pill:focus-visible {
-    outline: 2px solid rgba(207, 233, 101, 0.6);
+    outline: 2px solid rgba(143, 212, 168, 0.6);
   }
 
   :root[data-theme='dark'] .add-pill .add-pill-ic {
-    background: rgba(207, 233, 101, 0.14);
-    box-shadow: inset 0 0 0 1px rgba(207, 233, 101, 0.22);
+    background: rgba(143, 212, 168, 0.14);
+    box-shadow: inset 0 0 0 1px rgba(143, 212, 168, 0.22);
     color: var(--dk-accent);
   }
 
   :root[data-theme='dark'] .add-pill:hover .add-pill-ic {
-    background: rgba(207, 233, 101, 0.2);
+    background: rgba(143, 212, 168, 0.2);
   }
 }
 
@@ -460,7 +459,7 @@
 }
 
 :root[data-theme='dark'] .nutrition-dashboard.ntr .ntr-intel-glyph {
-  color: rgba(207, 233, 101, 0.045);
+  color: rgba(143, 212, 168, 0.045);
 }
 
 :root[data-theme='dark'] .nutrition-dashboard.ntr .ntr-intel-tooltip {
@@ -561,7 +560,7 @@
 }
 
 :root[data-theme='dark'] .bio-tile-icon.tint-yellow {
-  background: rgba(207, 233, 101, 0.14);
+  background: rgba(143, 212, 168, 0.14);
   color: var(--dk-accent);
 }
 
@@ -631,11 +630,11 @@
 :root[data-theme='dark'] :is(.home-face-btn--2, .mind-face-btn--2, .q-2) { background: rgba(140, 180, 172, 0.22); }
 :root[data-theme='dark'] :is(.home-face-btn--3, .mind-face-btn--3, .q-3) { background: rgba(160, 196, 150, 0.24); }
 :root[data-theme='dark'] :is(.home-face-btn--4, .mind-face-btn--4, .q-4) { background: rgba(186, 216, 128, 0.26); }
-:root[data-theme='dark'] :is(.home-face-btn--5, .mind-face-btn--5, .q-5) { background: rgba(207, 233, 101, 0.32); }
+:root[data-theme='dark'] :is(.home-face-btn--5, .mind-face-btn--5, .q-5) { background: rgba(143, 212, 168, 0.32); }
 
 :root[data-theme='dark'] :is(.home-face-btn, .mind-face-btn).is-active {
-  border-color: rgba(207, 233, 101, 0.5);
-  box-shadow: 0 0 0 3px var(--dk-surface), 0 0 0 5px rgba(207, 233, 101, 0.4), 0 8px 20px rgba(0, 0, 0, 0.4);
+  border-color: rgba(143, 212, 168, 0.5);
+  box-shadow: 0 0 0 3px var(--dk-surface), 0 0 0 5px rgba(143, 212, 168, 0.4), 0 8px 20px rgba(0, 0, 0, 0.4);
 }
 
 /* ══ Shared: confirm dialog ══════════════════════════════════════════════
@@ -1258,8 +1257,8 @@
 }
 
 :root[data-theme='dark'] .learnings-stat-icon--week {
-  border-color: rgba(207, 233, 101, 0.2);
-  background: rgba(207, 233, 101, 0.14);
+  border-color: rgba(143, 212, 168, 0.2);
+  background: rgba(143, 212, 168, 0.14);
   color: var(--dk-accent);
 }
 
@@ -1452,7 +1451,7 @@
 /* Start session: the card's primary action, carried by weight and a lit edge
    rather than a white slab. Same grammar as the add pill, at full width. */
 :root[data-theme='dark'] .fbw-cta {
-  border: 1px solid rgba(207, 233, 101, 0.22);
+  border: 1px solid rgba(143, 212, 168, 0.22);
   background: #24272c;
   color: var(--dk-ink);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 10px 24px rgba(0, 0, 0, 0.4);
@@ -1460,14 +1459,14 @@
 }
 
 :root[data-theme='dark'] .fbw-cta:hover:not(:disabled) {
-  border-color: rgba(207, 233, 101, 0.45);
+  border-color: rgba(143, 212, 168, 0.45);
   background: #2a2d33;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 14px 30px rgba(0, 0, 0, 0.5);
 }
 
 :root[data-theme='dark'] .fbw-cta-ic {
-  background: rgba(207, 233, 101, 0.16);
-  box-shadow: inset 0 0 0 1px rgba(207, 233, 101, 0.28);
+  background: rgba(143, 212, 168, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(143, 212, 168, 0.28);
   color: var(--dk-accent);
 }
 
@@ -1653,8 +1652,8 @@
 }
 
 :root[data-theme='dark'] .tasks-add-entry-modal .form-input:focus {
-  border-color: rgba(207, 233, 101, 0.45);
-  box-shadow: 0 0 0 3px rgba(207, 233, 101, 0.12);
+  border-color: rgba(143, 212, 168, 0.45);
+  box-shadow: 0 0 0 3px rgba(143, 212, 168, 0.12);
 }
 
 :root[data-theme='dark'] .tasks-add-entry-modal select.form-input {
@@ -1683,14 +1682,14 @@
 }
 
 :root[data-theme='dark'] .tasks-add-entry-modal .modal-btn-save {
-  border: 1px solid rgba(207, 233, 101, 0.35);
+  border: 1px solid rgba(143, 212, 168, 0.35);
   background: #2a2d33;
   color: var(--dk-ink);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 20px rgba(0, 0, 0, 0.4);
 }
 
 :root[data-theme='dark'] .tasks-add-entry-modal .modal-btn-save:hover:not(:disabled) {
-  border-color: rgba(207, 233, 101, 0.55);
+  border-color: rgba(143, 212, 168, 0.55);
   background: #30343a;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 12px 26px rgba(0, 0, 0, 0.5);
 }
@@ -1906,9 +1905,9 @@
 
 /* ══ Learnings: create-pursuit modal ═════════════════════════════════════
    The derived pass flattens every layer of this modal to the same grey, so the
-   hierarchy is rebuilt by hand: a lifted graphite panel with the route's lime
-   glow, recessed wells for inputs, lime for the one primary action and every
-   selected state. */
+   hierarchy is rebuilt by hand: a flat lifted graphite panel, recessed wells
+   for inputs, lime for the one primary action and every selected state — kept
+   flat (no blurred colour glows) so it reads as calm contrast, not neon. */
 
 :root[data-theme='dark'] .pursuit-modal-backdrop {
   background-color: rgba(6, 7, 9, 0.62);
@@ -1918,7 +1917,7 @@
 
 :root[data-theme='dark'] .pursuit-modal {
   border-color: var(--dk-line-strong);
-  background: var(--dk-glow-lime), var(--dk-panel);
+  background: var(--dk-panel);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 32px 80px rgba(0, 0, 0, 0.6);
   color: var(--dk-ink);
 }
@@ -1966,7 +1965,6 @@
 :root[data-theme='dark'] .pursuit-ai-step-num {
   background: var(--dk-accent);
   color: var(--dk-on-accent);
-  box-shadow: 0 0 0 4px rgba(207, 233, 101, 0.12);
 }
 
 :root[data-theme='dark'] .pursuit-label { color: var(--dk-ink-3); }
@@ -1991,9 +1989,9 @@
 
 :root[data-theme='dark'] .pursuit-input:focus,
 :root[data-theme='dark'] .pursuit-reply-input:focus {
-  border-color: rgba(207, 233, 101, 0.5);
+  border-color: rgba(143, 212, 168, 0.5);
   background: rgba(0, 0, 0, 0.34);
-  box-shadow: 0 0 0 3px rgba(207, 233, 101, 0.12);
+  box-shadow: 0 0 0 3px rgba(143, 212, 168, 0.12);
 }
 
 :root[data-theme='dark'] .pursuit-prompt-preview {
@@ -2013,22 +2011,22 @@
 }
 
 :root[data-theme='dark'] .pursuit-chip.is-selected {
-  border-color: rgba(207, 233, 101, 0.45);
-  background: rgba(207, 233, 101, 0.14);
-  color: #e2f3a0;
-  box-shadow: 0 0 14px rgba(207, 233, 101, 0.1);
+  border-color: rgba(143, 212, 168, 0.5);
+  background: rgba(143, 212, 168, 0.14);
+  color: #b6e3c6;
 }
 
-/* The one primary action per state is lime; disabled drops back to a quiet wash. */
+/* The one primary action per state is lime; disabled drops back to a quiet wash.
+   Flat elevation like every other dark button — no colour glow. */
 :root[data-theme='dark'] .pursuit-btn-primary {
   background: var(--dk-accent);
   color: var(--dk-on-accent);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 20px rgba(207, 233, 101, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 4px 12px rgba(0, 0, 0, 0.35);
 }
 
 :root[data-theme='dark'] .pursuit-btn-primary:hover:not(:disabled) {
-  background: #dcf27c;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 8px 26px rgba(207, 233, 101, 0.3);
+  background: #a3dbb8;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
 :root[data-theme='dark'] .pursuit-btn-primary:disabled {
@@ -2057,14 +2055,14 @@
 
 :root[data-theme='dark'] .pursuit-parse-ok,
 :root[data-theme='dark'] .pursuit-import-banner {
-  background: rgba(207, 233, 101, 0.08);
-  box-shadow: inset 0 0 0 1px rgba(207, 233, 101, 0.2);
-  color: #e2f3a0;
+  background: rgba(143, 212, 168, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(143, 212, 168, 0.2);
+  color: #b6e3c6;
 }
 
 :root[data-theme='dark'] .pursuit-import-banner button {
-  background: rgba(207, 233, 101, 0.14);
-  color: #e2f3a0;
+  background: rgba(143, 212, 168, 0.14);
+  color: #b6e3c6;
 }
 
 :root[data-theme='dark'] .pursuit-import-warnings {
@@ -2082,7 +2080,7 @@
 
 :root[data-theme='dark'] .pursuit-outline-row:not(.is-depth-0)::before { background: var(--dk-line-strong); }
 :root[data-theme='dark'] .pursuit-outline-marker { color: var(--dk-accent); }
-:root[data-theme='dark'] .pursuit-outline-row:not(.is-depth-0) .pursuit-outline-marker::before { border-color: rgba(207, 233, 101, 0.55); }
+:root[data-theme='dark'] .pursuit-outline-row:not(.is-depth-0) .pursuit-outline-marker::before { border-color: rgba(143, 212, 168, 0.55); }
 :root[data-theme='dark'] .pursuit-outline-row.is-depth-2 .pursuit-outline-marker::before { background: rgba(236, 238, 240, 0.35); }
 
 :root[data-theme='dark'] .pursuit-outline-input { color: var(--dk-ink); }
@@ -2094,7 +2092,7 @@
 
 :root[data-theme='dark'] .pursuit-outline-input:focus,
 :root[data-theme='dark'] .pursuit-outline-note:focus {
-  border-color: rgba(207, 233, 101, 0.4);
+  border-color: rgba(143, 212, 168, 0.4);
   background: rgba(255, 255, 255, 0.05);
 }
 
@@ -2105,7 +2103,7 @@
 
 :root[data-theme='dark'] .pursuit-outline-footer { border-top-color: var(--dk-line); }
 :root[data-theme='dark'] .pursuit-outline-add { color: var(--dk-accent); }
-:root[data-theme='dark'] .pursuit-outline-add:hover:not(:disabled) { background: rgba(207, 233, 101, 0.1); }
+:root[data-theme='dark'] .pursuit-outline-add:hover:not(:disabled) { background: rgba(143, 212, 168, 0.1); }
 :root[data-theme='dark'] .pursuit-outline-hint { color: rgba(236, 238, 240, 0.38); }
 
 :root[data-theme='dark'] .pursuit-outline-hint kbd {
@@ -2127,20 +2125,287 @@
   border-color: var(--dk-accent);
   background: var(--dk-accent);
   color: var(--dk-on-accent);
-  box-shadow: 0 0 10px rgba(207, 233, 101, 0.25);
 }
 
 :root[data-theme='dark'] .pursuit-step-check.is-partial::before {
   background: conic-gradient(var(--dk-accent) calc(var(--pct, 0) * 1%), transparent 0);
 }
 
-:root[data-theme='dark'] .pursuit-step-count.is-done { background: rgba(207, 233, 101, 0.14); color: #e2f3a0; }
+:root[data-theme='dark'] .pursuit-step-count.is-done { background: rgba(143, 212, 168, 0.14); color: #b6e3c6; }
 :root[data-theme='dark'] .pursuit-step-edit input,
 :root[data-theme='dark'] .pursuit-step-add-form input {
-  border-color: rgba(207, 233, 101, 0.4);
+  border-color: rgba(143, 212, 168, 0.4);
   background: rgba(0, 0, 0, 0.26);
   color: var(--dk-ink);
 }
-:root[data-theme='dark'] .pursuit-step-add-root:hover { background: rgba(207, 233, 101, 0.1); color: var(--dk-accent); }
+:root[data-theme='dark'] .pursuit-step-add-root:hover { background: rgba(143, 212, 168, 0.1); color: var(--dk-accent); }
 :root[data-theme='dark'] .pursuit-step-add-form button[type='submit'],
 :root[data-theme='dark'] .pursuit-step-edit button[type='button']:first-of-type { color: var(--dk-accent); }
+
+/* ══ Learnings: Up next, Learn with AI, session wrap-up ══════════════════
+   Same language as the create-pursuit modal above: graphite surfaces, recessed
+   wells, lime for the one primary action and every "current / selected" state. */
+
+:root[data-theme='dark'] .pursuit-next-up {
+  border-color: rgba(143, 212, 168, 0.16);
+  background: linear-gradient(160deg, #1f2226, #1a1c1f);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+:root[data-theme='dark'] .pnu-eyebrow { color: var(--dk-accent); }
+:root[data-theme='dark'] .pnu-meta { color: rgba(236, 238, 240, 0.45); }
+:root[data-theme='dark'] .pnu-trail { color: var(--dk-ink-3); }
+:root[data-theme='dark'] .pnu-step { color: var(--dk-ink); }
+:root[data-theme='dark'] .pnu-note { color: var(--dk-ink-2); }
+
+:root[data-theme='dark'] .pnu-chip {
+  background: var(--dk-wash-strong);
+  color: var(--dk-ink-2);
+}
+
+:root[data-theme='dark'] .pnu-resume-body {
+  background: rgba(0, 0, 0, 0.24);
+  box-shadow: inset 0 0 0 1px var(--dk-line);
+}
+
+:root[data-theme='dark'] .pnu-resume-icon { color: var(--dk-accent); }
+:root[data-theme='dark'] .pnu-resume-label { color: rgba(236, 238, 240, 0.4); }
+:root[data-theme='dark'] .pnu-resume-text { color: var(--dk-ink); }
+:root[data-theme='dark'] .pnu-resume-edit { color: var(--dk-ink-3); }
+
+:root[data-theme='dark'] .pnu-resume-empty {
+  border-color: var(--dk-line-strong);
+  color: var(--dk-ink-3);
+}
+
+:root[data-theme='dark'] .pnu-resume-empty:hover {
+  border-color: rgba(143, 212, 168, 0.45);
+  color: var(--dk-accent);
+}
+
+:root[data-theme='dark'] .pnu-resume-form input {
+  border-color: rgba(143, 212, 168, 0.45);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--dk-ink);
+  box-shadow: 0 0 0 3px rgba(143, 212, 168, 0.1);
+}
+
+:root[data-theme='dark'] .pnu-icon-btn { color: var(--dk-ink-3); }
+:root[data-theme='dark'] .pnu-icon-btn:hover { background: var(--dk-wash-strong); color: var(--dk-ink); }
+:root[data-theme='dark'] .pnu-icon-btn.is-save { color: var(--dk-accent); }
+
+:root[data-theme='dark'] .pnu-btn {
+  border-color: var(--dk-line-strong);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--dk-ink-2);
+}
+
+:root[data-theme='dark'] .pnu-btn:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: var(--dk-wash-strong);
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .pnu-btn.is-primary {
+  border-color: transparent;
+  background: var(--dk-accent);
+  color: var(--dk-on-accent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+:root[data-theme='dark'] .pnu-btn.is-primary:hover { background: #a3dbb8; }
+
+:root[data-theme='dark'] .pnu-btn.is-quiet {
+  border-color: transparent;
+  background: transparent;
+  color: var(--dk-ink-3);
+}
+
+:root[data-theme='dark'] .pnu-btn.is-quiet:hover { background: var(--dk-wash-strong); color: var(--dk-ink); }
+
+:root[data-theme='dark'] .pnu-focusing {
+  background: rgba(143, 212, 168, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(143, 212, 168, 0.25);
+  color: #b6e3c6;
+}
+
+:root[data-theme='dark'] .pnu-focusing i { background: var(--dk-accent); }
+
+:root[data-theme='dark'] .pursuit-main-badge {
+  background: var(--dk-accent);
+  color: var(--dk-on-accent);
+}
+
+:root[data-theme='dark'] .tutor-trail { color: var(--dk-ink-3); }
+
+:root[data-theme='dark'] .tutor-profile {
+  border-color: var(--dk-line);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015));
+  box-shadow: var(--dk-highlight);
+}
+
+:root[data-theme='dark'] .tutor-link { color: var(--dk-accent); }
+:root[data-theme='dark'] .tutor-profile-text { color: var(--dk-ink-2); }
+:root[data-theme='dark'] .tutor-hint,
+:root[data-theme='dark'] .wrapup-hint { color: rgba(236, 238, 240, 0.4); }
+
+:root[data-theme='dark'] .tutor-mode {
+  border-color: var(--dk-line-strong);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+:root[data-theme='dark'] .tutor-mode:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: var(--dk-wash-strong);
+}
+
+:root[data-theme='dark'] .tutor-mode.is-selected {
+  border-color: rgba(143, 212, 168, 0.45);
+  background: rgba(143, 212, 168, 0.09);
+  box-shadow: 0 0 0 3px rgba(143, 212, 168, 0.08);
+}
+
+:root[data-theme='dark'] .tutor-mode-icon {
+  background: var(--dk-wash-strong);
+  color: var(--dk-ink-2);
+}
+
+:root[data-theme='dark'] .tutor-mode.is-selected .tutor-mode-icon {
+  background: var(--dk-accent);
+  color: var(--dk-on-accent);
+}
+
+:root[data-theme='dark'] .tutor-mode-text strong { color: var(--dk-ink); }
+:root[data-theme='dark'] .tutor-mode-text span { color: var(--dk-ink-3); }
+
+:root[data-theme='dark'] .tutor-project {
+  border-color: var(--dk-line-strong);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+:root[data-theme='dark'] .tutor-project-icon { color: var(--dk-accent); }
+:root[data-theme='dark'] .tutor-project-copy h3 { color: var(--dk-ink); }
+:root[data-theme='dark'] .tutor-project-copy p { color: var(--dk-ink-3); }
+
+:root[data-theme='dark'] .pursuit-parse-status.is-info { color: var(--dk-ink-3); }
+
+:root[data-theme='dark'] .wrapup-done {
+  border-color: var(--dk-line-strong);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+:root[data-theme='dark'] .wrapup-done.is-on {
+  border-color: rgba(143, 212, 168, 0.4);
+  background: rgba(143, 212, 168, 0.08);
+}
+
+:root[data-theme='dark'] .wrapup-done-text strong { color: var(--dk-ink); }
+:root[data-theme='dark'] .wrapup-done-text span { color: var(--dk-ink-3); }
+:root[data-theme='dark'] .wrapup-switch { background: rgba(255, 255, 255, 0.14); }
+:root[data-theme='dark'] .wrapup-switch::after { background: var(--dk-ink); }
+:root[data-theme='dark'] .wrapup-done.is-on .wrapup-switch { background: var(--dk-accent); }
+:root[data-theme='dark'] .wrapup-done.is-on .wrapup-switch::after { background: var(--dk-on-accent); }
+
+/* Step tree: time, the current step, estimate editing */
+:root[data-theme='dark'] .pursuit-step-estimate { color: rgba(236, 238, 240, 0.42); }
+
+:root[data-theme='dark'] .pursuit-step-row.is-current {
+  background: rgba(143, 212, 168, 0.07);
+  box-shadow: 0 0 0 1px rgba(143, 212, 168, 0.13);
+}
+
+:root[data-theme='dark'] .pursuit-step-row.is-current:hover { background: rgba(143, 212, 168, 0.1); }
+:root[data-theme='dark'] .pursuit-step-row.is-current .pursuit-step-check { border-color: var(--dk-accent); }
+:root[data-theme='dark'] .pursuit-step-row.is-current .pursuit-step-check::after { background: var(--dk-accent); }
+:root[data-theme='dark'] .pursuit-step-row.is-current .pursuit-step-text { color: var(--dk-ink); }
+
+:root[data-theme='dark'] .pursuit-step-next-tag {
+  background: rgba(143, 212, 168, 0.14);
+  color: #bfe8cd;
+}
+
+:root[data-theme='dark'] .pursuit-step-edit select {
+  border-color: var(--dk-line-strong);
+  background: rgba(0, 0, 0, 0.26);
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .pursuit-step-actions button.is-ai:hover {
+  background: rgba(143, 212, 168, 0.1);
+  color: var(--dk-accent);
+}
+
+:root[data-theme='dark'] .pursuit-outline-estimate {
+  border-color: var(--dk-line-strong);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--dk-ink-2);
+}
+
+:root[data-theme='dark'] .pursuit-outline-estimate.is-empty { color: rgba(236, 238, 240, 0.35); }
+
+:root[data-theme='dark'] .pursuit-outline-estimate.is-sum {
+  border-color: transparent;
+  background: transparent;
+  color: rgba(236, 238, 240, 0.42);
+}
+
+:root[data-theme='dark'] .pursuit-outline-estimate option {
+  background: var(--dk-overlay);
+  color: var(--dk-ink);
+}
+
+/* ══ Learnings: pursuit tiles, milestone bar, plan sheet ═════════════════ */
+
+:root[data-theme='dark'] .plan-tile {
+  border-color: var(--dk-line);
+  background: linear-gradient(160deg, #1e2024, #191b1e);
+  box-shadow: var(--dk-highlight);
+}
+
+:root[data-theme='dark'] .plan-tile:hover { border-color: var(--dk-line-strong); }
+:root[data-theme='dark'] .plan-tile-title { color: var(--dk-ink); }
+:root[data-theme='dark'] .plan-tile-meta { color: rgba(236, 238, 240, 0.45); }
+:root[data-theme='dark'] .plan-tile-next { color: var(--dk-ink-2); }
+:root[data-theme='dark'] .plan-tile-next svg { color: var(--dk-accent); }
+:root[data-theme='dark'] .plan-tile-next-label { color: rgba(236, 238, 240, 0.4); }
+
+:root[data-theme='dark'] .plan-tile-open {
+  border-top-color: var(--dk-line);
+  color: var(--dk-ink-2);
+}
+
+:root[data-theme='dark'] .plan-tile-open:hover,
+:root[data-theme='dark'] .plan-tile-open:hover .plan-tile-open-chevron { color: var(--dk-accent); }
+:root[data-theme='dark'] .plan-tile-open-count,
+:root[data-theme='dark'] .plan-tile-open-chevron { color: rgba(236, 238, 240, 0.4); }
+
+:root[data-theme='dark'] .plan-milestone { background: rgba(255, 255, 255, 0.08); }
+:root[data-theme='dark'] .plan-milestone i { background: var(--dk-accent); }
+:root[data-theme='dark'] .plan-milestone.is-current { background: rgba(143, 212, 168, 0.22); }
+
+:root[data-theme='dark'] .plan-sheet-backdrop {
+  background: rgba(6, 7, 9, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+:root[data-theme='dark'] .plan-sheet {
+  border-color: var(--dk-line-strong);
+  background: var(--dk-panel);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 32px 80px rgba(0, 0, 0, 0.6);
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .plan-sheet-grabber { background: rgba(255, 255, 255, 0.2); }
+:root[data-theme='dark'] .plan-sheet-eyebrow { color: var(--dk-accent); }
+:root[data-theme='dark'] .plan-sheet-title { color: var(--dk-ink); }
+:root[data-theme='dark'] .plan-sheet-goal { color: var(--dk-ink-2); }
+
+:root[data-theme='dark'] .plan-stat {
+  background: rgba(0, 0, 0, 0.22);
+  box-shadow: inset 0 0 0 1px var(--dk-line);
+}
+
+:root[data-theme='dark'] .plan-stat-value { color: var(--dk-ink); }
+:root[data-theme='dark'] .plan-stat-label { color: var(--dk-ink-3); }
+:root[data-theme='dark'] .plan-sheet-body { border-top-color: var(--dk-line); }
