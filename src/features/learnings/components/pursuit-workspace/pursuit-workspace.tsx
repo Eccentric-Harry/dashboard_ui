@@ -331,7 +331,7 @@ function WorkspaceView({ pursuit, pursuits, onBack, onOpenPursuit, onRefresh, on
             <h2 id="pw-curriculum-title" className="pw-eyebrow">Curriculum</h2>
             {leafCount.total > 0 && (
               <span className="pw-curriculum-meta">
-                {grouped ? `${steps.length} milestones · ` : ''}
+                {grouped ? `${steps.length} ${steps.length === 1 ? 'milestone' : 'milestones'} · ` : ''}
                 {leafCount.total} {leafCount.total === 1 ? 'step' : 'steps'}
               </span>
             )}

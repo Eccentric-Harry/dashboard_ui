@@ -34,7 +34,15 @@ export function AddStepForm({ placeholder, onSubmit, onClose }: AddStepFormProps
         autoFocus
         value={text}
         onChange={(e) => setText(e.target.value)}
-        onKeyDown={(e) => e.key === 'Escape' && onClose()}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') onClose()
+          // Handle Enter here rather than relying on implicit form submission, so rapid
+          // entry works everywhere; skip while an IME is still composing.
+          if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+            e.preventDefault()
+            void submit()
+          }
+        }}
         placeholder={placeholder}
         maxLength={200}
         aria-label={placeholder}

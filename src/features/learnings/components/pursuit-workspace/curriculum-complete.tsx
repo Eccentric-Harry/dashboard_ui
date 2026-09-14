@@ -16,7 +16,9 @@ export function CurriculumComplete({ pursuit, nextPursuit, onBack, onOpenPursuit
   const { total } = countLeaves(pursuit.steps)
   const logged = sumSpent(pursuit.steps)
   const summary = [
-    hasMilestones(pursuit.steps) ? `${pursuit.steps.length} milestones` : null,
+    hasMilestones(pursuit.steps)
+      ? `${pursuit.steps.length} ${pursuit.steps.length === 1 ? 'milestone' : 'milestones'}`
+      : null,
     `${total} ${total === 1 ? 'step' : 'steps'}`,
     logged > 0 ? `${formatMinutes(logged)} of focus` : null,
   ]

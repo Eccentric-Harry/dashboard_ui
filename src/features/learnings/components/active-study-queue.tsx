@@ -362,7 +362,9 @@ export function ActiveStudyQueue({ onRefresh, onOpenPursuit }: ActiveStudyQueueP
                     <ListTree size={13} />
                     View plan
                     <span className="plan-tile-open-count">
-                      {hasMilestones(steps) ? `${steps.length} milestones` : `${total} ${total === 1 ? 'step' : 'steps'}`}
+                      {hasMilestones(steps)
+                        ? `${steps.length} ${steps.length === 1 ? 'milestone' : 'milestones'}`
+                        : `${total} ${total === 1 ? 'step' : 'steps'}`}
                     </span>
                     <ChevronRight size={13} className="plan-tile-open-chevron" />
                   </button>
