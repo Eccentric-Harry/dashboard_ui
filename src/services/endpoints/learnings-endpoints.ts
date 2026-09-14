@@ -25,6 +25,10 @@ export const API_DELETE_PURSUIT: ApiEndpoint<{ id: string }> = {
   url: ({ id }) => `/pursuits/${id}`,
   method: 'delete',
 };
+export const API_ADD_PURSUIT_STEP: ApiEndpoint<{ id: string }> = {
+  url: ({ id }) => `/pursuits/${id}/steps`,
+  method: 'post',
+};
 export const API_TOGGLE_PURSUIT_STEP: ApiEndpoint<{ id: string; stepId: string }> = {
   url: ({ id, stepId }) => `/pursuits/${id}/steps/${stepId}`,
   method: 'patch',

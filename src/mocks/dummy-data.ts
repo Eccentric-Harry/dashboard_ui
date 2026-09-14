@@ -513,7 +513,25 @@ const generatePursuits = (): LearningPursuit[] => {
       steps: [
         { id: 'ps-1-1', text: 'Complete Chapters 1-4 of DDIA', isCompleted: true },
         { id: 'ps-1-2', text: 'Design a URL Shortener (preparation)', isCompleted: true },
-        { id: 'ps-1-3', text: 'Design WhatsApp/Chat System', isCompleted: false },
+        {
+          id: 'ps-1-3',
+          text: 'Design WhatsApp/Chat System',
+          isCompleted: false,
+          children: [
+            { id: 'ps-1-3-1', text: 'Sketch the message delivery flow', isCompleted: true },
+            {
+              id: 'ps-1-3-2',
+              text: 'Choose storage for chat history',
+              note: 'Done when you can defend the partition key',
+              isCompleted: false,
+              children: [
+                { id: 'ps-1-3-2-1', text: 'Compare Cassandra and DynamoDB', isCompleted: false },
+                { id: 'ps-1-3-2-2', text: 'Estimate storage for 1B messages a day', isCompleted: false },
+              ],
+            },
+            { id: 'ps-1-3-3', text: 'Handle presence and read receipts', isCompleted: false },
+          ],
+        },
         { id: 'ps-1-4', text: 'Design a Distributed Key-Value Store', isCompleted: false },
         { id: 'ps-1-5', text: 'Practice mock interviews with peers', isCompleted: false },
       ],

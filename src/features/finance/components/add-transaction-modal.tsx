@@ -3,7 +3,7 @@ import { X, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import type { LendingRecord } from '@/types/finance'
 import { financeService } from '@/services/finance-service'
-import { confirmCloseIfDirty } from '@/lib/modal-utils'
+import { useConfirmClose } from '@/hooks/use-confirm-close'
 
 import faaahAudio from '@/assets/faaah.mp3'
 import { getErrorMessage } from '@/lib/errors'
@@ -117,6 +117,16 @@ export function AddTransactionModal({
     }
   }, [isOpen, isEdit, initialTab, initialTransactionData, initialLendingData])
 
+  const isDirty = Boolean(
+    amount.trim() ||
+    description.trim() ||
+    borrower.trim() ||
+    lendingAmount.trim() ||
+    dueDate.trim() ||
+    notes.trim()
+  )
+  const { requestClose, dialog: confirmCloseDialog } = useConfirmClose(isDirty, onClose)
+
   if (!isOpen) return null
 
   const handleTransactionSubmit = async (e: React.FormEvent) => {
@@ -220,23 +230,9 @@ export function AddTransactionModal({
     return activeTab === 'Lending' ? 'Record Lending' : 'Add Transaction'
   }
 
-  if (!isOpen) return null
-
-  const isDirty = Boolean(
-    amount.trim() ||
-    description.trim() ||
-    borrower.trim() ||
-    lendingAmount.trim() ||
-    dueDate.trim() ||
-    notes.trim()
-  )
-
-  const handleGuardedClose = () => {
-    confirmCloseIfDirty(isDirty, onClose)
-  }
-
   return (
-    <div className="finance-modal-backdrop" role="presentation" onClick={handleGuardedClose}>
+    <>
+    <div className="finance-modal-backdrop" role="presentation" onClick={requestClose}>
       <div
         className="finance-modal-popover add-tx-modal"
         role="dialog"
@@ -244,7 +240,7 @@ export function AddTransactionModal({
         onClick={(e) => e.stopPropagation()}
         style={{ width: 'min(440px, calc(100vw - 42px))' }}
       >
-        <button type="button" className="finance-modal-close" onClick={handleGuardedClose}>
+        <button type="button" className="finance-modal-close" onClick={requestClose}>
           <X size={15} />
         </button>
 
@@ -431,5 +427,7 @@ export function AddTransactionModal({
         )}
       </div>
     </div>
+    {confirmCloseDialog}
+    </>
   )
 }

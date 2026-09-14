@@ -45,10 +45,17 @@ export interface LearningsSummary {
   stats: LearningsStatsSummary;
 }
 
+/**
+ * A step in a pursuit's tree (step → sub-step → sub-sub-step, max 3 levels).
+ * For a step with children, `isCompleted` is derived: true only when every child is.
+ */
 export interface PursuitStep {
   id: string;
   text: string;
+  note?: string | null;
   isCompleted: boolean;
+  /** Absent on pursuits stored before nesting existed. */
+  children?: PursuitStep[];
 }
 
 export type LearningPursuitStatus = 'ACTIVE' | 'COMPLETED';
@@ -65,10 +72,22 @@ export interface LearningPursuit {
 // ── Request DTOs ──
 export type LearningRequest = Omit<LearningLog, 'id'>;
 
+export interface PursuitStepInput {
+  text: string;
+  note?: string;
+  children?: PursuitStepInput[];
+}
+
 export interface CreatePursuitRequest {
   title: string;
   category: string;
-  steps: string[];
+  steps: PursuitStepInput[];
+}
+
+export interface AddPursuitStepRequest {
+  /** Omit to append a top-level step. */
+  parentId?: string;
+  text: string;
 }
 
 export interface UpdatePursuitRequest {

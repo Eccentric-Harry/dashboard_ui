@@ -6,7 +6,7 @@ import type { LearningLog } from '@/types/learnings'
 import type { DailyTask } from '@/types/tasks'
 import { learningsService } from '@/services/learnings-service'
 import { tasksService } from '@/services/tasks-service'
-import { confirmCloseIfDirty } from '@/lib/modal-utils'
+import { useConfirmClose } from '@/hooks/use-confirm-close'
 import './add-learning-modal.css'
 import { getErrorMessage } from '@/lib/errors'
 
@@ -133,6 +133,15 @@ export function AddEntryModal({
     }
   }, [isOpen, isEdit, initialTab, initialLearningData, initialTaskData, defaultDate])
 
+  const isDirty = Boolean(
+    learningTitle.trim() ||
+    learningDescription.trim() ||
+    customCategory.trim() ||
+    taskTitle.trim() ||
+    taskNotes.trim()
+  )
+  const { requestClose, dialog: confirmCloseDialog } = useConfirmClose(isDirty, onClose)
+
   if (!isOpen) return null
 
   const handleCategoryChange = (val: string) => {
@@ -223,20 +232,6 @@ export function AddEntryModal({
     }
   }
 
-  if (!isOpen) return null
-
-  const isDirty = Boolean(
-    learningTitle.trim() ||
-    learningDescription.trim() ||
-    customCategory.trim() ||
-    taskTitle.trim() ||
-    taskNotes.trim()
-  )
-
-  const handleGuardedClose = () => {
-    confirmCloseIfDirty(isDirty, onClose)
-  }
-
   const renderTitle = () => {
     if (isEdit) {
       return activeTab === 'Task' ? 'Edit Task' : 'Edit Learning Log'
@@ -245,14 +240,15 @@ export function AddEntryModal({
   }
 
   return createPortal(
-    <div className={`learning-modal-backdrop ${activeTab === 'Task' ? 'is-tasks-theme' : ''}`} role="presentation" onClick={handleGuardedClose}>
-      <div 
+    <>
+    <div className={`learning-modal-backdrop ${activeTab === 'Task' ? 'is-tasks-theme' : ''}`} role="presentation" onClick={requestClose}>
+      <div
         className="learning-modal-popover" 
         role="dialog" 
         aria-modal="true" 
         onClick={(e) => e.stopPropagation()}
       >
-        <button type="button" className="learning-modal-close" onClick={handleGuardedClose}>
+        <button type="button" className="learning-modal-close" onClick={requestClose}>
           <X size={16} />
         </button>
         
@@ -420,7 +416,9 @@ export function AddEntryModal({
           </form>
         )}
       </div>
-    </div>,
+    </div>
+    {confirmCloseDialog}
+    </>,
     document.body
   )
 }

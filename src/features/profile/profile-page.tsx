@@ -11,7 +11,7 @@ import type { AppPath } from '@/app/routes';
 import toast from 'react-hot-toast';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { getAvatarImage, avatarPresets } from '@/lib/avatar';
-import { confirmCloseIfDirty } from '@/lib/modal-utils';
+import { useConfirmClose } from '@/hooks/use-confirm-close';
 import './profile-page.css';
 import { getErrorMessage } from '@/lib/errors';
 
@@ -326,9 +326,7 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
     )
   );
 
-  const handleGuardedCancel = () => {
-    confirmCloseIfDirty(isProfileDirty, handleCancel);
-  };
+  const { requestClose: handleGuardedCancel, dialog: confirmCloseDialog } = useConfirmClose(isProfileDirty, handleCancel);
 
   const handleToggleCondition = (cond: string) => {
     if (medicalConditions.includes(cond)) {
@@ -1203,6 +1201,7 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
         onConfirm={confirmLogout}
         onCancel={() => setShowLogoutDialog(false)}
       />
+      {confirmCloseDialog}
     </>
   );
 }

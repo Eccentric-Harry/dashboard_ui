@@ -638,6 +638,59 @@
   box-shadow: 0 0 0 3px var(--dk-surface), 0 0 0 5px rgba(207, 233, 101, 0.4), 0 8px 20px rgba(0, 0, 0, 0.4);
 }
 
+/* ══ Shared: confirm dialog ══════════════════════════════════════════════
+   ConfirmDialog (components/ui/confirm-dialog.tsx) portals to document.body,
+   which still sits under the themed <html>, so these rules apply on any
+   dark-enabled route regardless of where in the tree it was opened from. */
+
+:root[data-theme='dark'] .confirm-modal-backdrop {
+  background-color: rgba(6, 7, 9, 0.6);
+}
+
+:root[data-theme='dark'] .confirm-popover {
+  border-color: var(--dk-line-strong);
+  background: var(--dk-overlay);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 24px 64px rgba(0, 0, 0, 0.55);
+}
+
+:root[data-theme='dark'] .confirm-popover h2 { color: var(--dk-ink); }
+:root[data-theme='dark'] .confirm-message { color: var(--dk-ink-2); }
+
+:root[data-theme='dark'] .confirm-modal-close {
+  background: var(--dk-wash-strong);
+  color: var(--dk-ink-3);
+}
+
+:root[data-theme='dark'] .confirm-modal-close:hover {
+  background: var(--dk-wash-strong);
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .confirm-btn.cancel {
+  border-color: var(--dk-line-strong);
+  background: transparent;
+  color: var(--dk-ink-2);
+}
+
+:root[data-theme='dark'] .confirm-btn.cancel:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: var(--dk-wash-strong);
+  color: var(--dk-ink);
+}
+
+/* The destructive action (Delete, Discard) keeps its red — desaturated a
+   touch so it doesn't glow against graphite the way the light-mode red would. */
+:root[data-theme='dark'] .confirm-btn.confirm {
+  background: #c1414c;
+  border-color: #a83540;
+  box-shadow: none;
+}
+
+:root[data-theme='dark'] .confirm-btn.confirm:hover {
+  background: #a83540;
+  box-shadow: 0 4px 14px rgba(193, 65, 76, 0.28);
+}
+
 /* ══ Home ════════════════════════════════════════════════════════════════
    Home's accent is lavender (--ntr-lime is #bcc3f2 on .home-dashboard, which
    the derived pass keeps). The dark pass follows the usual dark-dashboard
@@ -1850,3 +1903,244 @@
   background: var(--dk-overlay);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 24px 56px rgba(0, 0, 0, 0.55);
 }
+
+/* ══ Learnings: create-pursuit modal ═════════════════════════════════════
+   The derived pass flattens every layer of this modal to the same grey, so the
+   hierarchy is rebuilt by hand: a lifted graphite panel with the route's lime
+   glow, recessed wells for inputs, lime for the one primary action and every
+   selected state. */
+
+:root[data-theme='dark'] .pursuit-modal-backdrop {
+  background-color: rgba(6, 7, 9, 0.62);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+:root[data-theme='dark'] .pursuit-modal {
+  border-color: var(--dk-line-strong);
+  background: var(--dk-glow-lime), var(--dk-panel);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 32px 80px rgba(0, 0, 0, 0.6);
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .pursuit-eyebrow { color: var(--dk-accent); }
+:root[data-theme='dark'] .pursuit-modal-title { color: var(--dk-ink); }
+
+:root[data-theme='dark'] .pursuit-close {
+  background: var(--dk-wash-strong);
+  color: var(--dk-ink-3);
+}
+
+:root[data-theme='dark'] .pursuit-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--dk-ink);
+}
+
+/* Mode toggle: a recessed track with a raised, lime-marked active tab. */
+:root[data-theme='dark'] .pursuit-mode-toggle {
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35), inset 0 0 0 1px var(--dk-line);
+}
+
+:root[data-theme='dark'] .pursuit-mode-toggle button { color: var(--dk-ink-3); }
+:root[data-theme='dark'] .pursuit-mode-toggle button:hover:not(.is-active) { color: var(--dk-ink-2); }
+
+:root[data-theme='dark'] .pursuit-mode-toggle button.is-active {
+  background: linear-gradient(180deg, #2d3136, #25282d);
+  color: var(--dk-ink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 0 1px var(--dk-line-strong), 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+:root[data-theme='dark'] .pursuit-mode-toggle button.is-active svg { color: var(--dk-accent); }
+
+/* Numbered steps read as sections, not as more of the same grey. */
+:root[data-theme='dark'] .pursuit-ai-step {
+  border-color: var(--dk-line);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015));
+  box-shadow: var(--dk-highlight);
+}
+
+:root[data-theme='dark'] .pursuit-ai-step-head h3 { color: var(--dk-ink); }
+:root[data-theme='dark'] .pursuit-ai-step-head p { color: var(--dk-ink-3); }
+
+:root[data-theme='dark'] .pursuit-ai-step-num {
+  background: var(--dk-accent);
+  color: var(--dk-on-accent);
+  box-shadow: 0 0 0 4px rgba(207, 233, 101, 0.12);
+}
+
+:root[data-theme='dark'] .pursuit-label { color: var(--dk-ink-3); }
+:root[data-theme='dark'] .pursuit-optional,
+:root[data-theme='dark'] .pursuit-steps-meta,
+:root[data-theme='dark'] .pursuit-footer-hint { color: rgba(236, 238, 240, 0.4); }
+
+/* Inputs sit in recessed wells and pick up a lime focus ring. */
+:root[data-theme='dark'] .pursuit-input,
+:root[data-theme='dark'] .pursuit-reply-input,
+:root[data-theme='dark'] .pursuit-prompt-preview {
+  border-color: var(--dk-line-strong);
+  background: rgba(0, 0, 0, 0.26);
+  color: var(--dk-ink);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-theme='dark'] .pursuit-input::placeholder,
+:root[data-theme='dark'] .pursuit-reply-input::placeholder {
+  color: rgba(236, 238, 240, 0.3);
+}
+
+:root[data-theme='dark'] .pursuit-input:focus,
+:root[data-theme='dark'] .pursuit-reply-input:focus {
+  border-color: rgba(207, 233, 101, 0.5);
+  background: rgba(0, 0, 0, 0.34);
+  box-shadow: 0 0 0 3px rgba(207, 233, 101, 0.12);
+}
+
+:root[data-theme='dark'] .pursuit-prompt-preview {
+  color: var(--dk-ink-2);
+}
+
+:root[data-theme='dark'] .pursuit-chip {
+  border-color: var(--dk-line-strong);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--dk-ink-2);
+}
+
+:root[data-theme='dark'] .pursuit-chip:hover {
+  border-color: rgba(255, 255, 255, 0.24);
+  background: var(--dk-wash-strong);
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .pursuit-chip.is-selected {
+  border-color: rgba(207, 233, 101, 0.45);
+  background: rgba(207, 233, 101, 0.14);
+  color: #e2f3a0;
+  box-shadow: 0 0 14px rgba(207, 233, 101, 0.1);
+}
+
+/* The one primary action per state is lime; disabled drops back to a quiet wash. */
+:root[data-theme='dark'] .pursuit-btn-primary {
+  background: var(--dk-accent);
+  color: var(--dk-on-accent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 20px rgba(207, 233, 101, 0.22);
+}
+
+:root[data-theme='dark'] .pursuit-btn-primary:hover:not(:disabled) {
+  background: #dcf27c;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 8px 26px rgba(207, 233, 101, 0.3);
+}
+
+:root[data-theme='dark'] .pursuit-btn-primary:disabled {
+  opacity: 1;
+  background: var(--dk-wash-strong);
+  color: rgba(236, 238, 240, 0.35);
+  box-shadow: inset 0 0 0 1px var(--dk-line);
+}
+
+:root[data-theme='dark'] .pursuit-btn-ghost {
+  border-color: var(--dk-line-strong);
+  color: var(--dk-ink-2);
+}
+
+:root[data-theme='dark'] .pursuit-btn-ghost:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: var(--dk-wash-strong);
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .pursuit-parse-status.is-error,
+:root[data-theme='dark'] .pursuit-footer-error { color: var(--dk-danger); }
+:root[data-theme='dark'] .pursuit-parse-status.is-ok { color: var(--dk-accent); }
+:root[data-theme='dark'] .pursuit-parse-status strong { color: var(--dk-ink); }
+:root[data-theme='dark'] .pursuit-parse-status span { color: var(--dk-ink-3); }
+
+:root[data-theme='dark'] .pursuit-parse-ok,
+:root[data-theme='dark'] .pursuit-import-banner {
+  background: rgba(207, 233, 101, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(207, 233, 101, 0.2);
+  color: #e2f3a0;
+}
+
+:root[data-theme='dark'] .pursuit-import-banner button {
+  background: rgba(207, 233, 101, 0.14);
+  color: #e2f3a0;
+}
+
+:root[data-theme='dark'] .pursuit-import-warnings {
+  background: rgba(240, 196, 102, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(240, 196, 102, 0.18);
+  color: #efd08f;
+}
+
+/* Outline editor */
+:root[data-theme='dark'] .pursuit-outline {
+  border-color: var(--dk-line-strong);
+  background: rgba(0, 0, 0, 0.22);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-theme='dark'] .pursuit-outline-row:not(.is-depth-0)::before { background: var(--dk-line-strong); }
+:root[data-theme='dark'] .pursuit-outline-marker { color: var(--dk-accent); }
+:root[data-theme='dark'] .pursuit-outline-row:not(.is-depth-0) .pursuit-outline-marker::before { border-color: rgba(207, 233, 101, 0.55); }
+:root[data-theme='dark'] .pursuit-outline-row.is-depth-2 .pursuit-outline-marker::before { background: rgba(236, 238, 240, 0.35); }
+
+:root[data-theme='dark'] .pursuit-outline-input { color: var(--dk-ink); }
+:root[data-theme='dark'] .pursuit-outline-row.is-depth-2 .pursuit-outline-input { color: var(--dk-ink-2); }
+:root[data-theme='dark'] .pursuit-outline-note { color: var(--dk-ink-3); }
+
+:root[data-theme='dark'] .pursuit-outline-input:hover,
+:root[data-theme='dark'] .pursuit-outline-note:hover { background: var(--dk-wash); }
+
+:root[data-theme='dark'] .pursuit-outline-input:focus,
+:root[data-theme='dark'] .pursuit-outline-note:focus {
+  border-color: rgba(207, 233, 101, 0.4);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+:root[data-theme='dark'] .pursuit-icon-btn { color: var(--dk-ink-3); }
+:root[data-theme='dark'] .pursuit-icon-btn:hover:not(:disabled) { background: var(--dk-wash-strong); color: var(--dk-ink); }
+:root[data-theme='dark'] .pursuit-icon-btn.is-active { color: var(--dk-accent); }
+:root[data-theme='dark'] .pursuit-icon-btn.is-danger:hover:not(:disabled) { background: rgba(242, 139, 149, 0.14); color: var(--dk-danger); }
+
+:root[data-theme='dark'] .pursuit-outline-footer { border-top-color: var(--dk-line); }
+:root[data-theme='dark'] .pursuit-outline-add { color: var(--dk-accent); }
+:root[data-theme='dark'] .pursuit-outline-add:hover:not(:disabled) { background: rgba(207, 233, 101, 0.1); }
+:root[data-theme='dark'] .pursuit-outline-hint { color: rgba(236, 238, 240, 0.38); }
+
+:root[data-theme='dark'] .pursuit-outline-hint kbd {
+  border-color: var(--dk-line-strong);
+  background: var(--dk-wash-strong);
+  color: var(--dk-ink-2);
+}
+
+:root[data-theme='dark'] .pursuit-modal-footer {
+  border-top-color: var(--dk-line);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* Step tree inside the queue card: lime marks progress, matching the modal. */
+:root[data-theme='dark'] .pursuit-step-check { border-color: rgba(236, 238, 240, 0.24); background: transparent; }
+:root[data-theme='dark'] .pursuit-step-check:hover { border-color: var(--dk-accent); }
+
+:root[data-theme='dark'] .pursuit-step-check.is-checked {
+  border-color: var(--dk-accent);
+  background: var(--dk-accent);
+  color: var(--dk-on-accent);
+  box-shadow: 0 0 10px rgba(207, 233, 101, 0.25);
+}
+
+:root[data-theme='dark'] .pursuit-step-check.is-partial::before {
+  background: conic-gradient(var(--dk-accent) calc(var(--pct, 0) * 1%), transparent 0);
+}
+
+:root[data-theme='dark'] .pursuit-step-count.is-done { background: rgba(207, 233, 101, 0.14); color: #e2f3a0; }
+:root[data-theme='dark'] .pursuit-step-edit input,
+:root[data-theme='dark'] .pursuit-step-add-form input {
+  border-color: rgba(207, 233, 101, 0.4);
+  background: rgba(0, 0, 0, 0.26);
+  color: var(--dk-ink);
+}
+:root[data-theme='dark'] .pursuit-step-add-root:hover { background: rgba(207, 233, 101, 0.1); color: var(--dk-accent); }
+:root[data-theme='dark'] .pursuit-step-add-form button[type='submit'],
+:root[data-theme='dark'] .pursuit-step-edit button[type='button']:first-of-type { color: var(--dk-accent); }

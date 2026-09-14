@@ -8,6 +8,7 @@ import type {
   LearningPursuit,
   CreatePursuitRequest,
   UpdatePursuitRequest,
+  AddPursuitStepRequest,
 } from '../types/learnings';
 import * as E from './endpoints/learnings-endpoints';
 
@@ -23,6 +24,7 @@ export interface LearningsServiceInterface {
   createPursuit(dto: CreatePursuitRequest): Promise<SafeResult<LearningPursuit>>;
   updatePursuit(id: string, dto: UpdatePursuitRequest): Promise<SafeResult<LearningPursuit>>;
   deletePursuit(id: string): Promise<SafeResult<void>>;
+  addPursuitStep(id: string, dto: AddPursuitStepRequest): Promise<SafeResult<LearningPursuit>>;
   togglePursuitStep(id: string, stepId: string): Promise<SafeResult<LearningPursuit>>;
   updatePursuitStep(id: string, stepId: string, text: string): Promise<SafeResult<LearningPursuit>>;
   deletePursuitStep(id: string, stepId: string): Promise<SafeResult<LearningPursuit>>;
@@ -42,6 +44,8 @@ export const learningsService: LearningsServiceInterface = {
   updatePursuit: (id, dto) =>
     instance.safeCall<LearningPursuit>(E.API_UPDATE_PURSUIT, { params: { id }, body: dto }),
   deletePursuit: (id) => instance.safeCall<void>(E.API_DELETE_PURSUIT, { params: { id } }),
+  addPursuitStep: (id, dto) =>
+    instance.safeCall<LearningPursuit>(E.API_ADD_PURSUIT_STEP, { params: { id }, body: dto }),
   togglePursuitStep: (id, stepId) =>
     instance.safeCall<LearningPursuit>(E.API_TOGGLE_PURSUIT_STEP, { params: { id, stepId } }),
   updatePursuitStep: (id, stepId, text) =>

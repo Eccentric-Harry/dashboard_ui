@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { X, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { financeService } from '@/services/finance-service'
-import { confirmCloseIfDirty } from '@/lib/modal-utils'
+import { useConfirmClose } from '@/hooks/use-confirm-close'
 import { getErrorMessage } from '@/lib/errors'
 
 interface AddSubscriptionModalProps {
@@ -28,6 +28,9 @@ export function AddSubscriptionModal({ isOpen, onClose, onSuccess }: AddSubscrip
       setError('')
     }
   }, [isOpen])
+
+  const isDirty = Boolean(name.trim() || cost.trim())
+  const { requestClose, dialog: confirmCloseDialog } = useConfirmClose(isDirty, onClose)
 
   if (!isOpen) return null
 
@@ -63,13 +66,9 @@ export function AddSubscriptionModal({ isOpen, onClose, onSuccess }: AddSubscrip
     }
   }
 
-  const isDirty = Boolean(name.trim() || cost.trim())
-  const handleGuardedClose = () => {
-    confirmCloseIfDirty(isDirty, onClose)
-  }
-
   return createPortal(
-    <div className="finance-modal-backdrop" role="presentation" onClick={handleGuardedClose}>
+    <>
+    <div className="finance-modal-backdrop" role="presentation" onClick={requestClose}>
       <div
         className="finance-modal-popover add-tx-modal"
         role="dialog"
@@ -77,7 +76,7 @@ export function AddSubscriptionModal({ isOpen, onClose, onSuccess }: AddSubscrip
         onClick={(e) => e.stopPropagation()}
         style={{ width: 'min(420px, calc(100vw - 42px))' }}
       >
-        <button type="button" className="finance-modal-close" onClick={handleGuardedClose}>
+        <button type="button" className="finance-modal-close" onClick={requestClose}>
           <X size={15} />
         </button>
 
@@ -130,7 +129,9 @@ export function AddSubscriptionModal({ isOpen, onClose, onSuccess }: AddSubscrip
           </button>
         </form>
       </div>
-    </div>,
+    </div>
+    {confirmCloseDialog}
+    </>,
     document.body
   )
 }

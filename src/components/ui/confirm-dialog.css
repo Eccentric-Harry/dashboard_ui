@@ -1,7 +1,12 @@
 .confirm-modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 1050;
+  /* Highest z-index in the app on purpose: this dialog is now also used to
+     guard closing an already-open modal (useConfirmClose), so it must always
+     render above every modal backdrop that hosts it — the tallest of which
+     is .finance-modal-backdrop at 9995 (see finance-overview.css). Stays
+     below toasts (100000), which should still surface over a confirmation. */
+  z-index: 20000;
   display: grid;
   place-items: center;
   padding: 24px;

@@ -53,7 +53,7 @@ import type { CalendarItem, CalendarItemPayload, CalendarItemType, CalendarRecur
 import { calendarService } from '@/services/calendar-service'
 import { useCalendarStore } from '@/store/calendar-store'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
-import { confirmCloseIfDirty } from '@/lib/modal-utils'
+import { useConfirmClose } from '@/hooks/use-confirm-close'
 import { MiniMonth } from '@/components/ui/mini-month'
 import { getRoutineIconDetails } from './routine-icon-helper'
 import { getAvatarImage } from '@/lib/avatar'
@@ -2164,11 +2164,10 @@ function CalendarItemModal({
     ? title.trim() !== (item.title ?? '') || notes.trim() !== (item.notes ?? '') || category !== (item.category ?? 'Personal')
     : title.trim() !== '' || notes.trim() !== '' || customCategoryInput.trim() !== ''
 
-  const handleGuardedClose = () => {
-    confirmCloseIfDirty(isDirty, onClose)
-  }
+  const { requestClose: handleGuardedClose, dialog: confirmCloseDialog } = useConfirmClose(isDirty, onClose)
 
   return (
+    <>
     <div className="tasks-add-modal-overlay theme-glassmorphic" onClick={handleGuardedClose}>
       <div className="tasks-add-entry-modal" onClick={(event) => event.stopPropagation()}>
         <div className="modal-header">
@@ -2427,6 +2426,8 @@ function CalendarItemModal({
         </form>
       </div>
     </div>
+    {confirmCloseDialog}
+    </>
   )
 }
 

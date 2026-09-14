@@ -3,7 +3,7 @@ import { X, Loader2, ClipboardCheck, FileJson } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
 import { workoutsService } from '@/services/workouts-service'
-import { confirmCloseIfDirty } from '@/lib/modal-utils'
+import { useConfirmClose } from '@/hooks/use-confirm-close'
 
 type InitialData = {
   activityName?: string
@@ -69,6 +69,16 @@ function AddActivityModal({ isOpen, onClose, onSuccess, isEdit, initialData }: A
       setTimeout(() => resetForm(), 0)
     }
   }, [isOpen, isEdit, initialData])
+
+  const isDirty = Boolean(
+    formData.activityName.trim() ||
+    formData.distanceKm ||
+    formData.movingTime ||
+    formData.elevationGainMeters ||
+    formData.stravaEmbedId ||
+    stravaJson.trim()
+  )
+  const { requestClose, dialog: confirmCloseDialog } = useConfirmClose(isDirty, onClose)
 
   if (!isOpen) return null
 
@@ -147,27 +157,15 @@ function AddActivityModal({ isOpen, onClose, onSuccess, isEdit, initialData }: A
     }
   }
 
-  const isDirty = Boolean(
-    formData.activityName.trim() ||
-    formData.distanceKm ||
-    formData.movingTime ||
-    formData.elevationGainMeters ||
-    formData.stravaEmbedId ||
-    stravaJson.trim()
-  )
-
-  const handleGuardedClose = () => {
-    confirmCloseIfDirty(isDirty, onClose)
-  }
-
   return createPortal(
-    <div className="workouts-modal-backdrop" onClick={handleGuardedClose}>
-      <div 
-        className="workouts-modal-popover" 
+    <>
+    <div className="workouts-modal-backdrop" onClick={requestClose}>
+      <div
+        className="workouts-modal-popover"
         onClick={e => e.stopPropagation()}
         style={{ width: 'min(540px, calc(100vw - 42px))', maxWidth: 'none' }}
       >
-        <button className="workouts-modal-close" onClick={handleGuardedClose} type="button">
+        <button className="workouts-modal-close" onClick={requestClose} type="button">
           <X size={16} />
         </button>
 
@@ -300,7 +298,9 @@ function AddActivityModal({ isOpen, onClose, onSuccess, isEdit, initialData }: A
           </div>
         )}
       </div>
-    </div>,
+    </div>
+    {confirmCloseDialog}
+    </>,
     document.body
   )
 }

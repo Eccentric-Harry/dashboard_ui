@@ -1,10 +1,21 @@
 import React, { useState, useEffect } from 'react'
-import { GraduationCap, Plus, Check, ChevronLeft, ChevronRight, X, Loader2, Pencil, Trash2 } from 'lucide-react'
+import { GraduationCap, Plus, ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react'
 import type { LearningPursuit, PursuitStep } from '@/types/learnings'
 import { learningsService } from '@/services/learnings-service'
 import { useLearningsStore } from '@/store/learnings-store'
 import { isAwaitingData } from '@/store/zustand-utils'
 import { toast } from 'react-hot-toast'
+import { CreatePursuitModal } from './create-pursuit-modal'
+import { PURSUIT_CATEGORIES } from '../pursuit-import'
+import { PursuitStepTree } from './pursuit-step-tree'
+import {
+  countLeaves,
+  countSteps,
+  childrenOf,
+  deleteStepInPursuit,
+  renameStepInPursuit,
+  toggleStepInPursuit,
+} from '../pursuit-tree'
 
 const NotionIcon = () => (
   <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" stroke="currentColor" strokeWidth="0.8" aria-hidden="true" className="shrink-0 transition-transform duration-200 group-hover:scale-110">
@@ -22,25 +33,15 @@ export function ActiveStudyQueue({ onRefresh }: ActiveStudyQueueProps = {}) {
   const { loadPursuits, applyPursuits } = useLearningsStore.use.actions()
   const tracks = pursuitsState.data
   const isLoading = isAwaitingData(pursuitsState) && tracks.length === 0
-  
-  // Add Form State
-  const [isAdding, setIsAdding] = useState(false)
-  const [newTitle, setNewTitle] = useState('')
-  const [newCategory, setNewCategory] = useState('Development')
-  const [customCategory, setCustomCategory] = useState('')
-  const [newSteps, setNewSteps] = useState<string[]>([''])
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  
+
+  const [isCreating, setIsCreating] = useState(false)
+
   // Edit Pursuit State
   const [editingPursuitId, setEditingPursuitId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const [editCategory, setEditCategory] = useState('')
   const [editCustomCategory, setEditCustomCategory] = useState('')
   const [isEditCustom, setIsEditCustom] = useState(false)
-
-  // Edit Step State
-  const [editingStepId, setEditingStepId] = useState<string | null>(null)
-  const [editStepText, setEditStepText] = useState('')
 
   // Pagination State
   const [page, setPage] = useState(1)
@@ -62,42 +63,71 @@ export function ActiveStudyQueue({ onRefresh }: ActiveStudyQueueProps = {}) {
     }
   }, [tracks.length, totalPages, page])
 
+  const updateTrack = (pursuitId: string, fn: (track: LearningPursuit) => LearningPursuit) =>
+    applyPursuits((prev) => prev.map((track) => (track.id === pursuitId ? fn(track) : track)))
+
+  /** A pursuit whose last step was ticked (or deleted) has moved to All Learnings server-side. */
+  const handleMaybeCompleted = (res: { data?: LearningPursuit | null }) => {
+    if (res.data?.status === 'COMPLETED') {
+      toast.success(`"${res.data.title}" completed! Moved to All Learnings.`)
+      loadPursuits()
+      if (onRefresh) onRefresh()
+    }
+  }
+
   const handleToggleStep = async (pursuitId: string, stepId: string) => {
-    // 1. Optimistic UI update
-    applyPursuits((prev) =>
-      prev.map((track) => {
-        if (track.id === pursuitId) {
-          const updatedSteps = track.steps.map((step) => {
-            if (step.id === stepId) {
-              return { ...step, isCompleted: !step.isCompleted }
-            }
-            return step
-          })
-
-          const allCompleted = updatedSteps.length > 0 && updatedSteps.every((s) => s.isCompleted)
-          const status: 'ACTIVE' | 'COMPLETED' = allCompleted ? 'COMPLETED' : 'ACTIVE'
-
-          return { ...track, steps: updatedSteps, status }
-        }
-        return track
-      })
-    )
-
-    // 2. Perform PATCH in background
+    updateTrack(pursuitId, (track) => toggleStepInPursuit(track, stepId))
     try {
       const res = await learningsService.togglePursuitStep(pursuitId, stepId)
       if (res.error) throw new Error(res.error.message)
-      // If completed, it has been migrated and removed from queue
-      if (res.data?.status === 'COMPLETED') {
-        toast.success(`"${res.data.title}" completed! Moved to All Learnings.`)
-        loadPursuits()
-        if (onRefresh) onRefresh()
-      }
+      handleMaybeCompleted(res)
     } catch (err) {
       console.error('Failed to toggle step completion:', err)
-      toast.error('Failed to sync subtask status')
+      toast.error('Failed to sync step status')
       loadPursuits()
     }
+  }
+
+  const handleRenameStep = async (pursuitId: string, stepId: string, text: string) => {
+    updateTrack(pursuitId, (track) => renameStepInPursuit(track, stepId, text))
+    try {
+      const res = await learningsService.updatePursuitStep(pursuitId, stepId, text)
+      if (res.error) throw new Error(res.error.message)
+    } catch (err) {
+      console.error('Failed to update step:', err)
+      toast.error('Failed to update step')
+      loadPursuits()
+    }
+  }
+
+  const handleDeleteStep = async (pursuitId: string, step: PursuitStep) => {
+    const nested = countSteps(childrenOf(step))
+    const message = nested > 0
+      ? `Delete "${step.text}" and its ${nested} sub-step${nested === 1 ? '' : 's'}?`
+      : `Delete "${step.text}"?`
+    if (!window.confirm(message)) return
+
+    updateTrack(pursuitId, (track) => deleteStepInPursuit(track, step.id))
+    try {
+      const res = await learningsService.deletePursuitStep(pursuitId, step.id)
+      if (res.error) throw new Error(res.error.message)
+      handleMaybeCompleted(res)
+    } catch (err) {
+      console.error('Failed to delete step:', err)
+      toast.error('Failed to delete step')
+      loadPursuits()
+    }
+  }
+
+  const handleAddStep = async (pursuitId: string, text: string, parentId?: string) => {
+    const res = await learningsService.addPursuitStep(pursuitId, { text, parentId })
+    if (res.error || !res.data) {
+      toast.error(res.error?.message ?? 'Failed to add step')
+      return false
+    }
+    const saved = res.data
+    updateTrack(pursuitId, () => saved)
+    return true
   }
 
   // Edit Pursuit Handlers
@@ -105,9 +135,8 @@ export function ActiveStudyQueue({ onRefresh }: ActiveStudyQueueProps = {}) {
     e.stopPropagation()
     setEditingPursuitId(track.id)
     setEditTitle(track.title)
-    
-    const predefined = ['Computer Science', 'Development', 'Architecture', 'Frontend', 'Backend']
-    if (predefined.includes(track.category)) {
+
+    if (PURSUIT_CATEGORIES.includes(track.category)) {
       setEditCategory(track.category)
       setIsEditCustom(false)
       setEditCustomCategory('')
@@ -165,122 +194,11 @@ export function ActiveStudyQueue({ onRefresh }: ActiveStudyQueueProps = {}) {
     }
   }
 
-  // Edit Step Handlers
-  const handleStartEditStep = (e: React.MouseEvent, step: PursuitStep) => {
-    e.stopPropagation()
-    setEditingStepId(step.id)
-    setEditStepText(step.text)
-  }
-
-  const handleSaveStep = async (pursuitId: string, stepId: string) => {
-    if (!editStepText.trim()) return
-
-    // Optimistically update text
-    applyPursuits((prev) =>
-      prev.map((t) => {
-        if (t.id === pursuitId) {
-          const updatedSteps = t.steps.map((s) => (s.id === stepId ? { ...s, text: editStepText.trim() } : s))
-          return { ...t, steps: updatedSteps }
-        }
-        return t
-      })
-    )
-    setEditingStepId(null)
-
-    try {
-      const res = await learningsService.updatePursuitStep(pursuitId, stepId, editStepText.trim())
-      if (res.error) throw new Error(res.error.message)
-      toast.success('Subtask updated')
-    } catch (err) {
-      console.error('Failed to update step:', err)
-      toast.error('Failed to update subtask')
-      loadPursuits()
-    }
-  }
-
-  const handleDeleteStep = async (pursuitId: string, stepId: string) => {
-    if (window.confirm('Delete this subtask?')) {
-      // Optimistically remove step
-      applyPursuits((prev) =>
-        prev.map((t) => {
-          if (t.id === pursuitId) {
-            const updatedSteps = t.steps.filter((s) => s.id !== stepId)
-            const allCompleted = updatedSteps.length > 0 && updatedSteps.every((s) => s.isCompleted)
-            const status: 'ACTIVE' | 'COMPLETED' = allCompleted ? 'COMPLETED' : 'ACTIVE'
-            return { ...t, steps: updatedSteps, status }
-          }
-          return t
-        })
-      )
-
-      try {
-        const res = await learningsService.deletePursuitStep(pursuitId, stepId)
-        if (res.error) throw new Error(res.error.message)
-        if (res.data?.status === 'COMPLETED') {
-          toast.success(`"${res.data.title}" completed! Moved to All Learnings.`)
-          loadPursuits()
-          if (onRefresh) onRefresh()
-        }
-      } catch (err) {
-        console.error('Failed to delete step:', err)
-        toast.error('Failed to delete subtask')
-        loadPursuits()
-      }
-    }
-  }
-
-  const handleAddStepField = () => {
-    setNewSteps([...newSteps, ''])
-  }
-
-  const handleRemoveStepField = (index: number) => {
-    setNewSteps(newSteps.filter((_, i) => i !== index))
-  }
-
-  const handleStepChange = (index: number, val: string) => {
-    const updated = [...newSteps]
-    updated[index] = val
-    setNewSteps(updated)
-  }
-
-  const handleAddNewTrack = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newTitle.trim()) return
-
-    const finalCategory = newCategory === 'Custom' ? customCategory.trim() : newCategory
-    if (!finalCategory) {
-      toast.error('Please specify a category')
-      return
-    }
-
-    const sanitizedSteps = newSteps.filter((s) => s.trim() !== '')
-
-    try {
-      setIsSubmitting(true)
-      const res = await learningsService.createPursuit({
-        title: newTitle.trim(),
-        category: finalCategory,
-        steps: sanitizedSteps,
-      })
-      if (res.error || !res.data) throw new Error(res.error?.message ?? 'Failed to create pursuit')
-
-      const created = res.data
-      applyPursuits((prev) => [...prev, created])
-      toast.success('Added pursuit & created Notion page!')
-      
-      // Reset Form
-      setNewTitle('')
-      setNewCategory('Development')
-      setCustomCategory('')
-      setNewSteps([''])
-      setIsAdding(false)
-      if (onRefresh) onRefresh()
-    } catch (err) {
-      console.error('Failed to create pursuit:', err)
-      toast.error('Failed to create new pursuit')
-    } finally {
-      setIsSubmitting(false)
-    }
+  const handlePursuitCreated = (created: LearningPursuit) => {
+    applyPursuits((prev) => [...prev, created])
+    setPage(Math.ceil((tracks.length + 1) / TRACKS_PAGE_SIZE))
+    toast.success('Added pursuit & created Notion page!')
+    if (onRefresh) onRefresh()
   }
 
   return (
@@ -294,121 +212,16 @@ export function ActiveStudyQueue({ onRefresh }: ActiveStudyQueueProps = {}) {
           </h3>
         </div>
         <button
-          onClick={() => setIsAdding(!isAdding)}
+          onClick={() => setIsCreating(true)}
           className="w-7 h-7 rounded-full bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center text-neutral-600 transition-colors"
           title="Add new pursuit"
+          aria-label="Add new pursuit"
         >
           <Plus size={14} />
         </button>
       </div>
 
-      {isAdding && (
-        <form onSubmit={handleAddNewTrack} className="mb-5 p-4 rounded-2xl bg-gray-50/50 border border-gray-100 shadow-sm flex flex-col gap-3">
-          <div>
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Pursuit Title</label>
-            <input
-              type="text"
-              placeholder="e.g. Learning Zustand Store Management"
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              className="w-full text-xs p-2.5 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-[#1a7a4a] focus:border-[#1a7a4a] transition-all"
-              autoFocus
-              required
-            />
-          </div>
-
-          <div>
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">Category</label>
-            <div className="flex flex-wrap gap-1.5 mb-2">
-              {['Computer Science', 'Development', 'Architecture', 'Frontend', 'Backend', 'Custom'].map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setNewCategory(cat)}
-                  className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border transition-all ${
-                    newCategory === cat
-                      ? 'bg-[#1a7a4a] text-white border-[#1a7a4a]'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-            {newCategory === 'Custom' && (
-              <input
-                type="text"
-                placeholder="Enter custom category name..."
-                value={customCategory}
-                onChange={(e) => setCustomCategory(e.target.value)}
-                className="w-full text-xs p-2.5 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-[#1a7a4a] focus:border-[#1a7a4a]"
-                required
-              />
-            )}
-          </div>
-
-          <div>
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1 flex justify-between items-center">
-              <span>Steps / Subtasks</span>
-              <button
-                type="button"
-                onClick={handleAddStepField}
-                className="text-[10px] text-[#1a7a4a] hover:underline font-semibold"
-              >
-                + Add Step
-              </button>
-            </label>
-            <div className="flex flex-col gap-2 max-h-40 overflow-y-auto pr-1">
-              {newSteps.map((step, idx) => (
-                <div key={idx} className="flex gap-2 items-center">
-                  <span className="text-[10px] text-gray-400 font-mono w-4">{idx + 1}.</span>
-                  <input
-                    type="text"
-                    placeholder={`Step ${idx + 1} text`}
-                    value={step}
-                    onChange={(e) => handleStepChange(idx, e.target.value)}
-                    className="flex-1 text-xs p-2 rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-[#1a7a4a] focus:border-[#1a7a4a] transition-all"
-                    required
-                  />
-                  {newSteps.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveStepField(idx)}
-                      className="text-gray-400 hover:text-red-500 transition-colors p-1"
-                    >
-                      <X size={14} />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 mt-2 pt-2 border-t border-gray-100">
-            <button
-              type="button"
-              onClick={() => {
-                setIsAdding(false)
-                setNewTitle('')
-                setNewCategory('Development')
-                setCustomCategory('')
-                setNewSteps([''])
-              }}
-              className="text-[11px] px-3.5 py-1.5 rounded-full text-gray-500 hover:bg-gray-100 font-medium"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="text-[11px] px-3.5 py-1.5 rounded-full bg-black text-white hover:bg-neutral-800 font-medium flex items-center gap-1 transition-all disabled:opacity-50"
-            >
-              {isSubmitting && <Loader2 size={10} className="animate-spin" />}
-              Create Pursuit
-            </button>
-          </div>
-        </form>
-      )}
+      {isCreating && <CreatePursuitModal onClose={() => setIsCreating(false)} onCreated={handlePursuitCreated} />}
 
       {isLoading ? (
         <div className="flex flex-col gap-3 flex-1 overflow-y-auto">
@@ -442,15 +255,21 @@ export function ActiveStudyQueue({ onRefresh }: ActiveStudyQueueProps = {}) {
       ) : (
         <div className="flex flex-col gap-3 flex-1 overflow-y-auto">
           {paginatedTracks.length === 0 ? (
-            <div className="flex justify-center items-center py-8 border border-dashed border-gray-200 rounded-2xl bg-gray-50/50 flex-1 min-h-[200px]">
+            <div className="flex flex-col gap-3 justify-center items-center py-8 border border-dashed border-gray-200 rounded-2xl bg-gray-50/50 flex-1 min-h-[200px]">
               <span className="text-xs text-gray-400 font-medium">No active pursuits in queue.</span>
+              <button
+                type="button"
+                onClick={() => setIsCreating(true)}
+                className="text-[11px] px-3.5 py-1.5 rounded-full bg-black text-white hover:bg-neutral-800 font-semibold flex items-center gap-1"
+              >
+                <Plus size={12} />
+                Plan a pursuit
+              </button>
             </div>
           ) : (
             paginatedTracks.map((track) => {
-              const totalSteps = track.steps?.length || 0
-              const completedSteps = track.steps?.filter((s) => s.isCompleted).length || 0
+              const { done: completedSteps, total: totalSteps } = countLeaves(track.steps ?? [])
               const percentage = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0
-              const isExpanded = true
 
               return (
                 <div
@@ -495,9 +314,9 @@ export function ActiveStudyQueue({ onRefresh }: ActiveStudyQueueProps = {}) {
 
                   {/* Title or Edit Title input */}
                   {editingPursuitId === track.id ? (
-                    <form 
+                    <form
                       onSubmit={(e) => handleSaveEditPursuit(e, track.id)}
-                      onClick={(e) => e.stopPropagation()} 
+                      onClick={(e) => e.stopPropagation()}
                       className="flex flex-col gap-2 mt-1 mb-2 bg-gray-50/50 p-2.5 rounded-xl border border-gray-100"
                     >
                       <div>
@@ -527,7 +346,7 @@ export function ActiveStudyQueue({ onRefresh }: ActiveStudyQueueProps = {}) {
                             }}
                             className="text-[10px] p-1.5 rounded-lg border border-gray-200 bg-white font-medium text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#1a7a4a]"
                           >
-                            {['Computer Science', 'Development', 'Architecture', 'Frontend', 'Backend'].map(cat => (
+                            {PURSUIT_CATEGORIES.map(cat => (
                               <option key={cat} value={cat}>{cat}</option>
                             ))}
                             <option value="Custom">Custom...</option>
@@ -571,7 +390,7 @@ export function ActiveStudyQueue({ onRefresh }: ActiveStudyQueueProps = {}) {
                     </div>
                   )}
 
-                  {/* Progress Bar & Status */}
+                  {/* Progress Bar & Status — counts leaf steps, so nesting doesn't double-count */}
                   <div className="flex items-center justify-between gap-4 mt-2">
                     <div className="flex-1">
                       <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
@@ -597,99 +416,15 @@ export function ActiveStudyQueue({ onRefresh }: ActiveStudyQueueProps = {}) {
                     </div>
                   </div>
 
-                  {/* Collapsible Steps Checklist */}
-                  <div 
-                    className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                      isExpanded ? 'max-h-96 opacity-100 mt-4 border-t border-gray-50 pt-3' : 'max-h-0 opacity-0'
-                    }`}
-                  >
-                    <div className="pl-1 pr-1 flex flex-col gap-2.5">
-                      {totalSteps === 0 ? (
-                        <span className="text-[11px] text-gray-400 italic">No subtasks defined.</span>
-                      ) : (
-                        track.steps.map((step) => (
-                          <div 
-                            key={step.id} 
-                            className="flex items-center justify-between gap-2.5 group/step relative py-0.5"
-                          >
-                            <div className="flex items-start gap-2.5 flex-1 min-w-0">
-                              <div 
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleToggleStep(track.id, step.id)
-                                }}
-                                className={`w-5 h-5 rounded-full border flex items-center justify-center cursor-pointer transition-all duration-200 shrink-0 mt-0.5 ${
-                                  step.isCompleted 
-                                    ? 'bg-[#1a7a4a] border-[#1a7a4a] text-white shadow-[0_2px_8px_rgba(26,122,74,0.3)]' 
-                                    : 'border-gray-300 hover:border-[#1a7a4a] bg-white'
-                                }`}
-                              >
-                                {step.isCompleted && <Check size={10} strokeWidth={3} />}
-                              </div>
-                              
-                              {editingStepId === step.id ? (
-                                <div className="flex items-center gap-1.5 flex-1 min-w-0" onClick={e => e.stopPropagation()}>
-                                  <input
-                                    type="text"
-                                    value={editStepText}
-                                    onChange={(e) => setEditStepText(e.target.value)}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') handleSaveStep(track.id, step.id)
-                                      if (e.key === 'Escape') setEditingStepId(null)
-                                    }}
-                                    className="flex-1 text-xs px-2 py-0.5 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#1a7a4a] bg-white"
-                                    autoFocus
-                                  />
-                                  <button
-                                    onClick={() => handleSaveStep(track.id, step.id)}
-                                    className="text-[#1a7a4a] hover:text-emerald-700 p-0.5 shrink-0"
-                                    title="Save step text"
-                                  >
-                                    <Check size={12} strokeWidth={3} />
-                                  </button>
-                                  <button
-                                    onClick={() => setEditingStepId(null)}
-                                    className="text-gray-400 hover:text-gray-600 p-0.5 shrink-0"
-                                    title="Cancel"
-                                  >
-                                    <X size={12} strokeWidth={3} />
-                                  </button>
-                                </div>
-                              ) : (
-                                <span className={`text-xs transition-colors duration-200 select-none break-words flex-1 leading-relaxed ${
-                                  step.isCompleted ? 'text-gray-400 line-through' : 'text-gray-700 font-medium'
-                                }`}>
-                                  {step.text}
-                                </span>
-                              )}
-                            </div>
-
-                            {/* Hover Step Actions */}
-                            {editingStepId !== step.id && (
-                              <div 
-                                className="flex items-center gap-1 opacity-0 group-hover/step:opacity-100 transition-opacity shrink-0"
-                                onClick={e => e.stopPropagation()}
-                              >
-                                <button
-                                  onClick={(e) => handleStartEditStep(e, step)}
-                                  className="text-gray-400 hover:text-neutral-700 p-1 rounded hover:bg-neutral-100 transition-colors"
-                                  title="Edit subtask"
-                                >
-                                  <Pencil size={11} />
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteStep(track.id, step.id)}
-                                  className="text-gray-400 hover:text-red-600 p-1 rounded hover:bg-red-50 transition-colors"
-                                  title="Delete subtask"
-                                >
-                                  <Trash2 size={11} />
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        ))
-                      )}
-                    </div>
+                  {/* Nested steps checklist */}
+                  <div className="mt-3 border-t border-gray-50 pt-2">
+                    <PursuitStepTree
+                      pursuit={track}
+                      onToggle={(stepId) => handleToggleStep(track.id, stepId)}
+                      onRename={(stepId, text) => handleRenameStep(track.id, stepId, text)}
+                      onDelete={(step) => handleDeleteStep(track.id, step)}
+                      onAdd={(text, parentId) => handleAddStep(track.id, text, parentId)}
+                    />
                   </div>
                 </div>
               )

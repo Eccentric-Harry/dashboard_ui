@@ -7,7 +7,7 @@ import { tasksService } from '@/services/tasks-service'
 import { useTasksStore } from '@/store/tasks-store'
 import { isAwaitingData } from '@/store/zustand-utils'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
-import { confirmCloseIfDirty } from '@/lib/modal-utils'
+import { useConfirmClose } from '@/hooks/use-confirm-close'
 import { TasksListView } from './tasks-list-view'
 import { TasksKanbanView } from './tasks-kanban-view'
 import { TasksCalendarView } from './tasks-calendar-view'
@@ -331,9 +331,10 @@ export function TasksDashboard({ onNavigate }: TasksDashboardProps) {
     ? modalFormTitle.trim() !== (selectedTask.title ?? '') || modalFormNotes.trim() !== (selectedTask.notes ?? '')
     : modalFormTitle.trim() !== '' || modalFormNotes.trim() !== '' || customCategory.trim() !== ''
 
-  const handleCloseTaskModal = () => {
-    confirmCloseIfDirty(isTaskFormDirty, () => setModalMode(null))
-  }
+  const { requestClose: handleCloseTaskModal, dialog: confirmCloseTaskDialog } = useConfirmClose(
+    Boolean(isTaskFormDirty),
+    () => setModalMode(null),
+  )
 
   return (
     <div className="tasks-dashboard">
@@ -742,6 +743,8 @@ export function TasksDashboard({ onNavigate }: TasksDashboardProps) {
         />,
         document.body
       )}
+
+      {confirmCloseTaskDialog}
     </div>
   )
 }

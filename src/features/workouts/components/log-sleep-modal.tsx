@@ -3,7 +3,7 @@ import { X, Loader2 } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
 import { sleepService } from '@/services/sleep-service'
-import { confirmCloseIfDirty } from '@/lib/modal-utils'
+import { useConfirmClose } from '@/hooks/use-confirm-close'
 
 type LogSleepModalProps = {
   isOpen: boolean
@@ -52,6 +52,9 @@ function LogSleepModal({ isOpen, onClose, onSuccess }: LogSleepModalProps) {
     }
   }, [isOpen])
 
+  const isDirty = Boolean(formData.notes.trim() || formData.bedTime !== '22:30' || formData.wakeTime !== '06:30')
+  const { requestClose, dialog: confirmCloseDialog } = useConfirmClose(isDirty, onClose)
+
   if (!isOpen) return null
 
   const handleSubmit = async (e: React.SyntheticEvent) => {
@@ -85,19 +88,14 @@ function LogSleepModal({ isOpen, onClose, onSuccess }: LogSleepModalProps) {
     }
   }
 
-  const isDirty = Boolean(formData.notes.trim() || formData.bedTime !== '22:30' || formData.wakeTime !== '06:30')
-
-  const handleGuardedClose = () => {
-    confirmCloseIfDirty(isDirty, onClose)
-  }
-
   return createPortal(
-    <div className="workouts-modal-backdrop" onClick={handleGuardedClose}>
+    <>
+    <div className="workouts-modal-backdrop" onClick={requestClose}>
       <div
         className="workouts-modal-popover sleep-modal-popover"
         onClick={e => e.stopPropagation()}
       >
-        <button className="workouts-modal-close" onClick={handleGuardedClose} type="button">
+        <button className="workouts-modal-close" onClick={requestClose} type="button">
           <X size={16} />
         </button>
 
@@ -158,7 +156,9 @@ function LogSleepModal({ isOpen, onClose, onSuccess }: LogSleepModalProps) {
           </button>
         </form>
       </div>
-    </div>,
+    </div>
+    {confirmCloseDialog}
+    </>,
     document.body
   )
 }

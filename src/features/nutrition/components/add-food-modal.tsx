@@ -9,7 +9,7 @@ import { hasFullAnalysis, useNotifications } from '@/store/notification-store'
 import { usePromptsStore } from '@/store/prompts-store'
 import { normalizeMealGrade } from './meal-grade'
 import { NUTRILOG_PROMPT } from './nutrilog-prompt'
-import { confirmCloseIfDirty } from '@/lib/modal-utils'
+import { useConfirmClose } from '@/hooks/use-confirm-close'
 import { getErrorMessage } from '@/lib/errors'
 
 // ─── Types ────────────────────────────────────────────────────────────────
@@ -598,8 +598,6 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
     setAiErrorCode(null)
   }
 
-  if (!isOpen) return null
-
   const isDirty = Boolean(
     description.trim() ||
     proteinGrams ||
@@ -608,13 +606,13 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
     aiDescription.trim() ||
     imageFiles.length > 0
   )
+  const { requestClose, dialog: confirmCloseDialog } = useConfirmClose(isDirty, onClose)
 
-  const handleGuardedClose = () => {
-    confirmCloseIfDirty(isDirty, onClose)
-  }
+  if (!isOpen) return null
 
   return createPortal(
-    <div className="finance-modal-backdrop" role="presentation" onClick={handleGuardedClose}>
+    <>
+    <div className="finance-modal-backdrop" role="presentation" onClick={requestClose}>
       <div
         className="finance-modal-popover add-tx-modal"
         role="dialog"
@@ -622,7 +620,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
         onClick={(e) => e.stopPropagation()}
         style={{ width: 'min(560px, calc(100vw - 42px))', maxHeight: 'min(90vh, 760px)', display: 'flex', flexDirection: 'column' }}
       >
-        <button type="button" className="finance-modal-close" onClick={handleGuardedClose}>
+        <button type="button" className="finance-modal-close" onClick={requestClose}>
           <X size={15} />
         </button>
 
@@ -1203,7 +1201,9 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
           </>
         )}
       </div>
-    </div>,
+    </div>
+    {confirmCloseDialog}
+    </>,
     document.body
   )
 }

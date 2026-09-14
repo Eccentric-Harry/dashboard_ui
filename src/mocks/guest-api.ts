@@ -17,6 +17,13 @@ import {
   dummyStravaActivities,
   dummyStravaStats,
 } from '../mocks/dummy-data';
+import type { PursuitStepInput } from '@/types/learnings';
+import {
+  addStepInPursuit,
+  deleteStepInPursuit,
+  stepsFromInputs,
+  toggleStepInPursuit,
+} from '@/features/learnings/pursuit-tree';
 
 let calendarItems = [...dummyCalendarItems];
 const financeLogs = [...dummyFinanceLogs];
@@ -1057,41 +1064,45 @@ export function resolveGuestRequest(request: GuestRequest): GuestResponse | null
       return respondWith({ data: dummyPursuits });
     }
 
+    const body = JSON.parse(typeof request.body === 'string' ? request.body : '{}');
+    let idSeq = 0;
+    const guestId = () => `ps-guest-${Date.now()}-${idSeq++}`;
+    const stepMatch = urlStr.match(/\/pursuits\/([^/?]+)\/steps(?:\/([^/?]+))?/);
+    const stepPursuit = stepMatch ? dummyPursuits.find(p => p.id === stepMatch[1]) : undefined;
+
+    // Add a step / sub-step
+    if (method === 'POST' && stepMatch) {
+      if (!stepPursuit) return respondWith({ data: dummyPursuits[0] });
+      const step = { id: guestId(), text: String(body.text || '').trim(), isCompleted: false, children: [] };
+      return respondWith({ data: addStepInPursuit(stepPursuit, step, body.parentId || undefined) });
+    }
+
     if (method === 'POST') {
-      const body = JSON.parse(typeof request.body === 'string' ? request.body : '{}');
+      // Old flat payloads sent plain strings; nested ones send { text, note, children }.
+      const inputs: PursuitStepInput[] = (body.steps || []).map((s: string | PursuitStepInput) =>
+        typeof s === 'string' ? { text: s } : s
+      );
       const newPursuit = {
         id: `p-guest-${Date.now()}`,
         title: body.title || 'New Pursuit',
         category: body.category || 'Development',
         notionUrl: 'https://notion.so/guest-pursuit',
         status: 'ACTIVE' as const,
-        steps: (body.steps || []).map((text: string, i: number) => ({
-          id: `ps-guest-${Date.now()}-${i}`,
-          text,
-          isCompleted: false,
-        })),
+        steps: stepsFromInputs(inputs, guestId),
       };
       return respondWith({ data: newPursuit });
     }
 
     if (method === 'PATCH') {
       // Toggle step completion — return the pursuit to match API contract
-      const match = urlStr.match(/\/pursuits\/([^/]+)\/steps\/([^/]+)/);
-      if (match) {
-        const pursuitId = match[1];
-        const stepId = match[2];
-        const pursuit = dummyPursuits.find(p => p.id === pursuitId);
-        if (pursuit) {
-          const updatedSteps = pursuit.steps.map(s =>
-            s.id === stepId ? { ...s, isCompleted: !s.isCompleted } : s
-          );
-          const allDone = updatedSteps.length > 0 && updatedSteps.every(s => s.isCompleted);
-          return respondWith({
-            data: { ...pursuit, steps: updatedSteps, status: allDone ? 'COMPLETED' : 'ACTIVE' },
-          });
-        }
+      if (stepPursuit && stepMatch?.[2]) {
+        return respondWith({ data: toggleStepInPursuit(stepPursuit, stepMatch[2]) });
       }
       return respondWith({ data: dummyPursuits[0] });
+    }
+
+    if (method === 'DELETE' && stepPursuit && stepMatch?.[2]) {
+      return respondWith({ data: deleteStepInPursuit(stepPursuit, stepMatch[2]) });
     }
 
     if (method === 'PUT') {
