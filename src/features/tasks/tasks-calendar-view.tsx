@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import type { DailyTask } from '@/lib/api'
+import type { DailyTask } from '@/types/tasks'
 import { getTagColor } from '@/lib/tag-colors'
 
 

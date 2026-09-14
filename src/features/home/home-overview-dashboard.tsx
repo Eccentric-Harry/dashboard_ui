@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { CheckSquare, Droplets, Lightbulb, MessageCircle, Moon, Plus, Trophy, Utensils } from 'lucide-react'
-import type { DailyTask, MindAnchorOutcome, SleepEntryPayload } from '@/lib/api'
+import type { DailyTask } from '@/types/tasks'
+import type { MindAnchorOutcome } from '@/types/mind'
+import type { SleepEntryPayload } from '@/types/sleep'
 import type { FocusLogPayload } from '@/types/focus'
 import { focusService } from '@/services/focus-service'
 import { learningsService } from '@/services/learnings-service'
@@ -611,7 +613,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
       <div className="home-grid home-grid--rest">
         <SleepCard
           loading={home.loading}
-          failed={home.sleep.failed}
+          failed={home.sleep.hasErrors}
           summary={sleepSummary}
           today={home.today}
           openFormNonce={sleepFormNonce}
@@ -634,14 +636,14 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           coverage={focusStats.coverage}
           loggedMinutes={focusStats.loggedMinutes}
           suggestions={home.focusSuggestions.data ?? []}
-          suggestionsFailed={home.focusSuggestions.failed}
+          suggestionsFailed={home.focusSuggestions.hasErrors}
           onLog={handleLogFocus}
           onImport={handleImportFocus}
         />
 
         <ActivityCard
           loading={home.loading}
-          failed={home.workouts.failed}
+          failed={home.workouts.hasErrors}
           activities={home.workouts.data}
           stats={home.workoutStats.data}
           weekDates={weekDates}

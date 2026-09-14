@@ -2,15 +2,17 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { Plus, Search, List, Columns3, CalendarDays, X, Clock, Tag } from 'lucide-react'
 import toast from 'react-hot-toast'
-import type { DailyTask } from '@/lib/api'
+import type { DailyTask } from '@/types/tasks'
 import { tasksService } from '@/services/tasks-service'
 import { useTasksStore } from '@/store/tasks-store'
+import { isAwaitingData } from '@/store/zustand-utils'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { confirmCloseIfDirty } from '@/lib/modal-utils'
 import { TasksListView } from './tasks-list-view'
 import { TasksKanbanView } from './tasks-kanban-view'
 import { TasksCalendarView } from './tasks-calendar-view'
 import { TasksDetailPanel } from './tasks-detail-panel'
+import { TasksSkeleton } from './tasks-skeleton'
 import { CategoryIcon } from './category-icon'
 import avatarImage from '@/assets/reference-crops/avatar_luffy.png'
 import { getAvatarImage } from '@/lib/avatar'
@@ -53,7 +55,8 @@ export function TasksDashboard({ onNavigate }: TasksDashboardProps) {
   const tasksState = useTasksStore.use.tasks()
   const tasksActions = useTasksStore.use.actions()
   const rawTasks = tasksState.data
-  const loading = tasksState.loading || (!tasksState.loaded && !tasksState.hasErrors)
+  // Skeleton only when there is nothing to show yet; a revisit keeps the cached list on screen.
+  const loading = isAwaitingData(tasksState) && rawTasks.length === 0
   const tasks = useMemo(
     () =>
       [...rawTasks].sort((a, b) => {
@@ -500,53 +503,7 @@ export function TasksDashboard({ onNavigate }: TasksDashboardProps) {
       <div className={`tasks-content-grid ${selectedTask ? 'has-selection' : ''}`}>
         <div className="tasks-viewport">
           {loading ? (
-            viewMode === 'list' ? (
-              <div className="tasks-list-view" style={{ pointerEvents: 'none' }}>
-                {Array.from({ length: 4 }).map((_, groupIdx) => (
-                  <div key={groupIdx} className="tasks-accordion-group">
-                    <div className="skeleton-shimmer skeleton-rect" style={{ width: '90px', height: '14px', borderRadius: '3px', margin: '4px 6px 12px' }} />
-                    {Array.from({ length: groupIdx % 2 === 0 ? 3 : 2 }).map((_, idx) => (
-                      <div
-                        key={idx}
-                        className="tasks-list-card"
-                        style={{ display: 'flex', gap: '9px', alignItems: 'flex-start' }}
-                      >
-                        <div className="skeleton-shimmer skeleton-circle" style={{ width: '18px', height: '18px', marginTop: '1px' }} />
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div className="skeleton-shimmer skeleton-rect" style={{ width: '70%', height: '12px', borderRadius: '3px' }} />
-                          <div style={{ display: 'flex', gap: '4px', marginTop: '6px' }}>
-                            <div className="skeleton-shimmer skeleton-rect" style={{ width: '54px', height: '12px', borderRadius: '4px' }} />
-                            <div className="skeleton-shimmer skeleton-rect" style={{ width: '38px', height: '12px', borderRadius: '4px' }} />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              /* Kanban view skeleton loading */
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', height: '100%', pointerEvents: 'none' }}>
-                {Array.from({ length: 3 }).map((_, colIdx) => (
-                  <div key={colIdx} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <div className="skeleton-shimmer skeleton-rect" style={{ width: '80px', height: '16px', borderRadius: '3px' }} />
-                      <div className="skeleton-shimmer skeleton-circle" style={{ width: '18px', height: '18px' }} />
-                    </div>
-                    {Array.from({ length: 2 }).map((_, cardIdx) => (
-                      <div key={cardIdx} className="tasks-kanban-card" style={{ padding: '14px' }}>
-                        <div className="skeleton-shimmer skeleton-rect" style={{ width: '70%', height: '14px', borderRadius: '3px' }} />
-                        <div className="skeleton-shimmer skeleton-rect" style={{ width: '90%', height: '10px', marginTop: '8px', borderRadius: '2px' }} />
-                        <div style={{ display: 'flex', gap: '6px', marginTop: '12px' }}>
-                          <div className="skeleton-shimmer skeleton-rect" style={{ width: '50px', height: '14px', borderRadius: '4px' }} />
-                          <div className="skeleton-shimmer skeleton-rect" style={{ width: '40px', height: '14px', borderRadius: '4px' }} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            )
+            <TasksSkeleton viewMode={viewMode} />
           ) : viewMode === 'list' || viewMode === 'kanban' ? (
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
               {viewMode === 'list' ? (

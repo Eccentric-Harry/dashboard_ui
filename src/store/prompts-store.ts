@@ -1,5 +1,5 @@
-// Prompts store — single read slice consumed by prompts-view. Mutations stay in
-// the view (lib/api) and call loadPrompts() to re-sync.
+// Prompts store — single read slice consumed by the prompts page. Mutations run
+// through promptsService in the page, which calls loadPrompts() to re-sync.
 
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';

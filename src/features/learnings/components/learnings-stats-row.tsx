@@ -1,5 +1,5 @@
 import { BookOpen, Flame, GraduationCap, Target } from 'lucide-react'
-import type { LearningsSummary } from '@/lib/api'
+import type { LearningsSummary } from '@/types/learnings'
 
 interface LearningsStatsRowProps {
   summary: LearningsSummary | null

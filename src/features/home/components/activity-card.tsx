@@ -12,7 +12,7 @@ import {
   Zap,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import type { StravaActivity, StravaActivityStats } from '@/lib/api'
+import type { StravaActivity, StravaActivityStats } from '@/types/workouts'
 import type { AppPath } from '@/app/routes'
 import { cn } from '@/lib/utils'
 import { formatMinutes, formatTimeLabel } from '../home-types'

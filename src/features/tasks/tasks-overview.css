@@ -745,242 +745,6 @@
   padding-bottom: 8px;
 }
 
-.tasks-list-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 9px;
-  padding: 9px 6px;
-  border-radius: 10px;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid rgba(16, 19, 18, 0.12);
-  box-shadow: none;
-  cursor: pointer;
-  transition: background-color 0.15s ease, border-radius 0.15s ease;
-  min-width: 0;
-}
-
-.tasks-accordion-content .tasks-list-card:last-child {
-  border-bottom: none;
-}
-
-.tasks-list-card:hover {
-  background: rgba(16, 19, 18, 0.035);
-  border-bottom-color: transparent;
-}
-
-.tasks-list-card.is-completed .task-list-body {
-  opacity: 0.55;
-}
-
-.tasks-list-card.is-completed .task-list-title {
-  text-decoration: line-through;
-  color: rgba(16, 19, 18, 0.35);
-}
-
-.tasks-list-card.is-selected {
-  background: rgba(16, 19, 18, 0.055);
-  border-bottom-color: transparent;
-}
-
-.task-list-check {
-  width: 18px;
-  height: 18px;
-  min-width: 18px;
-  margin-top: 1px;
-  border-radius: 5px;
-  border: 2px solid rgba(16, 19, 18, 0.14);
-  background: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  padding: 0;
-}
-
-.task-list-check:hover {
-  border-color: rgba(16, 19, 18, 0.3);
-  background: rgba(255, 255, 255, 0.5);
-}
-
-.task-list-check.checked {
-  border-color: rgba(16, 19, 18, 0.35);
-  background: rgba(16, 19, 18, 0.06);
-  color: rgba(16, 19, 18, 0.55);
-  box-shadow: none;
-}
-
-.task-list-check.checked svg {
-  opacity: 1;
-}
-
-.task-list-body {
-  flex: 1;
-  min-width: 0;
-}
-
-.task-list-title {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #101312;
-  margin-bottom: 4px;
-  line-height: 1.3;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
-.task-list-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  align-items: center;
-}
-
-.tasks-list-card .k-tag {
-  padding: 2px 6px;
-  font-size: 9.5px;
-  border-radius: 5px;
-  gap: 3px;
-  white-space: nowrap;
-}
-
-.tasks-list-card .k-tag.sla.sla-done {
-  background: rgba(16, 19, 18, 0.07);
-  color: #101312;
-}
-
-
-/* ─── Accordion Section ─── */
-
-.tasks-accordion-group {
-  display: inline-block;
-  width: 100%;
-  break-inside: avoid;
-  -webkit-column-break-inside: avoid;
-  page-break-inside: avoid;
-  margin-bottom: 12px;
-  padding: 10px;
-  border-radius: 16px;
-  background: #ffffff;
-  border: 1px solid rgba(23, 27, 21, 0.07);
-  box-shadow: 0 1px 2px rgba(23, 27, 21, 0.03), 0 8px 20px rgba(23, 27, 21, 0.03);
-  overflow: hidden;
-  transition: all 0.2s ease;
-}
-
-.tasks-accordion-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 4px 6px 10px;
-  margin-bottom: 2px;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid rgba(16, 19, 18, 0.08);
-  border-radius: 0;
-  cursor: pointer;
-  user-select: none;
-  transition: opacity 0.15s ease, border-color 0.2s ease;
-  box-shadow: none;
-}
-
-.tasks-accordion-group.is-collapsed .tasks-accordion-header {
-  padding-bottom: 4px;
-  margin-bottom: 0;
-  border-bottom-color: transparent;
-}
-
-.tasks-accordion-header:hover {
-  opacity: 0.7;
-}
-
-.tasks-accordion-header-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.tasks-accordion-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: #101312;
-  letter-spacing: 0.3px;
-}
-
-.tasks-accordion-badge {
-  font-size: 10px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 10px;
-  background: rgba(16, 19, 18, 0.06);
-  color: rgba(16, 19, 18, 0.6);
-  margin-left: 6px;
-}
-
-.tasks-accordion-header-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: rgba(16, 19, 18, 0.4);
-}
-
-.tasks-accordion-chevron {
-  transition: transform 0.2s ease;
-}
-
-.tasks-accordion-chevron.is-collapsed {
-  transform: rotate(-90deg);
-}
-
-.tasks-accordion-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  margin-top: 6px;
-  padding: 2px;
-  transition: all 0.2s ease;
-}
-
-.tasks-accordion-content.is-collapsed {
-  display: none;
-}
-
-.tasks-completed-toggle {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 11px;
-  color: rgba(16, 19, 18, 0.4);
-  padding: 6px 10px;
-  border-radius: 8px;
-  margin-top: 2px;
-  transition: background 0.15s, color 0.15s;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  width: fit-content;
-}
-
-.tasks-completed-toggle:hover {
-  background: rgba(16, 19, 18, 0.05);
-  color: rgba(16, 19, 18, 0.65);
-}
-
-.tasks-completed-toggle svg {
-  flex-shrink: 0;
-  transition: transform 0.2s ease;
-}
-
-.tasks-completed-toggle svg.rotate-180 {
-  transform: rotate(180deg);
-}
-
 /* ─── List view ───────────────────────────────────────────────────────────
    Modelled on Things 3 and Linear: rows are plain text on the card — no
    dividers, rails or chips — and only lift on hover/selection. Each list shows
@@ -2612,5 +2376,110 @@ select.form-input {
 
   .tasks-list-col {
     display: contents;
+  }
+}
+
+/* ── Loading skeleton ──
+   tasks-skeleton.tsx reuses the real view classes, so these rules only paint the
+   bones and choreograph their arrival. The wrapper fades in after a short delay so
+   a fast response never flashes placeholders; cards then rise in a light cascade. */
+.tasks-skel {
+  pointer-events: none;
+  user-select: none;
+  animation: tasks-skel-in 0.28s ease 0.12s both;
+}
+
+/* Doubled class: bones sit inside view markup whose element selectors (e.g. a
+   `span` rule on the calendar grid) must never restyle a placeholder. */
+.tasks-skel .tasks-skel-bone {
+  display: block;
+  flex: none;
+  justify-self: auto;
+  place-items: normal;
+  width: var(--skel-w, 100%);
+  max-width: 100%;
+  height: var(--skel-h, 10px);
+  border-radius: var(--skel-r, 5px);
+  color: transparent;
+  background: linear-gradient(
+    90deg,
+    rgba(16, 19, 18, 0.055) 25%,
+    rgba(16, 19, 18, 0.11) 37%,
+    rgba(16, 19, 18, 0.055) 63%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
+.tasks-skel-card {
+  animation: tasks-skel-rise 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--skel-i, 0) * 55ms + 120ms);
+}
+
+/* Bones keep the same box as the elements they stand in for. */
+.tasks-skel .tg-head,
+.tasks-skel .tr {
+  cursor: default;
+}
+
+.tasks-skel .tg-title {
+  display: flex;
+}
+
+.tasks-skel .tr-body {
+  gap: 7px;
+  padding-top: 2px;
+}
+
+.tasks-skel-check {
+  margin-top: 1px;
+}
+
+.tasks-skel-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tasks-skel-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tasks-skel .calendar-day {
+  cursor: default;
+}
+
+.tasks-skel .calendar-day-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 6px;
+}
+
+.tasks-skel-day-number {
+  margin: 3px 0 0 3px;
+}
+
+@keyframes tasks-skel-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes tasks-skel-rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tasks-skel,
+  .tasks-skel-card {
+    animation: none;
+  }
+
+  .tasks-skel .tasks-skel-bone {
+    animation: none;
+    background: rgba(16, 19, 18, 0.07);
   }
 }

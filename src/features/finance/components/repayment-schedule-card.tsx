@@ -1,12 +1,15 @@
-import { useState, useMemo, useEffect, type CSSProperties } from 'react'
+import { useState, useMemo, type CSSProperties } from 'react'
 import { Check, Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
 import toast from 'react-hot-toast'
-import type { RepaymentInstallment } from '@/lib/api'
+import type { RepaymentInstallment } from '@/types/finance'
+import { getErrorMessage } from '@/lib/errors'
 import { financeService } from '@/services/finance-service'
+import { useFinanceStore } from '@/store/finance-store'
+import { isAwaitingData } from '@/store/zustand-utils'
+import type { TransactionProp } from './transactions-card'
 
 interface RepaymentScheduleCardProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  transactions: any[]
+  transactions: TransactionProp[]
   onRefresh?: () => void
   /** Fired when an instalment is cleared, so the route can celebrate. */
   onCelebrate?: () => void
@@ -15,25 +18,13 @@ interface RepaymentScheduleCardProps {
 }
 
 export function RepaymentScheduleCard({ transactions, onRefresh, onCelebrate, stagger = 0 }: RepaymentScheduleCardProps) {
-  const [repayments, setRepayments] = useState<RepaymentInstallment[]>([])
-  const [loading, setLoading] = useState(true)
+  const repaymentsState = useFinanceStore.use.repayments()
+  const repayments = repaymentsState.data
+  const loading = isAwaitingData(repaymentsState)
   const [processingId, setProcessingId] = useState<string | null>(null)
   const [optimisticPaidIds, setOptimisticPaidIds] = useState<Set<string>>(new Set())
   const [currentPage, setCurrentPage] = useState(1)
   const ITEMS_PER_PAGE = 4
-
-  useEffect(() => {
-    financeService.getSliceRepayments()
-      .then(res => {
-        if (res.error) throw new Error(res.error.message)
-        setRepayments(res.data || [])
-        setLoading(false)
-      })
-      .catch(err => {
-        console.error('Failed to fetch Slice repayments:', err)
-        setLoading(false)
-      })
-  }, [])
 
   // Compute which items have already been paid by searching existing transaction logs
   const paidIds = useMemo(() => {
@@ -102,9 +93,8 @@ export function RepaymentScheduleCard({ transactions, onRefresh, onCelebrate, st
       toast.success(`Paid Slice installment of ${installment.amount}`)
       onCelebrate?.()
       if (onRefresh) onRefresh()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      toast.error(error.message || `Failed to record payment for Slice installment`)
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to record payment for Slice installment'))
       console.error('Failed to record installment payment:', error)
     } finally {
       setProcessingId(null)

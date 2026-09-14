@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useEffectEvent, useState } from 'react';
 import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts';
 import { X, Clock, Pencil, LogOut, Mail, Globe, Activity, Target, Plus, Calendar, RefreshCw, Cake, PersonStanding, Ruler, Weight, Footprints, HeartPulse, CalendarDays, Sparkle, Leaf, ShieldAlert, Zap } from 'lucide-react';
-import type { UserProfile, GoogleSyncStatus } from '@/lib/api';
-import { userService } from '@/services/user-service';
+import type { ActivityLevel, FitnessGoal, UserProfile } from '@/types/user';
+import type { GoogleSyncStatus } from '@/types/calendar';
+import { useUserStore, userActions } from '@/store/user-store';
 import { calendarService } from '@/services/calendar-service';
 import { SideRail } from '@/components/layout/side-rail';
 import { TopChip } from '@/components/layout/top-chip';
@@ -12,6 +13,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { getAvatarImage, avatarPresets } from '@/lib/avatar';
 import { confirmCloseIfDirty } from '@/lib/modal-utils';
 import './profile-page.css';
+import { getErrorMessage } from '@/lib/errors';
 
 type ProfileOverviewProps = {
   activePath: AppPath;
@@ -96,7 +98,7 @@ function bmiStatus(bmi?: number): { label: string; cls: string } {
 }
 
 export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps) {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const profile = useUserStore.use.profile().data;
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
@@ -126,8 +128,8 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
   const [gender, setGender] = useState('MALE');
   const [height, setHeight] = useState('');
   const [weight, setWeight] = useState('');
-  const [activityLevel, setActivityLevel] = useState('SEDENTARY');
-  const [fitnessGoal, setFitnessGoal] = useState('MAINTAIN_WEIGHT');
+  const [activityLevel, setActivityLevel] = useState<ActivityLevel>('SEDENTARY');
+  const [fitnessGoal, setFitnessGoal] = useState<FitnessGoal>('MAINTAIN_WEIGHT');
   const [medicalConditions, setMedicalConditions] = useState<string[]>([]);
   const [customConditionInput, setCustomConditionInput] = useState('');
 
@@ -138,45 +140,42 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
     setIsMounted(true);
   }, []);
 
+  /** Copies a saved profile into the edit form (on load, and when an edit is cancelled). */
+  const resetForm = (data: UserProfile) => {
+    setDisplayName(data.displayName || '');
+    setAvatarUrl(data.avatarUrl || 'luffy');
+    setEmail(data.email || '');
+    setTimezone(data.timezone || 'GMT-8');
+    setWorkingHours(data.workingHours || '10 AM - 6 PM');
+    setTitle(data.title || '');
+    setBio(data.bio || '');
+    setStatus(data.status || 'Online');
+
+    const pm = data.physicalMetrics || {};
+    setAge(pm.age?.toString() || '');
+    setGender(pm.gender || 'MALE');
+    setHeight(pm.height?.toString() || '');
+    setWeight(pm.weight?.toString() || '');
+    setActivityLevel(data.activityLevel || 'SEDENTARY');
+    setFitnessGoal(data.fitnessGoal || 'MAINTAIN_WEIGHT');
+    setMedicalConditions(data.medicalConditions || []);
+  };
+
+  // Always re-read on entry so the form starts from the latest saved profile.
+  const handleProfileLoaded = useEffectEvent((data: UserProfile | null) => {
+    if (data) resetForm(data);
+    else toast.error('Failed to load profile data');
+    setLoading(false);
+  });
+
   useEffect(() => {
-    async function loadProfile() {
-      try {
-        const res = await userService.getProfile();
-        if (res.error) throw new Error(res.error.message);
-        if (res?.data) {
-          const data = res.data;
-          setProfile(data);
-          setDisplayName(data.displayName || '');
-          setAvatarUrl(data.avatarUrl || 'luffy');
-          setEmail(data.email || '');
-          setTimezone(data.timezone || 'GMT-8');
-          setWorkingHours(data.workingHours || '10 AM - 6 PM');
-          setTitle(data.title || '');
-          setBio(data.bio || '');
-          setStatus(data.status || 'Online');
-
-          // Initialize health metrics states
-          const pm = data.physicalMetrics || {};
-          setAge(pm.age?.toString() || '');
-          setGender(pm.gender || 'MALE');
-          setHeight(pm.height?.toString() || '');
-          setWeight(pm.weight?.toString() || '');
-          setActivityLevel(data.activityLevel || 'SEDENTARY');
-          setFitnessGoal(data.fitnessGoal || 'MAINTAIN_WEIGHT');
-          setMedicalConditions(data.medicalConditions || []);
-
-          localStorage.setItem('avatarUrl', data.avatarUrl || 'luffy');
-          localStorage.setItem('displayName', data.displayName || '');
-          window.dispatchEvent(new Event('profile-updated'));
-        }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (err) {
-        toast.error('Failed to load profile data');
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadProfile();
+    let cancelled = false;
+    void userActions.loadProfile().then((data) => {
+      if (!cancelled) handleProfileLoaded(data);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const loadSyncStatus = async () => {
@@ -283,26 +282,19 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
           height: height ? parseFloat(height) : undefined,
           weight: weight ? parseFloat(weight) : undefined,
         },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        activityLevel: activityLevel as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        fitnessGoal: fitnessGoal as any,
+        activityLevel,
+        fitnessGoal,
         medicalConditions,
       };
 
-      const res = await userService.updateProfile(payload);
+      const res = await userActions.saveProfile(payload);
       if (res.error) throw new Error(res.error.message);
-      if (res?.data) {
+      if (res.data) {
         toast.success('Profile updated successfully!');
-        localStorage.setItem('displayName', res.data.displayName);
-        localStorage.setItem('avatarUrl', res.data.avatarUrl || 'luffy');
-        setProfile(res.data);
-        window.dispatchEvent(new Event('profile-updated'));
         setIsEditing(false);
       }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to save profile');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to save profile'));
     } finally {
       setSaving(false);
     }
@@ -318,25 +310,7 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
   };
 
   const handleCancel = () => {
-    if (profile) {
-      setDisplayName(profile.displayName || '');
-      setAvatarUrl(profile.avatarUrl || 'luffy');
-      setEmail(profile.email || '');
-      setTimezone(profile.timezone || 'GMT-8');
-      setWorkingHours(profile.workingHours || '10 AM - 6 PM');
-      setTitle(profile.title || '');
-      setBio(profile.bio || '');
-      setStatus(profile.status || 'Online');
-
-      const pm = profile.physicalMetrics || {};
-      setAge(pm.age?.toString() || '');
-      setGender(pm.gender || 'MALE');
-      setHeight(pm.height?.toString() || '');
-      setWeight(pm.weight?.toString() || '');
-      setActivityLevel(profile.activityLevel || 'SEDENTARY');
-      setFitnessGoal(profile.fitnessGoal || 'MAINTAIN_WEIGHT');
-      setMedicalConditions(profile.medicalConditions || []);
-    }
+    if (profile) resetForm(profile);
     setIsEditing(false);
   };
 
@@ -1081,7 +1055,7 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                         <select
                           id="activityLevel"
                           value={activityLevel}
-                          onChange={(e) => setActivityLevel(e.target.value)}
+                          onChange={(e) => setActivityLevel(e.target.value as ActivityLevel)}
                         >
                           <option value="SEDENTARY">Sedentary (Little or no exercise)</option>
                           <option value="LIGHTLY_ACTIVE">Lightly Active (Light exercise 1-3 days/wk)</option>
@@ -1098,7 +1072,7 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                         <select
                           id="fitnessGoal"
                           value={fitnessGoal}
-                          onChange={(e) => setFitnessGoal(e.target.value)}
+                          onChange={(e) => setFitnessGoal(e.target.value as FitnessGoal)}
                         >
                           <option value="LOSE_WEIGHT">Lose Weight (-500 kcal deficit)</option>
                           <option value="MAINTAIN_WEIGHT">Maintain Weight (TDEE balance)</option>

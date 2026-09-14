@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { AppPath } from '@/app/routes'
-import type { LearningLog } from '@/lib/api'
+import type { LearningLog } from '@/types/learnings'
 import { calendarService } from '@/services/calendar-service'
 import { useLearningsStore } from '@/store/learnings-store'
+import { isAwaitingData } from '@/store/zustand-utils'
 import { isoDate, parseIsoDate } from './learnings-utils'
 import { LearningsHeader } from './components/learnings-header'
 import { LearningsStatsRow } from './components/learnings-stats-row'
@@ -28,13 +29,12 @@ interface LearningsOverviewDashboardProps {
 
 function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverviewDashboardProps) {
   const [selectedDate, setSelectedDate] = useState(() => parseDateFromParams(searchParams))
-  const [refreshKey, setRefreshKey] = useState(0)
 
   // Summary server state comes from the learnings store (date-keyed slice).
   const summaryState = useLearningsStore.use.summary()
   const learningsActions = useLearningsStore.use.actions()
   const summary = summaryState.data
-  const summaryLoading = summaryState.loading || (!summaryState.loaded && !summaryState.hasErrors)
+  const summaryLoading = isAwaitingData(summaryState)
 
   const [entryModalOpen, setEntryModalOpen] = useState(false)
   const [editingLearning, setEditingLearning] = useState<LearningLog | undefined>()
@@ -60,12 +60,19 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
 
   useEffect(() => {
     reloadSummary()
-  }, [reloadSummary, refreshKey])
-
-  const handleRefresh = useCallback(() => {
-    setRefreshKey((k) => k + 1)
-    reloadSummary()
   }, [reloadSummary])
+
+  // The full lists back several cards; the route loads them once.
+  useEffect(() => {
+    void learningsActions.loadLearnings()
+    void learningsActions.loadPursuits()
+  }, [learningsActions])
+
+  /** Re-sync after any mutation — a completed pursuit becomes a learning, so both move. */
+  const handleRefresh = useCallback(() => {
+    void learningsActions.loadLearnings()
+    reloadSummary()
+  }, [learningsActions, reloadSummary])
 
   const handleDateChange = (date: string) => {
     setSelectedDate(date)
@@ -125,12 +132,11 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
 
         {/* Row 3: Category Distribution + Journal */}
         <div className="lo-distribution-wrap">
-          <CategoryBreakdownCard refreshKey={refreshKey} />
+          <CategoryBreakdownCard />
         </div>
 
         <div className="lo-journal-wrap">
           <LearningsLogCard
-            refreshKey={refreshKey}
             onRefresh={handleRefresh}
             onEditLearning={(learning) => {
               setEditingLearning(learning)

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { getNutritionSummaryShared } from './food-history'
 import { useDashboard } from '@/store/dashboard-store'
 import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip, ReferenceLine } from 'recharts'
+import type { ChartTooltipProps } from '@/lib/chart-tooltip'
 
 type TrendPoint = {
   day: string
@@ -12,8 +13,7 @@ type TrendPoint = {
 
 const FALLBACK_PROTEIN_TARGET = 100
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function CustomTooltip({ active, payload, label }: any) {
+function CustomTooltip({ active, payload, label }: ChartTooltipProps) {
   if (active && payload && payload.length) {
     return (
       <div className="ntr-trend-tooltip">
@@ -64,8 +64,7 @@ function ProteinTrendCard() {
 
   const proteinTarget = useMemo(() => {
     const circularGoals = data?.health?.circularGoals || []
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const proteinGoal = (circularGoals as any[]).find((g) => g.label === 'Protein')
+    const proteinGoal = circularGoals.find((g: { label?: string }) => g.label === 'Protein')
     return Number(proteinGoal?.target) || FALLBACK_PROTEIN_TARGET
   }, [data?.health?.circularGoals])
 
@@ -163,8 +162,7 @@ function ProteinTrendCard() {
   const daysOnTarget = displayTrend.filter(p => p.grams >= proteinTarget).length
 
   // emphasise only the latest point — the line stays clean
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const renderEndDot = (props: any) => {
+  const renderEndDot = (props: { cx?: number; cy?: number; index?: number }) => {
     const { cx, cy, index } = props
     if (index !== displayTrend.length - 1 || cx == null || cy == null) {
       return <g key={`dot-${index}`} />

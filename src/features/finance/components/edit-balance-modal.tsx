@@ -3,6 +3,7 @@ import { X, Loader2, Wallet } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { financeService } from '@/services/finance-service'
 import { confirmCloseIfDirty } from '@/lib/modal-utils'
+import { getErrorMessage } from '@/lib/errors'
 
 interface EditBalanceModalProps {
   isOpen: boolean
@@ -44,9 +45,8 @@ export function EditBalanceModal({ isOpen, currentBalance, onClose, onSuccess }:
       toast.success(`Balance set to ₹${saved.toLocaleString('en-IN')}`)
       onSuccess(saved)
       onClose()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      setError(err.message || 'Failed to update balance')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to update balance'))
     } finally {
       setLoading(false)
     }

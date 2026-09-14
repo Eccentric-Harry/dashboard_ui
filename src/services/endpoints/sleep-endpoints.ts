@@ -1,4 +1,4 @@
-// Declarative Sleep endpoint descriptors, ported 1:1 from lib/api.ts.
+// Declarative Sleep endpoint descriptors.
 // Two parallel subsystems: /sleep (SleepEntry) and /health/sleep (SleepLog).
 import type { ApiEndpoint } from '../api-config';
 

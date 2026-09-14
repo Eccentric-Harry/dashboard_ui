@@ -4,6 +4,7 @@ import { X, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { financeService } from '@/services/finance-service'
 import { confirmCloseIfDirty } from '@/lib/modal-utils'
+import { getErrorMessage } from '@/lib/errors'
 
 interface AddSubscriptionModalProps {
   isOpen: boolean
@@ -55,9 +56,8 @@ export function AddSubscriptionModal({ isOpen, onClose, onSuccess }: AddSubscrip
       toast.success(`Added ${name.trim()} subscription`)
       onSuccess()
       onClose()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      setError(err.message || 'Failed to add subscription')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to add subscription'))
     } finally {
       setLoading(false)
     }

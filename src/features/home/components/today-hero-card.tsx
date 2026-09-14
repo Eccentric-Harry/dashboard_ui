@@ -13,7 +13,9 @@ import {
   X,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import type { CalendarItem, DailyTask, HydrationData } from '@/lib/api'
+import type { CalendarItem } from '@/types/calendar'
+import type { DailyTask } from '@/types/tasks'
+import type { HydrationData } from '@/types/nutrition'
 import type { AppPath } from '@/app/routes'
 import { cn } from '@/lib/utils'
 import { useCountUp } from '@/hooks/use-count-up'

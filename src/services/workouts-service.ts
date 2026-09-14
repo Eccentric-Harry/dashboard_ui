@@ -7,6 +7,7 @@ import type {
   StravaActivityStats,
   CreateStravaActivityRequest,
   FeaturedEmbedRequest,
+  StravaEmbedRef,
 } from '../types/workouts';
 import * as E from './endpoints/workouts-endpoints';
 
@@ -16,7 +17,7 @@ export interface WorkoutsServiceInterface {
   getStats(): Promise<SafeResult<StravaActivityStats>>;
   createActivity(dto: CreateStravaActivityRequest): Promise<SafeResult<StravaActivity>>;
   importStravaJson(payload: unknown): Promise<SafeResult<unknown>>;
-  getFeaturedEmbed(): Promise<SafeResult<{ id: string; token?: string }>>;
+  getFeaturedEmbed(): Promise<SafeResult<StravaEmbedRef | null>>;
   updateFeaturedEmbed(dto: FeaturedEmbedRequest): Promise<SafeResult<unknown>>;
 }
 
@@ -26,6 +27,6 @@ export const workoutsService: WorkoutsServiceInterface = {
   getStats: () => instance.safeCall<StravaActivityStats>(E.API_GET_STRAVA_STATS),
   createActivity: (dto) => instance.safeCall<StravaActivity>(E.API_CREATE_STRAVA_ACTIVITY, { body: dto }),
   importStravaJson: (payload) => instance.safeCall(E.API_IMPORT_STRAVA_JSON, { body: payload }),
-  getFeaturedEmbed: () => instance.safeCall<{ id: string; token?: string }>(E.API_GET_FEATURED_EMBED),
+  getFeaturedEmbed: () => instance.safeCall<StravaEmbedRef | null>(E.API_GET_FEATURED_EMBED),
   updateFeaturedEmbed: (dto) => instance.safeCall(E.API_UPDATE_FEATURED_EMBED, { body: dto }),
 };

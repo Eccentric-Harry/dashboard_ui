@@ -1,4 +1,4 @@
-// Declarative Focus-session endpoint descriptors, ported 1:1 from lib/api.ts.
+// Declarative Focus-session endpoint descriptors.
 import type { ApiEndpoint } from '../api-config';
 
 export const API_GET_CURRENT_SESSION: ApiEndpoint = { url: '/focus/current', method: 'get' };

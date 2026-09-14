@@ -1,7 +1,7 @@
 // Strictly-typed Focus-session service — one-liners over instance.safeCall<T>().
 import { instance } from './http/api-request';
 import type { SafeResult } from '../types/api';
-import type { FocusSession, FocusDaySummary } from '../lib/api';
+import type { FocusSession, FocusDaySummary } from '../types/focus';
 import type { FocusLogPayload, FocusSuggestion } from '../types/focus';
 import * as E from './endpoints/focus-endpoints';
 

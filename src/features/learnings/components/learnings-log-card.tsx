@@ -1,55 +1,39 @@
-import { useState, useEffect, useCallback, type CSSProperties } from 'react'
+import { useMemo, useState, type CSSProperties } from 'react'
 import { BookOpen, ChevronLeft, ChevronRight, Edit2, Pencil, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import type { LearningLog } from '@/lib/api'
+import type { LearningLog } from '@/types/learnings'
 import { learningsService } from '@/services/learnings-service'
+import { useLearningsStore } from '@/store/learnings-store'
+import { isAwaitingData } from '@/store/zustand-utils'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { extractNotionUrl, getConsistentColor, parseIsoDate } from '../learnings-utils'
 
 interface LearningsLogCardProps {
-  refreshKey: number
+  /** Called after a mutation so the route can re-sync every learnings slice. */
   onRefresh: () => void
   onEditLearning: (learning: LearningLog) => void
 }
 
 const PAGE_SIZE = 6
 
+/** Newest first; ObjectIds break ties between entries logged on the same day. */
+const byNewest = (a: LearningLog, b: LearningLog) => {
+  const dateCompare = (b.date || '').localeCompare(a.date || '')
+  if (dateCompare !== 0) return dateCompare
+  if (b.id && a.id) return b.id.localeCompare(a.id)
+  return 0
+}
+
 export function LearningsLogCard({
-  refreshKey,
   onRefresh,
   onEditLearning,
 }: LearningsLogCardProps) {
-  const [learnings, setLearnings] = useState<LearningLog[]>([])
-  const [loading, setLoading] = useState(false)
+  const learningsState = useLearningsStore.use.learnings()
+  const learnings = useMemo(() => [...learningsState.data].sort(byNewest), [learningsState.data])
+  const loading = isAwaitingData(learningsState) && learnings.length === 0
   const [isEditMode, setIsEditMode] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<LearningLog | null>(null)
-  const [page, setPage] = useState(1)
-
-  const load = useCallback(async () => {
-    setLoading(true)
-    try {
-      const res = await learningsService.getLearnings()
-      if (res.error) throw new Error(res.error.message)
-      const sorted = (res?.data ?? []).sort((a: LearningLog, b: LearningLog) => {
-        const dateCompare = (b.date || '').localeCompare(a.date || '')
-        if (dateCompare !== 0) return dateCompare
-        if (b.id && a.id) return b.id.localeCompare(a.id)
-        return 0
-      })
-      setLearnings(sorted)
-    } catch {
-      setLearnings([])
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    load()
-    setIsEditMode(false)
-    setPage(1)
-  }, [load, refreshKey])
+  const [requestedPage, setPage] = useState(1)
 
   const handleDelete = async () => {
     if (!deleteTarget?.id) return
@@ -58,7 +42,6 @@ export function LearningsLogCard({
       if (res.error) throw new Error(res.error.message)
       toast.success(`Deleted "${deleteTarget.title}"`)
       setDeleteTarget(null)
-      load()
       onRefresh()
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to delete')
@@ -80,6 +63,8 @@ export function LearningsLogCard({
   }
 
   const totalPages = Math.ceil(learnings.length / PAGE_SIZE)
+  // Clamp rather than reset: a delete on the last page must not strand the view.
+  const page = Math.max(1, Math.min(requestedPage, totalPages || 1))
   const start = (page - 1) * PAGE_SIZE
   const paginated = learnings.slice(start, start + PAGE_SIZE)
 

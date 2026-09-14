@@ -1,4 +1,4 @@
-// Declarative Auth endpoint descriptors, ported 1:1 from lib/api.ts.
+// Declarative Auth endpoint descriptors.
 import type { ApiEndpoint } from '../api-config';
 
 export const API_VERIFY_PASSCODE: ApiEndpoint = { url: '/auth/verify', method: 'post' };

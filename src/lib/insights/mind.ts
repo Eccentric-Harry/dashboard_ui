@@ -11,7 +11,7 @@
 
 import type { Insight } from './engine'
 import { confidenceFrom, lastNDates, mean, rankInsights } from './engine'
-import type { MindDistortionTag, MindEntry, MindLoopRadarDay, MindWorryLedger } from '../api'
+import type { MindDistortionTag, MindEntry, MindLoopRadarDay, MindWorryLedger } from '@/types/mind'
 
 // ---------- Inputs ----------
 

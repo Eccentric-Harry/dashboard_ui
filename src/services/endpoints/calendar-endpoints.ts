@@ -1,4 +1,4 @@
-// Declarative Calendar + Google-sync endpoint descriptors, ported from lib/api.ts.
+// Declarative Calendar + Google-sync endpoint descriptors.
 import type { ApiEndpoint } from '../api-config';
 
 export const API_GET_CALENDAR_RANGE: ApiEndpoint = { url: '/calendar/items/range', method: 'get' };

@@ -18,11 +18,12 @@ import { devtools } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import toast from 'react-hot-toast';
 import { Bell, Calendar, Clock, Trophy, Info, Moon } from 'lucide-react';
-import { analyzeMeal } from '../lib/api';
-import type { CalendarItem } from '../lib/api';
+import type { CalendarItem } from '../types/calendar';
+import type { MealAnalysisApiResponse } from '../types/nutrition';
 import { calendarService } from '../services/calendar-service';
 import { pushService } from '../services/push-service';
 import { nutritionService } from '../services/nutrition-service';
+import { mealAnalysisService, type MealAnalysisError } from '../services/meal-analysis-service';
 import { createSelectors } from './zustand-utils';
 
 export interface InAppNotification {
@@ -35,17 +36,40 @@ export interface InAppNotification {
   isRead: boolean;
 }
 
+/** The slice of a persisted food entry used when a scan is recovered after a lost response. */
+export interface RecoveredMealEntry {
+  id?: string;
+  mealType?: string;
+  description?: string;
+  calories?: number;
+  proteinGrams?: number;
+  imageUrl?: string | null;
+}
+
 export interface BackgroundScanTask {
   id: string;
   description: string;
   mealType: string;
   date: string;
   status: 'processing' | 'success' | 'failed';
+  /** User-facing failure message. */
   error?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  result?: any;
+  /** HTTP status behind the failure, when the backend returned one. */
+  errorCode?: number;
+  /** Full analysis on a normal success; only the persisted entry when `recovered`. */
+  result?: MealAnalysisApiResponse | RecoveredMealEntry;
   recovered?: boolean;
 }
+
+/** Narrows a scan result to the full analysis payload (absent on a recovered scan). */
+export const hasFullAnalysis = (
+  result: BackgroundScanTask['result'],
+): result is MealAnalysisApiResponse => !!result && 'analysis' in result && !!result.analysis;
+
+/** Web-platform option the DOM lib typings don't declare yet. */
+type PersistentNotificationOptions = NotificationOptions & {
+  actions?: { action: string; title: string }[];
+};
 
 const getLocalDateStr = (d: Date) => {
   const year = d.getFullYear();
@@ -80,68 +104,50 @@ function urlBase64ToUint8Array(base64String: string) {
   return outputArray;
 }
 
-function parseNotificationError(errorMsg: string): string {
-  const match = errorMsg.match(/^(\d{3}):\s*(.*)$/);
-  if (match) {
-    const code = match[1];
-    const jsonStr = match[2];
-    try {
-      const parsed = JSON.parse(jsonStr);
-      const source = parsed?.meta?.source;
-      if (source) {
-        if (source.includes('gemini-error') || source.includes('provider-error')) {
-          return 'AI nutrition analysis pipeline encountered a service error. Please try again.';
-        }
-        if (source.includes('validation-error')) {
-          return 'Invalid input details provided. Please review and try again.';
-        }
-        if (source.includes('persistence-error')) {
-          return 'Could not save the meal entry. Database error.';
-        }
-      }
-    } catch {
-      // ignore
-    }
-    if (code === '500') return 'Internal server error while processing your meal.';
-    if (code === '404') return 'Service endpoint not found.';
-    if (code === '400') return 'Bad request. The parameters could not be processed.';
-    if (code === '503') return 'AI Service temporarily unavailable due to high load. Please retry.';
-    if (code === '429') return 'Too many requests. Rate limit reached, please try again in a minute.';
-  }
-  return errorMsg;
-}
+const HTTP_STATUS_MESSAGES: Record<number, string> = {
+  400: 'Bad request. The parameters could not be processed.',
+  404: 'Service endpoint not found.',
+  429: 'Too many requests. Rate limit reached, please try again in a minute.',
+  500: 'Internal server error while processing your meal.',
+  503: 'AI Service temporarily unavailable due to high load. Please retry.',
+};
 
-function isDefiniteBusinessFailure(errorMsg: string): boolean {
-  const match = errorMsg.match(/^(\d{3}):\s*(.*)$/);
-  if (!match) return false;
-  try {
-    const source: string = JSON.parse(match[2])?.meta?.source || '';
-    return /validation-error|gemini-error|persistence-error/.test(source);
-  } catch {
-    return false;
+function describeMealAnalysisError(error: MealAnalysisError): string {
+  const source = error.source ?? '';
+  if (/gemini-error|provider-error/.test(source)) {
+    return 'AI nutrition analysis pipeline encountered a service error. Please try again.';
   }
+  if (source.includes('validation-error')) {
+    return 'Invalid input details provided. Please review and try again.';
+  }
+  if (source.includes('persistence-error')) {
+    return 'Could not save the meal entry. Database error.';
+  }
+  return (error.httpStatus && HTTP_STATUS_MESSAGES[error.httpStatus]) || error.message;
 }
-
-type FoodEntryLite = { id?: string; mealType?: string; description?: string; calories?: number; proteinGrams?: number; imageUrl?: string | null };
 
 async function snapshotEntryIds(date: string): Promise<Set<string> | null> {
   const res = await nutritionService.getFoodEntries(undefined, date, date);
   if (res.error || !Array.isArray(res.data)) return res.error ? null : new Set();
-  const list = res.data as FoodEntryLite[];
+  const list = res.data as RecoveredMealEntry[];
   return new Set(list.map((e) => e?.id).filter((id): id is string => Boolean(id)));
 }
 
+/**
+ * After an ambiguous failure (timeout, network), the meal may still have been
+ * persisted server-side. Look for an entry that wasn't there before the scan started.
+ */
 async function findRecoveredEntry(
   date: string,
   mealType: string,
   priorIds: Set<string> | null,
-): Promise<FoodEntryLite | null> {
+): Promise<RecoveredMealEntry | null> {
   if (!priorIds) return null;
   for (let attempt = 0; attempt < 4; attempt++) {
     await new Promise((r) => setTimeout(r, attempt === 0 ? 1500 : 4000));
     const res = await nutritionService.getFoodEntries(undefined, date, date);
     if (res.error || !Array.isArray(res.data)) continue;
-    const list = res.data as FoodEntryLite[];
+    const list = res.data as RecoveredMealEntry[];
     const fresh = list.filter((e) => e?.id && !priorIds.has(e.id));
     if (fresh.length > 0) {
       return fresh.find((e) => (e.mealType || '').toLowerCase() === mealType.toLowerCase()) || fresh[0];
@@ -274,20 +280,18 @@ const useNotificationStoreBase = create<NotificationStore>()(
         if (get().desktopEnabled && 'Notification' in window && Notification.permission === 'granted') {
           try {
             if ('serviceWorker' in navigator) {
-              navigator.serviceWorker.ready.then((reg) => {
-                reg.showNotification(item.title, {
-                  body: message,
-                  icon: '/logo.png',
-                  tag: `dashboard-notification-${item.id}`,
-                  requireInteraction: true,
-                  actions: [
-                    { action: 'snooze', title: 'Snooze 10m' },
-                    { action: 'open', title: 'Open' },
-                  ],
-                  data: { url: '/', itemId: item.id },
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                } as any);
-              });
+              const options: PersistentNotificationOptions = {
+                body: message,
+                icon: '/logo.png',
+                tag: `dashboard-notification-${item.id}`,
+                requireInteraction: true,
+                actions: [
+                  { action: 'snooze', title: 'Snooze 10m' },
+                  { action: 'open', title: 'Open' },
+                ],
+                data: { url: '/', itemId: item.id },
+              };
+              navigator.serviceWorker.ready.then((reg) => reg.showNotification(item.title, options));
             } else {
               new Notification(item.title, { body: message, icon: '/logo.png' });
             }
@@ -364,7 +368,7 @@ const useNotificationStoreBase = create<NotificationStore>()(
         }
       };
 
-      const markSuccess = (taskId: string, data: FoodEntryLite & { mealEntryId?: string }, recovered: boolean) => {
+      const markSuccess = (taskId: string, data: MealAnalysisApiResponse | RecoveredMealEntry, recovered: boolean) => {
         set((s) => {
           const t = s.backgroundScans.find((x) => x.id === taskId);
           if (t) { t.status = 'success'; t.result = data; t.recovered = recovered; }
@@ -376,7 +380,7 @@ const useNotificationStoreBase = create<NotificationStore>()(
         const desc = data.description || 'AI meal';
         persistNotifications((prev) => [{
           id: `ai-meal-success-${Date.now()}`,
-          itemId: data.mealEntryId || data.id || '',
+          itemId: ('mealEntryId' in data ? data.mealEntryId : data.id) ?? '',
           title: 'AI Meal Logged!',
           message: `Added: ${desc} (${kcal} kcal, ${protein}g Protein)`,
           timestamp: new Date().toISOString(),
@@ -400,10 +404,11 @@ const useNotificationStoreBase = create<NotificationStore>()(
         window.dispatchEvent(new Event('dashboard-updated'));
       };
 
-      const markFailure = (taskId: string, description: string | null, parsedError: string) => {
+      const markFailure = (taskId: string, description: string | null, error: MealAnalysisError) => {
+        const parsedError = describeMealAnalysisError(error);
         set((s) => {
           const t = s.backgroundScans.find((x) => x.id === taskId);
-          if (t) { t.status = 'failed'; t.error = parsedError; }
+          if (t) { t.status = 'failed'; t.error = parsedError; t.errorCode = error.httpStatus; }
         });
         playSound();
 
@@ -571,26 +576,30 @@ const useNotificationStoreBase = create<NotificationStore>()(
               });
             });
 
+            // Snapshot before the upload so a meal persisted by an "failed" scan can be told apart.
             const priorIdsPromise = snapshotEntryIds(date);
 
-            analyzeMeal(files, description, mealType, date)
-              .then((res) => markSuccess(taskId, res.data, false))
-              .catch(async (err: unknown) => {
-                const errorMsg = err instanceof Error ? err.message : 'Analysis failed';
-                if (!isDefiniteBusinessFailure(errorMsg)) {
-                  try {
-                    const priorIds = await priorIdsPromise;
-                    const recovered = await findRecoveredEntry(date, mealType, priorIds);
-                    if (recovered) {
-                      markSuccess(taskId, recovered, true);
-                      return;
-                    }
-                  } catch (reconErr) {
-                    console.warn('Meal persistence reconciliation failed:', reconErr);
+            // Runs in the background; the caller tracks progress through backgroundScans.
+            void (async () => {
+              const outcome = await mealAnalysisService.analyze({ files, description, mealType, date });
+              if (outcome.data) {
+                markSuccess(taskId, outcome.data, false);
+                return;
+              }
+
+              if (!outcome.error.isDefinite) {
+                try {
+                  const recovered = await findRecoveredEntry(date, mealType, await priorIdsPromise);
+                  if (recovered) {
+                    markSuccess(taskId, recovered, true);
+                    return;
                   }
+                } catch (reconErr) {
+                  console.warn('Meal persistence reconciliation failed:', reconErr);
                 }
-                markFailure(taskId, description, parseNotificationError(errorMsg));
-              });
+              }
+              markFailure(taskId, description, outcome.error);
+            })();
 
             return taskId;
           },

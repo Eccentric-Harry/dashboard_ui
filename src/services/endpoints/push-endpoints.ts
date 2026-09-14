@@ -1,4 +1,4 @@
-// Declarative Web Push endpoint descriptors, ported 1:1 from lib/api.ts.
+// Declarative Web Push endpoint descriptors.
 import type { ApiEndpoint } from '../api-config';
 
 export const API_GET_VAPID_KEY: ApiEndpoint = { url: '/push/public-key', method: 'get' };

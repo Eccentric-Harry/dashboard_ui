@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Moon, Plus, Sunrise, Trophy, Waves } from 'lucide-react'
 import { Bar, BarChart, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import type { SleepEntryPayload } from '@/lib/api'
+import type { SleepEntryPayload } from '@/types/sleep'
 import { cn } from '@/lib/utils'
 import {
   formatMinutes,
@@ -12,6 +12,7 @@ import {
   weekdayLetter,
 } from '../home-types'
 import type { HomeSleepEntry, SleepSummary } from '../sleep-summary'
+import type { ChartTooltipProps } from '@/lib/chart-tooltip'
 
 const QUALITY_LABELS = ['Rough', 'Poor', 'Okay', 'Good', 'Great'] as const
 
@@ -114,8 +115,7 @@ function avgClockTime(times: string[], anchorHour: number): string | null {
  * within a 7-day window) and calling out "Last night" explicitly fixes that.
  */
 function makeSleepTooltip(today: string) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return function SleepTooltip({ active, payload }: any) {
+  return function SleepTooltip({ active, payload }: ChartTooltipProps) {
     if (!active || !payload?.length) return null
     const point = payload[0].payload as SleepPoint
     const label = point.date === today ? 'Last night' : shortDayLabel(point.date)

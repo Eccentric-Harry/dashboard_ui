@@ -1,7 +1,8 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Footprints, Bike, PersonStanding, Zap, ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react'
-import type { StravaActivity } from '@/lib/api'
+import type { StravaActivity } from '@/types/workouts'
 import { toneStyle } from '@/lib/tone'
+import type { LucideIcon } from 'lucide-react'
 
 type ActivityLogCardProps = {
   activities: StravaActivity[]
@@ -10,8 +11,7 @@ type ActivityLogCardProps = {
   onDelete?: (activity: StravaActivity) => void
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sportIcons: Record<string, { icon: any; cls: string }> = {
+const sportIcons: Record<string, { icon: LucideIcon; cls: string }> = {
   Run: { icon: Footprints, cls: 'run-icon' },
   Ride: { icon: Bike, cls: 'ride-icon' },
   Walk: { icon: PersonStanding, cls: 'walk-icon' },

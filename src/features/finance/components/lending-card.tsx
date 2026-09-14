@@ -1,12 +1,14 @@
 import { useState, useEffect, useMemo, type CSSProperties } from 'react'
 import { Check, Loader2, ChevronLeft, ChevronRight, Pencil, Trash2, DollarSign } from 'lucide-react'
 import toast from 'react-hot-toast'
-import type { LendingRecord } from '@/lib/api'
+import type { LendingRecord } from '@/types/finance'
+import { getErrorMessage } from '@/lib/errors'
 import { toneStyle } from '@/lib/tone'
 import { financeService } from '@/services/finance-service'
+import { useFinanceStore } from '@/store/finance-store'
+import { isAwaitingData } from '@/store/zustand-utils'
 
 interface LendingCardProps {
-  refreshKey: number
   onEditClick: (record: LendingRecord) => void
   onDeleteClick: (record: LendingRecord) => void
   onRefreshTransactions?: () => void
@@ -16,9 +18,11 @@ interface LendingCardProps {
   stagger?: number
 }
 
-export function LendingCard({ refreshKey, onEditClick, onDeleteClick, onRefreshTransactions, onCelebrate, stagger = 0 }: LendingCardProps) {
-  const [records, setRecords] = useState<LendingRecord[]>([])
-  const [loading, setLoading] = useState(true)
+export function LendingCard({ onEditClick, onDeleteClick, onRefreshTransactions, onCelebrate, stagger = 0 }: LendingCardProps) {
+  const lendingState = useFinanceStore.use.lending()
+  const { loadLending } = useFinanceStore.use.actions()
+  const records = lendingState.data
+  const loading = isAwaitingData(lendingState)
   const [processingId, setProcessingId] = useState<string | null>(null)
   const [isEditMode, setIsEditMode] = useState(false)
 
@@ -29,24 +33,9 @@ export function LendingCard({ refreshKey, onEditClick, onDeleteClick, onRefreshT
   // eslint-disable-next-line react-hooks/purity
   const nowTime = useMemo(() => Date.now(), [])
 
-  const loadRecords = async () => {
-    setLoading(true)
-    try {
-      const res = await financeService.getLending()
-      if (res.error) throw new Error(res.error.message)
-      setRecords(res.data || [])
-    } catch (err) {
-      console.error('Failed to fetch lending records:', err)
-      toast.error('Failed to load lending records')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadRecords()
-  }, [refreshKey])
+    if (lendingState.hasErrors) toast.error('Failed to load lending records')
+  }, [lendingState.hasErrors])
 
   // Calculate totals
   const totalPendingVal = useMemo(() => {
@@ -109,11 +98,10 @@ export function LendingCard({ refreshKey, onEditClick, onDeleteClick, onRefreshT
         toast.success(`Status updated for ${record.borrower}`)
       }
 
-      loadRecords()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
+      void loadLending()
+    } catch (err) {
       console.error(err)
-      toast.error(err.message || 'Failed to update status')
+      toast.error(getErrorMessage(err, 'Failed to update status'))
     } finally {
       setProcessingId(null)
     }

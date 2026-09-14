@@ -1,46 +1,9 @@
-// Home route types + date helpers. Canonical API types live in lib/api.ts;
-// these are the shapes of the two untyped dashboard endpoints Home consumes,
-// plus small pure helpers shared by the cards and the insights engine.
+// Home route constants + date helpers shared by the cards and the insights engine.
+// The dashboard summary shapes Home consumes are canonical in types/; re-exported
+// here so the feature keeps a single local import.
 
-/**
- * One day's meal-quality aggregate, from DashboardService.mealQualityOf.
- *
- * `averagePoints` runs on the GPA-shaped ramp the grade badges use (A=4 … D=1) and
- * covers only the graded meals — manual entries never get a grade, which is why
- * `gradedMeals` is reported separately from `mealsLogged`. Null average means
- * "nothing assessed yet", never "poor".
- */
-export interface MealQualityDay {
-  mealsLogged: number
-  gradedMeals: number
-  averagePoints: number | null
-  letter: 'A' | 'B' | 'C' | 'D' | null
-}
-
-/** Shape of GET /dashboard/nutrition-summary (DashboardService.getNutritionSummary). */
-export interface NutritionSummary {
-  date: string
-  dailyCalories: Record<string, number>
-  dailyProtein: Record<string, number>
-  mealTypeBreakdown: Record<string, number>
-  todayTotalCalories: number
-  todayTotalProtein: number
-  calorieGoal: number
-  proteinGoal: number
-  /** Optional: absent when the UI is running against a backend older than the day-loop change. */
-  dailyMealQuality?: Record<string, MealQualityDay>
-  todayMealQuality?: MealQualityDay | null
-}
-
-/** Shape of GET /dashboard/spending-summary (DashboardService.getSpendingSummary). */
-export interface SpendingSummary {
-  month: string
-  totalSpent: number
-  monthlyBudget: number
-  budgetRemaining: number
-  budgetUtilization: number
-  categoryBreakdown: Record<string, number>
-}
+export type { MealQualityDay, NutritionSummary } from '@/types/nutrition'
+export type { SpendingSummary } from '@/types/finance'
 
 // TODO: make the sleep target user-editable from Profile; hardcoded for now.
 export const SLEEP_TARGET_HOURS = 7.5

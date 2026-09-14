@@ -1,6 +1,6 @@
 import { Fragment, useMemo, useState } from 'react'
 import { ArrowRight, Check, CheckCircle2 } from 'lucide-react'
-import type { DailyTask } from '@/lib/api'
+import type { DailyTask } from '@/types/tasks'
 import type { AppPath } from '@/app/routes'
 import { cn } from '@/lib/utils'
 

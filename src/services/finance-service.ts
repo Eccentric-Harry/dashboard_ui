@@ -9,6 +9,7 @@ import type {
   RepaymentInstallment,
   SubscriptionDTO,
   LendingRecord,
+  SpendingSummary,
   TransactionRequest,
   SubscriptionRequest,
   LendingRequest,
@@ -23,7 +24,7 @@ export interface FinanceServiceInterface {
   getSliceRepayments(): Promise<SafeResult<RepaymentInstallment[]>>;
   getSubscriptions(): Promise<SafeResult<SubscriptionDTO[]>>;
   getLending(): Promise<SafeResult<LendingRecord[]>>;
-  getSpendingSummary(month?: string): Promise<SafeResult<unknown>>;
+  getSpendingSummary(month?: string): Promise<SafeResult<SpendingSummary>>;
   // Mutations
   updateBalance(balance: number): Promise<SafeResult<FinanceAccount>>;
   updateBudget(monthlyBudget: number): Promise<SafeResult<FinanceAccount>>;
@@ -46,7 +47,8 @@ export const financeService: FinanceServiceInterface = {
   getSliceRepayments: () => instance.safeCall<RepaymentInstallment[]>(E.API_GET_SLICE_REPAYMENTS),
   getSubscriptions: () => instance.safeCall<SubscriptionDTO[]>(E.API_GET_SUBSCRIPTIONS),
   getLending: () => instance.safeCall<LendingRecord[]>(E.API_GET_LENDING),
-  getSpendingSummary: (month) => instance.safeCall(E.API_GET_SPENDING_SUMMARY, { query: { month } }),
+  getSpendingSummary: (month) =>
+    instance.safeCall<SpendingSummary>(E.API_GET_SPENDING_SUMMARY, { query: { month } }),
 
   updateBalance: (balance) =>
     instance.safeCall<FinanceAccount>(E.API_UPDATE_FINANCE_BALANCE, { body: { balance } }),

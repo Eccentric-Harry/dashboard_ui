@@ -1,7 +1,8 @@
 import { useMemo, useState, useEffect } from 'react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Label } from 'recharts'
 import { Footprints, Bike, PersonStanding, Zap, type LucideIcon } from 'lucide-react'
-import type { StravaActivityStats } from '@/lib/api'
+import type { StravaActivityStats } from '@/types/workouts'
+import type { ChartTooltipProps } from '@/lib/chart-tooltip'
 
 const SPORT_COLORS: Record<string, string> = {
   Run: '#3dc152',
@@ -17,8 +18,7 @@ const sportIcons: Record<string, LucideIcon> = {
   'E-Bike Ride': Zap,
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function CustomTooltip({ active, payload }: any) {
+function CustomTooltip({ active, payload }: ChartTooltipProps) {
   if (!active || !payload?.length) return null
   const d = payload[0].payload as { name: string; value: number; distance: number }
   return (

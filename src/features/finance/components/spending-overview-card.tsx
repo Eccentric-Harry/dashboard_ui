@@ -1,8 +1,9 @@
 import { useMemo, useState, useCallback, useEffect, type CSSProperties } from 'react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { PieChart as PieChartIcon } from 'lucide-react'
-import type { DailyFinancialLog } from '@/lib/api'
+import type { DailyFinancialLog } from '@/types/finance'
 import { getIconForCategory, getConsistentColor } from '../utils'
+import type { ChartTooltipProps } from '@/lib/chart-tooltip'
 
 interface SpendingOverviewCardProps {
   logs?: DailyFinancialLog[]
@@ -26,8 +27,7 @@ const getMonthKey = (dateString: string) => {
 }
 
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const CustomTooltip = ({ active, payload }: any) => {
+const CustomTooltip = ({ active, payload }: ChartTooltipProps) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload as { label: string; rawAmount: number; share: string }
     return (

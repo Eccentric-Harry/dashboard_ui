@@ -4,11 +4,12 @@ import toast from 'react-hot-toast'
 import { SideRail } from '@/components/layout/side-rail'
 import { TopChip } from '@/components/layout/top-chip'
 import type { AppPath } from '@/app/routes'
-import type { Prompt } from '@/lib/api'
+import type { Prompt } from '@/types/prompts'
 import { promptsService } from '@/services/prompts-service'
 import { usePromptsStore } from '@/store/prompts-store'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import './prompts-page.css'
+import { getErrorMessage } from '@/lib/errors'
 
 type PromptsOverviewProps = {
   activePath: AppPath
@@ -99,10 +100,9 @@ function PromptsOverviewDashboard() {
       }
       setIsEditing(false)
       loadPrompts()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to save prompt:', error)
-      toast.error(error.message || 'Failed to save prompt')
+      toast.error(getErrorMessage(error, 'Failed to save prompt'))
     } finally {
       setIsSaving(false)
     }
@@ -119,10 +119,9 @@ function PromptsOverviewDashboard() {
       }
       toast.success('Prompt deleted')
       loadPrompts()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to delete prompt:', error)
-      toast.error(error.message || 'Failed to delete prompt')
+      toast.error(getErrorMessage(error, 'Failed to delete prompt'))
     } finally {
       setPromptToDelete(null)
     }

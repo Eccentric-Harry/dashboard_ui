@@ -1,18 +1,8 @@
-import type {
-  DailyTask,
-  LearningsSummary,
-  LearningLog,
-  LearningPursuit,
-  CalendarItem,
-  CalendarRecurrence,
-  DailyFinancialLog,
-  FinancialTransaction,
-  FinancialTotals,
-  LendingRecord,
-  RepaymentInstallment,
-  StravaActivity,
-  StravaActivityStats,
-} from '../lib/api';
+import type { DailyTask } from '../types/tasks';
+import type { LearningsSummary, LearningLog, LearningPursuit } from '../types/learnings';
+import type { CalendarItem, CalendarRecurrence } from '../types/calendar';
+import type { DailyFinancialLog, FinancialTransaction, FinancialTotals, LendingRecord, RepaymentInstallment } from '../types/finance';
+import type { StravaActivity, StravaActivityStats } from '../types/workouts';
 
 const today = new Date();
 const todayIso = today.toISOString().split('T')[0];

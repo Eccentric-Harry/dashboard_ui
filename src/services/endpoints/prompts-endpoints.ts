@@ -1,4 +1,4 @@
-// Declarative Prompts endpoint descriptors, ported 1:1 from lib/api.ts.
+// Declarative Prompts endpoint descriptors.
 import type { ApiEndpoint } from '../api-config';
 
 export const API_GET_PROMPTS: ApiEndpoint = { url: '/prompts', method: 'get' };

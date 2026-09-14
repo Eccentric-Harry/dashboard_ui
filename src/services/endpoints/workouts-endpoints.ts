@@ -1,4 +1,4 @@
-// Declarative Workouts endpoint descriptors, ported 1:1 from the URLs in lib/api.ts.
+// Declarative Workouts endpoint descriptors.
 import type { ApiEndpoint } from '../api-config';
 
 export const API_GET_WORKOUTS: ApiEndpoint = { url: '/workouts', method: 'get' };

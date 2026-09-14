@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
 import { ExternalLink, Pin } from 'lucide-react'
-import type { StravaActivityStats } from '@/lib/api'
-import { workoutsService } from '@/services/workouts-service'
+import type { StravaActivityStats } from '@/types/workouts'
+import { useWorkoutsStore } from '@/store/workouts-store'
+import { isAwaitingData } from '@/store/zustand-utils'
 
 type StravaEmbedCardProps = {
   stats: StravaActivityStats | null
@@ -9,30 +9,10 @@ type StravaEmbedCardProps = {
 }
 
 function StravaEmbedCard({ stats, onEditClick }: StravaEmbedCardProps) {
-  const [activeEmbed, setActiveEmbed] = useState<{ id: string; token?: string } | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  // Load featured embed on mount
-  useEffect(() => {
-    const loadFeatured = async () => {
-      try {
-        const res = await workoutsService.getFeaturedEmbed()
-        if (res.error) throw new Error(res.error.message)
-        const featured = res.data
-        if (featured) {
-          setActiveEmbed(featured)
-        } else if (stats?.recentEmbeds?.length) {
-          // Fallback to most recent activity if no pinned featured activity exists
-          setActiveEmbed(stats.recentEmbeds[0])
-        }
-      } catch (err) {
-        console.error('Error loading featured embed:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-    loadFeatured()
-  }, [stats])
+  const featuredState = useWorkoutsStore.use.featuredEmbed()
+  // A pinned activity wins; otherwise fall back to the most recent one.
+  const activeEmbed = featuredState.data ?? stats?.recentEmbeds?.[0] ?? null
+  const loading = isAwaitingData(featuredState)
 
   const iframeSrc = activeEmbed 
     ? `https://strava-embeds.com/activity/${activeEmbed.id}${activeEmbed.token ? `?token=${activeEmbed.token}` : ''}`

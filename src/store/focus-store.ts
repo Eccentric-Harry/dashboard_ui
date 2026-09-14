@@ -8,7 +8,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { createSelectors } from './zustand-utils';
-import type { FocusSession } from '../lib/api';
+import type { FocusSession } from '../types/focus';
 import { focusService } from '../services/focus-service';
 
 interface FocusState {

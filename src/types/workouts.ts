@@ -1,5 +1,10 @@
 // Workouts (Strava) domain types — single source of truth.
-// lib/api.ts re-exports these for back-compat while its workout functions migrate.
+
+/** A Strava activity reference the embed iframe can render (token needed for private activities). */
+export interface StravaEmbedRef {
+  id: string;
+  token?: string;
+}
 
 export interface StravaActivity {
   id: string;
@@ -28,7 +33,7 @@ export interface StravaActivityStats {
   countBySportType: Record<string, number>;
   distanceBySportType: Record<string, number>;
   currentStreakWeeks: number;
-  recentEmbeds: Array<{ id: string; token?: string }>;
+  recentEmbeds: StravaEmbedRef[];
 }
 
 // ── Request DTOs ──
@@ -43,7 +48,4 @@ export interface CreateStravaActivityRequest {
   stravaToken?: string;
 }
 
-export interface FeaturedEmbedRequest {
-  id: string;
-  token?: string;
-}
+export type FeaturedEmbedRequest = StravaEmbedRef;

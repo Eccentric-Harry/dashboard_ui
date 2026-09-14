@@ -6,7 +6,7 @@
 // said "Not logged" directly above a card showing a closed night. Every consumer
 // now reads the entries normalized here, so they can't drift again.
 
-import type { SleepEntry } from '@/lib/api'
+import type { SleepEntry } from '@/types/sleep'
 import { addDaysIso, isoDate, lastNDates, SLEEP_TARGET_MINUTES } from './home-types'
 
 /** An entry as Home reads it: `date` may be re-attributed, `storedDate` is what the backend holds. */

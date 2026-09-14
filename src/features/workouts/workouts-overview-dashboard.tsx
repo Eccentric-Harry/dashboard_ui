@@ -10,6 +10,7 @@ import {
   UpdateEmbedModal,
 } from './components'
 import { useWorkoutsStore } from '@/store/workouts-store'
+import type { StravaActivity } from '@/types/workouts'
 import { Activity, Mountain, Timer, Flame } from 'lucide-react'
 
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
@@ -30,10 +31,8 @@ function WorkoutsOverviewDashboard() {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEmbedModalOpen, setIsEmbedModalOpen] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [editingActivity, setEditingActivity] = useState<any>(null)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [activityToDelete, setActivityToDelete] = useState<any>(null)
+  const [editingActivity, setEditingActivity] = useState<StravaActivity | null>(null)
+  const [activityToDelete, setActivityToDelete] = useState<StravaActivity | null>(null)
 
   const refreshData = useCallback(() => {
     void workoutsActions.loadAll()

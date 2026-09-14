@@ -6,17 +6,13 @@
 // uses for Finance/Nutrition/Mind, so Home's Patterns feed can render through
 // the shared <InsightList> component — one visual system, three domains.
 
-import type {
-  DailyFinancialLog,
-  DailyLog,
-  DailyTask,
-  FocusDaySummary,
-  LearningsSummary,
-  MindAnchorOutcome,
-  MindEntry,
-  SleepEntry,
-  StravaActivity,
-} from '@/lib/api'
+import type { DailyFinancialLog } from '@/types/finance'
+import type { DailyLog, MindAnchorOutcome, MindEntry } from '@/types/mind'
+import type { DailyTask } from '@/types/tasks'
+import type { FocusDaySummary } from '@/types/focus'
+import type { LearningsSummary } from '@/types/learnings'
+import type { SleepEntry } from '@/types/sleep'
+import type { StravaActivity } from '@/types/workouts'
 import type { Insight, InsightIcon, InsightSentiment } from '@/lib/insights/engine'
 import { confidenceFrom } from '@/lib/insights/engine'
 import type { NutritionSummary, SpendingSummary } from './home-types'

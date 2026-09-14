@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { GraduationCap, Plus, Check, ChevronLeft, ChevronRight, X, Loader2, Pencil, Trash2 } from 'lucide-react'
-import type { LearningPursuit, PursuitStep } from '@/lib/api'
+import type { LearningPursuit, PursuitStep } from '@/types/learnings'
 import { learningsService } from '@/services/learnings-service'
+import { useLearningsStore } from '@/store/learnings-store'
+import { isAwaitingData } from '@/store/zustand-utils'
 import { toast } from 'react-hot-toast'
 
 const NotionIcon = () => (
@@ -11,13 +13,15 @@ const NotionIcon = () => (
 )
 
 interface ActiveStudyQueueProps {
-  refreshKey?: number
+  /** Called after a pursuit changes so the route can re-sync learnings + summary. */
   onRefresh?: () => void
 }
 
-export function ActiveStudyQueue({ refreshKey, onRefresh }: ActiveStudyQueueProps = {}) {
-  const [tracks, setTracks] = useState<LearningPursuit[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+export function ActiveStudyQueue({ onRefresh }: ActiveStudyQueueProps = {}) {
+  const pursuitsState = useLearningsStore.use.pursuits()
+  const { loadPursuits, applyPursuits } = useLearningsStore.use.actions()
+  const tracks = pursuitsState.data
+  const isLoading = isAwaitingData(pursuitsState) && tracks.length === 0
   
   // Add Form State
   const [isAdding, setIsAdding] = useState(false)
@@ -42,24 +46,9 @@ export function ActiveStudyQueue({ refreshKey, onRefresh }: ActiveStudyQueueProp
   const [page, setPage] = useState(1)
   const TRACKS_PAGE_SIZE = 2 // Match expanded display height
 
-  const loadPursuits = async () => {
-    try {
-      setIsLoading(true)
-      const res = await learningsService.getPursuits()
-      if (res.error) throw new Error(res.error.message)
-      setTracks(res.data ?? [])
-    } catch (err) {
-      console.error('Failed to load learning pursuits:', err)
-      toast.error('Could not load pursuits.')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadPursuits()
-  }, [refreshKey])
+    if (pursuitsState.hasErrors) toast.error('Could not load pursuits.')
+  }, [pursuitsState.hasErrors])
 
   const totalPages = Math.max(1, Math.ceil(tracks.length / TRACKS_PAGE_SIZE))
   const start = (page - 1) * TRACKS_PAGE_SIZE
@@ -75,7 +64,7 @@ export function ActiveStudyQueue({ refreshKey, onRefresh }: ActiveStudyQueueProp
 
   const handleToggleStep = async (pursuitId: string, stepId: string) => {
     // 1. Optimistic UI update
-    setTracks((prev) =>
+    applyPursuits((prev) =>
       prev.map((track) => {
         if (track.id === pursuitId) {
           const updatedSteps = track.steps.map((step) => {
@@ -141,7 +130,7 @@ export function ActiveStudyQueue({ refreshKey, onRefresh }: ActiveStudyQueueProp
     }
 
     // Optimistically update
-    setTracks((prev) =>
+    applyPursuits((prev) =>
       prev.map((t) => (t.id === id ? { ...t, title: editTitle.trim(), category: finalCategory } : t))
     )
     setEditingPursuitId(null)
@@ -162,7 +151,7 @@ export function ActiveStudyQueue({ refreshKey, onRefresh }: ActiveStudyQueueProp
     e.stopPropagation()
     if (window.confirm('Are you sure you want to delete this pursuit?')) {
       // Optimistically remove
-      setTracks((prev) => prev.filter((t) => t.id !== id))
+      applyPursuits((prev) => prev.filter((t) => t.id !== id))
       try {
         const res = await learningsService.deletePursuit(id)
         if (res.error) throw new Error(res.error.message)
@@ -187,7 +176,7 @@ export function ActiveStudyQueue({ refreshKey, onRefresh }: ActiveStudyQueueProp
     if (!editStepText.trim()) return
 
     // Optimistically update text
-    setTracks((prev) =>
+    applyPursuits((prev) =>
       prev.map((t) => {
         if (t.id === pursuitId) {
           const updatedSteps = t.steps.map((s) => (s.id === stepId ? { ...s, text: editStepText.trim() } : s))
@@ -212,7 +201,7 @@ export function ActiveStudyQueue({ refreshKey, onRefresh }: ActiveStudyQueueProp
   const handleDeleteStep = async (pursuitId: string, stepId: string) => {
     if (window.confirm('Delete this subtask?')) {
       // Optimistically remove step
-      setTracks((prev) =>
+      applyPursuits((prev) =>
         prev.map((t) => {
           if (t.id === pursuitId) {
             const updatedSteps = t.steps.filter((s) => s.id !== stepId)
@@ -275,7 +264,8 @@ export function ActiveStudyQueue({ refreshKey, onRefresh }: ActiveStudyQueueProp
       })
       if (res.error || !res.data) throw new Error(res.error?.message ?? 'Failed to create pursuit')
 
-      setTracks((prev) => [...prev, res.data as LearningPursuit])
+      const created = res.data
+      applyPursuits((prev) => [...prev, created])
       toast.success('Added pursuit & created Notion page!')
       
       // Reset Form

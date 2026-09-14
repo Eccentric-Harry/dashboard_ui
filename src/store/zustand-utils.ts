@@ -38,6 +38,12 @@ export const remoteStateWith = <T>(data: T): RemoteDataStatus<T> => ({
   ...emptyRemoteState,
   data,
 });
+/**
+ * True while a resource has no settled result to show — before its first response and
+ * while a reload is in flight. Use it to gate skeletons.
+ */
+export const isAwaitingData = (state: RemoteDataState): boolean => !state.loaded && !state.hasErrors;
+
 export const emptyRemoteStateWithArray = <T>(): RemoteDataStatus<T[]> => remoteStateWith<T[]>([]);
 
 /**

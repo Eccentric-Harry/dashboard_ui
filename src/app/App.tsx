@@ -16,13 +16,9 @@ import { ProfileOverview } from '../features/profile/profile-page'
 import { MindOverview } from '../features/mind/mind-page'
 import { getAvatarImage } from '../lib/avatar'
 import { isStandalone } from '../lib/utils'
-// Imported from lib/api (which re-exports it from axios-client) rather than from
-// axios-client directly: lib/api installs the window.fetch patch that injects the
-// bearer token and feeds the active-GET counter as an import side effect, and it
-// has to be loaded before the first request goes out. Phase B removes both.
-import { subscribeToActiveRequests } from '../lib/api'
-import { resolveAuthGate } from '../services/http/axios-client'
-import { userService } from '../services/user-service'
+import { resolveAuthGate, subscribeToActiveRequests } from '../services/http/axios-client'
+import { hasSession } from '../services/http/session'
+import { userActions } from '../store/user-store'
 import { dashboardActions } from '../store/dashboard-store'
 import { appearanceActions } from '../store/appearance-store'
 import { focusActions } from '../store/focus-store'
@@ -31,14 +27,9 @@ import { OverlayLoader } from '../components/ui/overlay-loader'
 import { NotificationCenter } from '../components/layout/notification-center'
 import { SpiralBreakerOverlay } from '../features/spiral-breaker/spiral-breaker-overlay';
 import { VisitorAuthPopup } from '../features/auth/visitor-auth-popup'
-import { enableGuestInterceptor } from '../lib/guest-interceptor'
 
-const isGuest = localStorage.getItem('isGuest') === 'true';
-const authToken = localStorage.getItem('authToken');
-
-if (isGuest) {
-  enableGuestInterceptor();
-}
+// Signing in or out reloads the page, so the session is fixed for this app lifetime.
+const sessionActive = hasSession();
 
 function MobileProfileTrigger({ onNavigate, activePath }: { onNavigate: (path: AppPath) => void; activePath: AppPath }) {
   const [avatar, setAvatar] = useState(() => localStorage.getItem('avatarUrl') || 'luffy');
@@ -124,26 +115,13 @@ function App() {
   // and name into localStorage.
   //
   // resolveAuthGate MUST run here, and before anything else can issue a request:
-  // every non-bypassed Axios request parks on a 25ms poll loop until the gate is
-  // resolved (services/http/axios-client.ts). If this call is ever dropped, the
-  // whole app hangs on a permanent loading overlay with no error anywhere.
+  // every non-bypassed Axios request waits on the gate (services/http/axios-client.ts).
+  // If this call is ever dropped, the whole app hangs on a permanent loading overlay
+  // with no error anywhere.
   useEffect(() => {
-    resolveAuthGate(isGuest || !!authToken)
-
-    async function prefetchProfile() {
-      try {
-        const res = await userService.getProfile()
-        if (res?.data) {
-          localStorage.setItem('avatarUrl', res.data.avatarUrl || 'luffy')
-          localStorage.setItem('displayName', res.data.displayName || 'User')
-          window.dispatchEvent(new Event('profile-updated'))
-        }
-      } catch (err) {
-        console.error('Failed to prefetch profile', err)
-      }
-    }
-    if (isGuest || authToken) {
-      prefetchProfile()
+    resolveAuthGate(sessionActive)
+    if (sessionActive) {
+      void userActions.loadProfile()
     }
   }, [])
 
@@ -301,7 +279,7 @@ function App() {
     content = <HomeOverview activePath={pathname} onNavigate={navigateTo} />
   }
 
-  if (!isGuest && !authToken) {
+  if (!sessionActive) {
     return <VisitorAuthPopup />;
   }
 

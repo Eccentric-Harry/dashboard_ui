@@ -3,6 +3,7 @@ import { Lock, ArrowRight, Loader2, User, ArrowLeft, LogIn, UserPlus, Globe, Ale
 import { authService } from '@/services/auth-service';
 import toast from 'react-hot-toast';
 import './visitor-auth-popup.css';
+import { getErrorMessage } from '@/lib/errors';
 
 export function VisitorAuthPopup() {
   const [step, setStep] = useState<2 | 3>(2);
@@ -46,9 +47,8 @@ export function VisitorAuthPopup() {
       } else {
         setErrorMsg('Invalid response from server');
       }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Invalid username or passcode');
+    } catch (err) {
+      setErrorMsg(getErrorMessage(err, 'Invalid username or passcode'));
     } finally {
       setLoading(false);
     }
@@ -80,9 +80,8 @@ export function VisitorAuthPopup() {
       } else {
         setErrorMsg('Invalid response from server');
       }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Signup failed. Username might be taken.');
+    } catch (err) {
+      setErrorMsg(getErrorMessage(err, 'Signup failed. Username might be taken.'));
     } finally {
       setLoading(false);
     }

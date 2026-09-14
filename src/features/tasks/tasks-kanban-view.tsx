@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Plus, MoreHorizontal, Clock, Pencil, Check, Trash2 } from 'lucide-react'
-import type { DailyTask } from '@/lib/api'
+import type { DailyTask } from '@/types/tasks'
 import { getTagColor } from '@/lib/tag-colors'
 import { toneStyle } from '@/lib/tone'
 import avatar1 from '@/assets/avatars/avatar1.png'

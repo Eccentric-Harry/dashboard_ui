@@ -1,16 +1,12 @@
-import { useEffect, useState, useCallback, useMemo, type CSSProperties } from 'react'
+import { useState, useCallback, useMemo, type CSSProperties } from 'react'
 import { PieChart as PieIcon, X } from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
-import type { LearningLog } from '@/lib/api'
-import { learningsService } from '@/services/learnings-service'
+import { useLearningsStore } from '@/store/learnings-store'
+import { isAwaitingData } from '@/store/zustand-utils'
 import { getConsistentColor, getIconForCategory, liftTone } from '../learnings-utils'
+import type { ChartTooltipProps } from '@/lib/chart-tooltip'
 
-interface CategoryBreakdownCardProps {
-  refreshKey: number
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const CustomChartTooltip = ({ active, payload }: any) => {
+const CustomChartTooltip = ({ active, payload }: ChartTooltipProps) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload as { name: string; value: number; color?: string }
     return (
@@ -23,45 +19,23 @@ const CustomChartTooltip = ({ active, payload }: any) => {
   return null
 }
 
-export function CategoryBreakdownCard({ refreshKey }: CategoryBreakdownCardProps) {
-  const [learnings, setLearnings] = useState<LearningLog[]>([])
-  const [categories, setCategories] = useState<{ name: string; count: number }[]>([])
-  const [loading, setLoading] = useState(false)
+export function CategoryBreakdownCard() {
+  const learningsState = useLearningsStore.use.learnings()
+  const learnings = learningsState.data
+  const loading = isAwaitingData(learningsState) && learnings.length === 0
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [activeIndex, setActiveIndex] = useState<number>(-1)
 
-  const loadCategories = useCallback(async () => {
-    setLoading(true)
-    try {
-      const res = await learningsService.getLearnings()
-      if (res.error) throw new Error(res.error.message)
-      const list: LearningLog[] = res?.data ?? []
-      setLearnings(list)
-
-      const counts: Record<string, number> = {}
-      list.forEach((log) => {
-        const cat = log.category ? log.category.trim() : 'General'
-        counts[cat] = (counts[cat] || 0) + 1
-      })
-
-      const sorted = Object.entries(counts)
-        .map(([name, count]) => ({ name, count }))
-        .sort((a, b) => b.count - a.count)
-
-      setCategories(sorted)
-    } catch (err) {
-      console.error('Failed to load category counts', err)
-      setCategories([])
-      setLearnings([])
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadCategories()
-  }, [loadCategories, refreshKey])
+  const categories = useMemo(() => {
+    const counts: Record<string, number> = {}
+    learnings.forEach((log) => {
+      const cat = log.category ? log.category.trim() : 'General'
+      counts[cat] = (counts[cat] || 0) + 1
+    })
+    return Object.entries(counts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+  }, [learnings])
 
   const chartData = useMemo(() => {
     return categories.map((cat) => ({
@@ -81,10 +55,10 @@ export function CategoryBreakdownCard({ refreshKey }: CategoryBreakdownCardProps
     setActiveIndex(-1)
   }, [])
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const onPieClick = useCallback((data: any) => {
-    if (data && data.name) {
-      setSelectedCategory((prev) => (prev === data.name ? null : data.name))
+  const onPieClick = useCallback((data: { name?: unknown }) => {
+    const name = data?.name
+    if (typeof name === 'string' && name) {
+      setSelectedCategory((prev) => (prev === name ? null : name))
     }
   }, [])
 

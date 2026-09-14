@@ -1,4 +1,4 @@
-// Declarative Finance endpoint descriptors, ported 1:1 from the URLs in lib/api.ts.
+// Declarative Finance endpoint descriptors.
 import type { ApiEndpoint } from '../api-config';
 
 export const API_GET_FINANCE_DAILY_LOGS: ApiEndpoint = { url: '/finance/daily-logs', method: 'get' };

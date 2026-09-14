@@ -1,4 +1,4 @@
-// Declarative Mind endpoint descriptors, ported 1:1 from lib/api.ts.
+// Declarative Mind endpoint descriptors.
 import type { ApiEndpoint } from '../api-config';
 
 export const API_GET_MIND_ENTRIES: ApiEndpoint = { url: '/mind/entries', method: 'get' };

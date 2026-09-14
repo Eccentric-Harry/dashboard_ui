@@ -1,14 +1,17 @@
-import { useState, useMemo, useEffect, useCallback, type CSSProperties } from 'react'
+import { useState, useMemo, type CSSProperties } from 'react'
 import { Check, Loader2, Pencil, Plus, Trash2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
-import type { SubscriptionDTO } from '@/lib/api'
+import type { SubscriptionDTO } from '@/types/finance'
+import { getErrorMessage } from '@/lib/errors'
 import { toneStyle } from '@/lib/tone'
 import { financeService } from '@/services/finance-service'
+import { useFinanceStore } from '@/store/finance-store'
+import { isAwaitingData } from '@/store/zustand-utils'
 import { AddSubscriptionModal } from './add-subscription-modal'
+import type { TransactionProp } from './transactions-card'
 
 interface SubscriptionsCardProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  transactions: any[]
+  transactions: TransactionProp[]
   onRefresh?: () => void
   /** Fired when a bill is cleared, so the route can celebrate. */
   onCelebrate?: () => void
@@ -19,28 +22,13 @@ interface SubscriptionsCardProps {
 function SubscriptionsCard({ transactions, onRefresh, onCelebrate, stagger = 0 }: SubscriptionsCardProps) {
   const [processingId, setProcessingId] = useState<string | null>(null)
   const [optimisticPaidIds, setOptimisticPaidIds] = useState<Set<string>>(new Set())
-  const [apiSubscriptions, setApiSubscriptions] = useState<SubscriptionDTO[]>([])
-  const [loading, setLoading] = useState(true)
+  const subscriptionsState = useFinanceStore.use.subscriptions()
+  const { loadSubscriptions } = useFinanceStore.use.actions()
+  const subscriptions = subscriptionsState.data
+  const loading = isAwaitingData(subscriptionsState) && subscriptions.length === 0
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
-
-  const loadSubscriptions = useCallback(() => {
-    return financeService.getSubscriptions()
-      .then((res) => {
-        if (res.error) throw new Error(res.error.message)
-        setApiSubscriptions(res.data || [])
-        setLoading(false)
-      })
-      .catch((err) => {
-        console.error('Failed to fetch subscriptions:', err)
-        setLoading(false)
-      })
-  }, [])
-
-  useEffect(() => {
-    loadSubscriptions()
-  }, [loadSubscriptions])
 
   const handleDelete = async (subscription: SubscriptionDTO) => {
     setDeletingId(subscription.id)
@@ -49,9 +37,8 @@ function SubscriptionsCard({ transactions, onRefresh, onCelebrate, stagger = 0 }
       if (res.error) throw new Error(res.error.message)
       toast.success(`Removed ${subscription.name}`)
       await loadSubscriptions()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      toast.error(error.message || `Failed to remove ${subscription.name}`)
+    } catch (error) {
+      toast.error(getErrorMessage(error, `Failed to remove ${subscription.name}`))
     } finally {
       setDeletingId(null)
     }
@@ -62,7 +49,7 @@ function SubscriptionsCard({ transactions, onRefresh, onCelebrate, stagger = 0 }
 
     // Check transactions for subscription payments
     transactions.forEach(tx => {
-      apiSubscriptions.forEach(sub => {
+      subscriptions.forEach(sub => {
         // Match by description containing service name
         if (tx.merchant.toLowerCase().includes(sub.name.toLowerCase())) {
           ids.add(sub.name)
@@ -74,7 +61,7 @@ function SubscriptionsCard({ transactions, onRefresh, onCelebrate, stagger = 0 }
     optimisticPaidIds.forEach(id => ids.add(id))
 
     return ids
-  }, [transactions, optimisticPaidIds, apiSubscriptions])
+  }, [transactions, optimisticPaidIds, subscriptions])
 
   const getSubColorStyles = (service: string) => {
     const s = service.toLowerCase()
@@ -259,9 +246,8 @@ function SubscriptionsCard({ transactions, onRefresh, onCelebrate, stagger = 0 }
       toast.success(`Paid ${subscription.name} subscription`)
       onCelebrate?.()
       if (onRefresh) onRefresh()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      toast.error(error.message || `Failed to record payment for ${subscription.name}`)
+    } catch (error) {
+      toast.error(getErrorMessage(error, `Failed to record payment for ${subscription.name}`))
       console.error('Failed to record subscription payment:', error)
     } finally {
       setProcessingId(null)
@@ -272,7 +258,7 @@ function SubscriptionsCard({ transactions, onRefresh, onCelebrate, stagger = 0 }
     return n + (n > 0 ? ['th', 'st', 'nd', 'rd'][(n > 3 && n < 21) || n % 10 > 3 ? 0 : n % 10] : '');
   };
 
-  const totalCost = apiSubscriptions.reduce((sum, sub) => sum + sub.cost, 0);
+  const totalCost = subscriptions.reduce((sum, sub) => sum + sub.cost, 0);
 
   if (loading) {
     return (
@@ -308,7 +294,7 @@ function SubscriptionsCard({ transactions, onRefresh, onCelebrate, stagger = 0 }
         <div>
           <span className="finance-eyebrow">Recurring</span>
           <h2>Subscriptions</h2>
-          <p>{apiSubscriptions.length} active renewals</p>
+          <p>{subscriptions.length} active renewals</p>
         </div>
         <div className="finance-sub-head-right">
           <strong>₹{totalCost.toLocaleString('en-IN')}</strong>
@@ -332,14 +318,14 @@ function SubscriptionsCard({ transactions, onRefresh, onCelebrate, stagger = 0 }
           </button>
         </div>
       </div>
-      {apiSubscriptions.length === 0 ? (
+      {subscriptions.length === 0 ? (
         <button type="button" className="finance-sub-empty" onClick={() => setIsAddOpen(true)}>
           <Plus size={16} strokeWidth={2.2} />
           <span>Add your first subscription</span>
         </button>
       ) : (
       <div className="finance-subscription-list">
-        {apiSubscriptions.map((subscription) => {
+        {subscriptions.map((subscription) => {
           const isProcessing = processingId === subscription.name
           const isPaid = paidIds.has(subscription.name)
           

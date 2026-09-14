@@ -14,12 +14,23 @@ import {
   type RemoteDataStatus,
 } from './zustand-utils';
 import { financeService } from '../services/finance-service';
-import type { DailyFinancialLog, FinanceAccount } from '../types/finance';
+import type {
+  DailyFinancialLog,
+  FinanceAccount,
+  LendingRecord,
+  RepaymentInstallment,
+  SubscriptionDTO,
+} from '../types/finance';
 
 interface FinanceState {
   dailyLogs: RemoteDataStatus<DailyFinancialLog[]>;
   account: RemoteDataStatus<FinanceAccount | null>;
   budget: RemoteDataStatus<FinanceAccount | null>;
+  // Commitments — read by both their own cards and the intelligence panel, so they
+  // are fetched once here instead of once per consumer.
+  subscriptions: RemoteDataStatus<SubscriptionDTO[]>;
+  lending: RemoteDataStatus<LendingRecord[]>;
+  repayments: RemoteDataStatus<RepaymentInstallment[]>;
 }
 
 interface FinanceActions {
@@ -27,8 +38,13 @@ interface FinanceActions {
     loadDailyLogs: (days?: number) => Promise<void>;
     loadAccount: () => Promise<void>;
     loadBudget: () => Promise<void>;
-    /** Refresh every finance slice (replaces the old component-local refreshData). */
+    /** Refresh the ledger + balance/budget slices (the "a transaction changed" refresh). */
     loadAll: (days?: number) => Promise<void>;
+    loadSubscriptions: () => Promise<void>;
+    loadLending: () => Promise<void>;
+    loadRepayments: () => Promise<void>;
+    /** Refresh subscriptions, lending and repayments together. */
+    loadCommitments: () => Promise<void>;
     /** Optimistic local updates after a successful edit-modal save. */
     applyBalance: (balance: number) => void;
     applyBudget: (monthlyBudget: number) => void;
@@ -41,6 +57,9 @@ const initialState: FinanceState = {
   dailyLogs: emptyRemoteStateWithArray<DailyFinancialLog>(),
   account: remoteStateWith<FinanceAccount | null>(null),
   budget: remoteStateWith<FinanceAccount | null>(null),
+  subscriptions: emptyRemoteStateWithArray<SubscriptionDTO>(),
+  lending: emptyRemoteStateWithArray<LendingRecord>(),
+  repayments: emptyRemoteStateWithArray<RepaymentInstallment>(),
 };
 
 const useFinanceStoreBase = create<FinanceStore>()(
@@ -68,6 +87,22 @@ const useFinanceStoreBase = create<FinanceStore>()(
             get().actions.loadBudget(),
           ]);
         },
+        loadSubscriptions: async () => {
+          await requestAndSet<FinanceStore, 'subscriptions'>('subscriptions', financeService.getSubscriptions, set);
+        },
+        loadLending: async () => {
+          await requestAndSet<FinanceStore, 'lending'>('lending', financeService.getLending, set);
+        },
+        loadRepayments: async () => {
+          await requestAndSet<FinanceStore, 'repayments'>('repayments', financeService.getSliceRepayments, set);
+        },
+        loadCommitments: async () => {
+          await Promise.all([
+            get().actions.loadSubscriptions(),
+            get().actions.loadLending(),
+            get().actions.loadRepayments(),
+          ]);
+        },
         applyBalance: (balance) =>
           set((state) => {
             const prev = state.account.data;
@@ -87,3 +122,6 @@ const useFinanceStoreBase = create<FinanceStore>()(
 );
 
 export const useFinanceStore = createSelectors(useFinanceStoreBase);
+
+/** Stable module-level handle — safe to call without listing as a dependency. */
+export const financeActions = useFinanceStoreBase.getState().actions;

@@ -1,11 +1,22 @@
 import { useState, useEffect } from 'react'
 import { X, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import type { LendingRecord } from '@/lib/api'
+import type { LendingRecord } from '@/types/finance'
 import { financeService } from '@/services/finance-service'
 import { confirmCloseIfDirty } from '@/lib/modal-utils'
 
 import faaahAudio from '@/assets/faaah.mp3'
+import { getErrorMessage } from '@/lib/errors'
+
+/** A ledger transaction as the form edits it. */
+export interface TransactionFormData {
+  id?: string
+  description: string
+  amount: number
+  category: string
+  type: string
+  date: string
+}
 
 interface AddTransactionModalProps {
   isOpen: boolean
@@ -13,14 +24,7 @@ interface AddTransactionModalProps {
   onSuccess: () => void
   isEdit?: boolean
   initialTab?: 'Transaction' | 'Lending'
-  initialTransactionData?: {
-    id?: string
-    description: string
-    amount: number
-    category: string
-    type: string
-    date: string
-  } | null
+  initialTransactionData?: TransactionFormData | null
   initialLendingData?: LendingRecord | null
 }
 
@@ -157,9 +161,8 @@ export function AddTransactionModal({
 
       onSuccess()
       onClose()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      setError(err.message || 'Failed to save transaction')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to save transaction'))
     } finally {
       setLoading(false)
     }
@@ -203,9 +206,8 @@ export function AddTransactionModal({
 
       onSuccess()
       onClose()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      setError(err.message || 'Failed to save lending record')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to save lending record'))
     } finally {
       setLoading(false)
     }

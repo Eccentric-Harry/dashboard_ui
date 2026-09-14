@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from 'react'
 import { ChevronDown, Plus } from 'lucide-react'
 import type { AppPath } from '@/app/routes'
-import type { LearningsSummary } from '@/lib/api'
+import type { LearningsSummary } from '@/types/learnings'
 import { learningsService } from '@/services/learnings-service'
 import { tasksService } from '@/services/tasks-service'
 import { formatHeaderDate, parseIsoDate } from '../learnings-utils'

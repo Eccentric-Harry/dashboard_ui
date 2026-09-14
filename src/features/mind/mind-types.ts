@@ -1,5 +1,5 @@
-// Canonical types now live in lib/api.ts (mirrors the `mind_entries` collection +
-// MindController). Re-exported here so components keep importing from mind-types.
+// UI constants and helpers for the Mind feature. Canonical API types live in
+// types/mind.ts; re-exported here so feature components have a single import.
 export type {
   MindEntry,
   MindEntryType,
@@ -16,14 +16,9 @@ export type {
   MindSpiralLog,
   MindWorryLedger,
   MindLoopRadarDay,
-} from '@/lib/api'
+} from '@/types/mind'
 
-import type {
-  MindValueTag,
-  MindDistortionTag,
-  MindEntry,
-  MindIntrusiveCategory,
-} from '@/lib/api'
+import type { MindValueTag, MindDistortionTag, MindEntry, MindIntrusiveCategory } from '@/types/mind'
 
 export const MIND_VALUE_TAGS: MindValueTag[] = [
   'Coding',
@@ -34,6 +29,10 @@ export const MIND_VALUE_TAGS: MindValueTag[] = [
   'Joy',
   'Fulfilment',
 ]
+
+/** True for the built-in value tags; user-defined tags are anything else. */
+export const isDefaultValueTag = (tag: string): tag is MindValueTag =>
+  (MIND_VALUE_TAGS as readonly string[]).includes(tag)
 
 export const MIND_DISTORTION_TAGS: MindDistortionTag[] = [
   'Catastrophizing',

@@ -1,4 +1,4 @@
-// Declarative Learnings endpoint descriptors, ported 1:1 from lib/api.ts.
+// Declarative Learnings endpoint descriptors.
 import type { ApiEndpoint } from '../api-config';
 
 export const API_GET_LEARNINGS: ApiEndpoint = { url: '/learnings', method: 'get' };

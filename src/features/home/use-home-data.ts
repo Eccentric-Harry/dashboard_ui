@@ -1,55 +1,28 @@
-import { useCallback, useEffect, useState } from 'react'
-import type {
-  CalendarItem,
-  DailyFinancialLog,
-  DailyLog,
-  DailyTask,
-  FocusDaySummary,
-  HydrationData,
-  LearningsSummary,
-  MindEntry,
-  MindSummary,
-  SleepEntry,
-  StravaActivity,
-  StravaActivityStats,
-} from '@/lib/api'
-import { calendarService } from '@/services/calendar-service'
-import { financeService } from '@/services/finance-service'
-import { focusService } from '@/services/focus-service'
-import { learningsService } from '@/services/learnings-service'
-import { mindService } from '@/services/mind-service'
-import { nutritionService } from '@/services/nutrition-service'
-import { sleepService } from '@/services/sleep-service'
-import { tasksService } from '@/services/tasks-service'
-import { workoutsService } from '@/services/workouts-service'
-import type { FocusSuggestion } from '@/types/focus'
-import type { NutritionSummary, SpendingSummary } from './home-types'
+import { useEffect, useMemo } from 'react'
+import { homeActions, useHomeStore, type HomeWindow } from '@/store/home-store'
+import type { RemoteDataStatus } from '@/store/zustand-utils'
+import type { CalendarItem } from '@/types/calendar'
+import type { DailyFinancialLog, SpendingSummary } from '@/types/finance'
+import type { FocusDaySummary, FocusSuggestion } from '@/types/focus'
+import type { LearningsSummary } from '@/types/learnings'
+import type { DailyLog, MindEntry, MindSummary } from '@/types/mind'
+import type { HydrationData, NutritionSummary } from '@/types/nutrition'
+import type { SleepEntry } from '@/types/sleep'
+import type { DailyTask } from '@/types/tasks'
+import type { StravaActivity, StravaActivityStats } from '@/types/workouts'
 import { addDaysIso, isoDate } from './home-types'
 
 /** Days of history fetched for series, streak strips, and the insights window. */
 export const HOME_WINDOW_DAYS = 14
 
-export type Slice<T> = {
-  data: T | null
-  failed: boolean
-}
+/** Tasks are read this far past today so the Tasks card can show upcoming items too. */
+const UPCOMING_TASK_DAYS = 21
 
-const emptySlice = { data: null, failed: false }
-
-async function settle<R>(
-  promise: Promise<{ data?: R | null; error?: unknown }>,
-  set: (slice: Slice<R>) => void,
-): Promise<void> {
-  const result = await promise
-  if (result.error) {
-    set({ data: null, failed: true })
-  } else {
-    set({ data: result.data ?? null, failed: false })
-  }
-}
+export type Slice<T> = RemoteDataStatus<T | null>
 
 export interface HomeData {
   today: string
+  /** True until the first full load has settled. */
   loading: boolean
   nutrition: Slice<NutritionSummary>
   hydration: Slice<HydrationData>
@@ -77,107 +50,54 @@ export interface HomeData {
 }
 
 /**
- * Home reads every domain through its existing endpoint, each request settled
- * independently: a failing store marks only its own slice as failed and the
- * rest of the page renders normally.
+ * The /home read model, backed by the home store. Loads on mount (and when the day
+ * rolls over), and refetches whenever a calendar/task mutation happens elsewhere.
  */
 export function useHomeData(): HomeData {
   const today = isoDate()
-  const windowStart = addDaysIso(today, -(HOME_WINDOW_DAYS - 1))
+  const homeWindow = useMemo<HomeWindow>(
+    () => ({
+      today,
+      start: addDaysIso(today, -(HOME_WINDOW_DAYS - 1)),
+      tasksUntil: addDaysIso(today, UPCOMING_TASK_DAYS),
+      days: HOME_WINDOW_DAYS,
+    }),
+    [today],
+  )
 
-  const [loading, setLoading] = useState(true)
-  const [nutrition, setNutrition] = useState<Slice<NutritionSummary>>(emptySlice)
-  const [hydration, setHydration] = useState<Slice<HydrationData>>(emptySlice)
-  const [tasks, setTasks] = useState<Slice<DailyTask[]>>(emptySlice)
-  const [calendarToday, setCalendarToday] = useState<Slice<CalendarItem[]>>(emptySlice)
-  const [sleep, setSleep] = useState<Slice<SleepEntry[]>>(emptySlice)
-  const [focus, setFocus] = useState<Slice<FocusDaySummary[]>>(emptySlice)
-  const [moods, setMoods] = useState<Slice<DailyLog[]>>(emptySlice)
-  const [workouts, setWorkouts] = useState<Slice<StravaActivity[]>>(emptySlice)
-  const [workoutStats, setWorkoutStats] = useState<Slice<StravaActivityStats>>(emptySlice)
-  const [learnings, setLearnings] = useState<Slice<LearningsSummary>>(emptySlice)
-  const [mind, setMind] = useState<Slice<MindSummary>>(emptySlice)
-  const [mindEntries, setMindEntries] = useState<Slice<MindEntry[]>>(emptySlice)
-  const [anchors, setAnchors] = useState<Slice<MindEntry[]>>(emptySlice)
-  const [focusSuggestions, setFocusSuggestions] = useState<Slice<FocusSuggestion[]>>(emptySlice)
-  const [spending, setSpending] = useState<Slice<SpendingSummary>>(emptySlice)
-  const [finance, setFinance] = useState<Slice<DailyFinancialLog[]>>(emptySlice)
-
-  const reloadSleep = useCallback(async () => {
-    await settle<SleepEntry[]>(sleepService.getEntries(windowStart, today), setSleep)
-  }, [windowStart, today])
-
-  const reloadAnchors = useCallback(async () => {
-    await settle<MindEntry[]>(mindService.getEntries('INTENTION'), setAnchors)
-  }, [])
-
-  /** Focus history + calendar suggestions move together: importing a block changes both. */
-  const reloadFocus = useCallback(async () => {
-    await Promise.allSettled([
-      settle<FocusDaySummary[]>(focusService.getHistory(windowStart, today), setFocus),
-      settle<FocusSuggestion[]>(
-        focusService.getCalendarSuggestions(windowStart, today),
-        setFocusSuggestions,
-      ),
-    ])
-  }, [windowStart, today])
-
-  const reloadHydration = useCallback(async () => {
-    await settle<HydrationData>(nutritionService.getHydration(today), setHydration)
-  }, [today])
-
-  const refetch = useCallback(async () => {
-    await Promise.allSettled([
-      settle<NutritionSummary>(nutritionService.getSummary(today) as Promise<{ data?: NutritionSummary; error?: unknown }>, setNutrition),
-      settle<HydrationData>(nutritionService.getHydration(today), setHydration),
-      // End date runs past today so the Tasks card can show upcoming pending
-      // items, not just today's + overdue. Every other consumer of this slice
-      // filters by date, so the wider window is inert for them.
-      settle<DailyTask[]>(tasksService.getTasksRange(windowStart, addDaysIso(today, 21)), setTasks),
-      settle<CalendarItem[]>(calendarService.getItemsForRange(today, today), setCalendarToday),
-      settle<SleepEntry[]>(sleepService.getEntries(windowStart, today), setSleep),
-      settle<FocusDaySummary[]>(focusService.getHistory(windowStart, today), setFocus),
-      settle<DailyLog[]>(mindService.getDailyLogRange(windowStart, today), setMoods),
-      settle<StravaActivity[]>(workoutsService.getActivities(), setWorkouts),
-      settle<StravaActivityStats>(workoutsService.getStats(), setWorkoutStats),
-      settle<LearningsSummary>(learningsService.getSummary(today), setLearnings),
-      settle<MindSummary>(mindService.getSummary(today), setMind),
-      settle<MindEntry[]>(mindService.getEntries('THOUGHT'), setMindEntries),
-      settle<MindEntry[]>(mindService.getEntries('INTENTION'), setAnchors),
-      settle<FocusSuggestion[]>(
-        focusService.getCalendarSuggestions(windowStart, today),
-        setFocusSuggestions,
-      ),
-      settle<SpendingSummary>(financeService.getSpendingSummary(today.slice(0, 7)) as Promise<{ data?: SpendingSummary; error?: unknown }>, setSpending),
-      settle<DailyFinancialLog[]>(financeService.getDailyLogs(HOME_WINDOW_DAYS), setFinance),
-    ])
-    setLoading(false)
-  }, [today, windowStart])
+  const initialized = useHomeStore.use.initialized()
+  const nutrition = useHomeStore.use.nutrition()
+  const hydration = useHomeStore.use.hydration()
+  const tasks = useHomeStore.use.tasks()
+  const calendarToday = useHomeStore.use.calendarToday()
+  const sleep = useHomeStore.use.sleep()
+  const focus = useHomeStore.use.focus()
+  const moods = useHomeStore.use.moods()
+  const workouts = useHomeStore.use.workouts()
+  const workoutStats = useHomeStore.use.workoutStats()
+  const learnings = useHomeStore.use.learnings()
+  const mind = useHomeStore.use.mind()
+  const mindEntries = useHomeStore.use.mindEntries()
+  const anchors = useHomeStore.use.anchors()
+  const focusSuggestions = useHomeStore.use.focusSuggestions()
+  const spending = useHomeStore.use.spending()
+  const finance = useHomeStore.use.finance()
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void refetch()
-  }, [refetch])
+    void homeActions.load(homeWindow)
+  }, [homeWindow])
 
   useEffect(() => {
     const handleUpdate = () => {
-      void refetch()
+      void homeActions.refetch()
     }
     window.addEventListener('calendar-updated', handleUpdate)
     return () => window.removeEventListener('calendar-updated', handleUpdate)
-  }, [refetch])
-
-  const patchHydration = useCallback((data: HydrationData) => {
-    setHydration({ data, failed: false })
-  }, [])
-
-  const patchMind = useCallback((patch: Partial<MindSummary>) => {
-    setMind((prev) => (prev.data ? { data: { ...prev.data, ...patch }, failed: false } : prev))
   }, [])
 
   return {
     today,
-    loading,
+    loading: !initialized,
     nutrition,
     hydration,
     tasks,
@@ -194,12 +114,12 @@ export function useHomeData(): HomeData {
     focusSuggestions,
     spending,
     finance,
-    refetch,
-    reloadAnchors,
-    reloadFocus,
-    reloadSleep,
-    reloadHydration,
-    patchHydration,
-    patchMind,
+    refetch: homeActions.refetch,
+    reloadAnchors: homeActions.reloadAnchors,
+    reloadFocus: homeActions.reloadFocus,
+    reloadSleep: homeActions.reloadSleep,
+    reloadHydration: homeActions.reloadHydration,
+    patchHydration: homeActions.patchHydration,
+    patchMind: homeActions.patchMind,
   }
 }

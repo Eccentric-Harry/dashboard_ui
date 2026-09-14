@@ -760,39 +760,6 @@ button {
   padding: 18px 21px 0;
 }
 
-.calendar-grid b {
-  text-align: center;
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.calendar-grid span {
-  display: grid;
-  width: 24px;
-  height: 24px;
-  place-items: center;
-  border-radius: 50%;
-  justify-self: center;
-  background: rgba(227, 237, 29, 0.52);
-  color: #101312;
-  font-size: 9px;
-}
-
-.calendar-grid .selected {
-  background: #fff;
-  box-shadow: 0 8px 18px rgba(24, 28, 24, 0.05);
-}
-
-.calendar-grid .striped {
-  background:
-    repeating-linear-gradient(45deg, rgba(34, 38, 33, 0.08) 0 2px, rgba(34, 38, 33, 0) 2px 4px),
-    rgba(214, 223, 29, 0.62);
-}
-
-.calendar-grid .active-date {
-  box-shadow: 0 0 0 2px #0d1110;
-}
-
 .scale-card {
   position: absolute;
   left: 0;

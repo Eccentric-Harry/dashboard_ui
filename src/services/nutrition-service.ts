@@ -1,14 +1,28 @@
 // Strictly-typed Nutrition + Hydration service — one-liners over safeCall<T>().
-// AI meal analysis (multipart upload + polling) stays in lib/api as a dedicated
-// flow; it doesn't fit the simple request/response shape this service wraps.
+// The multi-step AI meal-analysis flow (upload → poll) is orchestrated by
+// meal-analysis-service.ts on top of the two job calls exposed here.
 
 import { instance } from './http/api-request';
 import type { SafeResult } from '../types/api';
-import type { FoodEntry, FoodEntryRequest, HydrationData, HydrationUpdateRequest } from '../types/nutrition';
+import type {
+  FoodEntry,
+  FoodEntryRequest,
+  HydrationData,
+  HydrationUpdateRequest,
+  MealAnalysisJobStarted,
+  MealAnalysisJobStatus,
+  NutritionSummary,
+} from '../types/nutrition';
 import * as E from './endpoints/nutrition-endpoints';
 
+const MEAL_ANALYSIS_START_TIMEOUT_MS = 30_000;
+const MEAL_ANALYSIS_POLL_TIMEOUT_MS = 20_000;
+
 export interface NutritionServiceInterface {
-  getSummary(date?: string): Promise<SafeResult<unknown>>;
+  /** Multipart upload; returns the background job id almost immediately. */
+  startMealAnalysis(formData: FormData): Promise<SafeResult<MealAnalysisJobStarted>>;
+  getMealAnalysisJob(jobId: string): Promise<SafeResult<MealAnalysisJobStatus>>;
+  getSummary(date?: string): Promise<SafeResult<NutritionSummary>>;
   /**
    * Defaults to the backend's summary view (macros + grade only). Pass view: 'full' to get the
    * AI clinical payload back — several KB per meal, so only ever for a single day or a single meal.
@@ -24,7 +38,17 @@ export interface NutritionServiceInterface {
 }
 
 export const nutritionService: NutritionServiceInterface = {
-  getSummary: (date) => instance.safeCall(E.API_GET_NUTRITION_SUMMARY, { query: { date } }),
+  startMealAnalysis: (formData) =>
+    instance.safeCall<MealAnalysisJobStarted>(E.API_START_MEAL_ANALYSIS, {
+      body: formData,
+      timeoutMs: MEAL_ANALYSIS_START_TIMEOUT_MS,
+    }),
+  getMealAnalysisJob: (jobId) =>
+    instance.safeCall<MealAnalysisJobStatus>(E.API_GET_MEAL_ANALYSIS_JOB, {
+      params: { jobId },
+      timeoutMs: MEAL_ANALYSIS_POLL_TIMEOUT_MS,
+    }),
+  getSummary: (date) => instance.safeCall<NutritionSummary>(E.API_GET_NUTRITION_SUMMARY, { query: { date } }),
   getFoodEntries: (days, startDate, endDate, mealType, view) =>
     instance.safeCall<FoodEntry[]>(E.API_GET_FOOD_ENTRIES, { query: { days, startDate, endDate, mealType, view } }),
   addFoodEntry: (dto) => instance.safeCall<FoodEntry>(E.API_ADD_FOOD_ENTRY, { body: dto }),

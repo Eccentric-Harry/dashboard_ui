@@ -1,21 +1,30 @@
-// The single Axios instance + its interceptors.
-//
-// PHASE A (migration): `adapter: 'fetch'` routes every Axios request through the
-// existing window.fetch patch in lib/api.ts, so auth-header injection, guest-mode
-// mocking, and active-GET counting keep working with zero duplication. The counter
-// itself now lives here (its final home); the fetch patch feeds it.
-//
-// PHASE B (cleanup): drop `adapter: 'fetch'`, move auth + GET counting into the
-// commented interceptor stubs below, and delete the window.fetch patch.
+// The single Axios instance and every cross-cutting transport concern:
+//   • auth gate      — requests park until the boot-time auth check resolves
+//   • bearer token   — injected on every non-auth request of a signed-in session
+//   • active GETs    — counted for the route-transition OverlayLoader
+//   • guest mode     — served by a local adapter; guest traffic never reaches the backend
 
-import axios from 'axios';
-import type { InternalAxiosRequestConfig } from 'axios';
+import axios, { CanceledError, getAdapter } from 'axios';
+import type { AxiosAdapter, InternalAxiosRequestConfig } from 'axios';
+import { createGuestAdapter } from './guest-adapter';
+import { getAuthToken, isGuestSession } from './session';
 
-// ── Active-GET counter (drives OverlayLoader). Fed by the fetch patch in Phase A. ──
+declare module 'axios' {
+  interface InternalAxiosRequestConfig {
+    /** Set once a GET has been counted towards the active-request total. */
+    countedAsActiveGet?: boolean;
+  }
+}
+
+// ── Active-GET counter (drives OverlayLoader) ──
 let activeGetRequests = 0;
-const requestChangeListeners = new Set<(n: number) => void>();
+const requestChangeListeners = new Set<(count: number) => void>();
 
-export function subscribeToActiveRequests(listener: (n: number) => void) {
+const notifyRequestListeners = () => {
+  requestChangeListeners.forEach((listener) => listener(activeGetRequests));
+};
+
+export function subscribeToActiveRequests(listener: (count: number) => void): () => void {
   requestChangeListeners.add(listener);
   listener(activeGetRequests);
   return () => {
@@ -23,66 +32,74 @@ export function subscribeToActiveRequests(listener: (n: number) => void) {
   };
 }
 
-export function incrementActiveGets() {
+function trackActiveGet(config: InternalAxiosRequestConfig): void {
+  if ((config.method ?? 'get').toLowerCase() !== 'get') return;
+  config.countedAsActiveGet = true;
   activeGetRequests++;
-  requestChangeListeners.forEach((cb) => cb(activeGetRequests));
+  notifyRequestListeners();
 }
 
-export function decrementActiveGets() {
+function settleActiveGet(config: InternalAxiosRequestConfig | undefined): void {
+  if (!config?.countedAsActiveGet) return;
+  config.countedAsActiveGet = false;
   activeGetRequests = Math.max(0, activeGetRequests - 1);
-  requestChangeListeners.forEach((cb) => cb(activeGetRequests));
+  notifyRequestListeners();
 }
 
-// ── Auth gatekeeper (adapts the blueprint's /LoggedInUser request queue) ──
-// Non-bypassed requests wait until the token has been validated at boot, then
-// either proceed or are cancelled. Prevents a cascade of 401s on an expired token.
-let authChecked = false;
-let authorized = false;
-const step = () => new Promise<void>((r) => setTimeout(r, 25));
-const waitUntilAuth = async () => {
-  while (!authChecked) await step();
-};
-
-/** Called once from the app bootstrap when the auth state is known. */
-export function resolveAuthGate(isAuthorized: boolean) {
-  authorized = isAuthorized;
-  authChecked = true;
-}
-
-// Endpoints that must never wait on the gate: the auth flow and the profile call
-// used to validate the token itself.
-const GATE_BYPASS = ['/auth/', '/users/profile'];
-
-export const axiosClient = axios.create({
-  // Reuse the window.fetch patch during migration. Remove in Phase B.
-  adapter: 'fetch',
-  headers: { 'Content-Type': 'application/json' },
+// ── Auth gate ──
+// Gated requests wait until the app boot has decided whether a session exists, then
+// either proceed or are cancelled — an expired session produces one decision instead
+// of a cascade of 401s.
+let releaseAuthGate: (authorized: boolean) => void = () => undefined;
+const authGate = new Promise<boolean>((resolve) => {
+  releaseAuthGate = resolve;
 });
 
-axiosClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
+/** Called once from the app bootstrap when the auth state is known. Later calls are no-ops. */
+export function resolveAuthGate(isAuthorized: boolean): void {
+  releaseAuthGate(isAuthorized);
+}
+
+const AUTH_PATH = '/auth/';
+// Never gated: the auth flow itself, and the profile read used to validate the session.
+const GATE_BYPASS = [AUTH_PATH, '/users/profile'];
+
+// ── Instance ──
+// No default Content-Type: Axios sets application/json for object bodies on its own,
+// and a JSON default would make it serialize FormData (meal-image uploads) to JSON.
+const networkAdapter: AxiosAdapter = getAdapter('fetch');
+const guestAdapter = createGuestAdapter(networkAdapter);
+
+export const axiosClient = axios.create({
+  adapter: (config) => (isGuestSession() ? guestAdapter(config) : networkAdapter(config)),
+});
+
+axiosClient.interceptors.request.use(async (config) => {
   const url = config.url ?? '';
-  const isBypass = GATE_BYPASS.some((p) => url.includes(p));
-  if (!isBypass) {
-    await waitUntilAuth();
-    if (authChecked && !authorized) {
-      throw new axios.Cancel('Blocked: unauthorized');
+
+  if (!GATE_BYPASS.some((path) => url.includes(path))) {
+    const authorized = await authGate;
+    if (!authorized) {
+      throw new CanceledError('Blocked: no active session', undefined, config);
     }
   }
-  // PHASE B only — the fetch patch handles these in Phase A:
-  //   if ((config.method ?? 'get').toLowerCase() === 'get') incrementActiveGets();
-  //   const token = localStorage.getItem('authToken');
-  //   if (token && !isBypass) config.headers.set('Authorization', `Bearer ${token}`);
+
+  const token = getAuthToken();
+  if (token && !isGuestSession() && !url.includes(AUTH_PATH)) {
+    config.headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  trackActiveGet(config);
   return config;
 });
 
-// PHASE B only — decrement on settle:
-// axiosClient.interceptors.response.use(
-//   (res) => {
-//     if ((res.config.method ?? 'get').toLowerCase() === 'get') decrementActiveGets();
-//     return res;
-//   },
-//   (err) => {
-//     if ((err.config?.method ?? 'get').toLowerCase() === 'get') decrementActiveGets();
-//     return Promise.reject(err);
-//   },
-// );
+axiosClient.interceptors.response.use(
+  (response) => {
+    settleActiveGet(response.config);
+    return response;
+  },
+  (error: unknown) => {
+    if (axios.isAxiosError(error)) settleActiveGet(error.config);
+    return Promise.reject(error);
+  },
+);

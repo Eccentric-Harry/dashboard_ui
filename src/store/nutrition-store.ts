@@ -1,6 +1,6 @@
-// Nutrition store. Read slices for food entries / hydration / summary; the
-// primary /nutrition dashboard mostly reads from DashboardContext (migrates in
-// the Home sprint) — this store backs the child cards that fetch independently.
+// Nutrition store. Read slices for food entries / hydration / summary. The primary
+// /nutrition dashboard reads the shared /dashboard aggregate (dashboard-store); this
+// store backs the child cards with their own reads.
 
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
@@ -13,13 +13,13 @@ import {
   type RemoteDataStatus,
 } from './zustand-utils';
 import { nutritionService } from '../services/nutrition-service';
-import type { FoodEntry, HydrationData } from '../types/nutrition';
+import type { FoodEntry, HydrationData, NutritionSummary } from '../types/nutrition';
 
 interface NutritionState {
   foodEntries: RemoteDataStatus<FoodEntry[]>;
   hydration: RemoteDataStatus<HydrationData | null>;
   hydrationRange: RemoteDataStatus<HydrationData[]>;
-  summary: RemoteDataStatus<unknown>;
+  summary: RemoteDataStatus<NutritionSummary | null>;
 }
 
 interface NutritionActions {
@@ -28,6 +28,8 @@ interface NutritionActions {
     loadHydration: (date?: string) => Promise<void>;
     loadHydrationRange: (days?: number, startDate?: string, endDate?: string) => Promise<void>;
     loadSummary: (date?: string) => Promise<void>;
+    /** Apply a mutation response (e.g. water added) without a round trip. */
+    applyHydration: (data: HydrationData) => void;
   };
 }
 
@@ -37,7 +39,7 @@ const initialState: NutritionState = {
   foodEntries: emptyRemoteStateWithArray<FoodEntry>(),
   hydration: remoteStateWith<HydrationData | null>(null),
   hydrationRange: emptyRemoteStateWithArray<HydrationData>(),
-  summary: remoteStateWith<unknown>(null),
+  summary: remoteStateWith<NutritionSummary | null>(null),
 };
 
 const useNutritionStoreBase = create<NutritionStore>()(
@@ -66,6 +68,12 @@ const useNutritionStoreBase = create<NutritionStore>()(
             set,
           );
         },
+        applyHydration: (data) =>
+          set((state) => {
+            state.hydration.data = data;
+            state.hydration.loaded = true;
+            state.hydration.hasErrors = false;
+          }),
         loadSummary: async (date) => {
           await requestAndSet<NutritionStore, 'summary'>(
             'summary',

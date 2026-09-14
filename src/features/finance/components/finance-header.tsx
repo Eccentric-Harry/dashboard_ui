@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { CalendarCheck, ChevronDown, X, Plus, ArrowUpRight, ArrowDownLeft } from 'lucide-react'
-import type { DailyFinancialLog } from '@/lib/api'
+import type { DailyFinancialLog } from '@/types/finance'
 import { getConsistentColor, getIconForCategory } from '../utils'
 import { toneStyle } from '@/lib/tone'
 import { isStandalone } from '@/lib/utils'
 import { MiniMonth } from '@/components/ui/mini-month'
+import type { TransactionProp } from './transactions-card'
 
 interface FinanceHeaderProps {
   onAddClick?: () => void
@@ -92,8 +93,7 @@ function FinanceHeader({ onAddClick, logs, selectedDate, onDateChange }: Finance
     const dates = new Set<string>()
     logs.forEach((log) => {
       const hasTransactions = Object.values(log.transactions || {}).some(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (txs) => (txs as any[]).length > 0,
+        (txs) => txs.length > 0,
       )
       if (hasTransactions) {
         dates.add(log.date.split('T')[0])
@@ -167,8 +167,7 @@ function FinanceHeader({ onAddClick, logs, selectedDate, onDateChange }: Finance
       if (!logDate.startsWith(monthKey)) return
       let count = 0
       Object.values(log.transactions || {}).forEach((txs) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        count += (txs as any[]).length
+        count += txs.length
       })
       month += count
       if (logDate === selectedDate) day = count
@@ -183,11 +182,9 @@ function FinanceHeader({ onAddClick, logs, selectedDate, onDateChange }: Finance
     const log = logs.find((l) => l.id === pickedDate || l.date.startsWith(pickedDate))
     if (!log) return []
     
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const allTxs: any[] = []
+    const allTxs: Array<TransactionProp & { timestamp: number }> = []
     Object.entries(log.transactions || {}).forEach(([category, txs]) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (txs as any[]).forEach((tx: any) => {
+      txs.forEach((tx) => {
         const isIncome = category.toLowerCase().includes('income')
         allTxs.push({
           id: tx.id,

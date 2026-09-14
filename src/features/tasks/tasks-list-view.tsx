@@ -1,6 +1,6 @@
 import { Fragment, useState, useMemo, type CSSProperties, type ReactNode } from 'react'
 import { Check, Clock, CheckSquare, ChevronDown, CalendarDays } from 'lucide-react'
-import type { DailyTask } from '@/lib/api'
+import type { DailyTask } from '@/types/tasks'
 import { getTagColor } from '@/lib/tag-colors'
 import { CategoryIcon } from './category-icon'
 

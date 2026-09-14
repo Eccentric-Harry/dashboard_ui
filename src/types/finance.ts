@@ -1,5 +1,4 @@
-// Finance domain types — the single source of truth. `lib/api.ts` re-exports
-// these for back-compat while its finance functions are migrated to the service.
+// Finance domain types — single source of truth.
 
 export interface FinancialTotals {
   totalExpense: number;
@@ -48,6 +47,16 @@ export interface LendingRecord {
   dueDate?: string;
   status: 'Pending' | 'Repaid';
   notes?: string;
+}
+
+/** Shape of GET /dashboard/spending-summary (DashboardService.getSpendingSummary). */
+export interface SpendingSummary {
+  month: string;
+  totalSpent: number;
+  monthlyBudget: number;
+  budgetRemaining: number;
+  budgetUtilization: number;
+  categoryBreakdown: Record<string, number>;
 }
 
 // ── Request DTOs ──

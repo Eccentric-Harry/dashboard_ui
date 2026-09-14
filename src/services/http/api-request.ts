@@ -15,6 +15,7 @@ export interface RequestOptions<P = unknown, B = unknown> {
   body?: B;
   raw?: boolean; // true → skip envelope unwrap (e.g. /auth/* endpoints)
   signal?: AbortSignal;
+  timeoutMs?: number; // abort a single hop that hangs (0/undefined → no timeout)
 }
 
 type BackendErrorBody = { data?: { message?: string }; message?: string };
@@ -28,6 +29,7 @@ export class ApiRequest {
       params: opts.query,
       data: opts.body,
       signal: opts.signal,
+      timeout: opts.timeoutMs,
     });
   }
 

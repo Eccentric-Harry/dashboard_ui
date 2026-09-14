@@ -6,13 +6,14 @@ import { MetricCard } from './components/metric-card'
 import { SpendingOverviewCard } from './components/spending-overview-card'
 import { SubscriptionsCard } from './components/subscriptions-card'
 import { RepaymentScheduleCard } from './components/repayment-schedule-card'
-import { TransactionsCard } from './components/transactions-card'
-import { AddTransactionModal } from './components/add-transaction-modal'
+import { TransactionsCard, type TransactionProp } from './components/transactions-card'
+import { AddTransactionModal, type TransactionFormData } from './components/add-transaction-modal'
 import { EditBalanceModal } from './components/edit-balance-modal'
 import { EditBudgetModal } from './components/edit-budget-modal'
 import { LendingCard } from './components/lending-card'
 import { FinanceIntelligence } from './components/finance-intelligence'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { getErrorMessage } from '@/lib/errors'
 import { financeMetrics as fallbackMetrics } from './data'
 import type { FinanceMetric } from './data'
 import type { LendingRecord } from '@/types/finance'
@@ -28,6 +29,8 @@ import './finance-overview.css'
 // Redesign layer — must load after the base sheet so its refinements win.
 import './finance-playful.css'
 
+/** A ledger row plus the sort key it's ordered by. */
+type LedgerRow = TransactionProp & { timestamp: number }
 
 function FinanceOverviewDashboard() {
   const isGuest = localStorage.getItem('isGuest') === 'true'
@@ -48,14 +51,11 @@ function FinanceOverviewDashboard() {
   const [isEditBudgetOpen, setIsEditBudgetOpen] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [editingTransaction, setEditingTransaction] = useState<any>(null)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [deleteTarget, setDeleteTarget] = useState<any>(null)
+  const [editingTransaction, setEditingTransaction] = useState<TransactionFormData | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<TransactionProp | null>(null)
   const [isLendingModalOpen, setIsLendingModalOpen] = useState(false)
   const [editingLending, setEditingLending] = useState<LendingRecord | null>(null)
   const [deleteLendingTarget, setDeleteLendingTarget] = useState<LendingRecord | null>(null)
-  const [lendingRefreshKey, setLendingRefreshKey] = useState(0)
   // Bumped by any child that lands a "money went right" moment — a loan
   // recovered, a bill cleared, an instalment closed out.
   const [celebrationTrigger, setCelebrationTrigger] = useState(0)
@@ -147,6 +147,7 @@ function FinanceOverviewDashboard() {
 
   useEffect(() => {
     void financeActions.loadAll()
+    void financeActions.loadCommitments()
   }, [financeActions])
 
   const metrics = useMemo(() => {
@@ -255,8 +256,7 @@ function FinanceOverviewDashboard() {
   }, [logs, selectedMonthKey, monthlyBudget])
 
   const recentTransactions = useMemo(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let allTxs: any[] = []
+    let allTxs: LedgerRow[] = []
     logs.forEach(log => {
       const d = new Date(log.date)
       const logMonthKey = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`
@@ -317,8 +317,7 @@ function FinanceOverviewDashboard() {
     })
   }, [logs, selectedCategory, selectedMonthKey])
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleEdit = (tx: any) => {
+  const handleEdit = (tx: TransactionProp) => {
     setEditingTransaction({
       id: tx.id,
       description: tx.merchant,
@@ -329,8 +328,7 @@ function FinanceOverviewDashboard() {
     })
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleDelete = async (tx: any) => {
+  const handleDelete = (tx: TransactionProp) => {
     setDeleteTarget(tx)
   }
 
@@ -342,9 +340,8 @@ function FinanceOverviewDashboard() {
       toast.success(`Deleted "${deleteTarget.merchant}"`)
       setDeleteTarget(null)
       refreshData()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to delete transaction')
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to delete transaction'))
       console.error('Failed to delete transaction:', err)
       setDeleteTarget(null)
     }
@@ -357,11 +354,10 @@ function FinanceOverviewDashboard() {
       if (res.error) throw new Error(res.error.message)
       toast.success(`Deleted lending record for ${deleteLendingTarget.borrower}`)
       setDeleteLendingTarget(null)
-      setLendingRefreshKey(prev => prev + 1)
+      void financeActions.loadLending()
       refreshData()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to delete lending record')
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to delete lending record'))
       console.error('Failed to delete lending record:', err)
       setDeleteLendingTarget(null)
     }
@@ -402,7 +398,6 @@ function FinanceOverviewDashboard() {
           selectedMonthKey={selectedMonthKey}
           onMonthChange={setSelectedMonthKey}
           loading={loading}
-          refreshKey={lendingRefreshKey}
           stagger={1}
         />
         <SpendingOverviewCard
@@ -434,7 +429,6 @@ function FinanceOverviewDashboard() {
           stagger={5}
         />}
         {!isGuest && showFinanceGrids && <LendingCard
-          refreshKey={lendingRefreshKey}
           onEditClick={(record) => {
             setEditingLending(record)
             setIsLendingModalOpen(true)
@@ -493,7 +487,7 @@ function FinanceOverviewDashboard() {
           setEditingLending(null)
         }} 
         onSuccess={() => {
-          setLendingRefreshKey(prev => prev + 1)
+          void financeActions.loadLending()
           refreshData()
         }} 
       />

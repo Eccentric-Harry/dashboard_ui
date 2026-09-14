@@ -4,7 +4,7 @@
 // radar, lending exposure, and the Patterns-style insight rows.
 // All math lives in lib/insights; this file only fetches and renders.
 
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { RefreshCw, Wallet } from 'lucide-react'
 import {
   Area,
@@ -20,8 +20,9 @@ import {
   YAxis,
 } from 'recharts'
 import { getConsistentColor } from '../utils'
-import { financeService } from '@/services/finance-service'
-import type { DailyFinancialLog, SubscriptionDTO } from '@/lib/api'
+import { financeActions, useFinanceStore } from '@/store/finance-store'
+import { isAwaitingData } from '@/store/zustand-utils'
+import type { DailyFinancialLog } from '@/types/finance'
 import { inr, isoDate, monthLabel } from '@/lib/insights/engine'
 import {
   buildBurndown,
@@ -30,14 +31,11 @@ import {
   lendingExposure,
   subscriptionRadar,
 } from '@/lib/insights/finance'
-import type {
-  FinanceEngineInput,
-  LendingLike,
-  RepaymentLike,
-} from '@/lib/insights/finance'
+import type { FinanceEngineInput } from '@/lib/insights/finance'
 import { useCountUp } from '@/hooks/use-count-up'
 import { InsightList } from '@/components/ui/insight-list'
 import './finance-intelligence.css'
+import type { ChartTooltipProps } from '@/lib/chart-tooltip'
 
 type FinanceIntelligenceProps = {
   logs: DailyFinancialLog[]
@@ -45,8 +43,6 @@ type FinanceIntelligenceProps = {
   selectedMonthKey: string
   onMonthChange: (monthKey: string) => void
   loading: boolean
-  /** Bumped by the parent whenever transactions/lending change. */
-  refreshKey?: number
   /** Entrance-stagger index; drives the `--i` animation delay. */
   stagger?: number
 }
@@ -66,10 +62,9 @@ const SERIES_LABEL: Record<string, string> = {
   forecast: 'projected',
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const BurndownTooltip = ({ active, payload, label, monthKey }: any) => {
+const BurndownTooltip = ({ active, payload, label, monthKey }: ChartTooltipProps & { monthKey?: string }) => {
   if (!active || !payload?.length) return null
-  const row = payload.filter((p: { value: number | null }) => p.value != null)
+  const row = payload.filter((p) => p.value != null)
   if (row.length === 0) return null
 
   // "Day 14" is an index; "14 Sep" is a date. The axis already carries the
@@ -84,13 +79,16 @@ const BurndownTooltip = ({ active, payload, label, monthKey }: any) => {
   return (
     <div className="fin-intel-tooltip">
       <b>{dayDate}</b>
-      {row.map((p: { dataKey: string; value: number }) => (
-        <span key={p.dataKey} className={`is-${p.dataKey}`}>
-          <i />
-          {SERIES_LABEL[p.dataKey] ?? p.dataKey}
-          <em>{inr(p.value)}</em>
-        </span>
-      ))}
+      {row.map((p) => {
+        const key = String(p.dataKey)
+        return (
+          <span key={key} className={`is-${key}`}>
+            <i />
+            {SERIES_LABEL[key] ?? key}
+            <em>{inr(Number(p.value))}</em>
+          </span>
+        )
+      })}
     </div>
   )
 }
@@ -101,46 +99,25 @@ function FinanceIntelligence({
   selectedMonthKey,
   onMonthChange,
   loading,
-  refreshKey = 0,
   stagger = 0,
 }: FinanceIntelligenceProps) {
   const today = isoDate()
-  const [subscriptions, setSubscriptions] = useState<SubscriptionDTO[] | null>(null)
-  const [lending, setLending] = useState<LendingLike[] | null>(null)
-  const [repayments, setRepayments] = useState<RepaymentLike[] | null>(null)
-  const [sideLoading, setSideLoading] = useState(true)
+  // Commitments are loaded by the route into the finance store. Each settles on its
+  // own — a failed one is null and gates only its own insights instead of blanking
+  // the section.
+  const subscriptionsState = useFinanceStore.use.subscriptions()
+  const lendingState = useFinanceStore.use.lending()
+  const repaymentsState = useFinanceStore.use.repayments()
+  const subscriptions = subscriptionsState.loaded ? subscriptionsState.data : null
+  const lending = lendingState.loaded ? lendingState.data : null
+  const repayments = repaymentsState.loaded ? repaymentsState.data : null
+  const sideLoading = [subscriptionsState, lendingState, repaymentsState].some(isAwaitingData)
   const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMounted(true)
   }, [])
-
-  const loadSide = useCallback(async () => {
-    setSideLoading(true)
-    // Each side source settles independently — a failing one just gates
-    // its own insights instead of blanking the section.
-    const [subsRes, lendRes, repayRes] = await Promise.allSettled([
-      financeService.getSubscriptions(),
-      financeService.getLending(),
-      financeService.getSliceRepayments(),
-    ])
-    setSubscriptions(
-      subsRes.status === 'fulfilled' && !subsRes.value.error ? (subsRes.value.data ?? []) : null,
-    )
-    setLending(lendRes.status === 'fulfilled' && !lendRes.value.error ? (lendRes.value.data ?? []) : null)
-    setRepayments(
-      repayRes.status === 'fulfilled' && !repayRes.value.error
-        ? ((repayRes.value.data as RepaymentLike[] | undefined) ?? [])
-        : null,
-    )
-    setSideLoading(false)
-  }, [])
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadSide()
-  }, [loadSide, refreshKey])
 
   const input = useMemo<FinanceEngineInput>(
     () => ({
@@ -226,7 +203,7 @@ function FinanceIntelligence({
   if (loading || sideLoading) {
     return (
       <section className="finance-card fin-intel" aria-label="Finance intelligence loading" style={{ '--i': stagger } as CSSProperties}>
-        <SectionHead months={availableMonths} selectedMonthKey={selectedMonthKey} onMonthChange={onMonthChange} onRefresh={loadSide} />
+        <SectionHead months={availableMonths} selectedMonthKey={selectedMonthKey} onMonthChange={onMonthChange} onRefresh={financeActions.loadCommitments} />
         <div className="fin-intel-grid">
           <div className="fin-intel-hero">
             <span className="skeleton-rect skeleton-shimmer" style={{ width: 150, height: 36, borderRadius: 8 }} />
@@ -247,7 +224,7 @@ function FinanceIntelligence({
   if (!burndown && monthTxCount === 0) {
     return (
       <section className="finance-card fin-intel" aria-label="Finance intelligence" style={{ '--i': stagger } as CSSProperties}>
-        <SectionHead months={availableMonths} selectedMonthKey={selectedMonthKey} onMonthChange={onMonthChange} onRefresh={loadSide} />
+        <SectionHead months={availableMonths} selectedMonthKey={selectedMonthKey} onMonthChange={onMonthChange} onRefresh={financeActions.loadCommitments} />
         <div className="fin-intel-empty">
           <p>
             No transactions logged in {monthName} yet — log a few and I'll start tracking your
@@ -270,7 +247,7 @@ function FinanceIntelligence({
   return (
     <section className="finance-card fin-intel" aria-label="Finance intelligence" style={{ '--i': stagger } as CSSProperties}>
       <Wallet className="fin-intel-glyph" aria-hidden="true" />
-      <SectionHead months={availableMonths} selectedMonthKey={selectedMonthKey} onMonthChange={onMonthChange} onRefresh={loadSide} />
+      <SectionHead months={availableMonths} selectedMonthKey={selectedMonthKey} onMonthChange={onMonthChange} onRefresh={financeActions.loadCommitments} />
 
       <div className="fin-intel-grid">
         {/* ── Flagship: safe to spend + burn-down ── */}

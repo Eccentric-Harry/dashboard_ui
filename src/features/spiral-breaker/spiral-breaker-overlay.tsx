@@ -1,12 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ArrowRight, Check, Eye, ListTodo, Timer, Wind, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { mindService } from '@/services/mind-service'
-import { tasksService } from '@/services/tasks-service'
+import { useTasksStore } from '@/store/tasks-store'
 import { useSpiralStore, spiralActions } from '@/store/spiral-store'
 import { SpiralSketch } from './spiral-sketches'
-import type { DailyTask } from '@/types/tasks'
 import './spiral-breaker.css'
 
 /**
@@ -34,7 +33,10 @@ function SpiralBreakerOverlay() {
   const [step, setStep] = useState<Step>('name')
   const [solvable, setSolvable] = useState<boolean | null>(null)
   const [groundIndex, setGroundIndex] = useState(0)
-  const [tasks, setTasks] = useState<DailyTask[]>([])
+  const allTasks = useTasksStore.use.tasks().data
+  const { reloadTasks } = useTasksStore.use.actions()
+  // Open tasks, so the last step can offer something concrete to go back to.
+  const tasks = useMemo(() => allTasks.filter((t) => !t.completed).slice(0, 4), [allTasks])
   // Stamped when the overlay opens (see the effect below) — reading the clock during
   // render would make this component non-idempotent.
   const startedAt = useRef<number>(0)
@@ -62,21 +64,12 @@ function SpiralBreakerOverlay() {
     [solvable, reset],
   )
 
-  // Today's open tasks, so the last step can offer something concrete to go back to.
+  // Stamp the start and refresh the task list each time the overlay opens.
   useEffect(() => {
     if (!open) return
     startedAt.current = Date.now()
-    let cancelled = false
-    void (async () => {
-      const res = await tasksService.getTasks()
-      if (!cancelled && !res.error && res.data) {
-        setTasks(res.data.filter((t) => !t.completed).slice(0, 4))
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [open])
+    void reloadTasks()
+  }, [open, reloadTasks])
 
   // Escape to leave, and focus moves into the dialog and back out again on close.
   useEffect(() => {

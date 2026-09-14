@@ -49,10 +49,8 @@ function TodaysMealsCard({ onEdit, onSelectEntry }: TodaysMealsCardProps) {
 
   const totalCalories = useMemo(() => foodEntries.reduce((s, e) => s + (Number(e.calories) || 0), 0), [foodEntries])
   const totalProtein = useMemo(() => foodEntries.reduce((s, e) => s + (Number(e.proteinGrams) || 0), 0), [foodEntries])
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const calorieGoal: number = (data as any)?.health?.dailyFood?.calorieGoal || 2000
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const proteinGoalTarget: number = (data as any)?.health?.dailyFood?.proteinGoalGrams || (data as any)?.health?.circularGoals?.find((g: { label?: string }) => g.label === 'Protein')?.target || 148
+  const calorieGoal: number = data?.health?.dailyFood?.calorieGoal || 2000
+  const proteinGoalTarget: number = data?.health?.dailyFood?.proteinGoalGrams || data?.health?.circularGoals?.find((g: { label?: string }) => g.label === 'Protein')?.target || 148
   const [isEditMode, setIsEditMode] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<FoodEntry | null>(null)
 

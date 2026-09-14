@@ -7,8 +7,8 @@
  * 3. Event Card/Chip Component: Rendered as `<button className="grid-event-card">` within each `.grid-day-column`.
  * 4. Left Sidebar Panel: Contains `.sidebar-search-block` (Search Input), `.sidebar-month-card` (`MiniMonth` component), `.quick-reminder-card` (Meeting Reminder), `.calendar-filter-card` (Filters Accordion), and `.calendar-other-accordion` (Other Calendars).
  * 5. Custom Hooks: State (e.g. `selectedDate`, `items`, `viewType`, `categoryFilters`) is managed directly via React standard hooks (`useState`, `useMemo`, `useCallback`, `useEffect`).
- * 6. TypeScript Interfaces: `CalendarItem` (defined in `lib/api.ts`) contains: `id`, `occurrenceId`, `date`, `originalDate`, `title`, `startTime`, `endTime`, `allDay`, `itemType`, `category`, `color`, `notes`, `completed`, `cancelled`, `sortOrder`, `recurrenceFrequency`, `recurrenceUntil`, `history`, `createdAt`. It has no `attendees` field.
- * 7. API Service: Functions in `lib/api.ts` fetch data via browser `fetch` (e.g. `fetchCalendarItemsForRange`, `createCalendarItem`, `updateCalendarItem`, `toggleCalendarItem`, `deleteCalendarItem`).
+ * 6. TypeScript Interfaces: `CalendarItem` (defined in `types/calendar.ts`) contains: `id`, `occurrenceId`, `date`, `originalDate`, `title`, `startTime`, `endTime`, `allDay`, `itemType`, `category`, `color`, `notes`, `completed`, `cancelled`, `sortOrder`, `recurrenceFrequency`, `recurrenceUntil`, `history`, `createdAt`. It has no `attendees` field.
+ * 7. API Service: `calendarService` (services/calendar-service.ts) wraps every calendar endpoint over the shared Axios client; `calendar-store` holds the loaded range and Google sync status.
  * 
  * 1B — BACKEND ANALYSIS
  * 1. Controller: `CalendarController` in backend handles requests mapped to `/api/v1/calendar/items`.
@@ -49,7 +49,7 @@ import {
 import toast from 'react-hot-toast'
 
 import type { AppPath } from '@/app/routes'
-import type { CalendarItem, CalendarItemPayload, CalendarItemType, CalendarRecurrence, GoogleCalendarAccount } from '@/lib/api'
+import type { CalendarItem, CalendarItemPayload, CalendarItemType, CalendarRecurrence, GoogleCalendarAccount } from '@/types/calendar'
 import { calendarService } from '@/services/calendar-service'
 import { useCalendarStore } from '@/store/calendar-store'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'

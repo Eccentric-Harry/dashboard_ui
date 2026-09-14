@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react'
 import { X, Loader2, ListTodo, BookOpen } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
-import type { LearningLog, DailyTask } from '@/lib/api'
+import type { LearningLog } from '@/types/learnings'
+import type { DailyTask } from '@/types/tasks'
 import { learningsService } from '@/services/learnings-service'
 import { tasksService } from '@/services/tasks-service'
 import { confirmCloseIfDirty } from '@/lib/modal-utils'
 import './add-learning-modal.css'
+import { getErrorMessage } from '@/lib/errors'
 
 function formatTimeTo12Hour(time24: string): string {
   if (!time24) return ''
@@ -174,9 +176,8 @@ export function AddEntryModal({
       
       onSuccess()
       onClose()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      setError(err.message || 'Failed to save learning log')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to save learning log'))
     } finally {
       setLoading(false)
     }

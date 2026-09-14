@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Anchor, Check, Pencil, X } from 'lucide-react'
-import type { MindAnchorOutcome } from '@/lib/api'
+import type { MindAnchorOutcome } from '@/types/mind'
 import { cn } from '@/lib/utils'
 
 type TodaysAnchorCardProps = {

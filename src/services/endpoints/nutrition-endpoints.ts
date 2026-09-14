@@ -1,5 +1,12 @@
-// Declarative Nutrition + Hydration endpoint descriptors, ported from lib/api.ts.
+// Declarative Nutrition, Hydration and AI meal-analysis endpoint descriptors.
 import type { ApiEndpoint } from '../api-config';
+
+// AI meal analysis — a background job: POST starts it, GET polls its status.
+export const API_START_MEAL_ANALYSIS: ApiEndpoint = { url: '/meals/analyze', method: 'post' };
+export const API_GET_MEAL_ANALYSIS_JOB: ApiEndpoint<{ jobId: string }> = {
+  url: ({ jobId }) => `/meals/analyze/${jobId}`,
+  method: 'get',
+};
 
 export const API_GET_NUTRITION_SUMMARY: ApiEndpoint = { url: '/dashboard/nutrition-summary', method: 'get' };
 

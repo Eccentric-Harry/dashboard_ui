@@ -20,10 +20,9 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { userService } from '@/services/user-service'
+import { useUserStore } from '@/store/user-store'
 import { nutritionService } from '@/services/nutrition-service'
 import { getFoodHistory, getNutritionSummaryShared } from './food-history'
-import type { UserProfile } from '@/lib/api'
 import type { Insight } from '@/lib/insights/engine'
 import { isoDate, shortDay } from '@/lib/insights/engine'
 import {
@@ -40,6 +39,7 @@ import type { AdherenceDay, FoodEntryLike, HydrationDayLike, NutritionEngineInpu
 import { useCountUp } from '@/hooks/use-count-up'
 import { InsightList } from '@/components/ui/insight-list'
 import './nutrition-intelligence.css'
+import type { ChartTooltipProps } from '@/lib/chart-tooltip'
 
 const WINDOW_DAYS = 30
 
@@ -58,18 +58,18 @@ interface GoalFallback {
   calorieGoal?: number
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const CHART_TOOLTIP = ({ active, payload, label }: any) =>
+const CHART_TOOLTIP = ({ active, payload, label }: ChartTooltipProps) =>
   active && payload?.length ? (
     <div className="ntr-intel-tooltip">
-      {label}: {Math.round(payload[0].value)}g
+      {label}: {Math.round(Number(payload[0].value))}g
     </div>
   ) : null
 
 function NutritionIntelligence() {
   const today = isoDate()
   const [entries, setEntries] = useState<FoodEntryLike[] | null>(null)
-  const [profile, setProfile] = useState<UserProfile | null>(null)
+  // Loaded at app boot. Optional — targets fall back to the nutrition summary's goals.
+  const profile = useUserStore.use.profile().data
   const [goalFallback, setGoalFallback] = useState<GoalFallback>({})
   const [hydration, setHydration] = useState<HydrationDayLike[] | null>(null)
   const [loading, setLoading] = useState(true)
@@ -88,9 +88,8 @@ function NutritionIntelligence() {
     // The history read and the 7-day summary are shared with the other cards —
     // buildNutritionDays windows the entries down to WINDOW_DAYS locally, so
     // asking for a second, narrower copy of the same data buys nothing.
-    const [entriesRes, profileRes, summaryRes, hydrationRes] = await Promise.allSettled([
+    const [entriesRes, summaryRes, hydrationRes] = await Promise.allSettled([
       getFoodHistory(options),
-      userService.getProfile(),
       getNutritionSummaryShared(today),
       nutritionService.getHydrationRange(WINDOW_DAYS),
     ])
@@ -100,11 +99,6 @@ function NutritionIntelligence() {
       setEntries(null)
       setFailed(true)
     }
-    // Profile is optional (guest mode has no profile endpoint) — targets fall
-    // back to the nutrition summary's goals.
-    setProfile(
-      profileRes.status === 'fulfilled' && !profileRes.value.error ? (profileRes.value.data ?? null) : null,
-    )
     if (summaryRes.status === 'fulfilled') {
       const summary = summaryRes.value as GoalFallback | undefined
       setGoalFallback({ proteinGoal: summary?.proteinGoal, calorieGoal: summary?.calorieGoal })
@@ -511,8 +505,7 @@ function WeekDelta({
   )
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const CALORIE_TOOLTIP = ({ active, payload }: any) => {
+const CALORIE_TOOLTIP = ({ active, payload }: ChartTooltipProps) => {
   if (!active || !payload?.length) return null
   const d = payload[0].payload as AdherenceDay
   return (
@@ -523,8 +516,7 @@ const CALORIE_TOOLTIP = ({ active, payload }: any) => {
   )
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const PROTEIN_TOOLTIP = ({ active, payload }: any) => {
+const PROTEIN_TOOLTIP = ({ active, payload }: ChartTooltipProps) => {
   if (!active || !payload?.length) return null
   const d = payload[0].payload as AdherenceDay
   return (

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Anchor, RefreshCw, Pencil, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { MIND_VALUE_TAGS } from '../mind-types'
+import { isDefaultValueTag } from '../mind-types'
 
 type TodaysAnchorCardProps = {
   intention: string
@@ -165,8 +165,7 @@ function TodaysAnchorCard({
       {isPickingTag && (
         <div className="mind-anchor-tag-picker" role="group" aria-label="Choose focus tag">
           {availableTags.map((tag) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const isDefault = MIND_VALUE_TAGS.includes(tag as any)
+            const isDefault = isDefaultValueTag(tag)
             return (
               <button
                 key={tag}

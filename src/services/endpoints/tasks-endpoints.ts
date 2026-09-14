@@ -1,4 +1,4 @@
-// Declarative Tasks endpoint descriptors, ported 1:1 from lib/api.ts.
+// Declarative Tasks endpoint descriptors.
 import type { ApiEndpoint } from '../api-config';
 
 export const API_GET_TASKS: ApiEndpoint = { url: '/learnings/tasks', method: 'get' };

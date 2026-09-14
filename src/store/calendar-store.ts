@@ -1,7 +1,7 @@
 // Calendar store. `loadItems` keeps the monotonic seq guard (rapid date changes
 // must not leave stale data) and returns the SafeResult so the view can toast on
 // error. Optimistic edits use `applyItems`; `upcoming` is a plain slice the view
-// computes and sets. Mutations stay in the component (lib/api) for now.
+// computes and sets. Mutations run through calendarService in the component.
 
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';

@@ -8,7 +8,7 @@ import type {
   MindWorryOutcome,
   MindWorrySeverity,
 } from './mind-types'
-import { AFFIRMATIONS, buildSeedEntries, mindAddDays, mindIsoDate, MIND_VALUE_TAGS } from './mind-types'
+import { AFFIRMATIONS, buildSeedEntries, mindAddDays, mindIsoDate, isDefaultValueTag, MIND_VALUE_TAGS } from './mind-types'
 import { mindService } from '@/services/mind-service'
 import { mindActions, useMindStore } from '@/store/mind-store'
 import { MindHeader } from './components/mind-header'
@@ -154,8 +154,7 @@ function MindOverviewDashboard() {
         const res = await mindService.updateEntry(existing.id, {
           text: text.trim(),
           type: 'INTENTION',
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          valueTag: tag as any,
+          valueTag: tag,
           date: selectedDate
         })
         if (res.error || !res.data) throw new Error(res.error?.message ?? 'Failed to save intention')
@@ -165,8 +164,7 @@ function MindOverviewDashboard() {
         const res = await mindService.createEntry({
           text: text.trim(),
           type: 'INTENTION',
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          valueTag: tag as any,
+          valueTag: tag,
           date: selectedDate
         })
         if (res.error || !res.data) throw new Error(res.error?.message ?? 'Failed to save intention')
@@ -202,20 +200,17 @@ function MindOverviewDashboard() {
     setAvailableTags((prev) => {
       if (prev.includes(trimmed)) return prev
       const next = [...prev, trimmed]
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const customTagsOnly = next.filter((t) => !MIND_VALUE_TAGS.includes(t as any))
+      const customTagsOnly = next.filter((t) => !isDefaultValueTag(t))
       localStorage.setItem('custom_mind_tags', JSON.stringify(customTagsOnly))
       return next
     })
   }, [])
 
   const handleRemoveTag = useCallback((tagToRemove: string) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (MIND_VALUE_TAGS.includes(tagToRemove as any)) return
+    if (isDefaultValueTag(tagToRemove)) return
     setAvailableTags((prev) => {
       const next = prev.filter((t) => t !== tagToRemove)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const customTagsOnly = next.filter((t) => !MIND_VALUE_TAGS.includes(t as any))
+      const customTagsOnly = next.filter((t) => !isDefaultValueTag(t))
       localStorage.setItem('custom_mind_tags', JSON.stringify(customTagsOnly))
       return next
     })
@@ -382,15 +377,8 @@ function MindOverviewDashboard() {
     [patchEntry, refreshSummary],
   )
 
-  const refreshLedger = useCallback(async () => {
-    const res = await mindService.getWorryLedger()
-    if (!res.error && res.data) mindActions.setWorryLedger(res.data)
-  }, [])
-
-  const refreshRadar = useCallback(async () => {
-    const res = await mindService.getLoopRadar(30)
-    if (!res.error && res.data) mindActions.setLoopRadar(res.data)
-  }, [])
+  const refreshLedger = mindActions.loadWorryLedger
+  const refreshRadar = mindActions.loadLoopRadar
 
   useEffect(() => {
     void refreshLedger()

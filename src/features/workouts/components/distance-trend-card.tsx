@@ -1,14 +1,14 @@
 import { useMemo, useState, useEffect } from 'react'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
-import type { StravaActivity } from '@/lib/api'
+import type { StravaActivity } from '@/types/workouts'
+import type { ChartTooltipProps } from '@/lib/chart-tooltip'
 
 type DistanceTrendCardProps = {
   activities: StravaActivity[]
   loading: boolean
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function CustomTooltip({ active, payload }: any) {
+function CustomTooltip({ active, payload }: ChartTooltipProps) {
   if (!active || !payload?.length) return null
   const d = payload[0].payload as { date: string; distance: number; pace: number }
   return (

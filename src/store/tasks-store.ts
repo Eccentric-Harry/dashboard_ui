@@ -1,6 +1,6 @@
 // Tasks store. Holds the raw task list; the dashboard sorts/filters in memos.
 // Optimistic UI (toggle/delete/update) goes through `applyTasks`; the actual
-// network mutations stay in the component (lib/api) then call `reloadTasks`.
+// network mutations run through tasksService in the component, then call `reloadTasks`.
 
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';

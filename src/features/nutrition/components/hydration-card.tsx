@@ -2,8 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { RefreshCw, Minus, GlassWater, Droplet, Milk, Check } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { nutritionService } from '@/services/nutrition-service'
-import type { HydrationData } from '@/lib/api'
 import { useDashboard } from '@/store/dashboard-store'
+import { useNutritionStore } from '@/store/nutrition-store'
+import { isAwaitingData } from '@/store/zustand-utils'
+import { getErrorMessage } from '@/lib/errors'
 
 const TARGET_ML = 3000
 const GLASS_ML = 250
@@ -39,48 +41,40 @@ function getPace(
 function HydrationCard() {
   const { data: dashboardData } = useDashboard()
   const selectedDate = dashboardData?.date || new Date().toISOString().split('T')[0]
-  const [data, setData] = useState<HydrationData | null>(null)
-  const [loading, setLoading] = useState(true)
+  const hydrationState = useNutritionStore.use.hydration()
+  const { loadHydration, applyHydration } = useNutritionStore.use.actions()
+  const data = hydrationState.data
+  const loading = isAwaitingData(hydrationState)
   const [adding, setAdding] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [addError, setAddError] = useState<string | null>(null)
   const [bounceBtn, setBounceBtn] = useState<string | null>(null)
-
-  const loadHydration = useCallback(async () => {
-    try {
-      setError(null)
-      setLoading(true)
-      const response = await nutritionService.getHydration(selectedDate)
-      if (response.error) throw response.error
-      setData(response.data ?? null)
-    } catch (err) {
-      setError('Connection Error')
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
-  }, [selectedDate])
+  const error = addError ?? (hydrationState.hasErrors ? 'Connection Error' : null)
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadHydration()
-  }, [loadHydration])
+    void loadHydration(selectedDate)
+  }, [loadHydration, selectedDate])
+
+  const retry = useCallback(() => {
+    setAddError(null)
+    void loadHydration(selectedDate)
+  }, [loadHydration, selectedDate])
 
   const handleAddWater = async (amount: number, key: string) => {
     if (adding || amount === 0) return
     setBounceBtn(key)
     setTimeout(() => setBounceBtn(null), 400)
+    setAdding(true)
+    setAddError(null)
     try {
-      setAdding(true)
-      const addRes = await nutritionService.addWaterIntake(amount, selectedDate)
-      if (addRes.error) throw addRes.error
+      const res = await nutritionService.addWaterIntake(amount, selectedDate)
+      if (res.error) throw new Error(res.error.message)
       toast.success(`${amount > 0 ? 'Logged' : 'Removed'} ${Math.abs(amount)}ml of water`)
-      const response = await nutritionService.getHydration(selectedDate)
-      if (response.error) throw response.error
-      setData(response.data ?? null)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to log water')
-      setError('Failed to log water')
+      // The add endpoint returns the updated day; re-read only if it didn't.
+      if (typeof res.data?.waterIntakeMl === 'number') applyHydration(res.data)
+      else await loadHydration(selectedDate)
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to log water'))
+      setAddError('Failed to log water')
       console.error(err)
     } finally {
       setAdding(false)
@@ -207,7 +201,7 @@ function HydrationCard() {
       {error && (
         <div className="ntr-error">
           <span>{error}</span>
-          <button onClick={loadHydration} aria-label="Retry">
+          <button onClick={retry} aria-label="Retry">
             <RefreshCw size={14} />
           </button>
         </div>

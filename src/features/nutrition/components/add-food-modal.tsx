@@ -2,13 +2,15 @@ import { useState, useEffect, useRef, useCallback, type CSSProperties } from 're
 import { X, Loader2, ClipboardCheck, ClipboardPaste, Camera, CheckCircle, AlertTriangle, RotateCcw, Upload, Wifi, Bell, Scan, Shield, TrendingUp, Sparkles, Copy, ChevronLeft, ChevronRight, ChevronDown, ImagePlus } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
-import type { MealAnalysisApiResponse, ClinicalFlag, IngredientBreakdown, Prompt } from '@/lib/api'
+import type { MealAnalysisApiResponse, ClinicalFlag, IngredientBreakdown, FoodEntryRequest } from '@/types/nutrition'
+import type { Prompt } from '@/types/prompts'
 import { nutritionService } from '@/services/nutrition-service'
-import { useNotifications } from '@/store/notification-store'
+import { hasFullAnalysis, useNotifications } from '@/store/notification-store'
 import { usePromptsStore } from '@/store/prompts-store'
 import { normalizeMealGrade } from './meal-grade'
 import { NUTRILOG_PROMPT } from './nutrilog-prompt'
 import { confirmCloseIfDirty } from '@/lib/modal-utils'
+import { getErrorMessage } from '@/lib/errors'
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -291,12 +293,9 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
   }, [isOpen, isEdit, initialData, selectedDate])
 
   // Realistic progressive progress bar timer (~90s duration) + Trivia carousel
+  // Progress resets in handleAiSubmit when a scan starts; this effect only ticks.
   useEffect(() => {
-    if (aiPhase !== 'processing') {
-      setProgressPercent(0)
-      setElapsedSeconds(0)
-      return
-    }
+    if (aiPhase !== 'processing') return
 
     const startTime = Date.now()
     const TARGET_DURATION_MS = 90000 // 90 seconds (1.5 mins)
@@ -334,11 +333,13 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
   useEffect(() => {
     if (!currentTask) return
 
+    // Mirrors the background scan's terminal state (owned by the notification store) into
+    // this modal's phase machine.
     if (currentTask.status === 'success') {
       if (stageTimerRef.current) clearTimeout(stageTimerRef.current)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setProgressPercent(100)
-      if (currentTask.result?.analysis) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (hasFullAnalysis(currentTask.result)) {
         setAiResult(currentTask.result)
         setAiPhase('results')
       } else {
@@ -351,11 +352,8 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       }
     } else if (currentTask.status === 'failed') {
       if (stageTimerRef.current) clearTimeout(stageTimerRef.current)
-      const rawMsg = currentTask.error || 'Analysis failed'
-      const codeMatch = rawMsg.match(/(\d{3})/)
-      const code = codeMatch ? parseInt(codeMatch[1], 10) : null
-      setAiErrorCode(code)
-      setAiError(rawMsg)
+      setAiErrorCode(currentTask.errorCode ?? null)
+      setAiError(currentTask.error || 'Analysis failed')
       setAiPhase('input')
       setCurrentTaskId(null)
     }
@@ -486,8 +484,8 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       return
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const finalPayload: any = {
+    // Rich AI fields from a pasted analysis ride along with the required columns.
+    const finalPayload: FoodEntryRequest & Record<string, unknown> = {
       ...(parsed ? parsed.rich : {}),
       description: finalDescription,
       calories: numCalories,
@@ -509,9 +507,8 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       }
       onSuccess()
       onClose()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      setError(err.message || 'Failed to save food entry')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to save food entry'))
     } finally {
       setLoading(false)
     }
@@ -573,6 +570,8 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       return
     }
 
+    setProgressPercent(0)
+    setElapsedSeconds(0)
     setAiPhase('processing')
 
     try {
