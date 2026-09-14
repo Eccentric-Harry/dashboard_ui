@@ -1253,10 +1253,13 @@ button {
     zoom: 1;
   }
 
-  /* --- Body: ensure native page scroll --- */
+  /* --- Body: ensure native page scroll ---
+     `clip`, not `hidden`: hidden on one axis turns the other into `auto`, which makes
+     body and #root scroll containers that never scroll — and every position: sticky
+     below them (the pursuit workspace bar, ledger day headers) silently stops pinning. */
   body,
   #root {
-    overflow-x: hidden;
+    overflow-x: clip;
     overflow-y: visible;
     height: auto;
   }

@@ -98,6 +98,18 @@
   box-shadow: 0 6px 16px rgba(216, 53, 66, 0.3);
 }
 
+/* A positive but final action, e.g. finishing a pursuit. */
+.confirm-btn.confirm.is-accent {
+  background: #1a7a4a;
+  border-color: #156a3f;
+  box-shadow: 0 4px 12px rgba(26, 122, 74, 0.22);
+}
+
+.confirm-btn.confirm.is-accent:hover {
+  background: #156a3f;
+  box-shadow: 0 6px 16px rgba(26, 122, 74, 0.3);
+}
+
 .confirm-modal-close {
   display: grid;
   width: 28px;

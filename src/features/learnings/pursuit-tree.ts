@@ -32,6 +32,39 @@ export function countSteps(steps: PursuitStep[]): number {
   return steps.reduce((sum, step) => sum + 1 + countSteps(childrenOf(step)), 0)
 }
 
+/** A plan is milestone-shaped when any top-level step holds sub-steps; a flat plan is one list. */
+export function hasMilestones(steps: PursuitStep[]): boolean {
+  return steps.some((step) => childrenOf(step).length > 0)
+}
+
+/** Leaf progress under one top-level step — a step without sub-steps counts as one. */
+export function milestoneProgress(step: PursuitStep): { done: number; total: number } {
+  const children = childrenOf(step)
+  return children.length > 0 ? countLeaves(children) : { done: step.isCompleted ? 1 : 0, total: 1 }
+}
+
+/** Every step that has sub-steps (the foldable ones), in plan order. */
+export function collectParents(steps: PursuitStep[]): PursuitStep[] {
+  return steps.flatMap((step) => {
+    const children = childrenOf(step)
+    return children.length > 0 ? [step, ...collectParents(children)] : []
+  })
+}
+
+/** Estimate choices for a step, keeping an off-list value it already has. */
+export function estimateChoices(current: number | null): number[] {
+  return current && !ESTIMATE_OPTIONS.includes(current)
+    ? [...ESTIMATE_OPTIONS, current].sort((a, b) => a - b)
+    : ESTIMATE_OPTIONS
+}
+
+/** Milliseconds left → "24:05". */
+export function formatCountdown(ms: number): string {
+  if (ms <= 0) return '00:00'
+  const totalSeconds = Math.floor(ms / 1000)
+  return `${String(Math.floor(totalSeconds / 60)).padStart(2, '0')}:${String(totalSeconds % 60).padStart(2, '0')}`
+}
+
 function deriveCompletion(steps: PursuitStep[]): PursuitStep[] {
   return steps.map((step) => {
     const children = childrenOf(step)

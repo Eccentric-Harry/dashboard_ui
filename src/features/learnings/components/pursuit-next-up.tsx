@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Check, Clock, CornerDownRight, Pencil, Play, Plus, Sparkles, Target, Timer, X } from 'lucide-react'
 import type { LearningPursuit } from '@/types/learnings'
 import { countLeaves, formatMinutes, suggestedSessionMinutes, sumEstimates, type NextStep } from '../pursuit-tree'
@@ -7,6 +7,8 @@ import './pursuit-next-up.css'
 interface PursuitNextUpProps {
   pursuit: LearningPursuit
   next: NextStep
+  /** Replaces the pursuit title and step count in the head — the workspace already shows both. */
+  meta?: ReactNode
   /** A focus session is running or paused on this very step. */
   isFocusing: boolean
   onStartFocus: (minutes: number) => void
@@ -19,7 +21,7 @@ interface PursuitNextUpProps {
  * The main pursuit's current step — the "pick up where I left off" surface. Parents
  * key it by step id, so its local edit state resets when the step moves on.
  */
-export function PursuitNextUp({ pursuit, next, isFocusing, onStartFocus, onLearn, onMarkDone, onSaveResumeNote }: PursuitNextUpProps) {
+export function PursuitNextUp({ pursuit, next, meta, isFocusing, onStartFocus, onLearn, onMarkDone, onSaveResumeNote }: PursuitNextUpProps) {
   const { step, trail } = next
   const [editingNote, setEditingNote] = useState(false)
   const [noteDraft, setNoteDraft] = useState('')
@@ -40,17 +42,19 @@ export function PursuitNextUp({ pursuit, next, isFocusing, onStartFocus, onLearn
           <Target size={12} strokeWidth={2.4} />
           Up next
         </span>
-        <span className="pnu-meta">
-          <span className="pnu-meta-title">{pursuit.title}</span>
-          <i aria-hidden="true">·</i>
-          <span>{leaves.done}/{leaves.total} steps</span>
-          {remaining.minutes > 0 && (
-            <>
-              <i aria-hidden="true">·</i>
-              <span>≈{formatMinutes(remaining.minutes)} left</span>
-            </>
-          )}
-        </span>
+        {meta ?? (
+          <span className="pnu-meta">
+            <span className="pnu-meta-title">{pursuit.title}</span>
+            <i aria-hidden="true">·</i>
+            <span>{leaves.done}/{leaves.total} steps</span>
+            {remaining.minutes > 0 && (
+              <>
+                <i aria-hidden="true">·</i>
+                <span>≈{formatMinutes(remaining.minutes)} left</span>
+              </>
+            )}
+          </span>
+        )}
       </div>
 
       {trail.length > 0 && <p className="pnu-trail">{trail.map((t) => t.text).join(' › ')}</p>}

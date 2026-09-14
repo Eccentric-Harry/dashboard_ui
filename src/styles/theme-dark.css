@@ -690,6 +690,19 @@
   box-shadow: 0 4px 14px rgba(193, 65, 76, 0.28);
 }
 
+/* A positive but final action (finishing a pursuit) takes the mint accent instead. */
+:root[data-theme='dark'] .confirm-btn.confirm.is-accent {
+  border-color: transparent;
+  background: var(--dk-accent);
+  color: var(--dk-on-accent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+:root[data-theme='dark'] .confirm-btn.confirm.is-accent:hover {
+  background: #a3dbb8;
+  box-shadow: 0 4px 14px rgba(143, 212, 168, 0.22);
+}
+
 /* ══ Home ════════════════════════════════════════════════════════════════
    Home's accent is lavender (--ntr-lime is #bcc3f2 on .home-dashboard, which
    the derived pass keeps). The dark pass follows the usual dark-dashboard
@@ -2117,31 +2130,6 @@
   background: rgba(0, 0, 0, 0.2);
 }
 
-/* Step tree inside the queue card: lime marks progress, matching the modal. */
-:root[data-theme='dark'] .pursuit-step-check { border-color: rgba(236, 238, 240, 0.24); background: transparent; }
-:root[data-theme='dark'] .pursuit-step-check:hover { border-color: var(--dk-accent); }
-
-:root[data-theme='dark'] .pursuit-step-check.is-checked {
-  border-color: var(--dk-accent);
-  background: var(--dk-accent);
-  color: var(--dk-on-accent);
-}
-
-:root[data-theme='dark'] .pursuit-step-check.is-partial::before {
-  background: conic-gradient(var(--dk-accent) calc(var(--pct, 0) * 1%), transparent 0);
-}
-
-:root[data-theme='dark'] .pursuit-step-count.is-done { background: rgba(143, 212, 168, 0.14); color: #b6e3c6; }
-:root[data-theme='dark'] .pursuit-step-edit input,
-:root[data-theme='dark'] .pursuit-step-add-form input {
-  border-color: rgba(143, 212, 168, 0.4);
-  background: rgba(0, 0, 0, 0.26);
-  color: var(--dk-ink);
-}
-:root[data-theme='dark'] .pursuit-step-add-root:hover { background: rgba(143, 212, 168, 0.1); color: var(--dk-accent); }
-:root[data-theme='dark'] .pursuit-step-add-form button[type='submit'],
-:root[data-theme='dark'] .pursuit-step-edit button[type='button']:first-of-type { color: var(--dk-accent); }
-
 /* ══ Learnings: Up next, Learn with AI, session wrap-up ══════════════════
    Same language as the create-pursuit modal above: graphite surfaces, recessed
    wells, lime for the one primary action and every "current / selected" state. */
@@ -2306,35 +2294,6 @@
 :root[data-theme='dark'] .wrapup-done.is-on .wrapup-switch { background: var(--dk-accent); }
 :root[data-theme='dark'] .wrapup-done.is-on .wrapup-switch::after { background: var(--dk-on-accent); }
 
-/* Step tree: time, the current step, estimate editing */
-:root[data-theme='dark'] .pursuit-step-estimate { color: rgba(236, 238, 240, 0.42); }
-
-:root[data-theme='dark'] .pursuit-step-row.is-current {
-  background: rgba(143, 212, 168, 0.07);
-  box-shadow: 0 0 0 1px rgba(143, 212, 168, 0.13);
-}
-
-:root[data-theme='dark'] .pursuit-step-row.is-current:hover { background: rgba(143, 212, 168, 0.1); }
-:root[data-theme='dark'] .pursuit-step-row.is-current .pursuit-step-check { border-color: var(--dk-accent); }
-:root[data-theme='dark'] .pursuit-step-row.is-current .pursuit-step-check::after { background: var(--dk-accent); }
-:root[data-theme='dark'] .pursuit-step-row.is-current .pursuit-step-text { color: var(--dk-ink); }
-
-:root[data-theme='dark'] .pursuit-step-next-tag {
-  background: rgba(143, 212, 168, 0.14);
-  color: #bfe8cd;
-}
-
-:root[data-theme='dark'] .pursuit-step-edit select {
-  border-color: var(--dk-line-strong);
-  background: rgba(0, 0, 0, 0.26);
-  color: var(--dk-ink);
-}
-
-:root[data-theme='dark'] .pursuit-step-actions button.is-ai:hover {
-  background: rgba(143, 212, 168, 0.1);
-  color: var(--dk-accent);
-}
-
 :root[data-theme='dark'] .pursuit-outline-estimate {
   border-color: var(--dk-line-strong);
   background: rgba(255, 255, 255, 0.04);
@@ -2354,7 +2313,7 @@
   color: var(--dk-ink);
 }
 
-/* ══ Learnings: pursuit tiles, milestone bar, plan sheet ═════════════════ */
+/* ══ Learnings: pursuit tiles, milestone bar ═════════════════════════════ */
 
 :root[data-theme='dark'] .plan-tile {
   border-color: var(--dk-line);
@@ -2364,6 +2323,8 @@
 
 :root[data-theme='dark'] .plan-tile:hover { border-color: var(--dk-line-strong); }
 :root[data-theme='dark'] .plan-tile-title { color: var(--dk-ink); }
+:root[data-theme='dark'] .plan-tile-title-btn:hover { color: var(--dk-accent); }
+:root[data-theme='dark'] .plan-tile-title-btn:focus-visible { outline-color: var(--dk-accent); }
 :root[data-theme='dark'] .plan-tile-meta { color: rgba(236, 238, 240, 0.45); }
 :root[data-theme='dark'] .plan-tile-next { color: var(--dk-ink-2); }
 :root[data-theme='dark'] .plan-tile-next svg { color: var(--dk-accent); }
@@ -2383,29 +2344,49 @@
 :root[data-theme='dark'] .plan-milestone i { background: var(--dk-accent); }
 :root[data-theme='dark'] .plan-milestone.is-current { background: rgba(143, 212, 168, 0.22); }
 
-:root[data-theme='dark'] .plan-sheet-backdrop {
-  background: rgba(6, 7, 9, 0.55);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+/* ══ Learnings: pursuit workspace ════════════════════════════════════════
+   Every colour in pursuit-workspace.css reads a --pw-* token, so dark is a token
+   swap: graphite washes and hairlines, mint for progress, "next" and the one
+   primary action, recessed wells for inputs. */
+
+:root[data-theme='dark'] .pursuit-workspace {
+  --pw-ink: var(--dk-ink);
+  --pw-ink-2: var(--dk-ink-2);
+  --pw-ink-3: rgba(236, 238, 240, 0.48);
+  --pw-ink-4: rgba(236, 238, 240, 0.28);
+  --pw-accent: var(--dk-accent);
+  --pw-accent-ink: #bfe8cd;
+  --pw-on-accent: var(--dk-on-accent);
+  --pw-accent-wash: rgba(143, 212, 168, 0.07);
+  --pw-accent-wash-strong: rgba(143, 212, 168, 0.14);
+  --pw-accent-line: rgba(143, 212, 168, 0.16);
+  --pw-accent-focus: rgba(143, 212, 168, 0.45);
+  --pw-accent-glow: rgba(143, 212, 168, 0.4);
+  --pw-line: var(--dk-line);
+  --pw-line-strong: var(--dk-line-strong);
+  --pw-wash: var(--dk-wash);
+  --pw-wash-strong: var(--dk-wash-strong);
+  --pw-well: rgba(0, 0, 0, 0.26);
+  --pw-chip: rgba(255, 255, 255, 0.04);
+  --pw-chip-hover: var(--dk-wash-strong);
+  --pw-bar-surface: var(--dk-raised);
+  --pw-menu-surface: var(--dk-overlay);
+  --pw-menu-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 24px 60px rgba(0, 0, 0, 0.55);
+  --pw-danger: var(--dk-danger);
+  --pw-danger-wash: rgba(242, 139, 149, 0.14);
+  --pw-paused: #e0b36a;
+  --pw-check-border: rgba(236, 238, 240, 0.24);
+  --pw-float-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 1px 2px rgba(0, 0, 0, 0.45), 0 18px 44px rgba(0, 0, 0, 0.45);
 }
 
-:root[data-theme='dark'] .plan-sheet {
-  border-color: var(--dk-line-strong);
-  background: var(--dk-panel);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 32px 80px rgba(0, 0, 0, 0.6);
+:root[data-theme='dark'] .pw-bar-surface,
+:root[data-theme='dark'] .pw-switch-menu { border-color: var(--dk-line-strong); }
+
+:root[data-theme='dark'] .pursuit-workspace :is(.pw-input, .pw-add input, .pw-edit-line input, .pw-bar-note input)::placeholder {
+  color: rgba(236, 238, 240, 0.35);
+}
+
+:root[data-theme='dark'] .pursuit-workspace :is(select.pw-input, .pw-edit-line select) option {
+  background: var(--dk-overlay);
   color: var(--dk-ink);
 }
-
-:root[data-theme='dark'] .plan-sheet-grabber { background: rgba(255, 255, 255, 0.2); }
-:root[data-theme='dark'] .plan-sheet-eyebrow { color: var(--dk-accent); }
-:root[data-theme='dark'] .plan-sheet-title { color: var(--dk-ink); }
-:root[data-theme='dark'] .plan-sheet-goal { color: var(--dk-ink-2); }
-
-:root[data-theme='dark'] .plan-stat {
-  background: rgba(0, 0, 0, 0.22);
-  box-shadow: inset 0 0 0 1px var(--dk-line);
-}
-
-:root[data-theme='dark'] .plan-stat-value { color: var(--dk-ink); }
-:root[data-theme='dark'] .plan-stat-label { color: var(--dk-ink-3); }
-:root[data-theme='dark'] .plan-sheet-body { border-top-color: var(--dk-line); }

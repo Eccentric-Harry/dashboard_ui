@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { AppPath } from '@/app/routes'
 import type { LearningLog } from '@/types/learnings'
 import { calendarService } from '@/services/calendar-service'
 import { useLearningsStore } from '@/store/learnings-store'
 import { isAwaitingData } from '@/store/zustand-utils'
+import { isStandalone } from '@/lib/utils'
 import { isoDate, parseIsoDate } from './learnings-utils'
 import { LearningsHeader } from './components/learnings-header'
 import { LearningsStatsRow } from './components/learnings-stats-row'
@@ -11,7 +12,9 @@ import { LearningsLogCard } from './components/learnings-log-card'
 import { CategoryBreakdownCard } from './components/category-breakdown-card'
 import { AddEntryModal } from './components/add-entry-modal'
 import { FocusBlockWidget } from './components/focus-block-widget'
+import { FocusSessionHost } from './components/focus-session-host'
 import { ActiveStudyQueue } from './components/active-study-queue'
+import { PursuitWorkspace } from './components/pursuit-workspace/pursuit-workspace'
 import './learnings-overview.css'
 
 function parseDateFromParams(searchParams: URLSearchParams): string {
@@ -22,6 +25,10 @@ function parseDateFromParams(searchParams: URLSearchParams): string {
   return isoDate(d)
 }
 
+/** Desktop scrolls inside the dashboard's own box; phones scroll the page. */
+const ownsScroll = (el: HTMLElement | null): el is HTMLElement =>
+  el !== null && getComputedStyle(el).overflowY !== 'visible'
+
 interface LearningsOverviewDashboardProps {
   searchParams: URLSearchParams
   onNavigate?: (pathname: AppPath, search?: string) => void
@@ -29,6 +36,8 @@ interface LearningsOverviewDashboardProps {
 
 function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverviewDashboardProps) {
   const [selectedDate, setSelectedDate] = useState(() => parseDateFromParams(searchParams))
+  // `?pursuit=<id>` swaps the dashboard for that pursuit's workspace.
+  const pursuitParam = searchParams.get('pursuit')
 
   // Summary server state comes from the learnings store (date-keyed slice).
   const summaryState = useLearningsStore.use.summary()
@@ -38,6 +47,11 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
 
   const [entryModalOpen, setEntryModalOpen] = useState(false)
   const [editingLearning, setEditingLearning] = useState<LearningLog | undefined>()
+
+  const sectionRef = useRef<HTMLElement>(null)
+  const dashboardScrollRef = useRef(0)
+  // True while the open workspace was reached straight from the dashboard in this tab.
+  const enteredFromDashboardRef = useRef(false)
 
   // Bottom-dock quick-add bubble opens the same "add entry" modal
   useEffect(() => {
@@ -53,6 +67,18 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedDate(parseDateFromParams(searchParams))
   }, [searchParams])
+
+  // Each view opens at its top; coming back to the dashboard restores where it was.
+  useLayoutEffect(() => {
+    const el = sectionRef.current
+    const y = pursuitParam ? 0 : dashboardScrollRef.current
+    if (ownsScroll(el)) el.scrollTop = y
+    else window.scrollTo(0, y)
+    if (!pursuitParam) {
+      dashboardScrollRef.current = 0
+      enteredFromDashboardRef.current = false
+    }
+  }, [pursuitParam])
 
   const reloadSummary = useCallback(() => {
     void learningsActions.loadSummary(selectedDate)
@@ -77,6 +103,38 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
   const handleDateChange = (date: string) => {
     setSelectedDate(date)
     onNavigate?.('/learnings', `?date=${date}`)
+  }
+
+  /** Keeps the viewed date when moving between the dashboard and a workspace. */
+  const searchWith = (pursuitId?: string) => {
+    const params = new URLSearchParams()
+    const date = searchParams.get('date')
+    if (date) params.set('date', date)
+    if (pursuitId) params.set('pursuit', pursuitId)
+    const query = params.toString()
+    return query ? `?${query}` : ''
+  }
+
+  const openPursuit = (pursuitId: string) => {
+    if (pursuitParam) {
+      // Switching pursuits inside the workspace: Back can no longer just pop one entry.
+      enteredFromDashboardRef.current = false
+    } else {
+      const el = sectionRef.current
+      dashboardScrollRef.current = ownsScroll(el) ? el.scrollTop : window.scrollY
+      enteredFromDashboardRef.current = true
+    }
+    onNavigate?.('/learnings', searchWith(pursuitId))
+  }
+
+  const closePursuit = () => {
+    // Straight back from the dashboard in a browser tab: pop history so the browser's own
+    // Back and Forward stay in step. Deep links and the installed PWA navigate instead.
+    if (enteredFromDashboardRef.current && !isStandalone()) {
+      window.history.back()
+      return
+    }
+    onNavigate?.('/learnings', searchWith())
   }
 
   const handleSessionComplete = useCallback(async (durationMinutes: number, activityType: string) => {
@@ -105,46 +163,64 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
   }, [selectedDate, handleRefresh])
 
   return (
-    <section className="learnings-dashboard" aria-label="Learnings overview dashboard">
-      <LearningsHeader
-        selectedDate={selectedDate}
-        onDateChange={handleDateChange}
-        onNavigate={onNavigate}
-        onAddEntry={() => {
-          setEditingLearning(undefined)
-          setEntryModalOpen(true)
-        }}
-        summary={summary}
-      />
-
-      <div className="learnings-dashboard-grid">
-        {/* Row 1: Stats strip */}
-        <LearningsStatsRow summary={summary} loading={summaryLoading} />
-
-        {/* Row 2: Study Queue (wide) + Focus Widget */}
-        <div className="lo-study-queue-wrap">
-          <ActiveStudyQueue onRefresh={handleRefresh} />
-        </div>
-
-        <div className="lo-focus-wrap">
-          <FocusBlockWidget onSessionComplete={handleSessionComplete} onPursuitsChanged={handleRefresh} />
-        </div>
-
-        {/* Row 3: Category Distribution + Journal */}
-        <div className="lo-distribution-wrap">
-          <CategoryBreakdownCard />
-        </div>
-
-        <div className="lo-journal-wrap">
-          <LearningsLogCard
-            onRefresh={handleRefresh}
-            onEditLearning={(learning) => {
-              setEditingLearning(learning)
+    <section
+      ref={sectionRef}
+      className="learnings-dashboard"
+      aria-label={pursuitParam ? 'Pursuit workspace' : 'Learnings overview dashboard'}
+    >
+      {pursuitParam ? (
+        <PursuitWorkspace
+          pursuitId={pursuitParam}
+          onBack={closePursuit}
+          onOpenPursuit={openPursuit}
+          onRefresh={handleRefresh}
+        />
+      ) : (
+        <>
+          <LearningsHeader
+            selectedDate={selectedDate}
+            onDateChange={handleDateChange}
+            onNavigate={onNavigate}
+            onAddEntry={() => {
+              setEditingLearning(undefined)
               setEntryModalOpen(true)
             }}
+            summary={summary}
           />
-        </div>
-      </div>
+
+          <div className="learnings-dashboard-grid">
+            {/* Row 1: Stats strip */}
+            <LearningsStatsRow summary={summary} loading={summaryLoading} />
+
+            {/* Row 2: Study Queue (wide) + Focus Widget */}
+            <div className="lo-study-queue-wrap">
+              <ActiveStudyQueue onRefresh={handleRefresh} onOpenPursuit={openPursuit} />
+            </div>
+
+            <div className="lo-focus-wrap">
+              <FocusBlockWidget />
+            </div>
+
+            {/* Row 3: Category Distribution + Journal */}
+            <div className="lo-distribution-wrap">
+              <CategoryBreakdownCard />
+            </div>
+
+            <div className="lo-journal-wrap">
+              <LearningsLogCard
+                onRefresh={handleRefresh}
+                onEditLearning={(learning) => {
+                  setEditingLearning(learning)
+                  setEntryModalOpen(true)
+                }}
+              />
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Finishing a focus session is handled here so it works from either view. */}
+      <FocusSessionHost onSessionComplete={handleSessionComplete} onPursuitsChanged={handleRefresh} />
 
       <AddEntryModal
         isOpen={entryModalOpen}

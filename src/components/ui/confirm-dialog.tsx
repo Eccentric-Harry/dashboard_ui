@@ -8,11 +8,13 @@ interface ConfirmDialogProps {
   message: string
   confirmLabel?: string
   cancelLabel?: string
+  /** `danger` (default) for destructive actions; `accent` for a positive but final one. */
+  tone?: 'danger' | 'accent'
   onConfirm: () => void
   onCancel: () => void
 }
 
-export function ConfirmDialog({ open, title, message, confirmLabel = 'Delete', cancelLabel = 'Cancel', onConfirm, onCancel }: ConfirmDialogProps) {
+export function ConfirmDialog({ open, title, message, confirmLabel = 'Delete', cancelLabel = 'Cancel', tone = 'danger', onConfirm, onCancel }: ConfirmDialogProps) {
   if (!open) return null
 
   const modalContent = (
@@ -31,7 +33,7 @@ export function ConfirmDialog({ open, title, message, confirmLabel = 'Delete', c
           <button type="button" className="confirm-btn cancel" onClick={onCancel}>
             {cancelLabel}
           </button>
-          <button type="button" className="confirm-btn confirm" onClick={onConfirm}>
+          <button type="button" className={`confirm-btn confirm${tone === 'accent' ? ' is-accent' : ''}`} onClick={onConfirm}>
             {confirmLabel}
           </button>
         </div>

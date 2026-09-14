@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react'
 import type { PursuitStep } from '@/types/learnings'
 import { cn } from '@/lib/utils'
-import { childrenOf, countLeaves, findStepById } from '../pursuit-tree'
+import { countLeaves, findStepById, milestoneProgress } from '../pursuit-tree'
 import './pursuit-plan.css'
 
 interface PursuitMilestoneBarProps {
@@ -26,9 +26,7 @@ export function PursuitMilestoneBar({ steps, currentStepId, large }: PursuitMile
       aria-label={`${overall.done} of ${overall.total} steps done across ${steps.length} milestones`}
     >
       {steps.map((step) => {
-        const { done, total } = childrenOf(step).length > 0
-          ? countLeaves(childrenOf(step))
-          : { done: step.isCompleted ? 1 : 0, total: 1 }
+        const { done, total } = milestoneProgress(step)
         const fill = total > 0 ? Math.round((done / total) * 100) : 0
         const isCurrent = Boolean(currentStepId && findStepById([step], currentStepId))
         return (
