@@ -72,11 +72,23 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
   useLayoutEffect(() => {
     const el = sectionRef.current
     const y = pursuitParam ? 0 : dashboardScrollRef.current
-    if (ownsScroll(el)) el.scrollTop = y
-    else window.scrollTo(0, y)
+    const apply = () => {
+      if (ownsScroll(el)) el.scrollTop = y
+      else window.scrollTo(0, y)
+    }
+    apply()
     if (!pursuitParam) {
       dashboardScrollRef.current = 0
       enteredFromDashboardRef.current = false
+    }
+    if (y === 0) return
+    // The cards re-mount with the dashboard and are still growing to full height, which
+    // clamps the first restore short; re-apply once they've settled.
+    const frame = requestAnimationFrame(apply)
+    const timer = window.setTimeout(apply, 250)
+    return () => {
+      cancelAnimationFrame(frame)
+      window.clearTimeout(timer)
     }
   }, [pursuitParam])
 
