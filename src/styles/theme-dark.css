@@ -442,6 +442,43 @@
   color: color-mix(in oklab, var(--grade-ink) 45%, #fff);
 }
 
+/* Health context — graphite card with a faint top wash of the risk hue; the pill
+   carries the colour so the prose can stay neutral and readable. */
+:root[data-theme='dark'] .ntr-insight-medical-card {
+  border-color: color-mix(in srgb, var(--med-ink) 28%, var(--dk-line));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--med-ink) 14%, transparent), transparent 65%),
+    var(--dk-raised);
+  box-shadow: var(--dk-highlight);
+}
+
+:root[data-theme='dark'] .ntr-medical-head span {
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .ntr-medical-finding {
+  color: var(--dk-ink-2);
+}
+
+:root[data-theme='dark'] .ntr-medical-reco {
+  border-top: 1px solid var(--dk-line-strong);
+}
+
+:root[data-theme='dark'] .ntr-medical-reco p {
+  color: var(--dk-ink);
+  font-weight: 500;
+}
+
+:root[data-theme='dark'] .ntr-medical-reco svg {
+  color: var(--dk-accent);
+}
+
+:root[data-theme='dark'] .ntr-risk-badge {
+  border-color: color-mix(in srgb, var(--risk-ink) 45%, transparent);
+  background: color-mix(in srgb, var(--risk-ink) 22%, transparent);
+  color: color-mix(in oklab, var(--risk-ink) 45%, #fff);
+}
+
 :root[data-theme='dark'] .ntr-detail-grade-hero {
   border-color: color-mix(in srgb, var(--grade-ink) 38%, transparent);
   background: color-mix(in srgb, var(--grade-ink) 16%, transparent);

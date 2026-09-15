@@ -676,7 +676,8 @@
 .ntr-insight-medical-card {
   padding: 14px 16px;
   border-radius: 14px;
-  border: 1px solid;
+  border: 1px solid var(--med-border);
+  background: var(--med-wash);
 }
 
 .ntr-medical-head {
@@ -697,6 +698,9 @@
   font-weight: 700;
   padding: 3px 9px;
   border-radius: 999px;
+  border: 1px solid var(--risk-border);
+  background: var(--risk-bg);
+  color: var(--risk-ink);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }

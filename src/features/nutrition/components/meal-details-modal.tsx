@@ -105,7 +105,7 @@ export function MealDetailsModal({ open, onClose, entry, onEdit }: MealDetailsMo
     return (
       <span
         className="ntr-risk-badge"
-        style={{ backgroundColor: tone.bg, color: tone.ink, border: `1px solid ${tone.border}` }}
+        style={{ '--risk-ink': tone.ink, '--risk-bg': tone.bg, '--risk-border': tone.border } as CSSProperties}
       >
         {risk}
       </span>
@@ -414,13 +414,13 @@ export function MealDetailsModal({ open, onClose, entry, onEdit }: MealDetailsMo
                         <div
                           key={i}
                           className="ntr-insight-medical-card"
-                          // The light pastel wash is only the var() fallback: over a dark
-                          // page it turned into a milky overlay, so dark swaps in its own
-                          // surface tinted by --med-tone (see theme-dark.css).
+                          // Tone travels as variables, not inline colours, so dark mode can
+                          // re-derive a graphite surface from --med-ink (see theme-dark.css)
+                          // instead of inheriting the light pastel wash as a milky overlay.
                           style={{
-                            '--med-tone': tone?.border,
-                            borderColor: tone?.border || 'var(--ntr-line, #eae9e0)',
-                            background: `var(--med-surface, ${tone ? `${tone.bg}66` : '#fbfaf5'})`,
+                            '--med-ink': tone?.ink ?? '#6b7165',
+                            '--med-border': tone?.border ?? '#eae9e0',
+                            '--med-wash': tone ? `${tone.bg}66` : '#fbfaf5',
                           } as CSSProperties}
                         >
                           <div className="ntr-medical-head">
