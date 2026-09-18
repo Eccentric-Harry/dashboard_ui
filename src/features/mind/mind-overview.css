@@ -16,19 +16,13 @@
   scrollbar-gutter: stable;
 }
 
-.mind-dashboard::-webkit-scrollbar {
-  width: 9px;
-}
-
-.mind-dashboard::-webkit-scrollbar-track {
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.24);
-}
-
-.mind-dashboard::-webkit-scrollbar-thumb {
-  border: 2px solid rgba(255, 255, 255, 0.24);
-  border-radius: 999px;
-  background: rgba(21, 27, 24, 0.34);
+/* Tablet (769–1024px): the shared tablet inset — level with the top of the
+   frame and ~46px right of the tablet rail (24–74px). Without it the desktop
+   206px left edge left a 132px gap beside the rail. */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .mind-dashboard {
+    inset: 20px 28px 12px 120px;
+  }
 }
 
 /* ---------- Header ---------- */

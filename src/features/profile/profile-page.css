@@ -2,63 +2,48 @@
 /* Profile View — single-viewport glass profile card       */
 /* ═══════════════════════════════════════════════════════ */
 
-/* Every other route hardcodes `inset: 20px 58px 12px 206px` on its own
-   container class — these two custom properties are that same top/bottom as an
-   overridable default (20px / 12px) rather than a third copy of the magic
-   numbers. Profile is the only route that shrinks them; nothing about any
-   other route's CSS has to change for that fallback to stay accurate. */
-.dashboard-stage.profile-stage {
-  --profile-inset-top: 10px;
-  /* 14px, not 12px, is deliberate: it puts the container's bottom edge at
-     850 − 14 = 836px, exactly where `.side-rail` ends. See the bottom-alignment
-     note below. */
-  --profile-inset-bottom: 14px;
-}
+/* Desktop only. The desktop stage tracks the window (styles/index.css), but
+   Profile's content is short — its columns need ~750px (identity) and ~700px
+   (metrics) — so rather than stretch the card over a tall window with dead air
+   inside it, the card takes its own content height and centres in the stage.
+   On a window too short for that, `max-height` caps it at the stage and the two
+   columns scroll on their own, so the card's edges are never cut off.
 
-/* Desktop only. The shared `.dashboard-stage` runs 900–1200px tall, which
-   Finance/Home/Nutrition fill but Profile does not: measured, its columns need
-   747px (identity) and 699px (metrics), so everything above that was dead air.
-   `min-height` has to be overridden alongside `height` — the shared rule sets
-   both, and its 900px min was quietly re-inflating the stage on its own.
+   The rail centres with it: every other route starts its content at the top,
+   so the rail sits level with their first row, but this is the one route whose
+   content is centred — a rail pinned near the top would hang off-centre from
+   the card on tall windows.
 
-   The stage can't go below 850px: `.side-rail` is absolutely positioned at
-   top:161px + height:675px = 836px and the stage's `overflow: hidden` clips it
-   any shorter. But that rail is floating chrome, not card content — so rather
-   than let it dictate the panel's height, the card stops stretching to fill the
-   stage and takes its own content height instead (`align-items: center` on the
-   container, which is the flex parent of `.profile-shell-card`). The leftover
-   becomes page background above and below a compact card, which reads as
-   ordinary margin, instead of dead air inside it.
-
-   Scoped to ≥1025px because this selector outranks the tablet and mobile
-   `.dashboard-stage` rules, and tablet scales the stage assuming exactly 900px. */
+   Scoped to ≥1025px: tablet and mobile stack the columns (below). */
 @media (min-width: 1025px) {
-  .dashboard-stage.profile-stage {
-    /* Fixed, not viewport-tracking: the card's bottom is pinned to the rail's
-       bottom (below), and the rail sits at a fixed offset from the stage top,
-       so a stage that grew with the screen would just drag the pair upward.
-       Vertical placement is handled by the margin instead. */
-    height: 850px;
-    min-height: 850px;
-    /* Centers the *card* — not the stage — in the viewport. The card occupies
-       80–836px within the stage, so its midpoint is 458px down; parking that at
-       50svh keeps it optically centred at any height, and the max() collapses
-       the margin to 0 on screens too short to spare it (no new scrollbar). */
-    margin-top: max(0px, calc(50svh - 458px));
+  .profile-stage .side-rail {
+    top: max(20px, calc((100% - 675px) / 2));
   }
 
-  /* Bottom-aligned so the card's lower edge meets `.side-rail`'s. The rail ends
-     836px below the stage top and the container now ends there too, which puts
-     the card at 80–836px: same baseline as the rail, at every viewport height.
-     Centring it instead left the rail hanging ~31px below the card. */
   .profile-container {
-    align-items: flex-end;
+    align-items: center;
+  }
+
+  .profile-shell-card {
+    max-height: 100%;
+  }
+}
+
+/* Short window: the identity column is the taller of the two (nine stacked
+   blocks), so it tightens its rhythm to keep Log out / Edit profile on screen
+   rather than scrolling them away. Scoped under the container because the
+   base .profile-identity rule comes later in this file. */
+@media (min-width: 1025px) and (max-height: 760px) {
+  .profile-container .profile-identity {
+    gap: 12px;
+    padding-top: 20px;
+    padding-bottom: 16px;
   }
 }
 
 .profile-container {
   position: absolute;
-  inset: var(--profile-inset-top, 20px) 58px var(--profile-inset-bottom, 12px) 206px;
+  inset: 20px 58px 12px 206px;
   z-index: 2;
   display: flex;
   color: #101312;
@@ -1354,8 +1339,15 @@
 
 @media (max-width: 1024px) {
   .profile-container {
-    inset: 110px 32px 24px 100px;
+    /* Tablet inset, shared by every route: level with the top of the frame
+       and ~46px right of the tablet rail (24–74px). */
+    inset: 20px 28px 12px 120px;
     overflow-y: auto;
+    /* Not stretch: a stretched card is exactly the container's height, so the
+       stacked columns were squeezed into it and the metrics grid overran the
+       settings below. Top-aligned, the card grows to its content and this
+       container scrolls it. */
+    align-items: flex-start;
   }
 
   .profile-shell-card {

@@ -620,7 +620,7 @@ function MindOverviewDashboard() {
   }, [thoughts, nowMs])
 
   return (
-    <div className="mind-dashboard">
+    <div className="mind-dashboard route-scroll">
       <MindHeader
         dateIso={selectedDate}
         mood={mood}

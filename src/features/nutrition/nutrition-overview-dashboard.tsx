@@ -173,7 +173,7 @@ function NutritionOverviewDashboard() {
   }
 
   return (
-    <section className="nutrition-dashboard ntr" aria-label="Nutrition overview dashboard">
+    <section className="nutrition-dashboard ntr route-scroll" aria-label="Nutrition overview dashboard">
       {itemId && (
         <div className="ntr-detail-overlay-wrapper">
           <div className="ntr-detail-stage" style={{ minHeight: '100%' }}>

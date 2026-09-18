@@ -503,8 +503,9 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     return () => window.removeEventListener('mobile-quick-add', handler)
   }, [selectedDate])
 
+  // Phone defaults; 768px matches the calendar's phone-layout media queries.
   const [viewType, setViewType] = useState<'daily' | 'weekly' | 'monthly'>(() => {
-    if (typeof window !== 'undefined' && window.innerWidth <= 820) {
+    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
       return 'daily'
     }
     return 'weekly'
@@ -513,7 +514,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   const [uncheckedCategories, setUncheckedCategories] = useState<string[]>([])
   const [upcomingCardIndex, setUpcomingCardIndex] = useState(0)
   const [filtersOpen, setFiltersOpen] = useState(() => {
-    if (typeof window !== 'undefined' && window.innerWidth <= 820) {
+    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
       return false
     }
     return true

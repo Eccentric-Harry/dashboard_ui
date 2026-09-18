@@ -366,7 +366,7 @@ function FinanceOverviewDashboard() {
 
 
   return (
-    <section className="finance-dashboard" aria-label="Finance overview dashboard">
+    <section className="finance-dashboard route-scroll" aria-label="Finance overview dashboard">
       <FinanceHeader 
         onAddClick={() => setIsAddModalOpen(true)} 
         logs={logs}

@@ -337,7 +337,7 @@ export function TasksDashboard({ onNavigate }: TasksDashboardProps) {
   )
 
   return (
-    <div className="tasks-dashboard">
+    <div className="tasks-dashboard route-scroll">
       {/* Top Control Bar */}
       <div className="tasks-control-bar">
         {/* Row 1: Search & Avatar */}

@@ -22,9 +22,54 @@ html {
   -webkit-overflow-scrolling: touch;
 }
 
-@media (min-width: 1025px) {
+/* Density follows the window from tablet width up. Every route is laid out on
+   one canvas (see .dashboard-stage), so a short window used to mean a clipped
+   rail and cards cut off at the fold. Instead the whole UI eases from 0.9 down
+   to a 0.8 floor between a 900px- and a 650px-tall window — the floor is where
+   the 9–11px metadata type stops being comfortable to read. Anything still
+   taller than the window scrolls inside its route, never the frame.
+
+   Width is the other limit: the canvas is never narrower than 1000px, so
+   below ~1110px of window the zoom is also capped at width / 1000px — a
+   769–1024px (tablet) window shows the whole canvas instead of cutting its
+   right side off. That can take zoom a little under the 0.8 floor (0.77 at
+   769px); only the narrowest tablet widths reach it.
+
+   The steps are the fallback, ordered largest to smallest so that where two
+   match, the smaller (tighter) one wins. Browsers with typed calc()
+   arithmetic get the same curves continuously, so resizing shrinks the page
+   smoothly instead of in jumps. Scripts that position popovers read the
+   computed zoom at call time (tasks-detail-panel, tasks-kanban-view), so any
+   value here is safe. */
+@media (min-width: 769px) and (max-height: 860px) {
   html {
-    zoom: 0.9;
+    zoom: 0.85;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 899px) {
+  html {
+    zoom: 0.82;
+  }
+}
+
+@media (min-width: 769px) and (max-height: 740px) {
+  html {
+    zoom: 0.8;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 819px) {
+  html {
+    zoom: 0.76;
+  }
+}
+
+@supports (zoom: calc(100vh / 1000px)) {
+  @media (min-width: 769px) {
+    html {
+      zoom: min(clamp(0.8, calc(0.9 - (900px - 100vh) / 2500px), 0.9), calc(100vw / 1000px));
+    }
   }
 }
 
@@ -218,6 +263,111 @@ button {
   display: none;
 }
 
+/* Frame (tablet width and up): the stage *is* the window. The rules above size it with
+   viewport units, which were doubly wrong here — the 900px floor forced a
+   page scroll on any shorter window (clipping the rail and every card at the
+   fold), and under `html { zoom }` Chromium renders 100vw/100vh at the zoom
+   factor, so even a full-screen window left a tenth of its height as a dead
+   band under the stage. `inset: 0` and percentages resolve against the real
+   viewport at any zoom, so the frame is pinned to the window and the stage
+   fills it; each route scrolls inside its own container.
+
+   Past 1200px the stage stops growing and centres, as it always has. The
+   640px floor is where the side rail stops fitting — only below that does the
+   frame itself scroll (the auto margins collapse to 0 on overflow, so the top
+   stays reachable). On tablet widths the zoom's width cap (top of file)
+   keeps this canvas's 1000px minimum inside the window.
+
+   The stage is also a size container, so a route can fit its first-screen
+   cards to the window with `cqh` (100cqh = the stage's height) where a
+   percentage can't reach — e.g. grid items, whose % heights resolve against
+   an auto row. A size container does not capture `position: fixed`
+   descendants, so popovers inside the stage still position to the viewport. */
+@media (min-width: 769px) {
+  .dashboard-shell {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    min-height: 0;
+    overflow: auto;
+  }
+
+  .dashboard-stage {
+    flex: none;
+    width: min(100%, 1200px);
+    height: 100%;
+    min-height: 640px;
+    max-height: 1200px;
+    margin: auto;
+    container: stage / size;
+  }
+}
+
+/* ── Quiet scrollbar ───────────────────────────────────────────────────────
+   Every route scrolls inside its own container (.route-scroll on the route's
+   root). A styled ::-webkit-scrollbar is always drawn, so each route used to
+   carry a permanent pill-in-a-track down its right edge — and in dark mode the
+   derived colours turned the track into a pale slab beside graphite cards.
+   Instead it behaves like a macOS overlay scrollbar: nothing at rest, a thin
+   theme-tinted thumb fades in while the container scrolls (lib/quiet-
+   scrollbars.ts sets [data-scrolling]) and out ~1s after it stops. Hovering
+   the thumb's spot or dragging it shows it too, and the gutter stays reserved
+   (scrollbar-gutter on each route) so nothing shifts as it appears.
+
+   The thumb colour is a registered custom property so it can transition —
+   scrollbar pseudo-elements don't animate their own background. Dark values
+   are set in theme-dark.css. */
+@property --qs-thumb {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+
+:root {
+  --scroll-thumb: rgba(23, 27, 21, 0.22);
+  --scroll-thumb-hover: rgba(23, 27, 21, 0.4);
+}
+
+.route-scroll {
+  --qs-thumb: transparent;
+  transition: --qs-thumb 0.6s ease;
+}
+
+.route-scroll[data-scrolling] {
+  --qs-thumb: var(--scroll-thumb);
+  transition-duration: 0.12s;
+}
+
+.route-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.route-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.route-scroll::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-color: var(--qs-thumb);
+  background-clip: padding-box;
+}
+
+.route-scroll::-webkit-scrollbar-thumb:hover,
+.route-scroll::-webkit-scrollbar-thumb:active {
+  border-width: 1px;
+  background-color: var(--scroll-thumb-hover);
+}
+
+/* Browsers without the pseudo-elements (Firefox) get a static thin bar in
+   the same tint — setting these in Chromium would switch the styling above off. */
+@supports not selector(::-webkit-scrollbar) {
+  .route-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scroll-thumb) transparent;
+  }
+}
+
 .date-tiles {
   position: absolute;
   left: 58px;
@@ -296,6 +446,18 @@ button {
   backdrop-filter: blur(30px) saturate(190%);
   -webkit-backdrop-filter: blur(30px) saturate(190%);
   border: 0.5px solid rgba(255, 255, 255, 0.4);
+}
+
+/* On the fluid stage the rail keeps its designed spot (level with the
+   first row of cards, 64px clear of the bottom) whenever the stage is tall
+   enough — 900px and up. Shorter, it slides up to hold that 64px margin
+   instead of running off the bottom, and only once it reaches the top does it
+   start to shrink, taking the slack out of the icon spacing (below). */
+@media (min-width: 769px) {
+  .side-rail {
+    top: clamp(20px, calc(100% - 739px), 161px);
+    height: min(675px, calc(100% - 40px));
+  }
 }
 
 .rail-avatar-btn {
@@ -386,6 +548,24 @@ button {
   gap: 16px;
   margin-top: auto;
   margin-bottom: 21px;
+}
+
+/* A stage near its 640px floor can't give the rail its full 675px, so the
+   icon spacing gives way first — the icons themselves never shrink. */
+@media (min-width: 769px) and (max-height: 600px) {
+  .rail-avatar-btn {
+    margin-top: 10px;
+  }
+
+  .rail-nav-desktop {
+    gap: 9px;
+    margin-top: 12px;
+  }
+
+  .rail-bottom {
+    gap: 10px;
+    margin-bottom: 14px;
+  }
 }
 
 /* Spiral breaker trigger — present on every route, but styled to sit back until
@@ -1681,24 +1861,19 @@ button {
   }
 }
 
-/* Tablet Home dashboard: scale-down approach for the absolute-positioned artistic layout */
+/* Tablet (769–1024px) uses the same window-filling frame as desktop; the
+   zoom's width cap (top of file) is what fits the 1000px canvas across. This
+   used to scale the stage with `transform: scale(calc(100vw / 1000))`, which is
+   invalid (a length over a number is still a length) and never applied — the
+   canvas was simply clipped on the right below ~900px.
+
+   No 1200px height cap here: a portrait tablet is taller than it is wide, and
+   capping the stage would park dead bands above and below it. The rail sits
+   closer to the edge, and each route's tablet rules start their content just
+   right of it (left inset ~120px). */
 @media (min-width: 769px) and (max-width: 1024px) {
-
-  /* Scale all dashboard stages on tablet */
-  .dashboard-shell .dashboard-stage {
-    width: 1000px;
-    min-width: 1000px;
-    height: 900px;
-    overflow: hidden;
-    transform: scale(calc(100vw / 1000));
-    transform-origin: top left;
-  }
-
-  .dashboard-shell {
-    display: block;
-    overflow: hidden;
-    height: calc(900px * (100vw / 1000));
-    min-height: auto;
+  .dashboard-stage {
+    max-height: none;
   }
 
   .side-rail {

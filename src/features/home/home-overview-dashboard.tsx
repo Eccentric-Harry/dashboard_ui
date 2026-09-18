@@ -500,7 +500,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
   )
 
   return (
-    <div className="home-dashboard">
+    <div className="home-dashboard route-scroll">
       <ConfettiBurst trigger={confettiTrigger} />
       <HomeHeader dateIso={home.today} onQuickAdd={handleQuickAdd} signals={headerSignals} />
 

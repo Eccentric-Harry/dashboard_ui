@@ -291,6 +291,67 @@
   padding: 24px 26px;
 }
 
+/* Fit the bento to a short desktop window. The four cards (daily nutrition,
+   weekly protein, today's meals, water) are the first screen, and at full
+   size they need ~720px under the header — past what a window under ~760px
+   tall can give. There the grid takes what the stage has left (100cqh — see
+   .dashboard-stage) as two equal rows, down to a 560px floor, and each card
+   gives way from the inside: the meals list scrolls, the trend chart and the
+   hydration stack flex, and the hero's gauge panel tightens. Taller windows
+   keep the natural, content-sized layout untouched.
+
+   Every selector is scoped to .nutrition-dashboard: Home imports this file for
+   the same primitives, and bundle order can put this file before the route's
+   own nutrition-overview.css, so specificity — not source order — decides.
+   --ntr-fold-chrome is the stage inset, the tightened padding, the header and
+   its margin, plus clearance so the cards' bottom edge stays in view. */
+@media (min-width: 1025px) and (max-height: 760px) {
+  .dashboard-stage .nutrition-dashboard {
+    --ntr-fold-chrome: 131px;
+    padding-top: 14px;
+    padding-bottom: 18px;
+  }
+
+  .nutrition-dashboard .ntr-header {
+    margin-bottom: 14px;
+  }
+
+  /* Row 1 can't go below its content: the hero's gauge panel is a fixed
+     stack (gauge beside three macro rows) that doesn't compress, and with a
+     0 minimum a very short window squeezed the row until the panel spilled
+     out of the card over Today's Meals. Row 2 takes the squeeze instead —
+     the meals list scrolls and the hydration stack flexes — and the 600px
+     floor keeps enough of it for the hydration card. */
+  .nutrition-dashboard .ntr-grid:not(.ntr-grid--history) {
+    height: clamp(600px, calc(100cqh - var(--ntr-fold-chrome)), 719px);
+    /* min-content, not auto: .ntr-hero sets min-height: 0, which an auto
+       track minimum would take literally. */
+    grid-template-rows: minmax(min-content, 1fr) minmax(0, 1fr);
+  }
+
+  .nutrition-dashboard .ntr-meals-card {
+    height: auto;
+  }
+
+  .nutrition-dashboard .ntr-hero {
+    padding: 20px 24px;
+  }
+
+  .nutrition-dashboard .ntr-gauge-panel {
+    margin-top: 12px;
+    padding: 14px 22px 12px;
+  }
+
+  .nutrition-dashboard .ntr-gauge svg {
+    width: min(100%, 176px);
+  }
+
+  .nutrition-dashboard .ntr-trend,
+  .nutrition-dashboard .ntr-hydro {
+    padding: 18px 22px;
+  }
+}
+
 /* shared card head */
 .ntr-card-head {
   display: flex;
@@ -1528,22 +1589,11 @@
 
 /* ── Responsive ─────────────────────────────────────────────────── */
 
-@media (max-width: 1024px) and (min-width: 769px) {
-  .ntr-grid {
-    grid-template-rows: auto;
-  }
-
-  .ntr-hero, .ntr-meals-card {
-    grid-column: 1 / -1;
-    grid-row: auto;
-  }
-
-  .ntr-trend,
-  .ntr-hydro {
-    grid-column: span 6;
-    grid-row: auto;
-  }
-}
+/* No tablet (769–1024px) override: the zoom now fits the full ≥1000px canvas
+   across a tablet window (styles/index.css), so the grid is as wide there as
+   on desktop (~850–1050px) and keeps the desktop 7 + 5 bento. The old tablet
+   stack (hero and meals full width, trend and water at half) left each
+   half-width card alone on its row beside an empty half. */
 
 @media (max-width: 768px) {
   .ntr-header {

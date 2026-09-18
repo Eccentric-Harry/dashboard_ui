@@ -177,7 +177,7 @@ function LearningsOverviewDashboard({ searchParams, onNavigate }: LearningsOverv
   return (
     <section
       ref={sectionRef}
-      className="learnings-dashboard"
+      className="learnings-dashboard route-scroll"
       aria-label={pursuitParam ? 'Pursuit workspace' : 'Learnings overview dashboard'}
     >
       {pursuitParam ? (

@@ -46,21 +46,6 @@
      .dashboard-shell ground and nothing else. */
 }
 
-.home-dashboard::-webkit-scrollbar {
-  width: 9px;
-}
-
-.home-dashboard::-webkit-scrollbar-track {
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.24);
-}
-
-.home-dashboard::-webkit-scrollbar-thumb {
-  border: 2px solid rgba(255, 255, 255, 0.24);
-  border-radius: 999px;
-  background: rgba(21, 27, 24, 0.34);
-}
-
 /* ---------- Header ---------- */
 
 .home-header {
@@ -1153,6 +1138,101 @@
   height: 376px;
   padding: 18px 20px;
   gap: 10px;
+}
+
+/* ---------- Fit the fold ----------
+   Header + primary bento are the first screen, and all four cards should be on
+   it at once. A fixed 376px card only fit windows ~900px tall, so on desktop
+   the bento takes whatever height the scroller has left under the header —
+   from the designed 2 × 376 down to a 2 × 260 floor, below which the page
+   scrolls instead of crushing the cards. Every card already gives way from the
+   inside (anchor panel, capture's recent list, the loop rows and the task list
+   are all flex-shrinkable), so a shorter card loses slack, not content.
+
+   `100%` is the scroller's content box. --home-head-block is the header's
+   84px plus its bottom margin: the header is one fixed stack (eyebrow, title,
+   one line) on desktop, so it's a stable number, not a guess. On first run the
+   welcome card sits above the grid and simply pushes it into the scroll. */
+@media (min-width: 1025px) {
+  .home-dashboard {
+    --home-head-block: 104px;
+  }
+
+  .home-grid--primary {
+    height: clamp(536px, calc(100% - var(--home-head-block)), 768px);
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+  }
+
+  .home-grid--primary .home-card {
+    height: auto;
+    min-height: 0;
+  }
+}
+
+/* A shorter window spends less on the frame around the cards, and the cards
+   trim their own padding before any of them has to hide something. Cards here
+   run ~300–360px tall instead of 376. */
+@media (min-width: 1025px) and (max-height: 760px) {
+  .home-dashboard {
+    --home-head-block: 98px;
+    padding-top: 14px;
+    padding-bottom: 18px;
+  }
+
+  .home-header {
+    margin-bottom: 14px;
+  }
+
+  /* Day loop: all four signal rows must stay visible — they're the breakdown
+     the ring summarises — so the ring and row padding shrink instead. */
+  .home-grid--primary .home-card--hero {
+    padding: 16px 20px;
+  }
+
+  .home-grid--primary .home-hero-head {
+    margin-bottom: 8px;
+  }
+
+  .home-grid--primary .home-hero-panel {
+    gap: 10px 16px;
+    padding: 12px 14px;
+  }
+
+  .home-grid--primary .home-hero-gauge-col {
+    gap: 5px;
+  }
+
+  .home-grid--primary .home-loop-arc svg {
+    width: min(100%, 112px);
+  }
+
+  /* Enough to keep the longest nudge ("Log last night's sleep") on one line
+     in the 168px gauge column — wrapped, it overran the shorter panel. */
+  .home-grid--primary .home-hero-focus-btn {
+    padding: 7px 12px;
+  }
+
+  .home-grid--primary .home-card--hero .ntr-hero-macros {
+    gap: 6px;
+  }
+
+  .home-grid--primary .home-card--hero .ntr-macro-row {
+    gap: 6px;
+    padding: 7px 12px;
+  }
+
+  /* Quick capture: the mode's destination hint is the first thing to go. */
+  .home-grid--primary .home-capture-hint {
+    display: none;
+  }
+}
+
+/* Below ~670px there's no longer room for even one recent capture beside the
+   input and the mood row — hide the list rather than show half an item. */
+@media (min-width: 1025px) and (max-height: 670px) {
+  .home-grid--primary .home-card--capture .home-capture-recent {
+    display: none;
+  }
 }
 
 /* Inner scroll regions so a full list never grows the fixed card height. */
@@ -3458,6 +3538,15 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
 @media (max-width: 1240px) {
   .home-dashboard {
     inset: 20px 32px 12px 180px;
+  }
+}
+
+/* Tablet (769–1024px): the shared tablet inset — level with the top of the
+   frame and ~46px right of the tablet rail (24–74px). Follows the ≤1240px
+   rule, whose 180px left edge sits for the desktop rail. */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .home-dashboard {
+    inset: 20px 28px 12px 120px;
   }
 }
 

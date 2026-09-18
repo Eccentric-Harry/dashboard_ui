@@ -155,7 +155,7 @@ function PromptsOverviewDashboard() {
   const isSaveDisabled = isSaving
 
   return (
-    <section className="prompts-dashboard" aria-label="Prompts overview dashboard">
+    <section className="prompts-dashboard route-scroll" aria-label="Prompts overview dashboard">
       <div className="prompts-header">
         <h1>Prompts Library</h1>
         <button type="button" className="prompts-add-btn add-pill" onClick={handleCreateNew}>

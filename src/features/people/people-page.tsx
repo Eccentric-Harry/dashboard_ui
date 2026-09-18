@@ -285,7 +285,7 @@ function PeopleDashboard() {
   }, [selectedInteraction])
 
   return (
-    <section className="people-dashboard" aria-label="Mentorship and memories">
+    <section className="people-dashboard route-scroll" aria-label="Mentorship and memories">
       <header className="people-header">
         <div className="people-header-title">
           <p>People archive</p>

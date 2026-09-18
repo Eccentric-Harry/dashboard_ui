@@ -48,7 +48,7 @@ function WorkoutsOverviewDashboard() {
   }, [])
 
   return (
-    <section className="workouts-dashboard" aria-label="Workouts overview dashboard">
+    <section className="workouts-dashboard route-scroll" aria-label="Workouts overview dashboard">
       <WorkoutsHeader onAddClick={() => setIsAddModalOpen(true)} />
       <div className="workouts-dashboard-grid">
         <div className="workouts-stats-row">

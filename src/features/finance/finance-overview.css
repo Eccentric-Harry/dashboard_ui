@@ -55,21 +55,6 @@
   scrollbar-gutter: stable;
 }
 
-.finance-dashboard::-webkit-scrollbar {
-  width: 9px;
-}
-
-.finance-dashboard::-webkit-scrollbar-track {
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.24);
-}
-
-.finance-dashboard::-webkit-scrollbar-thumb {
-  border: 2px solid rgba(255, 255, 255, 0.24);
-  border-radius: 999px;
-  background: rgba(21, 27, 24, 0.34);
-}
-
 .finance-header {
   display: flex;
   height: 56px;
@@ -2800,7 +2785,9 @@
 /* Tablet finance adjustments */
 @media (min-width: 769px) and (max-width: 1024px) {
   .finance-dashboard {
-    inset: 132px 24px 48px 120px;
+    /* Tablet inset, shared by every route: level with the top of the frame
+       and ~46px right of the tablet rail (24–74px). */
+    inset: 20px 28px 12px 120px;
   }
 
   .finance-dashboard-grid {

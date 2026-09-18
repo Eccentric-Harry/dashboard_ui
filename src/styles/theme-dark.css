@@ -8,6 +8,9 @@
    Rationale and token table: design/DARK_MODE_PLAN.md. */
 
 :root[data-theme='dark'] {
+  /* Quiet scrollbar thumb (index.css) — a faint white glint on graphite. */
+  --scroll-thumb: rgba(255, 255, 255, 0.16);
+  --scroll-thumb-hover: rgba(255, 255, 255, 0.3);
   --dk-canvas: #0c0d0f;
   --dk-surface: #16181b;
   --dk-raised: #1f2125;
