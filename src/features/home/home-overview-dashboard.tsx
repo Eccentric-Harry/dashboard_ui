@@ -19,6 +19,7 @@ import { ConfettiBurst } from './components/confetti-burst'
 import { TodayHeroCard } from './components/today-hero-card'
 import { TodaysAnchorCard } from './components/todays-anchor-card'
 import { SleepCard } from './components/sleep-card'
+import { LogSleepModal } from './components/log-sleep-modal'
 import { ActivityCard } from './components/activity-card'
 import { InsightsCard } from './components/insights-card'
 import { FocusLogCard } from './components/focus-log-card'
@@ -54,7 +55,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
   const focusSession = useFocusStore.use.session()
   const [captureRequest, setCaptureRequest] = useState<{ mode: QuickCaptureMode; nonce: number } | null>(null)
   const [fabOpen, setFabOpen] = useState(false)
-  const [sleepFormNonce, setSleepFormNonce] = useState(0)
+  const [sleepModalOpen, setSleepModalOpen] = useState(false)
   const [confettiTrigger, setConfettiTrigger] = useState(0)
   const [anchorSaving, setAnchorSaving] = useState(false)
   const fabRef = useRef<HTMLDivElement | null>(null)
@@ -325,8 +326,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
         return
       }
       if (action === 'sleep') {
-        setSleepFormNonce((n) => n + 1)
-        document.querySelector('.home-card--sleep')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        setSleepModalOpen(true)
         return
       }
       setCaptureRequest((prev) => ({ mode: action, nonce: (prev?.nonce ?? 0) + 1 }))
@@ -547,7 +547,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           <h2>Welcome to your Life OS.</h2>
           <p>This page learns from what you log. Start with any one of these:</p>
           <div className="home-welcome-actions">
-            <button type="button" onClick={() => document.querySelector<HTMLButtonElement>('.home-card--sleep .home-btn-primary')?.click()}>
+            <button type="button" onClick={() => setSleepModalOpen(true)}>
               <Moon size={14} /> Log last night's sleep
             </button>
             <button type="button" onClick={() => onNavigate('/nutrition')}>
@@ -612,8 +612,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           failed={home.sleep.hasErrors}
           summary={sleepSummary}
           today={home.today}
-          openFormNonce={sleepFormNonce}
-          onLog={handleLogSleep}
+          onOpenLog={() => setSleepModalOpen(true)}
           onRetry={() => void home.reloadSleep()}
         />
 
@@ -658,6 +657,14 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           spending={home.spending.data}
         />
       </div>
+
+      <LogSleepModal
+        open={sleepModalOpen}
+        today={home.today}
+        summary={sleepSummary}
+        onLog={handleLogSleep}
+        onClose={() => setSleepModalOpen(false)}
+      />
     </div>
   )
 }

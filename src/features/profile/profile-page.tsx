@@ -97,6 +97,94 @@ function bmiStatus(bmi?: number): { label: string; cls: string } {
   return { label: 'Obese', cls: 'obese' };
 }
 
+const PROTEIN_TARGET_MIN = 20;
+const PROTEIN_TARGET_MAX = 400;
+
+/**
+ * Explicit daily protein target. Unset, the backend calculates it (2 g per kg of
+ * body weight); set, it replaces that everywhere the protein goal is read, and the
+ * calculated carbs absorb the difference.
+ */
+function ProteinTargetControl({ override }: { override: number | null }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const grams = Number(draft);
+  const draftValid = Number.isInteger(grams) && grams >= PROTEIN_TARGET_MIN && grams <= PROTEIN_TARGET_MAX;
+
+  const startEditing = () => {
+    setDraft(override != null ? String(override) : '');
+    setEditing(true);
+  };
+
+  const save = async (value: number | null) => {
+    setSaving(true);
+    const res = await userActions.saveProteinTarget(value);
+    setSaving(false);
+    if (res.error) {
+      toast.error(getErrorMessage(res.error, 'Could not save your protein target.'));
+      return;
+    }
+    setEditing(false);
+    toast.success(value == null ? 'Protein target is calculated again (2 g/kg).' : `Protein target set to ${value} g a day.`);
+  };
+
+  if (editing) {
+    return (
+      <form
+        className="protein-target-row is-editing"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (draftValid) void save(grams);
+        }}
+      >
+        <label htmlFor="protein-target-input">Protein target</label>
+        <div className="protein-target-input">
+          <input
+            id="protein-target-input"
+            type="number"
+            inputMode="numeric"
+            min={PROTEIN_TARGET_MIN}
+            max={PROTEIN_TARGET_MAX}
+            step={1}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onFocus={(e) => e.currentTarget.select()}
+            autoFocus
+            aria-describedby="protein-target-hint"
+          />
+          <span>g / day</span>
+        </div>
+        <small id="protein-target-hint">{PROTEIN_TARGET_MIN}–{PROTEIN_TARGET_MAX} g</small>
+        <div className="protein-target-actions">
+          <button type="button" onClick={() => setEditing(false)} disabled={saving}>Cancel</button>
+          <button type="submit" className="is-primary" disabled={!draftValid || saving}>
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+        </div>
+      </form>
+    );
+  }
+
+  return (
+    <div className="protein-target-row">
+      <div className="protein-target-text">
+        <span>Protein target</span>
+        <b>{override != null ? 'Set by you' : 'Auto · 2 g/kg'}</b>
+      </div>
+      <div className="protein-target-actions">
+        {override != null && (
+          <button type="button" onClick={() => void save(null)} disabled={saving}>Use calculated</button>
+        )}
+        <button type="button" onClick={startEditing} disabled={saving}>
+          <Pencil size={11} /> {override != null ? 'Edit' : 'Set'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps) {
   const profile = useUserStore.use.profile().data;
   const [loading, setLoading] = useState(true);
@@ -777,6 +865,7 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                             </div>
                           );
                         })()}
+                        <ProteinTargetControl override={profile?.proteinTargetOverride ?? null} />
                       </div>
 
                     </div>

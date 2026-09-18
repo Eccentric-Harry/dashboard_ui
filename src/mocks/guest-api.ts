@@ -669,6 +669,24 @@ export function resolveGuestRequest(request: GuestRequest): GuestResponse | null
       localStorage.setItem('guest_user_profile', JSON.stringify(profile));
     }
 
+    if (method === 'PUT' && urlStr.includes('/protein-target')) {
+      // Mirrors HealthEngineService: override (or 2 g/kg) for protein, carbs take the rest.
+      const { grams } = JSON.parse(typeof request.body === 'string' ? request.body : '{}') as { grams: number | null };
+      const targets = profile.dynamicTargets ?? {};
+      const protein = grams ?? Math.round(2 * (profile.physicalMetrics?.weight ?? 75));
+      const calories = targets.calculatedCalories ?? 2000;
+      const fat = targets.calculatedFat ?? Math.round((calories * 0.25) / 9);
+      profile = {
+        ...profile,
+        proteinTargetOverride: grams,
+        targetProtein: protein,
+        dynamicTargets: { ...targets, calculatedProtein: protein, calculatedCarbs: Math.max(0, Math.round((calories - protein * 4 - fat * 9) / 4)) },
+        updatedAt: new Date().toISOString(),
+      };
+      localStorage.setItem('guest_user_profile', JSON.stringify(profile));
+      return respondWith({ data: profile });
+    }
+
     if (method === 'PUT') {
       const body = JSON.parse(typeof request.body === 'string' ? request.body : '{}');
       profile = { ...profile, ...body, updatedAt: new Date().toISOString() };

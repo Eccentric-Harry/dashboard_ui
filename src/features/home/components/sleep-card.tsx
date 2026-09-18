@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Moon, Plus, Sunrise, Trophy, Waves } from 'lucide-react'
 import { Bar, BarChart, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import type { SleepEntryPayload } from '@/types/sleep'
 import { cn } from '@/lib/utils'
 import {
   formatMinutes,
@@ -29,9 +28,8 @@ type SleepCardProps = {
   /** Shared, date-attributed sleep read — the same one the Day Loop and trends use. */
   summary: SleepSummary
   today: string
-  openFormNonce?: number
-  /** `entryId` is set when saving should move an existing entry rather than create one. */
-  onLog: (payload: SleepEntryPayload, entryId?: string) => Promise<void>
+  /** Opens the log-sleep modal (components/log-sleep-modal.tsx), owned by the route. */
+  onOpenLog: () => void
   onRetry: () => void
 }
 
@@ -136,8 +134,7 @@ function makeSleepTooltip(today: string) {
   }
 }
 
-function SleepCard({ loading, failed, summary, today, openFormNonce, onLog, onRetry }: SleepCardProps) {
-  const [formOpen, setFormOpen] = useState(false)
+function SleepCard({ loading, failed, summary, today, onOpenLog, onRetry }: SleepCardProps) {
   const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
@@ -145,39 +142,8 @@ function SleepCard({ loading, failed, summary, today, openFormNonce, onLog, onRe
     setIsMounted(true)
   }, [])
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (openFormNonce) setFormOpen(true)
-  }, [openFormNonce])
-  const [date, setDate] = useState(today)
-  const [bedtime, setBedtime] = useState('23:30')
-  const [wakeTime, setWakeTime] = useState('07:00')
-  const [quality, setQuality] = useState<number>(3)
-  const [note, setNote] = useState('')
-  const [saving, setSaving] = useState(false)
-
   const week = useMemo(() => lastNDates(7, today), [today])
   const { byDate, lastNight, latest, week: loggedThisWeek, avgMinutes, avgVsTargetMinutes } = summary
-
-  // Fresh open always starts on today; picking a different date re-syncs
-  // the fields below to whatever (if anything) is already logged for it.
-  useEffect(() => {
-    if (formOpen) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setDate(today)
-    }
-  }, [formOpen, today])
-
-  useEffect(() => {
-    if (!formOpen) return
-    const existing = byDate.get(date)
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setBedtime(existing?.bedtime ?? '23:30')
-    setWakeTime(existing?.wakeTime ?? '07:00')
-    setQuality(existing?.quality ?? 3)
-    setNote(existing?.note ?? '')
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formOpen, date])
 
   const series = useMemo<SleepPoint[]>(
     () =>
@@ -225,31 +191,6 @@ function SleepCard({ loading, failed, summary, today, openFormNonce, onLog, onRe
     return point.minutes >= SLEEP_TARGET_MINUTES ? BAR_ON_TARGET : BAR_UNDER
   }
 
-  const submit = async () => {
-    if (saving) return
-    setSaving(true)
-    try {
-      // An entry re-attributed to this date still sits on another one in storage;
-      // update it in place so saving moves it instead of leaving a duplicate night.
-      const existing = byDate.get(date)
-      await onLog(
-        {
-          date,
-          bedtime,
-          wakeTime,
-          quality,
-          note: note.trim() || undefined,
-          source: 'manual',
-        },
-        existing && existing.storedDate !== date ? existing.id : undefined,
-      )
-      setFormOpen(false)
-      setNote('')
-    } finally {
-      setSaving(false)
-    }
-  }
-
   return (
     <section className="home-card home-card--sleep" aria-label="Sleep">
       <Moon className="home-card-glyph" aria-hidden="true" />
@@ -259,12 +200,7 @@ function SleepCard({ loading, failed, summary, today, openFormNonce, onLog, onRe
           <h2 className="home-card-title">{lastNight || !latest ? 'Last night' : 'Latest night'}</h2>
         </div>
         {!loading && !failed && (
-          <button
-            type="button"
-            className="home-btn-quiet"
-            onClick={() => setFormOpen((open) => !open)}
-            aria-expanded={formOpen}
-          >
+          <button type="button" className="home-btn-quiet" onClick={onOpenLog}>
             <Plus size={13} /> {lastNight ? 'Update night' : 'Log night'}
           </button>
         )}
@@ -319,74 +255,11 @@ function SleepCard({ loading, failed, summary, today, openFormNonce, onLog, onRe
               </div>
             </div>
           ) : (
-            !formOpen && (
-              <div className="home-card-empty">
-                <p>Log last night to start seeing patterns.</p>
-                <button type="button" className="home-btn-quiet" onClick={() => setFormOpen(true)}>
-                  Add last night
-                </button>
-              </div>
-            )
-          )}
-
-          {formOpen && (
-            <div className="home-sleep-form">
-              <div className="home-sleep-form-row">
-                <label>
-                  {/* The backend keys a night by the date you woke up — "Night of"
-                      read as the bedtime date and filed last night under yesterday. */}
-                  <span>Woke up on</span>
-                  <input
-                    type="date"
-                    value={date}
-                    max={today}
-                    onChange={(e) => setDate(e.target.value)}
-                  />
-                </label>
-                <label>
-                  <span>Bedtime</span>
-                  <input type="time" value={bedtime} onChange={(e) => setBedtime(e.target.value)} />
-                </label>
-                <label>
-                  <span>Woke up</span>
-                  <input type="time" value={wakeTime} onChange={(e) => setWakeTime(e.target.value)} />
-                </label>
-                <div className="home-sleep-quality-picker" role="radiogroup" aria-label="Sleep quality">
-                  <span>Quality</span>
-                  <div>
-                    {QUALITY_LABELS.map((label, index) => {
-                      const value = index + 1
-                      return (
-                        <button
-                          key={label}
-                          type="button"
-                          role="radio"
-                          aria-checked={quality === value}
-                          title={label}
-                          className={cn('home-quality-btn', `q-${value}`, quality === value && 'is-active')}
-                          onClick={() => setQuality(value)}
-                        />
-                      )
-                    })}
-                  </div>
-                </div>
-              </div>
-              <input
-                type="text"
-                className="home-sleep-note"
-                placeholder="Optional note — woke up twice, late coffee…"
-                value={note}
-                maxLength={200}
-                onChange={(e) => setNote(e.target.value)}
-              />
-              <div className="home-sleep-form-actions">
-                <button type="button" className="home-btn-quiet" onClick={() => setFormOpen(false)}>
-                  Cancel
-                </button>
-                <button type="button" className="home-btn-primary" disabled={saving} onClick={() => void submit()}>
-                  {saving ? 'Saving…' : byDate.get(date) ? 'Update night' : 'Save night'}
-                </button>
-              </div>
+            <div className="home-card-empty">
+              <p>Log last night to start seeing patterns.</p>
+              <button type="button" className="home-btn-quiet" onClick={onOpenLog}>
+                Add last night
+              </button>
             </div>
           )}
 

@@ -8,6 +8,8 @@ export interface UserServiceInterface {
   getProfile(): Promise<SafeResult<UserProfile>>;
   updateProfile(payload: Partial<UserProfile>): Promise<SafeResult<UserProfile>>;
   updateLearnerProfile(learnerProfile: string): Promise<SafeResult<UserProfile>>;
+  /** null clears the explicit target, returning to the calculated one. */
+  updateProteinTarget(grams: number | null): Promise<SafeResult<UserProfile>>;
 }
 
 export const userService: UserServiceInterface = {
@@ -15,4 +17,6 @@ export const userService: UserServiceInterface = {
   updateProfile: (payload) => instance.safeCall<UserProfile>(E.API_UPDATE_USER_PROFILE, { body: payload }),
   updateLearnerProfile: (learnerProfile) =>
     instance.safeCall<UserProfile>(E.API_UPDATE_LEARNER_PROFILE, { body: { learnerProfile } }),
+  updateProteinTarget: (grams) =>
+    instance.safeCall<UserProfile>(E.API_UPDATE_PROTEIN_TARGET, { body: { grams } }),
 };

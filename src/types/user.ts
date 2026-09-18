@@ -38,6 +38,8 @@ export interface UserProfile {
   height?: number;
   targetCalories?: number;
   targetProtein?: number;
+  /** Protein target set by hand (g/day); null = calculated 2 g/kg. Written via PUT /users/profile/protein-target only. */
+  proteinTargetOverride?: number | null;
   /** "About me as a learner" — written via PUT /users/profile/learner only. */
   learnerProfile?: string | null;
   timezone?: string;

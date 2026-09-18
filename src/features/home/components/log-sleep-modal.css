@@ -1,0 +1,307 @@
+/* Log-sleep modal — the one place a night is entered from Home (the Sleep
+   card's button, the quick-add menu and the first-run welcome all open it).
+   Replaced the inline form that used to unfold inside the Sleep card, which
+   squeezed four inputs and a note into a 450px column and pushed the chart
+   out of view while you typed.
+
+   Names end in -backdrop / -modal on purpose: config/postcss-dark-theme.ts maps
+   those to the scrim and overlay tiers, so dark mode is derived, not hand-drawn.
+   Reads the Sleep card's slate-blue family for the duration panel. */
+
+.home-sleep-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  /* Under the confirm dialog (20000), which guards closing this one. */
+  z-index: 9990;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background-color: rgba(23, 27, 21, 0.28);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: home-sleep-modal-fade 0.18s ease both;
+}
+
+.home-sleep-modal {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 520px;
+  max-height: calc(100% - 16px);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 26px;
+  background: #ffffff;
+  box-shadow: 0 30px 80px rgba(23, 27, 21, 0.22);
+  animation: home-sleep-modal-rise 0.26s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes home-sleep-modal-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes home-sleep-modal-rise {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ---------- Header ---------- */
+
+.home-sleep-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 22px 0;
+}
+
+.home-sleep-modal-head .home-card-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.home-sleep-modal-head h2 {
+  margin: 4px 0 0;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.1;
+  color: #17211c;
+}
+
+.home-sleep-modal-close {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(23, 27, 21, 0.06);
+  color: rgba(23, 27, 21, 0.7);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.home-sleep-modal-close:hover {
+  background: rgba(23, 27, 21, 0.1);
+  color: #17211c;
+}
+
+/* ---------- Body ---------- */
+
+.home-sleep-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px 22px 4px;
+  overflow-y: auto;
+}
+
+.home-sleep-modal-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.home-sleep-modal-fields label,
+.home-sleep-modal-note,
+.home-sleep-modal-quality {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.home-sleep-modal-fields label > span,
+.home-sleep-modal-note > span,
+.home-sleep-modal-quality > span {
+  color: rgba(23, 28, 25, 0.66);
+  font-size: 10px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.home-sleep-modal-fields input,
+.home-sleep-modal-note input {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid rgba(26, 31, 29, 0.14);
+  border-radius: 12px;
+  background: #f7f8f4;
+  color: #17211c;
+  font-size: 13.5px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.home-sleep-modal-fields input:focus,
+.home-sleep-modal-note input:focus {
+  outline: none;
+  border-color: #43799e;
+  background: #ffffff;
+}
+
+.home-sleep-modal-note input {
+  font-weight: 550;
+}
+
+.home-sleep-modal-note input::placeholder {
+  color: rgba(23, 28, 25, 0.5);
+}
+
+/* Duration preview — the "so what" of the three inputs, restated as the
+   number the Sleep card will show, in that card's slate-blue panel. */
+.home-sleep-modal-duration {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 18px;
+  background: #d9e6f1;
+  color: #1e3d52;
+}
+
+.home-sleep-modal-duration strong {
+  display: block;
+  font-size: 30px;
+  font-weight: 750;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.home-sleep-modal-duration small {
+  display: block;
+  margin-top: 5px;
+  font-size: 11px;
+  font-weight: 650;
+  color: rgba(30, 61, 82, 0.72);
+}
+
+.home-sleep-modal-delta {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  font-size: 11.5px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.home-sleep-modal-delta.is-short {
+  color: #8a4b30;
+  background: rgba(255, 244, 232, 0.9);
+}
+
+.home-sleep-modal-delta.is-invalid {
+  color: #a33f4b;
+  background: rgba(255, 236, 238, 0.9);
+}
+
+/* Quality — five labelled chips, one tint each (.q-1…5 are shared with the
+   card's meter). Labels beat bare colour dots: "Poor" next to "Great" reads
+   without a legend. */
+.home-sleep-modal-quality > div {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.home-sleep-modal-quality button {
+  height: 36px;
+  padding: 0;
+  border: 1px solid rgba(26, 31, 29, 0.12);
+  border-radius: 12px;
+  color: rgba(23, 28, 25, 0.78);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+}
+
+.home-sleep-modal-quality button:hover {
+  transform: translateY(-1px);
+}
+
+.home-sleep-modal-quality button[aria-checked='true'] {
+  color: #17211c;
+  border-color: transparent;
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px rgba(62, 107, 84, 0.42);
+}
+
+/* ---------- Footer ---------- */
+
+.home-sleep-modal-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 22px 20px;
+}
+
+.home-sleep-modal-hint {
+  margin: 0;
+  color: rgba(23, 28, 25, 0.58);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.home-sleep-modal-hint.is-error {
+  color: #a33f4b;
+}
+
+.home-sleep-modal-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+/* ---------- Phone: a bottom sheet ---------- */
+
+@media (max-width: 640px) {
+  .home-sleep-modal-backdrop {
+    align-items: end;
+    padding: 0;
+  }
+
+  .home-sleep-modal {
+    max-width: none;
+    max-height: calc(100% - 24px);
+    border-radius: 26px 26px 0 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .home-sleep-modal-fields {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .home-sleep-modal-fields label:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .home-sleep-modal-foot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .home-sleep-modal-actions {
+    justify-content: flex-end;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-sleep-modal-backdrop,
+  .home-sleep-modal {
+    animation: none;
+  }
+}

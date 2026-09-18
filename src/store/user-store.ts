@@ -38,6 +38,7 @@ interface UserActions {
     loadProfile: () => Promise<UserProfile | null>;
     saveProfile: (payload: Partial<UserProfile>) => Promise<SafeResult<UserProfile>>;
     saveLearnerProfile: (learnerProfile: string) => Promise<SafeResult<UserProfile>>;
+    saveProteinTarget: (grams: number | null) => Promise<SafeResult<UserProfile>>;
   };
 }
 
@@ -75,6 +76,18 @@ const useUserStoreBase = create<UserStore>()(
             set((state) => {
               if (state.profile.data) state.profile.data.learnerProfile = saved.learnerProfile ?? null;
               else state.profile.data = saved;
+            });
+          }
+          return res;
+        },
+        // The whole profile comes back: the override also moves the calculated
+        // macro split (carbs absorb the difference).
+        saveProteinTarget: async (grams) => {
+          const res = await userService.updateProteinTarget(grams);
+          const saved = res.data;
+          if (!res.error && saved) {
+            set((state) => {
+              state.profile.data = saved;
             });
           }
           return res;
