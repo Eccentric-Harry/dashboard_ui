@@ -1600,9 +1600,9 @@
   gap: 14px;
 }
 
-/* Fourteen cells, one per day, filled by how the anchor landed: full for
+/* Seven cells, one per day, filled by how the anchor landed: full for
    achieved, half for partial, a stub for missed, a dot for "set, not called
-   yet". The seven-day break mirrors Hydration's gap between litres. */
+   yet". */
 .hm-anchor-track {
   display: flex;
   flex: 1 1 54px;
@@ -1619,10 +1619,6 @@
   overflow: hidden;
   border-radius: 8px;
   background: var(--hm-accent-soft);
-}
-
-.hm-anchor-cell:nth-child(8) {
-  margin-left: 6px;
 }
 
 .hm-anchor-cell > i {
@@ -3585,10 +3581,6 @@
   .hm-anchor-track {
     flex-basis: 44px;
     gap: 3px;
-  }
-
-  .hm-anchor-cell:nth-child(8) {
-    margin-left: 4px;
   }
 
   .hm-anchor-actions .hm-soft-btn {

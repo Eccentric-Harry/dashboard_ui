@@ -13,7 +13,7 @@ type TodaysAnchorCardProps = {
   note: string
   /** Recorded outcome for today's anchor, or null. */
   outcome: MindAnchorOutcome | null
-  /** Every INTENTION entry the page has — the track below reads the last 14 days of it. */
+  /** Every INTENTION entry the page has — the track below reads the last 7 days of it. */
   history: MindEntry[]
   saving: boolean
   onSave: (text: string) => Promise<void>
@@ -35,7 +35,7 @@ const OUTCOME_PHRASES: Record<MindAnchorOutcome, string> = {
   MISSED: 'A fresh go tomorrow',
 }
 
-const TRACK_DAYS = 14
+const TRACK_DAYS = 7
 
 /** What one day of the track shows: the call if it was made, else whether an anchor was set. */
 type TrackState = 'achieved' | 'partial' | 'missed' | 'open' | 'none'
@@ -152,8 +152,8 @@ function TodaysAnchorCard({ today, intention, note, outcome, history, saving, on
 
   const trackLabel =
     counts.set === 0
-      ? 'No anchors in the last 14 days yet.'
-      : `Last 14 days: ${counts.set} anchored, ${counts.achieved} achieved, ${counts.partial} partial.`
+      ? 'No anchors in the last 7 days yet.'
+      : `Last 7 days: ${counts.set} anchored, ${counts.achieved} achieved, ${counts.partial} partial.`
 
   return (
     <section
@@ -273,7 +273,7 @@ function TodaysAnchorCard({ today, intention, note, outcome, history, saving, on
             <span className="hm-legend is-partial"><i aria-hidden="true" />{counts.partial} partial</span>
           </span>
         )}
-        <span className="hm-anchor-meta-span">{counts.set} of 14 days anchored</span>
+        <span className="hm-anchor-meta-span">{counts.set} of {TRACK_DAYS} days anchored</span>
       </div>
 
       <div className="hm-anchor-actions" role="group" aria-label={intention ? 'How did the anchor land?' : undefined}>
