@@ -1,5 +1,5 @@
-import { Fragment, useMemo, useState } from 'react'
-import { ArrowRight, Check, CheckCircle2 } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { ArrowUpRight, Check, CheckCircle2, ChevronRight } from 'lucide-react'
 import type { DailyTask } from '@/types/tasks'
 import type { AppPath } from '@/app/routes'
 import { cn } from '@/lib/utils'
@@ -85,10 +85,10 @@ function PendingTasksCard({ loading, today, tasks, onToggle, onNavigate }: Pendi
             <span className="home-skel home-skel--title" style={{ width: 150, marginTop: 6 }} />
           </div>
         </header>
-        <span className="home-skel" style={{ height: 58, borderRadius: 18 }} />
-        <div className="home-tasks-list">
+        <span className="home-skel" style={{ height: 64, borderRadius: 18 }} />
+        <div className="hm-task-list">
           {Array.from({ length: 3 }, (_, i) => (
-            <span key={i} className="home-skel" style={{ height: 44, borderRadius: 12 }} />
+            <span key={i} className="home-skel" style={{ height: 40, borderRadius: 12, marginTop: 8 }} />
           ))}
         </div>
       </section>
@@ -115,12 +115,15 @@ function PendingTasksCard({ loading, today, tasks, onToggle, onNavigate }: Pendi
                   : `${total} on the runway`}
           </h2>
         </div>
-        <button type="button" className="home-tasks-open" onClick={() => onNavigate('/tasks')}>
-          Open <ArrowRight size={12} strokeWidth={2.6} />
+        <button type="button" className="hm-icon-btn" onClick={() => onNavigate('/tasks')} aria-label="Plan and reorder in Tasks">
+          <ArrowUpRight size={14} strokeWidth={2.4} />
         </button>
       </header>
 
-      <div className="home-tasks-accent" role="group" aria-label="Filter tasks">
+      {/* Today's Meals stat strip: three counts on one well, split by hairlines.
+          Each bar is that bucket's share of everything open, so the strip reads
+          as a distribution at a glance. The counts double as list filters. */}
+      <div className="hm-strip hm-strip--tasks" role="group" aria-label="Filter tasks">
         {(['overdue', 'today', 'upcoming'] as Bucket[]).map((b) => (
           <button
             key={b}
@@ -128,91 +131,63 @@ function PendingTasksCard({ loading, today, tasks, onToggle, onNavigate }: Pendi
             aria-pressed={filter === b}
             onClick={() => setFilter((f) => (f === b ? null : b))}
             className={cn(
-              'home-tasks-stat',
-              `home-tasks-stat--${b}`,
+              'hm-strip-stat',
+              `hm-strip-stat--${b}`,
               counts[b] > 0 && 'has-items',
               filter === b && 'is-active',
               filter === null && counts[b] > 0 && lead === b && 'is-lead',
             )}
           >
-            <i aria-hidden="true" />
             <strong>{counts[b]}</strong>
             <span>{b === 'upcoming' ? 'Upcoming' : BUCKET_LABEL[b]}</span>
+            <i className="hm-strip-bar" aria-hidden="true">
+              <i style={{ width: total > 0 ? `${(counts[b] / total) * 100}%` : '0%' }} />
+            </i>
           </button>
         ))}
       </div>
 
-      <div className="home-tasks-list">
-        {filter && visibleRows.length === 0 ? (
-          <div className="home-tasks-empty">
-            <span className="home-tasks-empty-ic" aria-hidden="true">
-              <CheckCircle2 size={22} strokeWidth={2} />
-            </span>
-            <p>No {filter === 'upcoming' ? 'upcoming' : BUCKET_LABEL[filter].toLowerCase()} tasks.</p>
-            <span>Tap {filter === 'upcoming' ? 'Upcoming' : BUCKET_LABEL[filter]} again to see everything.</span>
-          </div>
-        ) : total === 0 ? (
-          <div className="home-tasks-empty">
-            <span className="home-tasks-empty-ic" aria-hidden="true">
-              <CheckCircle2 size={22} strokeWidth={2} />
-            </span>
-            <p>You're all caught up.</p>
-            <span>Nothing overdue, due today, or coming up soon.</span>
-          </div>
-        ) : (
-          <ul className="home-tasks-rows">
-            {visibleRows.map(({ task, bucket }, i) => {
-              const showGroup = i === 0 || visibleRows[i - 1].bucket !== bucket
-              return (
-                <Fragment key={task.id ?? `${task.title}-${i}`}>
-                  {showGroup && (
-                    <li className="home-tasks-group" aria-hidden="true">
-                      {BUCKET_LABEL[bucket]}
-                    </li>
-                  )}
-                  <li className={cn('home-task-row', `home-task-row--${bucket}`)}>
-                    <button
-                      type="button"
-                      className="home-task-check"
-                      aria-label={`Mark "${task.title}" done`}
-                      disabled={busyId === task.id}
-                      onClick={() => void handleToggle(task)}
-                    >
-                      <Check size={12} strokeWidth={3.5} aria-hidden="true" />
-                    </button>
-                    <button type="button" className="home-task-body" onClick={() => onNavigate('/tasks')}>
-                      <b title={task.title}>{task.title}</b>
-                      <span className="home-task-meta">
-                        <span className={cn('home-task-due', `home-task-due--${bucket}`)}>
-                          {dueLabel(task.date, today, bucket)}
-                        </span>
-                        {task.category && (
-                          <>
-                            <span className="home-task-dot" aria-hidden="true" />
-                            <span className="home-task-cat">{task.category}</span>
-                          </>
-                        )}
-                      </span>
-                    </button>
-                    <ArrowRight className="home-task-go" size={13} strokeWidth={2.4} aria-hidden="true" />
-                  </li>
-                </Fragment>
-              )
-            })}
-            {!filter && total <= 4 && (
-              <li className="home-tasks-tail" aria-hidden="true">
-                Nothing else due in the next three weeks.
-              </li>
-            )}
-          </ul>
-        )}
-      </div>
-
-      {total > 0 && (
-        <button type="button" className="home-tasks-foot" onClick={() => onNavigate('/tasks')}>
-          Plan &amp; reorder in Tasks
-          <ArrowRight size={13} strokeWidth={2.4} aria-hidden="true" />
-        </button>
+      {filter && visibleRows.length === 0 ? (
+        <div className="hm-empty">
+          <CheckCircle2 size={20} strokeWidth={2} aria-hidden="true" />
+          <p>No {filter === 'upcoming' ? 'upcoming' : BUCKET_LABEL[filter].toLowerCase()} tasks.</p>
+          <span>Tap {filter === 'upcoming' ? 'Upcoming' : BUCKET_LABEL[filter]} again to see everything.</span>
+        </div>
+      ) : total === 0 ? (
+        <div className="hm-empty">
+          <CheckCircle2 size={20} strokeWidth={2} aria-hidden="true" />
+          <p>You're all caught up.</p>
+          <span>Nothing overdue, due today, or coming up soon.</span>
+        </div>
+      ) : (
+        <ul className="hm-task-list">
+          {visibleRows.map(({ task, bucket }, i) => (
+            <li key={task.id ?? `${task.title}-${i}`} className={cn('hm-task-row', `hm-task-row--${bucket}`)}>
+              <button
+                type="button"
+                className="hm-task-check"
+                aria-label={`Mark "${task.title}" done`}
+                disabled={busyId === task.id}
+                onClick={() => void handleToggle(task)}
+              >
+                <Check size={11} strokeWidth={3.5} aria-hidden="true" />
+              </button>
+              <button type="button" className="hm-task-body" onClick={() => onNavigate('/tasks')}>
+                <b title={task.title}>{task.title}</b>
+                <span className="hm-task-tags">
+                  <span className={cn('hm-tag', `hm-tag--${bucket}`)}>{dueLabel(task.date, today, bucket)}</span>
+                  {task.category && <span className="hm-task-cat">{task.category}</span>}
+                </span>
+              </button>
+              <ChevronRight className="hm-task-go" size={14} strokeWidth={2.4} aria-hidden="true" />
+            </li>
+          ))}
+          {!filter && total <= 3 && (
+            <li className="hm-task-tail" aria-hidden="true">
+              Nothing else due in the next three weeks.
+            </li>
+          )}
+        </ul>
       )}
     </section>
   )

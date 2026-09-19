@@ -7,9 +7,9 @@ import { formatRelativeTime } from '../home-types'
 export type QuickCaptureMode = 'task' | 'thought' | 'win' | 'learning'
 
 const MODES: { id: QuickCaptureMode; label: string; icon: LucideIcon; placeholder: string; hint: string }[] = [
-  { id: 'task', label: 'Task', icon: CheckSquare, placeholder: 'What needs doing?', hint: 'Goes to today’s tasks' },
-  { id: 'thought', label: 'Thought', icon: MessageCircle, placeholder: 'What’s on your mind?', hint: 'Goes to your Mind inbox' },
-  { id: 'win', label: 'Win', icon: Trophy, placeholder: 'What went well?', hint: 'Filed in your evidence locker' },
+  { id: 'task', label: 'Task', icon: CheckSquare, placeholder: 'What needs doing?', hint: 'To today’s tasks' },
+  { id: 'thought', label: 'Thought', icon: MessageCircle, placeholder: 'What’s on your mind?', hint: 'To your Mind inbox' },
+  { id: 'win', label: 'Win', icon: Trophy, placeholder: 'What went well?', hint: 'To your evidence locker' },
 ]
 
 const MODE_ICON: Record<'task' | 'thought' | 'win', LucideIcon> = {
@@ -58,6 +58,8 @@ type QuickCaptureCardProps = {
   moodRequest?: number
   /** Latest task/thought/win entries, newest first — fills the card's footer space. */
   recentCaptures: RecentCapture[]
+  /** How many tasks/thoughts/wins went through capture today, before the list's cap. */
+  captureCount: number
 }
 
 function QuickCaptureCard({
@@ -67,6 +69,7 @@ function QuickCaptureCard({
   onMood,
   moodRequest,
   recentCaptures,
+  captureCount,
 }: QuickCaptureCardProps) {
   const [mode, setMode] = useState<QuickCaptureMode>('thought')
   const [text, setText] = useState('')
@@ -122,82 +125,84 @@ function QuickCaptureCard({
           <span className="home-card-eyebrow">Quick capture</span>
           <h2 className="home-card-title">Get it out of your head</h2>
         </div>
+        {captureCount > 0 && <span className="hm-pill">{captureCount} today</span>}
       </header>
 
-      <div className="home-capture-modes" role="tablist" aria-label="Capture destination">
-        {MODES.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            type="button"
-            role="tab"
-            aria-selected={mode === id}
-            className={cn('home-capture-mode', `home-capture-mode--${id}`, mode === id && 'is-active')}
-            onClick={() => {
-              setMode(id)
-              inputRef.current?.focus()
-            }}
-          >
-            <Icon size={13} strokeWidth={2.4} />
-            {label}
-          </button>
-        ))}
-      </div>
-
-      <div className="home-capture-input-row">
+      {/* One well holds the whole composer — the text, where it goes, and send —
+          the way a chat composer does, instead of three separate boxes. */}
+      <div className="hm-composer">
         <input
           ref={inputRef}
           type="text"
           value={text}
           maxLength={300}
           placeholder={active.placeholder}
+          aria-label={`Capture a ${active.label.toLowerCase()}`}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') void submit()
           }}
         />
-        <button
-          type="button"
-          className="home-capture-send"
-          disabled={!text.trim() || saving}
-          onClick={() => void submit()}
-          aria-label={`Capture ${active.label}`}
-        >
-          <Send size={15} strokeWidth={2.2} />
-        </button>
-      </div>
-      <small className="home-capture-hint">{active.hint}</small>
-
-      <div className="home-capture-recent">
-        <span className="home-card-eyebrow">Recently captured</span>
-        {recentCaptures.length > 0 ? (
-          <ul className="home-capture-recent-list">
-            {recentCaptures.map((item) => {
-              const Icon = MODE_ICON[item.mode]
-              return (
-                <li key={item.id} className={cn('home-capture-recent-item', `home-capture-recent-item--${item.mode}`)}>
-                  <span className="home-capture-recent-ic" aria-hidden="true">
-                    <Icon size={12} strokeWidth={2.4} />
-                  </span>
-                  <span className="home-capture-recent-text">{item.text}</span>
-                  <span className="home-capture-recent-time">{formatRelativeTime(item.at)}</span>
-                </li>
-              )
-            })}
-          </ul>
-        ) : (
-          <p className="home-capture-recent-empty">
-            <Inbox size={13} strokeWidth={2.2} aria-hidden="true" />
-            Nothing captured yet today.
-          </p>
-        )}
-      </div>
-
-      <div className={cn('home-capture-mood', moodNudged && 'is-nudged')} ref={moodRef}>
-        <div className="home-capture-mood-text">
-          <span className="home-card-eyebrow">Mood check-in</span>
-          <p>{shownMood ? `Today feels ${MOOD_LABELS[shownMood - 1].toLowerCase()}.` : 'How’s the head today?'}</p>
+        <div className="hm-composer-foot">
+          <div className="hm-composer-modes" role="tablist" aria-label="Capture destination">
+            {MODES.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={mode === id}
+                className={cn('hm-mode', `hm-mode--${id}`, mode === id && 'is-active')}
+                onClick={() => {
+                  setMode(id)
+                  inputRef.current?.focus()
+                }}
+              >
+                <Icon size={12} strokeWidth={2.4} />
+                {label}
+              </button>
+            ))}
+          </div>
+          <span className="hm-composer-hint">{active.hint}</span>
+          <button
+            type="button"
+            className="hm-composer-send"
+            disabled={!text.trim() || saving}
+            onClick={() => void submit()}
+            aria-label={`Capture ${active.label}`}
+          >
+            <Send size={14} strokeWidth={2.3} />
+          </button>
         </div>
-        <div className="home-capture-mood-faces" role="group" aria-label="Mood check-in">
+      </div>
+
+      {recentCaptures.length > 0 ? (
+        <ul className="hm-capture-list" aria-label="Captured today">
+          {recentCaptures.map((item) => {
+            const Icon = MODE_ICON[item.mode]
+            return (
+              <li key={item.id} className={cn('hm-capture-row', `hm-capture-row--${item.mode}`)}>
+                <span className="hm-capture-ic" aria-hidden="true">
+                  <Icon size={12} strokeWidth={2.4} />
+                </span>
+                <span className="hm-capture-text" title={item.text}>{item.text}</span>
+                <span className="hm-capture-time">{formatRelativeTime(item.at)}</span>
+              </li>
+            )
+          })}
+        </ul>
+      ) : (
+        <p className="hm-capture-empty">
+          <Inbox size={13} strokeWidth={2.2} aria-hidden="true" />
+          Nothing captured yet today.
+        </p>
+      )}
+
+      <div className={cn('hm-mood', moodNudged && 'is-nudged')} ref={moodRef}>
+        <p className="hm-mood-text">
+          <span>Mood</span>
+          {shownMood ? `Today feels ${MOOD_LABELS[shownMood - 1].toLowerCase()}.` : 'How’s the head today?'}
+        </p>
+        <div className="hm-mood-faces" role="group" aria-label="Mood check-in">
           {MOOD_LABELS.map((label, index) => {
             const value = index + 1
             return (
@@ -206,6 +211,7 @@ function QuickCaptureCard({
                 type="button"
                 aria-label={`Mood: ${label}`}
                 aria-pressed={shownMood === value}
+                title={label}
                 className={cn('home-face-btn', `home-face-btn--${value}`, shownMood === value && 'is-active')}
                 onClick={() => pickMood(value)}
               >

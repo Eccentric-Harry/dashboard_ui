@@ -132,7 +132,6 @@ function ActivityCard({
 
   return (
     <section className="home-card home-card--activity" aria-label="Movement">
-      <Activity className="home-card-glyph" aria-hidden="true" />
       <header className="home-card-head">
         <div>
           <span className="home-card-eyebrow">Movement</span>

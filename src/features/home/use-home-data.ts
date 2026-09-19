@@ -1,7 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { homeActions, useHomeStore, type HomeWindow } from '@/store/home-store'
 import type { RemoteDataStatus } from '@/store/zustand-utils'
-import type { CalendarItem } from '@/types/calendar'
 import type { DailyFinancialLog, SpendingSummary } from '@/types/finance'
 import type { FocusDaySummary, FocusSuggestion } from '@/types/focus'
 import type { LearningsSummary } from '@/types/learnings'
@@ -27,7 +26,6 @@ export interface HomeData {
   nutrition: Slice<NutritionSummary>
   hydration: Slice<HydrationData>
   tasks: Slice<DailyTask[]>
-  calendarToday: Slice<CalendarItem[]>
   sleep: Slice<SleepEntry[]>
   focus: Slice<FocusDaySummary[]>
   moods: Slice<DailyLog[]>
@@ -36,12 +34,15 @@ export interface HomeData {
   learnings: Slice<LearningsSummary>
   mind: Slice<MindSummary>
   mindEntries: Slice<MindEntry[]>
+  wins: Slice<MindEntry[]>
   anchors: Slice<MindEntry[]>
   focusSuggestions: Slice<FocusSuggestion[]>
   spending: Slice<SpendingSummary>
   finance: Slice<DailyFinancialLog[]>
   refetch: () => Promise<void>
   reloadAnchors: () => Promise<void>
+  reloadMindEntries: () => Promise<void>
+  reloadWins: () => Promise<void>
   reloadFocus: () => Promise<void>
   reloadSleep: () => Promise<void>
   reloadHydration: () => Promise<void>
@@ -69,7 +70,6 @@ export function useHomeData(): HomeData {
   const nutrition = useHomeStore.use.nutrition()
   const hydration = useHomeStore.use.hydration()
   const tasks = useHomeStore.use.tasks()
-  const calendarToday = useHomeStore.use.calendarToday()
   const sleep = useHomeStore.use.sleep()
   const focus = useHomeStore.use.focus()
   const moods = useHomeStore.use.moods()
@@ -78,6 +78,7 @@ export function useHomeData(): HomeData {
   const learnings = useHomeStore.use.learnings()
   const mind = useHomeStore.use.mind()
   const mindEntries = useHomeStore.use.mindEntries()
+  const wins = useHomeStore.use.wins()
   const anchors = useHomeStore.use.anchors()
   const focusSuggestions = useHomeStore.use.focusSuggestions()
   const spending = useHomeStore.use.spending()
@@ -101,7 +102,6 @@ export function useHomeData(): HomeData {
     nutrition,
     hydration,
     tasks,
-    calendarToday,
     sleep,
     focus,
     moods,
@@ -110,12 +110,15 @@ export function useHomeData(): HomeData {
     learnings,
     mind,
     mindEntries,
+    wins,
     anchors,
     focusSuggestions,
     spending,
     finance,
     refetch: homeActions.refetch,
     reloadAnchors: homeActions.reloadAnchors,
+    reloadMindEntries: homeActions.reloadMindEntries,
+    reloadWins: homeActions.reloadWins,
     reloadFocus: homeActions.reloadFocus,
     reloadSleep: homeActions.reloadSleep,
     reloadHydration: homeActions.reloadHydration,

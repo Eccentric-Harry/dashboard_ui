@@ -10,7 +10,6 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { createSelectors, remoteStateWith, requestAndSet, type RemoteDataStatus } from './zustand-utils';
-import { calendarService } from '../services/calendar-service';
 import { financeService } from '../services/finance-service';
 import { focusService } from '../services/focus-service';
 import { learningsService } from '../services/learnings-service';
@@ -20,7 +19,6 @@ import { sleepService } from '../services/sleep-service';
 import { tasksService } from '../services/tasks-service';
 import { workoutsService } from '../services/workouts-service';
 import type { SafeResult } from '../types/api';
-import type { CalendarItem } from '../types/calendar';
 import type { DailyFinancialLog, SpendingSummary } from '../types/finance';
 import type { FocusDaySummary, FocusSuggestion } from '../types/focus';
 import type { LearningsSummary } from '../types/learnings';
@@ -52,7 +50,6 @@ interface HomeState {
   nutrition: HomeSlice<NutritionSummary>;
   hydration: HomeSlice<HydrationData>;
   tasks: HomeSlice<DailyTask[]>;
-  calendarToday: HomeSlice<CalendarItem[]>;
   sleep: HomeSlice<SleepEntry[]>;
   focus: HomeSlice<FocusDaySummary[]>;
   moods: HomeSlice<DailyLog[]>;
@@ -61,6 +58,7 @@ interface HomeState {
   learnings: HomeSlice<LearningsSummary>;
   mind: HomeSlice<MindSummary>;
   mindEntries: HomeSlice<MindEntry[]>;
+  wins: HomeSlice<MindEntry[]>;
   anchors: HomeSlice<MindEntry[]>;
   focusSuggestions: HomeSlice<FocusSuggestion[]>;
   spending: HomeSlice<SpendingSummary>;
@@ -80,6 +78,10 @@ interface HomeActions {
     refetch: () => Promise<void>;
     reloadSleep: () => Promise<void>;
     reloadAnchors: () => Promise<void>;
+    /** Thoughts only — what Home's quick capture writes to /mind. */
+    reloadMindEntries: () => Promise<void>;
+    /** Wins only — shown in Home's capture list, kept out of the thought-based insights. */
+    reloadWins: () => Promise<void>;
     /** Focus history + calendar suggestions move together: importing a block changes both. */
     reloadFocus: () => Promise<void>;
     reloadHydration: () => Promise<void>;
@@ -99,7 +101,6 @@ const initialState: HomeState = {
   nutrition: emptySlice(),
   hydration: emptySlice(),
   tasks: emptySlice(),
-  calendarToday: emptySlice(),
   sleep: emptySlice(),
   focus: emptySlice(),
   moods: emptySlice(),
@@ -108,6 +109,7 @@ const initialState: HomeState = {
   learnings: emptySlice(),
   mind: emptySlice(),
   mindEntries: emptySlice(),
+  wins: emptySlice(),
   anchors: emptySlice(),
   focusSuggestions: emptySlice(),
   spending: emptySlice(),
@@ -136,6 +138,8 @@ const useHomeStoreBase = create<HomeStore>()(
 
       const loadSleep = (w: HomeWindow) => settle('sleep', () => sleepService.getEntries(w.start, w.today));
       const loadAnchors = () => settle('anchors', () => mindService.getEntries('INTENTION'));
+      const loadWins = () => settle('wins', () => mindService.getEntries('WIN'));
+      const loadMindEntries = () => settle('mindEntries', () => mindService.getEntries('THOUGHT'));
       const loadHydration = (w: HomeWindow) => settle('hydration', () => nutritionService.getHydration(w.today));
       const loadFocus = (w: HomeWindow) =>
         Promise.all([
@@ -148,7 +152,6 @@ const useHomeStoreBase = create<HomeStore>()(
           settle('nutrition', () => nutritionService.getSummary(w.today)),
           loadHydration(w),
           settle('tasks', () => tasksService.getTasksRange(w.start, w.tasksUntil)),
-          settle('calendarToday', () => calendarService.getItemsForRange(w.today, w.today)),
           loadSleep(w),
           loadFocus(w),
           settle('moods', () => mindService.getDailyLogRange(w.start, w.today)),
@@ -156,7 +159,8 @@ const useHomeStoreBase = create<HomeStore>()(
           settle('workoutStats', () => workoutsService.getStats()),
           settle('learnings', () => learningsService.getSummary(w.today)),
           settle('mind', () => mindService.getSummary(w.today)),
-          settle('mindEntries', () => mindService.getEntries('THOUGHT')),
+          loadMindEntries(),
+          loadWins(),
           loadAnchors(),
           settle('spending', () => financeService.getSpendingSummary(w.today.slice(0, 7))),
           settle('finance', () => financeService.getDailyLogs(w.days)),
@@ -178,6 +182,12 @@ const useHomeStoreBase = create<HomeStore>()(
           reloadSleep: () => withWindow(loadSleep),
           reloadAnchors: async () => {
             await loadAnchors();
+          },
+          reloadMindEntries: async () => {
+            await loadMindEntries();
+          },
+          reloadWins: async () => {
+            await loadWins();
           },
           reloadFocus: () => withWindow(loadFocus),
           reloadHydration: () => withWindow(loadHydration),

@@ -193,7 +193,6 @@ function SleepCard({ loading, failed, summary, today, onOpenLog, onRetry }: Slee
 
   return (
     <section className="home-card home-card--sleep" aria-label="Sleep">
-      <Moon className="home-card-glyph" aria-hidden="true" />
       <header className="home-card-head">
         <div>
           <span className="home-card-eyebrow">Sleep</span>

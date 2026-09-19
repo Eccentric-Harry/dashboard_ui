@@ -24,8 +24,57 @@
   --ntr-lime: #bcc3f2;
   --ntr-lime-deep: #4d56ae;
   --ntr-lime-soft: #e9ebfb;
+  --ntr-ink-faint: #999e91;
   --ntr-radius: 26px;
   --ntr-shadow: 0 1px 2px rgba(23, 27, 21, 0.03), 0 10px 30px rgba(23, 27, 21, 0.05);
+
+  /* Home's own tokens (see "Nutrition grammar" below). theme-dark.css re-points
+     every one of them, so no rule on this route hardcodes a colour. */
+  --hm-ink: #171b15;
+  --hm-ink-2: #6b7165;
+  --hm-ink-3: #999e91;
+  --hm-line: #efeee7;
+  --hm-line-strong: rgba(23, 27, 21, 0.1);
+  --hm-check-line: rgba(23, 27, 21, 0.22);
+  --hm-pill: #f4f1e8;
+  --hm-control: #f2f3ee;
+  --hm-control-hover: #e9ebfb;
+  --hm-well: #f7f6f1;
+  --hm-well-line: rgba(23, 27, 21, 0.045);
+  --hm-strip: linear-gradient(120deg, #f6f1e4 0%, #e9ebfb 100%);
+  --hm-strip-hover: rgba(255, 255, 255, 0.4);
+  --hm-strip-active: rgba(255, 255, 255, 0.72);
+  --hm-row-hover: rgba(23, 27, 21, 0.025);
+  --hm-chip-active: #ffffff;
+  --hm-chip-active-shadow: 0 1px 2px rgba(23, 27, 21, 0.08), inset 0 0 0 1px rgba(23, 27, 21, 0.06);
+  --hm-accent: #4d56ae;
+  --hm-accent-fill: #bcc3f2;
+  --hm-accent-soft: #eceefb;
+  --hm-accent-line: rgba(77, 86, 174, 0.3);
+  --hm-on-accent: #171b15;
+  --hm-cell-a: #b3bbee;
+  --hm-cell-b: #7f89d6;
+  --hm-cell-missed: rgba(23, 27, 21, 0.16);
+  --hm-primary-bg: #171b15;
+  --hm-primary-hover: #2a2f28;
+  --hm-primary-ink: #ffffff;
+  --hm-primary-glyph: #bcc3f2;
+  --hm-good: #2e6b4f;
+  --hm-on-good: #ffffff;
+  --hm-watch: #9a5a10;
+  --hm-overdue: #c0596e;
+  --hm-upcoming: #5d87ad;
+  --hm-tone-task: #4f8a66;
+  --hm-tone-thought: #5d87ad;
+  --hm-tone-win: #b0822e;
+  --hm-sleep-accent: #4a7fa3;
+  --hm-move: #3d6b52;
+  --hm-move-on: #9db892;
+  --hm-move-off: rgba(26, 31, 29, 0.09);
+  --hm-move-well: linear-gradient(150deg, #f1f6ee 0%, #e4eee1 60%, #d8e8d4 100%);
+  --hm-move-line: rgba(34, 58, 42, 0.12);
+  --hm-ring-cutout: #ffffff;
+
   /* Content cap — hero/grid otherwise sprawl on wide monitors. */
   --home-max: 1104px;
 
@@ -272,21 +321,15 @@
   border-radius: var(--ntr-radius);
   background: var(--ntr-card);
   box-shadow: var(--ntr-shadow);
-  padding: 22px;
+  padding: 22px 24px;
   display: flex;
   flex-direction: column;
   gap: 14px;
   animation: home-card-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), background 0.28s ease;
 }
 
-/* Cards lift slightly on hover — calm, evening-dashboard subtle. With an opaque
-   surface there is nowhere brighter to go, so the lift reads through the shadow
-   deepening instead of the background brightening. */
-.home-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 1px 2px rgba(23, 27, 21, 0.04), 0 16px 38px rgba(23, 27, 21, 0.09);
-}
+/* No hover lift: like /nutrition, a card is a surface, not a button. Only the
+   controls inside it respond to the pointer. */
 
 @keyframes home-card-in {
   from {
@@ -299,16 +342,6 @@
   }
 }
 
-.home-card-glyph {
-  position: absolute;
-  right: -14px;
-  bottom: -18px;
-  width: 108px;
-  height: 108px;
-  color: rgba(46, 74, 60, 0.055);
-  pointer-events: none;
-}
-
 .home-card-head {
   display: flex;
   align-items: flex-start;
@@ -317,20 +350,23 @@
 }
 
 .home-card-eyebrow {
-  color: rgba(23, 28, 25, 0.64);
+  color: var(--hm-ink-3);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.11em;
+  letter-spacing: 0.14em;
 }
 
+/* Nutrition's card headline (.ntr-card-head h2), so every card on the two
+   routes speaks in the same voice. */
 .home-card-title {
-  margin: 4px 0 0;
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 19px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: #17211c;
+  margin: 5px 0 0;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  line-height: 1.08;
+  color: var(--hm-ink);
 }
 
 .home-card-body {
@@ -389,27 +425,37 @@
   cursor: default;
 }
 
+/* Head actions read as Nutrition's cream pill ("7 days"), not an outlined
+   button — one shape for everything that sits beside a card title. */
 .home-btn-quiet {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 6px;
-  padding: 8px 13px;
-  border: 1px solid rgba(26, 31, 29, 0.14);
+  height: 30px;
+  padding: 0 13px;
+  border: 0;
   border-radius: 999px;
-  background: rgba(23, 27, 21, 0.025);
-  color: #2b352f;
+  background: var(--hm-pill);
+  color: var(--hm-ink);
   font-size: 11px;
   font-weight: 700;
+  white-space: nowrap;
   cursor: pointer;
   transition: background 0.2s ease, transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .home-btn-quiet:hover {
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--hm-control-hover);
 }
 
 .home-btn-quiet:active {
   transform: scale(0.96);
+}
+
+.home-btn-quiet:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 /* ---------- Hero — "Today's loop" ----------
@@ -435,11 +481,12 @@
 }
 
 .home-hero-head h2 {
-  font-size: 20px;
+  color: var(--hm-ink);
 }
 
 .home-hero-head .ntr-eyebrow {
-  margin: 0 0 2px;
+  margin: 0;
+  color: var(--hm-ink-3);
 }
 
 .home-hero-head-actions {
@@ -447,26 +494,6 @@
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
-}
-
-.home-loop-info-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 999px;
-  border: none;
-  background: var(--ntr-cream, #f0efe6);
-  color: var(--ntr-ink-soft);
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.home-loop-info-btn:hover,
-.home-loop-info-btn[aria-expanded='true'] {
-  background: var(--ntr-lime-soft);
-  color: var(--ntr-lime-deep);
 }
 
 /* ---------- Loop info modal ----------
@@ -641,32 +668,6 @@
   font-style: italic;
 }
 
-/* Overdue badge — one visual language wherever "overdue" appears on Home:
-   the rose dot + text the Tasks card's count strip uses. */
-.home-dashboard {
-  --home-overdue: #c0596e;
-}
-
-.home-overdue-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px 4px 8px;
-  border-radius: 999px;
-  background: var(--home-overdue-bg, rgba(192, 89, 110, 0.12));
-  color: var(--home-overdue);
-  font-size: 11px;
-  font-weight: 750;
-  white-space: nowrap;
-}
-
-.home-overdue-badge i {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
 .home-sleep-quality-why {
   margin-left: 6px;
   padding: 1px 7px;
@@ -689,9 +690,8 @@
   align-items: stretch;
   padding: 18px 20px;
   border-radius: 22px;
-  /* Flat cool periwinkle-blue — the tinted stat panel inside a white card, the
-     same idea as /nutrition's lime panel but a single solid fill, no gradient. */
-  background: #d5deef;
+  /* Home's periwinkle, graded the way /nutrition grades its lime panel. */
+  background: linear-gradient(160deg, #e2e8f6 0%, #d5deef 58%, #cbd5ec 100%);
   overflow: hidden;
 }
 
@@ -811,20 +811,6 @@
   font-weight: 700;
 }
 
-.home-loop-count {
-  margin: -2px 0 0;
-  color: rgba(23, 27, 21, 0.6);
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
-.home-loop-count strong {
-  color: #171b15;
-  font-size: 12px;
-  font-weight: 800;
-}
-
 /* Gentle ambient pulse behind the gauge while a focus session is running */
 .ntr-gauge-wrap.is-live::before {
   content: '';
@@ -839,37 +825,6 @@
 @keyframes home-gauge-pulse {
   0%, 100% { transform: scale(0.94); opacity: 0.5; }
   50% { transform: scale(1.05); opacity: 1; }
-}
-
-.home-hero-focus-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border: 0;
-  border-radius: 999px;
-  background: rgba(23, 27, 21, 0.92);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 750;
-  letter-spacing: 0.01em;
-  cursor: pointer;
-  box-shadow: 0 3px 0 0 rgba(0, 0, 0, 0.34), 0 8px 18px rgba(23, 27, 21, 0.22);
-  transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.14s ease;
-}
-
-.home-hero-focus-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 0 0 rgba(0, 0, 0, 0.34), 0 12px 24px rgba(23, 27, 21, 0.28);
-}
-
-.home-hero-focus-btn:active {
-  transform: translateY(2px);
-  box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.34), 0 4px 10px rgba(23, 27, 21, 0.2);
-}
-
-.home-hero-focus-btn svg {
-  color: var(--ntr-lime);
 }
 
 /* Four loop signals as full-width stacked rows beside the ring — the same
@@ -890,12 +845,12 @@
   justify-content: center;
   padding: 10px 14px;
   gap: 8px;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.55);
   transition: background-color 0.18s ease, transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .home-card--hero .ntr-macro-row:hover {
-  background: rgba(255, 255, 255, 0.97);
+  background: rgba(255, 255, 255, 0.88);
 }
 
 .home-card--hero .ntr-macro-header {
@@ -968,115 +923,6 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--home-loop-color) 20%, transparent);
 }
 
-/* Overdue is the loudest thing in the hero — and the only red */
-
-/* Up-next agenda strip — spans the full panel width. The title owns its
-   own line (time rides above it in small caps), so long event names
-   ellipsize gracefully instead of crushing the time label. */
-.home-next-strip {
-  grid-column: 1 / -1;
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  min-width: 0;
-  padding: 10px 16px 10px 10px;
-  border: 0;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.5);
-  color: var(--ntr-ink);
-  text-align: left;
-  cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.home-next-strip:hover {
-  background: rgba(255, 255, 255, 0.78);
-  transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(52, 58, 122, 0.14);
-}
-
-.home-next-strip:active {
-  transform: translateY(0) scale(0.985);
-}
-
-.home-next-ic {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
-  border-radius: 12px;
-  background: rgba(23, 27, 21, 0.9);
-  color: var(--ntr-lime);
-}
-
-.home-next-text {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-
-.home-next-text small {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: rgba(23, 27, 21, 0.55);
-  font-size: 9px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-variant-numeric: tabular-nums;
-}
-
-.home-next-text b {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
-
-.home-next-more {
-  flex-shrink: 0;
-  padding: 4px 9px;
-  border-radius: 999px;
-  background: rgba(23, 27, 21, 0.08);
-  color: #514a38;
-  font-size: 10px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.home-next-go {
-  flex-shrink: 0;
-  color: rgba(23, 27, 21, 0.45);
-  transition: transform 0.2s ease, color 0.2s ease;
-}
-
-.home-next-strip:hover .home-next-go {
-  color: #171b15;
-  transform: translateX(3px);
-}
-
-.home-next-strip-skel {
-  grid-column: 1 / -1;
-  height: 54px;
-  border-radius: 18px;
-}
-
-/* Phone widths: the time label beats the later-count chip for space */
-@media (max-width: 480px) {
-  .home-next-more {
-    display: none;
-  }
-}
-
 @media (max-width: 700px) {
   /* Stacked: nothing to match heights with, so the rows go back to sizing
      themselves and the panel to its content. */
@@ -1121,7 +967,7 @@
 }
 
 .home-grid--rest {
-  margin-top: 16px;
+  margin-top: 0;
 }
 
 /* Reset the 6-col spans the cards carry for the other grid — here every cell
@@ -1136,8 +982,8 @@
    (tasks, recent captures) scrolls within that shared height. */
 .home-grid--primary .home-card {
   height: 376px;
-  padding: 18px 20px;
-  gap: 10px;
+  padding: 20px 22px;
+  gap: 12px;
 }
 
 /* ---------- Fit the fold ----------
@@ -1183,6 +1029,11 @@
     margin-bottom: 14px;
   }
 
+  .home-grid--primary .home-card {
+    padding: 16px 20px;
+    gap: 10px;
+  }
+
   /* Day loop: all four signal rows must stay visible — they're the breakdown
      the ring summarises — so the ring and row padding shrink instead. */
   .home-grid--primary .home-card--hero {
@@ -1206,12 +1057,6 @@
     width: min(100%, 112px);
   }
 
-  /* Enough to keep the longest nudge ("Log last night's sleep") on one line
-     in the 168px gauge column — wrapped, it overran the shorter panel. */
-  .home-grid--primary .home-hero-focus-btn {
-    padding: 7px 12px;
-  }
-
   .home-grid--primary .home-card--hero .ntr-hero-macros {
     gap: 6px;
   }
@@ -1222,61 +1067,1108 @@
   }
 
   /* Quick capture: the mode's destination hint is the first thing to go. */
-  .home-grid--primary .home-capture-hint {
+  .home-grid--primary .hm-composer-hint {
     display: none;
+  }
+
+  .home-grid--primary .hm-soft-btn {
+    height: 38px;
+  }
+
+  .home-grid--primary .hm-anchor-title {
+    font-size: 23px;
   }
 }
 
-/* Below ~670px there's no longer room for even one recent capture beside the
-   input and the mood row — hide the list rather than show half an item. */
+/* Below ~670px there's no longer room for a recent capture or the anchor's
+   note beside everything else — hide them rather than show half of one. */
 @media (min-width: 1025px) and (max-height: 670px) {
-  .home-grid--primary .home-card--capture .home-capture-recent {
+  .home-grid--primary .hm-capture-list,
+  .home-grid--primary .hm-capture-empty,
+  .home-grid--primary .hm-anchor-note,
+  .home-grid--primary .hm-anchor-add-note {
     display: none;
   }
 }
 
-/* Inner scroll regions so a full list never grows the fixed card height. */
-.home-grid--primary .home-tasks-list,
-.home-grid--primary .home-card--capture .home-capture-recent {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-}
-
-/* Quick capture holds a lot (modes, input, recent list, mood) — the recent
-   list gives up its space first and scrolls, so the mood row stays pinned and
-   visible instead of being clipped by the fixed height. */
-.home-grid--primary .home-card--capture .home-capture-modes {
-  padding: 4px;
-}
-
-.home-grid--primary .home-card--capture .home-capture-mode {
-  padding: 6px 10px;
-}
-
-.home-grid--primary .home-card--capture .home-capture-input-row input {
-  padding: 10px 14px;
-}
-
-.home-grid--primary .home-card--capture .home-capture-send {
-  width: 40px;
-  height: 40px;
-  flex-basis: 40px;
-}
-
-.home-grid--primary .home-card--capture .home-capture-recent {
+/* Inner scroll regions so a full list never grows the fixed card height. The
+   bottom edge fades rather than cutting a row in half. */
+.home-grid--primary .hm-task-list,
+.home-grid--primary .hm-capture-list {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 20px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 20px), transparent);
 }
 
-.home-grid--primary .home-card--capture .home-capture-recent::-webkit-scrollbar {
+.home-grid--primary .hm-task-list::-webkit-scrollbar,
+.home-grid--primary .hm-capture-list::-webkit-scrollbar {
   display: none;
 }
 
-.home-grid--primary .home-card--capture .home-capture-mood {
+/* ---------- Nutrition grammar ----------
+   Home is laid out in /nutrition's language, and these are its rules:
+   - one inset well per card at most; everything else sits on the card surface
+   - one hero per card: a big figure or a single visual
+   - lists and stat groups split by hairlines, never a box per row
+   - the serif headline states the finding; one pill or icon button beside it
+   - actions are soft pill buttons at the card's foot
+   Colours are --hm-* tokens (declared on .home-dashboard at the top of this
+   file); theme-dark.css re-points them, so the rules below serve both themes. */
+
+/* Head pill: Nutrition's cream .ntr-pill ("7 days"). */
+.hm-pill {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 13px;
+  border-radius: 999px;
+  background: var(--hm-pill);
+  color: var(--hm-ink);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Head icon button: Nutrition's .ntr-icon-btn (the meals card's pencil). */
+.hm-icon-btn {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--hm-line-strong);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--hm-ink-2);
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.hm-icon-btn:hover,
+.hm-icon-btn[aria-expanded='true'] {
+  background: var(--hm-control-hover);
+  color: var(--hm-ink);
+}
+
+/* Foot actions: Nutrition's .ntr-soft-btn (the hydration buttons). */
+.hm-soft-btn {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 0;
+  height: 42px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--hm-control);
+  color: var(--hm-ink);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.hm-soft-btn svg {
+  flex-shrink: 0;
+  color: var(--hm-ink-2);
+  transition: color 0.2s ease;
+}
+
+.hm-soft-btn:hover {
+  background: var(--hm-control-hover);
+}
+
+.hm-soft-btn:active {
+  transform: scale(0.97);
+}
+
+.hm-soft-btn.is-primary {
+  background: var(--hm-primary-bg);
+  color: var(--hm-primary-ink);
+}
+
+.hm-soft-btn.is-primary svg {
+  color: var(--hm-primary-glyph);
+}
+
+.hm-soft-btn.is-primary:hover {
+  background: var(--hm-primary-hover);
+}
+
+/* Inline text action: no slab, just type that leans in on hover. */
+.hm-text-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 0;
+  border: 0;
+  background: none;
+  color: var(--hm-ink-2);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.18s ease;
+}
+
+.hm-text-btn:hover {
+  color: var(--hm-ink);
+}
+
+.hm-text-btn.is-strong {
+  color: var(--hm-accent);
+}
+
+/* The gauge's nudge: a quiet accent link under the ring, not a second slab. */
+.hm-link-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 5px 2px;
+  border: 0;
+  background: none;
+  color: var(--hm-accent);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 750;
+  text-align: center;
+  cursor: pointer;
+}
+
+.hm-link-btn svg {
+  flex-shrink: 0;
+  transition: transform 0.18s ease;
+}
+
+.hm-link-btn:hover svg:last-child {
+  transform: translateX(2px);
+}
+
+/* Stat strip: Today's Meals' well. Counts share one surface and hairlines
+   split them — never a tile per number. */
+.hm-strip {
+  display: flex;
+  flex-shrink: 0;
+  align-items: stretch;
+  padding: 12px 6px;
+  border-radius: 18px;
+  background: var(--hm-strip);
+  box-shadow: inset 0 0 0 1px var(--hm-well-line);
+}
+
+.hm-strip-stat {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  padding: 3px 8px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--hm-ink);
+  font: inherit;
+  text-align: center;
+}
+
+.hm-strip-stat + .hm-strip-stat::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 1px;
+  height: 32px;
+  background: var(--hm-line-strong);
+  transform: translateY(-50%);
+}
+
+.hm-strip-stat strong {
+  font-size: 20px;
+  font-weight: 750;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.hm-strip-stat > span {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--hm-ink-3);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.hm-strip-bar {
+  display: block;
+  width: 52px;
+  max-width: 80%;
+  height: 4px;
+  margin-top: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--hm-line-strong);
+}
+
+.hm-strip-bar > i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--hm-strip-tone, var(--hm-ink));
+  transform-origin: left center;
+  animation: ntrBarGrow 0.8s cubic-bezier(0.3, 0.8, 0.3, 1) both;
+  transition: width 0.4s ease;
+}
+
+/* Tinted chip: Nutrition's meal-type tag, keyed by --tag-tone. */
+.hm-tag {
+  display: inline-block;
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border: 1px solid color-mix(in srgb, var(--tag-tone, #8b9187) 22%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tag-tone, #8b9187) 10%, transparent);
+  color: var(--tag-tone, #8b9187);
+  font-size: 9.5px;
+  font-weight: 750;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Week-over-week change under a strip stat. */
+.hm-delta {
+  color: var(--hm-ink-3);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.hm-delta.tone-good { color: var(--hm-good); }
+.hm-delta.tone-watch { color: var(--hm-watch); }
+
+/* Quiet empty state: an icon and two lines, no dashed well. */
+.hm-empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 0;
+  padding: 12px;
+  text-align: center;
+}
+
+.hm-empty svg {
+  margin-bottom: 5px;
+  color: var(--hm-good);
+}
+
+.hm-empty p {
+  margin: 0;
+  color: var(--hm-ink);
+  font-size: 14px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+.hm-empty span {
+  max-width: 260px;
+  color: var(--hm-ink-3);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.hm-saving {
+  margin-left: 8px;
+  color: var(--hm-accent);
+  font-style: normal;
+  animation: hm-saving-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes hm-saving-pulse {
+  50% { opacity: 0.45; }
+}
+
+/* ---------- Section head ----------
+   /nutrition's "Intelligence" break: today is the first screen, and the
+   cards under this head read the days behind it. */
+
+.home-section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  max-width: var(--home-max);
+  margin: 30px auto 14px;
+  padding: 0 4px;
+}
+
+.home-section-head .ntr-eyebrow {
+  color: var(--hm-ink-3);
+}
+
+.home-section-title {
+  margin: 0;
+  color: var(--hm-ink);
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* ---------- Today's anchor ----------
+   The Hydration card's shape: the intention is the big figure, fourteen days
+   of anchors are the segmented track under it, and how today landed is the
+   row of soft buttons at the foot. No inset panel, no watermark. */
+
+.home-card--anchor {
+  gap: 12px;
+}
+
+.hm-anchor-head {
+  flex: 1;
+  min-width: 0;
+}
+
+.hm-anchor-status {
+  color: var(--hm-accent);
+  font-style: normal;
+}
+
+.hm-anchor-status.is-missed {
+  color: var(--hm-ink-2);
+}
+
+/* The intention is the headline — a size up from the other cards' titles,
+   because here it is also the card's hero figure. */
+.hm-anchor-title {
+  margin-top: 8px;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.18;
+}
+
+.hm-anchor-figure {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-height: 0;
+  margin-top: -2px;
+}
+
+.hm-anchor-text {
+  display: -webkit-box;
+  max-width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  text-decoration: underline dotted transparent;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 6px;
+  cursor: text;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  transition: text-decoration-color 0.2s ease;
+}
+
+.hm-anchor-text:hover {
+  text-decoration-color: var(--hm-line-strong);
+}
+
+.hm-anchor-text.is-placeholder {
+  color: var(--hm-ink-3);
+  font-style: italic;
+  font-weight: 550;
+}
+
+.hm-anchor-edit {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.hm-anchor-edit input {
+  flex: 1;
+  min-width: 0;
+  padding: 0 0 6px;
+  border: 0;
+  border-bottom: 1.5px solid var(--hm-accent-line);
+  border-radius: 0;
+  outline: none;
+  background: transparent;
+  color: var(--hm-ink);
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.hm-anchor-edit input::placeholder {
+  color: var(--hm-ink-3);
+  font-style: italic;
+}
+
+.hm-anchor-note {
+  display: -webkit-box;
+  max-width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: none;
+  color: var(--hm-ink-2);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 550;
+  line-height: 1.45;
+  text-align: left;
+  white-space: pre-line;
+  cursor: text;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.hm-anchor-note:hover {
+  color: var(--hm-ink);
+}
+
+.hm-anchor-note-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.hm-anchor-note-edit textarea {
+  width: 100%;
+  min-height: 58px;
   padding: 10px 12px;
+  border: 0;
+  border-radius: 14px;
+  outline: none;
+  background: var(--hm-well);
+  box-shadow: inset 0 0 0 1px var(--hm-well-line);
+  color: var(--hm-ink);
+  font: inherit;
+  font-size: 12.5px;
+  line-height: 1.45;
+  resize: none;
+}
+
+.hm-anchor-note-edit textarea:focus {
+  box-shadow: inset 0 0 0 1.5px var(--hm-accent-line), 0 0 0 4px var(--hm-accent-soft);
+}
+
+.hm-anchor-note-edit textarea::placeholder {
+  color: var(--hm-ink-3);
+}
+
+.hm-anchor-note-actions {
+  display: flex;
+  gap: 14px;
+}
+
+/* Fourteen cells, one per day, filled by how the anchor landed: full for
+   achieved, half for partial, a stub for missed, a dot for "set, not called
+   yet". The seven-day break mirrors Hydration's gap between litres. */
+.hm-anchor-track {
+  display: flex;
+  flex: 1 1 54px;
+  gap: 4px;
+  min-height: 26px;
+  max-height: 72px;
+  margin-top: auto;
+}
+
+.hm-anchor-cell {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--hm-accent-soft);
+}
+
+.hm-anchor-cell:nth-child(8) {
+  margin-left: 6px;
+}
+
+.hm-anchor-cell > i {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 0;
+  background: linear-gradient(180deg, var(--hm-cell-a) 0%, var(--hm-cell-b) 100%);
+  transition: height 0.45s cubic-bezier(0.3, 0.8, 0.3, 1);
+}
+
+.hm-anchor-cell.is-achieved > i { height: 100%; }
+.hm-anchor-cell.is-partial > i { height: 50%; }
+
+.hm-anchor-cell.is-missed > i {
+  height: 14%;
+  background: var(--hm-cell-missed);
+}
+
+.hm-anchor-cell.is-open::after {
+  content: '';
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--hm-cell-b);
+  transform: translateX(-50%);
+}
+
+.hm-anchor-cell.is-today {
+  box-shadow: inset 0 0 0 1.5px var(--hm-accent-line);
+}
+
+.hm-anchor-meta {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 10px;
+  color: var(--hm-ink-2);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.hm-anchor-legend {
+  display: inline-flex;
+  gap: 14px;
+}
+
+.hm-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.hm-legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 2.5px;
+  background: var(--hm-cell-b);
+}
+
+.hm-legend.is-partial i {
+  background: linear-gradient(0deg, var(--hm-cell-b) 50%, var(--hm-accent-soft) 50%);
+}
+
+.hm-anchor-meta-quiet,
+.hm-anchor-meta-span {
+  color: var(--hm-ink-3);
+  white-space: nowrap;
+}
+
+.hm-anchor-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.hm-outcome--achieved.is-active {
+  background: var(--hm-accent-fill);
+  color: var(--hm-on-accent);
+}
+
+.hm-outcome--achieved.is-active svg {
+  color: var(--hm-on-accent);
+}
+
+.hm-outcome--partial.is-active {
+  background: var(--hm-accent-soft);
+  box-shadow: inset 0 0 0 1.5px var(--hm-accent-line);
+  color: var(--hm-accent);
+}
+
+.hm-outcome--partial.is-active svg {
+  color: var(--hm-accent);
+}
+
+/* A miss is tomorrow's start, not a verdict: neutral, never red. */
+.hm-outcome--missed.is-active {
+  box-shadow: inset 0 0 0 1.5px var(--hm-line-strong);
+  color: var(--hm-ink);
+}
+
+/* Writing a note takes the track's room rather than pushing the buttons out. */
+.home-card--anchor.is-note-editing .hm-anchor-track,
+.home-card--anchor.is-note-editing .hm-anchor-meta {
+  display: none;
+}
+
+.home-card--anchor.is-note-editing .hm-anchor-actions {
+  margin-top: auto;
+}
+
+/* ---------- Quick capture ----------
+   Today's Meals' shape: one composer well, then a hairline list of what went
+   through it today, then the mood check-in as the card's footer row. */
+
+.home-card--capture {
+  gap: 12px;
+}
+
+.hm-composer {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 10px 10px 16px;
+  border-radius: 18px;
+  background: var(--hm-well);
+  box-shadow: inset 0 0 0 1px var(--hm-well-line);
+  transition: box-shadow 0.2s ease;
+}
+
+.hm-composer:focus-within {
+  box-shadow: inset 0 0 0 1.5px var(--hm-accent-line), 0 0 0 4px var(--hm-accent-soft);
+}
+
+.hm-composer input {
+  width: 100%;
+  min-width: 0;
+  padding: 3px 6px 3px 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--hm-ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 550;
+}
+
+.hm-composer input::placeholder {
+  color: var(--hm-ink-3);
+}
+
+.hm-composer-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: -6px;
+}
+
+.hm-composer-modes {
+  display: flex;
+  flex-shrink: 0;
+  gap: 2px;
+}
+
+.hm-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--hm-ink-2);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.hm-mode:hover:not(.is-active) {
+  background: var(--hm-control-hover);
+  color: var(--hm-ink);
+}
+
+.hm-mode.is-active {
+  background: var(--hm-chip-active);
+  color: var(--hm-ink);
+  box-shadow: var(--hm-chip-active-shadow);
+}
+
+.hm-mode.is-active svg {
+  color: var(--hm-accent);
+}
+
+.hm-composer-hint {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--hm-ink-3);
+  font-size: 10.5px;
+  font-weight: 650;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hm-composer-send {
+  display: grid;
+  flex: 0 0 32px;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--hm-primary-bg);
+  color: var(--hm-primary-ink);
+  cursor: pointer;
+  transition: background-color 0.18s ease, transform 0.15s ease;
+}
+
+.hm-composer-send:hover:not(:disabled) {
+  background: var(--hm-primary-hover);
+}
+
+.hm-composer-send:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.hm-composer-send:disabled {
+  background: var(--hm-control);
+  color: var(--hm-ink-3);
+  cursor: default;
+}
+
+.hm-capture-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hm-capture-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 2px;
+  border-bottom: 1px solid var(--hm-line);
+}
+
+.hm-capture-row:last-child {
+  border-bottom: 0;
+}
+
+.hm-capture-row--task { --cap-tone: var(--hm-tone-task); }
+.hm-capture-row--thought { --cap-tone: var(--hm-tone-thought); }
+.hm-capture-row--win { --cap-tone: var(--hm-tone-win); }
+
+.hm-capture-ic {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--cap-tone) 15%, transparent);
+  color: var(--cap-tone);
+}
+
+.hm-capture-text {
+  overflow: hidden;
+  color: var(--hm-ink);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hm-capture-time {
+  color: var(--hm-ink-3);
+  font-size: 10.5px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.hm-capture-empty {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  padding: 2px;
+  color: var(--hm-ink-3);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.hm-mood {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--hm-line);
+}
+
+.hm-mood-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  margin: 0;
+  color: var(--hm-ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.hm-mood-text span {
+  color: var(--hm-ink-3);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.hm-mood-faces {
+  display: flex;
+  flex-shrink: 0;
+  gap: 6px;
+  border-radius: 999px;
+}
+
+.hm-mood .home-face-btn {
+  width: 30px;
+  height: 30px;
+}
+
+.hm-mood .home-face {
+  width: 22px;
+  height: 22px;
+}
+
+/* Sent here from the hero: one glow so the jump lands on something actionable. */
+.hm-mood.is-nudged .hm-mood-faces {
+  animation: hm-mood-nudge 1.8s ease-out 1;
+}
+
+@keyframes hm-mood-nudge {
+  0% { box-shadow: 0 0 0 0 var(--hm-accent-line); }
+  30% { box-shadow: 0 0 0 7px var(--hm-accent-soft); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+/* ---------- Pending tasks ----------
+   Today's Meals again: the stat strip on top (each bar is that bucket's share
+   of everything open), then hairline rows with a due chip where the meal tag
+   sits. Opening Tasks is the head's icon button — no footer link repeating it. */
+
+.home-card--tasks {
+  gap: 12px;
+}
+
+.hm-strip--tasks .hm-strip-stat {
+  cursor: pointer;
+  transition: background-color 0.18s ease;
+}
+
+.hm-strip--tasks .hm-strip-stat:hover {
+  background: var(--hm-strip-hover);
+}
+
+.hm-strip--tasks .hm-strip-stat.is-active {
+  background: var(--hm-strip-active);
+}
+
+.hm-strip--tasks .hm-strip-stat.is-active > span {
+  color: var(--hm-ink);
+}
+
+.hm-strip--tasks .hm-strip-stat:not(.has-items) strong {
+  color: var(--hm-ink-3);
+}
+
+.hm-strip-stat--overdue { --hm-strip-tone: var(--hm-overdue); }
+.hm-strip-stat--today { --hm-strip-tone: var(--hm-accent); }
+.hm-strip-stat--upcoming { --hm-strip-tone: var(--hm-upcoming); }
+
+.hm-strip-stat--overdue.has-items strong { color: var(--hm-overdue); }
+.hm-strip-stat--today.has-items strong { color: var(--hm-accent); }
+
+.hm-task-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hm-task-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 6px;
+  border-bottom: 1px solid var(--hm-line);
+  transition: background-color 0.18s ease, border-radius 0.18s ease;
+}
+
+.hm-task-row:last-child,
+.hm-task-row:has(+ .hm-task-tail) {
+  border-bottom: 0;
+}
+
+.hm-task-row:hover {
+  border-bottom-color: transparent;
+  border-radius: 12px;
+  background: var(--hm-row-hover);
+}
+
+.hm-task-check {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1.5px solid var(--hm-check-line);
+  border-radius: 50%;
+  background: transparent;
+  color: transparent;
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.hm-task-check:hover:not(:disabled) {
+  border-color: var(--hm-good);
+  background: var(--hm-good);
+  color: var(--hm-on-good);
+}
+
+.hm-task-check:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.hm-task-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.hm-task-body b {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--hm-ink);
+  font-size: 13.5px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hm-task-tags {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.hm-tag--overdue { --tag-tone: var(--hm-overdue); }
+.hm-tag--today { --tag-tone: var(--hm-accent); }
+.hm-tag--upcoming { --tag-tone: var(--hm-upcoming); }
+
+.hm-task-cat {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--hm-ink-3);
+  font-size: 9.5px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.hm-task-go {
+  color: var(--hm-ink-3);
+  transition: color 0.18s ease, transform 0.18s ease;
+}
+
+.hm-task-row:hover .hm-task-go {
+  color: var(--hm-ink);
+  transform: translateX(2px);
+}
+
+.hm-task-tail {
+  padding: 10px 6px 2px;
+  color: var(--hm-ink-3);
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: 12.5px;
+  font-style: italic;
+}
+
+/* ---------- Week rollup ----------
+   The week in numbers, leading the lower section: one strip, hairline-split,
+   the change against last week under each figure. */
+
+.hm-strip--rollup {
+  padding: 14px 6px;
+}
+
+.hm-strip--rollup .hm-strip-stat {
+  gap: 4px;
+}
+
+.hm-strip--rollup .hm-strip-stat.is-quiet strong {
+  color: var(--hm-ink-3);
+}
+
+.hm-strip--rollup .hm-strip-stat.is-watch strong {
+  color: var(--hm-watch);
+}
+
+/* Protein goal is phone-only: the desktop strip already runs seven wide. */
+.hm-strip .home-rollup-mobile-only {
+  display: none;
 }
 
 /* ---------- Focus log ----------
@@ -1329,9 +2221,10 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 10px;
-  padding: 13px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.6);
+  padding: 14px;
+  border-radius: 18px;
+  background: var(--hm-well);
+  box-shadow: inset 0 0 0 1px var(--hm-well-line);
 }
 
 .home-focus-form-row {
@@ -1415,7 +2308,7 @@
   flex-direction: column;
   gap: 8px;
   padding-top: 12px;
-  border-top: 1px dashed rgba(26, 31, 29, 0.13);
+  border-top: 1px solid var(--hm-line);
 }
 
 .home-focus-suggestions .home-card-eyebrow {
@@ -1436,10 +2329,15 @@
 .home-focus-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 7px;
+  gap: 0 24px;
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+/* Hairline rows, like the task list — a checkbox marks the pick, no tile. */
+.home-focus-list li {
+  border-bottom: 1px solid var(--hm-line);
 }
 
 .home-focus-sugg {
@@ -1447,22 +2345,19 @@
   align-items: center;
   gap: 10px;
   width: 100%;
-  padding: 9px 12px;
-  border: 1px solid rgba(26, 31, 29, 0.1);
-  border-radius: 14px;
-  background: rgba(23, 27, 21, 0.025);
+  padding: 10px 6px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: inherit;
+  font: inherit;
   text-align: left;
   cursor: pointer;
-  transition: background 0.18s ease, border-color 0.18s ease;
+  transition: background 0.18s ease;
 }
 
 .home-focus-sugg:hover {
-  background: rgba(255, 255, 255, 0.85);
-}
-
-.home-focus-sugg.is-selected {
-  border-color: #6f8a5e;
-  background: rgba(111, 138, 94, 0.12);
+  background: var(--hm-row-hover);
 }
 
 .home-focus-sugg-check {
@@ -1523,759 +2418,6 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-}
-
-/* ---------- Today's anchor ----------
-   Top-left bento cell, paired with Quick capture: the day's single intention,
-   mirrored from /mind's anchor card. It takes the same head grammar as its
-   three neighbours (caps eyebrow + serif title, the title reflecting the
-   outcome), then one inset panel the intention owns — the Nutrition hero's
-   "tinted panel inside a card". Anchor disc + the intention set as a headline,
-   vertically centred in the space, with the notes journal and the outcome
-   control pinned beneath. The panel is what makes the card's height read as
-   deliberate; a bare quote floating in the card read as empty. The intention
-   wraps rather than truncating — an unreadable anchor defeats the card. */
-
-.home-grid--primary .home-card--anchor {
-  gap: 12px;
-}
-
-.home-card--anchor .home-card-head {
-  align-items: center;
-}
-
-.home-card--anchor .home-card-head .home-btn-quiet {
-  flex-shrink: 0;
-  padding: 6px 12px;
-  font-size: 10.5px;
-}
-
-.home-anchor-saving {
-  margin-left: 8px;
-  color: rgba(23, 28, 25, 0.45);
-  font-size: 9px;
-  font-style: italic;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-}
-
-.home-anchor-panel {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 12px;
-  min-height: 0;
-  padding: 16px;
-  border-radius: 22px;
-  /* Porcelain within the pastel family — separates from the white card by
-     lightness, leaving the near-black disc as the one strong mark. */
-  background: #f3f4ef;
-  box-shadow: inset 0 0 0 1px rgba(23, 27, 21, 0.045);
-  overflow-y: auto;
-  scrollbar-width: none;
-}
-
-.home-anchor-panel::-webkit-scrollbar {
-  display: none;
-}
-
-.home-anchor-main {
-  display: flex;
-  position: relative;
-  flex: 1;
-  /* Top-aligned, not centred in the panel's full height — a headline sitting
-     at the top of a tall box reads as composed; dead-centred in empty space
-     read as an error state with nothing to look at above or below it. */
-  align-items: flex-start;
-  gap: 16px;
-  min-height: 0;
-  padding-top: 2px;
-}
-
-/* A large, faint anchor watermark in the panel's corner — the same device
-   every other Home card uses (.home-card-glyph) to keep an otherwise plain
-   surface from reading as empty. Scoped to the panel (not the whole card) so
-   it never sits behind the notes/outcome controls, and hidden in dark mode by
-   the existing .home-card-glyph rule. */
-.home-anchor-watermark {
-  position: absolute;
-  right: -10px;
-  bottom: -14px;
-  width: 96px;
-  height: 96px;
-  color: rgba(23, 27, 21, 0.05);
-  pointer-events: none;
-}
-
-.home-anchor-ic {
-  display: grid;
-  position: relative;
-  z-index: 1;
-  place-items: center;
-  width: 46px;
-  height: 46px;
-  flex: 0 0 46px;
-  border-radius: 15px;
-  background: rgba(23, 27, 21, 0.9);
-  color: #eaff28;
-}
-
-.home-anchor-display {
-  display: flex;
-  position: relative;
-  z-index: 1;
-  flex: 1;
-  /* Top-aligned so the pencil stays beside the first line once the quote wraps */
-  align-items: flex-start;
-  gap: 8px;
-  min-width: 0;
-  padding: 3px 0 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-/* Playfair Display, upright — the same serif the card's own title is set in
-   just above, so the two read as one voice instead of a serif heading over a
-   plain-sans headline. Upright rather than italic: this is a commitment the
-   user typed, not a pull-quote ornament (the small watermark behind it does
-   the "quote card" work instead). `anywhere` covers long unbroken tokens. */
-.home-anchor-quote {
-  overflow-wrap: anywhere;
-  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  font-size: 29px;
-  font-weight: 650;
-  font-style: normal;
-  letter-spacing: -0.012em;
-  line-height: 1.26;
-  text-wrap: balance;
-  color: #17211c;
-}
-
-.home-anchor-quote.is-empty {
-  font-weight: 600;
-  color: rgba(23, 28, 25, 0.42);
-}
-
-.home-anchor-pencil {
-  flex-shrink: 0;
-  margin-top: 11px;
-  color: rgba(23, 27, 21, 0.32);
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.home-anchor-display:hover .home-anchor-pencil,
-.home-anchor-display:focus-visible .home-anchor-pencil {
-  opacity: 1;
-}
-
-.home-anchor-edit {
-  display: flex;
-  flex: 1;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.home-anchor-edit input {
-  flex: 1;
-  min-width: 0;
-  padding: 9px 14px;
-  border: 1px solid rgba(26, 31, 29, 0.16);
-  border-radius: 999px;
-  background: #fff;
-  color: #17211c;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.home-anchor-edit input:focus {
-  outline: none;
-  border-color: rgba(26, 31, 29, 0.34);
-}
-
-.home-anchor-done {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  flex-shrink: 0;
-  padding: 8px 13px;
-  border: 0;
-  border-radius: 999px;
-  background: #202321;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-/* How it landed — one segmented control rather than three loose pills. */
-.home-anchor-outcomes {
-  display: flex;
-  flex: none;
-  gap: 2px;
-  padding: 3px;
-  border: 1px solid rgba(26, 31, 29, 0.08);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.75);
-}
-
-.home-anchor-outcome {
-  flex: 1;
-  padding: 7px 8px;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: #4a544e;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: background 0.16s ease, color 0.16s ease, transform 0.12s ease;
-}
-
-.home-anchor-outcome:hover:not(.is-active) {
-  background: rgba(23, 27, 21, 0.05);
-  color: #17211c;
-}
-
-.home-anchor-outcome:active {
-  transform: scale(0.96);
-}
-
-.home-anchor-outcome:focus-visible {
-  outline: 2px solid rgba(86, 95, 184, 0.5);
-  outline-offset: 1px;
-}
-
-.home-anchor-outcome.is-active {
-  color: #fff;
-}
-
-.home-anchor-outcome--achieved.is-active { background: #5f8a6e; }
-.home-anchor-outcome--partial.is-active { background: #a9822f; }
-.home-anchor-outcome--missed.is-active { background: #b06b6b; }
-
-.home-anchor-foot {
-  flex: none;
-  margin: 0;
-  color: rgba(23, 28, 25, 0.5);
-  font-size: 11.5px;
-  font-weight: 600;
-}
-
-/* Notes — a small journal block inside the panel with an explicit Edit / Save /
-   Cancel flow, never a bare always-live textarea. */
-.home-anchor-note {
-  display: flex;
-  flex: none;
-  flex-direction: column;
-  gap: 6px;
-  padding: 9px 12px 10px;
-  border: 1px solid rgba(26, 31, 29, 0.08);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.7);
-}
-
-.home-anchor-note-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.home-anchor-note-label {
-  color: rgba(23, 28, 25, 0.6);
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-}
-
-.home-anchor-note-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 9px;
-  border: 1px solid rgba(26, 31, 29, 0.14);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.7);
-  color: #3c4a3f;
-  font-size: 9.5px;
-  font-weight: 750;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: background 0.16s ease, transform 0.12s ease;
-}
-
-.home-anchor-note-btn:hover {
-  background: #fff;
-}
-
-.home-anchor-note-btn:active {
-  transform: scale(0.94);
-}
-
-/* Notes read in Outfit — an even, low-contrast text face at a relaxed measure,
-   so the journal entry looks written rather than framed. Three lines, then it
-   scrolls, so a long note never shoves the outcome control out of the card. */
-.home-anchor-note-text {
-  max-height: 4.9em;
-  margin: 0;
-  overflow-y: auto;
-  font-family: 'Outfit', 'Inter', ui-sans-serif, system-ui, sans-serif;
-  font-size: 12.5px;
-  font-weight: 400;
-  line-height: 1.62;
-  letter-spacing: 0.005em;
-  color: #37423a;
-  white-space: pre-wrap;
-  scrollbar-width: none;
-}
-
-.home-anchor-note-text::-webkit-scrollbar {
-  display: none;
-}
-
-.home-anchor-note-input {
-  width: 100%;
-  min-height: 52px;
-  padding: 8px 11px;
-  border: 1px solid rgba(26, 31, 29, 0.16);
-  border-radius: 11px;
-  background: #fff;
-  color: #1f2a22;
-  font-family: 'Outfit', 'Inter', ui-sans-serif, system-ui, sans-serif;
-  font-size: 12.5px;
-  font-weight: 400;
-  line-height: 1.6;
-  letter-spacing: 0.005em;
-  resize: none;
-}
-
-.home-anchor-note-input::placeholder {
-  color: rgba(23, 28, 25, 0.5);
-}
-
-.home-anchor-note-input:focus {
-  outline: none;
-  border-color: rgba(26, 31, 29, 0.34);
-}
-
-.home-anchor-note-actions {
-  display: flex;
-  gap: 6px;
-}
-
-.home-anchor-note-save,
-.home-anchor-note-cancel {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 750;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: transform 0.12s ease, background 0.16s ease;
-}
-
-.home-anchor-note-save {
-  border: 0;
-  background: #202321;
-  color: #fff;
-}
-
-.home-anchor-note-save:hover {
-  background: #2c302d;
-}
-
-.home-anchor-note-cancel {
-  border: 1px solid rgba(26, 31, 29, 0.16);
-  background: transparent;
-  color: #4a544e;
-}
-
-.home-anchor-note-cancel:hover {
-  background: rgba(23, 27, 21, 0.04);
-}
-
-.home-anchor-note-save:active,
-.home-anchor-note-cancel:active {
-  transform: scale(0.95);
-}
-
-/* ---------- Pending tasks card ----------
-   The fourth bento cell: what's overdue, due today, or coming up soon, pulled
-   from the /tasks route. A quiet count strip, grouped rows with a rounded
-   hover surface, and a ghost link out — the list scrolls inside the fixed
-   card height so a long backlog never stretches the row.
-   Per-bucket accent: overdue rose, today periwinkle, upcoming slate-grey. */
-
-.home-card--tasks {
-  --tk-overdue: var(--home-overdue, #c0596e);
-  --tk-today: #4d56ae;
-  --tk-upcoming: #7f86a2;
-}
-
-.home-grid--primary .home-card--tasks {
-  padding-bottom: 14px;
-}
-
-.home-tasks-open {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-  padding: 6px 12px;
-  border: 1px solid rgba(26, 31, 29, 0.12);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.6);
-  color: #3c4a3f;
-  font-size: 10px;
-  font-weight: 750;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.home-tasks-open:hover {
-  background: #fff;
-  border-color: rgba(26, 31, 29, 0.2);
-}
-
-.home-tasks-open:active {
-  transform: scale(0.96);
-}
-
-/* Count strip — three cells; the most urgent non-empty one lifts onto a white
-   pill so the eye lands there first. */
-.home-tasks-accent {
-  display: flex;
-  align-items: stretch;
-  gap: 6px;
-  padding: 7px;
-  border-radius: 18px;
-  background: linear-gradient(120deg, #edeffb 0%, #e3e6f6 100%);
-}
-
-.home-tasks-stat {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 8px 4px 7px;
-  border-radius: 13px;
-  transition: background 0.2s ease, box-shadow 0.2s ease;
-}
-
-.home-tasks-stat > i {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--tk-dot, rgba(23, 27, 21, 0.25));
-}
-
-.home-tasks-stat--overdue { --tk-dot: var(--tk-overdue); }
-.home-tasks-stat--today { --tk-dot: var(--tk-today); }
-.home-tasks-stat--upcoming { --tk-dot: var(--tk-upcoming); }
-
-.home-tasks-stat strong {
-  font-size: 21px;
-  font-weight: 750;
-  letter-spacing: -0.035em;
-  color: rgba(23, 33, 28, 0.4);
-  font-variant-numeric: tabular-nums;
-  line-height: 1.05;
-}
-
-.home-tasks-stat span {
-  color: rgba(23, 28, 25, 0.5);
-  font-size: 8px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-}
-
-/* Non-zero buckets get their real ink; the leading one gets the pill. */
-.home-tasks-stat.has-items strong { color: #17211c; }
-.home-tasks-stat--overdue.has-items strong { color: var(--tk-overdue); }
-.home-tasks-stat--today.has-items strong { color: var(--tk-today); }
-
-.home-tasks-stat.is-lead {
-  background: #fff;
-  box-shadow: 0 1px 2px rgba(23, 27, 21, 0.05), 0 6px 16px rgba(46, 60, 80, 0.1);
-}
-
-.home-tasks-stat.is-lead strong { color: #17211c; }
-.home-tasks-stat--overdue.is-lead strong { color: var(--tk-overdue); }
-
-/* The stats are filters: tap one to show only that bucket, tap it again to
-   show everything. The selected one keeps the white pill and adds a ring in
-   its own dot colour, so "filtered" never reads the same as the default
-   "most urgent" highlight. */
-button.home-tasks-stat {
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-}
-
-button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
-  background: rgba(255, 255, 255, 0.55);
-}
-
-.home-tasks-stat.is-active {
-  background: #fff;
-  box-shadow: inset 0 0 0 1.5px var(--tk-dot, rgba(23, 27, 21, 0.3)), 0 6px 16px rgba(46, 60, 80, 0.1);
-}
-
-.home-tasks-stat.is-active strong { color: #17211c; }
-.home-tasks-stat--overdue.is-active strong { color: var(--tk-overdue); }
-
-.home-tasks-stat:focus-visible {
-  outline: 2px solid var(--tk-dot, #17211c);
-  outline-offset: 2px;
-}
-
-.home-tasks-list {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-height: 0;
-  overflow-y: auto;
-  margin: 0 -6px;
-  padding: 2px 6px 0;
-  scrollbar-width: none;
-}
-
-.home-tasks-list::-webkit-scrollbar {
-  display: none;
-}
-
-.home-tasks-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.home-tasks-group {
-  margin: 10px 4px 3px;
-  color: rgba(23, 28, 25, 0.4);
-  font-size: 8.5px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.home-tasks-rows > .home-tasks-group:first-child {
-  margin-top: 2px;
-}
-
-.home-task-row {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 11px;
-  padding: 8px;
-  border-radius: 12px;
-  transition: background 0.16s ease;
-}
-
-.home-task-row:hover {
-  background: rgba(23, 27, 21, 0.035);
-}
-
-.home-task-check {
-  display: grid;
-  place-items: center;
-  width: 19px;
-  height: 19px;
-  flex-shrink: 0;
-  border: 1.5px solid rgba(26, 31, 29, 0.22);
-  border-radius: 50%;
-  background: #fff;
-  color: transparent;
-  cursor: pointer;
-  transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease, transform 0.14s ease;
-}
-
-.home-task-check:hover:not(:disabled) {
-  border-color: #5f8a6e;
-  background: #5f8a6e;
-  color: #fff;
-}
-
-.home-task-check:active:not(:disabled) {
-  transform: scale(0.85);
-}
-
-.home-task-check:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.home-task-body {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  text-align: left;
-  cursor: pointer;
-}
-
-.home-task-body b {
-  overflow: hidden;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #17211c;
-  letter-spacing: -0.005em;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.home-task-meta {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  min-width: 0;
-}
-
-.home-task-due {
-  flex-shrink: 0;
-  font-size: 9.5px;
-  font-weight: 750;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-}
-
-.home-task-due--overdue { color: var(--tk-overdue); }
-.home-task-due--today { color: var(--tk-today); }
-.home-task-due--upcoming { color: rgba(23, 28, 25, 0.5); }
-
-.home-task-dot {
-  width: 3px;
-  height: 3px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: rgba(23, 28, 25, 0.28);
-}
-
-.home-task-cat {
-  overflow: hidden;
-  color: rgba(23, 28, 25, 0.45);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.home-task-go {
-  flex-shrink: 0;
-  color: rgba(23, 27, 21, 0.22);
-  opacity: 0;
-  transform: translateX(-3px);
-  transition: opacity 0.16s ease, transform 0.16s ease, color 0.16s ease;
-}
-
-.home-task-row:hover .home-task-go {
-  opacity: 1;
-  transform: translateX(0);
-  color: rgba(23, 27, 21, 0.5);
-}
-
-/* Fills the space under a short list without a dead gap. */
-.home-tasks-tail {
-  margin: 12px 6px 4px;
-  padding-top: 11px;
-  border-top: 1px dashed rgba(26, 31, 29, 0.13);
-  color: rgba(23, 28, 25, 0.4);
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 11.5px;
-  font-style: italic;
-}
-
-.home-tasks-empty {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
-  padding: 20px;
-  text-align: center;
-}
-
-.home-tasks-empty-ic {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: rgba(95, 138, 110, 0.12);
-  color: #5f8a6e;
-}
-
-.home-tasks-empty p {
-  margin: 0;
-  color: #17211c;
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-.home-tasks-empty span {
-  max-width: 28ch;
-  color: rgba(23, 28, 25, 0.52);
-  font-size: 11.5px;
-  font-weight: 600;
-  line-height: 1.45;
-}
-
-/* Ghost link — no slab, just text that leans in on hover. */
-.home-tasks-foot {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  flex-shrink: 0;
-  margin-top: 4px;
-  padding: 9px;
-  border: 0;
-  border-top: 1px solid var(--ntr-line);
-  border-radius: 0;
-  background: none;
-  color: rgba(23, 28, 25, 0.55);
-  font-size: 10.5px;
-  font-weight: 750;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: color 0.18s ease, gap 0.18s ease;
-}
-
-.home-tasks-foot:hover {
-  color: #17211c;
-  gap: 10px;
 }
 
 /* ---------- Sleep card ----------
@@ -2397,42 +2539,57 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
   font-weight: 600;
 }
 
-/* Night facts — derived reads pinned under the chart */
+/* Night facts — derived reads pinned under the chart, split by hairlines on
+   the card surface rather than boxed. */
 
 .home-sleep-facts {
-  /* 2×2 on the half-width card, one row when the card spans full width */
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid var(--hm-line);
 }
 
+/* A 2 × 2 of hairline cells: the half-width card can't hold four across
+   without clipping "Thu · 7h 50m". */
 .home-sleep-fact {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: rgba(74, 127, 163, 0.09);
+  gap: 3px;
+  min-width: 0;
+  padding: 11px 14px 0;
+}
+
+.home-sleep-fact:nth-child(odd) {
+  padding-left: 2px;
+}
+
+.home-sleep-fact:nth-child(even) {
+  border-left: 1px solid var(--hm-line);
+}
+
+.home-sleep-fact:nth-child(n + 3) {
+  margin-top: 11px;
+  border-top: 1px solid var(--hm-line);
 }
 
 .home-sleep-fact small {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  color: rgba(30, 61, 82, 0.6);
+  color: var(--hm-ink-3);
   font-size: 9px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+  white-space: nowrap;
 }
 
 .home-sleep-fact small svg {
   flex-shrink: 0;
-  color: #4a7fa3;
+  color: var(--hm-sleep-accent);
 }
 
 .home-sleep-fact b {
-  color: #1e3d52;
+  color: var(--hm-ink);
   font-size: 13.5px;
   font-weight: 750;
   letter-spacing: -0.01em;
@@ -2443,95 +2600,94 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
 }
 
 .home-sleep-fact b.is-watch {
-  color: #9a5a10;
+  color: var(--hm-watch);
 }
 
 /* ---------- Movement (latest activity) ----------
-   Two halves: the last recorded session as a sage accent panel (the Sleep
-   card's accent grammar, tinted for movement), and a week read — a 7-day
-   dot strip plus distance/moving/streak chips. Strava is the source, so the
-   panel only ever restates what the /workouts route already holds. */
+   Weekly Protein's shape turned sideways: the last session sits open on the
+   card (name, one big distance, a hairline-split metric row), and the week is
+   the card's one well — a day strip over a hairline-split stat row. Strava is
+   the source, so this only ever restates what /workouts already holds. */
 
 .home-activity-body {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-  gap: 12px;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 18px;
   align-items: stretch;
 }
 
 .home-activity-latest {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 14px 16px 15px;
+  gap: 12px;
+  padding: 6px 4px 4px 2px;
   border: 0;
-  border-radius: 20px;
+  border-radius: 16px;
+  background: none;
+  color: var(--hm-ink);
+  font: inherit;
   text-align: left;
   cursor: pointer;
-  color: #223a2a;
-  background: linear-gradient(150deg, #eff5ec 0%, #e2eddf 55%, #d1e4ce 100%);
-  transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
 }
 
-.home-activity-latest:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 26px rgba(45, 60, 48, 0.14);
-}
-
-.home-activity-latest:active {
-  transform: translateY(1px);
+.home-activity-latest:hover .home-activity-name b {
+  text-decoration: underline;
+  text-decoration-color: var(--hm-line-strong);
+  text-underline-offset: 3px;
 }
 
 .home-activity-top {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
 }
 
 .home-activity-ic {
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   flex: 0 0 auto;
-  border-radius: 11px;
-  background: rgba(255, 255, 255, 0.7);
-  color: #3d6b52;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--hm-move) 13%, transparent);
+  color: var(--hm-move);
 }
 
 .home-activity-name {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
   min-width: 0;
 }
 
 .home-activity-name b {
-  font-size: 13px;
-  font-weight: 750;
-  letter-spacing: -0.01em;
-  white-space: nowrap;
   overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .home-activity-name small {
-  color: rgba(34, 58, 42, 0.62);
+  color: var(--hm-ink-3);
   font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .home-activity-sport {
   margin-left: auto;
-  padding: 4px 9px;
+  --tag-tone: var(--hm-move);
+  padding: 2px 8px;
+  border: 1px solid color-mix(in srgb, var(--tag-tone) 22%, transparent);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.62);
-  color: rgba(34, 58, 42, 0.72);
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  background: color-mix(in srgb, var(--tag-tone) 10%, transparent);
+  color: var(--tag-tone);
+  font-size: 9.5px;
+  font-weight: 750;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -2539,64 +2695,75 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
 .home-activity-headline {
   display: flex;
   align-items: baseline;
-  gap: 6px;
+  gap: 7px;
 }
 
 .home-activity-headline strong {
-  font-size: 34px;
-  font-weight: 700;
-  letter-spacing: -0.04em;
-  line-height: 1;
+  font-size: 40px;
+  font-weight: 750;
+  letter-spacing: -0.045em;
+  line-height: 0.95;
 }
 
 .home-activity-headline em {
+  color: var(--hm-ink-3);
+  font-size: 15px;
   font-style: normal;
-  color: rgba(34, 58, 42, 0.58);
-  font-size: 11px;
-  font-weight: 750;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-weight: 700;
 }
 
 .home-activity-metrics {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  /* pins to the panel floor so the two halves stay level as the card grows */
   margin-top: auto;
 }
 
-.home-activity-metric {
+.home-activity-metric,
+.home-activity-stat {
   display: flex;
+  flex: 1;
   flex-direction: column;
-  gap: 1px;
-  padding: 6px 10px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.55);
+  gap: 3px;
+  min-width: 0;
+  padding: 0 12px;
+  border-left: 1px solid var(--hm-line);
 }
 
-.home-activity-metric span {
-  color: rgba(34, 58, 42, 0.55);
+.home-activity-metric:first-child,
+.home-activity-stat:first-child {
+  padding-left: 2px;
+  border-left: 0;
+}
+
+.home-activity-metric span,
+.home-activity-stat span {
+  color: var(--hm-ink-3);
   font-size: 8.5px;
   font-weight: 800;
   letter-spacing: 0.09em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
-.home-activity-metric b {
-  font-size: 12.5px;
+.home-activity-metric b,
+.home-activity-stat b {
+  color: var(--hm-ink);
+  font-size: 14px;
   font-weight: 750;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-/* Week half */
+/* Week half — the card's one well */
 
 .home-activity-week {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 14px 15px 15px;
+  gap: 12px;
+  padding: 14px 16px;
   border-radius: 20px;
-  background: rgba(23, 27, 21, 0.022);
+  background: var(--hm-move-well);
+  box-shadow: inset 0 0 0 1px var(--hm-well-line);
 }
 
 .home-activity-week-head {
@@ -2608,7 +2775,7 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
 }
 
 .home-activity-week-head span {
-  color: rgba(23, 28, 25, 0.6);
+  color: var(--hm-ink-3);
   font-size: 9.5px;
   font-weight: 800;
   letter-spacing: 0.1em;
@@ -2616,7 +2783,7 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
 }
 
 .home-activity-week-head b {
-  color: #17211c;
+  color: var(--hm-ink);
   font-size: 13px;
   font-weight: 750;
 }
@@ -2632,7 +2799,7 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
   flex-direction: column;
   align-items: center;
   gap: 5px;
-  color: rgba(23, 28, 25, 0.42);
+  color: var(--hm-ink-3);
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -2640,53 +2807,31 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
 }
 
 .home-activity-day i {
-  width: 17px;
-  height: 17px;
-  border-radius: 7px;
-  background: rgba(26, 31, 29, 0.09);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--hm-move-off);
 }
 
 .home-activity-day.is-on i {
-  background: #9db892;
+  background: var(--hm-move-on);
 }
 
 .home-activity-day.is-on {
-  color: rgba(23, 28, 25, 0.7);
+  color: var(--hm-ink-2);
 }
 
 .home-activity-day.is-today i {
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9), 0 0 0 3.5px rgba(61, 107, 82, 0.45);
+  box-shadow: 0 0 0 2px var(--hm-ring-cutout), 0 0 0 3.5px var(--hm-move);
 }
 
 .home-activity-stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
+  display: flex;
   margin-top: auto;
 }
 
-.home-activity-stat {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  padding: 8px 10px;
-  border-radius: 13px;
-  background: rgba(23, 27, 21, 0.035);
-}
-
-.home-activity-stat span {
-  color: rgba(23, 28, 25, 0.55);
-  font-size: 8.5px;
-  font-weight: 800;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-}
-
-.home-activity-stat b {
-  color: #17211c;
-  font-size: 13px;
-  font-weight: 750;
-  letter-spacing: -0.01em;
+.home-activity-week .home-activity-stat {
+  border-left-color: var(--hm-move-line);
 }
 
 .home-activity-foot {
@@ -2694,7 +2839,7 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
   align-items: center;
   gap: 5px;
   margin: 0;
-  color: rgba(23, 28, 25, 0.6);
+  color: var(--hm-ink-2);
   font-size: 10.5px;
   font-weight: 650;
 }
@@ -2710,6 +2855,44 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
    Rows render through the shared <InsightList> (ui/insight-list.css):
    sentiment icon-chips, WIN/INSIGHT/WATCH tags, metric pills, sparklines —
    the exact dressing the Nutrition/Finance Intelligence sections use. */
+
+/* On Home the rows lose their glass boxes and sit on the card surface split
+   by hairlines — the Today's Meals list, not a stack of cards. Scoped here so
+   Nutrition, Finance and Mind keep their own dressing. */
+.home-card--insights .ins-list {
+  gap: 0;
+}
+
+.home-card--insights .ins-row {
+  padding: 14px 2px;
+  border: 0;
+  border-bottom: 1px solid var(--hm-line);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.home-card--insights .ins-row:first-child {
+  padding-top: 2px;
+}
+
+.home-card--insights .ins-row:last-child {
+  padding-bottom: 2px;
+  border-bottom: 0;
+}
+
+.home-card--insights .ins-row:hover {
+  transform: none;
+  border-color: var(--hm-line);
+  box-shadow: none;
+}
+
+.home-card--insights .ins-row::before,
+.home-card--insights .ins-row::after {
+  display: none;
+}
 
 .home-progress-hint {
   color: rgba(23, 28, 25, 0.66);
@@ -2741,23 +2924,26 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
 
 .home-trend-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(var(--trend-cols, 4), minmax(0, 1fr));
 }
 
+/* Columns on the card surface, split by hairlines — no tile per metric. */
 .home-trend-tile {
   display: flex;
   flex-direction: column;
   gap: 11px;
   min-width: 0;
-  padding: 15px 16px 14px;
-  border-radius: 18px;
-  background: rgba(23, 27, 21, 0.035);
-  transition: background 0.2s ease;
+  padding: 2px 20px;
+  border-left: 1px solid var(--hm-line);
 }
 
-.home-trend-tile:hover {
-  background: rgba(23, 27, 21, 0.055);
+.home-trend-tile:first-child {
+  padding-left: 2px;
+  border-left: 0;
+}
+
+.home-trend-tile:last-child {
+  padding-right: 2px;
 }
 
 .home-trend-head {
@@ -2766,24 +2952,24 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
   gap: 9px;
 }
 
-/* Small colored icon chip — same vocabulary as the rollup tiles */
+/* The metric's colour rides on its glyph and its line, not on a chip. */
 .home-trend-ic {
-  display: grid;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  flex: 0 0 26px;
-  border-radius: 9px;
-  background: var(--trend-tint, rgba(23, 27, 21, 0.06));
+  display: inline-flex;
+  flex: 0 0 auto;
   color: var(--trend-accent, #526057);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+}
+
+.home-trend-head {
+  gap: 7px;
 }
 
 .home-trend-label {
   flex-shrink: 0;
-  color: #2b352f;
-  font-size: 12px;
-  font-weight: 650;
+  color: var(--hm-ink-3);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
@@ -2917,16 +3103,16 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
 }
 
 .home-trend-value {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 750;
   letter-spacing: -0.03em;
-  color: #17211c;
+  color: var(--hm-ink);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 .home-trend-sub {
-  color: rgba(23, 28, 25, 0.62);
+  color: var(--hm-ink-3);
   font-size: 9.5px;
   font-weight: 700;
   text-transform: uppercase;
@@ -2937,380 +3123,13 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
 /* Zero-signal vitals stay grey and quiet — never alarming */
 .home-trend-tile.is-quiet .home-trend-value { color: rgba(23, 28, 25, 0.42); }
 .home-trend-tile.is-quiet .home-trend-ic {
-  background: rgba(23, 27, 21, 0.05);
-  color: rgba(23, 28, 25, 0.4);
+  color: var(--hm-ink-3);
 }
 
 .home-trend--sleep { --trend-accent: #2c5c78; --trend-tint: #d7e6f0; }
 .home-trend--focus { --trend-accent: #4d56ae; --trend-tint: #e3e5f9; }
 .home-trend--mood { --trend-accent: #6f66b0; --trend-tint: #e7e5f6; }
 .home-trend--tasks { --trend-accent: #2f6b4b; --trend-tint: #dcefe3; }
-
-/* ---------- Quick capture ----------
-   Mode picker restyled as the Nutrition segmented control (.ntr-week
-   pattern): one white pill container, active segment flips to dark ink
-   with an amber icon. Send is a round accent circle. */
-
-.home-capture-modes {
-  display: flex;
-  gap: 4px;
-  align-self: stretch;
-  max-width: 100%;
-  padding: 5px;
-  border: 1px solid rgba(26, 31, 29, 0.1);
-  border-radius: 999px;
-  background: rgba(23, 27, 21, 0.035);
-  overflow-x: auto;
-}
-
-.home-capture-mode {
-  display: inline-flex;
-  flex: 1;
-  justify-content: center;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 13px;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: #4a544e;
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: background 0.18s ease, color 0.18s ease, transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.home-capture-mode:hover {
-  background: var(--ntr-lime-soft);
-  color: #17211c;
-}
-
-.home-capture-mode:active {
-  transform: scale(0.95);
-}
-
-.home-capture-mode.is-active {
-  background: #202321;
-  color: #fff;
-}
-
-.home-capture-mode.is-active svg {
-  color: var(--ntr-lime);
-}
-
-.home-capture-input-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.home-capture-input-row input {
-  flex: 1;
-  min-width: 0;
-  padding: 12px 16px;
-  border: 1px solid rgba(26, 31, 29, 0.14);
-  border-radius: 999px;
-  background: rgba(23, 27, 21, 0.028);
-  color: #17211c;
-  font-size: 13px;
-}
-
-.home-capture-input-row input::placeholder {
-  color: rgba(23, 28, 25, 0.68); /* AA: don't drop below ~0.64 on these surfaces */
-}
-
-.home-capture-input-row input:focus-visible {
-  outline: 2px solid rgba(86, 95, 184, 0.5);
-  outline-offset: 1px;
-}
-
-/* Round send button — the Nutrition soft-button, circled */
-.home-capture-send {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  flex: 0 0 44px;
-  border: 0;
-  border-radius: 50%;
-  background: #202321;
-  color: var(--ntr-lime);
-  cursor: pointer;
-  box-shadow: 0 3px 0 0 rgba(0, 0, 0, 0.3), 0 8px 18px rgba(23, 27, 21, 0.2);
-  transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.14s ease, opacity 0.2s ease;
-}
-
-.home-capture-send:hover:not(:disabled) {
-  transform: translateY(-1px) scale(1.04);
-  box-shadow: 0 4px 0 0 rgba(0, 0, 0, 0.3), 0 12px 24px rgba(23, 27, 21, 0.26);
-}
-
-.home-capture-send:active:not(:disabled) {
-  transform: translateY(2px) scale(0.94);
-  box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.3), 0 4px 10px rgba(23, 27, 21, 0.18);
-}
-
-.home-capture-send:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-
-.home-capture-hint {
-  color: rgba(23, 28, 25, 0.66);
-  font-size: 10.5px;
-  font-weight: 600;
-}
-
-/* Recently captured — fills the leftover space above the mood footer with
-   the last few things that actually went through this card's Task/Thought/
-   Win tabs, instead of leaving it empty. */
-.home-capture-recent {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex: 1;
-  min-height: 0;
-  padding-top: 2px;
-}
-
-.home-capture-recent-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.home-capture-recent-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 9px;
-  border-radius: 12px;
-  background: rgba(23, 27, 21, 0.035);
-}
-
-.home-capture-recent-ic {
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  flex: 0 0 22px;
-  border-radius: 7px;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
-}
-
-.home-capture-recent-item--task .home-capture-recent-ic { background: linear-gradient(150deg, #dcefe3, #b8dcc6); color: #275a3f; }
-.home-capture-recent-item--thought .home-capture-recent-ic { background: linear-gradient(150deg, #ddeaf6, #c3d9ec); color: #3e6a8e; }
-.home-capture-recent-item--win .home-capture-recent-ic { background: linear-gradient(150deg, #fbe8c8, #f3cf8e); color: #8a5009; }
-
-.home-capture-recent-text {
-  flex: 1;
-  min-width: 0;
-  color: #2b352f;
-  font-size: 11.5px;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.home-capture-recent-time {
-  flex: 0 0 auto;
-  color: rgba(23, 28, 25, 0.48);
-  font-size: 9.5px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.home-capture-recent-empty {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin: 0;
-  color: rgba(23, 28, 25, 0.5);
-  font-size: 11.5px;
-  font-weight: 600;
-}
-
-/* Mood check-in — pins to the capture card's footer, filling what used to
-   be dead space. Faces reuse the Mind route's check-in language via the
-   .home-face-* classes defined in the header section above. */
-/* Its own inset panel rather than a dashed rule: mood is a check-in, not a
-   capture, so it reads as a separate module sharing the card. */
-.home-capture-mood {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: auto;
-  padding: 12px 14px;
-  border-radius: 18px;
-  background: var(--home-capture-mood-bg, rgba(122, 99, 184, 0.07));
-  box-shadow: inset 0 0 0 1px var(--home-capture-mood-ring, rgba(122, 99, 184, 0.12));
-}
-
-.home-capture-mood-text {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-}
-
-.home-capture-mood-text p {
-  margin: 0;
-  color: #2b352f;
-  font-size: 13.5px;
-  font-weight: 650;
-  letter-spacing: -0.01em;
-}
-
-.home-capture-mood-faces {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-/* Sent here from the hero's Mood row: one glow so the scroll lands on something
-   that visibly wants a tap, then it settles back down. */
-.home-capture-mood.is-nudged {
-  border-radius: 14px;
-  animation: home-mood-nudge 1.8s ease-out 1;
-}
-
-@keyframes home-mood-nudge {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(122, 99, 184, 0); }
-  25% { box-shadow: 0 0 0 6px rgba(122, 99, 184, 0.16); }
-  70% { box-shadow: 0 0 0 6px rgba(122, 99, 184, 0.1); }
-}
-
-/* Nothing captured yet: a quiet dashed well filling the list's share of the
-   card, instead of one line of text over dead space. */
-.home-capture-recent-empty {
-  flex: 1;
-  justify-content: center;
-  min-height: 56px;
-  border: 1px dashed rgba(26, 31, 29, 0.14);
-  border-radius: 14px;
-}
-
-/* ---------- Week rollup ----------
-   The Nutrition "This week vs last" tile pattern (.ntr-intel-week-delta):
-   compact tinted tiles — icon chip, big number, week-over-week delta,
-   caps label — one accent per life domain. */
-
-.home-card--rollup {
-  padding-bottom: 18px;
-}
-
-.home-rollup-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(114px, 1fr));
-  gap: 10px;
-}
-
-/* double class so the later .home-rollup-tile display:flex can't win */
-.home-rollup-tile.home-rollup-mobile-only {
-  display: none;
-}
-
-.home-rollup-tile {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  min-width: 0;
-  padding: 13px 14px 12px;
-  border-radius: 16px;
-  background: rgba(23, 27, 21, 0.035);
-  text-align: center;
-  transition: background 0.2s ease;
-}
-
-.home-rollup-tile:hover {
-  background: rgba(23, 27, 21, 0.055);
-}
-
-/* Small colored icon chip — same vocabulary as the trend tiles */
-.home-rollup-ic {
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  margin-bottom: 6px;
-  border-radius: 8px;
-  background: var(--rollup-tint, rgba(23, 27, 21, 0.06));
-  color: var(--rollup-accent, #526057);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
-}
-
-.home-rollup-tile b {
-  font-size: 19px;
-  font-weight: 750;
-  letter-spacing: -0.03em;
-  color: #17211c;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-/* Week-over-week delta line — nutrition's tone language */
-.home-rollup-delta {
-  font-size: 9.5px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.home-rollup-delta.tone-good { color: #2e5f4b; }
-.home-rollup-delta.tone-watch { color: #8a5009; }
-.home-rollup-delta.tone-flat { color: rgba(23, 28, 25, 0.45); }
-
-.home-rollup-tile small {
-  margin-top: 1px;
-  color: rgba(23, 28, 25, 0.66);
-  font-size: 9.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.home-rollup--focus { --rollup-accent: #4d56ae; --rollup-tint: #e3e5f9; }
-.home-rollup--tasks { --rollup-accent: #275a3f; --rollup-tint: #dcefe3; }
-.home-rollup--workouts { --rollup-accent: #8a5009; --rollup-tint: #fbe8c8; }
-.home-rollup--learnings { --rollup-accent: #3e6a8e; --rollup-tint: #ddeaf6; }
-.home-rollup--meals { --rollup-accent: #63801f; --rollup-tint: #ebf2d2; }
-.home-rollup--sleep { --rollup-accent: #2c5c78; --rollup-tint: #d7e6f0; }
-.home-rollup--spend { --rollup-accent: #2c7264; --rollup-tint: #d8ece7; }
-
-/* Zeros stay grey and quiet — never green, never alarming. Muted as a whole
-   tile (no tint, light dash) so the eye goes to real stats first. */
-.home-rollup-tile.is-quiet {
-  background: rgba(23, 27, 21, 0.025);
-  opacity: 0.62;
-}
-
-.home-rollup-tile.is-quiet b {
-  color: rgba(23, 28, 25, 0.42);
-  font-weight: 500;
-}
-
-.home-rollup-tile.is-quiet .home-rollup-ic {
-  background: rgba(23, 27, 21, 0.05);
-  color: rgba(23, 28, 25, 0.4);
-}
-
-.home-rollup-tile.is-watch b {
-  color: #9a5a10;
-}
 
 /* ---------- Welcome (first run) ---------- */
 
@@ -3427,13 +3246,11 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
   .ntr-gauge-wrap.is-live::before,
   .home-hero-panel.is-complete,
   .home-hero-panel.is-complete::before,
-  .home-capture-mood.is-nudged,
+  .hm-mood.is-nudged .hm-mood-faces,
+  .hm-saving,
+  .hm-strip-bar > i,
   .home-confetti-piece {
     animation: none !important;
-  }
-
-  .home-card:hover {
-    transform: none;
   }
 
   .home-dashboard * {
@@ -3477,9 +3294,11 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
     overflow: visible;
   }
 
-  .home-grid--primary .home-tasks-list,
-  .home-grid--primary .home-card--capture .home-capture-recent {
+  .home-grid--primary .hm-task-list,
+  .home-grid--primary .hm-capture-list {
     overflow: visible;
+    -webkit-mask-image: none;
+    mask-image: none;
   }
 
   .home-grid--primary .home-card--hero,
@@ -3494,12 +3313,8 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
     grid-column: 1 / -1;
   }
 
-  .home-grid--primary .home-anchor-panel {
-    overflow: visible;
-  }
-
-  .home-grid--primary .home-anchor-main {
-    min-height: 96px;
+  .home-grid--primary .hm-anchor-track {
+    flex: 0 0 48px;
   }
 
   /* Stacked order: Anchor, Capture, then Tasks before the Day loop — what's
@@ -3742,18 +3557,6 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
     height: 4px;
   }
 
-  .home-next-strip {
-    padding: 9px 12px 9px 8px;
-    gap: 10px;
-  }
-
-  .home-next-ic {
-    width: 30px;
-    height: 30px;
-    flex-basis: 30px;
-    border-radius: 10px;
-  }
-
   .home-grid {
     grid-template-columns: 1fr;
   }
@@ -3775,21 +3578,22 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .home-anchor-ic {
-    width: 38px;
-    height: 38px;
-    flex-basis: 38px;
-    border-radius: 12px;
+  .hm-anchor-title {
+    font-size: 23px;
   }
 
-  .home-anchor-quote {
-    font-size: 22px;
-    line-height: 1.32;
+  .hm-anchor-track {
+    flex-basis: 44px;
+    gap: 3px;
   }
 
-  .home-anchor-watermark {
-    width: 76px;
-    height: 76px;
+  .hm-anchor-cell:nth-child(8) {
+    margin-left: 4px;
+  }
+
+  .hm-anchor-actions .hm-soft-btn {
+    padding: 0 10px;
+    font-size: 12px;
   }
 
   /* Stacked single column — cards flow to their natural height and the page
@@ -3805,8 +3609,8 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
     overflow: visible;
   }
 
-  .home-grid--primary .home-tasks-list,
-  .home-grid--primary .home-card--capture .home-capture-recent {
+  .home-grid--primary .hm-task-list,
+  .home-grid--primary .hm-capture-list {
     flex: 0 0 auto;
     overflow: visible;
   }
@@ -3819,12 +3623,64 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
     flex: 0 0 auto;
   }
 
-  .home-rollup-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  /* The week strip wraps to two rows of four on a phone; the hairline
+     before each row's first stat goes. */
+  .hm-strip--rollup {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    row-gap: 14px;
   }
 
-  .home-card--rollup .home-card-head {
-    flex-wrap: wrap;
+  .hm-strip--rollup .hm-strip-stat:nth-child(4n + 1)::before {
+    display: none;
+  }
+
+  .hm-strip--rollup .hm-strip-stat strong {
+    font-size: 17px;
+  }
+
+  .hm-strip--rollup .hm-strip-stat > span {
+    overflow: visible;
+    letter-spacing: 0.05em;
+    line-height: 1.25;
+    white-space: normal;
+  }
+
+  /* Card heads: the pill or icon button rides beside the eyebrow, and the
+     serif title gets the full card width instead of wrapping into a column. */
+  .home-card-head,
+  .home-hero-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 2px 10px;
+  }
+
+  .home-card-head > div:first-child,
+  .home-hero-head > div:first-child {
+    display: contents;
+  }
+
+  .home-card-head > div:first-child > :first-child,
+  .home-hero-head > div:first-child > :first-child {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  .home-card-head > div:first-child > :not(:first-child),
+  .home-hero-head > div:first-child > :not(:first-child) {
+    grid-row: 2;
+    grid-column: 1 / -1;
+  }
+
+  .home-card-head > :nth-child(2),
+  .home-hero-head > :nth-child(2) {
+    grid-row: 1;
+    grid-column: 2;
+  }
+
+  .hm-strip .home-rollup-mobile-only {
+    display: flex;
   }
 
   .home-sleep-accent {
@@ -3832,25 +3688,40 @@ button.home-tasks-stat:hover:not(.is-lead):not(.is-active) {
     align-items: flex-start;
   }
 
-  .home-capture-modes {
-    align-self: stretch;
+  /* The destination hint gives way to the three mode chips on a phone. */
+  .hm-composer-hint {
+    display: none;
+  }
+
+  .hm-composer-foot {
+    justify-content: space-between;
   }
 
   /* Two trend tiles per row on phones — keeps sparklines legible */
   .home-trend-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 18px;
   }
 
-  .home-capture-mood {
-    justify-content: center;
-    text-align: center;
+  .home-trend-tile {
+    padding: 2px 14px;
   }
 
-  .home-capture-mood-text {
-    align-items: center;
+  .home-trend-tile:nth-child(odd) {
+    padding-left: 2px;
+    border-left: 0;
   }
 
-  .home-rollup-tile.home-rollup-mobile-only {
-    display: flex;
+  .home-activity-headline strong {
+    font-size: 34px;
+  }
+
+  .hm-mood-text {
+    font-size: 12px;
+  }
+
+  .hm-mood .home-face-btn {
+    width: 28px;
+    height: 28px;
   }
 }

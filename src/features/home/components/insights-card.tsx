@@ -1,4 +1,4 @@
-import { RefreshCw, Sparkles } from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 import type { Insight } from '@/lib/insights/engine'
 import { InsightList } from '@/components/ui/insight-list'
 import { INSIGHT_WINDOW_DAYS } from '../insights-engine'
@@ -16,7 +16,6 @@ type InsightsCardProps = {
 function InsightsCard({ loading, insights, activeDays, onRefresh, onNavigate }: InsightsCardProps) {
   return (
     <section className="home-card home-card--insights" aria-label="Patterns this week">
-      <Sparkles className="home-card-glyph" aria-hidden="true" />
       <header className="home-card-head">
         <div>
           <span className="home-card-eyebrow">Patterns</span>

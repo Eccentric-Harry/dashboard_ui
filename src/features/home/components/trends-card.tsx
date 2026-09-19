@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Brain, CheckSquare, Flame, Moon, TrendingUp } from 'lucide-react'
+import type { CSSProperties } from 'react'
+import { Brain, CheckSquare, Flame, Moon } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { DayRecord } from '../insights-engine'
@@ -180,7 +181,6 @@ function TrendsCard({ loading, records }: TrendsCardProps) {
 
   return (
     <section className="home-card home-card--trends" aria-label="Trends">
-      <TrendingUp className="home-card-glyph" aria-hidden="true" />
       <header className="home-card-head">
         <div>
           <span className="home-card-eyebrow">Trends</span>
@@ -199,7 +199,7 @@ function TrendsCard({ loading, records }: TrendsCardProps) {
           <p>Two weeks of logging and your trajectory shows up here — sleep, focus, mood and tasks, each finding its line.</p>
         </div>
       ) : (
-        <div className="home-trend-grid">
+        <div className="home-trend-grid" style={{ '--trend-cols': tiles.length } as CSSProperties}>
           {tiles.map((tile) => {
             const Icon = tile.icon
             return (

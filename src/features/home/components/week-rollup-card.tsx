@@ -1,4 +1,3 @@
-import { Bean, CalendarCheck, CheckSquare, Dumbbell, Flame, Lightbulb, Moon, Utensils, Wallet } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { DayRecord } from '../insights-engine'
 import type { NutritionSummary, SpendingSummary } from '../home-types'
@@ -18,17 +17,16 @@ type Tone = 'good' | 'watch' | 'flat'
 
 type RollupTile = {
   id: string
-  icon: React.ReactNode
   value: string
   label: string
   isZero: boolean
   watch?: boolean
   mobileOnly?: boolean
-  /** Week-over-week line, e.g. "▲ 1h 10m vs last wk"; null hides the row. */
+  /** Week-over-week change, e.g. "▲ 1h 10m"; null hides the row. */
   delta: { text: string; tone: Tone } | null
 }
 
-/** "▲ +2 vs last wk" — tone follows whether more of this metric is good. */
+/** "▲ 2" against last week (the card's pill names the baseline) — tone follows whether more is good. */
 function weekDelta(
   current: number,
   previous: number,
@@ -36,12 +34,12 @@ function weekDelta(
   goodWhen: 'up' | 'down' = 'up',
 ): { text: string; tone: Tone } | null {
   if (current === 0 && previous === 0) return null
-  if (previous === 0) return { text: 'new this week', tone: 'good' }
+  if (previous === 0) return { text: 'new', tone: 'good' }
   const diff = current - previous
-  if (diff === 0) return { text: 'same as last wk', tone: 'flat' }
+  if (diff === 0) return { text: 'same', tone: 'flat' }
   const arrow = diff > 0 ? '▲' : '▼'
   const improved = goodWhen === 'up' ? diff > 0 : diff < 0
-  return { text: `${arrow} ${format(Math.abs(diff))} vs last wk`, tone: improved ? 'good' : 'watch' }
+  return { text: `${arrow} ${format(Math.abs(diff))}`, tone: improved ? 'good' : 'watch' }
 }
 
 function WeekRollupCard({
@@ -94,7 +92,6 @@ function WeekRollupCard({
   const tiles: RollupTile[] = [
     {
       id: 'focus',
-      icon: <Flame size={13} strokeWidth={2.4} />,
       value: focus > 0 ? formatMinutes(focus) : '—',
       label: 'focused',
       isZero: focus === 0,
@@ -102,7 +99,6 @@ function WeekRollupCard({
     },
     {
       id: 'tasks',
-      icon: <CheckSquare size={13} strokeWidth={2.4} />,
       value: tasks > 0 ? String(tasks) : '—',
       label: 'tasks done',
       isZero: tasks === 0,
@@ -110,7 +106,6 @@ function WeekRollupCard({
     },
     {
       id: 'workouts',
-      icon: <Dumbbell size={13} strokeWidth={2.4} />,
       value: workouts > 0 ? String(workouts) : '—',
       label: 'workouts',
       isZero: workouts === 0,
@@ -118,7 +113,6 @@ function WeekRollupCard({
     },
     {
       id: 'learnings',
-      icon: <Lightbulb size={13} strokeWidth={2.4} />,
       value: learnings > 0 ? String(learnings) : '—',
       label: 'learnings',
       isZero: learnings === 0,
@@ -126,7 +120,6 @@ function WeekRollupCard({
     },
     {
       id: 'meals',
-      icon: <Utensils size={13} strokeWidth={2.4} />,
       value: mealsLoggedDays > 0 ? `${mealsLoggedDays}d` : '—',
       label: 'meals logged',
       isZero: mealsLoggedDays === 0,
@@ -134,7 +127,6 @@ function WeekRollupCard({
     },
     {
       id: 'sleep',
-      icon: <Moon size={13} strokeWidth={2.4} />,
       value: sleep != null ? formatMinutes(sleep) : '—',
       label: 'avg sleep',
       isZero: sleep == null,
@@ -142,7 +134,6 @@ function WeekRollupCard({
     },
     {
       id: 'spend',
-      icon: <Wallet size={13} strokeWidth={2.4} />,
       value: budgetUtilization != null ? `${Math.round(budgetUtilization)}%` : '—',
       label: 'budget used',
       isZero: budgetUtilization == null,
@@ -151,7 +142,6 @@ function WeekRollupCard({
     },
     {
       id: 'protein',
-      icon: <Bean size={13} strokeWidth={2.4} />,
       value: proteinPct != null ? `${proteinPct}%` : '—',
       label: 'protein goal',
       isZero: proteinPct == null || proteinPct === 0,
@@ -167,46 +157,39 @@ function WeekRollupCard({
 
   return (
     <section className="home-card home-card--rollup" aria-label="This week">
-      <CalendarCheck className="home-card-glyph" aria-hidden="true" />
       <header className="home-card-head">
         <div>
           <span className="home-card-eyebrow">This week</span>
-          <h2 className="home-card-title">You showed up</h2>
+          <h2 className="home-card-title">{allZero ? 'A quiet week so far' : 'You showed up'}</h2>
         </div>
+        {!loading && !allZero && <span className="hm-pill">vs last week</span>}
       </header>
 
       {loading ? (
-        <div className="home-rollup-grid">
-          {Array.from({ length: 7 }, (_, i) => (
-            <span key={i} className="home-skel home-skel--tile" />
-          ))}
-        </div>
+        <span className="home-skel" style={{ height: 72, borderRadius: 18 }} />
       ) : allZero ? (
         <div className="home-card-empty">
-          <p>A quiet week so far — and that's okay. Anything you log starts showing up here.</p>
+          <p>That's okay. Anything you log starts showing up here.</p>
         </div>
       ) : (
-        <div className="home-rollup-grid">
+        <div className="hm-strip hm-strip--rollup">
           {visibleTiles.map((tile) => (
-            <article
+            <div
               key={tile.id}
               className={cn(
-                'home-rollup-tile',
+                'hm-strip-stat',
                 `home-rollup--${tile.id}`,
                 tile.isZero && 'is-quiet',
                 tile.watch && 'is-watch',
-                tile.mobileOnly && 'home-rollup-mobile-only'
+                tile.mobileOnly && 'home-rollup-mobile-only',
               )}
             >
-              <span className="home-rollup-ic" aria-hidden="true">
-                {tile.icon}
-              </span>
-              <b>{tile.value}</b>
+              <strong>{tile.value}</strong>
+              <span>{tile.label}</span>
               {tile.delta && !tile.isZero && (
-                <span className={cn('home-rollup-delta', `tone-${tile.delta.tone}`)}>{tile.delta.text}</span>
+                <em className={cn('hm-delta', `tone-${tile.delta.tone}`)}>{tile.delta.text}</em>
               )}
-              <small>{tile.label}</small>
-            </article>
+            </div>
           ))}
         </div>
       )}

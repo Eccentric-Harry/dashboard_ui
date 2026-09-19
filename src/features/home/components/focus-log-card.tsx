@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { CalendarClock, Check, Flame, Plus, X } from 'lucide-react'
+import { CalendarClock, Check, Plus, X } from 'lucide-react'
 import type { FocusSuggestion } from '@/types/focus'
 import type { FocusLogPayload } from '@/types/focus'
 import { cn } from '@/lib/utils'
@@ -82,7 +82,6 @@ function FocusLogCard({
 
   return (
     <section className="home-card home-card--focuslog" aria-label="Focus log">
-      <Flame className="home-card-glyph" aria-hidden="true" />
       <header className="home-card-head">
         <div>
           <span className="home-card-eyebrow">Focus log</span>

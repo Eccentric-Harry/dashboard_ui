@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   ArrowRight,
-  CalendarClock,
   CheckSquare,
   Droplets,
   Flame as FocusFlame,
@@ -12,24 +11,20 @@ import {
   X,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import type { CalendarItem } from '@/types/calendar'
 import type { DailyTask } from '@/types/tasks'
 import type { HydrationData } from '@/types/nutrition'
 import type { AppPath } from '@/app/routes'
 import { cn } from '@/lib/utils'
 import { useCountUp } from '@/hooks/use-count-up'
 import type { MealQualityDay } from '../home-types'
-import { formatMinutes, formatTimeLabel, MEAL_COVERAGE_TARGET, SLEEP_TARGET_MINUTES } from '../home-types'
+import { formatMinutes, MEAL_COVERAGE_TARGET, SLEEP_TARGET_MINUTES } from '../home-types'
 import type { LoopMetric, LoopMetricId } from '../day-loop'
 import { buildDayLoop, fuelBreakdown, loopClosedCount, loopScore, nextLoopNudge } from '../day-loop'
 import { LoopArc } from './loop-arc'
-import { OverdueBadge } from './overdue-badge'
 
 type TodayHeroCardProps = {
   loading: boolean
-  calendarItems: CalendarItem[] | null
   todayTasks: DailyTask[] | null
-  overdueCount: number
   hydration: HydrationData | null
   focusRunning: boolean
   /** Minutes slept on the night that ended this morning; null when unlogged. */
@@ -207,9 +202,7 @@ function LoopInfoPanel({
 
 function TodayHeroCard({
   loading,
-  calendarItems,
   todayTasks,
-  overdueCount,
   hydration,
   focusRunning,
   sleepMinutesToday,
@@ -270,13 +263,7 @@ function TodayHeroCard({
     )
   }
 
-  // Upcoming, non-cancelled items with a start time still ahead of now.
   const now = new Date()
-  const nowHm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-  const upcoming = (calendarItems ?? [])
-    .filter((item) => !item.cancelled && !item.completed && item.startTime && item.startTime >= nowHm)
-    .sort((a, b) => (a.startTime ?? '').localeCompare(b.startTime ?? ''))
-  const nextEvent = upcoming[0]
 
   const openRoute: Record<LoopMetricId, () => void> = {
     sleep: onLogSleep,
@@ -294,12 +281,13 @@ function TodayHeroCard({
           <p className="ntr-eyebrow">Today · Day loop</p>
           <h2>{loopPhrase(dayScore, now.getHours())}</h2>
         </div>
-        {/* No focus-session pill here — the running state already shows on the
-            gauge button, so a second copy just repeats itself. */}
+        {/* One pill, like Nutrition's meal count: how many of the four are closed.
+            Overdue tasks aren't repeated here — the Tasks card beside this one
+            owns that number. */}
         <div className="home-hero-head-actions">
           <button
             type="button"
-            className="home-loop-info-btn"
+            className="hm-icon-btn"
             aria-label="How the loop is scored"
             aria-expanded={showInfo}
             onClick={() => setShowInfo((v) => !v)}
@@ -309,19 +297,10 @@ function TodayHeroCard({
           {showInfo && (
             <LoopInfoPanel metrics={metrics} meal={mealQuality} onClose={() => setShowInfo(false)} />
           )}
-          {overdueCount > 0 ? (
-            <OverdueBadge count={overdueCount} />
-          ) : nextEvent ? (
-            <span className="ntr-pill dark">
-              <CalendarClock size={12} strokeWidth={2.5} />
-              Next · {formatTimeLabel(nextEvent.startTime)}
-            </span>
-          ) : (
-            <span className="ntr-pill dark">
-              <CheckSquare size={12} strokeWidth={2.5} />
-              All caught up
-            </span>
-          )}
+          <span className="ntr-pill dark" aria-label={`${closed} of ${metrics.length} closed`}>
+            <CheckSquare size={12} strokeWidth={2.5} />
+            {closed}/{metrics.length} closed
+          </span>
         </div>
       </div>
 
@@ -334,19 +313,16 @@ function TodayHeroCard({
               description={metrics.map((m) => `${m.label} ${Math.round(m.ratio * 100)}%`).join(', ')}
             />
           </div>
-          <p className="home-loop-count">
-            <strong>{closed}</strong> of {metrics.length} closed
-          </p>
           {/* The cheapest unlogged signal — the gauge's "so what". Falls back to
               the focus button once there's nothing left to suggest. */}
           {nudge ? (
-            <button type="button" className="home-hero-focus-btn" onClick={openRoute[nudge.id]}>
-              <ArrowRight size={12} />
+            <button type="button" className="hm-link-btn" onClick={openRoute[nudge.id]}>
               {nudge.cta}
+              <ArrowRight size={12} strokeWidth={2.6} />
             </button>
           ) : (
-            <button type="button" className="home-hero-focus-btn" onClick={onStartFocus}>
-              <FocusFlame size={12} />
+            <button type="button" className="hm-link-btn" onClick={onStartFocus}>
+              <FocusFlame size={12} strokeWidth={2.6} />
               {focusRunning ? 'Session running' : 'Start focus'}
             </button>
           )}

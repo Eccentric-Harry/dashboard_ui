@@ -266,11 +266,11 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
   // Newest-first feed of what actually went through the Task/Thought/Win
   // capture grid today — fills the card's leftover footer space instead of
   // leaving it dead air.
-  const recentCaptures = useMemo<RecentCapture[]>(() => {
+  const todaysCaptures = useMemo<RecentCapture[]>(() => {
     const fromTasks = todayTasks
       .filter((t) => t.createdAt)
       .map((t) => ({ id: `task-${t.id}`, mode: 'task' as const, text: t.title, at: t.createdAt as string }))
-    const fromMind = (home.mindEntries.data ?? [])
+    const fromMind = [...(home.mindEntries.data ?? []), ...(home.wins.data ?? [])]
       .filter((e) => (e.type === 'THOUGHT' || e.type === 'WIN') && e.date === home.today && e.createdAt)
       // Sealed entries carry no text on a normal read, and are deliberately kept out of
       // the Home digest entirely — the whole point of sealing is not meeting it again.
@@ -281,10 +281,9 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
         text: e.text,
         at: e.createdAt as string,
       }))
-    return [...fromTasks, ...fromMind]
-      .sort((a, b) => b.at.localeCompare(a.at))
-      .slice(0, 3)
-  }, [todayTasks, home.mindEntries.data, home.today])
+    return [...fromTasks, ...fromMind].sort((a, b) => b.at.localeCompare(a.at))
+  }, [todayTasks, home.mindEntries.data, home.wins.data, home.today])
+  const recentCaptures = useMemo(() => todaysCaptures.slice(0, 3), [todaysCaptures])
 
   const isFirstRun =
     !home.loading &&
@@ -360,6 +359,11 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
         toast.success(CAPTURE_TOASTS[mode])
         if (mode === 'task' || mode === 'learning') {
           void home.refetch()
+        } else if (mode === 'thought') {
+          // Just the thoughts slice, so the card's recent list and count catch up.
+          void home.reloadMindEntries()
+        } else if (mode === 'win') {
+          void home.reloadWins()
         }
       } catch {
         toast.error('Could not save that — try again.')
@@ -565,6 +569,8 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           grid below. On ≤1024px the CSS stacks Anchor, Capture, Tasks, Loop. */}
       <div className="home-grid home-grid--primary">
         <TodaysAnchorCard
+          today={home.today}
+          history={home.anchors.data ?? []}
           intention={todayAnchor?.text ?? ''}
           note={todayAnchor?.note ?? ''}
           outcome={todayAnchor?.outcome ?? null}
@@ -579,13 +585,12 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           moodScore={todayMood}
           onMood={handleMood}
           recentCaptures={recentCaptures}
+          captureCount={todaysCaptures.length}
         />
 
         <TodayHeroCard
           loading={home.loading}
-          calendarItems={home.calendarToday.data}
           todayTasks={todayTasks}
-          overdueCount={overdueCount}
           hydration={home.hydration.data}
           focusRunning={focusSession?.status === 'RUNNING'}
           sleepMinutesToday={sleepSummary.lastNight?.durationMinutes ?? null}
@@ -606,7 +611,25 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
         />
       </div>
 
+      {/* Nutrition's section rhythm: the first screen is today, and everything
+          under this head reads the days behind it. */}
+      <header className="home-section-head">
+        <div>
+          <p className="ntr-eyebrow">Beyond today</p>
+          <h2 className="home-section-title">What your days are telling you</h2>
+        </div>
+      </header>
+
       <div className="home-grid home-grid--rest">
+        {/* The week in numbers leads the section — the cards under it explain them. */}
+        <WeekRollupCard
+          loading={home.loading}
+          weekRecords={weekRecords}
+          prevWeekRecords={prevWeekRecords}
+          nutrition={home.nutrition.data}
+          spending={home.spending.data}
+        />
+
         <SleepCard
           loading={home.loading}
           failed={home.sleep.hasErrors}
@@ -648,14 +671,6 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
         />
 
         <TrendsCard loading={home.loading} records={dayRecords} />
-
-        <WeekRollupCard
-          loading={home.loading}
-          weekRecords={weekRecords}
-          prevWeekRecords={prevWeekRecords}
-          nutrition={home.nutrition.data}
-          spending={home.spending.data}
-        />
       </div>
 
       <LogSleepModal

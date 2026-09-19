@@ -321,6 +321,28 @@ let mindEntries: GuestMindEntry[] = [
   { id: 'mg-7', type: 'WIN', text: 'Fixed the recurrence bug everyone was avoiding.', status: 'OPEN', pinned: true, date: guestToday, createdAt: new Date().toISOString() },
   { id: 'mg-8', type: 'WIN', text: 'Ran 5k without stopping.', status: 'OPEN', date: guestToday, createdAt: new Date().toISOString() },
   { id: 'mg-9', type: 'GRATITUDE', text: 'A teammate covered for me without being asked.', status: 'OPEN', date: guestToday, createdAt: new Date().toISOString() },
+  // Two weeks of Home anchors (INTENTION), so the anchor card's track has a
+  // history to draw: a few landed, some partial, one miss, and gaps.
+  ...([
+    [0, 'Ship the Zustand store migration', null],
+    [1, 'Finish the calendar sync tests', 'ACHIEVED'],
+    [2, 'Draft the pursuits workspace spec', 'PARTIAL'],
+    [3, 'Review the meal-analysis prompt', 'ACHIEVED'],
+    [5, 'Clear the Google webhook backlog', 'MISSED'],
+    [6, 'Run 5k before work', 'ACHIEVED'],
+    [7, 'Write the dark-mode rollout notes', 'ACHIEVED'],
+    [9, 'Refactor the recurrence engine', 'PARTIAL'],
+    [10, 'Plan next week around the deadline', 'ACHIEVED'],
+    [12, 'Read two chapters of DDIA', null],
+  ] as const).map(([daysAgo, text, outcome], i): GuestMindEntry => ({
+    id: `mg-anchor-${i}`,
+    type: 'INTENTION',
+    text,
+    status: 'OPEN',
+    outcome,
+    date: guestAddDays(guestToday, -daysAgo),
+    createdAt: new Date(Date.now() - daysAgo * 86_400_000).toISOString(),
+  })),
 ];
 
 export interface GuestRequest {
