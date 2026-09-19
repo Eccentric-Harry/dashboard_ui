@@ -44,17 +44,26 @@ interface UserActions {
 
 type UserStore = UserState & UserActions;
 
+// App boot and the Profile page both load on mount; landing on /profile fired the same
+// read twice. Callers that overlap share one request.
+let profileLoadInFlight: Promise<UserProfile | null> | null = null;
+
 const useUserStoreBase = create<UserStore>()(
   devtools(
     immer((set, get) => ({
       profile: remoteStateWith<UserProfile | null>(null),
       actions: {
-        loadProfile: async () => {
-          const res = await requestAndSet<UserStore, 'profile'>('profile', userService.getProfile, set);
-          const profile = get().profile.data;
-          if (res?.error || !profile) return null;
-          publishIdentity(profile);
-          return profile;
+        loadProfile: () => {
+          profileLoadInFlight ??= (async () => {
+            const res = await requestAndSet<UserStore, 'profile'>('profile', userService.getProfile, set);
+            const profile = get().profile.data;
+            if (res?.error || !profile) return null;
+            publishIdentity(profile);
+            return profile;
+          })().finally(() => {
+            profileLoadInFlight = null;
+          });
+          return profileLoadInFlight;
         },
         saveProfile: async (payload) => {
           const res = await userService.updateProfile(payload);
