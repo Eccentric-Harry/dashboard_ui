@@ -777,8 +777,10 @@
   --hm-accent-soft: rgba(188, 195, 242, 0.08);
   --hm-accent-line: rgba(188, 195, 242, 0.3);
   --hm-on-accent: #171a2e;
-  --hm-cell-a: #c9cff7;
-  --hm-cell-b: #8f99e2;
+  /* Lifted from #8f99e2: flat now that the wash is gone, and this is the same
+     periwinkle the loop arc and the sleep bar use, so Home reads as one signature
+     hue the way Nutrition reads as one green. */
+  --hm-cell-b: #a5b4f0;
   --hm-cell-missed: rgba(255, 255, 255, 0.16);
   --hm-primary-bg: #bcc3f2;
   --hm-primary-hover: #d3d7f8;
@@ -859,13 +861,17 @@
 }
 
 /* The ink ring inverted to plain off-white read as black-and-white next to the
-   coloured tiles. In dark it becomes Home's lavender flowing into the sky blue
-   of the sleep/water bars. Stops are read by the <linearGradient> in
-   loop-arc.tsx; light mode's fallbacks keep it ink. No glow filter: a filter on
-   a dash-animated path stalls Chromium repaints. */
+   coloured tiles, so dark gives it Home's lavender. It ran violet → sky across
+   the arc for a while; that was the one two-hue sweep in the whole app and it
+   read as generic gradient rather than as this product's colour — /nutrition's
+   gauge is a single confident green and that is exactly why it looks settled.
+   Both stops are therefore the same periwinkle: the <linearGradient> in
+   loop-arc.tsx stays (light mode still feeds it ink through the fallbacks), it
+   simply no longer travels. No glow filter: a filter on a dash-animated path
+   stalls Chromium repaints. */
 :root[data-theme='dark'] .home-loop-arc {
-  --loop-stop-a: #c4b5fd;
-  --loop-stop-b: #7dd3fc;
+  --loop-stop-a: #a5b4f0;
+  --loop-stop-b: #a5b4f0;
 }
 
 :root[data-theme='dark'] .home-loop-fill {

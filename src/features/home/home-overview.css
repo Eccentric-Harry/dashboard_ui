@@ -52,7 +52,8 @@
   --hm-accent-soft: #eceefb;
   --hm-accent-line: rgba(77, 86, 174, 0.3);
   --hm-on-accent: #171b15;
-  --hm-cell-a: #b3bbee;
+  /* One fill, not two. A vertical a→b wash on a 10px-wide capsule reads as a
+     milky smear rather than a colour — see the note on .hm-anchor-cell > i. */
   --hm-cell-b: #7f89d6;
   --hm-cell-missed: rgba(23, 27, 21, 0.16);
   --hm-primary-bg: #171b15;
@@ -1629,7 +1630,11 @@
   bottom: 0;
   left: 0;
   height: 0;
-  background: linear-gradient(180deg, var(--hm-cell-a) 0%, var(--hm-cell-b) 100%);
+  /* Flat, in /nutrition's grammar: that route's gauge and macro bars are single
+     confident fills, and it is why they read cleanly at a glance. A gradient this
+     narrow only dilutes the hue — at 50% height a "partial" capsule showed the
+     pale end and barely registered as the same colour as an achieved one. */
+  background: var(--hm-cell-b);
   transition: height 0.45s cubic-bezier(0.3, 0.8, 0.3, 1);
 }
 
