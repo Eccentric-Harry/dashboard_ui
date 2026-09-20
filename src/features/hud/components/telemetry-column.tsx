@@ -15,6 +15,7 @@ import type { HudDensity } from '../use-gutter-space'
 import { useActiveRequestCount, useRequestSamples } from '../use-request-samples'
 import {
   readDeviceFacts,
+  readNavigationTiming,
   useBattery,
   useFps,
   useMemory,
@@ -23,9 +24,10 @@ import {
   useUptimeSeconds,
   useViewport,
 } from '../use-runtime-vitals'
-import { formatDuration, formatMs } from '../hud-format'
+import { formatBytes, formatCompactMs, formatDuration, formatMs } from '../hud-format'
 
 const deviceFacts = readDeviceFacts()
+const navigationTiming = readNavigationTiming()
 const apiHost = (() => {
   try {
     return new URL(CONFIG.BACKEND_API_BASE_URL, window.location.origin).host
@@ -35,7 +37,27 @@ const apiHost = (() => {
 })()
 
 const PULSE_TONE: Record<PulseState, HudTone> = { up: 'good', slow: 'watch', down: 'bad', unknown: 'idle' }
-const PULSE_LABEL: Record<PulseState, string> = { up: 'reachable', slow: 'slow', down: 'unreachable', unknown: 'checking' }
+const PULSE_LABEL: Record<PulseState, string> = { up: 'reachable', slow: 'slow', down: 'unreachable', unknown: 'idle' }
+
+/**
+ * A grid cell is only worth its space if it has a reading. Half of what this
+ * panel can show is Chromium-only, and on Safari the omitted ones used to print
+ * '—' — four dashes in a row reads as a broken card, not as a browser limit.
+ */
+function MetricCells({ cells }: { cells: { label: string; value: string; tone?: HudTone }[] }) {
+  const present = cells.filter((cell) => cell.value)
+  if (present.length === 0) return null
+  return (
+    <div className="hud-metric-grid">
+      {present.map((cell) => (
+        <span key={cell.label} className="hud-metric">
+          <span className="hud-metric-label">{cell.label}</span>
+          <span className={`hud-metric-value${cell.tone ? ` hud-tone-${cell.tone}` : ''}`}>{cell.value}</span>
+        </span>
+      ))}
+    </div>
+  )
+}
 
 /** Frame budget: 55+ is smooth, under 30 is visibly dropping. */
 function fpsTone(fps: number | undefined): HudTone {
@@ -71,8 +93,8 @@ function TelemetryColumn({
   const battery = useBattery()
   const viewport = useViewport()
   const storage = useStorageEstimate()
-  const pulse = useBackendPulse(true)
   const samples = useRequestSamples()
+  const pulse = useBackendPulse(true, samples)
   const inFlight = useActiveRequestCount()
 
   const guest = isGuestSession()
@@ -94,6 +116,13 @@ function TelemetryColumn({
         <div className="hud-clock-rows">
           <HudRow label="Route" value={activePath} />
           <HudRow label="Requests" value={samples.length ? `${samples[samples.length - 1].id}` : '0'} />
+          {/* Lives here rather than in the Link panel, which does not render at
+              all on a browser with no Network Information API. */}
+          <HudRow
+            label="Network"
+            value={network.online ? 'online' : 'offline'}
+            tone={network.online ? 'idle' : 'bad'}
+          />
         </div>
       </HudPanel>
 
@@ -101,49 +130,34 @@ function TelemetryColumn({
         <div className="hud-spark-row">
           <HudSpark values={fps.history} tone={fpsTone(fps.current)} minRange={12} height={22} />
         </div>
-        {memory ? (
+        {memory && (
           <>
             <HudRow label="JS heap" value={`${memory.usedMb.toFixed(0)} / ${memory.limitMb.toFixed(0)} MB`} />
             <HudBar ratio={memory.ratio} tone={ratioTone(memory.ratio)} />
           </>
-        ) : (
-          <HudRow label="JS heap" value="not exposed" />
         )}
         {storage && (
           <>
-            <HudRow label="Storage" value={`${storage.usageMb.toFixed(0)} / ${storage.quotaMb.toFixed(0)} MB`} />
+            <HudRow label="Storage" value={`${formatBytes(storage.usageBytes)} / ${formatBytes(storage.quotaBytes)}`} />
             <HudBar ratio={storage.ratio} tone={ratioTone(storage.ratio)} />
           </>
         )}
-        <div className="hud-metric-grid">
-          <span className="hud-metric">
-            <span className="hud-metric-label">Cores</span>
-            <span className="hud-metric-value">{deviceFacts.cores ? `${deviceFacts.cores}×` : '—'}</span>
-          </span>
-          <span className="hud-metric">
-            <span className="hud-metric-label">Memory</span>
-            <span className="hud-metric-value">{deviceFacts.memoryGb ? `${deviceFacts.memoryGb} GB` : '—'}</span>
-          </span>
-          <span className="hud-metric">
-            <span className="hud-metric-label">Viewport</span>
-            <span className="hud-metric-value">
-              {viewport.width}×{viewport.height}
-            </span>
-          </span>
-          <span className="hud-metric">
-            <span className="hud-metric-label">Zoom · DPR</span>
-            <span className="hud-metric-value">
-              {viewport.zoom.toFixed(2)} · {deviceFacts.pixelRatio}×
-            </span>
-          </span>
-        </div>
+        <MetricCells
+          cells={[
+            // Navigation Timing is the only part of this panel every browser
+            // answers, so it leads.
+            { label: 'TTFB', value: navigationTiming ? formatMs(navigationTiming.ttfbMs) : '' },
+            { label: 'DOM ready', value: navigationTiming ? formatMs(navigationTiming.domReadyMs) : '' },
+            { label: 'Cores', value: deviceFacts.cores ? `${deviceFacts.cores}×` : '' },
+            { label: 'Memory', value: deviceFacts.memoryGb ? `${deviceFacts.memoryGb} GB` : '' },
+            { label: 'Viewport', value: `${viewport.width}×${viewport.height}` },
+            { label: 'Zoom · DPR', value: `${viewport.zoom.toFixed(2)} · ${deviceFacts.pixelRatio}×` },
+          ]}
+        />
       </HudPanel>
 
-      {density === 'full' && (
+      {density === 'full' && (network.hasDetails || battery) && (
         <HudPanel label="Link" meta={network.effectiveType ?? undefined}>
-          <HudRow label="Status" value={network.online ? 'online' : 'offline'} tone={network.online ? 'good' : 'bad'} />
-          {/* Safari and Firefox ship no Network Information API, so these would be
-              three dashes in a row — an empty-looking panel reads as broken. */}
           {network.rttMs !== undefined && <HudRow label="RTT" value={`${network.rttMs}ms`} />}
           {!narrow && network.downlinkMbps !== undefined && (
             <HudRow label="Downlink" value={`${network.downlinkMbps.toFixed(1)} Mb/s`} />
@@ -174,26 +188,18 @@ function TelemetryColumn({
                 height={22}
               />
             </div>
-            <div className="hud-metric-grid">
-              <span className="hud-metric">
-                <span className="hud-metric-label">p50</span>
-                <span className="hud-metric-value">{formatMs(p50)}</span>
-              </span>
-              <span className="hud-metric">
-                <span className="hud-metric-label">p95</span>
-                <span className="hud-metric-value">{formatMs(p95)}</span>
-              </span>
-              <span className="hud-metric">
-                <span className="hud-metric-label">In flight</span>
-                <span className="hud-metric-value">{inFlight === 0 ? 'idle' : inFlight}</span>
-              </span>
-              <span className="hud-metric">
-                <span className="hud-metric-label">Errors</span>
-                <span className={`hud-metric-value hud-tone-${failures > 0 ? 'bad' : 'good'}`}>
-                  {failures} / {recent.length}
-                </span>
-              </span>
-            </div>
+            <MetricCells
+              cells={[
+                { label: 'p50', value: formatMs(p50) },
+                { label: 'p95', value: formatMs(p95) },
+                { label: 'In flight', value: inFlight === 0 ? 'idle' : `${inFlight}` },
+                {
+                  label: 'Errors',
+                  value: `${failures} / ${recent.length}`,
+                  tone: failures > 0 ? 'bad' : 'good',
+                },
+              ]}
+            />
             <div className="hud-row">
               <span className="hud-row-label">Backend</span>
               <span className="hud-row-leader" aria-hidden="true" />
@@ -220,7 +226,9 @@ function TelemetryColumn({
                 <span className={`hud-stream-status hud-tone-${statusTone(sample.status)}`}>
                   {sample.status || 'ERR'}
                 </span>
-                <span className="hud-stream-ms">{sample.guest ? 'mock' : sample.durationMs}</span>
+                <span className="hud-stream-ms">
+                    {sample.guest ? 'mock' : formatCompactMs(sample.durationMs)}
+                  </span>
               </li>
             ))}
           </ul>

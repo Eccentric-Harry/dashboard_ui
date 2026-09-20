@@ -63,6 +63,30 @@ export function formatMs(ms: number | undefined): string {
   return `${(ms / 1000).toFixed(1)}s`;
 }
 
+/** Byte sizes at a sensible precision — '812 KB', '1.4 GB', not '0 MB'. */
+export function formatBytes(bytes: number | undefined): string {
+  if (bytes === undefined || Number.isNaN(bytes)) return '—';
+  if (bytes < 1024) return `${Math.round(bytes)} B`;
+  const units = ['KB', 'MB', 'GB', 'TB'];
+  let value = bytes / 1024;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit++;
+  }
+  return `${value < 10 ? value.toFixed(1) : Math.round(value)} ${units[unit]}`;
+}
+
+/**
+ * Durations for the request stream's fixed-width column. A 30s timeout printed
+ * as '30003' overflows it and looks like a corrupted number.
+ */
+export function formatCompactMs(ms: number): string {
+  if (ms < 1000) return `${Math.round(ms)}`;
+  if (ms < 10_000) return `${(ms / 1000).toFixed(1)}s`;
+  return `${Math.round(ms / 1000)}s`;
+}
+
 export function formatTemperature(celsius: number | undefined): string {
   return celsius === undefined || Number.isNaN(celsius) ? '—' : `${Math.round(celsius)}°`;
 }

@@ -148,27 +148,24 @@ export interface NetworkReading {
   effectiveType: string | undefined;
   downlinkMbps: number | undefined;
   rttMs: number | undefined;
+  /** False outside Chromium, where the Network Information API does not exist. */
+  hasDetails: boolean;
 }
 
 export function useNetwork(): NetworkReading {
-  const [reading, setReading] = useState<NetworkReading>(() => ({
+  const read = (connection = connectionInfo()): NetworkReading => ({
     online: navigator.onLine,
-    effectiveType: connectionInfo()?.effectiveType,
-    downlinkMbps: connectionInfo()?.downlink,
-    rttMs: connectionInfo()?.rtt,
-  }));
+    effectiveType: connection?.effectiveType,
+    downlinkMbps: connection?.downlink,
+    rttMs: connection?.rtt,
+    hasDetails: Boolean(connection?.effectiveType || connection?.rtt !== undefined),
+  });
+
+  const [reading, setReading] = useState<NetworkReading>(() => read());
 
   useEffect(() => {
     const connection = connectionInfo();
-
-    const sync = () => {
-      setReading({
-        online: navigator.onLine,
-        effectiveType: connection?.effectiveType,
-        downlinkMbps: connection?.downlink,
-        rttMs: connection?.rtt,
-      });
-    };
+    const sync = () => setReading(read(connection));
 
     window.addEventListener('online', sync);
     window.addEventListener('offline', sync);
@@ -270,8 +267,8 @@ export function useViewport(): ViewportReading {
 }
 
 export interface StorageReading {
-  usageMb: number;
-  quotaMb: number;
+  usageBytes: number;
+  quotaBytes: number;
   ratio: number;
 }
 
@@ -284,8 +281,10 @@ export function useStorageEstimate(): StorageReading | undefined {
     let cancelled = false;
 
     void navigator.storage.estimate().then(({ usage, quota }) => {
-      if (cancelled || !usage || !quota) return;
-      setReading({ usageMb: usage / 1_048_576, quotaMb: quota / 1_048_576, ratio: usage / quota });
+      // `usage === 0` is a real answer, not a missing one — a falsy check here
+      // threw away every reading under a megabyte.
+      if (cancelled || usage === undefined || !quota) return;
+      setReading({ usageBytes: usage, quotaBytes: quota, ratio: usage / quota });
     });
 
     return () => {
@@ -294,6 +293,32 @@ export function useStorageEstimate(): StorageReading | undefined {
   }, []);
 
   return reading;
+}
+
+export interface NavigationTiming {
+  /** Time to first byte for the document itself. */
+  ttfbMs: number;
+  domReadyMs: number;
+  loadMs: number | undefined;
+}
+
+/**
+ * How long this page took to come up, from the Navigation Timing API.
+ *
+ * Worth having specifically because it is the one part of the runtime panel that
+ * every browser answers. `performance.memory`, `navigator.deviceMemory` and
+ * `navigator.connection` are all Chromium-only, so on Safari the panel was three
+ * dashes and a sparkline; these three numbers are always real.
+ */
+export function readNavigationTiming(): NavigationTiming | undefined {
+  const entry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+  if (!entry || !entry.responseStart) return undefined;
+  return {
+    ttfbMs: Math.max(0, entry.responseStart - entry.startTime),
+    domReadyMs: Math.max(0, entry.domContentLoadedEventEnd - entry.startTime),
+    // Zero until the load event actually fires.
+    loadMs: entry.loadEventEnd > 0 ? Math.max(0, entry.loadEventEnd - entry.startTime) : undefined,
+  };
 }
 
 /** Seconds since app boot, re-rendered once a second while the tab is visible. */
