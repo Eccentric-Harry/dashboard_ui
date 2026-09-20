@@ -8,7 +8,7 @@
 // returns `undefined` rather than a zero, and the HUD renders a dash. A zero
 // here would read as "0 fps" / "no battery", which is worse than silence.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 
 /** Module scope, so uptime counts from app boot rather than from a HUD mount. */
 const BOOT_AT = Date.now();
@@ -310,15 +310,38 @@ export interface NavigationTiming {
  * `navigator.connection` are all Chromium-only, so on Safari the panel was three
  * dashes and a sparkline; these three numbers are always real.
  */
-export function readNavigationTiming(): NavigationTiming | undefined {
+function readNavigationTiming(): NavigationTiming | undefined {
   const entry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
   if (!entry || !entry.responseStart) return undefined;
   return {
     ttfbMs: Math.max(0, entry.responseStart - entry.startTime),
     domReadyMs: Math.max(0, entry.domContentLoadedEventEnd - entry.startTime),
-    // Zero until the load event actually fires.
     loadMs: entry.loadEventEnd > 0 ? Math.max(0, entry.loadEventEnd - entry.startTime) : undefined,
   };
+}
+
+// The entry is only complete once the load event has fired, and this module is
+// evaluated well before that — a module-scope read would have captured a zero for
+// everything but TTFB. So it is read once the document reports 'complete', and
+// cached from then on: useSyncExternalStore requires a snapshot whose identity is
+// stable between changes, and an object rebuilt on every render would spin.
+let cachedTiming: NavigationTiming | undefined;
+
+function timingSnapshot(): NavigationTiming | undefined {
+  if (cachedTiming) return cachedTiming;
+  if (document.readyState !== 'complete') return undefined;
+  cachedTiming = readNavigationTiming();
+  return cachedTiming;
+}
+
+function subscribeToLoad(onLoad: () => void): () => void {
+  if (document.readyState === 'complete') return () => undefined;
+  window.addEventListener('load', onLoad);
+  return () => window.removeEventListener('load', onLoad);
+}
+
+export function useNavigationTiming(): NavigationTiming | undefined {
+  return useSyncExternalStore(subscribeToLoad, timingSnapshot, timingSnapshot);
 }
 
 /** Seconds since app boot, re-rendered once a second while the tab is visible. */

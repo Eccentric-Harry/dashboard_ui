@@ -15,10 +15,10 @@ import type { HudDensity } from '../use-gutter-space'
 import { useActiveRequestCount, useRequestSamples } from '../use-request-samples'
 import {
   readDeviceFacts,
-  readNavigationTiming,
   useBattery,
   useFps,
   useMemory,
+  useNavigationTiming,
   useNetwork,
   useStorageEstimate,
   useUptimeSeconds,
@@ -27,7 +27,6 @@ import {
 import { formatBytes, formatCompactMs, formatDuration, formatMs } from '../hud-format'
 
 const deviceFacts = readDeviceFacts()
-const navigationTiming = readNavigationTiming()
 const apiHost = (() => {
   try {
     return new URL(CONFIG.BACKEND_API_BASE_URL, window.location.origin).host
@@ -93,6 +92,7 @@ function TelemetryColumn({
   const battery = useBattery()
   const viewport = useViewport()
   const storage = useStorageEstimate()
+  const navigationTiming = useNavigationTiming()
   const samples = useRequestSamples()
   const pulse = useBackendPulse(true, samples)
   const inFlight = useActiveRequestCount()
