@@ -7,9 +7,12 @@
 // competing with it.
 //
 // Three rules hold the whole thing together:
-//   1. It is progressive. Below ~232px of spare gutter the columns do not render
-//      at all — no fetch, no rAF loop, no cost. Mobile never sees them, and the
-//      ~1065px working window the rest of the UI is tuned for is unaffected.
+//   1. It is progressive. A wide window gets the roomy column, a windowed one gets
+//      a narrower, denser version of the same card, and below about 150px of
+//      spare band nothing renders at all — no fetch, no rAF loop, no cost. There
+//      is no bottom-bar fallback: the stage is a fixed 1200px the routes are
+//      tuned around, so on a narrow window the only room left would have to come
+//      out of the cards.
 //   2. It never takes a click. The gutters are pointer-events: none; only the two
 //      genuine controls (location opt-in, the HUD toggle) opt back in. Nothing out
 //      here can swallow a click meant for a card.
@@ -23,12 +26,12 @@ import type { AppPath } from '@/app/routes'
 import { StationColumn } from './components/station-column'
 import { TelemetryColumn } from './components/telemetry-column'
 import { useClock } from './use-clock'
-import { densityFor, useElementSize } from './use-gutter-space'
+import { fitFor, useElementSize } from './use-gutter-space'
 import './hud.css'
 
-/** Below this the column would be narrower than its own two-column rows. */
-const MIN_GUTTER_PX = 232
 const ENABLED_KEY = 'hud.enabled'
+/** Matches the breakpoint the rest of the shell switches layout at. */
+const DESKTOP_QUERY = '(min-width: 769px)'
 
 function readEnabled(): boolean {
   try {
@@ -38,13 +41,27 @@ function readEnabled(): boolean {
   }
 }
 
+function useIsDesktop(): boolean {
+  const [isDesktop, setIsDesktop] = useState(() => window.matchMedia(DESKTOP_QUERY).matches)
+
+  useEffect(() => {
+    const query = window.matchMedia(DESKTOP_QUERY)
+    const sync = () => setIsDesktop(query.matches)
+    query.addEventListener('change', sync)
+    return () => query.removeEventListener('change', sync)
+  }, [])
+
+  return isDesktop
+}
+
 function HudGutters({ activePath }: { activePath: AppPath }) {
   const [enabled, setEnabled] = useState(readEnabled)
   const gutterRef = useRef<HTMLDivElement>(null)
   // Both gutters carry the same calc, so one measurement describes both.
   const gutter = useElementSize(gutterRef)
-  const hasRoom = gutter.width >= MIN_GUTTER_PX
-  const density = densityFor(gutter.height)
+  const isDesktop = useIsDesktop()
+  const fit = fitFor(gutter)
+  const show = enabled && isDesktop && fit.render
 
   // The clock is lifted here so both columns tick on the same frame — two
   // independent second-boundary timers drift apart and the readouts disagree.
@@ -76,30 +93,32 @@ function HudGutters({ activePath }: { activePath: AppPath }) {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [])
 
-  const showColumns = hasRoom && enabled
+  const toggleButton = (
+    <button
+      type="button"
+      className="hud-toggle"
+      onClick={toggle}
+      aria-pressed={enabled}
+      title={`${enabled ? 'Hide' : 'Show'} the HUD  (⌘⇧H)`}
+    >
+      <PanelsTopLeft size={12} strokeWidth={2} aria-hidden="true" />
+      <span>HUD</span>
+    </button>
+  )
 
   return (
-    <aside className="hud-root" data-active={showColumns ? 'true' : 'false'} aria-label="Ambient status">
+    <aside className="hud-root" data-active={show} data-narrow={fit.narrow} aria-label="Ambient status">
+      {/* Always mounted, even when empty: it is the probe the whole layout
+          decision is measured from. */}
       <div className="hud-gutter hud-gutter--left" ref={gutterRef}>
-        {showColumns && <StationColumn now={now} density={density} />}
+        {show && <StationColumn now={now} density={fit.density} narrow={fit.narrow} />}
       </div>
 
       <div className="hud-gutter hud-gutter--right">
-        {showColumns && <TelemetryColumn activePath={activePath} density={density} />}
+        {show && <TelemetryColumn activePath={activePath} density={fit.density} narrow={fit.narrow} />}
       </div>
 
-      {hasRoom && (
-        <button
-          type="button"
-          className="hud-toggle"
-          onClick={toggle}
-          aria-pressed={enabled}
-          title={`${enabled ? 'Hide' : 'Show'} gutter HUD  (⌘⇧H)`}
-        >
-          <PanelsTopLeft size={12} strokeWidth={2} aria-hidden="true" />
-          <span>HUD</span>
-        </button>
-      )}
+      {isDesktop && fit.render && toggleButton}
     </aside>
   )
 }

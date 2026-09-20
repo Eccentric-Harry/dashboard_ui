@@ -114,8 +114,12 @@ const useAmbientStoreBase = create<AmbientState & AmbientActions>()(
 
         actions: {
           ensureFresh: async () => {
-            const { coords, snapshot } = get();
+            const { coords, place, snapshot } = get();
             if (!coords) return;
+            // A place name the first reverse-geocode missed — or a fix cached by a
+            // build that predates place names — is picked up here. It is one call
+            // per location ever, and the result is cached, so this is not polling.
+            if (!place) void loadPlace(coords);
             if (snapshot && Date.now() - snapshot.fetchedAt < SNAPSHOT_TTL_MS) return;
             await get().actions.refresh();
           },
@@ -128,9 +132,6 @@ const useAmbientStoreBase = create<AmbientState & AmbientActions>()(
             inFlight ??= loadSnapshot(coords).finally(() => {
               inFlight = undefined;
             });
-            // A place name the first reverse-geocode missed (or a fix taken before
-            // this store cached names at all) is picked up here rather than never.
-            if (!get().place) void loadPlace(coords);
             await inFlight;
           },
 

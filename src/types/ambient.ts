@@ -40,6 +40,25 @@ export interface AmbientWeather {
   observedAt: number;
 }
 
+/** The next several hours, for the forecast strip. Optional: snapshots cached by
+    a build that predates it still render, just without the strip. */
+export interface AmbientHourly {
+  /** Epoch ms per sample, hourly, from the current hour forward. */
+  times: number[];
+  temperatureC: number[];
+  precipitationChance: number[];
+}
+
+/** The days after today, for the outlook panel. */
+export interface AmbientOutlookDay {
+  /** Epoch ms at local midnight of that day. */
+  at: number;
+  highC: number;
+  lowC: number;
+  weatherCode: number;
+  precipitationChance: number;
+}
+
 export interface AmbientAir {
   usAqi: number | null;
   europeanAqi: number | null;
@@ -50,6 +69,8 @@ export interface AmbientAir {
 
 export interface AmbientSnapshot {
   weather: AmbientWeather;
+  hourly?: AmbientHourly;
+  outlook?: AmbientOutlookDay[];
   air: AmbientAir;
   /** Epoch ms this snapshot was fetched — drives the cache TTL and the "as of" label. */
   fetchedAt: number;

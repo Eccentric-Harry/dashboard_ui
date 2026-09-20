@@ -238,6 +238,64 @@ export function readDeviceFacts(): DeviceFacts {
   };
 }
 
+export interface ViewportReading {
+  width: number;
+  height: number;
+  /** The html { zoom } the density curve in index.css settled on. */
+  zoom: number;
+}
+
+/**
+ * Window size and the zoom the shell derived from it. Worth a row of its own in
+ * this app specifically: every layout decision downstream — the density curve,
+ * the stage cap, this HUD's own breakpoints — is a function of these two numbers,
+ * and until now there was nowhere to read them without opening devtools.
+ */
+export function useViewport(): ViewportReading {
+  const read = (): ViewportReading => ({
+    width: window.innerWidth,
+    height: window.innerHeight,
+    zoom: Number.parseFloat(getComputedStyle(document.documentElement).zoom) || 1,
+  });
+
+  const [reading, setReading] = useState(read);
+
+  useEffect(() => {
+    const sync = () => setReading(read());
+    window.addEventListener('resize', sync);
+    return () => window.removeEventListener('resize', sync);
+  }, []);
+
+  return reading;
+}
+
+export interface StorageReading {
+  usageMb: number;
+  quotaMb: number;
+  ratio: number;
+}
+
+/** Origin storage (caches, IndexedDB, localStorage). Undefined on Safari < 17. */
+export function useStorageEstimate(): StorageReading | undefined {
+  const [reading, setReading] = useState<StorageReading | undefined>(undefined);
+
+  useEffect(() => {
+    if (!navigator.storage?.estimate) return;
+    let cancelled = false;
+
+    void navigator.storage.estimate().then(({ usage, quota }) => {
+      if (cancelled || !usage || !quota) return;
+      setReading({ usageMb: usage / 1_048_576, quotaMb: quota / 1_048_576, ratio: usage / quota });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return reading;
+}
+
 /** Seconds since app boot, re-rendered once a second while the tab is visible. */
 export function useUptimeSeconds(): number {
   const [seconds, setSeconds] = useState(() => Math.floor((Date.now() - BOOT_AT) / 1000));

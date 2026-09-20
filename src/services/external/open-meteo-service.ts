@@ -14,7 +14,15 @@
 // free). Reverse geocoding: OSM Nominatim, called at most once per rounded
 // coordinate thanks to the caller's cache — its usage policy rules out polling.
 
-import type { AmbientAir, AmbientCoords, AmbientPlace, AmbientSnapshot, AmbientWeather } from '@/types/ambient';
+import type {
+  AmbientAir,
+  AmbientCoords,
+  AmbientHourly,
+  AmbientOutlookDay,
+  AmbientPlace,
+  AmbientSnapshot,
+  AmbientWeather,
+} from '@/types/ambient';
 
 const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
 const AIR_URL = 'https://air-quality-api.open-meteo.com/v1/air-quality';
@@ -52,7 +60,11 @@ async function getJson<T>(url: string): Promise<ExternalResult<T>> {
  */
 function toEpochMs(localIso: string | undefined, utcOffsetSeconds: number): number {
   if (!localIso) return Number.NaN;
-  const asUtc = Date.parse(`${localIso}${localIso.length === 16 ? ':00' : ''}Z`);
+  // Three shapes come back: '2026-09-21' (daily), '2026-09-21T06:04' (sunrise,
+  // hourly) and occasionally a full one. Normalise to seconds precision first.
+  const normalized =
+    localIso.length === 10 ? `${localIso}T00:00:00` : localIso.length === 16 ? `${localIso}:00` : localIso;
+  const asUtc = Date.parse(`${normalized}Z`);
   return Number.isNaN(asUtc) ? Number.NaN : asUtc - utcOffsetSeconds * 1000;
 }
 
@@ -69,11 +81,19 @@ interface ForecastResponse {
     wind_speed_10m: number;
   };
   daily: {
+    time: string[];
     sunrise: string[];
     sunset: string[];
     uv_index_max: (number | null)[];
     temperature_2m_max: number[];
     temperature_2m_min: number[];
+    weather_code?: number[];
+    precipitation_probability_max?: (number | null)[];
+  };
+  hourly?: {
+    time: string[];
+    temperature_2m: (number | null)[];
+    precipitation_probability: (number | null)[];
   };
 }
 
@@ -101,7 +121,59 @@ interface NominatimResponse {
 }
 
 const CURRENT_FIELDS = 'temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,is_day,wind_speed_10m';
-const DAILY_FIELDS = 'sunrise,sunset,uv_index_max,temperature_2m_max,temperature_2m_min';
+const DAILY_FIELDS =
+  'sunrise,sunset,uv_index_max,temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max';
+/** Today plus the three days the outlook panel shows. */
+const FORECAST_DAYS = 4;
+const HOURLY_FIELDS = 'temperature_2m,precipitation_probability';
+/** Hours kept in the forecast strip. Two forecast days so it survives midnight. */
+const HOURLY_SPAN = 12;
+
+/**
+ * The hourly arrays start at midnight local, so most of them are already past.
+ * Slice forward from the current hour and keep a fixed span, so the strip always
+ * reads "now → 12 hours out" no matter what time it is.
+ */
+function sliceHourly(hourly: ForecastResponse['hourly'], offset: number): AmbientHourly | undefined {
+  if (!hourly?.time?.length) return undefined;
+
+  const times = hourly.time.map((iso) => toEpochMs(iso, offset));
+  const now = Date.now();
+  const start = Math.max(0, times.findIndex((time) => time >= now - 30 * 60_000));
+  const end = Math.min(times.length, start + HOURLY_SPAN);
+
+  const temperatureC: number[] = [];
+  const precipitationChance: number[] = [];
+  const kept: number[] = [];
+
+  for (let index = start; index < end; index++) {
+    const temperature = hourly.temperature_2m?.[index];
+    if (temperature === null || temperature === undefined) continue;
+    kept.push(times[index]);
+    temperatureC.push(temperature);
+    precipitationChance.push(hourly.precipitation_probability?.[index] ?? 0);
+  }
+
+  return kept.length >= 2 ? { times: kept, temperatureC, precipitationChance } : undefined;
+}
+
+/** Index 0 is today, already covered by `current` and the daylight panel. */
+function buildOutlook(daily: ForecastResponse['daily'], offset: number): AmbientOutlookDay[] {
+  const days: AmbientOutlookDay[] = [];
+  for (let index = 1; index < (daily.time?.length ?? 0); index++) {
+    const high = daily.temperature_2m_max?.[index];
+    const low = daily.temperature_2m_min?.[index];
+    if (high === undefined || low === undefined) continue;
+    days.push({
+      at: toEpochMs(daily.time[index], offset),
+      highC: high,
+      lowC: low,
+      weatherCode: daily.weather_code?.[index] ?? 0,
+      precipitationChance: daily.precipitation_probability_max?.[index] ?? 0,
+    });
+  }
+  return days;
+}
 
 /**
  * One snapshot of the world at these coordinates. Weather and air quality are two
@@ -114,7 +186,7 @@ export async function fetchAmbientSnapshot({ latitude, longitude }: AmbientCoord
 
   const [forecast, air] = await Promise.all([
     getJson<ForecastResponse>(
-      `${FORECAST_URL}?latitude=${lat}&longitude=${lon}&current=${CURRENT_FIELDS}&daily=${DAILY_FIELDS}&timezone=auto&forecast_days=1`,
+      `${FORECAST_URL}?latitude=${lat}&longitude=${lon}&current=${CURRENT_FIELDS}&daily=${DAILY_FIELDS}&hourly=${HOURLY_FIELDS}&timezone=auto&forecast_days=${FORECAST_DAYS}`,
     ),
     getJson<AirResponse>(`${AIR_URL}?latitude=${lat}&longitude=${lon}&current=pm2_5,pm10,us_aqi,european_aqi&timezone=auto`),
   ]);
@@ -147,7 +219,13 @@ export async function fetchAmbientSnapshot({ latitude, longitude }: AmbientCoord
     observedAt: airCurrent ? toEpochMs(airCurrent.time, air.data?.utc_offset_seconds ?? offset) : Number.NaN,
   };
 
-  return ok({ weather, air: airQuality, fetchedAt: Date.now() });
+  return ok({
+    weather,
+    hourly: sliceHourly(forecast.data.hourly, offset),
+    outlook: buildOutlook(daily, offset),
+    air: airQuality,
+    fetchedAt: Date.now(),
+  });
 }
 
 /** Best-effort place name. Undefined is a normal outcome — the HUD shows coordinates. */

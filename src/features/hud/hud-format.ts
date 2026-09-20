@@ -25,6 +25,16 @@ export function formatClock(date: Date, timeZone?: string, withSeconds = true): 
   }).format(date);
 }
 
+/** Hour-only label for the forecast axis: '15h', '03h'. */
+export function formatHourLabel(epochMs: number): string {
+  return `${new Intl.DateTimeFormat('en-GB', { hour: '2-digit', hour12: false }).format(new Date(epochMs))}h`;
+}
+
+/** Short weekday for the outlook rows: 'MON'. */
+export function formatWeekday(epochMs: number): string {
+  return new Intl.DateTimeFormat('en-GB', { weekday: 'short' }).format(new Date(epochMs)).toUpperCase();
+}
+
 export function formatDayStamp(date: Date, timeZone?: string): string {
   return new Intl.DateTimeFormat('en-GB', {
     weekday: 'short',
