@@ -70,7 +70,7 @@
 :root[data-theme='dark'] .routine-navigator,
 :root[data-theme='dark'] .focus-canvas,
 :root[data-theme='dark'] .prompts-card,
-:root[data-theme='dark'] .hud-column {
+:root[data-theme='dark'] .hud-panel {
   background: var(--dk-surface) !important;
   border-color: var(--dk-line) !important;
 }

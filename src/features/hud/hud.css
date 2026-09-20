@@ -108,7 +108,12 @@
   width: min(320px, 100% - 16px);
   flex-direction: column;
   margin: 0 auto;
-  gap: 12px;
+  /* The stack itself is never a surface — it is the canvas showing between the
+     panels that makes them read as separate cards rather than one slab with
+     dividers. (A dark-theme override did paint it once; see the Cards block in
+     theme-dark.css, which lists .hud-panel, not .hud-column.) */
+  background: none;
+  gap: 14px;
   animation: hud-enter 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
@@ -776,7 +781,7 @@
 
 .hud-root[data-narrow='true'] .hud-column {
   width: min(240px, 100% - 16px);
-  gap: 9px;
+  gap: 11px;
 }
 
 .hud-root[data-narrow='true'] .hud-panel {
