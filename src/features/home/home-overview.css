@@ -1600,7 +1600,7 @@
   gap: 14px;
 }
 
-/* Seven cylinders, one per day, filled by how the anchor landed: full for
+/* Ten cylinders, one per day, filled by how the anchor landed: full for
    achieved, half for partial, a stub for missed, a dot for "set, not called
    yet". Fixed narrow width + fully rounded ends keep them capsule-shaped at
    any card width; the row spreads them edge to edge. */
