@@ -104,11 +104,29 @@ const DEFAULT_GET_TIMEOUT_MS = 30_000;
 const RETRYABLE_STATUSES = new Set([502, 503, 504]);
 const GET_RETRY_DELAYS_MS = [700, 2_000];
 
+// A timeout is not like the other failures. The others fail fast and cost nothing to
+// repeat; a timeout has *already* spent the full 30s, so the default two retries turn one
+// slow endpoint into 92 seconds of a spinner and three times the load on a backend that
+// is evidently struggling. One more attempt still covers a cold start (30s + 30s), and by
+// ~60s the user has reloaded anyway — which is exactly the behaviour this avoids.
+const TIMEOUT_MAX_RETRIES = 1;
+
+const isTimeout = (error: AxiosError) => error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT';
+
 function shouldRetry(error: AxiosError, config: InternalAxiosRequestConfig): boolean {
   if (axios.isCancel(error) || !isGet(config) || config.signal?.aborted) return false;
-  if ((config.retryCount ?? 0) >= GET_RETRY_DELAYS_MS.length) return false;
+  const maxRetries = isTimeout(error) ? TIMEOUT_MAX_RETRIES : GET_RETRY_DELAYS_MS.length;
+  if ((config.retryCount ?? 0) >= maxRetries) return false;
   const status = error.response?.status;
   return status === undefined || RETRYABLE_STATUSES.has(status);
+}
+
+// ±30% jitter. A cold start fails every request on the page at once, and without jitter
+// they all come back in lockstep — the retry burst lands as one spike on the instance
+// that is still booting.
+function retryDelayMs(attempt: number): number {
+  const base = GET_RETRY_DELAYS_MS[Math.min(attempt, GET_RETRY_DELAYS_MS.length - 1)];
+  return Math.round(base * (0.7 + Math.random() * 0.6));
 }
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -158,7 +176,7 @@ axiosClient.interceptors.response.use(
     if (config && shouldRetry(error, config)) {
       const attempt = config.retryCount ?? 0;
       config.retryCount = attempt + 1;
-      await sleep(GET_RETRY_DELAYS_MS[attempt]);
+      await sleep(retryDelayMs(attempt));
       // Still counted as active, so the loader stays up across the retry; the retried
       // request settles it once it finally succeeds or fails.
       return axiosClient.request(config);

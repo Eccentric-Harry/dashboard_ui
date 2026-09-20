@@ -312,7 +312,8 @@ const useNotificationStoreBase = create<NotificationStore>()(
         persistNotifications((prev) => [newNotif, ...prev]);
       };
 
-      const fetchUpcomingItems = async () => {
+      /** Resolves true when the read failed, so the poller can back off. */
+      const fetchUpcomingItems = async (): Promise<boolean> => {
         set((s) => { s.isLoadingItems = true; });
         const today = new Date();
         const tomorrow = new Date();
@@ -322,6 +323,46 @@ const useNotificationStoreBase = create<NotificationStore>()(
           if (!res.error && res.data) s.items = res.data;
           s.isLoadingItems = false;
         });
+        return Boolean(res.error);
+      };
+
+      // ── Upcoming-items poll ──────────────────────────────────────────────
+      // A bare `setInterval` over an async read is a pile-up waiting to happen:
+      // when the backend is slow, a read that takes longer than the interval is
+      // still running when the next tick starts another, and each one carries its
+      // own retries. That is how one slow endpoint turns into eight concurrent
+      // requests against an instance that is already struggling.
+      //
+      // So the poll reschedules itself only once the previous read has settled,
+      // backs off while the backend is failing, and does nothing at all in a
+      // background tab — polling a sleeping instance from a tab nobody is looking
+      // at only keeps it warm at the cost of a stream of errors.
+      const BASE_POLL_MS = 60_000;
+      const MAX_POLL_MS = 8 * 60_000;
+      let pollTimer = 0;
+      let pollInFlight = false;
+      let consecutiveFailures = 0;
+
+      const schedulePoll = () => {
+        window.clearTimeout(pollTimer);
+        const backoff = BASE_POLL_MS * 2 ** Math.min(consecutiveFailures, 3);
+        pollTimer = window.setTimeout(() => void pollUpcomingItems(), Math.min(MAX_POLL_MS, backoff));
+      };
+
+      const pollUpcomingItems = async (force = false) => {
+        if (pollInFlight) return;
+        if (document.hidden && !force) {
+          schedulePoll();
+          return;
+        }
+        pollInFlight = true;
+        try {
+          const failed = await fetchUpcomingItems();
+          consecutiveFailures = failed ? consecutiveFailures + 1 : 0;
+        } finally {
+          pollInFlight = false;
+          schedulePoll();
+        }
       };
 
       const checkAlerts = () => {
@@ -490,10 +531,16 @@ const useNotificationStoreBase = create<NotificationStore>()(
               });
             }
 
-            // Pollers: calendar items every 60s (+ on calendar-updated), alert check every 10s
-            void fetchUpcomingItems();
-            setInterval(fetchUpcomingItems, 60000);
-            window.addEventListener('calendar-updated', () => { void fetchUpcomingItems(); });
+            // Pollers: calendar items on a self-scheduling backoff (see above),
+            // alert check every 10s. The alert check is synchronous, so a plain
+            // interval is safe for it.
+            void pollUpcomingItems(true);
+            window.addEventListener('calendar-updated', () => { void pollUpcomingItems(true); });
+            // Coming back to the tab should show current data immediately rather
+            // than waiting out whatever backoff the poll was sitting on.
+            document.addEventListener('visibilitychange', () => {
+              if (!document.hidden) void pollUpcomingItems(true);
+            });
             setInterval(checkAlerts, 10000);
           },
 
@@ -507,7 +554,7 @@ const useNotificationStoreBase = create<NotificationStore>()(
             localStorage.removeItem('dashboard_notifications');
           },
 
-          refetchItems: fetchUpcomingItems,
+          refetchItems: () => pollUpcomingItems(true),
           playSound,
 
           toggleDesktopNotifications: async () => {
