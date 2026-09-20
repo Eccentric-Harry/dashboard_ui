@@ -2,6 +2,7 @@
 //   • auth gate      — requests park until the boot-time auth check resolves
 //   • bearer token   — injected on every non-auth request of a signed-in session
 //   • active GETs    — counted for the route-transition OverlayLoader
+//   • telemetry      — every settled request is timed into request-telemetry.ts
 //   • GET resilience — a default timeout, and retries for transient failures
 //   • guest mode     — served by a local adapter; guest traffic never reaches the backend
 
@@ -9,6 +10,7 @@ import axios, { CanceledError, getAdapter } from 'axios';
 import type { AxiosAdapter, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { CONFIG } from '../api-config';
 import { createGuestAdapter } from './guest-adapter';
+import { recordRequest } from './request-telemetry';
 import { getAuthToken, isGuestSession } from './session';
 
 declare module 'axios' {
@@ -17,6 +19,8 @@ declare module 'axios' {
     countedAsActiveGet?: boolean;
     /** Transient-failure retries already spent on this GET. */
     retryCount?: number;
+    /** performance.now() at the start of the current attempt — see request-telemetry.ts. */
+    telemetryStartedAt?: number;
   }
 }
 
@@ -44,6 +48,20 @@ function trackActiveGet(config: InternalAxiosRequestConfig): void {
   config.countedAsActiveGet = true;
   activeGetRequests++;
   notifyRequestListeners();
+}
+
+// Timed per *attempt*, not per request: a GET that 502s twice before succeeding
+// shows all three lines in the HUD's request stream, which is the point of it.
+function recordAttempt(config: InternalAxiosRequestConfig | undefined, status: number | undefined): void {
+  if (!config) return;
+  recordRequest({
+    method: config.method,
+    url: config.url,
+    status,
+    startedAt: config.telemetryStartedAt,
+    guest: isGuestSession(),
+  });
+  config.telemetryStartedAt = undefined;
 }
 
 function settleActiveGet(config: InternalAxiosRequestConfig | undefined): void {
@@ -122,18 +140,21 @@ axiosClient.interceptors.request.use(async (config) => {
 
   if (isGet(config) && !config.timeout) config.timeout = DEFAULT_GET_TIMEOUT_MS;
 
+  config.telemetryStartedAt = performance.now();
   trackActiveGet(config);
   return config;
 });
 
 axiosClient.interceptors.response.use(
   (response) => {
+    recordAttempt(response.config, response.status);
     settleActiveGet(response.config);
     return response;
   },
   async (error: unknown) => {
     if (!axios.isAxiosError(error)) return Promise.reject(error);
     const config = error.config;
+    recordAttempt(config, error.response?.status);
     if (config && shouldRetry(error, config)) {
       const attempt = config.retryCount ?? 0;
       config.retryCount = attempt + 1;

@@ -1,0 +1,476 @@
+/* HUD gutters — the instrument columns flanking the stage on a wide window.
+   Scoped entirely under .hud-root; nothing here leaks into a route.
+
+   Design rules this file encodes:
+   - No card, no glass, no border-box. The stage is the only object on screen;
+     a third and fourth surface out here would flatten the hierarchy. Content
+     sits on the bare canvas, divided by hairlines.
+   - Monospace, 9–11px, tabular figures. This is the "developer" tell, and the
+     tabular figures are load-bearing: a clock that reflows every second is a
+     distraction in the corner of the eye.
+   - Three semantic colours only, straight from the route palette (sage = fine,
+     amber = watch, rose = act). No neon, no traffic-light saturation.
+   - Motion is near-zero. One 2.4s pulse on the backend dot, and only when the
+     backend is healthy — a HUD that twitches costs attention all day.
+
+   Dark mode is derived at build time by config/postcss-dark-theme.ts from the
+   light values below, so every colour here is a real literal on a token. */
+
+.hud-root {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  /* Chrome, not content: the gutters must never intercept a click aimed at a
+     card, a modal scrim or the side rail. The two real controls opt back in. */
+  pointer-events: none;
+
+  --hud-ink: #171b15;
+  /* Tuned against the sage canvas (#dfe4df), not a white card: the route
+     palette's #6b7165 / #999e91 pair loses roughly a stop of contrast out here,
+     and these are 9–10px labels. */
+  --hud-ink-2: #5c6355;
+  --hud-ink-3: #7e857a;
+  --hud-line: rgba(23, 27, 21, 0.1);
+  --hud-line-soft: rgba(23, 27, 21, 0.06);
+  --hud-good: #2e6b4f;
+  --hud-watch: #9a5a10;
+  --hud-bad: #c0596e;
+  --hud-track: rgba(23, 27, 21, 0.09);
+
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+/* The spare band beside the stage, to the pixel: .dashboard-stage is
+   min(100%, 1200px) centred by auto margins in a viewport-sized shell, so the
+   leftover either side is exactly half of what is past 1200px. Percentages on a
+   fixed element resolve against the same box the stage's do, at any html zoom. */
+.hud-gutter {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  width: max(0px, calc((100% - 1200px) / 2));
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.hud-gutter--left {
+  left: 0;
+}
+
+.hud-gutter--right {
+  right: 0;
+}
+
+/* Centred in the band rather than hugging either edge: flush to the stage it
+   reads as a third content column, flush to the window it drifts out of
+   peripheral range on a wide display. Centred, the pair reads as a frame. */
+.hud-column {
+  display: flex;
+  width: min(268px, 100% - 36px);
+  max-height: calc(100% - 44px);
+  flex-direction: column;
+  gap: 17px;
+  animation: hud-column-in 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.hud-column--telemetry {
+  animation-delay: 60ms;
+}
+
+@keyframes hud-column-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── Hero: clock (left) / uptime (right) ─────────────────────────────────── */
+
+.hud-clock {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.hud-clock-time {
+  color: var(--hud-ink);
+  font-size: 27px;
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+
+.hud-clock-time--small {
+  font-size: 21px;
+}
+
+.hud-clock-meta {
+  color: var(--hud-ink-3);
+  font-size: 8.5px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+}
+
+/* ── Block ───────────────────────────────────────────────────────────────── */
+
+.hud-block {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-top: 11px;
+  border-top: 1px solid var(--hud-line);
+}
+
+.hud-block-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.hud-eyebrow {
+  color: var(--hud-ink-2);
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.hud-block-meta {
+  overflow: hidden;
+  color: var(--hud-ink-3);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Row: label ···· value ───────────────────────────────────────────────── */
+
+.hud-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.5;
+}
+
+.hud-row-label {
+  color: var(--hud-ink-3);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+/* The leader is what turns a stack of rows into a readout rather than a list. */
+.hud-row-leader {
+  flex: 1 1 auto;
+  min-width: 10px;
+  border-bottom: 1px dotted var(--hud-line);
+  transform: translateY(1px);
+}
+
+.hud-row-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--hud-ink);
+  font-size: 10.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ── Hero value inside a block (temperature, AQI) ────────────────────────── */
+
+.hud-hero {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin-bottom: 3px;
+}
+
+.hud-hero-value {
+  color: var(--hud-ink);
+  font-size: 23px;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.hud-hero-glyph {
+  color: var(--hud-ink-2);
+  font-size: 15px;
+  line-height: 1;
+}
+
+.hud-hero-unit {
+  color: var(--hud-ink-3);
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* ── Bar, dot, sparkline ─────────────────────────────────────────────────── */
+
+.hud-bar {
+  overflow: hidden;
+  width: 100%;
+  height: 2px;
+  margin: 3px 0 4px;
+  border-radius: 2px;
+  background: var(--hud-track);
+}
+
+.hud-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--hud-ink-2);
+  transition: width 600ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.hud-bar-fill.hud-tone-good {
+  background: var(--hud-good);
+}
+
+.hud-bar-fill.hud-tone-watch {
+  background: var(--hud-watch);
+}
+
+.hud-bar-fill.hud-tone-bad {
+  background: var(--hud-bad);
+}
+
+.hud-dot {
+  width: 5px;
+  height: 5px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--hud-ink-3);
+}
+
+.hud-dot.hud-tone-good {
+  background: var(--hud-good);
+}
+
+.hud-dot.hud-tone-watch {
+  background: var(--hud-watch);
+}
+
+.hud-dot.hud-tone-bad {
+  background: var(--hud-bad);
+}
+
+.hud-dot.is-pulsing {
+  animation: hud-pulse 2400ms ease-in-out infinite;
+}
+
+@keyframes hud-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.hud-spark-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 3px;
+}
+
+.hud-spark {
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
+  stroke: var(--hud-ink-2);
+  stroke-linejoin: round;
+}
+
+.hud-spark.hud-tone-good {
+  stroke: var(--hud-good);
+}
+
+.hud-spark.hud-tone-watch {
+  stroke: var(--hud-watch);
+}
+
+.hud-spark.hud-tone-bad {
+  stroke: var(--hud-bad);
+}
+
+.hud-spark.is-empty {
+  border-bottom: 1px dotted var(--hud-line);
+}
+
+.hud-spark-value {
+  color: var(--hud-ink);
+  font-size: 10.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ── Request stream ──────────────────────────────────────────────────────── */
+
+.hud-stream {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hud-stream-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9.5px;
+  line-height: 1.45;
+}
+
+.hud-stream-method {
+  width: 30px;
+  flex: none;
+  color: var(--hud-ink-3);
+  font-weight: 600;
+}
+
+.hud-stream-path {
+  overflow: hidden;
+  flex: 1 1 auto;
+  color: var(--hud-ink-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hud-stream-status {
+  flex: none;
+  font-weight: 600;
+}
+
+.hud-stream-ms {
+  width: 30px;
+  flex: none;
+  color: var(--hud-ink-3);
+  text-align: right;
+}
+
+/* ── Notes, footer, controls ─────────────────────────────────────────────── */
+
+.hud-note {
+  margin: 0;
+  color: var(--hud-ink-3);
+  font-size: 9.5px;
+  line-height: 1.55;
+}
+
+.hud-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 9px;
+  border-top: 1px solid var(--hud-line-soft);
+}
+
+.hud-footer-text {
+  overflow: hidden;
+  color: var(--hud-ink-3);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hud-action,
+.hud-toggle {
+  /* The only two things out here that take a pointer. */
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 160ms ease, border-color 160ms ease, opacity 160ms ease;
+}
+
+.hud-action {
+  margin-top: 7px;
+  padding: 5px 9px;
+  border: 1px solid var(--hud-line);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--hud-ink-2);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.hud-action:hover:not(:disabled) {
+  border-color: var(--hud-ink-3);
+  color: var(--hud-ink);
+}
+
+.hud-action:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* Parked in the corner of the window rather than in a column, so it stays put
+   whether the HUD is on or off. */
+.hud-toggle {
+  position: absolute;
+  bottom: 14px;
+  left: 16px;
+  padding: 4px 7px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--hud-ink-3);
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  opacity: 0.3;
+}
+
+.hud-toggle:hover {
+  color: var(--hud-ink);
+  opacity: 1;
+}
+
+.hud-root[data-active='false'] .hud-toggle {
+  opacity: 0.55;
+}
+
+/* Under 769px the shell stops being a fixed frame and the stage fills the
+   window — there is no gutter to fill, and the bottom dock owns the corners. */
+@media (max-width: 768px) {
+  .hud-root {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-column {
+    animation: none;
+  }
+
+  .hud-dot.is-pulsing {
+    animation: none;
+  }
+
+  .hud-bar-fill {
+    transition: none;
+  }
+}
