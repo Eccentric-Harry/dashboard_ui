@@ -1600,24 +1600,26 @@
   gap: 14px;
 }
 
-/* Seven cells, one per day, filled by how the anchor landed: full for
+/* Seven cylinders, one per day, filled by how the anchor landed: full for
    achieved, half for partial, a stub for missed, a dot for "set, not called
-   yet". */
+   yet". Fixed narrow width + fully rounded ends keep them capsule-shaped at
+   any card width; the row spreads them edge to edge. */
 .hm-anchor-track {
   display: flex;
   flex: 1 1 54px;
-  gap: 4px;
-  min-height: 26px;
+  align-items: stretch;
+  justify-content: space-between;
+  min-height: 44px;
   max-height: 72px;
   margin-top: auto;
 }
 
 .hm-anchor-cell {
   position: relative;
-  flex: 1;
-  min-width: 0;
+  flex: 0 0 auto;
+  width: 26px;
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: 999px;
   background: var(--hm-accent-soft);
 }
 
@@ -1642,7 +1644,7 @@
 .hm-anchor-cell.is-open::after {
   content: '';
   position: absolute;
-  bottom: 8px;
+  bottom: 10px;
   left: 50%;
   width: 6px;
   height: 6px;
@@ -1682,7 +1684,7 @@
 .hm-legend i {
   width: 8px;
   height: 8px;
-  border-radius: 2.5px;
+  border-radius: 999px;
   background: var(--hm-cell-b);
 }
 
@@ -3580,7 +3582,6 @@
 
   .hm-anchor-track {
     flex-basis: 44px;
-    gap: 3px;
   }
 
   .hm-anchor-actions .hm-soft-btn {
