@@ -87,6 +87,15 @@ export function formatCompactMs(ms: number): string {
   return `${Math.round(ms / 1000)}s`;
 }
 
+/**
+ * Trims float noise from ratios the browser reports as raw doubles — a 1.7 DPR
+ * comes back as 1.7000000476837158, which is 19 characters of garbage that blew
+ * the metric cell out of its grid.
+ */
+export function formatScale(value: number): string {
+  return `${Math.round(value * 100) / 100}`;
+}
+
 export function formatTemperature(celsius: number | undefined): string {
   return celsius === undefined || Number.isNaN(celsius) ? '—' : `${Math.round(celsius)}°`;
 }

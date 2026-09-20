@@ -24,7 +24,7 @@ import {
   useUptimeSeconds,
   useViewport,
 } from '../use-runtime-vitals'
-import { formatBytes, formatCompactMs, formatDuration, formatMs } from '../hud-format'
+import { formatBytes, formatCompactMs, formatDuration, formatMs, formatScale } from '../hud-format'
 
 const deviceFacts = readDeviceFacts()
 const apiHost = (() => {
@@ -151,7 +151,7 @@ function TelemetryColumn({
             { label: 'Cores', value: deviceFacts.cores ? `${deviceFacts.cores}×` : '' },
             { label: 'Memory', value: deviceFacts.memoryGb ? `${deviceFacts.memoryGb} GB` : '' },
             { label: 'Viewport', value: `${viewport.width}×${viewport.height}` },
-            { label: 'Zoom · DPR', value: `${viewport.zoom.toFixed(2)} · ${deviceFacts.pixelRatio}×` },
+            { label: 'Zoom · DPR', value: `${viewport.zoom.toFixed(2)} · ${formatScale(deviceFacts.pixelRatio)}×` },
           ]}
         />
       </HudPanel>

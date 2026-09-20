@@ -293,6 +293,12 @@
   gap: 1px;
 }
 
+/* Cells are dropped when a browser cannot supply them, so the count is not fixed.
+   An odd last one takes the whole row rather than leaving a hole beside it. */
+.hud-metric:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
 .hud-metric-label {
   overflow: hidden;
   color: var(--hud-ink-3);
@@ -305,11 +311,13 @@
 }
 
 .hud-metric-value {
+  overflow: hidden;
   color: var(--hud-ink);
   font-family: var(--hud-mono);
   font-size: 11.5px;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
