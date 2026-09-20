@@ -1,120 +1,174 @@
-const CACHE_NAME = 'pwa-shell-v1';
+/*
+ * Service worker: PWA shell + Web Push.
+ *
+ * The one rule that matters here: a notification is shown when — and only when — a real
+ * `push` event arrives from the push service. The worker has no timers, no polling and no
+ * idea what is on the user's calendar. Everything it displays was decided by the backend
+ * and delivered over the wire, which is why launching the app, reloading it, or opening a
+ * second tab cannot make an alert appear.
+ *
+ * The API base is passed on the registration URL (`/sw.js?api=...`) because a worker has
+ * no access to the app's environment or its localStorage.
+ */
+
+const CACHE_NAME = 'pwa-shell-v2';
+const API_BASE = new URL(self.location.href).searchParams.get('api') || '';
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.add('/index.html');
-    })
-  );
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.add('/index.html')));
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
-      );
-    }).then(() => self.clients.claim())
+    caches
+      .keys()
+      .then((names) => Promise.all(names.filter((name) => name !== CACHE_NAME).map((name) => caches.delete(name))))
+      .then(() => self.clients.claim())
   );
 });
 
-// Intercept navigation requests and serve the SPA shell.
-// This ensures the app loads correctly on all routes when running as a
-// standalone PWA on iOS, even after a cold launch or page refresh.
+// Navigation requests fall back to the cached shell so a cold PWA launch works offline.
 self.addEventListener('fetch', (event) => {
   if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match('/index.html');
-      })
-    );
+    event.respondWith(fetch(event.request).catch(() => caches.match('/index.html')));
   }
 });
 
-// Listen for push events from browser push service
+// ── Push ────────────────────────────────────────────────────────────────────
+
 self.addEventListener('push', (event) => {
   let data = {};
   if (event.data) {
     try {
       data = event.data.json();
-    } catch (e) {
-      data = { title: 'Personal Dashboard Alert', body: event.data.text() };
+    } catch (err) {
+      data = { title: 'Personal Dashboard', body: event.data.text() };
     }
   }
 
-  const title = data.title || 'Personal Dashboard Alert';
+  const title = data.title || 'Personal Dashboard';
   const options = {
     body: data.body || 'You have an upcoming event.',
     icon: '/logo.png',
     badge: '/logo.png',
-    tag: data.tag || 'dashboard-notification',
-    data: { url: data.url || '/', itemId: data.itemId || null },
-    vibrate: [100, 50, 100],
-    sound: '/iphone-notification.mp3',
-    silent: true,
+    // The tag is the backend's notification id. If the same notification ever reaches this
+    // device twice — a retry, a second push service attempt — the browser replaces the
+    // banner instead of stacking a duplicate. renotify:false keeps that replacement quiet.
+    tag: data.tag || data.id || 'dashboard-notification',
+    renotify: false,
     requireInteraction: true,
+    timestamp: data.fireAt ? Date.parse(data.fireAt) : Date.now(),
+    vibrate: [100, 50, 100],
+    data: {
+      url: data.url || '/',
+      id: data.id || null,
+      sourceId: data.sourceId || null,
+      actionToken: data.actionToken || null,
+    },
     actions: [
       { action: 'snooze', title: 'Snooze 10m' },
-      { action: 'open', title: 'Open App' }
-    ]
+      { action: 'open', title: 'Open' },
+    ],
   };
 
   event.waitUntil(
-    self.registration.showNotification(title, options)
+    self.registration
+      .showNotification(title, options)
+      // Tell any open tab, so the in-app list and toast react to the same event rather
+      // than to a second, independent timer.
+      .then(() => broadcast({ type: 'PUSH_RECEIVED', notification: data }))
   );
 });
 
-// Handle notification click events
+/**
+ * The browser can replace a subscription at any time (key rotation, storage eviction).
+ * Without this the server keeps a dead endpoint and the device silently stops receiving
+ * anything — the classic "it just stopped working after a while" failure.
+ */
+self.addEventListener('pushsubscriptionchange', (event) => {
+  const oldSubscription = event.oldSubscription;
+  // `options` is absent on some browsers' change events, and reading through it eagerly
+  // would throw before waitUntil ever ran — taking the whole handler with it.
+  const keyOf = (subscription) => (subscription && subscription.options
+    ? subscription.options.applicationServerKey
+    : undefined);
+  const applicationServerKey = keyOf(event.newSubscription) || keyOf(oldSubscription);
+
+  event.waitUntil(
+    (async () => {
+      try {
+        const subscription =
+          event.newSubscription ||
+          (await self.registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey }));
+        const raw = subscription.toJSON();
+        await fetch(`${API_BASE}/push/rotate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            oldEndpoint: oldSubscription ? oldSubscription.endpoint : null,
+            endpoint: raw.endpoint,
+            p256dh: raw.keys.p256dh,
+            auth: raw.keys.auth,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+          }),
+        });
+      } catch (err) {
+        // Nothing useful to do from here; the app reconciles on its next launch.
+        console.error('[sw] push subscription rotation failed', err);
+      }
+    })()
+  );
+});
+
+// ── Notification interaction ────────────────────────────────────────────────
+
 self.addEventListener('notificationclick', (event) => {
+  const data = event.notification.data || {};
   event.notification.close();
-  
+
   if (event.action === 'snooze') {
-    const itemId = event.notification.data?.itemId;
+    // Snoozing is a backend reschedule, authorised by the token that arrived inside the
+    // encrypted payload. The old implementation used a setTimeout in here, which never
+    // fired: a service worker is killed within seconds of going idle.
     event.waitUntil(
-      clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-        if (windowClients.length > 0) {
-          windowClients.forEach(client => {
-            client.postMessage({ type: 'SNOOZE_NOTIFICATION', itemId });
-          });
-        } else {
-          // Best effort snooze if app is closed.
-          setTimeout(() => {
-            const title = event.notification.title;
-            const options = {
-              body: event.notification.body,
-              icon: event.notification.icon,
-              badge: event.notification.badge,
-              tag: event.notification.tag,
-              data: event.notification.data,
-              requireInteraction: true,
-              actions: event.notification.actions
-            };
-            self.registration.showNotification(title, options);
-          }, 10 * 60 * 1000);
+      (async () => {
+        if (data.actionToken) {
+          try {
+            await fetch(`${API_BASE}/push/actions/snooze`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ actionToken: data.actionToken, minutes: 10 }),
+            });
+          } catch (err) {
+            console.error('[sw] snooze request failed', err);
+          }
         }
-      })
+        await broadcast({ type: 'NOTIFICATION_SNOOZED', id: data.id, minutes: 10 });
+      })()
     );
     return;
   }
 
-  const urlToOpen = event.notification.data?.url || '/';
-  
+  const urlToOpen = data.url || '/';
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      // If a tab is already open, focus it
-      for (let i = 0; i < windowClients.length; i++) {
-        const client = windowClients[i];
-        if (client.url.includes(urlToOpen) && 'focus' in client) {
+    (async () => {
+      const windowClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      await broadcast({ type: 'NOTIFICATION_CLICK', id: data.id, url: urlToOpen });
+      for (const client of windowClients) {
+        if ('focus' in client) {
           return client.focus();
         }
       }
-      // Otherwise open a new tab
-      if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(urlToOpen);
       }
-    })
+      return undefined;
+    })()
   );
 });
+
+async function broadcast(message) {
+  const windowClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  windowClients.forEach((client) => client.postMessage(message));
+}

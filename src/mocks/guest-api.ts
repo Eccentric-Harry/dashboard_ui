@@ -373,6 +373,25 @@ export function resolveGuestRequest(request: GuestRequest): GuestResponse | null
 
   const respondWith = (body: unknown): GuestResponse => ({ status: 200, body });
 
+  // ── Notifications & Web Push ──────────────────────────────────────────
+  // A guest has no account and therefore no device the backend could push to. These are
+  // answered locally rather than falling through to the network, where they would 401 and
+  // leave the client believing it had registered a subscription the server never stored.
+  if (urlStr.includes('/api/v1/notifications')) {
+    if ((request.method || 'GET').toUpperCase() === 'GET') {
+      return respondWith({ data: [] });
+    }
+    return respondWith({ data: null });
+  }
+
+  if (urlStr.includes('/api/v1/push/')) {
+    if (urlStr.includes('/push/status')) {
+      return respondWith({ data: { registered: false, activeDeviceCount: 0 } });
+    }
+    // Deliberately a failure: guest mode must not look like alerts were switched on.
+    return { status: 403, body: { data: { message: 'Alerts are not available in guest mode.' } } };
+  }
+
   // ── Mind tab ──────────────────────────────────────────────────────────
   if (urlStr.includes('/api/v1/mind/')) {
     const method = (request.method || 'GET').toUpperCase();

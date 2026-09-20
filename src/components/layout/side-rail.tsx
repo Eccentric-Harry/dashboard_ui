@@ -6,6 +6,7 @@ import type { AppPath } from '@/app/routes'
 import { useNotifications } from '@/store/notification-store'
 import { ConfirmDialog } from '../ui/confirm-dialog'
 import { spiralActions } from '@/store/spiral-store'
+import { logoutAndReload } from '@/services/http/session';
 
 type DashboardStageProps = {
   activePath: AppPath
@@ -41,8 +42,7 @@ function SideRail({ activePath, onNavigate }: DashboardStageProps) {
   }
 
   const confirmLogout = () => {
-    localStorage.clear()
-    window.location.reload()
+    void logoutAndReload()
   }
 
   return (
