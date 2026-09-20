@@ -5,6 +5,7 @@ import { useNotifications } from '@/store/notification-store';
 import { DARK_THEME_ROUTES, useAppearanceStore } from '@/store/appearance-store';
 import type { AppPath } from '@/app/routes';
 import { ConfirmDialog } from '../ui/confirm-dialog';
+import { logoutAndReload } from '@/services/http/session';
 
 type NotificationCenterProps = {
   onNavigate?: (path: AppPath) => void;
@@ -259,7 +260,7 @@ function NotificationCenter({ onNavigate }: NotificationCenterProps) {
         message="Do you want to log out of your session?"
         confirmLabel="Log Out"
         cancelLabel="Cancel"
-        onConfirm={() => { localStorage.clear(); window.location.reload(); }}
+        onConfirm={() => { void logoutAndReload(); }}
         onCancel={() => setShowLogoutDialog(false)}
       />
     </>

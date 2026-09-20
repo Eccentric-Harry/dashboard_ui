@@ -14,6 +14,7 @@ import { getAvatarImage, avatarPresets } from '@/lib/avatar';
 import { useConfirmClose } from '@/hooks/use-confirm-close';
 import './profile-page.css';
 import { getErrorMessage } from '@/lib/errors';
+import { logoutAndReload } from '@/services/http/session';
 
 type ProfileOverviewProps = {
   activePath: AppPath;
@@ -393,8 +394,7 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
   };
 
   const confirmLogout = () => {
-    localStorage.clear();
-    window.location.reload();
+    void logoutAndReload();
   };
 
   const handleCancel = () => {
