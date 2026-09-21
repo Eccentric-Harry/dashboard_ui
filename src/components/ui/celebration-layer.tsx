@@ -2,13 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Check, Droplet, Flame, Sparkles, Trophy, type LucideIcon } from 'lucide-react'
 
 import { ConfettiEngine } from '@/lib/celebration/confetti-engine'
-import { cn } from '@/lib/utils'
-import {
-  useCelebrationStore,
-  type CaptionPlacement,
-  type CelebrationIcon,
-  type CelebrationMoment,
-} from '@/store/celebration-store'
+import { useCelebrationStore, type CelebrationIcon, type CelebrationMoment } from '@/store/celebration-store'
 
 import './celebration-layer.css'
 
@@ -20,29 +14,20 @@ const ICONS: Record<CelebrationIcon, LucideIcon> = {
   flame: Flame,
 }
 
-/** How long a moment stays mounted — outlives its slowest particle and its caption. */
+/** How long a moment stays mounted — outlives its slowest particle and its card. */
 const LIFETIME_MS = { full: 5400, echo: 2900 } as const
 /** Particle counts are tuned for a ~1280×800 screen and scale with its area, so a phone
  *  gets a proportionate storm rather than a wall of paper. */
 const REFERENCE_AREA = 1280 * 800
-/** Layout px between the anchor's edge and the caption. */
-const CAPTION_GAP = 10
-/** Below this much room on the requested side, the caption flips to the other one. */
-const CAPTION_MIN_ROOM = 64
-/** Half the caption's max width plus the viewport margin, for edge clamping. */
-const CAPTION_HALF_WIDTH = 120
-const EDGE = 12
 
 type Glow = { id: number; x: number; y: number; accent: string }
 
-type PlacedCaption = {
+type Card = {
   id: number
+  eyebrow?: string
   label: string
   detail?: string
   Icon: LucideIcon
-  placement: CaptionPlacement
-  x: number
-  y: number
   accent: string
 }
 
@@ -60,50 +45,24 @@ function haptic() {
   navigator.vibrate([12, 40, 18])
 }
 
-/**
- * Converts the moment's anchor (getBoundingClientRect px, which `html { zoom }` scales)
- * into the layer's own layout px, then picks a side with room and clamps to the edges.
- */
-function placeCaption(moment: CelebrationMoment, layer: HTMLDivElement | null): PlacedCaption | null {
-  if (!moment.caption || !layer) return null
-  const box = layer.getBoundingClientRect()
-  const scale = box.width ? layer.offsetWidth / box.width : 1
-  const width = layer.offsetWidth
-  const height = layer.offsetHeight
-
-  let placement = moment.caption.placement
-  let x = width / 2
-  let y = 72
-  if (moment.anchor) {
-    const top = (moment.anchor.top - box.top) * scale
-    const bottom = top + moment.anchor.height * scale
-    x = (moment.anchor.left - box.left + moment.anchor.width / 2) * scale
-    if (placement === 'above' && top < CAPTION_MIN_ROOM) placement = 'below'
-    else if (placement === 'below' && height - bottom < CAPTION_MIN_ROOM) placement = 'above'
-    y = placement === 'above' ? top - CAPTION_GAP : bottom + CAPTION_GAP
-  } else {
-    placement = 'below'
-  }
-  const half = Math.max(0, Math.min(CAPTION_HALF_WIDTH, width / 2 - EDGE))
-  x = Math.min(Math.max(x, EDGE + half), width - EDGE - half)
-
-  return {
-    id: moment.id,
-    label: moment.caption.label,
-    detail: moment.caption.detail,
-    Icon: ICONS[moment.caption.icon],
-    placement,
-    x,
-    y,
-    accent: moment.accent,
-  }
+/** The headline's first word goes italic — the same beat as the route titles' weekday. */
+function Headline({ text }: { text: string }) {
+  const space = text.indexOf(' ')
+  if (space < 0) return <em>{text}</em>
+  return (
+    <>
+      <em>{text.slice(0, space)}</em>
+      {text.slice(space)}
+    </>
+  )
 }
 
 /**
  * The app's one celebration surface, mounted once in App.tsx. Plays whatever
  * `celebrationActions.celebrate()` queues: confetti on a canvas that exists only while
- * something is in the air, a caption pill beside the achievement, and a polite
- * screen-reader announcement. Never takes a pointer event.
+ * something is in the air, and — for a labelled moment — an achievement card at the
+ * centre whose ring closes, announced politely to screen readers. Never takes a
+ * pointer event, so nothing under it is ever blocked.
  */
 function CelebrationLayer() {
   const moments = useCelebrationStore.use.moments()
@@ -113,7 +72,7 @@ function CelebrationLayer() {
   const engineRef = useRef<ConfettiEngine | null>(null)
   const scheduled = useRef(new Set<number>())
   const timers = useRef(new Set<number>())
-  const [captions, setCaptions] = useState<PlacedCaption[]>([])
+  const [cards, setCards] = useState<Card[]>([])
   const [glows, setGlows] = useState<Glow[]>([])
   const [announcement, setAnnouncement] = useState('')
 
@@ -175,9 +134,8 @@ function CelebrationLayer() {
         }
       }
       if (moment.caption) {
-        const placed = placeCaption(moment, layerRef.current)
-        if (placed) setCaptions((prev) => [...prev, placed])
-        const { label, detail } = moment.caption
+        const { eyebrow, label, detail, icon } = moment.caption
+        setCards((prev) => [...prev, { id: moment.id, eyebrow, label, detail, Icon: ICONS[icon], accent: moment.accent }])
         setAnnouncement(detail ? `${label}, ${detail}` : label)
       }
     }
@@ -189,7 +147,7 @@ function CelebrationLayer() {
       later(() => play(moment), wait)
       later(() => {
         scheduled.current.delete(moment.id)
-        setCaptions((prev) => prev.filter((c) => c.id !== moment.id))
+        setCards((prev) => prev.filter((c) => c.id !== moment.id))
         setGlows((prev) => prev.filter((g) => g.id !== moment.id))
         dismiss(moment.id)
       }, wait + LIFETIME_MS[moment.intensity])
@@ -215,19 +173,31 @@ function CelebrationLayer() {
           />
         ))}
         {needsCanvas && <canvas ref={canvasRef} className="celebration-canvas" />}
-        {captions.map(({ id, Icon, label, detail, placement, x, y, accent }) => (
-          <div
-            key={id}
-            className={cn('celebration-caption', `is-${placement}`)}
-            style={{ left: x, top: y, '--celebration-accent': accent } as CSSProperties}
-          >
-            <span className="celebration-caption-icon">
-              <Icon size={13} strokeWidth={3} />
-            </span>
-            <span className="celebration-caption-label">{label}</span>
-            {detail && <span className="celebration-caption-detail">{detail}</span>}
+        {cards.length > 0 && (
+          <div className="celebration-stack">
+            {cards.map(({ id, eyebrow, label, detail, Icon, accent }) => (
+              // The slot collapses once its card has faded, so a card below glides up.
+              <div key={id} className="celebration-slot">
+                <div className="celebration-card" style={{ '--celebration-accent': accent } as CSSProperties}>
+                  <span className="celebration-ring">
+                    <svg className="celebration-ring-svg" viewBox="0 0 48 48">
+                      <circle className="celebration-ring-track" cx="24" cy="24" r="20" />
+                      <circle className="celebration-ring-value" cx="24" cy="24" r="20" pathLength={100} />
+                    </svg>
+                    <Icon className="celebration-ring-icon" size={20} strokeWidth={2.6} />
+                  </span>
+                  <span className="celebration-card-copy">
+                    {eyebrow && <span className="celebration-card-eyebrow">{eyebrow}</span>}
+                    <span className="celebration-card-title">
+                      <Headline text={label} />
+                    </span>
+                    {detail && <span className="celebration-card-detail">{detail}</span>}
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
       </div>
       <div className="sr-only" role="status" aria-live="polite">
         {announcement}

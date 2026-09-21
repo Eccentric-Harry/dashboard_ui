@@ -33,7 +33,7 @@ import { promoteForHome } from '@/lib/insights/engine'
 import { financeInsights } from '@/lib/insights/finance'
 import { buildMindDays, mindInsights } from '@/lib/insights/mind'
 import { nutritionDaysFromSummary, nutritionInsights } from '@/lib/insights/nutrition'
-import { lastNDates, WATER_QUICK_ADD_ML } from './home-types'
+import { lastNDates, SLEEP_TARGET_MINUTES, WATER_QUICK_ADD_ML } from './home-types'
 import { summarizeSleep } from './sleep-summary'
 import { HOME_WINDOW_DAYS, useHomeData } from './use-home-data'
 import '../nutrition/nutrition-redesign.css'
@@ -48,6 +48,15 @@ const CAPTURE_TOASTS: Record<QuickCaptureMode, string> = {
 
 type HomeOverviewDashboardProps = {
   onNavigate: (pathname: AppPath, search?: string) => void
+}
+
+/** Minutes from bedtime to wake time (HH:mm), across midnight when needed. */
+function sleepMinutesBetween(bedtime: string, wakeTime: string): number {
+  const toMin = (t: string) => {
+    const [h, m] = t.split(':').map(Number)
+    return (h || 0) * 60 + (m || 0)
+  }
+  return (toMin(wakeTime) - toMin(bedtime) + 24 * 60) % (24 * 60)
 }
 
 function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
@@ -470,6 +479,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
   const handleSaveAnchorMeta = useCallback(
     async (patch: { note?: string; outcome?: MindAnchorOutcome | '' }) => {
       if (!todayAnchor) return
+      const landing = patch.outcome === 'ACHIEVED' && todayAnchor.outcome !== 'ACHIEVED'
       setAnchorSaving(true)
       try {
         const res = await mindService.updateEntry(todayAnchor.id, {
@@ -481,6 +491,17 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
         })
         if (res.error) throw new Error(res.error.message)
         await home.reloadAnchors()
+        // Only a switch *to* Achieved, only once saved. Re-landing it the same day echoes.
+        if (landing) {
+          celebrationActions.celebrate({
+            palette: 'confetti',
+            eyebrow: "Today's anchor",
+            label: 'Anchor landed',
+            detail: todayAnchor.text ?? undefined,
+            icon: 'check',
+            once: { key: 'anchor', scope: home.today },
+          })
+        }
       } catch {
         toast.error('Could not save that — try again.')
       } finally {
@@ -499,6 +520,21 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
         if (res.error) throw new Error(res.error.message)
         await home.reloadSleep()
         toast.success('Night logged. Sleep well tonight too.')
+        // A good night — the sleep target reached, or rated 4–5 — gets the full moment;
+        // re-saving the same night only echoes.
+        const minutes = res.data?.durationMinutes ?? sleepMinutesBetween(payload.bedtime, payload.wakeTime)
+        if (minutes >= SLEEP_TARGET_MINUTES || (payload.quality ?? 0) >= 4) {
+          const hours = Math.floor(minutes / 60)
+          const mins = minutes % 60
+          celebrationActions.celebrate({
+            palette: 'confetti',
+            eyebrow: 'Last night',
+            label: 'Good sleep logged',
+            detail: `${hours}h${mins ? ` ${mins}m` : ''} of sleep`,
+            icon: 'sparkles',
+            once: { key: 'sleep', scope: payload.date },
+          })
+        }
       } catch {
         toast.error('Could not save sleep — try again.')
         throw new Error('sleep log failed')
