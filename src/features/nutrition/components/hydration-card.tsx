@@ -92,8 +92,8 @@ function HydrationCard() {
   const remainingL = Math.max(0, target - logged) / 1000
   const pace = getPace(logged, target, isComplete, selectedDate)
 
-  // Water goal met → the glasses celebrate. 'hydration' is the same goal key Home uses,
-  // so hitting it there leaves only a quiet echo here. Today only.
+  // Water goal met → a full-screen celebration launched from the glasses, every time the
+  // route opens with it met. 'hydration' is the same goal key Home records. Today only.
   const segmentsRef = useRef<HTMLDivElement | null>(null)
   const today = isoDate()
   const viewedDay = selectedDate.slice(0, 10)
@@ -106,6 +106,8 @@ function HydrationCard() {
     enabled: viewedDay === today,
     anchorRef: segmentsRef,
     palette: 'water',
+    // Full effect on every visit while the goal stands, not just the first of the day.
+    repeat: 'full',
     label: 'Water goal met',
     detail: `${(logged / 1000).toFixed(1)}L`,
     icon: 'droplet',

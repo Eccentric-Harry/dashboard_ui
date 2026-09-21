@@ -21,7 +21,10 @@ const ICONS: Record<CelebrationIcon, LucideIcon> = {
 }
 
 /** How long a moment stays mounted — outlives its slowest particle and its caption. */
-const LIFETIME_MS = { full: 3600, echo: 2900 } as const
+const LIFETIME_MS = { full: 5400, echo: 2900 } as const
+/** Particle counts are tuned for a ~1280×800 screen and scale with its area, so a phone
+ *  gets a proportionate storm rather than a wall of paper. */
+const REFERENCE_AREA = 1280 * 800
 /** Layout px between the anchor's edge and the caption. */
 const CAPTION_GAP = 10
 /** Below this much room on the requested side, the caption flips to the other one. */
@@ -29,6 +32,8 @@ const CAPTION_MIN_ROOM = 64
 /** Half the caption's max width plus the viewport margin, for edge clamping. */
 const CAPTION_HALF_WIDTH = 120
 const EDGE = 12
+
+type Glow = { id: number; x: number; y: number; accent: string }
 
 type PlacedCaption = {
   id: number
@@ -39,6 +44,13 @@ type PlacedCaption = {
   x: number
   y: number
   accent: string
+}
+
+/** Viewport point → the layer's layout px (`html { zoom }` scales one but not the other). */
+function toLayer(layer: HTMLDivElement, x: number, y: number): { x: number; y: number } {
+  const box = layer.getBoundingClientRect()
+  const scale = box.width ? layer.offsetWidth / box.width : 1
+  return { x: (x - box.left) * scale, y: (y - box.top) * scale }
 }
 
 function haptic() {
@@ -102,6 +114,7 @@ function CelebrationLayer() {
   const scheduled = useRef(new Set<number>())
   const timers = useRef(new Set<number>())
   const [captions, setCaptions] = useState<PlacedCaption[]>([])
+  const [glows, setGlows] = useState<Glow[]>([])
   const [announcement, setAnnouncement] = useState('')
 
   const needsCanvas = moments.some((m) => !m.reducedMotion)
@@ -129,24 +142,37 @@ function CelebrationLayer() {
       timers.current.add(id)
     }
 
+    // The full moment, in three beats: the achievement's own element bursts (so you
+    // see *what* was met), cannons fire from both bottom corners, then a shower falls
+    // across the whole screen. A soft glow in the goal's colour blooms behind the burst.
+    const playFull = (engine: ConfettiEngine, moment: CelebrationMoment) => {
+      const density = Math.min(1.2, Math.max(0.5, engine.area / REFERENCE_AREA))
+      const n = (count: number) => Math.round(count * density)
+      const { colors, anchor } = moment
+      if (anchor) {
+        const x = anchor.left + anchor.width / 2
+        const y = anchor.top + anchor.height / 2
+        engine.burst({ x, y, colors, count: n(70), spread: 120, power: 16 })
+        const layer = layerRef.current
+        if (layer) setGlows((prev) => [...prev, { id: moment.id, ...toLayer(layer, x, y), accent: moment.accent }])
+      }
+      later(() => engineRef.current?.cannons({ colors, count: n(95) }), anchor ? 120 : 0)
+      later(() => engineRef.current?.shower({ colors, count: n(120), window: 650 }), anchor ? 260 : 140)
+      haptic()
+    }
+
     const play = (moment: CelebrationMoment) => {
       const engine = engineRef.current
       if (!moment.reducedMotion && engine) {
-        const full = moment.intensity === 'full'
-        if (moment.anchor) {
+        if (moment.intensity === 'full') {
+          playFull(engine, moment)
+        } else if (moment.anchor) {
           const x = moment.anchor.left + moment.anchor.width / 2
           const y = moment.anchor.top + moment.anchor.height / 2
-          if (full) {
-            engine.burst({ x, y, colors: moment.colors, count: 58, spread: 112, power: 15 })
-            // A narrower, higher second wave a beat later gives the bloom depth.
-            later(() => engineRef.current?.burst({ x, y, colors: moment.colors, count: 22, spread: 56, power: 18.5 }), 140)
-          } else {
-            engine.burst({ x, y, colors: moment.colors, count: 22, spread: 92, power: 11 })
-          }
+          engine.burst({ x, y, colors: moment.colors, count: 26, spread: 92, power: 11 })
         } else {
-          engine.shower({ colors: moment.colors, count: full ? 56 : 22 })
+          engine.shower({ colors: moment.colors, count: 26 })
         }
-        if (full) haptic()
       }
       if (moment.caption) {
         const placed = placeCaption(moment, layerRef.current)
@@ -164,6 +190,7 @@ function CelebrationLayer() {
       later(() => {
         scheduled.current.delete(moment.id)
         setCaptions((prev) => prev.filter((c) => c.id !== moment.id))
+        setGlows((prev) => prev.filter((g) => g.id !== moment.id))
         dismiss(moment.id)
       }, wait + LIFETIME_MS[moment.intensity])
     }
@@ -180,6 +207,13 @@ function CelebrationLayer() {
   return (
     <>
       <div ref={layerRef} className="celebration-layer" aria-hidden="true">
+        {glows.map(({ id, x, y, accent }) => (
+          <span
+            key={id}
+            className="celebration-glow"
+            style={{ left: x, top: y, '--celebration-accent': accent } as CSSProperties}
+          />
+        ))}
         {needsCanvas && <canvas ref={canvasRef} className="celebration-canvas" />}
         {captions.map(({ id, Icon, label, detail, placement, x, y, accent }) => (
           <div

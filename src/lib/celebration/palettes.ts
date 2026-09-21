@@ -1,8 +1,9 @@
-// Celebration palettes. Each commits to one hue family plus a neutral, the way the
-// routes themselves do: a rainbow of party brights reads as pasted-on over the
-// desaturated pastel ground, while "the metric's own colour, raining" reads as the
-// achievement itself. Dark sets are lifted a step and never use ink flecks, which
-// vanish on graphite.
+// Celebration palettes. Each is led by one hue family, the way the routes themselves
+// are: a rainbow of party brights reads as pasted-on over the desaturated pastel
+// ground, while "the metric's own colour, raining" reads as the achievement itself.
+// A neutral and two of the route's own pastels ride along at low weight so a
+// full-screen moment still feels festive. Dark sets are lifted a step and never use
+// ink flecks, which vanish on graphite.
 //
 // Colours are hex, or `var(--token, fallback)` for callers who want a route token —
 // those resolve against the anchor element, so a route's dark re-pointing applies.
@@ -24,16 +25,17 @@ const PALETTES: Record<CelebrationPaletteName, PaletteSpec> = {
     dark: ['#dcf05a', '#b3b9f0', '#f3d49b', '#a8d4b6', '#f2b3b9', '#9cc6e8'],
     accent: { light: '#eaff28', dark: '#dcf05a' },
   },
-  // Nutrition's signature — lime with ink, the same pairing as its dark gauge badge.
+  // Nutrition's signature — lime with ink, the same pairing as its dark gauge badge;
+  // sky and apricot are the route's other macro tones.
   lime: {
-    light: ['#cfe965', '#cfe965', '#b5d94c', '#8aa832', '#e4f2a4', '#f3eedc', '#171b15'],
-    dark: ['#8fd4a8', '#8fd4a8', '#73be91', '#c1e7cf', '#cfe965', '#eceef0'],
+    light: ['#cfe965', '#cfe965', '#cfe965', '#b5d94c', '#b5d94c', '#8aa832', '#e4f2a4', '#f3eedc', '#171b15', '#aecde9', '#f3cf8e'],
+    dark: ['#8fd4a8', '#8fd4a8', '#8fd4a8', '#73be91', '#c1e7cf', '#c1e7cf', '#cfe965', '#eceef0', '#9cc2e4', '#e4b077'],
     accent: { light: '#cfe965', dark: '#8fd4a8' },
   },
-  // Hydration — the glass cells' blues.
+  // Hydration — the glass cells' blues, with Nutrition's aqua and lime as accents.
   water: {
-    light: ['#9fc3e4', '#9fc3e4', '#7ba3c8', '#6f9ac2', '#c4dbef', '#5d87ad', '#e2edf8'],
-    dark: ['#8dbbe3', '#8dbbe3', '#5b8dbd', '#92bfe6', '#c3dcf2', '#eceef0'],
+    light: ['#9fc3e4', '#9fc3e4', '#9fc3e4', '#7ba3c8', '#6f9ac2', '#c4dbef', '#5d87ad', '#e2edf8', '#7dcdb9', '#cfe965'],
+    dark: ['#8dbbe3', '#8dbbe3', '#8dbbe3', '#5b8dbd', '#92bfe6', '#c3dcf2', '#eceef0', '#7dcdb9', '#8fd4a8'],
     accent: { light: '#aecde9', dark: '#8dbbe3' },
   },
   // Finance's sage / clay / sand range.

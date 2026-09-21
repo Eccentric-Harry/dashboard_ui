@@ -27,6 +27,19 @@
   height: 100%;
 }
 
+/* A soft bloom of the goal's colour behind the burst — the light the confetti comes
+   out of. Under the canvas, so particles fly over it. */
+.celebration-glow {
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--celebration-accent) 34%, transparent), transparent);
+  translate: -50% -50%;
+  opacity: 0;
+  animation: celebration-glow 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
 .celebration-caption {
   --celebration-rise: 10px;
 
@@ -52,7 +65,7 @@
   transform-origin: 50% 100%;
   animation:
     celebration-caption-in 540ms cubic-bezier(0.34, 1.56, 0.64, 1) 90ms both,
-    celebration-caption-out 380ms cubic-bezier(0.4, 0, 1, 1) 2400ms forwards;
+    celebration-caption-out 380ms cubic-bezier(0.4, 0, 1, 1) 3200ms forwards;
 }
 
 .celebration-caption.is-below {
@@ -122,6 +135,20 @@
   }
 }
 
+@keyframes celebration-glow {
+  0% {
+    opacity: 0;
+    transform: scale(0.35);
+  }
+  22% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+
 @keyframes celebration-fade {
   from {
     opacity: 0;
@@ -148,7 +175,7 @@
   .celebration-caption {
     animation:
       celebration-fade 260ms ease-out both,
-      celebration-fade 320ms ease-in 2400ms reverse forwards;
+      celebration-fade 320ms ease-in 3200ms reverse forwards;
   }
 
   .celebration-caption-icon {

@@ -25,27 +25,28 @@ export interface GoalCelebrationOptions
 
 /** How long the host's own flourish (the returned flag) stays on. */
 const FLOURISH_MS = 1400
-/** While the anchor is off screen or hidden, re-check this often. */
+/** While the anchor is hidden, re-check this often. */
 const VISIBILITY_POLL_MS = 300
 const DEFAULT_DELAY_MS = 450
 
-/** At least most of the element is in the viewport and nothing hides it. */
-function isOnScreen(el: HTMLElement | null): boolean {
+/**
+ * The page is in front and nothing hides the anchor (an overlay's `visibility: hidden`,
+ * a fading ancestor). Scrolled out of view is fine — the moment is full-screen, and the
+ * store drops the anchored burst and moves the caption to the top.
+ */
+function isShowable(el: HTMLElement | null): boolean {
   if (!el || document.visibilityState !== 'visible') return false
-  if (typeof el.checkVisibility === 'function' && !el.checkVisibility({ visibilityProperty: true, opacityProperty: true })) {
-    return false
+  if (typeof el.checkVisibility === 'function') {
+    return el.checkVisibility({ visibilityProperty: true, opacityProperty: true })
   }
-  const r = el.getBoundingClientRect()
-  if (r.width === 0 || r.height === 0 || r.right <= 0 || r.left >= window.innerWidth) return false
-  const visibleHeight = Math.min(r.bottom, window.innerHeight) - Math.max(r.top, 0)
-  return visibleHeight >= Math.min(r.height * 0.6, 120)
+  return el.getClientRects().length > 0
 }
 
 /**
  * Celebrates a goal when it is met — on arrival (the route opens with the goal already
  * met) and when it is crossed while watched. Waits for the data to settle, for the
- * route to finish arriving, and for the anchor to actually be on screen (on mobile the
- * card may sit below the fold: the moment plays when you reach it, not unseen).
+ * route to finish arriving, and for the anchor to be showable (not behind an overlay,
+ * not in a background tab).
  *
  * The first moment per goal per scope is the full one; later ones follow `repeat`
  * (default: a quiet echo from the same element). Returns true for a beat while a
@@ -76,7 +77,7 @@ export function useGoalCelebration(options: GoalCelebrationOptions): boolean {
         // changed, while we waited.
         if (!(o.enabled ?? true) || !o.met || o.scope !== seenScope.current) return
         const el = o.anchorRef.current
-        if (!o.ready || !isOnScreen(el)) {
+        if (!o.ready || !isShowable(el)) {
           pending.current = window.setTimeout(attempt, VISIBILITY_POLL_MS)
           return
         }

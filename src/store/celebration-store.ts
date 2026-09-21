@@ -8,7 +8,10 @@
 //   · reduced motion drops every particle; a labelled moment still shows its caption
 //     (opacity only) and is announced to screen readers, so nobody loses the news;
 //   · `once` gives a goal one full moment per scope; later calls get a quieter echo
-//     by default — the fifth identical fanfare of the day is noise, not delight.
+//     by default (a caller that wants the fanfare every time passes repeat: 'full').
+//
+// A full moment is full-screen: a burst from the anchor, cannons from both bottom
+// corners and a shower from the top. An echo is a small burst from the anchor alone.
 //
 // State holds plain data only: the anchor element is measured at call time and never
 // stored, so the devtools snapshot stays serialisable.
@@ -28,8 +31,9 @@ export type CelebrationIcon = 'check' | 'droplet' | 'sparkles' | 'trophy' | 'fla
 export type CaptionPlacement = 'above' | 'below';
 
 export interface CelebrateOptions {
-  /** The achievement's element: bursts launch from it and the caption sits beside it.
-   *  Omit it (or pass one that is off screen) for confetti drifting from the top edge. */
+  /** The achievement's element: the burst launches from it and the caption sits beside
+   *  it. Without one (or when it is off screen) the moment is screen-wide only and the
+   *  caption sits at the top. */
   anchor?: Element | null;
   palette?: CelebrationPaletteName | readonly string[];
   /** Short caption, e.g. "Water goal met". Full moments only; also announced to screen readers. */
@@ -78,8 +82,9 @@ interface CelebrationActions {
 
 type CelebrationStore = CelebrationState & CelebrationActions;
 
-/** Moments that land in the same instant (two goals met on arrival) play this far apart. */
-const SEQUENCE_GAP_MS = 320;
+/** Moments that land together (two goals met on arrival) play this far apart — two
+ *  distinct beats rather than one merged storm. */
+const SEQUENCE_GAP_MS = 650;
 
 let nextId = 1;
 let lastStartAt = 0;

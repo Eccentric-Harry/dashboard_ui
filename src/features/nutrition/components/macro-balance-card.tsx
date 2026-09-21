@@ -33,8 +33,8 @@ function MacroBalanceCard() {
   const proteinLogged = proteinGoal?.value || 0
   const proteinTarget = proteinGoal?.target || dailyFood.proteinGoalGrams || PROTEIN_TARGET
 
-  // Protein goal met → the protein row celebrates: a full moment the first time today,
-  // a quiet echo on later visits. Today only — browsing history never celebrates.
+  // Protein goal met → a full-screen celebration launched from the protein row, every
+  // time the route opens with it met. Today only — browsing history never celebrates.
   const today = isoDate()
   const viewedDay = String(data?.date ?? today).slice(0, 10)
   const proteinRowRef = useRef<HTMLDivElement | null>(null)
@@ -46,6 +46,8 @@ function MacroBalanceCard() {
     enabled: viewedDay === today,
     anchorRef: proteinRowRef,
     palette: 'lime',
+    // Full effect on every visit while the goal stands, not just the first of the day.
+    repeat: 'full',
     label: 'Protein goal met',
     detail: `${proteinLogged.toLocaleString()}g`,
     placement: 'above',
