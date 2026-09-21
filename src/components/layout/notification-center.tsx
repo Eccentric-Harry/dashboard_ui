@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Bell, BellOff, Calendar, CheckSquare, Trophy, Eye, EyeOff, Clock, Loader2, RefreshCw, Terminal, LogOut, Layers, Square, Moon, Sun } from 'lucide-react';
+import { X, Bell, BellOff, BellRing, Calendar, CheckSquare, Trophy, Eye, EyeOff, Clock, Loader2, RefreshCw, Terminal, LogOut, Layers, Square, Moon, Sun } from 'lucide-react';
 import { useNotifications } from '@/store/notification-store';
 import { DARK_THEME_ROUTES, useAppearanceStore } from '@/store/appearance-store';
 import type { AppPath } from '@/app/routes';
@@ -24,6 +24,7 @@ function NotificationCenter({ onNavigate }: NotificationCenterProps) {
     clearNotification,
     clearAllNotifications,
     toggleDesktopNotifications,
+    sendTestNotification,
   } = useNotifications();
 
   const surfaceStyle = useAppearanceStore.use.surfaceStyle();
@@ -32,7 +33,7 @@ function NotificationCenter({ onNavigate }: NotificationCenterProps) {
   const { toggleSurfaceStyle, toggleTheme } = useAppearanceStore.use.actions();
 
   const panelRef = useRef<HTMLDivElement>(null);
-  const [busy, setBusy] = useState<'refresh' | 'toggle' | null>(null);
+  const [busy, setBusy] = useState<'refresh' | 'toggle' | 'test' | null>(null);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const [showFinanceGrids, setShowFinanceGrids] = useState(() => {
@@ -91,6 +92,15 @@ function NotificationCenter({ onNavigate }: NotificationCenterProps) {
       bg: 'var(--qa-green-bg)',
       onClick: () => { setBusy('refresh'); location.reload(); },
     },
+    ...(isPushSupported && desktopEnabled ? [{
+      key: 'test-alert',
+      icon: busy === 'test' ? <Loader2 size={18} className="animate-spin" /> : <BellRing size={18} />,
+      label: 'Test Alert',
+      hint: 'Send a push to this account right now to check delivery',
+      color: 'var(--qa-blue)',
+      bg: 'var(--qa-blue-bg)',
+      onClick: async () => { setBusy('test'); await sendTestNotification(); setBusy(null); },
+    }] : []),
     ...(isPushSupported ? [{
       key: 'push',
       icon: busy === 'toggle' ? <Loader2 size={18} className="animate-spin" /> : desktopEnabled ? <Bell size={18} /> : <BellOff size={18} />,

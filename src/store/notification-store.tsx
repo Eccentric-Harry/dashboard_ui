@@ -196,6 +196,8 @@ interface NotificationActions {
     refreshNotifications: () => Promise<void>;
     /** Best-effort teardown before the session is cleared, so this device stops receiving. */
     unregisterDevice: () => Promise<void>;
+    /** Pushes a test notification to this account's devices and reports the transport result. */
+    sendTestNotification: () => Promise<boolean>;
     playSound: () => void;
     startBackgroundScan: (files: File[], description: string | null, mealType: string, date: string) => Promise<string>;
   };
@@ -713,6 +715,46 @@ const useNotificationStoreBase = create<NotificationStore>()(
           unregisterDevice: () => unregisterThisDevice(),
           playSound,
 
+          /**
+           * Proves the delivery path end to end without waiting for a scheduled time. The
+           * interesting case is a partial failure: the server reports per-device outcomes, so
+           * "Apple rejected it with 403" is distinguishable from "it was delivered and your OS
+           * is hiding it" — which are very different problems and look identical from here.
+           */
+          sendTestNotification: async () => {
+            if (!get().desktopEnabled) {
+              toast.error('Turn alerts on for this device first.');
+              return false;
+            }
+            const res = await pushService.sendTest();
+            if (res.error || !res.data) {
+              toast.error(getErrorMessage(res.error, 'Could not send the test notification.'));
+              return false;
+            }
+
+            const { deviceCount, accepted, outcomes } = res.data;
+            if (deviceCount === 0) {
+              toast.error('No devices are registered for alerts on this account.');
+              return false;
+            }
+            if (accepted === 0) {
+              const reason = outcomes[0];
+              console.error('[push] test push rejected by every device', outcomes);
+              toast.error(
+                `Push rejected by the browser's push service (${reason?.kind ?? 'unknown'}${
+                  reason?.statusCode ? ` ${reason.statusCode}` : ''
+                }). Check the backend logs.`,
+              );
+              return false;
+            }
+            toast.success(
+              accepted === deviceCount
+                ? `Test sent to ${accepted} device${accepted === 1 ? '' : 's'}. If nothing appears, the browser or OS is suppressing it.`
+                : `Test accepted by ${accepted} of ${deviceCount} devices.`,
+            );
+            return true;
+          },
+
           toggleDesktopNotifications: async () => {
             if (!PUSH_SUPPORTED) {
               toast.error('This browser does not support Web Push notifications.');
@@ -739,12 +781,17 @@ const useNotificationStoreBase = create<NotificationStore>()(
                 return false;
               }
 
-              // Requested from the click that got us here — the only time it is allowed.
-              const permission = await Notification.requestPermission();
-              set((s) => { s.permission = permission; });
-              if (permission !== 'granted') {
-                toast.error('Permission denied for system notifications.');
-                return false;
+              // Only ask when we do not already have an answer. Re-prompting an origin that
+              // already granted permission is pointless, and requirement-wise the user should
+              // never see a permission dialog they have already dealt with.
+              if (currentPermission() !== 'granted') {
+                // Requested from the click that got us here — the only time it is allowed.
+                const permission = await Notification.requestPermission();
+                set((s) => { s.permission = permission; });
+                if (permission !== 'granted') {
+                  toast.error('Permission denied for system notifications.');
+                  return false;
+                }
               }
 
               const reg = await navigator.serviceWorker.ready;

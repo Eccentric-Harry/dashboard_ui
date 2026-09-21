@@ -105,7 +105,10 @@ describe('notification store', () => {
     localStorage.setItem('authToken', 'token-123');
     sw = installServiceWorkerStub();
     Object.defineProperty(window, 'Notification', {
-      value: Object.assign(vi.fn(), { permission: 'granted', requestPermission: vi.fn() }),
+      value: Object.assign(vi.fn(), {
+        permission: 'granted',
+        requestPermission: vi.fn().mockResolvedValue('granted'),
+      }),
       configurable: true,
     });
     notificationServiceMock.list.mockResolvedValue(ok<ServerNotification[]>([]));
@@ -297,6 +300,24 @@ describe('notification store', () => {
 
       expect(unsubscribe).toHaveBeenCalled();
       expect(useNotificationStore.getState().desktopEnabled).toBe(false);
+    });
+
+    it('does not prompt again when permission was already granted', async () => {
+      sw.registration.pushManager.getSubscription.mockResolvedValue(null);
+      sw.registration.pushManager.subscribe.mockResolvedValue({
+        endpoint: 'https://push.example/new',
+        toJSON: () => ({ endpoint: 'https://push.example/new', keys: { p256dh: 'p', auth: 'a' } }),
+        unsubscribe: vi.fn(),
+      });
+      pushServiceMock.getVapidPublicKey.mockResolvedValue(ok('BNc-test-key'));
+      const { notificationActions } = await loadStore();
+      notificationActions.bootstrap();
+      await new Promise((resolve) => setTimeout(resolve, 20));
+
+      await notificationActions.toggleDesktopNotifications();
+
+      expect(window.Notification.requestPermission).not.toHaveBeenCalled();
+      expect(pushServiceMock.subscribeDevice).toHaveBeenCalledTimes(1);
     });
 
     it('does not re-prompt once notifications are blocked', async () => {

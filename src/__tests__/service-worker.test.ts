@@ -38,7 +38,7 @@ interface FakeScope {
 }
 
 /** Builds a scope, evaluates sw.js inside it, and returns the handles the tests poke at. */
-function loadServiceWorker(clients: FakeClient[] = []): FakeScope {
+function loadServiceWorker(clients: FakeClient[] = [], maxActions = 0): FakeScope {
   const listeners = new Map<string, Listener[]>();
   const showNotification = vi.fn().mockResolvedValue(undefined);
   const subscribe = vi.fn();
@@ -63,6 +63,8 @@ function loadServiceWorker(clients: FakeClient[] = []): FakeScope {
       matchAll: vi.fn().mockImplementation(async () => clients),
       openWindow,
     },
+    // Safari reports 0 here; Chrome reports 2. The push handler feature-detects on it.
+    Notification: { maxActions },
   };
 
   const scope = {
@@ -82,7 +84,6 @@ function loadServiceWorker(clients: FakeClient[] = []): FakeScope {
     Promise,
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-implied-eval
   const factory = new Function(
     'self', 'caches', 'fetch', 'console', 'Intl', 'URL', 'Date', 'JSON', 'Promise',
     SW_SOURCE,
@@ -333,5 +334,70 @@ describe('service worker: subscription rotation', () => {
         toJSON: () => ({ endpoint: 'https://push.example/new', keys: { p256dh: 'p', auth: 'a' } }),
       },
     })).resolves.not.toThrow();
+  });
+});
+
+
+describe('service worker: cross-browser display', () => {
+  /** Safari supports neither action buttons nor requireInteraction. */
+  it('omits actions and requireInteraction where the browser reports no action support', async () => {
+    const sw = loadServiceWorker([], 0);
+
+    await sw.dispatch('push', pushEvent(samplePayload));
+
+    const options = sw.showNotification.mock.calls[0][1];
+    expect(options.actions).toBeUndefined();
+    expect(options.requireInteraction).toBeUndefined();
+    expect(options.body).toBe('Starts now · 11:30');
+  });
+
+  it('includes actions where the browser supports them', async () => {
+    const sw = loadServiceWorker([], 2);
+
+    await sw.dispatch('push', pushEvent(samplePayload));
+
+    const options = sw.showNotification.mock.calls[0][1];
+    expect(options.actions).toHaveLength(2);
+    expect(options.actions[0].action).toBe('snooze');
+    expect(options.requireInteraction).toBe(true);
+  });
+
+  it('caps the actions at what the browser will accept', async () => {
+    const sw = loadServiceWorker([], 1);
+
+    await sw.dispatch('push', pushEvent(samplePayload));
+
+    expect(sw.showNotification.mock.calls[0][1].actions).toHaveLength(1);
+  });
+
+  /**
+   * A rejected showNotification means no banner and no explanation. Retrying with the bare
+   * minimum keeps a fussy option from being the reason the user saw nothing.
+   */
+  it('retries with minimal options when the browser rejects the rich notification', async () => {
+    const sw = loadServiceWorker([], 2);
+    sw.showNotification
+      .mockRejectedValueOnce(new TypeError('actions not supported'))
+      .mockResolvedValueOnce(undefined);
+
+    await sw.dispatch('push', pushEvent(samplePayload));
+
+    expect(sw.showNotification).toHaveBeenCalledTimes(2);
+    const retry = sw.showNotification.mock.calls[1][1];
+    expect(retry.actions).toBeUndefined();
+    expect(retry.body).toBe('Starts now · 11:30');
+    expect(retry.data.url).toBe(samplePayload.url);
+  });
+
+  it('still tells open tabs about the push after a retry', async () => {
+    const client: FakeClient = { url: 'https://app.example.test/home', focus: vi.fn(), postMessage: vi.fn() };
+    const sw = loadServiceWorker([client], 2);
+    sw.showNotification
+      .mockRejectedValueOnce(new TypeError('nope'))
+      .mockResolvedValueOnce(undefined);
+
+    await sw.dispatch('push', pushEvent(samplePayload));
+
+    expect(client.postMessage).toHaveBeenCalledWith({ type: 'PUSH_RECEIVED', notification: samplePayload });
   });
 });

@@ -58,3 +58,57 @@ export interface PushRegistrationStatus {
   activeDeviceCount: number;
   lastSeenAt?: string;
 }
+
+/** One device's answer to an immediate test push. */
+export interface PushTestOutcome {
+  subscriptionId: string;
+  endpointOrigin: string;
+  /** ACCEPTED | EXPIRED | RETRYABLE | PERMANENT */
+  kind: 'ACCEPTED' | 'EXPIRED' | 'RETRYABLE' | 'PERMANENT';
+  statusCode?: number;
+  message?: string;
+}
+
+export interface PushTestResult {
+  deviceCount: number;
+  accepted: number;
+  outcomes: PushTestOutcome[];
+}
+
+export interface NotificationDiagnostics {
+  enabled: boolean;
+  serverTime: string;
+  resolvedTimezone: string;
+  serverTimeLocal: string;
+  devices: {
+    id: string;
+    endpointOrigin: string;
+    active: boolean;
+    inactiveReason?: string;
+    timezone?: string;
+    userAgent?: string;
+    failureCount: number;
+    lastSeenAt?: string;
+    lastSuccessAt?: string;
+    lastFailureAt?: string;
+  }[];
+  upcoming: {
+    id: string;
+    title: string;
+    fireAt: string;
+    fireAtLocal: string;
+    status: NotificationLifecycle;
+    zoneId?: string;
+  }[];
+  recent: {
+    id: string;
+    title: string;
+    fireAt: string;
+    status: NotificationLifecycle;
+    attempts: number;
+    lastError?: string;
+    sentAt?: string;
+    acknowledgedAt?: string;
+    deliveries: string[];
+  }[];
+}

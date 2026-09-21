@@ -3,7 +3,7 @@
 // notification fire, which is what makes them safe to call on boot.
 import { instance } from './http/api-request';
 import type { SafeResult } from '../types/api';
-import type { ServerNotification } from '../types/notifications';
+import type { NotificationDiagnostics, ServerNotification } from '../types/notifications';
 import * as E from './endpoints/notification-endpoints';
 
 export interface NotificationServiceInterface {
@@ -13,6 +13,7 @@ export interface NotificationServiceInterface {
   markAllRead(): Promise<SafeResult<{ updated: number }>>;
   dismiss(id: string): Promise<SafeResult<void>>;
   dismissAll(): Promise<SafeResult<{ dismissed: number }>>;
+  diagnostics(): Promise<SafeResult<NotificationDiagnostics>>;
 }
 
 export const notificationService: NotificationServiceInterface = {
@@ -22,4 +23,5 @@ export const notificationService: NotificationServiceInterface = {
   markAllRead: () => instance.safeCall<{ updated: number }>(E.API_READ_ALL_NOTIFICATIONS),
   dismiss: (id) => instance.safeCall<void>(E.API_DISMISS_NOTIFICATION, { params: { id } }),
   dismissAll: () => instance.safeCall<{ dismissed: number }>(E.API_DISMISS_ALL_NOTIFICATIONS),
+  diagnostics: () => instance.safeCall<NotificationDiagnostics>(E.API_NOTIFICATION_DIAGNOSTICS),
 };

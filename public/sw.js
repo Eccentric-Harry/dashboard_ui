@@ -48,6 +48,16 @@ self.addEventListener('push', (event) => {
   }
 
   const title = data.title || 'Personal Dashboard';
+  const payloadData = {
+    url: data.url || '/',
+    id: data.id || null,
+    sourceId: data.sourceId || null,
+    actionToken: data.actionToken || null,
+  };
+
+  // Only the essentials. Everything below is added conditionally, because an option a
+  // browser dislikes rejects the whole showNotification promise — and a rejected promise
+  // here means no banner at all, with nothing on screen to explain why.
   const options = {
     body: data.body || 'You have an upcoming event.',
     icon: '/logo.png',
@@ -57,27 +67,39 @@ self.addEventListener('push', (event) => {
     // banner instead of stacking a duplicate. renotify:false keeps that replacement quiet.
     tag: data.tag || data.id || 'dashboard-notification',
     renotify: false,
-    requireInteraction: true,
-    timestamp: data.fireAt ? Date.parse(data.fireAt) : Date.now(),
-    vibrate: [100, 50, 100],
-    data: {
-      url: data.url || '/',
-      id: data.id || null,
-      sourceId: data.sourceId || null,
-      actionToken: data.actionToken || null,
-    },
-    actions: [
+    data: payloadData,
+  };
+
+  // Safari on macOS/iOS supports neither action buttons nor requireInteraction, and reports
+  // maxActions as 0. Feature-detect rather than assume Chrome.
+  const maxActions = (self.Notification && self.Notification.maxActions) || 0;
+  if (maxActions > 0) {
+    options.requireInteraction = true;
+    options.actions = [
       { action: 'snooze', title: 'Snooze 10m' },
       { action: 'open', title: 'Open' },
-    ],
-  };
+    ].slice(0, maxActions);
+    options.vibrate = [100, 50, 100];
+  }
 
   event.waitUntil(
     self.registration
       .showNotification(title, options)
+      .catch((err) => {
+        // Last resort: strip everything optional and try again, so a fussy option can never
+        // be the reason the user saw nothing.
+        console.error('[sw] showNotification failed, retrying with minimal options', err);
+        return self.registration.showNotification(title, {
+          body: options.body,
+          icon: '/logo.png',
+          tag: options.tag,
+          data: payloadData,
+        });
+      })
       // Tell any open tab, so the in-app list and toast react to the same event rather
       // than to a second, independent timer.
       .then(() => broadcast({ type: 'PUSH_RECEIVED', notification: data }))
+      .catch((err) => console.error('[sw] could not display the push', err))
   );
 });
 

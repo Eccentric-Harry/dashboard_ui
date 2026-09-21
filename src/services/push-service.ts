@@ -2,7 +2,7 @@
 import { instance } from './http/api-request';
 import type { SafeResult } from '../types/api';
 import type { PushSubscriptionPayload } from '../types/push';
-import type { PushRegistrationStatus } from '../types/notifications';
+import type { PushRegistrationStatus, PushTestResult } from '../types/notifications';
 import * as E from './endpoints/push-endpoints';
 
 export interface PushServiceInterface {
@@ -11,6 +11,8 @@ export interface PushServiceInterface {
   unsubscribeDevice(endpoint: string): Promise<SafeResult<unknown>>;
   /** Server-side truth for this device's registration, used to reconcile the UI on boot. */
   getStatus(endpoint?: string): Promise<SafeResult<PushRegistrationStatus>>;
+  /** Pushes immediately to every registered device and reports what each push service said. */
+  sendTest(): Promise<SafeResult<PushTestResult>>;
 }
 
 export const pushService: PushServiceInterface = {
@@ -19,4 +21,5 @@ export const pushService: PushServiceInterface = {
   unsubscribeDevice: (endpoint) => instance.safeCall(E.API_UNSUBSCRIBE_DEVICE, { query: { endpoint } }),
   getStatus: (endpoint) =>
     instance.safeCall<PushRegistrationStatus>(E.API_PUSH_STATUS, { query: endpoint ? { endpoint } : {} }),
+  sendTest: () => instance.safeCall<PushTestResult>(E.API_TEST_PUSH),
 };
