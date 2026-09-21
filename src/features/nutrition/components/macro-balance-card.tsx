@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { UtensilsCrossed } from 'lucide-react'
 import { ArcGauge } from './arc-gauge'
 import { useDashboard } from '@/store/dashboard-store'
+import { useGoalCelebration } from '@/hooks/use-goal-celebration'
+import { isoDate } from '@/lib/insights/engine'
 
 const goalTones: Record<string, string> = {
   protein: 'tone-lime',
@@ -27,6 +29,28 @@ function MacroBalanceCard() {
   const foodEntries = useMemo(() => data?.health?.foodEntries || [], [data?.health?.foodEntries])
   const [activeMetric, setActiveMetric] = useState<'calories' | 'protein' | 'carbs' | 'fat'>('calories')
 
+  const proteinGoal = circularGoals.find((goal) => goal.label === 'Protein')
+  const proteinLogged = proteinGoal?.value || 0
+  const proteinTarget = proteinGoal?.target || dailyFood.proteinGoalGrams || PROTEIN_TARGET
+
+  // Protein goal met → the protein row celebrates: a full moment the first time today,
+  // a quiet echo on later visits. Today only — browsing history never celebrates.
+  const today = isoDate()
+  const viewedDay = String(data?.date ?? today).slice(0, 10)
+  const proteinRowRef = useRef<HTMLDivElement | null>(null)
+  const proteinCelebrating = useGoalCelebration({
+    goal: 'protein',
+    scope: viewedDay,
+    met: proteinLogged >= proteinTarget,
+    ready: !isLoading && proteinGoal != null,
+    enabled: viewedDay === today,
+    anchorRef: proteinRowRef,
+    palette: 'lime',
+    label: 'Protein goal met',
+    detail: `${proteinLogged.toLocaleString()}g`,
+    placement: 'above',
+  })
+
   if (isLoading) {
     return (
       <section className="ntr-card ntr-hero" aria-label="Daily nutrition summary loading">
@@ -41,9 +65,6 @@ function MacroBalanceCard() {
     )
   }
 
-  const proteinGoal = circularGoals.find((goal) => goal.label === 'Protein')
-  const proteinLogged = proteinGoal?.value || 0
-  const proteinTarget = proteinGoal?.target || dailyFood.proteinGoalGrams || PROTEIN_TARGET
   const proteinProgress = Math.round((proteinLogged / proteinTarget) * 100) || 0
   const caloriesLogged = Number(dailyFood.calories) || 0
   const caloriesTarget = dailyFood.calorieGoal || circularGoals.find((goal) => goal.label === 'Calories')?.target || CALORIE_TARGET
@@ -110,7 +131,8 @@ function MacroBalanceCard() {
               return (
                 <div
                   key={goal.label}
-                  className={`ntr-macro-row ${goalTones[goal.label.toLowerCase()] || ''}${isActive ? ' active' : ''}${metricKey === 'protein' ? ' priority' : ''}`}
+                  ref={metricKey === 'protein' ? proteinRowRef : undefined}
+                  className={`ntr-macro-row ${goalTones[goal.label.toLowerCase()] || ''}${isActive ? ' active' : ''}${metricKey === 'protein' ? ' priority' : ''}${metricKey === 'protein' && proteinCelebrating ? ' is-celebrating' : ''}`}
                   onClick={() => setActiveMetric(isActive ? 'calories' : metricKey)}
                   style={{ cursor: 'pointer' }}
                   role="button"

@@ -176,6 +176,8 @@
   --ntr-apricot: rgba(230, 168, 92, 0.14);
   --ntr-apricot-deep: #e4b077;
   --ntr-shadow: var(--dk-shadow);
+  --ntr-goal-ring: rgba(143, 212, 168, 0.42);
+  --ntr-goal-wash: rgba(143, 212, 168, 0.16);
 
   /* Recharts reads these through fill="var(--…)"; light values are the fallbacks in TSX */
   --ntr-chart-tick: rgba(236, 238, 240, 0.45);

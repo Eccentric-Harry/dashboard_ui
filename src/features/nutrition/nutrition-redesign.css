@@ -23,6 +23,8 @@
   --ntr-aqua-soft: #e0f0eb;
   --ntr-apricot: #f9e9cf;
   --ntr-apricot-deep: #bd8a44;
+  --ntr-goal-ring: rgba(163, 199, 58, 0.5);
+  --ntr-goal-wash: rgba(207, 233, 101, 0.42);
   --ntr-radius: 26px;
   --ntr-radius-sm: 16px;
   --ntr-shadow: 0 1px 2px rgba(23, 27, 21, 0.03), 0 10px 30px rgba(23, 27, 21, 0.05);
@@ -596,6 +598,42 @@
 
 .ntr-macro-row.priority .ntr-macro-bar {
   height: 6px;
+}
+
+/* Goal met (useGoalCelebration): the row answers first — a lime wash settles, a ring
+   breathes out, the number pops — while the confetti launches from it. */
+.ntr-macro-row.is-celebrating {
+  position: relative;
+  animation: ntr-goal-wash 1.2s ease-out both;
+}
+
+.ntr-macro-row.is-celebrating::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  animation: ntr-goal-ring 1.25s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ntr-macro-row.is-celebrating .ntr-macro-header strong {
+  transform-origin: 100% 50%;
+  animation: ntr-goal-pop 0.62s cubic-bezier(0.34, 1.56, 0.64, 1) 0.12s both;
+}
+
+/* No `to`: the wash settles back into whatever background the row has. */
+@keyframes ntr-goal-wash {
+  from { background-color: var(--ntr-goal-wash); }
+}
+
+@keyframes ntr-goal-ring {
+  from { box-shadow: 0 0 0 0 var(--ntr-goal-ring); opacity: 1; }
+  to { box-shadow: 0 0 0 12px var(--ntr-goal-ring); opacity: 0; }
+}
+
+@keyframes ntr-goal-pop {
+  0%, 100% { transform: none; }
+  40% { transform: scale(1.12); }
 }
 
 .ntr-tile-bar {
@@ -1476,6 +1514,26 @@
 
 .ntr-hydro-cell.full .ntr-hydro-cell-fill {
   background: linear-gradient(180deg, #9fc3e4 0%, #6f9ac2 100%);
+}
+
+/* Goal met (useGoalCelebration): a ripple runs left to right across the glasses, each
+   one lifting and catching the light a beat after its neighbour. */
+.ntr-hydro-segments.is-celebrating .ntr-hydro-cell {
+  animation: ntr-hydro-wave 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) calc(var(--i, 0) * 32ms) both;
+}
+
+.ntr-hydro-segments.is-celebrating .ntr-hydro-cell-fill {
+  animation: ntr-hydro-glint 0.7s ease-out calc(var(--i, 0) * 32ms) both;
+}
+
+@keyframes ntr-hydro-wave {
+  0%, 100% { transform: none; }
+  38% { transform: translateY(-6px); }
+}
+
+@keyframes ntr-hydro-glint {
+  0%, 100% { filter: none; }
+  38% { filter: brightness(1.18) saturate(1.1); }
 }
 
 .ntr-hydro-meta-row {

@@ -3182,36 +3182,6 @@
   transform: translateY(-1px);
 }
 
-/* ---------- Confetti ----------
-   Fired on goal-complete moments (hydration goal, day loop hitting 100%).
-   DOM pieces, not canvas — cheap enough for a once-in-a-while burst. */
-
-.home-confetti {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.home-confetti-piece {
-  position: absolute;
-  top: -12px;
-  width: 8px;
-  height: 12px;
-  border-radius: 2px;
-  opacity: 0;
-  animation-name: home-confetti-fall;
-  animation-timing-function: cubic-bezier(0.2, 0.6, 0.4, 1);
-  animation-fill-mode: forwards;
-}
-
-@keyframes home-confetti-fall {
-  0% { opacity: 0; transform: translate3d(0, -20px, 0) rotate(0deg); }
-  10% { opacity: 1; }
-  100% { opacity: 0; transform: translate3d(var(--drift), 100vh, 0) rotate(var(--rotate)); }
-}
-
 /* ---------- Skeletons ---------- */
 
 .home-skel {
@@ -3251,8 +3221,7 @@
   .home-hero-panel.is-complete::before,
   .hm-mood.is-nudged .hm-mood-faces,
   .hm-saving,
-  .hm-strip-bar > i,
-  .home-confetti-piece {
+  .hm-strip-bar > i {
     animation: none !important;
   }
 

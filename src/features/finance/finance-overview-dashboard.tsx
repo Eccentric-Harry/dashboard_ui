@@ -23,7 +23,7 @@ import {
   ArrowUpRight, Gauge, PiggyBank, Target
 } from 'lucide-react'
 import { getIconForCategory } from './utils'
-import { FinanceCelebration } from './components/finance-celebration'
+import { celebrationActions } from '@/store/celebration-store'
 
 import './finance-overview.css'
 // Redesign layer — must load after the base sheet so its refinements win.
@@ -58,8 +58,7 @@ function FinanceOverviewDashboard() {
   const [deleteLendingTarget, setDeleteLendingTarget] = useState<LendingRecord | null>(null)
   // Bumped by any child that lands a "money went right" moment — a loan
   // recovered, a bill cleared, an instalment closed out.
-  const [celebrationTrigger, setCelebrationTrigger] = useState(0)
-  const celebrate = useCallback(() => setCelebrationTrigger((n) => n + 1), [])
+  const celebrate = useCallback(() => celebrationActions.celebrate({ palette: 'finance' }), [])
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const params = new URLSearchParams(window.location.search)
     return params.get('date') || new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)
@@ -442,7 +441,6 @@ function FinanceOverviewDashboard() {
         />}
       </div>
 
-      <FinanceCelebration trigger={celebrationTrigger} />
       
       <ConfirmDialog
         open={!!deleteTarget}

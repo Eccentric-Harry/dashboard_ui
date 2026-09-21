@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef, type CSSProperties } from 'react'
 import { RefreshCw, Minus, GlassWater, Droplet, Milk, Check } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { nutritionService } from '@/services/nutrition-service'
@@ -6,6 +6,8 @@ import { useDashboard } from '@/store/dashboard-store'
 import { useNutritionStore } from '@/store/nutrition-store'
 import { isAwaitingData } from '@/store/zustand-utils'
 import { getErrorMessage } from '@/lib/errors'
+import { isoDate } from '@/lib/insights/engine'
+import { useGoalCelebration } from '@/hooks/use-goal-celebration'
 
 const TARGET_ML = 3000
 const GLASS_ML = 250
@@ -90,6 +92,27 @@ function HydrationCard() {
   const remainingL = Math.max(0, target - logged) / 1000
   const pace = getPace(logged, target, isComplete, selectedDate)
 
+  // Water goal met → the glasses celebrate. 'hydration' is the same goal key Home uses,
+  // so hitting it there leaves only a quiet echo here. Today only.
+  const segmentsRef = useRef<HTMLDivElement | null>(null)
+  const today = isoDate()
+  const viewedDay = selectedDate.slice(0, 10)
+  const hydrationCelebrating = useGoalCelebration({
+    goal: 'hydration',
+    scope: viewedDay,
+    met: target > 0 && isComplete,
+    // The store can still hold another day's reading until this date's load lands.
+    ready: !loading && !hydrationState.hasErrors && data != null && (!data.date || data.date.slice(0, 10) === viewedDay),
+    enabled: viewedDay === today,
+    anchorRef: segmentsRef,
+    palette: 'water',
+    label: 'Water goal met',
+    detail: `${(logged / 1000).toFixed(1)}L`,
+    icon: 'droplet',
+    // Below the glasses is the "Goal met" pace row — the one line the caption repeats.
+    placement: 'below',
+  })
+
   if (loading) {
     return (
       <section className="ntr-card ntr-hydro" aria-label="Daily hydration loading">
@@ -134,7 +157,12 @@ function HydrationCard() {
         </div>
       </div>
 
-      <div className="ntr-hydro-segments" role="group" aria-label="Water logged, one segment per 250ml glass">
+      <div
+        ref={segmentsRef}
+        className={`ntr-hydro-segments${hydrationCelebrating ? ' is-celebrating' : ''}`}
+        role="group"
+        aria-label="Water logged, one segment per 250ml glass"
+      >
         {Array.from({ length: totalGlasses }, (_, i) => {
           const fill = Math.max(0, Math.min(1, (logged - i * GLASS_ML) / GLASS_ML))
           const levelMl = (i + 1) * GLASS_ML
@@ -143,6 +171,7 @@ function HydrationCard() {
               key={i}
               type="button"
               className={`ntr-hydro-cell${fill >= 1 ? ' full' : ''}`}
+              style={{ '--i': i } as CSSProperties}
               onClick={() => handleAddWater(levelMl - logged, 'cell')}
               disabled={adding}
               title={`Set to ${levelMl.toLocaleString()}ml`}

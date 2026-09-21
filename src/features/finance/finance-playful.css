@@ -540,45 +540,8 @@
 }
 
 /* ── 9. Celebration ──────────────────────────────────────────────────────────
-   Confetti for finance wins — a loan finally repaid, a bill cleared. Adapted
-   from home-overview's ConfettiBurst (same physics, same piece count) so the
-   two routes celebrate identically.
-
-   Fixed-position and pointer-events:none so it can never intercept a click or
-   extend the scroll region of the card it fires over. */
-.fin-confetti {
-  position: fixed;
-  inset: 0;
-  z-index: 90;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.fin-confetti-piece {
-  position: absolute;
-  top: -14px;
-  width: 8px;
-  height: 13px;
-  border-radius: 2px;
-  opacity: 0;
-  animation-name: finConfettiFall;
-  animation-timing-function: cubic-bezier(0.3, 0.7, 0.5, 1);
-  animation-fill-mode: forwards;
-}
-
-@keyframes finConfettiFall {
-  0% {
-    opacity: 0;
-    transform: translate3d(0, 0, 0) rotate(0deg);
-  }
-  12% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translate3d(var(--drift, 0), 78vh, 0) rotate(var(--rotate, 360deg));
-  }
-}
+   Confetti for finance wins — a loan finally repaid, a bill cleared — plays on the
+   app-wide celebration layer (store/celebration-store.ts, 'finance' palette). */
 
 /* Rows flash once when their action succeeds — the confetti is the party, this
    is the receipt. */
@@ -597,9 +560,9 @@
 
 /* ── 10. Reduced motion ──────────────────────────────────────────────────────
    One block, no exceptions. Everything above degrades to its end state: cards
-   are visible, rings are filled, nothing translates. Confetti is additionally
-   suppressed at the source in the component, which never mounts pieces when the
-   media query matches — CSS alone would still run the DOM churn. */
+   are visible, rings are filled, nothing translates. Confetti is suppressed at the
+   source by the celebration store, which never launches particles when the media
+   query matches. */
 @media (prefers-reduced-motion: reduce) {
   .finance-dashboard *,
   .finance-dashboard *::before,

@@ -1,0 +1,157 @@
+/* ── Celebration layer ─────────────────────────────────────────────────────
+   The global surface store/celebration-store.ts plays moments on. Above route
+   content and the mobile dock; below modals, toasts, the notification center
+   and the Spiral Breaker. Never takes a pointer event.
+
+   The caption borrows Nutrition's dark-pill grammar (ink pill, accent disc):
+   short, one line, gone in under three seconds. */
+
+.celebration-layer {
+  --celebration-surface: rgba(23, 27, 21, 0.9);
+  --celebration-ink: #ffffff;
+  --celebration-ink-soft: rgba(255, 255, 255, 0.6);
+  --celebration-on-accent: #171b15;
+  --celebration-shadow: 0 1px 2px rgba(23, 27, 21, 0.14), 0 14px 34px rgba(23, 27, 21, 0.24);
+
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.celebration-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.celebration-caption {
+  --celebration-rise: 10px;
+
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 240px;
+  height: 34px;
+  padding: 0 14px 0 5px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: var(--celebration-surface);
+  color: var(--celebration-ink);
+  box-shadow: var(--celebration-shadow);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+  font-size: 12.5px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  translate: -50% -100%;
+  transform-origin: 50% 100%;
+  animation:
+    celebration-caption-in 540ms cubic-bezier(0.34, 1.56, 0.64, 1) 90ms both,
+    celebration-caption-out 380ms cubic-bezier(0.4, 0, 1, 1) 2400ms forwards;
+}
+
+.celebration-caption.is-below {
+  --celebration-rise: -10px;
+
+  translate: -50% 0;
+  transform-origin: 50% 0;
+}
+
+.celebration-caption-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--celebration-accent);
+  color: var(--celebration-on-accent);
+  animation: celebration-icon-pop 620ms cubic-bezier(0.34, 1.56, 0.64, 1) 240ms both;
+}
+
+.celebration-caption-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.celebration-caption-detail {
+  flex: none;
+  color: var(--celebration-ink-soft);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.celebration-caption-detail::before {
+  content: '·';
+  margin-right: 6px;
+}
+
+@keyframes celebration-caption-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--celebration-rise)) scale(0.86);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes celebration-caption-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(calc(var(--celebration-rise) * -0.6)) scale(0.97);
+  }
+}
+
+@keyframes celebration-icon-pop {
+  from {
+    transform: scale(0.2) rotate(-40deg);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes celebration-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* On graphite the pill lifts to the raised tier with a hairline glint. */
+:root[data-theme='dark'] .celebration-layer {
+  --celebration-surface: rgba(37, 40, 45, 0.94);
+  --celebration-ink: #eceef0;
+  --celebration-ink-soft: #a8adb3;
+  --celebration-on-accent: #10170f;
+  --celebration-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 16px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* The store already drops every particle; the caption keeps an opacity-only fade. */
+@media (prefers-reduced-motion: reduce) {
+  .celebration-caption {
+    animation:
+      celebration-fade 260ms ease-out both,
+      celebration-fade 320ms ease-in 2400ms reverse forwards;
+  }
+
+  .celebration-caption-icon {
+    animation: none;
+  }
+}

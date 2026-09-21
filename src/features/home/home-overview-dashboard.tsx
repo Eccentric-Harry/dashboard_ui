@@ -13,9 +13,9 @@ import { sleepService } from '@/services/sleep-service'
 import { tasksService } from '@/services/tasks-service'
 import type { AppPath } from '@/app/routes'
 import { useFocusStore } from '@/store/focus-store'
+import { celebrationActions } from '@/store/celebration-store'
 import { HomeHeader } from './components/home-header'
 import type { HomeHeaderSignals, QuickAddAction } from './components/home-header'
-import { ConfettiBurst } from './components/confetti-burst'
 import { TodayHeroCard } from './components/today-hero-card'
 import { TodaysAnchorCard } from './components/todays-anchor-card'
 import { SleepCard } from './components/sleep-card'
@@ -56,11 +56,14 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
   const [captureRequest, setCaptureRequest] = useState<{ mode: QuickCaptureMode; nonce: number } | null>(null)
   const [fabOpen, setFabOpen] = useState(false)
   const [sleepModalOpen, setSleepModalOpen] = useState(false)
-  const [confettiTrigger, setConfettiTrigger] = useState(0)
   const [anchorSaving, setAnchorSaving] = useState(false)
   const fabRef = useRef<HTMLDivElement | null>(null)
 
-  const fireConfetti = useCallback(() => setConfettiTrigger((n) => n + 1), [])
+  // The day loop closing: one full moment per day, a quieter echo if it re-closes.
+  const celebrateLoop = useCallback(
+    () => celebrationActions.celebrate({ palette: 'confetti', once: { key: 'day-loop', scope: home.today } }),
+    [home.today],
+  )
 
   // Bottom-dock quick-add bubble opens the same expandable FAB menu
   useEffect(() => {
@@ -304,7 +307,8 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
       }
       const after = res?.data?.waterIntakeMl ?? before + WATER_QUICK_ADD_ML
       if (before < target && after >= target) {
-        fireConfetti()
+        // Same goal key as Nutrition's hydration card, so the moment isn't repeated there.
+        celebrationActions.celebrate({ palette: 'water', once: { key: 'hydration', scope: home.today } })
         toast.success('Hydration goal hit — nice work. 💧')
       } else {
         toast.success(`+${WATER_QUICK_ADD_ML}ml logged.`)
@@ -312,7 +316,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
     } catch {
       toast.error('Could not log water — try again.')
     }
-  }, [home, fireConfetti])
+  }, [home])
 
   const handleQuickAdd = useCallback(
     (action: QuickAddAction) => {
@@ -505,7 +509,6 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
 
   return (
     <div className="home-dashboard route-scroll">
-      <ConfettiBurst trigger={confettiTrigger} />
       <HomeHeader dateIso={home.today} onQuickAdd={handleQuickAdd} signals={headerSignals} />
 
       {/* Mobile FAB — fixed bottom-right, hidden on desktop via CSS */}
@@ -599,7 +602,7 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           onStartFocus={() => onNavigate('/learnings')}
           onLogSleep={() => handleQuickAdd('sleep')}
           onNavigate={onNavigate}
-          onCelebrate={fireConfetti}
+          onCelebrate={celebrateLoop}
         />
 
         <PendingTasksCard

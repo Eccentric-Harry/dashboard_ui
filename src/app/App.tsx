@@ -24,6 +24,7 @@ import { appearanceActions } from '../store/appearance-store'
 import { focusActions } from '../store/focus-store'
 import { notificationActions, useNotifications } from '../store/notification-store'
 import { OverlayLoader } from '../components/ui/overlay-loader'
+import { CelebrationLayer } from '../components/ui/celebration-layer'
 import { NotificationCenter } from '../components/layout/notification-center'
 import { SpiralBreakerOverlay } from '../features/spiral-breaker/spiral-breaker-overlay';
 import { HudGutters } from '../features/hud/hud-gutters';
@@ -373,6 +374,8 @@ function App() {
       <NotificationCenter onNavigate={navigateTo} />
       {/* Mounted once at the root so the Spiral Breaker is one tap from any route. */}
       <SpiralBreakerOverlay />
+      {/* Plays every celebrationActions.celebrate() moment, from any route. */}
+      <CelebrationLayer />
       <OverlayLoader show={showOverlay} />
     </>
   );
