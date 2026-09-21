@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type RefObject } from 'react'
 import { celebrationActions, type CelebrateOptions, type CelebrationRepeat } from '@/store/celebration-store'
 
 export interface GoalCelebrationOptions
-  extends Pick<CelebrateOptions, 'palette' | 'label' | 'detail' | 'icon' | 'placement'> {
+  extends Pick<CelebrateOptions, 'palette' | 'label' | 'eyebrow' | 'detail' | 'icon'> {
   /** Stable name for the goal, shared by every surface that celebrates it ('hydration'
    *  on Home and on Nutrition), so a goal celebrated on one route is only echoed on the next. */
   goal: string
@@ -15,7 +15,7 @@ export interface GoalCelebrationOptions
   ready: boolean
   /** Master switch — e.g. false while browsing a past day. Celebrations are for now. */
   enabled?: boolean
-  /** The achievement's element: the burst launches from it and the caption sits beside it. */
+  /** The achievement's element: the opening burst launches from it. */
   anchorRef: RefObject<HTMLElement | null>
   /** What later visits get once this goal has had its full moment in this scope. */
   repeat?: CelebrationRepeat
@@ -85,9 +85,9 @@ export function useGoalCelebration(options: GoalCelebrationOptions): boolean {
           anchor: el,
           palette: o.palette,
           label: o.label,
+          eyebrow: o.eyebrow,
           detail: o.detail,
           icon: o.icon,
-          placement: o.placement,
           once: { key: o.goal, scope: o.scope, repeat: o.repeat ?? 'echo' },
         })
         if (outcome === 'skipped') return

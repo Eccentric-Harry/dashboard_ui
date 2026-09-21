@@ -13,7 +13,8 @@ export type CelebrationPaletteName = 'confetti' | 'lime' | 'water' | 'finance'
 interface PaletteSpec {
   light: readonly string[]
   dark: readonly string[]
-  /** The caption's icon disc. */
+  /** The achievement card's ring and the glow — a deeper step than the confetti, so a
+   *  stroke still reads on a white card. */
   accent: { light: string; dark: string }
 }
 
@@ -23,26 +24,27 @@ const PALETTES: Record<CelebrationPaletteName, PaletteSpec> = {
   confetti: {
     light: ['#eaff28', '#a9b0e8', '#f3cf8e', '#9cc4a9', '#f0a8ae', '#8fb8da'],
     dark: ['#dcf05a', '#b3b9f0', '#f3d49b', '#a8d4b6', '#f2b3b9', '#9cc6e8'],
-    accent: { light: '#eaff28', dark: '#dcf05a' },
+    // Home's periwinkle signature — the app lime is invisible as a stroke on white.
+    accent: { light: '#7f89d6', dark: '#a5b4f0' },
   },
   // Nutrition's signature — lime with ink, the same pairing as its dark gauge badge;
   // sky and apricot are the route's other macro tones.
   lime: {
     light: ['#cfe965', '#cfe965', '#cfe965', '#b5d94c', '#b5d94c', '#8aa832', '#e4f2a4', '#f3eedc', '#171b15', '#aecde9', '#f3cf8e'],
     dark: ['#8fd4a8', '#8fd4a8', '#8fd4a8', '#73be91', '#c1e7cf', '#c1e7cf', '#cfe965', '#eceef0', '#9cc2e4', '#e4b077'],
-    accent: { light: '#cfe965', dark: '#8fd4a8' },
+    accent: { light: '#8aa832', dark: '#8fd4a8' },
   },
   // Hydration — the glass cells' blues, with Nutrition's aqua and lime as accents.
   water: {
     light: ['#9fc3e4', '#9fc3e4', '#9fc3e4', '#7ba3c8', '#6f9ac2', '#c4dbef', '#5d87ad', '#e2edf8', '#7dcdb9', '#cfe965'],
     dark: ['#8dbbe3', '#8dbbe3', '#8dbbe3', '#5b8dbd', '#92bfe6', '#c3dcf2', '#eceef0', '#7dcdb9', '#8fd4a8'],
-    accent: { light: '#aecde9', dark: '#8dbbe3' },
+    accent: { light: '#6f9ac2', dark: '#8dbbe3' },
   },
   // Finance's sage / clay / sand range.
   finance: {
     light: ['#4b7a63', '#9cc4a9', '#f3cf8e', '#a9b0e8', '#d98b6a', '#8fb8da'],
     dark: ['#8fd4a8', '#a8d4b6', '#f3d49b', '#b3b9f0', '#e4a283', '#9cc6e8'],
-    accent: { light: '#9cc4a9', dark: '#8fd4a8' },
+    accent: { light: '#4b7a63', dark: '#8fd4a8' },
   },
 }
 

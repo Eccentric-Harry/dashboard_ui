@@ -5,13 +5,14 @@
 // The rules every caller inherits (design/GAMIFICATION_MASTER_PROMPT.md):
 //   · never interrupts — no modal, no focus steal, pointer-events stay off;
 //   · haptics yes, sound no;
-//   · reduced motion drops every particle; a labelled moment still shows its caption
+//   · reduced motion drops every particle; a labelled moment still shows its card
 //     (opacity only) and is announced to screen readers, so nobody loses the news;
 //   · `once` gives a goal one full moment per scope; later calls get a quieter echo
 //     by default (a caller that wants the fanfare every time passes repeat: 'full').
 //
 // A full moment is full-screen: a burst from the anchor, cannons from both bottom
-// corners and a shower from the top. An echo is a small burst from the anchor alone.
+// corners, a shower from the top, and — when labelled — an achievement card at the
+// centre whose ring closes. An echo is a small burst from the anchor alone.
 //
 // State holds plain data only: the anchor element is measured at call time and never
 // stored, so the devtools snapshot stays serialisable.
@@ -28,21 +29,22 @@ export type CelebrationIntensity = 'full' | 'echo';
 export type CelebrationRepeat = 'echo' | 'full' | 'skip';
 export type CelebrationOutcome = CelebrationIntensity | 'skipped';
 export type CelebrationIcon = 'check' | 'droplet' | 'sparkles' | 'trophy' | 'flame';
-export type CaptionPlacement = 'above' | 'below';
 
 export interface CelebrateOptions {
-  /** The achievement's element: the burst launches from it and the caption sits beside
-   *  it. Without one (or when it is off screen) the moment is screen-wide only and the
-   *  caption sits at the top. */
+  /** The achievement's element: the opening burst (and a glow) launch from it. Without
+   *  one, or when it is off screen, the moment is screen-wide only. */
   anchor?: Element | null;
   palette?: CelebrationPaletteName | readonly string[];
-  /** Short caption, e.g. "Water goal met". Full moments only; also announced to screen readers. */
+  /** Headline of the achievement card, e.g. "Water goal met" — its first word is set in
+   *  italic, like the route titles' weekday. Full moments only; also announced to
+   *  screen readers. Without it there is no card, only confetti. */
   label?: string;
-  /** Secondary caption text, e.g. "3.2L". */
+  /** Small caps line above the headline, e.g. "Daily hydration". */
+  eyebrow?: string;
+  /** One quiet line under the headline, e.g. "3.0L of 3.0L". */
   detail?: string;
+  /** Shown inside the ring that closes on the card. */
   icon?: CelebrationIcon;
-  /** Caption side relative to the anchor; flips automatically when there is no room. */
-  placement?: CaptionPlacement;
   intensity?: CelebrationIntensity;
   /** One full moment per (key, scope) — `key` is shared by every surface celebrating the
    *  same goal, so a goal met on Home is only echoed on Nutrition. */
@@ -63,7 +65,7 @@ export interface CelebrationMoment {
   anchor: CelebrationRect | null;
   colors: string[];
   accent: string;
-  caption: { label: string; detail?: string; icon: CelebrationIcon; placement: CaptionPlacement } | null;
+  caption: { label: string; eyebrow?: string; detail?: string; icon: CelebrationIcon } | null;
   /** performance.now() time to play at — moments arriving together are spaced into a rhythm. */
   startAt: number;
   reducedMotion: boolean;
@@ -123,9 +125,9 @@ const useCelebrationStoreBase = create<CelebrationStore>()(
             intensity === 'full' && options.label
               ? {
                   label: options.label,
+                  eyebrow: options.eyebrow,
                   detail: options.detail,
                   icon: options.icon ?? 'check',
-                  placement: options.placement ?? 'above',
                 }
               : null;
           // Under reduced motion an unlabelled moment has nothing left to show.

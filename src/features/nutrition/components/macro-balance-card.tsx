@@ -48,9 +48,9 @@ function MacroBalanceCard() {
     palette: 'lime',
     // Full effect on every visit while the goal stands, not just the first of the day.
     repeat: 'full',
+    eyebrow: 'Daily protein',
     label: 'Protein goal met',
-    detail: `${proteinLogged.toLocaleString()}g`,
-    placement: 'above',
+    detail: `${proteinLogged.toLocaleString()}g of ${proteinTarget.toLocaleString()}g`,
   })
 
   if (isLoading) {
