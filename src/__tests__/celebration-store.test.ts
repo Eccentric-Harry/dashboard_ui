@@ -33,9 +33,9 @@ describe('celebration store', () => {
     expect(celebrationActions.celebrate({ label: 'Water goal met', once })).toBe('echo');
 
     const [first, second] = useCelebrationStore.getState().moments;
-    expect(first.caption?.label).toBe('Water goal met');
+    expect(first.announce).toBe('Water goal met');
     // An echo is a nod, not a second announcement.
-    expect(second.caption).toBeNull();
+    expect(second.announce).toBeNull();
   });
 
   it('honours repeat: full and repeat: skip', () => {
@@ -60,7 +60,7 @@ describe('celebration store', () => {
     expect(b.startAt - a.startAt).toBeGreaterThanOrEqual(600);
   });
 
-  it('under reduced motion keeps labelled moments (card only) and drops the rest', () => {
+  it('under reduced motion keeps labelled moments (announcement only) and drops the rest', () => {
     mockReducedMotion(true);
     celebrationActions.celebrate({ label: 'Water goal met' });
     celebrationActions.celebrate({});

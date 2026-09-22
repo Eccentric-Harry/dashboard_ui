@@ -108,10 +108,8 @@ function HydrationCard() {
     palette: 'water',
     // Full effect on every visit while the goal stands, not just the first of the day.
     repeat: 'full',
-    eyebrow: 'Daily hydration',
     label: 'Water goal met',
     detail: `${(logged / 1000).toFixed(1)}L of ${(target / 1000).toFixed(1)}L`,
-    icon: 'droplet',
   })
 
   if (loading) {

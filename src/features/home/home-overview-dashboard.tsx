@@ -495,10 +495,8 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
         if (landing) {
           celebrationActions.celebrate({
             palette: 'confetti',
-            eyebrow: "Today's anchor",
             label: 'Anchor landed',
             detail: todayAnchor.text ?? undefined,
-            icon: 'check',
             once: { key: 'anchor', scope: home.today },
           })
         }
@@ -528,10 +526,8 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
           const mins = minutes % 60
           celebrationActions.celebrate({
             palette: 'confetti',
-            eyebrow: 'Last night',
             label: 'Good sleep logged',
             detail: `${hours}h${mins ? ` ${mins}m` : ''} of sleep`,
-            icon: 'sparkles',
             once: { key: 'sleep', scope: payload.date },
           })
         }

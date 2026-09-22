@@ -13,8 +13,8 @@ export type CelebrationPaletteName = 'confetti' | 'lime' | 'water' | 'finance'
 interface PaletteSpec {
   light: readonly string[]
   dark: readonly string[]
-  /** The achievement card's ring and the glow — a deeper step than the confetti, so a
-   *  stroke still reads on a white card. */
+  /** The glow behind a burst — a deeper step than the confetti, so it still reads on
+   *  a white card. */
   accent: { light: string; dark: string }
 }
 

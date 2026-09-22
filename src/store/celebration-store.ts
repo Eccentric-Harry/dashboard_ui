@@ -5,13 +5,13 @@
 // The rules every caller inherits (design/GAMIFICATION_MASTER_PROMPT.md):
 //   · never interrupts — no modal, no focus steal, pointer-events stay off;
 //   · haptics yes, sound no;
-//   · reduced motion drops every particle; a labelled moment still shows its card
-//     (opacity only) and is announced to screen readers, so nobody loses the news;
+//   · reduced motion drops every particle; a labelled moment is still announced to
+//     screen readers, so nobody loses the news;
 //   · `once` gives a goal one full moment per scope; later calls get a quieter echo
 //     by default (a caller that wants the fanfare every time passes repeat: 'full').
 //
 // A full moment is one burst from the anchor (a light shower from the top without
-// one) and — when labelled — an achievement card at the centre whose ring closes. An echo is a small burst from the anchor alone.
+// one). There is deliberately no popup or card — the confetti is the whole moment. An echo is a small burst from the anchor alone.
 //
 // State holds plain data only: the anchor element is measured at call time and never
 // stored, so the devtools snapshot stays serialisable.
@@ -27,23 +27,17 @@ export type CelebrationIntensity = 'full' | 'echo';
 /** What a repeat gets once a goal has had its full moment in the current scope. */
 export type CelebrationRepeat = 'echo' | 'full' | 'skip';
 export type CelebrationOutcome = CelebrationIntensity | 'skipped';
-export type CelebrationIcon = 'check' | 'droplet' | 'sparkles' | 'trophy' | 'flame';
 
 export interface CelebrateOptions {
   /** The achievement's element: the opening burst (and a glow) launch from it. Without
    *  one, or when it is off screen, the moment is screen-wide only. */
   anchor?: Element | null;
   palette?: CelebrationPaletteName | readonly string[];
-  /** Headline of the achievement card, e.g. "Water goal met" — its first word is set in
-   *  italic, like the route titles' weekday. Full moments only; also announced to
-   *  screen readers. Without it there is no card, only confetti. */
+  /** What was achieved, e.g. "Water goal met". Never shown — announced to screen
+   *  readers (full moments only), so the confetti isn't the only signal. */
   label?: string;
-  /** Small caps line above the headline, e.g. "Daily hydration". */
-  eyebrow?: string;
-  /** One quiet line under the headline, e.g. "3.0L of 3.0L". */
+  /** Appended to the announcement, e.g. "3.0L of 3.0L". */
   detail?: string;
-  /** Shown inside the ring that closes on the card. */
-  icon?: CelebrationIcon;
   intensity?: CelebrationIntensity;
   /** One full moment per (key, scope) — `key` is shared by every surface celebrating the
    *  same goal, so a goal met on Home is only echoed on Nutrition. */
@@ -64,7 +58,8 @@ export interface CelebrationMoment {
   anchor: CelebrationRect | null;
   colors: string[];
   accent: string;
-  caption: { label: string; eyebrow?: string; detail?: string; icon: CelebrationIcon } | null;
+  /** Screen-reader announcement; null for echoes and unlabelled moments. */
+  announce: string | null;
   /** performance.now() time to play at — moments arriving together are spaced into a rhythm. */
   startAt: number;
   reducedMotion: boolean;
@@ -120,17 +115,14 @@ const useCelebrationStoreBase = create<CelebrationStore>()(
           }
 
           const reducedMotion = prefersReducedMotion();
-          const caption =
+          const announce =
             intensity === 'full' && options.label
-              ? {
-                  label: options.label,
-                  eyebrow: options.eyebrow,
-                  detail: options.detail,
-                  icon: options.icon ?? 'check',
-                }
+              ? options.detail
+                ? `${options.label}, ${options.detail}`
+                : options.label
               : null;
-          // Under reduced motion an unlabelled moment has nothing left to show.
-          if (reducedMotion && !caption) return intensity;
+          // Under reduced motion only the announcement is left to deliver.
+          if (reducedMotion && !announce) return intensity;
 
           const { colors, accent } = resolvePalette(
             options.palette ?? 'confetti',
@@ -146,7 +138,7 @@ const useCelebrationStoreBase = create<CelebrationStore>()(
             anchor: measureAnchor(options.anchor),
             colors,
             accent,
-            caption,
+            announce,
             startAt,
             reducedMotion,
           };

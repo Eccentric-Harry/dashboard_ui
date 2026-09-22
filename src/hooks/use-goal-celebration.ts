@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type RefObject } from 'react'
 import { celebrationActions, type CelebrateOptions, type CelebrationRepeat } from '@/store/celebration-store'
 
 export interface GoalCelebrationOptions
-  extends Pick<CelebrateOptions, 'palette' | 'label' | 'eyebrow' | 'detail' | 'icon'> {
+  extends Pick<CelebrateOptions, 'palette' | 'label' | 'detail'> {
   /** Stable name for the goal, shared by every surface that celebrates it ('hydration'
    *  on Home and on Nutrition), so a goal celebrated on one route is only echoed on the next. */
   goal: string
@@ -85,9 +85,7 @@ export function useGoalCelebration(options: GoalCelebrationOptions): boolean {
           anchor: el,
           palette: o.palette,
           label: o.label,
-          eyebrow: o.eyebrow,
           detail: o.detail,
-          icon: o.icon,
           once: { key: o.goal, scope: o.scope, repeat: o.repeat ?? 'echo' },
         })
         if (outcome === 'skipped') return
