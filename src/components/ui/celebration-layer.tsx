@@ -15,9 +15,9 @@ const ICONS: Record<CelebrationIcon, LucideIcon> = {
 }
 
 /** How long a moment stays mounted — outlives its slowest particle and its card. */
-const LIFETIME_MS = { full: 5400, echo: 2900 } as const
+const LIFETIME_MS = { full: 5000, echo: 2900 } as const
 /** Particle counts are tuned for a ~1280×800 screen and scale with its area, so a phone
- *  gets a proportionate storm rather than a wall of paper. */
+ *  gets a proportionate burst rather than a wall of paper. */
 const REFERENCE_AREA = 1280 * 800
 
 type Glow = { id: number; x: number; y: number; accent: string }
@@ -101,22 +101,22 @@ function CelebrationLayer() {
       timers.current.add(id)
     }
 
-    // The full moment, in three beats: the achievement's own element bursts (so you
-    // see *what* was met), cannons fire from both bottom corners, then a shower falls
-    // across the whole screen. A soft glow in the goal's colour blooms behind the burst.
+    // The full moment is one gesture: a single burst from the achievement's own element
+    // (so you see *what* was met) with a soft glow behind it — or, with nothing to point
+    // at, a light sprinkle from the top. The card carries the rest.
     const playFull = (engine: ConfettiEngine, moment: CelebrationMoment) => {
-      const density = Math.min(1.2, Math.max(0.5, engine.area / REFERENCE_AREA))
+      const density = Math.min(1, Math.max(0.6, engine.area / REFERENCE_AREA))
       const n = (count: number) => Math.round(count * density)
       const { colors, anchor } = moment
       if (anchor) {
         const x = anchor.left + anchor.width / 2
         const y = anchor.top + anchor.height / 2
-        engine.burst({ x, y, colors, count: n(70), spread: 120, power: 16 })
+        engine.burst({ x, y, colors, count: n(44), spread: 100, power: 14 })
         const layer = layerRef.current
         if (layer) setGlows((prev) => [...prev, { id: moment.id, ...toLayer(layer, x, y), accent: moment.accent }])
+      } else {
+        engine.shower({ colors, count: n(36) })
       }
-      later(() => engineRef.current?.cannons({ colors, count: n(95) }), anchor ? 120 : 0)
-      later(() => engineRef.current?.shower({ colors, count: n(120), window: 650 }), anchor ? 260 : 140)
       haptic()
     }
 

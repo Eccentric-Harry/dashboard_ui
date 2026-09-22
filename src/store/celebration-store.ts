@@ -10,9 +10,8 @@
 //   · `once` gives a goal one full moment per scope; later calls get a quieter echo
 //     by default (a caller that wants the fanfare every time passes repeat: 'full').
 //
-// A full moment is full-screen: a burst from the anchor, cannons from both bottom
-// corners, a shower from the top, and — when labelled — an achievement card at the
-// centre whose ring closes. An echo is a small burst from the anchor alone.
+// A full moment is one burst from the anchor (a light shower from the top without
+// one) and — when labelled — an achievement card at the centre whose ring closes. An echo is a small burst from the anchor alone.
 //
 // State holds plain data only: the anchor element is measured at call time and never
 // stored, so the devtools snapshot stays serialisable.
