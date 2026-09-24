@@ -240,7 +240,9 @@ export function TasksDashboard({ onNavigate }: TasksDashboardProps) {
         await handleUpdate(selectedTask.id, {
           title: modalFormTitle.trim(),
           date: modalFormDate,
-          scheduledTime: modalFormTime || undefined,
+          // '' clears the time on purpose; omitting the field leaves it untouched.
+          // The edit form always knows the intended time, so it always sends one.
+          scheduledTime: modalFormTime || '',
           category: finalCategory,
           notes: modalFormNotes.trim() || undefined,
         })

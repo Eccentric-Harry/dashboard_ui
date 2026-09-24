@@ -16,3 +16,9 @@ export const API_DELETE_TASK: ApiEndpoint<{ id: string }> = {
   url: ({ id }) => `/learnings/tasks/${id}`,
   method: 'delete',
 };
+
+// ── Google Tasks sync ──
+export const API_GOOGLE_TASKS_STATUS: ApiEndpoint = { url: '/google-tasks/status', method: 'get' };
+export const API_GOOGLE_TASKS_ENABLE: ApiEndpoint = { url: '/google-tasks/enable', method: 'post' };
+export const API_GOOGLE_TASKS_DISABLE: ApiEndpoint = { url: '/google-tasks/disable', method: 'post' };
+export const API_GOOGLE_TASKS_SYNC: ApiEndpoint = { url: '/google-tasks/sync', method: 'post' };

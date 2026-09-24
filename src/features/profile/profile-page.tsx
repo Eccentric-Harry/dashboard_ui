@@ -1,8 +1,10 @@
 import React, { useEffect, useEffectEvent, useState } from 'react';
 import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts';
-import { X, Clock, Pencil, LogOut, Mail, Globe, Activity, Target, Plus, Calendar, RefreshCw, Cake, PersonStanding, Ruler, Weight, Footprints, HeartPulse, CalendarDays, Sparkle, Leaf, ShieldAlert, Zap } from 'lucide-react';
+import { X, Clock, Pencil, LogOut, Mail, Globe, Activity, Target, Plus, Calendar, RefreshCw, Cake, PersonStanding, Ruler, Weight, Footprints, HeartPulse, CalendarDays, ListChecks, Sparkle, Leaf, ShieldAlert, Zap } from 'lucide-react';
 import type { ActivityLevel, FitnessGoal, UserProfile } from '@/types/user';
 import type { GoogleSyncStatus } from '@/types/calendar';
+import type { GoogleTasksStatus } from '@/types/tasks';
+import { tasksService } from '@/services/tasks-service';
 import { useUserStore, userActions } from '@/store/user-store';
 import { calendarService } from '@/services/calendar-service';
 import { SideRail } from '@/components/layout/side-rail';
@@ -202,6 +204,11 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
   const [syncLoading, setSyncLoading] = useState(false);
   const [authUrlLoading, setAuthUrlLoading] = useState(false);
 
+  // Google Tasks mirroring — a separate opt-in from the calendar connection,
+  // because enabling it creates task lists inside the user's Google account.
+  const [tasksSync, setTasksSync] = useState<GoogleTasksStatus | null>(null);
+  const [tasksBusy, setTasksBusy] = useState(false);
+
   // General profile form states
   const [displayName, setDisplayName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('luffy');
@@ -279,10 +286,70 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
     }
   };
 
+  const loadTasksSync = async () => {
+    const res = await tasksService.getGoogleTasksStatus();
+    if (res.error) {
+      console.error('Failed to load Google Tasks status:', res.error.message);
+      return;
+    }
+    if (res.data) setTasksSync(res.data);
+  };
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadSyncStatus();
+    void loadTasksSync();
   }, []);
+
+  /** The first connected account — mirroring is per-account, but the card shows one. */
+  const tasksAccount = tasksSync?.accounts?.[0] ?? null;
+
+  const handleToggleTasksSync = async () => {
+    if (!tasksAccount) return;
+    setTasksBusy(true);
+    try {
+      const res = tasksAccount.enabled
+        ? await tasksService.disableGoogleTasks(tasksAccount.email)
+        : await tasksService.enableGoogleTasks(tasksAccount.email);
+      if (res.error) throw new Error(res.error.message);
+
+      if (!tasksAccount.enabled) {
+        // An account connected before Tasks sync existed holds a Calendar-only grant,
+        // so the backend refuses rather than leaving a toggle that never syncs.
+        const outcome = (res.data as { byAccount?: Record<string, string> })?.byAccount?.[tasksAccount.email];
+        if (outcome === 'reconnect_required') {
+          toast.error('Reconnect Google to approve access to Tasks');
+          await loadTasksSync();
+          return;
+        }
+        toast.success('Mirroring tasks to Google Tasks — first sync running');
+      } else {
+        toast.success('Stopped mirroring to Google Tasks');
+      }
+      // The initial sync runs off the request thread, so re-read once it has had a moment.
+      await loadTasksSync();
+      setTimeout(() => void loadTasksSync(), 4000);
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to update Google Tasks sync'));
+    } finally {
+      setTasksBusy(false);
+    }
+  };
+
+  const handleSyncTasksNow = async () => {
+    if (!tasksAccount) return;
+    setTasksBusy(true);
+    try {
+      const res = await tasksService.syncGoogleTasks(tasksAccount.email);
+      if (res.error) throw new Error(res.error.message);
+      toast.success('Google Tasks sync triggered');
+      setTimeout(() => void loadTasksSync(), 3000);
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to trigger Google Tasks sync'));
+    } finally {
+      setTasksBusy(false);
+    }
+  };
 
   useEffect(() => {
     const handleOAuthMessage = (event: MessageEvent) => {
@@ -943,6 +1010,104 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                             <p className="sync-copy">
                               Synchronize your calendar events and dashboard tasks bidirectionally in real-time.
                             </p>
+                          </div>
+                        )}
+                      </div>
+                      {/* Google Tasks mirroring — one Google list per category, so a
+                          phone widget can pin just "Personal" or just "Learning". */}
+                      <div className="metric-card card-sync">
+                        <div className="metric-card-head">
+                          <ListChecks size={15} />
+                          <span>Google Tasks Sync</span>
+                        </div>
+                        {!tasksAccount ? (
+                          <div className="sync-card-content">
+                            <div className="sync-status-row">
+                              <div className="sync-badge disconnected">
+                                <span className="dot"></span>
+                                <span>Needs Google</span>
+                              </div>
+                            </div>
+                            <p className="sync-copy">
+                              Link a Google account above, then mirror your tasks into Google Tasks
+                              to see them on your phone widget.
+                            </p>
+                          </div>
+                        ) : !tasksAccount.scopeGranted && !tasksAccount.enabled ? (
+                          <div className="sync-card-content">
+                            <div className="sync-status-row">
+                              <div className="sync-badge disconnected">
+                                <span className="dot"></span>
+                                <span>Reconnect Needed</span>
+                              </div>
+                              <div className="sync-actions">
+                                <button
+                                  className="sync-btn-connect"
+                                  onClick={handleConnectGoogle}
+                                  disabled={authUrlLoading}
+                                >
+                                  {authUrlLoading ? 'Redirecting...' : 'Reconnect'}
+                                </button>
+                              </div>
+                            </div>
+                            <p className="sync-copy">
+                              This account was linked before Tasks sync existed, so it only granted
+                              calendar access. Reconnect to approve Google Tasks.
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="sync-card-content">
+                            <div className="sync-status-row">
+                              <div className={`sync-badge ${tasksAccount.enabled ? 'connected' : 'disconnected'}`}>
+                                <span className="dot"></span>
+                                <span>{tasksAccount.enabled ? 'Mirroring Tasks' : 'Not Mirroring'}</span>
+                              </div>
+                              <div className="sync-actions">
+                                {tasksAccount.enabled && (
+                                  <button
+                                    className="sync-btn-now"
+                                    onClick={handleSyncTasksNow}
+                                    disabled={tasksBusy}
+                                  >
+                                    <RefreshCw size={12} className={tasksBusy ? 'animate-spin' : ''} />
+                                    <span>{tasksBusy ? 'Syncing...' : 'Sync Now'}</span>
+                                  </button>
+                                )}
+                                <button
+                                  className={tasksAccount.enabled ? 'sync-btn-disconnect' : 'sync-btn-connect'}
+                                  onClick={handleToggleTasksSync}
+                                  disabled={tasksBusy}
+                                >
+                                  {tasksAccount.enabled ? 'Turn Off' : 'Turn On'}
+                                </button>
+                              </div>
+                            </div>
+                            {tasksAccount.enabled ? (
+                              <div className="sync-details-panel">
+                                <div className="sync-detail-item">
+                                  <span className="lbl">Lists</span>
+                                  <span className="val">
+                                    {tasksAccount.lists.length > 0
+                                      ? `${tasksAccount.lists.length} · ${tasksAccount.syncedTaskCount} tasks`
+                                      : 'Preparing...'}
+                                  </span>
+                                </div>
+                                <div className="sync-divider" />
+                                <div className="sync-detail-item align-right">
+                                  <span className="lbl">Last Synced</span>
+                                  <span className="val">
+                                    {tasksAccount.lastSyncedAt
+                                      ? new Date(tasksAccount.lastSyncedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+                                      : 'Waiting for Sync'}
+                                  </span>
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="sync-copy">
+                                Mirrors each category to its own Google Tasks list, so you can pin one
+                                to your phone. Calendar events stay out of it.
+                              </p>
+                            )}
                           </div>
                         )}
                       </div>

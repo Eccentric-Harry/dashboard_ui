@@ -771,6 +771,27 @@ export function resolveGuestRequest(request: GuestRequest): GuestResponse | null
     return respondWith({ data: { status: 'synced' } });
   }
 
+  // Google Tasks API intercept. Guests have no Google account to mirror into, so the
+  // status reports "not connected" and the card renders its explanatory empty state
+  // rather than erroring; the write endpoints are accepted and do nothing.
+  if (urlStr.includes('/api/v1/google-tasks/status')) {
+    return respondWith({
+      data: {
+        connected: false,
+        anyEnabled: false,
+        accounts: []
+      }
+    });
+  }
+
+  if (
+    urlStr.includes('/api/v1/google-tasks/enable') ||
+    urlStr.includes('/api/v1/google-tasks/disable') ||
+    urlStr.includes('/api/v1/google-tasks/sync')
+  ) {
+    return respondWith({ data: { status: 'ok', byAccount: {} } });
+  }
+
   // GitHub API intercept
   if (urlStr.includes('api.github.com/users/Eccentric-Harry/repos')) {
     return respondWith(dummyGithubRepos);
