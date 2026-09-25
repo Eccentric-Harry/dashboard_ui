@@ -65,3 +65,13 @@ export interface GoogleTasksStatus {
   anyEnabled: boolean;
   accounts: GoogleTasksAccount[];
 }
+
+/** Result of an on-demand inbound pull from Google Tasks. */
+export interface GoogleTasksRefresh {
+  /** False when no connected account has mirroring turned on — nothing to wait for. */
+  enabled: boolean;
+  /** How many local rows the pull changed. Zero means the list on screen is already right. */
+  applied: number;
+  /** True when a poll ran too recently and this call was debounced away. */
+  skipped: boolean;
+}

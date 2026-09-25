@@ -1,7 +1,7 @@
 // Strictly-typed Tasks service — one-liners over instance.safeCall<T>().
 import { instance } from './http/api-request';
 import type { SafeResult } from '../types/api';
-import type { DailyTask, GoogleTasksStatus, TaskRequest } from '../types/tasks';
+import type { DailyTask, GoogleTasksRefresh, GoogleTasksStatus, TaskRequest } from '../types/tasks';
 import * as E from './endpoints/tasks-endpoints';
 
 export interface TasksServiceInterface {
@@ -17,6 +17,8 @@ export interface TasksServiceInterface {
   enableGoogleTasks(email?: string): Promise<SafeResult<unknown>>;
   disableGoogleTasks(email?: string): Promise<SafeResult<unknown>>;
   syncGoogleTasks(email?: string): Promise<SafeResult<unknown>>;
+  /** Debounced inbound pull; `applied > 0` means the local list is now stale. */
+  refreshGoogleTasks(): Promise<SafeResult<GoogleTasksRefresh>>;
 }
 
 export const tasksService: TasksServiceInterface = {
@@ -32,4 +34,5 @@ export const tasksService: TasksServiceInterface = {
   enableGoogleTasks: (email) => instance.safeCall(E.API_GOOGLE_TASKS_ENABLE, { query: { email } }),
   disableGoogleTasks: (email) => instance.safeCall(E.API_GOOGLE_TASKS_DISABLE, { query: { email } }),
   syncGoogleTasks: (email) => instance.safeCall(E.API_GOOGLE_TASKS_SYNC, { query: { email } }),
+  refreshGoogleTasks: () => instance.safeCall<GoogleTasksRefresh>(E.API_GOOGLE_TASKS_REFRESH),
 };

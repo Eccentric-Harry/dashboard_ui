@@ -784,6 +784,12 @@ export function resolveGuestRequest(request: GuestRequest): GuestResponse | null
     });
   }
 
+  // The tasks route fires this on arrival; guests have nothing to pull, and `applied: 0`
+  // tells the page not to bother re-reading its list.
+  if (urlStr.includes('/api/v1/google-tasks/refresh')) {
+    return respondWith({ data: { enabled: false, applied: 0, skipped: true } });
+  }
+
   if (
     urlStr.includes('/api/v1/google-tasks/enable') ||
     urlStr.includes('/api/v1/google-tasks/disable') ||

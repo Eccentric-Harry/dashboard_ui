@@ -22,3 +22,4 @@ export const API_GOOGLE_TASKS_STATUS: ApiEndpoint = { url: '/google-tasks/status
 export const API_GOOGLE_TASKS_ENABLE: ApiEndpoint = { url: '/google-tasks/enable', method: 'post' };
 export const API_GOOGLE_TASKS_DISABLE: ApiEndpoint = { url: '/google-tasks/disable', method: 'post' };
 export const API_GOOGLE_TASKS_SYNC: ApiEndpoint = { url: '/google-tasks/sync', method: 'post' };
+export const API_GOOGLE_TASKS_REFRESH: ApiEndpoint = { url: '/google-tasks/refresh', method: 'post' };

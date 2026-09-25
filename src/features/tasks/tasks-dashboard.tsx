@@ -109,6 +109,24 @@ export function TasksDashboard({ onNavigate }: TasksDashboardProps) {
     load()
   }, [load])
 
+  // Google Tasks has no webhooks, so a task ticked off on the phone is only found by
+  // asking. The background poller does that on a timer, but a timer is invisible: open
+  // this page moments after changing something on the phone and it looks broken. So the
+  // page asks on arrival, and re-reads only if the pull actually changed something —
+  // no flicker when everything was already up to date. Opportunistic throughout: the
+  // list has already rendered from cache, and a failure here just leaves it as it was.
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      const res = await tasksService.refreshGoogleTasks()
+      if (cancelled || res.error || !res.data?.applied) return
+      await tasksActions.reloadTasks()
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [tasksActions])
+
   // Reset page when filters change
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
