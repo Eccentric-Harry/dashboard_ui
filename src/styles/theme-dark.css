@@ -557,8 +557,7 @@
 :root[data-theme='dark'] .nutrition-kcal,
 :root[data-theme='dark'] .energy-balance,
 :root[data-theme='dark'] .energy-row,
-:root[data-theme='dark'] .bmi-gauge,
-:root[data-theme='dark'] .sync-details-panel {
+:root[data-theme='dark'] .bmi-gauge {
   border-color: var(--dk-line);
   background: var(--dk-overlay);
   box-shadow: none;
@@ -623,6 +622,29 @@
 
 :root[data-theme='dark'] .profile-integrations {
   border-top-color: var(--dk-line);
+}
+
+/* The combined Google Sync card separates Calendar from Tasks with hairlines
+   rather than nested boxes, so those hairlines have to flip — a dark-on-dark
+   rgba(16,19,18,.07) rule is invisible, and the two services would run together. */
+:root[data-theme='dark'] .sync-service {
+  border-top-color: var(--dk-line);
+}
+
+:root[data-theme='dark'] .sync-service-name,
+:root[data-theme='dark'] .sync-facts .val,
+:root[data-theme='dark'] .sync-account-line .val {
+  color: var(--dk-ink);
+}
+
+:root[data-theme='dark'] .sync-facts,
+:root[data-theme='dark'] .sync-account-line {
+  color: var(--dk-ink-2);
+}
+
+:root[data-theme='dark'] .sync-facts .lbl,
+:root[data-theme='dark'] .sync-account-line .lbl {
+  color: var(--dk-ink-3);
 }
 
 :root[data-theme='dark'] .bmi-gauge-marker {

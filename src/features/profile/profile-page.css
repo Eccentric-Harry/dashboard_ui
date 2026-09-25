@@ -571,6 +571,13 @@
    below the whole grid rather than as dead air inside every card. */
 .metrics-grid {
   min-height: 0;
+  /* Never let the column squash this below its content. As a flex item it shrinks
+     by default, and `min-height: 0` removes the floor that would normally stop it —
+     so on a short window the grid was compressed ~190px under its own content and
+     the cards' innards (the energy-balance block) spilled out and painted over the
+     Integrations section below. Holding natural height hands the scrolling back to
+     `.profile-metrics { overflow-y: auto }`, which is what should have been doing it. */
+  flex-shrink: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   grid-template-rows: auto auto;
@@ -1147,24 +1154,7 @@
   gap: 16px;
 }
 
-.sync-details-panel {
-  background: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  border-radius: 14px;
-  padding: 10px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.01);
-}
 
-.sync-divider {
-  width: 1px;
-  height: 22px;
-  background: rgba(16, 19, 18, 0.08);
-  flex-shrink: 0;
-}
 
 .sync-badge {
   display: inline-flex;
@@ -1210,32 +1200,9 @@
   max-width: 290px;
 }
 
-.sync-detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-}
 
-.sync-detail-item.align-right {
-  align-items: flex-end;
-  text-align: right;
-}
 
-.sync-detail-item .lbl {
-  font-size: 8.5px;
-  font-weight: 750;
-  color: #7d8a82;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
 
-.sync-detail-item .val {
-  font-size: 12px;
-  font-weight: 650;
-  color: #101312;
-}
 
 .truncate-email {
   max-width: 180px;
@@ -1581,21 +1548,16 @@
     width: 100%;
   }
 
-  .sync-status-row {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
+  /* Narrow: the name + badge keep the first line and the buttons drop under them,
+     rather than the buttons squeezing the service name to an ellipsis. */
+  .sync-service-head {
+    flex-wrap: wrap;
+    row-gap: 10px;
   }
 
-  .sync-details-panel {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-
-  .sync-detail-item.align-right {
-    align-items: flex-start;
-    text-align: left;
+  .sync-service-head .sync-actions {
+    width: 100%;
+    margin-left: 0;
   }
 
   .sync-actions {
@@ -2108,6 +2070,89 @@
   gap: 12px;
   padding-top: 16px;
   border-top: 1px solid rgba(16, 19, 18, 0.07);
+  /* Same reason as .metrics-grid: hold natural height and let the column scroll. */
+  flex-shrink: 0;
+}
+
+/* ── One card, both Google services ──
+   Calendar and Tasks share an account and a mental model ("is my stuff synced?"),
+   so they share a card. Separated by a hairline rather than nested in boxes of
+   their own — two bordered cards inside a bordered card is three frames deep for
+   two rows of content. */
+.sync-service {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(16, 19, 18, 0.07);
+}
+
+.sync-service:first-of-type {
+  padding-top: 0;
+  border-top: none;
+}
+
+.sync-service-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.sync-service-head svg {
+  color: #526057;
+  flex: 0 0 auto;
+}
+
+.sync-service-name {
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+  color: #101312;
+}
+
+/* The badge sits with the name, actions push to the far edge. */
+.sync-service-head .sync-badge {
+  margin-left: 2px;
+}
+
+.sync-service-head .sync-actions {
+  margin-left: auto;
+}
+
+/* One shared line for whichever facts that service has — account, counts, last
+   sync. Wraps instead of truncating, because a squeezed column is exactly when
+   these matter. */
+.sync-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #526057;
+}
+
+.sync-facts .lbl {
+  font-size: 9px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(23, 28, 25, 0.5);
+  margin-right: 4px;
+}
+
+.sync-facts .val {
+  color: #101312;
+}
+
+.sync-account-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  padding-bottom: 12px;
+  font-size: 10.5px;
 }
 
 .profile-integrations .metrics-header h2 {
