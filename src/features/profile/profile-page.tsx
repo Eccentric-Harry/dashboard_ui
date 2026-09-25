@@ -944,144 +944,110 @@ export function ProfileOverview({ activePath, onNavigate }: ProfileOverviewProps
                         <h2>Integrations</h2>
                       </header>
                       {/* Calendar and Tasks share one card: same account, same question
-                          ("is my stuff synced?"). Two separate cards made the reader
-                          compare across a gap to answer it. */}
+                          ("is my stuff synced?"). One row per service — name, state, facts
+                          and actions all on the same line — so the whole integration status
+                          reads in two glances instead of filling half the panel. */}
                       <div className="metric-card card-sync">
                         <div className="metric-card-head">
                           <RefreshCw size={15} />
                           <span>Google Sync</span>
+                          {syncStatus?.connected && (
+                            <span className="sync-head-account truncate-email" title={syncStatus.email}>
+                              {syncStatus.email}
+                            </span>
+                          )}
                         </div>
-
-                        {syncStatus?.connected && (
-                          <div className="sync-account-line">
-                            <span className="lbl">Account</span>
-                            <span className="val truncate-email" title={syncStatus.email}>{syncStatus.email}</span>
-                          </div>
-                        )}
 
                         {/* ── Calendar ── */}
                         <div className="sync-service">
-                          <div className="sync-service-head">
-                            <Calendar size={13} />
-                            <span className="sync-service-name">Calendar</span>
-                            <div className={`sync-badge ${syncStatus?.connected ? 'connected' : 'disconnected'}`}>
-                              <span className="dot"></span>
-                              <span>{syncStatus?.connected ? 'Active' : 'Not Connected'}</span>
-                            </div>
-                            <div className="sync-actions">
-                              {syncStatus?.connected ? (
-                                <>
-                                  <button className="sync-btn-now" onClick={handleSyncNow} disabled={syncLoading}>
-                                    <RefreshCw size={12} className={syncLoading ? 'animate-spin' : ''} />
-                                    <span>{syncLoading ? 'Syncing...' : 'Sync'}</span>
-                                  </button>
-                                  <button className="sync-btn-disconnect" onClick={handleDisconnectGoogle} disabled={syncLoading}>
-                                    Disconnect
-                                  </button>
-                                </>
-                              ) : (
-                                <button className="sync-btn-connect" onClick={handleConnectGoogle} disabled={authUrlLoading}>
-                                  {authUrlLoading ? 'Redirecting...' : 'Link Calendar'}
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                          {syncStatus?.connected ? (
-                            <div className="sync-facts">
-                              <span>
-                                <span className="lbl">Last synced</span>
-                                <span className="val">
-                                  {syncStatus.accounts?.[0]?.lastSyncedAt && syncStatus.accounts[0].lastSyncedAt !== ''
-                                    ? new Date(syncStatus.accounts[0].lastSyncedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-                                    : 'Waiting for sync'}
-                                </span>
-                              </span>
-                            </div>
-                          ) : (
-                            <p className="sync-copy">
-                              Two-way sync for your calendar events.
-                            </p>
+                          <Calendar size={13} />
+                          <span className="sync-service-name">Calendar</span>
+                          <span className={`sync-badge ${syncStatus?.connected ? 'connected' : 'disconnected'}`}>
+                            <span className="dot"></span>
+                            <span>{syncStatus?.connected ? 'Active' : 'Not connected'}</span>
+                          </span>
+                          {syncStatus?.connected && (
+                            <span className="sync-facts">
+                              {syncStatus.accounts?.[0]?.lastSyncedAt && syncStatus.accounts[0].lastSyncedAt !== ''
+                                ? `Synced ${new Date(syncStatus.accounts[0].lastSyncedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+                                : 'Waiting for sync'}
+                            </span>
                           )}
+                          <div className="sync-actions">
+                            {syncStatus?.connected ? (
+                              <>
+                                <button className="sync-btn-now" onClick={handleSyncNow} disabled={syncLoading}>
+                                  <RefreshCw size={11} className={syncLoading ? 'animate-spin' : ''} />
+                                  <span>{syncLoading ? 'Syncing' : 'Sync'}</span>
+                                </button>
+                                <button className="sync-btn-disconnect" onClick={handleDisconnectGoogle} disabled={syncLoading}>
+                                  Disconnect
+                                </button>
+                              </>
+                            ) : (
+                              <button className="sync-btn-connect" onClick={handleConnectGoogle} disabled={authUrlLoading}>
+                                {authUrlLoading ? 'Redirecting' : 'Link Calendar'}
+                              </button>
+                            )}
+                          </div>
                         </div>
 
                         {/* ── Tasks ── */}
                         <div className="sync-service">
-                          <div className="sync-service-head">
-                            <ListChecks size={13} />
-                            <span className="sync-service-name">Tasks</span>
-                            {!tasksAccount ? (
-                              <div className="sync-badge disconnected">
-                                <span className="dot"></span>
-                                <span>Needs Google</span>
-                              </div>
-                            ) : !tasksAccount.scopeGranted && !tasksAccount.enabled ? (
-                              <>
-                                <div className="sync-badge disconnected">
-                                  <span className="dot"></span>
-                                  <span>Reconnect Needed</span>
-                                </div>
-                                <div className="sync-actions">
-                                  <button className="sync-btn-connect" onClick={handleConnectGoogle} disabled={authUrlLoading}>
-                                    {authUrlLoading ? 'Redirecting...' : 'Reconnect'}
-                                  </button>
-                                </div>
-                              </>
-                            ) : (
-                              <>
-                                <div className={`sync-badge ${tasksAccount.enabled ? 'connected' : 'disconnected'}`}>
-                                  <span className="dot"></span>
-                                  <span>{tasksAccount.enabled ? 'Mirroring' : 'Off'}</span>
-                                </div>
-                                <div className="sync-actions">
-                                  {tasksAccount.enabled && (
-                                    <button className="sync-btn-now" onClick={handleSyncTasksNow} disabled={tasksBusy}>
-                                      <RefreshCw size={12} className={tasksBusy ? 'animate-spin' : ''} />
-                                      <span>{tasksBusy ? 'Syncing...' : 'Sync'}</span>
-                                    </button>
-                                  )}
-                                  <button
-                                    className={tasksAccount.enabled ? 'sync-btn-disconnect' : 'sync-btn-connect'}
-                                    onClick={handleToggleTasksSync}
-                                    disabled={tasksBusy}
-                                  >
-                                    {tasksAccount.enabled ? 'Turn Off' : 'Turn On'}
-                                  </button>
-                                </div>
-                              </>
-                            )}
-                          </div>
+                          <ListChecks size={13} />
+                          <span className="sync-service-name">Tasks</span>
 
                           {!tasksAccount ? (
-                            <p className="sync-copy">
-                              Link a Google account to mirror your tasks to your phone widget.
-                            </p>
+                            <>
+                              <span className="sync-badge disconnected">
+                                <span className="dot"></span>
+                                <span>Needs Google</span>
+                              </span>
+                              <span className="sync-facts">Link an account above first</span>
+                            </>
                           ) : !tasksAccount.scopeGranted && !tasksAccount.enabled ? (
-                            <p className="sync-copy">
-                              Linked before Tasks sync existed, so only calendar access was granted.
-                              Reconnect to approve Google Tasks.
-                            </p>
-                          ) : tasksAccount.enabled ? (
-                            <div className="sync-facts">
-                              <span>
-                                <span className="lbl">Mirrored</span>
-                                <span className="val">
-                                  {tasksAccount.syncedTaskCount} task{tasksAccount.syncedTaskCount === 1 ? '' : 's'}
-                                </span>
+                            <>
+                              <span className="sync-badge disconnected">
+                                <span className="dot"></span>
+                                <span>Reconnect needed</span>
                               </span>
-                              <span>
-                                <span className="lbl">Last synced</span>
-                                <span className="val">
-                                  {tasksAccount.lastSyncedAt
-                                    ? new Date(tasksAccount.lastSyncedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-                                    : 'Waiting for sync'}
-                                </span>
-                              </span>
-                            </div>
+                              <span className="sync-facts">Granted calendar access only</span>
+                              <div className="sync-actions">
+                                <button className="sync-btn-connect" onClick={handleConnectGoogle} disabled={authUrlLoading}>
+                                  {authUrlLoading ? 'Redirecting' : 'Reconnect'}
+                                </button>
+                              </div>
+                            </>
                           ) : (
-                            <p className="sync-copy">
-                              Mirrors your tasks into one Google Tasks list, so your phone widget
-                              shows everything at once.
-                            </p>
+                            <>
+                              <span className={`sync-badge ${tasksAccount.enabled ? 'connected' : 'disconnected'}`}>
+                                <span className="dot"></span>
+                                <span>{tasksAccount.enabled ? 'Mirroring' : 'Off'}</span>
+                              </span>
+                              <span className="sync-facts">
+                                {tasksAccount.enabled
+                                  ? `${tasksAccount.syncedTaskCount} task${tasksAccount.syncedTaskCount === 1 ? '' : 's'}`
+                                    + (tasksAccount.lastSyncedAt
+                                      ? ` · ${new Date(tasksAccount.lastSyncedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+                                      : ' · waiting for sync')
+                                  : 'One list for your phone widget'}
+                              </span>
+                              <div className="sync-actions">
+                                {tasksAccount.enabled && (
+                                  <button className="sync-btn-now" onClick={handleSyncTasksNow} disabled={tasksBusy}>
+                                    <RefreshCw size={11} className={tasksBusy ? 'animate-spin' : ''} />
+                                    <span>{tasksBusy ? 'Syncing' : 'Sync'}</span>
+                                  </button>
+                                )}
+                                <button
+                                  className={tasksAccount.enabled ? 'sync-btn-disconnect' : 'sync-btn-connect'}
+                                  onClick={handleToggleTasksSync}
+                                  disabled={tasksBusy}
+                                >
+                                  {tasksAccount.enabled ? 'Turn Off' : 'Turn On'}
+                                </button>
+                              </div>
+                            </>
                           )}
                         </div>
                       </div>

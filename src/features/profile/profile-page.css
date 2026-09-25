@@ -1160,16 +1160,16 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  font-size: 11.5px;
+  font-size: 10.5px;
   font-weight: 650;
-  padding: 5px 12px;
+  padding: 3px 9px;
   border-radius: 9999px;
   white-space: nowrap;
 }
 
 .sync-badge .dot {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   display: inline-block;
 }
@@ -1213,18 +1213,19 @@
 
 .sync-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .sync-btn-connect,
 .sync-btn-now,
 .sync-btn-disconnect {
   font-family: inherit;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 650;
-  height: 34px;
-  border-radius: 12px;
+  height: 27px;
+  border-radius: 9px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -1233,7 +1234,7 @@
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   border: none;
   box-sizing: border-box;
-  padding: 0 16px;
+  padding: 0 11px;
   white-space: nowrap;
 }
 
@@ -1548,14 +1549,9 @@
     width: 100%;
   }
 
-  /* Narrow: the name + badge keep the first line and the buttons drop under them,
-     rather than the buttons squeezing the service name to an ellipsis. */
-  .sync-service-head {
-    flex-wrap: wrap;
-    row-gap: 10px;
-  }
-
-  .sync-service-head .sync-actions {
+  /* Narrow: the row already wraps, but the buttons should take the full width of
+     their wrapped line rather than hugging the right edge under the badge. */
+  .sync-service .sync-actions {
     width: 100%;
     margin-left: 0;
   }
@@ -2076,84 +2072,74 @@
 
 /* ── One card, both Google services ──
    Calendar and Tasks share an account and a mental model ("is my stuff synced?"),
-   so they share a card. Separated by a hairline rather than nested in boxes of
-   their own — two bordered cards inside a bordered card is three frames deep for
-   two rows of content. */
+   so they share a card. Each service is ONE row — name, state, facts and actions on
+   the same line — because this is a settings footnote, not a dashboard: it should
+   answer "still working?" at a glance and then get out of the way. The earlier
+   two-line-per-service version pushed the card past half the panel for six words
+   of information. Hairlines separate the services; nesting bordered boxes inside a
+   bordered card would be three frames deep for two rows of content. */
+.card-sync {
+  padding: 16px 18px;
+  gap: 10px;
+}
+
+.card-sync .metric-card-head {
+  padding-bottom: 2px;
+}
+
+/* The account belongs to both services, so it sits once in the header rather than
+   being repeated per row or taking a line of its own. */
+/* Scoped under the head because `.metric-card-head span` sets the uppercase
+   label treatment, and an email rendered in caps is both unreadable and wider —
+   it hit the ellipsis in a column that had room for the whole address. */
+.metric-card-head .sync-head-account {
+  margin-left: auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #526057;
+}
+
 .sync-service {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding-top: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 9px;
+  padding-top: 9px;
   border-top: 1px solid rgba(16, 19, 18, 0.07);
 }
 
 .sync-service:first-of-type {
-  padding-top: 0;
+  padding-top: 2px;
   border-top: none;
 }
 
-.sync-service-head {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  min-width: 0;
-}
-
-.sync-service-head svg {
+.sync-service > svg {
   color: #526057;
   flex: 0 0 auto;
 }
 
 .sync-service-name {
-  font-size: 11px;
-  font-weight: 750;
-  letter-spacing: 0.02em;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   color: #101312;
 }
 
-/* The badge sits with the name, actions push to the far edge. */
-.sync-service-head .sync-badge {
-  margin-left: 2px;
-}
-
-.sync-service-head .sync-actions {
-  margin-left: auto;
-}
-
-/* One shared line for whichever facts that service has — account, counts, last
-   sync. Wraps instead of truncating, because a squeezed column is exactly when
-   these matter. */
+/* Secondary detail — counts, last-sync time. Never competes with the badge, and
+   is the first thing allowed to wrap away on a narrow column. */
 .sync-facts {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 14px;
+  min-width: 0;
   font-size: 10.5px;
   font-weight: 600;
-  color: #526057;
+  color: rgba(82, 96, 87, 0.85);
 }
 
-.sync-facts .lbl {
-  font-size: 9px;
-  font-weight: 750;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(23, 28, 25, 0.5);
-  margin-right: 4px;
-}
-
-.sync-facts .val {
-  color: #101312;
-}
-
-.sync-account-line {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  min-width: 0;
-  padding-bottom: 12px;
-  font-size: 10.5px;
-}
 
 .profile-integrations .metrics-header h2 {
   font-size: 15px;

@@ -631,19 +631,12 @@
   border-top-color: var(--dk-line);
 }
 
-:root[data-theme='dark'] .sync-service-name,
-:root[data-theme='dark'] .sync-facts .val,
-:root[data-theme='dark'] .sync-account-line .val {
+:root[data-theme='dark'] .sync-service-name {
   color: var(--dk-ink);
 }
 
 :root[data-theme='dark'] .sync-facts,
-:root[data-theme='dark'] .sync-account-line {
-  color: var(--dk-ink-2);
-}
-
-:root[data-theme='dark'] .sync-facts .lbl,
-:root[data-theme='dark'] .sync-account-line .lbl {
+:root[data-theme='dark'] .sync-head-account {
   color: var(--dk-ink-3);
 }
 
