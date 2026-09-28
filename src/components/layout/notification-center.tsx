@@ -1,17 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Bell, BellOff, BellRing, Calendar, CheckSquare, Trophy, Eye, EyeOff, Clock, Loader2, RefreshCw, Terminal, LogOut, Layers, Square, Moon, Sun } from 'lucide-react';
+import { X, Bell, BellOff, BellRing, Calendar, CheckSquare, Trophy, Eye, EyeOff, Clock, Loader2, RefreshCw, MapPin, MapPinOff, LogOut, Layers, Square, Moon, Sun } from 'lucide-react';
 import { useNotifications } from '@/store/notification-store';
 import { DARK_THEME_ROUTES, useAppearanceStore } from '@/store/appearance-store';
-import type { AppPath } from '@/app/routes';
+import { useAmbientStore, ambientActions } from '@/store/ambient-store';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { logoutAndReload } from '@/services/http/session';
 
-type NotificationCenterProps = {
-  onNavigate?: (path: AppPath) => void;
-};
-
-function NotificationCenter({ onNavigate }: NotificationCenterProps) {
+function NotificationCenter() {
   const {
     notifications,
     unreadCount,
@@ -32,8 +28,12 @@ function NotificationCenter({ onNavigate }: NotificationCenterProps) {
   const activePath = useAppearanceStore.use.activePath();
   const { toggleSurfaceStyle, toggleTheme } = useAppearanceStore.use.actions();
 
+  const ambientCoords = useAmbientStore.use.coords();
+  const ambientPlace = useAmbientStore.use.place();
+  const ambientGate = useAmbientStore.use.gate();
+
   const panelRef = useRef<HTMLDivElement>(null);
-  const [busy, setBusy] = useState<'refresh' | 'toggle' | 'test' | null>(null);
+  const [busy, setBusy] = useState<'refresh' | 'toggle' | 'test' | 'location' | null>(null);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const [showFinanceGrids, setShowFinanceGrids] = useState(() => {
@@ -75,14 +75,33 @@ function NotificationCenter({ onNavigate }: NotificationCenterProps) {
 
   const isPushSupported = 'serviceWorker' in navigator && 'PushManager' in window;
 
+  // 'denied' is sticky and silent in Firefox-family browsers: the retry below will
+  // resolve instantly with no dialog until the site permission is cleared.
+  const locationBlocked = ambientGate === 'denied' || ambientGate === 'unavailable';
+  const locationHint = ambientCoords
+    ? 'Refresh the weather fix for this device'
+    : ambientGate === 'denied'
+      ? 'Blocked — clear the location permission for this site, then retry'
+      : ambientGate === 'unavailable'
+        ? window.isSecureContext
+          ? "The browser couldn't get a fix — check the OS location settings"
+          : 'Needs an https:// origin — the browser blocks location here'
+        : 'Share your location so the HUD can show local weather and daylight';
+
   const quickActions = [
     {
-      key: 'prompts',
-      icon: <Terminal size={18} />,
-      label: 'Prompts',
-      color: 'var(--qa-blue)',
-      bg: 'var(--qa-blue-bg)',
-      onClick: () => { setIsOpen(false); if (onNavigate) onNavigate('/prompts'); },
+      key: 'location',
+      icon: busy === 'location' || ambientGate === 'prompting'
+        ? <Loader2 size={18} className="animate-spin" />
+        : ambientCoords ? <MapPin size={18} /> : <MapPinOff size={18} />,
+      label: ambientCoords ? (ambientPlace?.label ?? 'Located') : locationBlocked ? 'No Location' : 'Location Off',
+      // The browser only opens the permission dialog from a gesture, so this tile
+      // is the one place in the shell that can ask for a fix.
+      hint: locationHint,
+      color: ambientCoords ? 'var(--qa-teal)' : locationBlocked ? 'var(--qa-red)' : 'var(--qa-muted)',
+      bg: ambientCoords ? 'var(--qa-teal-bg)' : locationBlocked ? 'var(--qa-red-bg)' : 'var(--qa-muted-bg)',
+      active: Boolean(ambientCoords),
+      onClick: async () => { setBusy('location'); await ambientActions.enableLocation(); setBusy(null); },
     },
     {
       key: 'refresh',

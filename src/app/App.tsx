@@ -371,7 +371,7 @@ function App() {
           all until the window is wide enough. */}
       <HudGutters activePath={pathname} />
       <MobileProfileTrigger onNavigate={navigateTo} activePath={pathname} />
-      <NotificationCenter onNavigate={navigateTo} />
+      <NotificationCenter />
       {/* Mounted once at the root so the Spiral Breaker is one tap from any route. */}
       <SpiralBreakerOverlay />
       {/* Plays every celebrationActions.celebrate() moment, from any route. */}
