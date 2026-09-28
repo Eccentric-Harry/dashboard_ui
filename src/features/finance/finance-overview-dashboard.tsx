@@ -1,12 +1,14 @@
-import { useCallback, useEffect, useState, useMemo, type CSSProperties } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import toast from 'react-hot-toast'
+import { ArrowUpRight, HeartHandshake, Landmark, Target } from 'lucide-react'
 import { BalanceSummaryCard } from './components/balance-summary-card'
 import { FinanceHeader } from './components/finance-header'
 import { MetricCard } from './components/metric-card'
 import { SpendingOverviewCard } from './components/spending-overview-card'
 import { SubscriptionsCard } from './components/subscriptions-card'
 import { RepaymentScheduleCard } from './components/repayment-schedule-card'
-import { TransactionsCard, type TransactionProp } from './components/transactions-card'
+import { TransactionsCard, type LedgerFilter } from './components/transactions-card'
+import { TransfersCard, type LegacyBucket } from './components/transfers-card'
 import { AddTransactionModal, type TransactionFormData } from './components/add-transaction-modal'
 import { EditBalanceModal } from './components/edit-balance-modal'
 import { EditBudgetModal } from './components/edit-budget-modal'
@@ -14,29 +16,41 @@ import { LendingCard } from './components/lending-card'
 import { FinanceIntelligence } from './components/finance-intelligence'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { getErrorMessage } from '@/lib/errors'
-import { financeMetrics as fallbackMetrics } from './data'
 import type { FinanceMetric } from './data'
 import type { LendingRecord } from '@/types/finance'
 import { financeService } from '@/services/finance-service'
+import { isGuestSession } from '@/services/http/session'
 import { useFinanceStore } from '@/store/finance-store'
 import {
-  ArrowUpRight, Gauge, PiggyBank, Target
-} from 'lucide-react'
-import { getIconForCategory } from './utils'
+  budgetConfigOf,
+  entriesInMonth,
+  FAMILY_CATEGORY,
+  flattenLogs,
+  localToday,
+  monthOptions,
+  summarize,
+  type LedgerEntry,
+} from '@/lib/finance-ledger'
+import { daysElapsedInMonth, daysInMonth, inr, monthLabel, type Insight, type InsightAction } from '@/lib/insights/engine'
+import { legacyTransferBuckets, transferSummary } from '@/lib/insights/finance'
 import { celebrationActions } from '@/store/celebration-store'
 
 import './finance-overview.css'
 // Redesign layer — must load after the base sheet so its refinements win.
 import './finance-playful.css'
+// Transfers, bills, ledger and bento layout — loads last.
+import './finance-refresh.css'
 
-/** A ledger row plus the sort key it's ordered by. */
-type LedgerRow = TransactionProp & { timestamp: number }
+type TxModalState =
+  | { tab: 'Transaction'; edit: TransactionFormData | null; preset?: Partial<TransactionFormData> }
+  | { tab: 'Lending'; lending: LendingRecord | null }
+
+const monthKeyOfDate = (date: string) => date.slice(0, 7)
 
 function FinanceOverviewDashboard() {
-  const isGuest = localStorage.getItem('isGuest') === 'true'
+  const isGuest = isGuestSession()
 
-  // Server state now comes from the finance store (RemoteDataStatus slices).
-  // Ephemeral UI state (modals, filters, selected date) stays local below.
+  // Server state from the finance store; ephemeral UI state stays local below.
   const logsState = useFinanceStore.use.dailyLogs()
   const accountState = useFinanceStore.use.account()
   const budgetState = useFinanceStore.use.budget()
@@ -45,407 +59,403 @@ function FinanceOverviewDashboard() {
   const logs = logsState.data
   const loading = logsState.loading || (!logsState.loaded && !logsState.hasErrors)
   const balance = accountState.loaded ? (accountState.data?.balance ?? 0) : null
-  const monthlyBudget = budgetState.data?.monthlyBudget ?? accountState.data?.monthlyBudget ?? null
+  const settings = budgetState.data ?? accountState.data
+  const monthlyBudget = settings?.monthlyBudget ?? null
+  const scope = settings?.budgetScope
+  const fixedCategories = settings?.fixedCategories
+  const config = useMemo(() => budgetConfigOf({ budgetScope: scope, fixedCategories }), [scope, fixedCategories])
 
+  const today = localToday()
+  const [selectedDate, setSelectedDate] = useState<string>(
+    () => new URLSearchParams(window.location.search).get('date') || localToday(),
+  )
+  const [selectedMonthKey, setSelectedMonthKey] = useState<string>(() => monthKeyOfDate(selectedDate))
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [ledgerFilter, setLedgerFilter] = useState<LedgerFilter>('all')
+
+  const [txModal, setTxModal] = useState<TxModalState | null>(null)
   const [isEditBalanceOpen, setIsEditBalanceOpen] = useState(false)
   const [isEditBudgetOpen, setIsEditBudgetOpen] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-  const [editingTransaction, setEditingTransaction] = useState<TransactionFormData | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<TransactionProp | null>(null)
-  const [isLendingModalOpen, setIsLendingModalOpen] = useState(false)
-  const [editingLending, setEditingLending] = useState<LendingRecord | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<TransactionFormData | null>(null)
   const [deleteLendingTarget, setDeleteLendingTarget] = useState<LendingRecord | null>(null)
-  // Bumped by any child that lands a "money went right" moment — a loan
-  // recovered, a bill cleared, an instalment closed out.
+  const [reclassifyTarget, setReclassifyTarget] = useState<LegacyBucket | null>(null)
+  const [mergeTarget, setMergeTarget] = useState<{ from: string; into: string } | null>(null)
+  const ledgerRef = useRef<HTMLDivElement>(null)
+
+  const [showFinanceGrids, setShowFinanceGrids] = useState(() => localStorage.getItem('showFinanceGrids') === 'true')
+
+  // Any child that lands a "money went right" moment — a loan recovered, a bill cleared.
   const celebrate = useCallback(() => celebrationActions.celebrate({ palette: 'finance' }), [])
-  const [selectedDate, setSelectedDate] = useState<string>(() => {
-    const params = new URLSearchParams(window.location.search)
-    return params.get('date') || new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)
-  })
-  const [selectedMonthKey, setSelectedMonthKey] = useState<string>(() => {
-    const params = new URLSearchParams(window.location.search)
-    const dStr = params.get('date') || new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)
-    return dStr.substring(0, 7)
-  })
-
-  const [showFinanceGrids, setShowFinanceGrids] = useState(() => {
-    const stored = localStorage.getItem('showFinanceGrids');
-    return stored ? stored === 'true' : false;
-  });
-
-  // Bottom-dock quick-add bubble opens the same "add transaction" modal
-  useEffect(() => {
-    const handler = () => setIsAddModalOpen(true)
-    window.addEventListener('mobile-quick-add', handler)
-    return () => window.removeEventListener('mobile-quick-add', handler)
-  }, [])
-
-  useEffect(() => {
-    const handleVisibilityChange = (e: Event) => {
-      const customEvent = e as CustomEvent;
-      setShowFinanceGrids(customEvent.detail);
-    };
-    window.addEventListener('financeGridsVisibilityChanged', handleVisibilityChange);
-    
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'showFinanceGrids') {
-        setShowFinanceGrids(e.newValue === 'true');
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('financeGridsVisibilityChanged', handleVisibilityChange);
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
-
-  // Deep link from Home's urgent budget insight: `?edit=budget` opens the budget
-  // editor straight away, then drops the flag so a reload doesn't reopen it.
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    if (params.get('edit') !== 'budget') return
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsEditBudgetOpen(true)
-    params.delete('edit')
-    const rest = params.toString()
-    window.history.replaceState(window.history.state, '', `${window.location.pathname}${rest ? `?${rest}` : ''}`)
-  }, [])
-
-  useEffect(() => {
-    const handlePopState = () => {
-      const params = new URLSearchParams(window.location.search)
-      const nextDate = params.get('date') || new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)
-      setSelectedDate(nextDate)
-      const [year, month] = nextDate.split('-')
-      if (year && month) {
-        setSelectedMonthKey(`${year}-${month}`)
-      }
-    }
-
-    window.addEventListener('popstate', handlePopState)
-    return () => {
-      window.removeEventListener('popstate', handlePopState)
-    }
-  }, [])
-
-  const handleDateChange = (date: string) => {
-    setSelectedDate(date)
-    const [year, month] = date.split('-')
-    if (year && month) {
-      setSelectedMonthKey(`${year}-${month}`)
-    }
-  }
-
-
-  // Refresh every finance slice; passed to child cards/modals as their onRefresh.
-  const refreshData = () => {
-    void financeActions.loadAll()
-  }
+  const refreshData = useCallback(() => void financeActions.loadAll(), [financeActions])
 
   useEffect(() => {
     void financeActions.loadAll()
     void financeActions.loadCommitments()
   }, [financeActions])
 
-  const metrics = useMemo(() => {
-    if (!logs.length) return fallbackMetrics
+  // ── One pass over the ledger feeds every card ─────────────────────────────
+  const entries = useMemo(() => flattenLogs(logs), [logs])
+  const monthEntries = useMemo(() => entriesInMonth(entries, selectedMonthKey), [entries, selectedMonthKey])
+  const summary = useMemo(() => summarize(monthEntries, config), [monthEntries, config])
+  const months = useMemo(
+    () => monthOptions(entries, today.slice(0, 7), selectedMonthKey),
+    [entries, today, selectedMonthKey],
+  )
+  const spendingCategories = useMemo(
+    () => [...new Set(entries.filter((e) => e.kind === 'spending').map((e) => e.category))],
+    [entries],
+  )
+  const engineInput = useMemo(
+    () => ({
+      today,
+      monthKey: selectedMonthKey,
+      logs,
+      monthlyBudget,
+      budgetScope: config.scope,
+      fixedCategories: config.fixedCategories,
+    }),
+    [today, selectedMonthKey, logs, monthlyBudget, config],
+  )
+  const transfers = useMemo(() => transferSummary(engineInput), [engineInput])
+  const legacy = useMemo(() => legacyTransferBuckets(engineInput), [engineInput])
 
-    let totalIncome = 0
-    let totalExpense = 0
-    let txCount = 0
-
-    logs.forEach(log => {
-      const d = new Date(log.date)
-      const logMonthKey = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`
-
-      if (logMonthKey === selectedMonthKey) {
-        totalIncome += log.dailyTotals?.totalIncome || 0
-        totalExpense += log.dailyTotals?.totalExpense || 0
-        Object.values(log.transactions || {}).forEach(txs => { txCount += txs.length })
+  // ── Deep links: `?edit=budget`, `?reclassify=To Home`, `?merge=A&into=B` ──
+  // Home's insight buttons land here; each opens its dialog once, then the flag is
+  // dropped so a reload doesn't reopen it.
+  const openFromParams = useCallback(
+    (params: URLSearchParams) => {
+      if (params.get('edit') === 'budget') setIsEditBudgetOpen(true)
+      const reclassify = params.get('reclassify')
+      if (reclassify) {
+        const bucket = legacy.find((b) => b.category === reclassify)
+        if (bucket) setReclassifyTarget(bucket)
       }
-    })
+      const merge = params.get('merge')
+      const into = params.get('into')
+      if (merge && into) setMergeTarget({ from: merge, into })
+    },
+    [legacy],
+  )
 
-    const inr = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`
+  const deepLinkHandled = useRef(false)
+  useEffect(() => {
+    // Reclassify needs the ledger loaded to find its bucket, so wait for the first load.
+    if (deepLinkHandled.current || !logsState.loaded) return
+    deepLinkHandled.current = true
+    const params = new URLSearchParams(window.location.search)
+    if (!['edit', 'reclassify', 'merge'].some((k) => params.has(k))) return
+    // One-shot: reads the URL once after the first ledger load, then clears it.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    openFromParams(params)
+    ;['edit', 'reclassify', 'merge', 'into'].forEach((k) => params.delete(k))
+    const rest = params.toString()
+    window.history.replaceState(window.history.state, '', `${window.location.pathname}${rest ? `?${rest}` : ''}`)
+  }, [logsState.loaded, openFromParams])
 
-    const budget = monthlyBudget ?? 20000
-    const budgetRemaining = budget - totalExpense
-    const budgetSubtitle = budgetRemaining >= 0
-      ? `${inr(budgetRemaining)} left`
-      : `${inr(-budgetRemaining)} over`
-    const budgetSubtitleTone = budgetRemaining >= 0
-      ? (budgetRemaining < budget * 0.2 ? 'warning' as const : 'positive' as const)
-      : 'negative' as const
+  const handleInsightAction = useCallback(
+    (_insight: Insight, action: InsightAction) => {
+      if (action.search) openFromParams(new URLSearchParams(action.search))
+      else ledgerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    },
+    [openFromParams],
+  )
 
-    // Days elapsed in the *selected* month — the current month counts only up to
-    // today, a past month counts in full, so the daily average is never diluted
-    // by days that haven't happened yet.
-    const [yearStr, monthStr] = selectedMonthKey.split('-')
-    const year = Number(yearStr)
-    const monthIndex = Number(monthStr) - 1
-    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate()
-    const now = new Date()
-    const isCurrentMonth = now.getFullYear() === year && now.getMonth() === monthIndex
-    const daysElapsed = isCurrentMonth ? now.getDate() : daysInMonth
-    const avgPerDay = daysElapsed > 0 ? totalExpense / daysElapsed : 0
-    const budgetPerDay = daysInMonth > 0 ? budget / daysInMonth : 0
-
-    // The 4th tile adapts rather than sitting dead: "Monthly Savings" was
-    // max(0, income − expense), and with no income ever recorded it displayed a
-    // permanent ₹0 while also hiding any net-negative month. Show real savings
-    // when there is income to save from, otherwise show the burn rate — which is
-    // always meaningful and is what actually predicts overspend.
-    const hasIncome = totalIncome > 0
-    const netSaved = totalIncome - totalExpense
-    const paceTile: FinanceMetric = hasIncome
-      ? {
-        label: 'Net Saved',
-        value: `${netSaved < 0 ? '−' : ''}${inr(Math.abs(netSaved))}`,
-        cents: '',
-        change: '',
-        tone: netSaved >= 0 ? 'positive' as const : 'negative' as const,
-        icon: PiggyBank,
-        subtitle: `${inr(totalIncome)} in · ${inr(totalExpense)} out`,
-        subtitleTone: netSaved >= 0 ? 'positive' as const : 'negative' as const,
-      }
-      : {
-        label: 'Avg / day',
-        value: inr(avgPerDay),
-        cents: '',
-        change: '',
-        tone: avgPerDay <= budgetPerDay ? 'positive' as const : 'negative' as const,
-        icon: Gauge,
-        subtitle: budgetPerDay > 0
-          ? `${inr(budgetPerDay)}/day pace`
-          : `over ${daysElapsed} days`,
-        subtitleTone: avgPerDay <= budgetPerDay ? 'positive' as const : 'warning' as const,
-      }
-
-    return [
-      paceTile,
-      {
-        label: 'Monthly Budget',
-        value: inr(budget),
-        cents: '',
-        change: '',
-        tone: 'positive' as const,
-        icon: Target,
-        subtitle: budgetSubtitle,
-        subtitleTone: budgetSubtitleTone,
-        progress: budget > 0 ? totalExpense / budget : 0,
-        progressTone: budgetSubtitleTone,
-        useRing: true,
-      },
-      {
-        label: 'Monthly Expenses',
-        value: inr(totalExpense),
-        cents: '',
-        change: '',
-        tone: 'negative' as const,
-        icon: ArrowUpRight,
-        // Transaction count already appears in the header and Recent
-        // Transactions — this tile earns its keep with the per-transaction
-        // average instead of repeating the same count a third time.
-        subtitle: txCount > 0 ? `${inr(totalExpense / txCount)} avg/transaction` : undefined,
-        // A count is a fact, not good news — green here read as a value judgment.
-        subtitleTone: 'neutral' as const,
-      },
-    ]
-  }, [logs, selectedMonthKey, monthlyBudget])
-
-  const recentTransactions = useMemo(() => {
-    let allTxs: LedgerRow[] = []
-    logs.forEach(log => {
-      const d = new Date(log.date)
-      const logMonthKey = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`
-      
-      if (logMonthKey === selectedMonthKey) {
-        Object.entries(log.transactions || {}).forEach(([category, txs]) => {
-          txs.forEach(tx => {
-            // Prefer the stored transaction type; fall back to the category-name
-            // heuristic only for legacy records saved before `type` was persisted.
-            const isIncome = tx.type
-              ? tx.type.toLowerCase() === 'income'
-              : category.toLowerCase().includes('income');
-            allTxs.push({
-              id: tx.id,
-              merchant: tx.description,
-              // Time, not date: the ledger now groups rows under a day header,
-              // so repeating "8/3/2026" on every row under "TODAY" spent a line
-              // of each row restating what the header already said. The clock
-              // time is the detail that header can't carry. Entries saved without a
-              // time land on local midnight; "12:00 AM" on those is noise, not data.
-              detail: (() => {
-                const at = new Date(tx.timestamp)
-                return at.getHours() === 0 && at.getMinutes() === 0
-                  ? ''
-                  : at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-              })(),
-              category: category,
-              amount: `${isIncome ? '+' : '-'}₹${tx.amount.toLocaleString()}`,
-              tone: isIncome ? 'income' : 'expense',
-              icon: getIconForCategory(category),
-              timestamp: new Date(tx.timestamp).getTime(),
-              rawAmount: tx.amount,
-              rawDate: new Date(tx.timestamp).toISOString().split('T')[0],
-              rawType: isIncome ? 'Income' : 'Expense'
-            })
-          })
-        })
-      }
-    })
-    
-    if (selectedCategory) {
-      allTxs = allTxs.filter(tx => tx.category === selectedCategory)
+  // ── Shell events ──────────────────────────────────────────────────────────
+  useEffect(() => {
+    const quickAdd = () => setTxModal({ tab: 'Transaction', edit: null })
+    const gridsChanged = (e: Event) => setShowFinanceGrids((e as CustomEvent<boolean>).detail)
+    const storage = (e: StorageEvent) => {
+      if (e.key === 'showFinanceGrids') setShowFinanceGrids(e.newValue === 'true')
     }
+    const popstate = () => {
+      const next = new URLSearchParams(window.location.search).get('date') || localToday()
+      setSelectedDate(next)
+      setSelectedMonthKey(monthKeyOfDate(next))
+    }
+    window.addEventListener('mobile-quick-add', quickAdd)
+    window.addEventListener('financeGridsVisibilityChanged', gridsChanged)
+    window.addEventListener('storage', storage)
+    window.addEventListener('popstate', popstate)
+    return () => {
+      window.removeEventListener('mobile-quick-add', quickAdd)
+      window.removeEventListener('financeGridsVisibilityChanged', gridsChanged)
+      window.removeEventListener('storage', storage)
+      window.removeEventListener('popstate', popstate)
+    }
+  }, [])
 
-    // Show the newest added transactions first.
-    // By comparing the IDs (MongoDB ObjectIDs encode exact creation time), 
-    // we guarantee the exact chronological insertion order even if they share the exact same 'date'.
-    return allTxs.sort((a, b) => {
-      // Sort primarily by precise timestamp if available/differ
-      if (b.timestamp !== a.timestamp && !Number.isNaN(b.timestamp) && !Number.isNaN(a.timestamp)) {
-        return b.timestamp - a.timestamp;
-      }
-      // Guarantee exact insertion order
-      if (typeof a.id === 'string' && typeof b.id === 'string') {
-        return b.id.localeCompare(a.id);
-      }
-      return 0;
-    })
-  }, [logs, selectedCategory, selectedMonthKey])
-
-  const handleEdit = (tx: TransactionProp) => {
-    setEditingTransaction({
-      id: tx.id,
-      description: tx.merchant,
-      amount: tx.rawAmount,
-      category: tx.category,
-      type: tx.rawType,
-      date: tx.rawDate
-    })
+  const handleDateChange = (date: string) => {
+    setSelectedDate(date)
+    setSelectedMonthKey(monthKeyOfDate(date))
   }
 
-  const handleDelete = (tx: TransactionProp) => {
-    setDeleteTarget(tx)
+  const changeMonth = (monthKey: string) => {
+    setSelectedMonthKey(monthKey)
+    setSelectedCategory(null)
   }
+
+  // ── KPI tiles ─────────────────────────────────────────────────────────────
+  const tiles = useMemo(() => {
+    const budget = monthlyBudget ?? 0
+    const flex = config.scope === 'FLEX'
+    const left = budget - summary.budgeted
+    const budgetTone = left < 0 ? 'negative' as const : left < budget * 0.2 ? 'warning' as const : 'positive' as const
+    const daysCounted = daysElapsedInMonth(selectedMonthKey, today) || daysInMonth(selectedMonthKey)
+
+    const budgetTile: FinanceMetric = {
+      label: left >= 0 ? 'Left to spend' : 'Over budget',
+      value: inr(Math.abs(left)),
+      cents: '',
+      change: '',
+      tone: 'positive',
+      icon: Target,
+      subtitle: `${inr(summary.budgeted)} of ${inr(budget)}${flex ? ' · everyday' : ''}`,
+      subtitleTone: budgetTone,
+      progress: budget > 0 ? summary.budgeted / budget : 0,
+      progressTone: budgetTone,
+      useRing: true,
+    }
+    const spentTile: FinanceMetric = {
+      label: 'Spent',
+      value: inr(summary.spending),
+      cents: '',
+      change: '',
+      tone: 'negative',
+      icon: ArrowUpRight,
+      subtitle: summary.spendingCount > 0
+        ? `${inr(summary.spending / daysCounted)}/day · ${summary.spendingCount} transactions`
+        : 'nothing yet',
+      // A fact, not a verdict — the budget tile carries the judgement.
+      subtitleTone: 'neutral',
+    }
+    const familyOnly = transfers.familyOut > 0 && transfers.familyOut === summary.transferOut
+    const moneyOutTile: FinanceMetric = summary.transferOut > 0
+      ? {
+          label: transfers.familyOut > 0 ? 'Sent home' : 'Transferred',
+          value: inr(transfers.familyOut > 0 ? transfers.familyOut : summary.transferOut),
+          cents: '',
+          change: '',
+          tone: 'positive',
+          icon: HeartHandshake,
+          subtitle: familyOnly || transfers.familyOut === 0
+            ? 'not counted as spending'
+            : `+ ${inr(summary.transferOut - transfers.familyOut)} lent or saved`,
+          subtitleTone: 'neutral',
+          panel: 'heather',
+        }
+      : {
+          label: 'Income',
+          value: inr(summary.income),
+          cents: '',
+          change: '',
+          tone: 'positive',
+          icon: Landmark,
+          subtitle: summary.income > 0 ? `${inr(summary.income - summary.spending)} after spending` : 'none logged this month',
+          subtitleTone: summary.income >= summary.spending ? 'positive' : 'neutral',
+        }
+    return [
+      { metric: budgetTile, onEdit: () => setIsEditBudgetOpen(true) },
+      { metric: spentTile },
+      { metric: moneyOutTile },
+    ]
+  }, [monthlyBudget, config.scope, summary, transfers, selectedMonthKey, today])
+
+  // ── Mutations ─────────────────────────────────────────────────────────────
+  const openEntry = (entry: LedgerEntry) =>
+    setTxModal({
+      tab: 'Transaction',
+      edit: {
+        id: entry.id,
+        description: entry.description,
+        amount: entry.amount,
+        category: entry.category,
+        type: entry.type,
+        direction: entry.direction,
+        date: entry.day,
+      },
+    })
 
   const confirmDelete = async () => {
-    if (!deleteTarget) return
+    const target = deleteTarget
+    if (!target?.id) return
+    setDeleteTarget(null)
     try {
-      const res = await financeService.deleteTransaction(deleteTarget.id)
+      const res = await financeService.deleteTransaction(target.id)
       if (res.error) throw new Error(res.error.message)
-      toast.success(`Deleted "${deleteTarget.merchant}"`)
-      setDeleteTarget(null)
+      toast.success(`Deleted "${target.description}"`)
+      setTxModal(null)
       refreshData()
     } catch (err) {
       toast.error(getErrorMessage(err, 'Failed to delete transaction'))
-      console.error('Failed to delete transaction:', err)
-      setDeleteTarget(null)
     }
   }
 
   const confirmDeleteLending = async () => {
-    if (!deleteLendingTarget) return
+    const target = deleteLendingTarget
+    if (!target) return
+    setDeleteLendingTarget(null)
     try {
-      const res = await financeService.deleteLending(deleteLendingTarget.id)
+      const res = await financeService.deleteLending(target.id)
       if (res.error) throw new Error(res.error.message)
-      toast.success(`Deleted lending record for ${deleteLendingTarget.borrower}`)
-      setDeleteLendingTarget(null)
+      toast.success(`Deleted lending record for ${target.borrower}`)
       void financeActions.loadLending()
       refreshData()
     } catch (err) {
       toast.error(getErrorMessage(err, 'Failed to delete lending record'))
-      console.error('Failed to delete lending record:', err)
-      setDeleteLendingTarget(null)
     }
   }
 
+  const confirmReclassify = async () => {
+    const bucket = reclassifyTarget
+    if (!bucket) return
+    setReclassifyTarget(null)
+    try {
+      const res = await financeService.reclassifyCategory({
+        category: bucket.category,
+        targetCategory: bucket.target,
+        type: 'Transfer',
+        direction: bucket.direction,
+      })
+      if (res.error) throw new Error(res.error.message)
+      toast.success(`Moved ${res.data?.updated ?? bucket.count} transaction(s) to transfers — no longer counted as ${bucket.direction === 'IN' ? 'income' : 'spending'}`)
+      refreshData()
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to move transactions'))
+    }
+  }
 
+  const confirmMerge = async () => {
+    const target = mergeTarget
+    if (!target) return
+    setMergeTarget(null)
+    try {
+      const res = await financeService.reclassifyCategory({ category: target.from, targetCategory: target.into })
+      if (res.error) throw new Error(res.error.message)
+      toast.success(`Merged ${res.data?.updated ?? ''} "${target.from}" transaction(s) into ${target.into}`)
+      if (selectedCategory === target.from) setSelectedCategory(target.into)
+      refreshData()
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to merge categories'))
+    }
+  }
+
+  const showTransfersInLedger = () => {
+    setLedgerFilter('transfers')
+    setSelectedCategory(null)
+    ledgerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  const netNote = summary.count > 0
+    ? `${summary.net >= 0 ? '+' : '−'}${inr(Math.abs(summary.net))} in ${monthLabel(selectedMonthKey).split(' ')[0]}`
+    : undefined
 
   return (
     <section className="finance-dashboard route-scroll" aria-label="Finance overview dashboard">
-      <FinanceHeader 
-        onAddClick={() => setIsAddModalOpen(true)} 
+      <FinanceHeader
+        onAddClick={() => setTxModal({ tab: 'Transaction', edit: null })}
         logs={logs}
         selectedDate={selectedDate}
         onDateChange={handleDateChange}
       />
-      {/* Entrance stagger: each grid child declares its own index, so cards can
-          be added or reordered without any nth-child bookkeeping in the CSS. */}
-      <div className={`finance-dashboard-grid${isGuest ? ' finance-dashboard-guest' : ''}`}>
+      {/* Entrance stagger: each grid child declares its own index, so cards can be
+          added or reordered without any nth-child bookkeeping in the CSS. */}
+      <div className={`finance-dashboard-grid fin-bento${isGuest ? ' finance-dashboard-guest' : ''}`}>
         <div className="finance-stats-row" style={{ '--i': 0 } as CSSProperties}>
           <BalanceSummaryCard
             balance={balance}
             loading={loading && balance === null}
             onEdit={() => setIsEditBalanceOpen(true)}
+            note={netNote}
+            noteTone={summary.net > 0 ? 'positive' : summary.net < 0 ? 'negative' : 'neutral'}
           />
-          {metrics.map((metric, index) => (
-            <MetricCard
-              key={metric.label}
-              metric={metric}
-              loading={loading}
-              onEdit={metric.label === 'Monthly Budget' ? () => setIsEditBudgetOpen(true) : undefined}
-              stagger={index + 1}
-            />
+          {tiles.map(({ metric, onEdit }, index) => (
+            <MetricCard key={index} metric={metric} loading={loading} onEdit={onEdit} stagger={index + 1} />
           ))}
         </div>
+
         <FinanceIntelligence
           logs={logs}
           monthlyBudget={monthlyBudget}
+          budgetScope={config.scope}
+          fixedCategories={config.fixedCategories}
           selectedMonthKey={selectedMonthKey}
-          onMonthChange={setSelectedMonthKey}
+          onMonthChange={changeMonth}
+          months={months}
+          monthSummary={summary}
+          onInsightAction={handleInsightAction}
           loading={loading}
           stagger={1}
         />
-        <SpendingOverviewCard
-          logs={logs}
-          selectedCategory={selectedCategory}
-          onCategorySelect={setSelectedCategory}
-          selectedMonthKey={selectedMonthKey}
-          onMonthSelect={setSelectedMonthKey}
-          loading={loading}
-          stagger={2}
-        />
-        <TransactionsCard
-          transactions={recentTransactions}
-          loading={loading}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          stagger={3}
-        />
-        <SubscriptionsCard
-          transactions={recentTransactions}
-          onRefresh={refreshData}
-          onCelebrate={celebrate}
-          stagger={4}
-        />
-        {!isGuest && showFinanceGrids && <RepaymentScheduleCard
-          transactions={recentTransactions}
-          onRefresh={refreshData}
-          onCelebrate={celebrate}
-          stagger={5}
-        />}
-        {!isGuest && showFinanceGrids && <LendingCard
-          onEditClick={(record) => {
-            setEditingLending(record)
-            setIsLendingModalOpen(true)
-          }}
-          onDeleteClick={(record) => {
-            setDeleteLendingTarget(record)
-          }}
-          onRefreshTransactions={refreshData}
-          onCelebrate={celebrate}
-          stagger={6}
-        />}
+
+        <div className="fin-col fin-col--main">
+          <SpendingOverviewCard
+            monthEntries={monthEntries}
+            config={config}
+            selectedCategory={selectedCategory}
+            onCategorySelect={(category) => {
+              setSelectedCategory(category)
+              if (category) setLedgerFilter('spending')
+            }}
+            months={months}
+            selectedMonthKey={selectedMonthKey}
+            onMonthSelect={changeMonth}
+            loading={loading}
+            stagger={2}
+          />
+          <div ref={ledgerRef} className="fin-scroll-anchor">
+            <TransactionsCard
+              entries={monthEntries}
+              loading={loading}
+              onOpen={openEntry}
+              categoryFilter={selectedCategory}
+              onClearCategory={() => setSelectedCategory(null)}
+              filter={ledgerFilter}
+              onFilterChange={setLedgerFilter}
+              monthLabel={monthLabel(selectedMonthKey)}
+              stagger={3}
+            />
+          </div>
+        </div>
+
+        <div className="fin-col fin-col--side">
+          <SubscriptionsCard
+            entries={entries}
+            today={today}
+            onLedgerChanged={refreshData}
+            onCelebrate={celebrate}
+            stagger={2}
+          />
+          <TransfersCard
+            monthEntries={monthEntries}
+            summary={transfers}
+            monthLabel={monthLabel(selectedMonthKey)}
+            legacy={legacy}
+            onLogTransfer={() =>
+              setTxModal({ tab: 'Transaction', edit: null, preset: { type: 'Transfer', direction: 'OUT', category: FAMILY_CATEGORY } })
+            }
+            onReclassify={setReclassifyTarget}
+            onShowAll={showTransfersInLedger}
+            stagger={3}
+          />
+          {!isGuest && showFinanceGrids && (
+            <LendingCard
+              onEditClick={(record) => setTxModal({ tab: 'Lending', lending: record })}
+              onDeleteClick={setDeleteLendingTarget}
+              onRefreshTransactions={refreshData}
+              onCelebrate={celebrate}
+              stagger={4}
+            />
+          )}
+          {!isGuest && showFinanceGrids && (
+            <RepaymentScheduleCard transactions={entries} onRefresh={refreshData} onCelebrate={celebrate} stagger={5} />
+          )}
+        </div>
       </div>
 
-      
       <ConfirmDialog
         open={!!deleteTarget}
         title="Delete transaction"
-        message={deleteTarget ? `Delete transaction "${deleteTarget.merchant}" (${deleteTarget.amount})?` : ''}
+        message={deleteTarget ? `Delete "${deleteTarget.description}" (₹${deleteTarget.amount.toLocaleString('en-IN')})? Your balance is adjusted back.` : ''}
         onConfirm={confirmDelete}
         onCancel={() => setDeleteTarget(null)}
       />
@@ -453,9 +463,33 @@ function FinanceOverviewDashboard() {
       <ConfirmDialog
         open={!!deleteLendingTarget}
         title="Delete lending record"
-        message={deleteLendingTarget ? `Are you sure you want to delete the lending record for "${deleteLendingTarget.borrower}" (₹${deleteLendingTarget.amount})?` : ''}
+        message={deleteLendingTarget ? `Delete the lending record for "${deleteLendingTarget.borrower}" (₹${deleteLendingTarget.amount.toLocaleString('en-IN')})?` : ''}
         onConfirm={confirmDeleteLending}
         onCancel={() => setDeleteLendingTarget(null)}
+      />
+
+      <ConfirmDialog
+        open={!!reclassifyTarget}
+        title="Move to transfers"
+        tone="accent"
+        confirmLabel="Move them"
+        message={
+          reclassifyTarget
+            ? `Move ${reclassifyTarget.count} "${reclassifyTarget.category}" transaction(s) (${inr(reclassifyTarget.total)}) to transfers as "${reclassifyTarget.target}"? They stop counting as ${reclassifyTarget.direction === 'IN' ? 'income' : 'spending and against your budget'}; your balance doesn't change.`
+            : ''
+        }
+        onConfirm={confirmReclassify}
+        onCancel={() => setReclassifyTarget(null)}
+      />
+
+      <ConfirmDialog
+        open={!!mergeTarget}
+        title="Merge categories"
+        tone="accent"
+        confirmLabel="Merge"
+        message={mergeTarget ? `Move every "${mergeTarget.from}" transaction into "${mergeTarget.into}"? Amounts, dates and your balance stay the same.` : ''}
+        onConfirm={confirmMerge}
+        onCancel={() => setMergeTarget(null)}
       />
 
       <EditBalanceModal
@@ -468,26 +502,28 @@ function FinanceOverviewDashboard() {
       <EditBudgetModal
         isOpen={isEditBudgetOpen}
         currentBudget={monthlyBudget ?? 20000}
+        currentScope={config.scope}
+        currentFixed={config.fixedCategories}
+        monthEntries={monthEntries}
+        spendingCategories={spendingCategories}
         onClose={() => setIsEditBudgetOpen(false)}
-        onSuccess={(newBudget) => financeActions.applyBudget(newBudget)}
+        onSuccess={(saved) => financeActions.applyBudget(saved)}
       />
 
       <AddTransactionModal
-        isOpen={isAddModalOpen || isLendingModalOpen || !!editingTransaction || !!editingLending}
-        initialTab={isLendingModalOpen || !!editingLending ? 'Lending' : 'Transaction'}
-        isEdit={!!editingTransaction || !!editingLending}
-        initialTransactionData={editingTransaction}
-        initialLendingData={editingLending}
-        onClose={() => {
-          setIsAddModalOpen(false)
-          setIsLendingModalOpen(false)
-          setEditingTransaction(null)
-          setEditingLending(null)
-        }} 
+        isOpen={txModal != null}
+        initialTab={txModal?.tab ?? 'Transaction'}
+        isEdit={txModal?.tab === 'Transaction' ? txModal.edit != null : txModal?.tab === 'Lending' && txModal.lending != null}
+        initialTransactionData={txModal?.tab === 'Transaction' ? txModal.edit : null}
+        initialLendingData={txModal?.tab === 'Lending' ? txModal.lending : null}
+        preset={txModal?.tab === 'Transaction' ? txModal.preset : null}
+        history={entries}
+        onDelete={setDeleteTarget}
+        onClose={() => setTxModal(null)}
         onSuccess={() => {
           void financeActions.loadLending()
           refreshData()
-        }} 
+        }}
       />
     </section>
   )

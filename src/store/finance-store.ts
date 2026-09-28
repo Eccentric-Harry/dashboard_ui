@@ -45,7 +45,8 @@ interface FinanceActions {
     loadCommitments: () => Promise<void>;
     /** Optimistic local updates after a successful edit-modal save. */
     applyBalance: (balance: number) => void;
-    applyBudget: (monthlyBudget: number) => void;
+    /** The saved budget settings (amount + what it covers), as the server returned them. */
+    applyBudget: (account: Pick<FinanceAccount, 'monthlyBudget'> & Partial<FinanceAccount>) => void;
   };
 }
 
@@ -104,14 +105,24 @@ const useFinanceStoreBase = create<FinanceStore>()(
         applyBalance: (balance) =>
           set((state) => {
             const prev = state.account.data;
-            state.account.data = { balance, monthlyBudget: prev?.monthlyBudget ?? 0 };
+            state.account.data = { ...prev, balance, monthlyBudget: prev?.monthlyBudget ?? 0 };
             state.account.loaded = true;
           }),
-        applyBudget: (monthlyBudget) =>
+        applyBudget: (saved) =>
           set((state) => {
-            const prev = state.budget.data;
-            state.budget.data = { balance: prev?.balance ?? 0, monthlyBudget };
-            state.budget.loaded = true;
+            // Both slices carry the budget settings; keep them identical so no card reads
+            // a stale scope after an edit.
+            for (const slice of [state.budget, state.account]) {
+              const prev = slice.data;
+              slice.data = {
+                ...prev,
+                balance: prev?.balance ?? saved.balance ?? 0,
+                monthlyBudget: saved.monthlyBudget,
+                budgetScope: saved.budgetScope ?? prev?.budgetScope,
+                fixedCategories: saved.fixedCategories ?? prev?.fixedCategories,
+              };
+              slice.loaded = true;
+            }
           }),
       },
     })),

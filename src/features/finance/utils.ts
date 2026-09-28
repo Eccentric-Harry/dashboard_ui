@@ -3,7 +3,8 @@ import {
   Fuel, Car, Train, Plane, Home, ReceiptText, ShieldCheck, 
   Film, MonitorPlay, Ticket, Stethoscope, Dumbbell, Pill, 
   Landmark, TrendingUp, HandCoins, Sparkles, WalletCards, 
-  CircleDollarSign, Bike, Map, type LucideIcon 
+  CircleDollarSign, Bike, Map, HeartHandshake, PiggyBank, Repeat, CreditCard,
+  Undo2, Gift, type LucideIcon
 } from 'lucide-react'
 
 /**
@@ -21,7 +22,15 @@ import {
  */
 export const CATEGORY_COLORS: Record<string, string> = {
   'Home': '#5f6bab',           // dusty indigo
-  'To Home': '#5f6bab',        // legacy alias
+  'To Home': '#8a7fb0',        // legacy spelling of Family
+  'Family': '#8a7fb0',         // heather — money sent home (a transfer, never spending)
+  'Rent': '#5f6bab',           // dusty indigo
+  'Subscriptions': '#9a7a9e',  // plum
+  'Savings': '#5d8f86',        // deep teal
+  'Investment': '#6f8f5b',     // fern
+  'Card Payment': '#7b8794',   // slate grey
+  'Personal': '#b08a6e',       // sandstone
+  'Refund': '#6f9e7f',         // light moss
   'Bills': '#b4707a',          // clay rose — near danger, deliberately softer
   'Food': '#5f8a6a',           // sage
   'Dining': '#4e7a63',         // deeper sage
@@ -75,6 +84,13 @@ export function getIconForCategory(category: string): LucideIcon {
   if (cat.includes('flight') || cat.includes('travel')) return Plane
   if (cat.includes('transport')) return Car
   
+  // Transfers
+  if (cat.includes('family') || cat.includes('to home') || cat.includes('sent home')) return HeartHandshake
+  if (cat.includes('saving')) return PiggyBank
+  if (cat.includes('card payment')) return CreditCard
+  if (cat.includes('refund')) return Undo2
+  if (cat.includes('gift')) return Gift
+
   // Housing & Bills
   if (cat.includes('home') || cat.includes('rent') || cat.includes('mortgage')) return Home
   if (cat.includes('bill') || cat.includes('utilit')) return ReceiptText
@@ -83,7 +99,8 @@ export function getIconForCategory(category: string): LucideIcon {
   // Entertainment & Subs
   if (cat.includes('outing') || cat.includes('trip') || cat.includes('tour')) return Map
   if (cat.includes('movie') || cat.includes('cinema')) return Film
-  if (cat.includes('sub') || cat.includes('streaming') || cat.includes('netflix')) return MonitorPlay
+  if (cat.includes('subscription')) return Repeat
+  if (cat.includes('streaming') || cat.includes('netflix')) return MonitorPlay
   if (cat.includes('entertain') || cat.includes('ticket') || cat.includes('event')) return Ticket
   
   // Health & Fitness

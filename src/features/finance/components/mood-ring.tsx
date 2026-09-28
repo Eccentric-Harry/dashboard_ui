@@ -9,6 +9,8 @@
 // it also animates *between* values — edit the budget in the modal and the ring
 // travels to its new position instead of snapping.
 
+import React from "react";
+
 type MoodTone = 'good' | 'watch' | 'over'
 
 type MoodRingProps = {
@@ -31,6 +33,9 @@ function MoodRing({ progress, tone, label, size = 44 }: MoodRingProps) {
   const clamped = Math.min(1, Math.max(0, progress))
   const offset = circumference * (1 - clamped)
   const pct = Math.round(progress * 100)
+  // Four digits don't fit inside a 38px ring ("1240%" spilled over the arc); past 999%
+  // a multiplier says the same thing in three glyphs.
+  const defaultLabel = pct > 999 ? `${Math.round(progress)}×` : `${pct}%`
 
   return (
     <span
@@ -57,7 +62,7 @@ function MoodRing({ progress, tone, label, size = 44 }: MoodRingProps) {
           strokeDashoffset={offset}
         />
       </svg>
-      <b className="fin-ring-label">{label ?? `${pct}%`}</b>
+      <b className="fin-ring-label">{label ?? defaultLabel}</b>
     </span>
   )
 }

@@ -6,10 +6,11 @@ import { getErrorMessage } from '@/lib/errors'
 import { financeService } from '@/services/finance-service'
 import { useFinanceStore } from '@/store/finance-store'
 import { isAwaitingData } from '@/store/zustand-utils'
-import type { TransactionProp } from './transactions-card'
+import { localToday, type LedgerEntry } from '@/lib/finance-ledger'
 
 interface RepaymentScheduleCardProps {
-  transactions: TransactionProp[]
+  /** Every loaded ledger row — an instalment paid in another month still counts as paid. */
+  transactions: LedgerEntry[]
   onRefresh?: () => void
   /** Fired when an instalment is cleared, so the route can celebrate. */
   onCelebrate?: () => void
@@ -32,7 +33,7 @@ export function RepaymentScheduleCard({ transactions, onRefresh, onCelebrate, st
 
     transactions.forEach(tx => {
       repayments.forEach(item => {
-        const descLower = tx.merchant.toLowerCase()
+        const descLower = tx.description.toLowerCase()
         // Match by keyword slice repayment and due date
         if (
           descLower.includes('slice repayment') &&
@@ -78,14 +79,14 @@ export function RepaymentScheduleCard({ transactions, onRefresh, onCelebrate, st
 
     try {
       const numericAmount = parseFloat(installment.amount.replace(/[^0-9.]/g, ''))
-      const today = new Date().toISOString().split('T')[0]
-
       const res = await financeService.addTransaction({
         description: `Slice Repayment (Due ${installment.dueDate})`,
         amount: Math.round(numericAmount),
-        category: 'Bills & Utilities',
+        // "Bills", not "Bills & Utilities": the latter isn't a category the picker offers and
+        // split the same spending across two near-duplicate buckets.
+        category: 'Bills',
         type: 'Expense',
-        date: today
+        date: localToday(),
       })
       if (res.error) throw new Error(res.error.message)
 

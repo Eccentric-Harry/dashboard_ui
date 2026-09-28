@@ -151,7 +151,10 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
             monthKey: home.today.slice(0, 7),
             logs: home.finance.data ?? [],
             monthlyBudget: home.spending.data.monthlyBudget ?? null,
-            monthTotalSpentOverride: home.spending.data.totalSpent ?? null,
+            budgetScope: home.spending.data.budgetScope ?? null,
+            fixedCategories: home.spending.data.fixedCategories ?? null,
+            // What the budget measures — flexible spending only under a FLEX budget.
+            monthTotalSpentOverride: home.spending.data.budgetedSpent ?? home.spending.data.totalSpent ?? null,
           }
         : null,
     [home.spending.data, home.finance.data, home.today],

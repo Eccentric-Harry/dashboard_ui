@@ -82,7 +82,7 @@ function MetricCard({ metric, loading = false, onEdit, stagger = 0 }: MetricCard
           type="button"
           className="finance-balance-edit"
           onClick={onEdit}
-          aria-label="Edit monthly budget"
+          aria-label={`Edit ${metric.label.toLowerCase()}`}
           title="Set monthly budget"
         >
           <Pencil size={12} strokeWidth={2.2} />
@@ -93,7 +93,7 @@ function MetricCard({ metric, loading = false, onEdit, stagger = 0 }: MetricCard
           <div className="skeleton-shimmer skeleton-rect" style={{ width: '85px', height: '18px', borderRadius: '4px' }} />
         </div>
       ) : (
-        <div className={`finance-accent-panel is-${panelTone}`}>
+        <div className={`finance-accent-panel is-${metric.panel ?? panelTone}`}>
           <strong>{displayValue}</strong>
 
           {/* The flat meter survives for any tile that tracks progress but

@@ -1,9 +1,21 @@
-import { useState, useEffect } from 'react'
-import { X, Loader2 } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { ArrowDownLeft, ArrowUpRight, Loader2, Plus, Trash2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
-import type { LendingRecord } from '@/types/finance'
+import type { LendingRecord, TransactionType, TransferDirection } from '@/types/finance'
 import { financeService } from '@/services/finance-service'
 import { useConfirmClose } from '@/hooks/use-confirm-close'
+import {
+  FAMILY_CATEGORY,
+  INCOME_CATEGORIES,
+  localToday,
+  SPENDING_CATEGORIES,
+  TRANSFER_IN_CATEGORIES,
+  TRANSFER_OUT_CATEGORIES,
+  type LedgerEntry,
+  type TxKind,
+} from '@/lib/finance-ledger'
+import { cn } from '@/lib/utils'
+import { getConsistentColor, getIconForCategory } from '../utils'
 
 import faaahAudio from '@/assets/faaah.mp3'
 import { getErrorMessage } from '@/lib/errors'
@@ -14,7 +26,8 @@ export interface TransactionFormData {
   description: string
   amount: number
   category: string
-  type: string
+  type: TransactionType
+  direction?: TransferDirection
   date: string
 }
 
@@ -26,17 +39,33 @@ interface AddTransactionModalProps {
   initialTab?: 'Transaction' | 'Lending'
   initialTransactionData?: TransactionFormData | null
   initialLendingData?: LendingRecord | null
+  /** Starting values for a new entry — e.g. the Transfers card's "Log money sent home". */
+  preset?: Partial<TransactionFormData> | null
+  /** Past ledger rows: ranks the category chips and powers merchant memory. */
+  history?: LedgerEntry[]
+  /** Edit mode only — asks the route to confirm and delete. */
+  onDelete?: (tx: TransactionFormData) => void
 }
 
-const CATEGORIES = [
-  'Food', 'Dining', 'Groceries',
-  'Transport', 'Cycling',
-  'Shopping', 'Entertainment', 'Outing',
-  'Bills', 'Health', 'Home',
-  'Lending', 'Loan Recovery',
-  'Income', 'Salary',
-  'Miscellaneous'
+const KINDS: { type: TransactionType; label: string }[] = [
+  { type: 'Expense', label: 'Expense' },
+  { type: 'Transfer', label: 'Transfer' },
+  { type: 'Income', label: 'Income' },
 ]
+
+const kindOf = (type: TransactionType, direction: TransferDirection): TxKind =>
+  type === 'Income' ? 'income' : type === 'Expense' ? 'spending' : direction === 'IN' ? 'transfer-in' : 'transfer-out'
+
+const defaultsFor = (kind: TxKind): string[] =>
+  kind === 'income'
+    ? INCOME_CATEGORIES
+    : kind === 'transfer-out'
+      ? TRANSFER_OUT_CATEGORIES
+      : kind === 'transfer-in'
+        ? TRANSFER_IN_CATEGORIES
+        : SPENDING_CATEGORIES
+
+const CHIP_LIMIT = 11
 
 export function AddTransactionModal({
   isOpen,
@@ -45,128 +74,157 @@ export function AddTransactionModal({
   isEdit,
   initialTab = 'Transaction',
   initialTransactionData,
-  initialLendingData
+  initialLendingData,
+  preset,
+  history = [],
+  onDelete,
 }: AddTransactionModalProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-
-  // Active Tab state
   const [activeTab, setActiveTab] = useState<'Transaction' | 'Lending'>('Transaction')
 
-  // Transaction Form State
-  const [type, setType] = useState('Expense')
-  const [category, setCategory] = useState(CATEGORIES[0])
+  // Transaction form
+  const [type, setType] = useState<TransactionType>('Expense')
+  const [direction, setDirection] = useState<TransferDirection>('OUT')
+  const [category, setCategory] = useState('')
+  const [categoryTouched, setCategoryTouched] = useState(false)
+  const [customCategory, setCustomCategory] = useState<string | null>(null)
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
-  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [date, setDate] = useState(localToday)
+  const amountRef = useRef<HTMLInputElement>(null)
 
-  // Lending Form State
+  // Lending form
   const [borrower, setBorrower] = useState('')
   const [lendingAmount, setLendingAmount] = useState('')
-  const [lendingDate, setLendingDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [lendingDate, setLendingDate] = useState(localToday)
   const [dueDate, setDueDate] = useState('')
   const [status, setStatus] = useState<'Pending' | 'Repaid'>('Pending')
   const [notes, setNotes] = useState('')
+  const [logLendingTransfer, setLogLendingTransfer] = useState(true)
 
   useEffect(() => {
-    if (isOpen) {
-      const tab = initialTab || (initialLendingData ? 'Lending' : 'Transaction')
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setActiveTab(tab)
+    if (!isOpen) return
+    const tab = initialTab || (initialLendingData ? 'Lending' : 'Transaction')
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setActiveTab(tab)
+    setError('')
+    setCustomCategory(null)
+    const tx = isEdit ? initialTransactionData : preset
+    setType(tx?.type ?? 'Expense')
+    setDirection(tx?.direction ?? 'OUT')
+    setCategory(tx?.category ?? '')
+    setCategoryTouched(Boolean(tx?.category))
+    setAmount(tx?.amount ? String(tx.amount) : '')
+    setDescription(tx?.description ?? '')
+    setDate(tx?.date ?? localToday())
 
-      if (isEdit) {
-        if (tab === 'Transaction' && initialTransactionData) {
-          setType(initialTransactionData.type)
-          setCategory(initialTransactionData.category)
-          setAmount(initialTransactionData.amount.toString())
-          setDescription(initialTransactionData.description)
-          setDate(initialTransactionData.date)
-        } else if (tab === 'Lending' && initialLendingData) {
-          setBorrower(initialLendingData.borrower)
-          setLendingAmount(initialLendingData.amount.toString())
-          setLendingDate(
-            initialLendingData.date
-              ? new Date(initialLendingData.date).toISOString().split('T')[0]
-              : new Date().toISOString().split('T')[0]
-          )
-          setDueDate(
-            initialLendingData.dueDate
-              ? new Date(initialLendingData.dueDate).toISOString().split('T')[0]
-              : ''
-          )
-          setStatus(initialLendingData.status)
-          setNotes(initialLendingData.notes || '')
-        }
-      } else {
-        // Reset Transaction
-        setType('Expense')
-        setCategory(CATEGORIES[0])
-        setAmount('')
-        setDescription('')
-        setDate(new Date().toISOString().split('T')[0])
+    const lend = isEdit ? initialLendingData : null
+    setBorrower(lend?.borrower ?? '')
+    setLendingAmount(lend ? String(lend.amount) : '')
+    setLendingDate(lend?.date ? lend.date.slice(0, 10) : localToday())
+    setDueDate(lend?.dueDate ? lend.dueDate.slice(0, 10) : '')
+    setStatus(lend?.status ?? 'Pending')
+    setNotes(lend?.notes ?? '')
+    setLogLendingTransfer(true)
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [isOpen, isEdit, initialTab, initialTransactionData, initialLendingData, preset])
 
-        // Reset Lending
-        setBorrower('')
-        setLendingAmount('')
-        setLendingDate(new Date().toISOString().split('T')[0])
-        setDueDate('')
-        setStatus('Pending')
-        setNotes('')
-      }
-      setError('')
+  const kind = kindOf(type, direction)
+
+  // Categories this kind has actually used, most-used first, topped up with defaults.
+  const categoryChips = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const e of history) {
+      if (e.kind === kind) counts.set(e.category, (counts.get(e.category) ?? 0) + 1)
     }
-  }, [isOpen, isEdit, initialTab, initialTransactionData, initialLendingData])
+    const ranked = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([c]) => c)
+    const merged = [...new Set([...ranked, ...defaultsFor(kind)])]
+      // A legacy spelling of Family shouldn't be offered next to Family itself.
+      .filter((c) => !(kind === 'transfer-out' && c === 'To Home'))
+      .slice(0, CHIP_LIMIT)
+    if (category && !merged.includes(category)) merged.unshift(category)
+    return merged
+  }, [history, kind, category])
+
+  // Merchant memory: the last category each description was filed under, per kind.
+  const memory = useMemo(() => {
+    const byDescription = new Map<string, { description: string; category: string }>()
+    for (const e of history) {
+      if (e.kind !== kind || !e.description) continue
+      const key = e.description.trim().toLowerCase()
+      if (!byDescription.has(key)) byDescription.set(key, { description: e.description.trim(), category: e.category })
+    }
+    return byDescription
+  }, [history, kind])
+
+  const suggestions = useMemo(() => [...memory.values()].slice(0, 40), [memory])
 
   const isDirty = Boolean(
-    amount.trim() ||
-    description.trim() ||
-    borrower.trim() ||
-    lendingAmount.trim() ||
-    dueDate.trim() ||
-    notes.trim()
+    amount.trim() || description.trim() || borrower.trim() || lendingAmount.trim() || dueDate.trim() || notes.trim(),
   )
   const { requestClose, dialog: confirmCloseDialog } = useConfirmClose(isDirty, onClose)
 
   if (!isOpen) return null
 
+  const chooseKind = (next: TransactionType) => {
+    setType(next)
+    if (!categoryTouched) setCategory('')
+    if (next === 'Transfer' && !categoryTouched) setCategory(FAMILY_CATEGORY)
+  }
+
+  const onDescriptionChange = (value: string) => {
+    setDescription(value)
+    const remembered = memory.get(value.trim().toLowerCase())
+    if (remembered && !categoryTouched) setCategory(remembered.category)
+  }
+
+  const pickCategory = (value: string) => {
+    setCategory(value)
+    setCategoryTouched(true)
+    setCustomCategory(null)
+  }
+
   const handleTransactionSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-
-    if (!description || !amount || !category || !type || !date) {
-      setError('Please fill in all fields')
-      return
-    }
-
+    const finalCategory = (customCategory ?? category).trim()
     const numAmount = parseFloat(amount)
     if (isNaN(numAmount) || numAmount <= 0) {
-      setError('Amount must be greater than 0')
+      setError('Enter an amount greater than 0')
+      amountRef.current?.focus()
+      return
+    }
+    if (!description.trim()) {
+      setError('Add a short description')
+      return
+    }
+    if (!finalCategory) {
+      setError('Pick a category')
       return
     }
 
     setLoading(true)
     try {
       const payload = {
-        description,
+        description: description.trim(),
         amount: numAmount,
-        category,
+        category: finalCategory,
         type,
-        date
+        direction: type === 'Transfer' ? direction : undefined,
+        date,
       }
+      const verb = isEdit ? 'Updated' : 'Saved'
+      const res = isEdit && initialTransactionData?.id
+        ? await financeService.updateTransaction(initialTransactionData.id, payload)
+        : await financeService.addTransaction(payload)
+      if (res.error) throw new Error(res.error.message)
+      toast.success(`${verb} "${payload.description}" (₹${numAmount.toLocaleString('en-IN')})`)
 
-      if (isEdit && initialTransactionData?.id) {
-        const res = await financeService.updateTransaction(initialTransactionData.id, payload)
-        if (res.error) throw new Error(res.error.message)
-        toast.success(`Updated "${description}" (₹${numAmount.toLocaleString()})`)
-      } else {
-        const res = await financeService.addTransaction(payload)
-        if (res.error) throw new Error(res.error.message)
-        toast.success(`Saved "${description}" (₹${numAmount.toLocaleString()})`)
-      }
-
-      if (type === 'Expense') {
+      // The route's signature "faaah" is for spending — sending money home isn't a splurge.
+      if (type === 'Expense' && !isEdit) {
         const audio = new Audio(faaahAudio)
-        audio.play().catch(err => console.error('Error playing sound:', err))
+        audio.play().catch(() => undefined)
       }
 
       onSuccess()
@@ -181,12 +239,10 @@ export function AddTransactionModal({
   const handleLendingSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-
-    if (!borrower || !lendingAmount || !lendingDate) {
+    if (!borrower.trim() || !lendingAmount || !lendingDate) {
       setError('Please fill in borrower, amount, and date')
       return
     }
-
     const numAmount = parseFloat(lendingAmount)
     if (isNaN(numAmount) || numAmount <= 0) {
       setError('Amount must be greater than 0')
@@ -196,24 +252,34 @@ export function AddTransactionModal({
     setLoading(true)
     try {
       const payload = {
-        borrower,
+        borrower: borrower.trim(),
         amount: numAmount,
         date: lendingDate,
         dueDate: dueDate || undefined,
         status,
-        notes: notes || undefined
+        notes: notes || undefined,
       }
-
       if (isEdit && initialLendingData?.id) {
         const res = await financeService.updateLending(initialLendingData.id, payload)
         if (res.error) throw new Error(res.error.message)
-        toast.success(`Updated lending to ${borrower}`)
+        toast.success(`Updated lending to ${payload.borrower}`)
       } else {
         const res = await financeService.addLending(payload)
         if (res.error) throw new Error(res.error.message)
-        toast.success(`Recorded lending of ₹${numAmount.toLocaleString()} to ${borrower}`)
+        // Lending is money out, not spending: the balance drops, the budget doesn't.
+        if (logLendingTransfer) {
+          const tx = await financeService.addTransaction({
+            description: `Lent to ${payload.borrower}`,
+            amount: numAmount,
+            category: 'Lending',
+            type: 'Transfer',
+            direction: 'OUT',
+            date: lendingDate,
+          })
+          if (tx.error) toast.error(`Lending saved, but the transfer wasn't logged: ${tx.error.message}`)
+        }
+        toast.success(`Recorded ₹${numAmount.toLocaleString('en-IN')} lent to ${payload.borrower}`)
       }
-
       onSuccess()
       onClose()
     } catch (err) {
@@ -223,211 +289,253 @@ export function AddTransactionModal({
     }
   }
 
-  const renderTitle = () => {
-    if (isEdit) {
-      return activeTab === 'Lending' ? 'Edit Lending Record' : 'Edit Transaction'
-    }
-    return activeTab === 'Lending' ? 'Record Lending' : 'Add Transaction'
-  }
+  const title = isEdit
+    ? activeTab === 'Lending' ? 'Edit lending' : 'Edit transaction'
+    : activeTab === 'Lending' ? 'Record lending' : 'Add transaction'
+
+  const kindIndex = KINDS.findIndex((k) => k.type === type)
 
   return (
     <>
-    <div className="finance-modal-backdrop" role="presentation" onClick={requestClose}>
-      <div
-        className="finance-modal-popover add-tx-modal"
-        role="dialog"
-        aria-modal="true"
-        onClick={(e) => e.stopPropagation()}
-        style={{ width: 'min(440px, calc(100vw - 42px))' }}
-      >
-        <button type="button" className="finance-modal-close" onClick={requestClose}>
-          <X size={15} />
-        </button>
+      <div className="finance-modal-backdrop" role="presentation" onClick={requestClose}>
+        <div
+          className="finance-modal-popover add-tx-modal fin-form-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label={title}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button type="button" className="finance-modal-close" onClick={requestClose} aria-label="Close">
+            <X size={15} />
+          </button>
 
-        <h2 style={{ fontSize: '22px', marginBottom: isEdit ? '24px' : '16px' }}>
-          {renderTitle()}
-        </h2>
+          <h2 className="fin-form-title">{title}</h2>
 
-        {!isEdit && (
-          <div className="type-toggle" style={{ marginBottom: '24px' }}>
-            <div className={`type-toggle-slider ${activeTab === 'Lending' ? 'slide-right' : ''}`} />
-            <button
-              type="button"
-              className={activeTab === 'Transaction' ? 'active' : ''}
-              onClick={() => setActiveTab('Transaction')}
-            >
-              Transaction
-            </button>
-            <button
-              type="button"
-              className={activeTab === 'Lending' ? 'active' : ''}
-              onClick={() => setActiveTab('Lending')}
-            >
-              Lending
-            </button>
-          </div>
-        )}
-
-        {activeTab === 'Transaction' ? (
-          <form onSubmit={handleTransactionSubmit} className="add-tx-form">
-            <div className="form-group type-toggle">
-              <div className={`type-toggle-slider ${type === 'Income' ? 'slide-right' : ''}`} />
-              <button
-                type="button"
-                className={type === 'Expense' ? 'active expense' : ''}
-                onClick={() => setType('Expense')}
-              >
-                Expense
-              </button>
-              <button
-                type="button"
-                className={type === 'Income' ? 'active income' : ''}
-                onClick={() => setType('Income')}
-              >
-                Income
-              </button>
+          {!isEdit && (
+            <div className="fin-seg fin-seg--tabs" style={{ '--seg-count': 2, '--seg-i': activeTab === 'Lending' ? 1 : 0 } as CSSProperties}>
+              <span className="fin-seg-pill" aria-hidden="true" />
+              {(['Transaction', 'Lending'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  className={cn(activeTab === tab && 'is-active')}
+                  onClick={() => setActiveTab(tab)}
+                  aria-pressed={activeTab === tab}
+                >
+                  {tab}
+                </button>
+              ))}
             </div>
+          )}
 
-            <div className="form-group">
-              <label>Merchant / Description</label>
-              <input
-                type="text"
-                placeholder="e.g. Starbucks, Netflix..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                autoFocus
-              />
-            </div>
+          {activeTab === 'Transaction' ? (
+            <form onSubmit={handleTransactionSubmit} className="add-tx-form fin-form">
+              <div className={cn('fin-seg', `is-${kind}`)} style={{ '--seg-count': 3, '--seg-i': kindIndex } as CSSProperties}>
+                <span className="fin-seg-pill" aria-hidden="true" />
+                {KINDS.map((k) => (
+                  <button
+                    key={k.type}
+                    type="button"
+                    className={cn(type === k.type && 'is-active')}
+                    onClick={() => chooseKind(k.type)}
+                    aria-pressed={type === k.type}
+                  >
+                    {k.label}
+                  </button>
+                ))}
+              </div>
 
-            <div className="form-group">
-              <label>Amount (₹)</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0.01"
-                placeholder="0.00"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-              />
-            </div>
+              {type === 'Transfer' && (
+                <div className="fin-transfer-note">
+                  <div className="fin-direction" role="group" aria-label="Transfer direction">
+                    <button
+                      type="button"
+                      className={cn(direction === 'OUT' && 'is-active')}
+                      onClick={() => { setDirection('OUT'); if (!categoryTouched) setCategory(FAMILY_CATEGORY) }}
+                    >
+                      <ArrowUpRight size={13} strokeWidth={2.4} /> Money out
+                    </button>
+                    <button
+                      type="button"
+                      className={cn(direction === 'IN' && 'is-active')}
+                      onClick={() => { setDirection('IN'); if (!categoryTouched) setCategory('Loan Recovery') }}
+                    >
+                      <ArrowDownLeft size={13} strokeWidth={2.4} /> Money in
+                    </button>
+                  </div>
+                  <p>
+                    Sent home, lent, moved to savings. Changes your balance, but never counts
+                    as spending or against your budget.
+                  </p>
+                </div>
+              )}
 
-            <div className="form-row add-tx-category-date-row">
-              <div className="form-group">
-                <label>Date</label>
+              <label className="fin-amount-field">
+                <span className="fin-amount-prefix">₹</span>
                 <input
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
+                  ref={amountRef}
+                  type="number"
+                  inputMode="decimal"
+                  step="0.01"
+                  min="0.01"
+                  placeholder="0"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  aria-label="Amount in rupees"
+                  autoFocus
                 />
+              </label>
+
+              <div className="form-group">
+                <label htmlFor="fin-tx-description">
+                  {type === 'Transfer' ? 'What was it?' : type === 'Income' ? 'From' : 'Merchant / description'}
+                </label>
+                <input
+                  id="fin-tx-description"
+                  type="text"
+                  list="fin-tx-suggestions"
+                  autoComplete="off"
+                  placeholder={type === 'Transfer' ? 'e.g. Sent home to Amma' : type === 'Income' ? 'e.g. Salary — September' : 'e.g. Swiggy, Metro recharge'}
+                  value={description}
+                  onChange={(e) => onDescriptionChange(e.target.value)}
+                />
+                <datalist id="fin-tx-suggestions">
+                  {suggestions.map((s) => (
+                    <option key={s.description} value={s.description}>{s.category}</option>
+                  ))}
+                </datalist>
               </div>
 
               <div className="form-group">
                 <label>Category</label>
-                <select value={category} onChange={(e) => setCategory(e.target.value)}>
-                  {CATEGORIES.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
+                <div className="fin-chip-grid" role="listbox" aria-label="Category">
+                  {categoryChips.map((c) => {
+                    const Icon = getIconForCategory(c)
+                    const active = customCategory == null && category === c
+                    return (
+                      <button
+                        key={c}
+                        type="button"
+                        role="option"
+                        aria-selected={active}
+                        className={cn('fin-cat-chip', active && 'is-active')}
+                        style={{ '--chip-hue': getConsistentColor(c) } as CSSProperties}
+                        onClick={() => pickCategory(c)}
+                      >
+                        <Icon size={12} strokeWidth={2.4} />
+                        {c}
+                      </button>
+                    )
+                  })}
+                  {customCategory == null ? (
+                    <button type="button" className="fin-cat-chip is-new" onClick={() => setCustomCategory('')}>
+                      <Plus size={12} strokeWidth={2.6} /> New
+                    </button>
+                  ) : (
+                    <input
+                      className="fin-cat-input"
+                      autoFocus
+                      placeholder="New category"
+                      value={customCategory}
+                      maxLength={40}
+                      onChange={(e) => setCustomCategory(e.target.value)}
+                    />
+                  )}
+                </div>
               </div>
-            </div>
 
-            {error && <p className="add-tx-error">{error}</p>}
-
-            <button
-              type="submit"
-              className="add-tx-submit"
-              style={{ borderRadius: '10px', backgroundColor: 'var(--inline-inverse, #121c17)' }}
-              disabled={loading}
-            >
-              {loading ? <Loader2 className="spinner" size={18} /> : 'Save Transaction'}
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleLendingSubmit} className="add-tx-form">
-            <div className="form-row">
               <div className="form-group">
-                <label>Borrower Name</label>
+                <label htmlFor="fin-tx-date">Date</label>
+                <input id="fin-tx-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+              </div>
+
+              {error && <p className="add-tx-error">{error}</p>}
+
+              <div className="fin-form-actions">
+                {isEdit && onDelete && initialTransactionData && (
+                  <button type="button" className="fin-form-delete" onClick={() => onDelete(initialTransactionData)}>
+                    <Trash2 size={14} strokeWidth={2.2} /> Delete
+                  </button>
+                )}
+                <button type="submit" className="add-tx-submit" disabled={loading}>
+                  {loading ? <Loader2 className="spinner" size={18} /> : isEdit ? 'Save changes' : `Save ${type.toLowerCase()}`}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handleLendingSubmit} className="add-tx-form fin-form">
+              <label className="fin-amount-field">
+                <span className="fin-amount-prefix">₹</span>
                 <input
+                  type="number"
+                  inputMode="decimal"
+                  step="0.01"
+                  min="0.01"
+                  placeholder="0"
+                  value={lendingAmount}
+                  onChange={(e) => setLendingAmount(e.target.value)}
+                  aria-label="Amount lent in rupees"
+                  autoFocus
+                />
+              </label>
+
+              <div className="form-group">
+                <label htmlFor="fin-lend-borrower">Borrower</label>
+                <input
+                  id="fin-lend-borrower"
                   type="text"
                   placeholder="Who borrowed this money?"
                   value={borrower}
                   onChange={(e) => setBorrower(e.target.value)}
-                  autoFocus
                 />
+              </div>
+
+              <div className="form-row add-tx-category-date-row">
+                <div className="form-group">
+                  <label htmlFor="fin-lend-date">Date lent</label>
+                  <input id="fin-lend-date" type="date" value={lendingDate} onChange={(e) => setLendingDate(e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="fin-lend-due">Expected back (optional)</label>
+                  <input id="fin-lend-due" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+                </div>
               </div>
 
               <div className="form-group">
-                <label>Amount (₹)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  placeholder="0.00"
-                  value={lendingAmount}
-                  onChange={(e) => setLendingAmount(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="form-row add-tx-category-date-row">
-              <div className="form-group">
-                <label>Date Lent</label>
-                <input
-                  type="date"
-                  value={lendingDate}
-                  onChange={(e) => setLendingDate(e.target.value)}
+                <label htmlFor="fin-lend-notes">Notes (optional)</label>
+                <textarea
+                  id="fin-lend-notes"
+                  className="fin-textarea"
+                  placeholder="Reason, split details…"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
                 />
               </div>
 
-              <div className="form-group">
-                <label>Due Date (Optional)</label>
-                <input
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                />
-              </div>
-            </div>
+              {!isEdit && (
+                <label className="fin-check">
+                  <input
+                    type="checkbox"
+                    checked={logLendingTransfer}
+                    onChange={(e) => setLogLendingTransfer(e.target.checked)}
+                  />
+                  <span>
+                    <b>Also log it as money out</b>
+                    <small>A transfer — lowers your balance, never your spending.</small>
+                  </span>
+                </label>
+              )}
 
-            
+              {error && <p className="add-tx-error">{error}</p>}
 
-            <div className="form-group">
-              <label>Notes (Optional)</label>
-              <textarea
-                placeholder="Add details (e.g., reason, split details)..."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                style={{
-                  width: '100%',
-                  minHeight: '80px',
-                  padding: '12px',
-                  borderRadius: '12px',
-                  background: 'var(--inline-fill, rgba(255, 255, 255, 0.5))',
-                  border: '1px solid var(--inline-line, rgba(22, 28, 24, 0.12))',
-                  color: 'var(--inline-ink, #101312)',
-                  fontSize: '13px',
-                  fontFamily: 'inherit',
-                  resize: 'vertical',
-                  outline: 'none'
-                }}
-              />
-            </div>
-
-            {error && <p className="add-tx-error">{error}</p>}
-
-            <button
-              type="submit"
-              className="add-tx-submit"
-              style={{ borderRadius: '10px', backgroundColor: 'var(--inline-inverse, #121c17)' }}
-              disabled={loading}
-            >
-              {loading ? <Loader2 className="spinner" size={18} /> : 'Save Record'}
-            </button>
-          </form>
-        )}
+              <button type="submit" className="add-tx-submit" disabled={loading}>
+                {loading ? <Loader2 className="spinner" size={18} /> : isEdit ? 'Save changes' : 'Save record'}
+              </button>
+            </form>
+          )}
+        </div>
       </div>
-    </div>
-    {confirmCloseDialog}
+      {confirmCloseDialog}
     </>
   )
 }

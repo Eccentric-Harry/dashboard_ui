@@ -1057,7 +1057,13 @@
   --fin-accent-sand: rgba(214, 176, 130, 0.16);
   --fin-accent-slate: rgba(130, 170, 205, 0.16);
   --fin-accent-clay: rgba(226, 140, 132, 0.18);
+  --fin-accent-heather: rgba(175, 155, 215, 0.17);
   --fin-chip: rgba(255, 255, 255, 0.06);
+  /* Transfers (sent home, lent) and money in keep their hue on graphite. */
+  --fin-transfer-ink: #b9a9e6;
+  --fin-income-ink: #7dc39d;
+  --fin-hairline: rgba(255, 255, 255, 0.07);
+  --fin-well: rgba(255, 255, 255, 0.05);
 
   --fin-chart-fill: #9fd1b0;
   --fin-chart-grid: rgba(255, 255, 255, 0.08);

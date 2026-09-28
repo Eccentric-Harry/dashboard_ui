@@ -3,6 +3,7 @@ import { Check, Loader2, ChevronLeft, ChevronRight, Pencil, Trash2, DollarSign }
 import toast from 'react-hot-toast'
 import type { LendingRecord } from '@/types/finance'
 import { getErrorMessage } from '@/lib/errors'
+import { localToday } from '@/lib/finance-ledger'
 import { toneStyle } from '@/lib/tone'
 import { financeService } from '@/services/finance-service'
 import { useFinanceStore } from '@/store/finance-store'
@@ -80,18 +81,19 @@ export function LendingCard({ onEditClick, onDeleteClick, onRefreshTransactions,
       const toggleRes = await financeService.toggleLending(record.id)
       if (toggleRes.error) throw new Error(toggleRes.error.message)
 
-      // If moving to Repaid, offer to record a recovery transaction
+      // Money coming back is a transfer in, not income: it restores the balance without
+      // inflating earnings or the savings rate (it was never spending on the way out either).
       if (nextStatus === 'Repaid') {
-        const today = new Date().toISOString().split('T')[0]
         const txRes = await financeService.addTransaction({
-          description: `Lending Recovery: ${record.borrower}`,
+          description: `${record.borrower} paid back`,
           amount: Math.round(record.amount),
           category: 'Loan Recovery',
-          type: 'Income',
-          date: today
+          type: 'Transfer',
+          direction: 'IN',
+          date: localToday(),
         })
         if (txRes.error) throw new Error(txRes.error.message)
-        toast.success(`Marked as Repaid & logged recovery of ₹${record.amount.toLocaleString()} in transactions!`)
+        toast.success(`${record.borrower} paid back ₹${record.amount.toLocaleString('en-IN')} — logged as a transfer in`)
         onCelebrate?.()
         if (onRefreshTransactions) onRefreshTransactions()
       } else {

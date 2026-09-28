@@ -1,389 +1,275 @@
-import { useState, useMemo, type CSSProperties } from 'react'
-import { Check, Loader2, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { useMemo, useState, type CSSProperties } from 'react'
+import { Check, Loader2, Plus, Repeat } from 'lucide-react'
 import toast from 'react-hot-toast'
 import type { SubscriptionDTO } from '@/types/finance'
 import { getErrorMessage } from '@/lib/errors'
-import { toneStyle } from '@/lib/tone'
+import type { LedgerEntry } from '@/lib/finance-ledger'
+import { billStatus, cycleLabel, DUE_SOON_DAYS, monthlyCostOf, type BillState, type BillStatus } from '@/lib/finance-recurring'
+import { cn } from '@/lib/utils'
 import { financeService } from '@/services/finance-service'
 import { useFinanceStore } from '@/store/finance-store'
 import { isAwaitingData } from '@/store/zustand-utils'
-import { AddSubscriptionModal } from './add-subscription-modal'
-import type { TransactionProp } from './transactions-card'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { BillModal } from './bill-modal'
+import { getBrandIcon, getSubColorStyles } from './bill-brand'
+import { getConsistentColor, getIconForCategory } from '../utils'
 
 interface SubscriptionsCardProps {
-  transactions: TransactionProp[]
-  onRefresh?: () => void
+  /** Every ledger row loaded (all months) — payments are matched against it. */
+  entries: LedgerEntry[]
+  today: string
+  /** Reload the ledger + balance after a payment is logged or undone. */
+  onLedgerChanged: () => void
   /** Fired when a bill is cleared, so the route can celebrate. */
   onCelebrate?: () => void
   /** Entrance-stagger index; drives the `--i` animation delay. */
   stagger?: number
 }
 
-function SubscriptionsCard({ transactions, onRefresh, onCelebrate, stagger = 0 }: SubscriptionsCardProps) {
-  const [processingId, setProcessingId] = useState<string | null>(null)
-  const [optimisticPaidIds, setOptimisticPaidIds] = useState<Set<string>>(new Set())
+const URGENCY: Record<BillState, number> = {
+  overdue: 0,
+  'due-today': 1,
+  'due-soon': 2,
+  upcoming: 3,
+  unscheduled: 4,
+  paid: 5,
+}
+
+const rupees = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`
+
+const shortDate = (iso: string) =>
+  new Date(`${iso}T00:00:00`).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })
+
+function statusLine(status: BillStatus): string {
+  switch (status.state) {
+    case 'paid':
+      return status.lastPaid
+        ? `Paid ${shortDate(status.lastPaid)} · next ${shortDate(status.nextDue!)}`
+        : `Paid · next ${shortDate(status.nextDue!)}`
+    case 'due-today':
+      return 'Due today'
+    case 'due-soon':
+      return `Due in ${status.daysUntil} day${status.daysUntil === 1 ? '' : 's'} · ${shortDate(status.nextDue!)}`
+    case 'overdue':
+      return `${status.daysOverdue} day${status.daysOverdue === 1 ? '' : 's'} overdue · was due ${shortDate(status.overdueSince!)}`
+    case 'upcoming':
+      return `Next ${shortDate(status.nextDue!)}`
+    default:
+      return 'No due date yet — tap to set one'
+  }
+}
+
+function SubscriptionsCard({ entries, today, onLedgerChanged, onCelebrate, stagger = 0 }: SubscriptionsCardProps) {
   const subscriptionsState = useFinanceStore.use.subscriptions()
   const { loadSubscriptions } = useFinanceStore.use.actions()
   const subscriptions = subscriptionsState.data
   const loading = isAwaitingData(subscriptionsState) && subscriptions.length === 0
-  const [isAddOpen, setIsAddOpen] = useState(false)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [isEditing, setIsEditing] = useState(false)
 
-  const handleDelete = async (subscription: SubscriptionDTO) => {
-    setDeletingId(subscription.id)
+  const [processingId, setProcessingId] = useState<string | null>(null)
+  const [modal, setModal] = useState<{ bill: SubscriptionDTO | null; nextDue: string | null } | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<SubscriptionDTO | null>(null)
+  const [undoTarget, setUndoTarget] = useState<{ bill: SubscriptionDTO; payment: LedgerEntry } | null>(null)
+
+  const rows = useMemo(
+    () =>
+      subscriptions
+        .map((bill) => ({ bill, status: billStatus(bill, entries, today) }))
+        .sort(
+          (a, b) =>
+            URGENCY[a.status.state] - URGENCY[b.status.state] ||
+            (a.status.nextDue ?? '9999').localeCompare(b.status.nextDue ?? '9999') ||
+            a.bill.name.localeCompare(b.bill.name),
+        ),
+    [subscriptions, entries, today],
+  )
+
+  const monthlyTotal = subscriptions.reduce((sum, s) => sum + monthlyCostOf(s), 0)
+  const dueSoon = rows.filter(
+    (r) => r.status.state === 'overdue' || ((r.status.state === 'due-today' || r.status.state === 'due-soon') && (r.status.daysUntil ?? 99) <= DUE_SOON_DAYS),
+  )
+  const dueSoonTotal = dueSoon.reduce((sum, r) => sum + r.bill.cost, 0)
+
+  const handlePay = async (bill: SubscriptionDTO) => {
+    setProcessingId(bill.id)
     try {
-      const res = await financeService.deleteSubscription(subscription.id)
+      const res = await financeService.paySubscription(bill.id)
       if (res.error) throw new Error(res.error.message)
-      toast.success(`Removed ${subscription.name}`)
-      await loadSubscriptions()
-    } catch (error) {
-      toast.error(getErrorMessage(error, `Failed to remove ${subscription.name}`))
-    } finally {
-      setDeletingId(null)
-    }
-  }
-
-  const paidIds = useMemo(() => {
-    const ids = new Set<string>()
-
-    // Check transactions for subscription payments
-    transactions.forEach(tx => {
-      subscriptions.forEach(sub => {
-        // Match by description containing service name
-        if (tx.merchant.toLowerCase().includes(sub.name.toLowerCase())) {
-          ids.add(sub.name)
-        }
-      })
-    })
-
-    // Add optimistic updates
-    optimisticPaidIds.forEach(id => ids.add(id))
-
-    return ids
-  }, [transactions, optimisticPaidIds, subscriptions])
-
-  const getSubColorStyles = (service: string) => {
-    const s = service.toLowerCase()
-    if (s.includes('youtube')) {
-      return {
-        ...toneStyle({ hue: '#ef4444', bg: '#ffebee', ink: '#ef4444' }),
-        border: 'none',
-        borderRadius: '10px',
-        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
-      }
-    }
-    if (s.includes('netflix')) {
-      return {
-        ...toneStyle({ hue: '#ac0810', bg: '#040303ff', ink: '#ac0810ff' }),
-        border: 'none',
-        borderRadius: '10px',
-        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
-      }
-    }
-    if (s.includes('jio')) {
-      return {
-        ...toneStyle({ hue: '#0f3cc9', bg: '#e6eeff', ink: '#0f3cc9' }),
-        border: 'none',
-        borderRadius: '10px',
-        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
-      }
-    }
-    if (s.includes('spotify')) {
-      return {
-        ...toneStyle({ hue: '#1db954', bg: '#eafaf1', ink: '#1db954' }),
-        border: 'none',
-        borderRadius: '10px',
-        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
-      }
-    }
-    if (s.includes('amazon')) {
-      return {
-        ...toneStyle({ hue: '#ff9900', bg: '#fff8e7', ink: '#ff9900' }),
-        border: 'none',
-        borderRadius: '10px',
-        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
-      }
-    }
-    if (s.includes('disney') || s.includes('hotstar')) {
-      return {
-        ...toneStyle({ hue: '#0747a6', bg: '#e6f7ff', ink: '#0747a6' }),
-        border: 'none',
-        borderRadius: '10px',
-        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
-      }
-    }
-    if (s.includes('apple') || s.includes('icloud')) {
-      return {
-        ...toneStyle({ hue: '#8e8e99', bg: '#f0f0f5', ink: '#555555' }),
-        border: 'none',
-        borderRadius: '10px',
-        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
-      }
-    }
-    if (s.includes('notion')) {
-      return {
-        ...toneStyle({ hue: '#9a9a9a', bg: '#f0f0f0', ink: '#111111' }),
-        border: 'none',
-        borderRadius: '10px',
-        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
-      }
-    }
-    if (s.includes('claude') || s.includes('anthropic')) {
-      return {
-        ...toneStyle({ hue: '#d97757', bg: '#fff0eb', ink: '#d97757' }),
-        border: 'none',
-        borderRadius: '10px',
-        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
-      }
-    }
-    return {
-      ...toneStyle({ hue: '#8b5cf6', bg: '#f5f2ff', ink: '#8b5cf6' }),
-      border: 'none',
-      borderRadius: '10px',
-      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
-    }
-  }
-
-  const getIcon = (service: string) => {
-    const s = service.toLowerCase()
-    if (s.includes('youtube')) {
-      return (
-        <svg viewBox="0 0 24 24" width="18" height="18" style={{ display: 'block' }}>
-          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.377.505 9.377.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814z" fill="#ef4444" />
-          <path d="M9.545 15.568V8.432L15.818 12l-6.273 3.568z" fill="#ffffff" />
-        </svg>
-      )
-    }
-    if (s.includes('netflix')) {
-      return (
-        <svg viewBox="0 0 24 24" width="16" height="18" style={{ display: 'block' }}>
-          <path d="M5 1h4v22q-2 -1.5 -4 0z" fill="#b9090b" />
-          <path d="M5 1h4l10 22h-4z" fill="#e50914" />
-          <path d="M15 1h4v22q-2 -1.5 -4 0z" fill="#b9090b" />
-        </svg>
-      )
-    }
-    if (s.includes('jio')) {
-      return (
-        <svg viewBox="0 0 24 24" width="22" height="22" style={{ display: 'block' }}>
-          <circle cx="12" cy="12" r="12" fill="#0f3cc9" />
-          <path d="M17.587 14.559c-.883 0-1.49-.648-1.49-1.574 0-.912.62-1.56 1.49-1.56s1.491.648 1.491 1.573c0 .897-.634 1.56-1.49 1.56zm.03-5.152c-2.265 0-3.772 1.437-3.772 3.576 0 2.195 1.451 3.604 3.729 3.604 2.264 0 3.755-1.409 3.755-3.59 0-2.153-1.475-3.59-3.713-3.59zM11.78 6.272c-.856 0-1.395.483-1.395 1.243 0 .774.552 1.257 1.435 1.257.857 0 1.395-.483 1.395-1.257 0-.773-.552-1.243-1.435-1.243zm.152 3.204h-.277c-.675 0-1.187.317-1.187 1.285v4.42c0 .98.496 1.284 1.216 1.284h.275c.677 0 1.16-.33 1.16-1.285v-4.419c0-.995-.47-1.285-1.187-1.285zM8.316 7.392h-.4c-.76 0-1.174.43-1.174 1.285v4.13c0 1.063-.36 1.436-1.2 1.436-.662 0-1.201-.29-1.63-.816C3.87 13.373 3 13.786 3 14.81c0 1.104 1.035 1.781 2.955 1.781 2.334 0 3.563-1.173 3.563-3.742V8.675c0-.856-.413-1.283-1.202-1.283z" fill="#fff" />
-        </svg>
-      )
-    }
-    if (s.includes('spotify')) {
-      return (
-        <svg viewBox="0 0 24 24" width="18" height="18" style={{ display: 'block' }}>
-          <circle cx="12" cy="12" r="12" fill="#1db954" />
-          <path d="M17.9 10.9C14.7 9.3 9.3 9 6.1 10.3c-.6.2-1.2-.1-1.4-.7-.2-.6.1-1.2.7-1.4 3.8-1.5 9.9-1.2 13.6.7.5.3.7 1 .4 1.5-.3.5-1 .7-1.5.4v.1zm.2 2.7c-.3.5-.9.7-1.4.4-2.7-1.6-6.8-2.1-10-1.2-.5.2-1.1-.1-1.3-.6-.2-.5.1-1.1.6-1.3 3.7-1.1 8.5-.5 11.6 1.4.5.3.6.9.3 1.4l.2-.1zm-1.5 2.8c-.2.4-.7.6-1.1.4-2.3-1.4-5.2-1.7-8.6-1-.4.1-.9-.1-1-.5-.1-.4.1-.9.5-1 3.7-.8 7-.4 9.6 1.1.4.2.6.7.4 1.1l.2-.1z" fill="#fff" />
-        </svg>
-      )
-    }
-    if (s.includes('amazon')) {
-      return (
-        <svg viewBox="0 0 24 24" width="18" height="18" style={{ display: 'block' }}>
-          <path d="M13.4 4.2c-1.3-.2-2.8-.3-4.1-.1-2 .4-3.5 1.6-4.1 3.5-.2.6-.1 1.2.3 1.6.4.4 1 .5 1.6.3.9-.3 1.5-1 1.9-1.8.5-1.2 1.5-1.9 2.8-2.1 1-.2 2.1-.1 3.1.2 1.6.5 2.5 1.7 2.5 3.4v.6c-1 .3-2.1.5-3.2.7-1.8.3-3.4.8-4.6 2.1-1.2 1.3-1.7 3-1.3 4.8.3 1.4 1.3 2.5 2.7 3 .8.3 1.7.3 2.6.2 1-.1 1.9-.5 2.7-1.1.2-.2.5-.3.8-.2.2.1.4.3.5.5.2.4.1.9-.2 1.2-1.2 1.3-2.8 2.1-4.6 2.2-1.6.1-3.1-.3-4.4-1.3-1.5-1.2-2.4-2.9-2.5-4.9-.1-2.4.7-4.5 2.4-6.1 1.5-1.5 3.5-2.3 5.7-2.5 1.3-.1 2.6 0 3.9.3.8.2 1.5.4 2.2.7l.4.2c.2.1.4.2.5.4.1.1.1.3 0 .5-.1.1-.2.2-.3.2v.1c-1.1.7-2.2 1.4-3.2 2.2-.2.1-.4.2-.6 0-.3-.2-.5-.4-.8-.6-.7-.5-1.5-.8-2.4-.9z" fill="#ff9900" />
-        </svg>
-      )
-    }
-    if (s.includes('disney') || s.includes('hotstar')) {
-      return (
-        <svg viewBox="0 0 24 24" width="18" height="18" style={{ display: 'block' }}>
-          <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8zm-1-13h2v4h-2V7zm0 6h2v4h-2v-4z" fill="#0747a6" />
-          <circle cx="12" cy="9" r="1.5" fill="#0747a6" />
-          <circle cx="12" cy="15" r="1.5" fill="#0747a6" />
-        </svg>
-      )
-    }
-    if (s.includes('apple') || s.includes('icloud')) {
-      return (
-        <svg viewBox="0 0 24 24" width="18" height="18" style={{ display: 'block' }}>
-          <path d="M18.7 12.5c0 3.2 2.5 4.7 2.5 4.7s-.7 2.3-2.9 3.3c-1.5.7-3.1.8-4.3.8-1.2 0-3.1-.2-5.1-1.1C5.7 18.7 2 14.5 2 10.4c0-3.8 2.7-5.8 5.5-5.8 1.6 0 2.9.6 3.9 1.1.4.3.9.3 1.3 0 1-.6 2.3-1.1 3.9-1.1 2.8 0 5.5 2 5.5 5.8 0 1.5-.5 3.1-1.4 4.3-.2.3-.3.6-.2.9.1.3.2.6.4.8.5.5 1.6 1.4 1.6 1.4s-2.1 1.7-3.6 1.7c-.9 0-1.7-.3-2.3-.8-.6-.5-1.1-1.1-1.6-1.7-.3-.4-.8-.6-1.3-.6h-.2c-.5 0-1 .2-1.3.6-.5.7-1 1.3-1.6 1.7-.6.5-1.4.8-2.3.8-1.5 0-3.6-1.7-3.6-1.7s1.1-.9 1.6-1.4c.2-.2.3-.5.4-.8.1-.3 0-.6-.2-.9-.9-1.2-1.4-2.8-1.4-4.3C6.5 6.6 9.2 4.6 12 4.6s5.5 2 5.5 5.8" fill="#555555" />
-        </svg>
-      )
-    }
-    if (s.includes('notion')) {
-      return (
-        <svg viewBox="0 0 24 24" width="18" height="18" style={{ display: 'block' }}>
-          <rect x="2" y="2" width="20" height="20" rx="3" fill="#111111" />
-          <path d="M8 7v10M8 7l4 5.5L16 7v10" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-        </svg>
-      )
-    }
-    if (s.includes('claude') || s.includes('anthropic')) {
-      return (
-        <svg viewBox="0 0 46 46" width="18" height="18" style={{ display: 'block' }} fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M32.73 6h-5.324L38.666 40h5.324L32.73 6Z" fill="#d97757"/>
-          <path d="M20.575 6h-5.324L26.51 40h5.325L20.575 6Z" fill="#d97757"/>
-          <path d="M2 29.804h21.095v-5H2v5Z" fill="#d97757"/>
-          <path d="M14.153 16.196h21.095v-5H14.153v5Z" fill="#d97757"/>
-        </svg>
-      )
-    }
-    return <span>{service.slice(0, 1)}</span>
-  }
-
-  const handlePay = async (subscription: SubscriptionDTO) => {
-    const id = subscription.name
-    setProcessingId(id)
-
-    try {
-      const numericAmount = subscription.cost
-
-      const today = new Date().toISOString().split('T')[0]
-
-      const res = await financeService.addTransaction({
-        description: `${subscription.name} Subscription`,
-        amount: numericAmount,
-        category: subscription.name.toLowerCase().includes('jio') ? 'Bills & Utilities' : 'Entertainment',
-        type: 'Expense',
-        date: today
-      })
-      if (res.error) throw new Error(res.error.message)
-
-      setOptimisticPaidIds(prev => new Set(prev).add(id))
-      toast.success(`Paid ${subscription.name} subscription`)
+      toast.success(`Logged ${rupees(bill.cost)} for ${bill.name}`)
       onCelebrate?.()
-      if (onRefresh) onRefresh()
+      onLedgerChanged()
     } catch (error) {
-      toast.error(getErrorMessage(error, `Failed to record payment for ${subscription.name}`))
-      console.error('Failed to record subscription payment:', error)
+      toast.error(getErrorMessage(error, `Couldn't log the payment for ${bill.name}`))
     } finally {
       setProcessingId(null)
     }
   }
 
-  const getOrdinalNum = (n: number) => {
-    return n + (n > 0 ? ['th', 'st', 'nd', 'rd'][(n > 3 && n < 21) || n % 10 > 3 ? 0 : n % 10] : '');
-  };
+  const confirmUndo = async () => {
+    if (!undoTarget) return
+    const { bill, payment } = undoTarget
+    setUndoTarget(null)
+    setProcessingId(bill.id)
+    try {
+      const res = await financeService.deleteTransaction(payment.id)
+      if (res.error) throw new Error(res.error.message)
+      toast.success(`Removed the ${shortDate(payment.day)} payment for ${bill.name}`)
+      onLedgerChanged()
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to undo the payment'))
+    } finally {
+      setProcessingId(null)
+    }
+  }
 
-  const totalCost = subscriptions.reduce((sum, sub) => sum + sub.cost, 0);
-
-  if (loading) {
-    return (
-      <section className="finance-card finance-subscription-card" style={{ '--i': stagger } as CSSProperties}>
-        <div className="finance-section-head compact">
-          <div>
-            <span className="finance-eyebrow">Recurring</span>
-          <h2>Subscriptions</h2>
-            <span className="skeleton-rect skeleton-shimmer" style={{ width: 100, height: 10, marginTop: 6 }} />
-          </div>
-          <span className="skeleton-rect skeleton-shimmer" style={{ width: 80, height: 20 }} />
-        </div>
-        <div className="finance-subscription-list" style={{ marginTop: 12 }}>
-          {Array.from({ length: 3 }).map((_, idx) => (
-            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span className="skeleton-circle skeleton-shimmer" style={{ width: 32, height: 32, borderRadius: 10, flexShrink: 0 }} />
-              <div style={{ flex: 1 }}>
-                <span className="skeleton-rect skeleton-shimmer mb-1.5" style={{ width: '40%', height: 12 }} />
-                <span className="skeleton-rect skeleton-shimmer" style={{ width: '25%', height: 8 }} />
-              </div>
-              <span className="skeleton-rect skeleton-shimmer" style={{ width: 50, height: 14, marginRight: 12 }} />
-              <span className="skeleton-rect skeleton-shimmer" style={{ width: 44, height: 24, borderRadius: 12 }} />
-            </div>
-          ))}
-        </div>
-      </section>
-    )
+  const confirmDelete = async () => {
+    if (!deleteTarget) return
+    const bill = deleteTarget
+    setDeleteTarget(null)
+    setModal(null)
+    try {
+      const res = await financeService.deleteSubscription(bill.id)
+      if (res.error) throw new Error(res.error.message)
+      toast.success(`Removed ${bill.name}. Past payments stay in your ledger.`)
+      await loadSubscriptions()
+    } catch (error) {
+      toast.error(getErrorMessage(error, `Failed to remove ${bill.name}`))
+    }
   }
 
   return (
-    <section className="finance-card finance-subscription-card" style={{ '--i': stagger } as CSSProperties}>
+    <section className="finance-card finance-subscription-card fin-bills" style={{ '--i': stagger } as CSSProperties}>
       <div className="finance-section-head compact">
         <div>
           <span className="finance-eyebrow">Recurring</span>
-          <h2>Subscriptions</h2>
-          <p>{subscriptions.length} active renewals</p>
+          <h2>Bills & plans</h2>
+          <p>
+            {subscriptions.length === 0 ? (
+              'Rent, plans and memberships'
+            ) : (
+              <>
+                <b className="fin-bills-total">{rupees(monthlyTotal)}/mo</b>
+                {' · '}
+                {dueSoon.length > 0
+                  ? `${rupees(dueSoonTotal)} due in ${DUE_SOON_DAYS} days`
+                  : `nothing due in ${DUE_SOON_DAYS} days`}
+              </>
+            )}
+          </p>
         </div>
-        <div className="finance-sub-head-right">
-          <strong>₹{totalCost.toLocaleString('en-IN')}</strong>
+        <div className="fin-bills-head-right">
           <button
             type="button"
-            className="finance-sub-add"
-            onClick={() => setIsEditing(v => !v)}
-            aria-label={isEditing ? 'Done editing' : 'Edit subscriptions'}
-            title={isEditing ? 'Done' : 'Edit'}
+            className="fin-icon-btn"
+            onClick={() => setModal({ bill: null, nextDue: null })}
+            aria-label="Add bill or subscription"
+            title="Add bill or subscription"
           >
-            {isEditing ? <X size={14} strokeWidth={2.6} /> : <Pencil size={13} strokeWidth={2.4} />}
-          </button>
-          <button
-            type="button"
-            className="finance-sub-add"
-            onClick={() => setIsAddOpen(true)}
-            aria-label="Add subscription"
-            title="Add subscription"
-          >
-            <Plus size={14} strokeWidth={2.6} />
+            <Plus size={15} strokeWidth={2.6} />
           </button>
         </div>
       </div>
-      {subscriptions.length === 0 ? (
-        <button type="button" className="finance-sub-empty" onClick={() => setIsAddOpen(true)}>
-          <Plus size={16} strokeWidth={2.2} />
-          <span>Add your first subscription</span>
+
+      {loading ? (
+        <div className="fin-bills-list">
+          {Array.from({ length: 3 }).map((_, idx) => (
+            <div key={idx} className="fin-bill-row is-skeleton">
+              <span className="skeleton-circle skeleton-shimmer" style={{ width: 32, height: 32, borderRadius: 10 }} />
+              <span style={{ flex: 1 }}>
+                <span className="skeleton-rect skeleton-shimmer" style={{ width: '45%', height: 11 }} />
+                <span className="skeleton-rect skeleton-shimmer" style={{ width: '30%', height: 8, marginTop: 6 }} />
+              </span>
+              <span className="skeleton-rect skeleton-shimmer" style={{ width: 52, height: 26, borderRadius: 10 }} />
+            </div>
+          ))}
+        </div>
+      ) : subscriptions.length === 0 ? (
+        <button type="button" className="fin-empty fin-empty--action" onClick={() => setModal({ bill: null, nextDue: null })}>
+          <span className="fin-empty-glyph">
+            <Repeat size={20} strokeWidth={2.2} />
+          </span>
+          <span className="fin-empty-title">Track what repeats</span>
+          <span className="fin-empty-sub">
+            Add rent, phone plans and subscriptions — see what's due, pay in one tap, and never
+            double-count a month.
+          </span>
         </button>
       ) : (
-      <div className="finance-subscription-list">
-        {subscriptions.map((subscription) => {
-          const isProcessing = processingId === subscription.name
-          const isPaid = paidIds.has(subscription.name)
-          
-          let renewsText = '';
-          if (subscription.billingDate) {
-            const date = new Date(subscription.billingDate);
-            renewsText = `Renews on ${getOrdinalNum(date.getDate())}`;
-          } else if (isPaid) {
-            // No billing date on file — say so explicitly instead of leaving
-            // the row blank next to ones that do show a date.
-            renewsText = 'Paid this cycle';
-          }
-
-          return (
-            <div key={subscription.name} className={isPaid ? 'paid' : ''}>
-              <span className="service-icon" style={getSubColorStyles(subscription.name)}>{getIcon(subscription.name)}</span>
-              <p>
-                <b>{subscription.name}</b>
-                <small>{renewsText}</small>
-              </p>
-              <strong className="subscription-price">₹{subscription.cost.toLocaleString('en-IN')}</strong>
-              <button
-                className={`pay-button ${isPaid ? 'success' : ''}`}
-                onClick={() => !isPaid && !isProcessing && handlePay(subscription)}
-                disabled={isProcessing || isPaid}
-              >
-                {isProcessing ? (
-                  <Loader2 size={12} className="animate-spin" />
-                ) : isPaid ? (
-                  <Check size={12} />
-                ) : (
-                  'Pay'
-                )}
-              </button>
-              {isEditing && (
+        <ul className="fin-bills-list">
+          {rows.map(({ bill, status }) => {
+            const hue = getConsistentColor(bill.category ?? 'Subscriptions')
+            const CategoryIcon = getIconForCategory(bill.category ?? 'Subscriptions')
+            const brand = getBrandIcon(bill.name)
+            const busy = processingId === bill.id
+            const paid = status.state === 'paid'
+            return (
+              <li key={bill.id} className={cn('fin-bill-row', `is-${status.state}`)}>
                 <button
                   type="button"
-                  className="finance-sub-delete"
-                  onClick={() => handleDelete(subscription)}
-                  disabled={deletingId === subscription.id}
-                  aria-label={`Remove ${subscription.name}`}
-                  title="Remove subscription"
+                  className="fin-bill-open"
+                  onClick={() => setModal({ bill, nextDue: status.nextDue })}
+                  aria-label={`Edit ${bill.name}`}
                 >
-                  {deletingId === subscription.id
-                    ? <Loader2 size={12} className="animate-spin" />
-                    : <Trash2 size={12} strokeWidth={2} />}
+                  <span className="fin-bill-icon" style={getSubColorStyles(bill.name, hue)} aria-hidden="true">
+                    {brand ?? <CategoryIcon size={15} strokeWidth={2.3} />}
+                  </span>
+                  <span className="fin-bill-main">
+                    <b>{bill.name}</b>
+                    <small>
+                      <span className="fin-bill-cycle">{cycleLabel(bill)}</span>
+                      <span className="fin-bill-status">{statusLine(status)}</span>
+                    </small>
+                  </span>
+                  <strong className="fin-bill-amount">{rupees(bill.cost)}</strong>
                 </button>
-              )}
-            </div>
-          )
-        })}
-      </div>
+                <button
+                  type="button"
+                  className={cn('fin-bill-action', paid && 'is-paid', status.state === 'overdue' && 'is-overdue')}
+                  disabled={busy}
+                  onClick={() =>
+                    paid && status.payments[0]
+                      ? setUndoTarget({ bill, payment: status.payments[0] })
+                      : void handlePay(bill)
+                  }
+                  aria-label={paid ? `Undo ${bill.name} payment` : `Log payment for ${bill.name}`}
+                  title={paid ? 'Paid — tap to undo' : `Log ${rupees(bill.cost)} as paid today`}
+                >
+                  {busy ? <Loader2 size={12} className="animate-spin" /> : paid ? <Check size={13} strokeWidth={2.8} /> : 'Pay'}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
       )}
 
-      <AddSubscriptionModal
-        isOpen={isAddOpen}
-        onClose={() => setIsAddOpen(false)}
-        onSuccess={loadSubscriptions}
+      <BillModal
+        isOpen={modal != null}
+        bill={modal?.bill ?? null}
+        nextDue={modal?.nextDue ?? null}
+        onClose={() => setModal(null)}
+        onSaved={() => void loadSubscriptions()}
+        onDelete={(bill) => setDeleteTarget(bill)}
+      />
+
+      <ConfirmDialog
+        open={deleteTarget != null}
+        title="Remove bill"
+        message={deleteTarget ? `Stop tracking ${deleteTarget.name}? Payments you've already logged stay in your ledger.` : ''}
+        confirmLabel="Remove"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
+      <ConfirmDialog
+        open={undoTarget != null}
+        title="Undo payment"
+        message={
+          undoTarget
+            ? `Delete the ${rupees(undoTarget.payment.amount)} ${undoTarget.bill.name} payment logged on ${shortDate(undoTarget.payment.day)}? The bill will show as due again.`
+            : ''
+        }
+        confirmLabel="Undo payment"
+        onConfirm={confirmUndo}
+        onCancel={() => setUndoTarget(null)}
       />
     </section>
   )

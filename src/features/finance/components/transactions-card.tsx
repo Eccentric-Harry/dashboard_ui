@@ -1,195 +1,177 @@
-/* eslint-disable react-refresh/only-export-components */
 import { useMemo, useState, type CSSProperties } from 'react'
-import { ChevronLeft, ChevronRight, Pencil, Receipt, Trash2 } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
-import { getConsistentColor } from '../utils'
+import { ArrowDownLeft, ArrowUpRight, ChevronLeft, ChevronRight, Receipt, Repeat, Search, X } from 'lucide-react'
+import { isTransferKind, signedAmount, type LedgerEntry, type TxKind } from '@/lib/finance-ledger'
+import { cn } from '@/lib/utils'
+import { getConsistentColor, getIconForCategory } from '../utils'
 
-export interface TransactionProp {
-  id: string
-  merchant: string
-  detail: string
-  category: string
-  amount: string
-  tone: 'income' | 'expense' | string
-  icon: LucideIcon
-  rawAmount: number
-  rawDate: string
-  rawType: string
-}
+export type LedgerFilter = 'all' | 'spending' | 'income' | 'transfers'
 
 interface TransactionsCardProps {
-  transactions?: TransactionProp[]
+  /** The selected month's rows, newest first (every kind). */
+  entries: LedgerEntry[]
   loading?: boolean
-  onEdit?: (transaction: TransactionProp) => void
-  onDelete?: (transaction: TransactionProp) => void
+  onOpen?: (entry: LedgerEntry) => void
+  /** Category picked on the Spending donut — shown as a removable chip, never silent. */
+  categoryFilter?: string | null
+  onClearCategory?: () => void
+  filter: LedgerFilter
+  onFilterChange: (filter: LedgerFilter) => void
+  monthLabel: string
   /** Entrance-stagger index; drives the `--i` animation delay. */
   stagger?: number
 }
 
 const PAGE_SIZE = 12
 
-export const getPastelBG = (colorHex: string) => {
-  const hex = colorHex.toLowerCase()
-  if (hex === '#4684ff') return '#e6f0ff'
-  if (hex === '#ff6c61') return '#ffebee'
-  if (hex === '#039855') return '#e6fcf0'
-  if (hex === '#10b981') return '#e6faf4'
-  if (hex === '#7a5af8') return '#f3e8ff'
-  if (hex === '#0ba5ec') return '#ecf8ff'
-  if (hex === '#f97316') return '#fff4e6'
-  if (hex === '#dd2590') return '#fff0f6'
-  if (hex === '#8b5cf6') return '#f7f4ff'
-  if (hex === '#12b76a') return '#e6faf0'
-  if (hex === '#32d583') return '#f0fdf4'
+const FILTERS: { key: LedgerFilter; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'spending', label: 'Spending' },
+  { key: 'income', label: 'Income' },
+  { key: 'transfers', label: 'Transfers' },
+]
 
-  try {
-    const c = hex.replace('#', '')
-    const r = parseInt(c.substring(0, 2), 16)
-    const g = parseInt(c.substring(2, 4), 16)
-    const b = parseInt(c.substring(4, 6), 16)
-    const pr = Math.round(r * 0.08 + 255 * 0.92)
-    const pg = Math.round(g * 0.08 + 255 * 0.92)
-    const pb = Math.round(b * 0.08 + 255 * 0.92)
-    return `rgb(${pr}, ${pg}, ${pb})`
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  } catch (e) {
-    return '#f3f4f6'
-  }
-}
+const matchesFilter = (kind: TxKind, filter: LedgerFilter): boolean =>
+  filter === 'all' ||
+  (filter === 'spending' && kind === 'spending') ||
+  (filter === 'income' && kind === 'income') ||
+  (filter === 'transfers' && isTransferKind(kind))
+
+const rupees = (n: number) => `₹${Math.round(Math.abs(n)).toLocaleString('en-IN')}`
+
+/** "−₹450" spending, "+₹85,000" income, "₹20,000" with an arrow for transfers. */
+const amountLabel = (e: LedgerEntry): string =>
+  e.kind === 'spending' ? `−${rupees(e.amount)}` : e.kind === 'income' ? `+${rupees(e.amount)}` : rupees(e.amount)
 
 /**
- * "Today" / "Yesterday" / "Sat 2 Aug" for a day header.
- *
- * Compared on local Y-M-D parts rather than by differencing timestamps: a plain
- * `(a - b) / 86400000` calculation drifts across a DST boundary and can label
- * yesterday as today, which is exactly the kind of bug nobody notices until the
- * clocks change.
+ * "Today" / "Yesterday" / "Sat, Sep 26". Compared on local Y-M-D parts rather than by
+ * differencing timestamps, which drifts across DST.
  */
 const dayLabel = (iso: string): string => {
   const [y, m, d] = iso.split('-').map(Number)
   if (!y || !m || !d) return iso
-
   const date = new Date(y, m - 1, d)
-  const today = new Date()
-  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-  const diffDays = Math.round((startOfToday.getTime() - date.getTime()) / 86400000)
-
-  if (diffDays === 0) return 'Today'
-  if (diffDays === 1) return 'Yesterday'
-
-  return date.toLocaleDateString('en-US', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-  })
+  const now = new Date()
+  const diff = Math.round((new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - date.getTime()) / 86400000)
+  if (diff === 0) return 'Today'
+  if (diff === 1) return 'Yesterday'
+  return date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })
 }
 
-type DayGroup = {
-  key: string
-  label: string
-  /** Net of the day: income counted up, expenses down. */
-  net: number
-  rows: TransactionProp[]
-}
+type DayGroup = { key: string; label: string; net: number; rows: LedgerEntry[] }
 
 /**
- * Groups an already-sorted page of transactions by calendar day.
- *
- * Grouping happens *after* pagination on purpose — the page boundary stays a
- * fixed PAGE_SIZE rows, so pages don't jump around in height, and a day that straddles
- * two pages simply gets its header repeated. Grouping before pagination would
- * mean variable-length pages and a much more disruptive change to the control.
+ * Groups a page by day *after* pagination, so every page is PAGE_SIZE rows tall and a
+ * day straddling two pages repeats its header. The day total is its net cash change.
  */
-const groupByDay = (rows: TransactionProp[]): DayGroup[] => {
+const groupByDay = (rows: LedgerEntry[]): DayGroup[] => {
   const groups: DayGroup[] = []
-
-  rows.forEach((tx) => {
-    const key = tx.rawDate
-    let group = groups.find((g) => g.key === key)
-    if (!group) {
-      group = { key, label: dayLabel(key), net: 0, rows: [] }
+  for (const row of rows) {
+    let group = groups[groups.length - 1]
+    if (!group || group.key !== row.day) {
+      group = { key: row.day, label: dayLabel(row.day), net: 0, rows: [] }
       groups.push(group)
     }
-    group.rows.push(tx)
-    group.net += tx.tone === 'income' ? tx.rawAmount : -tx.rawAmount
-  })
-
+    group.rows.push(row)
+    group.net += signedAmount(row)
+  }
   return groups
 }
 
-const formatNet = (net: number): string => {
-  const sign = net > 0 ? '+' : net < 0 ? '−' : ''
-  return `${sign}₹${Math.abs(net).toLocaleString('en-IN')}`
-}
+const formatNet = (net: number): string => `${net > 0 ? '+' : net < 0 ? '−' : ''}${rupees(net)}`
 
 function TransactionsCard({
-  transactions = [],
+  entries,
   loading = false,
-  onEdit,
-  onDelete,
+  onOpen,
+  categoryFilter,
+  onClearCategory,
+  filter,
+  onFilterChange,
+  monthLabel,
   stagger = 0,
 }: TransactionsCardProps) {
   const [page, setPage] = useState(1)
-  const [isEditMode, setIsEditMode] = useState(false)
-  const totalPages = Math.ceil(transactions.length / PAGE_SIZE)
+  const [query, setQuery] = useState('')
 
-  // A category filter can shrink the list under the current page — without this
-  // the card would render a blank page with no way back except paginating.
-  const safePage = Math.min(page, Math.max(1, totalPages))
-  const start = (safePage - 1) * PAGE_SIZE
-  const paginated = transactions.slice(start, start + PAGE_SIZE)
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return entries.filter(
+      (e) =>
+        matchesFilter(e.kind, filter) &&
+        (!categoryFilter || e.category === categoryFilter) &&
+        (!q || e.description.toLowerCase().includes(q) || e.category.toLowerCase().includes(q) || String(e.amount).includes(q)),
+    )
+  }, [entries, filter, categoryFilter, query])
 
+  const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE))
+  // A filter can shrink the list under the current page — clamp instead of showing a blank page.
+  const safePage = Math.min(page, totalPages)
+  const paginated = visible.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
   const groups = useMemo(() => groupByDay(paginated), [paginated])
+  const narrowed = filter !== 'all' || Boolean(categoryFilter) || Boolean(query.trim())
 
   return (
-    <section
-      className="finance-card finance-transactions-card"
-      style={{ '--i': stagger } as CSSProperties}
-    >
+    <section className="finance-card finance-transactions-card fin-ledger" style={{ '--i': stagger } as CSSProperties}>
       <div className="finance-section-head compact">
         <div>
           <span className="finance-eyebrow">Ledger</span>
-          <h2>Recent Transactions</h2>
-          <p>{transactions.length} transactions recorded</p>
+          <h2>Transactions</h2>
+          <p>
+            {narrowed ? `${visible.length} of ${entries.length}` : entries.length} in {monthLabel}
+          </p>
         </div>
-        <button
-          className={`finance-transaction-action-btn ${isEditMode ? 'active' : ''}`}
-          onClick={() => setIsEditMode(!isEditMode)}
-          aria-label="Toggle edit mode"
-          aria-pressed={isEditMode}
-          style={{
-            background: isEditMode ? 'var(--inline-fill, rgba(20, 24, 22, 0.06))' : 'transparent',
-            padding: '0',
-            borderRadius: '8px',
-            width: '32px',
-            height: '32px',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            minWidth: '32px',
-            minHeight: '32px',
-            border: 'none',
-            boxShadow: 'none',
-          }}
-        >
-          <Pencil size={14} strokeWidth={2.5} />
-        </button>
+        <label className="fin-ledger-search">
+          <Search size={13} strokeWidth={2.4} aria-hidden="true" />
+          <input
+            type="search"
+            placeholder="Search"
+            value={query}
+            onChange={(e) => { setQuery(e.target.value); setPage(1) }}
+            aria-label="Search transactions"
+          />
+        </label>
       </div>
-      <div className="finance-transaction-table" role="table" aria-label="Recent transactions">
+
+      <div className="fin-ledger-toolbar">
+        <div className="fin-filter-tabs" role="tablist" aria-label="Transaction type">
+          {FILTERS.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              role="tab"
+              aria-selected={filter === f.key}
+              className={cn(filter === f.key && 'is-active')}
+              onClick={() => { onFilterChange(f.key); setPage(1) }}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+        {categoryFilter && (
+          <button
+            type="button"
+            className="fin-filter-chip"
+            style={{ '--chip-hue': getConsistentColor(categoryFilter) } as CSSProperties}
+            onClick={onClearCategory}
+            aria-label={`Clear ${categoryFilter} filter`}
+          >
+            {categoryFilter}
+            <X size={11} strokeWidth={2.6} />
+          </button>
+        )}
+      </div>
+
+      <div className="finance-transaction-table" role="table" aria-label="Transactions">
         <div className="finance-transaction-list" role="rowgroup">
           {loading ? (
-            Array.from({ length: 5 }).map((_, idx) => (
-              <div className="finance-transaction-row" key={`loader-${idx}`} role="row" style={{ pointerEvents: 'none' }}>
-                <div className="finance-transaction-merchant" role="cell">
-                  <div className="skeleton-shimmer skeleton-circle" style={{ width: '30px', height: '30px', borderRadius: '50%' }} />
-                  <div style={{ flex: 1, marginLeft: '11px' }}>
-                    <div className="skeleton-shimmer skeleton-rect" style={{ width: '120px', height: '12px', borderRadius: '3px' }} />
-                    <div className="skeleton-shimmer skeleton-rect" style={{ width: '90px', height: '8px', marginTop: '6px', borderRadius: '2px' }} />
-                  </div>
-                </div>
-                <div className="finance-transaction-amount-group" role="cell">
-                  <div className="skeleton-shimmer skeleton-rect" style={{ width: '60px', height: '14px', borderRadius: '3px' }} />
-                </div>
+            Array.from({ length: 6 }).map((_, idx) => (
+              <div className="fin-ledger-row is-skeleton" key={idx} role="row">
+                <span className="skeleton-shimmer skeleton-circle" style={{ width: 30, height: 30 }} />
+                <span style={{ flex: 1 }}>
+                  <span className="skeleton-shimmer skeleton-rect" style={{ width: 130, height: 11 }} />
+                  <span className="skeleton-shimmer skeleton-rect" style={{ width: 80, height: 8, marginTop: 6 }} />
+                </span>
+                <span className="skeleton-shimmer skeleton-rect" style={{ width: 56, height: 13 }} />
               </div>
             ))
           ) : paginated.length === 0 ? (
@@ -197,84 +179,58 @@ function TransactionsCard({
               <span className="fin-empty-glyph">
                 <Receipt size={20} strokeWidth={2.2} />
               </span>
-              <p className="fin-empty-title">Nothing logged yet</p>
+              <p className="fin-empty-title">{narrowed ? 'Nothing matches' : 'Nothing logged yet'}</p>
               <p className="fin-empty-sub">
-                Add your first transaction and this ledger will start tracking your
-                spend, day by day.
+                {narrowed
+                  ? 'Try another filter or clear the search.'
+                  : 'Add your first transaction and this ledger will start tracking your money, day by day.'}
               </p>
             </div>
           ) : (
             groups.map((group) => (
-              <div className="fin-day-group" key={group.key}>
+              <div className="fin-day-group" key={`${group.key}-${group.rows[0].id}`}>
                 <div className="fin-day-head">
                   <span className="fin-day-label">{group.label}</span>
-                  <span className={`fin-day-total${group.net > 0 ? ' is-positive' : ''}`}>
-                    {formatNet(group.net)}
-                  </span>
+                  <span className={cn('fin-day-total', group.net > 0 && 'is-positive')}>{formatNet(group.net)}</span>
                 </div>
                 {group.rows.map((tx, index) => {
-                  const { merchant, detail, category, amount, tone, icon: Icon } = tx
-                  const accent = getConsistentColor(category)
+                  const Icon = getIconForCategory(tx.category)
+                  const transfer = isTransferKind(tx.kind)
+                  const editable = Boolean(tx.id) && Boolean(onOpen)
                   return (
-                    <div
-                      className="finance-transaction-row"
-                      key={tx.id || `${merchant}-${detail}-${index}`}
+                    <button
+                      type="button"
+                      className={cn('fin-ledger-row', `is-${tx.kind}`)}
+                      key={tx.id || `${tx.description}-${index}`}
                       role="row"
-                      style={{
-                        '--row-accent': accent,
-                        '--row-accent-soft': getPastelBG(accent),
-                        '--row-accent-ink': accent,
-                      } as CSSProperties}
+                      disabled={!editable}
+                      onClick={() => onOpen?.(tx)}
+                      aria-label={`${tx.description}, ${amountLabel(tx)}${editable ? ', edit' : ''}`}
+                      style={{ '--chip-hue': getConsistentColor(tx.category) } as CSSProperties}
                     >
-                      <div className="finance-transaction-merchant" role="cell">
-                        <span>
-                          <Icon size={14} strokeWidth={2.3} />
-                        </span>
-                        {/* Category rides in the subline instead of its own
-                            column: a fixed middle column left a wide void between
-                            the merchant and the amount on a full-width card. */}
-                        <p>
-                          <b>{merchant}</b>
-                          <small className="fin-tx-sub">
-                            <em className="fin-tx-cat">{category}</em>
-                            {detail && <span className="fin-tx-time">{detail}</span>}
-                          </small>
-                        </p>
-                      </div>
-                      <div className="finance-transaction-amount-group" role="cell">
-                        <strong className={tone}>
-                          {amount}
-                        </strong>
-                        {isEditMode && (
-                          /* Hover/focus styling now lives in finance-playful.css.
-                             This previously ran through onMouseEnter/onMouseLeave
-                             handlers mutating element.style, which never fired for
-                             keyboard users and couldn't carry the route's spring. */
-                          <div className="finance-transaction-actions" style={{ gap: '6px' }}>
-                            {onEdit && (
-                              <button
-                                type="button"
-                                className="fin-row-action"
-                                onClick={() => onEdit(tx)}
-                                aria-label={`Edit ${merchant}`}
-                              >
-                                <Pencil size={12} />
-                              </button>
-                            )}
-                            {onDelete && (
-                              <button
-                                type="button"
-                                className="fin-row-action is-danger"
-                                onClick={() => onDelete(tx)}
-                                aria-label={`Delete ${merchant}`}
-                              >
-                                <Trash2 size={12} />
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                      <span className="fin-ledger-icon" aria-hidden="true">
+                        <Icon size={14} strokeWidth={2.3} />
+                      </span>
+                      <span className="fin-ledger-main" role="cell">
+                        <b>{tx.description || 'Untitled'}</b>
+                        <small>
+                          <em>{tx.category}</em>
+                          {transfer && (
+                            <span className="fin-ledger-tag">
+                              {tx.kind === 'transfer-in' ? <ArrowDownLeft size={10} strokeWidth={2.6} /> : <ArrowUpRight size={10} strokeWidth={2.6} />}
+                              {tx.kind === 'transfer-in' ? 'transfer in' : 'transfer'}
+                            </span>
+                          )}
+                          {tx.subscriptionId && (
+                            <span className="fin-ledger-tag">
+                              <Repeat size={10} strokeWidth={2.6} /> bill
+                            </span>
+                          )}
+                          {tx.time && <span className="fin-ledger-time">{tx.time}</span>}
+                        </small>
+                      </span>
+                      <strong className="fin-ledger-amount" role="cell">{amountLabel(tx)}</strong>
+                    </button>
                   )
                 })}
               </div>

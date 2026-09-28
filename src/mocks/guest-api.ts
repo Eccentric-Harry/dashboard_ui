@@ -11,7 +11,6 @@ import {
   dummyLearningLogs,
   dummyPursuits,
   dummyCalendarItems,
-  dummyFinanceLogs,
   dummyLendingRecords,
   dummySliceRepayments,
   dummyStravaActivities,
@@ -26,9 +25,9 @@ import {
   stepsFromInputs,
   toggleStepInPursuit,
 } from '@/features/learnings/pursuit-tree';
+import { resolveGuestFinance } from './guest-finance';
 
 let calendarItems = [...dummyCalendarItems];
-const financeLogs = [...dummyFinanceLogs];
 let lendingRecords = [...dummyLendingRecords];
 
 // ── Guest nutrition analysis fixtures ──────────────────────────────────────
@@ -146,12 +145,6 @@ const guestMealQuality = (mealCount: number, dayIndex: number): GuestMealQuality
   };
 };
 
-// Guest finance account ("Total Balance") — a running balance moved by transactions.
-const financeAccount: { balance: number; monthlyBudget: number } = { balance: 2450800, monthlyBudget: 20000 };
-
-// Guest subscriptions (in-memory).
-interface GuestSubscription { id: string; name: string; cost: number; billingDate: string | null }
-let guestSubscriptions: GuestSubscription[] = [];
 
 // ── Mind tab (guest, in-memory) ────────────────────────────────────────────
 interface GuestWorryPrediction {
@@ -372,6 +365,10 @@ export function resolveGuestRequest(request: GuestRequest): GuestResponse | null
   }
 
   const respondWith = (body: unknown): GuestResponse => ({ status: 200, body });
+
+  // Finance ledger, budget, bills and the spending summary live in their own resolver.
+  const finance = resolveGuestFinance(urlObj, (request.method || 'GET').toUpperCase(), request.body);
+  if (finance) return finance;
 
   // ── Notifications & Web Push ──────────────────────────────────────────
   // A guest has no account and therefore no device the backend could push to. These are
@@ -1010,24 +1007,6 @@ export function resolveGuestRequest(request: GuestRequest): GuestResponse | null
     });
   }
 
-  // Finance: month spending summary (Home rollup + insights via fetchSpendingSummary)
-  if (urlStr.includes('/api/v1/dashboard/spending-summary')) {
-    const month = urlObj.searchParams.get('month') || guestToday.slice(0, 7);
-    const monthLogs = dummyFinanceLogs.filter(l => l.date.startsWith(month));
-    const totalSpent = monthLogs.reduce((sum, l) => sum + (l.dailyTotals?.totalExpense || 0), 0) || 12450;
-    const monthlyBudget = 20000;
-    return respondWith({
-      data: {
-        month,
-        totalSpent,
-        monthlyBudget,
-        budgetRemaining: monthlyBudget - totalSpent,
-        budgetUtilization: (totalSpent / monthlyBudget) * 100,
-        categoryBreakdown: {},
-      },
-    });
-  }
-
   // ── Home route: sleep, mood range, focus history ─────────────────────
   if (urlStr.includes('/api/v1/sleep')) {
     const method = (request.method || 'GET').toUpperCase();
@@ -1413,142 +1392,6 @@ export function resolveGuestRequest(request: GuestRequest): GuestResponse | null
     };
     calendarItems.push(newItem);
     return respondWith({ data: newItem });
-  }
-
-  // Finance: daily logs GET
-  if (urlStr.includes('/api/v1/finance/daily-logs')) {
-    const daysParam = urlObj.searchParams.get('days');
-    let logs = [...financeLogs];
-    if (daysParam) {
-      const days = parseInt(daysParam, 10);
-      if (!isNaN(days)) {
-        const cutoff = new Date();
-        cutoff.setDate(cutoff.getDate() - days);
-        const cutoffStr = cutoff.toISOString().split('T')[0];
-        logs = logs.filter(l => l.date >= cutoffStr);
-      }
-    }
-    return respondWith({ data: logs });
-  }
-
-  // Finance: transactions CRUD
-  const txMatch = urlStr.match(/\/api\/v1\/finance\/transactions\/([^/]+)/);
-  if (txMatch) {
-    const txId = txMatch[1];
-    const method = (request.method || 'GET').toUpperCase();
-
-    if (method === 'DELETE') {
-      for (const log of financeLogs) {
-        for (const category of Object.keys(log.transactions)) {
-          log.transactions[category] = log.transactions[category].filter(tx => tx.id !== txId);
-        }
-      }
-      return respondWith({ success: true });
-    }
-
-    if (method === 'PUT') {
-      const body = JSON.parse(typeof request.body === 'string' ? request.body : '{}');
-      for (const log of financeLogs) {
-        for (const category of Object.keys(log.transactions)) {
-          const idx = log.transactions[category].findIndex(tx => tx.id === txId);
-          if (idx !== -1) {
-            log.transactions[category][idx] = {
-              ...log.transactions[category][idx],
-              description: body.description,
-              amount: body.amount,
-            };
-            return respondWith({ data: log.transactions[category][idx] });
-          }
-        }
-      }
-      return respondWith({ data: null });
-    }
-  }
-
-  if (urlStr.includes('/api/v1/finance/transactions') && (request.method || 'GET').toUpperCase() === 'POST') {
-    const body = JSON.parse(typeof request.body === 'string' ? request.body : '{}');
-    const txDate = body.date || new Date().toISOString().split('T')[0];
-    let log = financeLogs.find(l => l.date === txDate);
-    if (!log) {
-      log = {
-        id: `fl-guest-${Date.now()}`,
-        date: txDate,
-        dailyTotals: { totalExpense: 0, totalIncome: 0 },
-        transactions: {},
-      };
-      financeLogs.push(log);
-    }
-
-    const isIncome = String(body.type).toLowerCase() === 'income';
-    const newTx = {
-      id: `ftx-guest-${Date.now()}`,
-      description: body.description,
-      amount: body.amount,
-      type: isIncome ? 'Income' : 'Expense',
-      timestamp: new Date().toISOString(),
-    };
-
-    const category = body.category || 'Miscellaneous';
-    if (!log.transactions[category]) {
-      log.transactions[category] = [];
-    }
-    log.transactions[category].push(newTx);
-
-    if (isIncome) {
-      log.dailyTotals.totalIncome += body.amount;
-      financeAccount.balance += body.amount;
-    } else {
-      log.dailyTotals.totalExpense += body.amount;
-      financeAccount.balance -= body.amount;
-    }
-
-    return respondWith({ data: newTx });
-  }
-
-  // Finance: account / Total Balance
-  if (urlStr.includes('/api/v1/finance/budget')) {
-    const method = (request.method || 'GET').toUpperCase();
-    if (method === 'PUT') {
-      const body = JSON.parse(typeof request.body === 'string' ? request.body : '{}');
-      if (typeof body.monthlyBudget === 'number') {
-        financeAccount.monthlyBudget = body.monthlyBudget;
-      }
-    }
-    return respondWith({ data: { balance: financeAccount.balance, monthlyBudget: financeAccount.monthlyBudget ?? 20000 } });
-  }
-
-  if (urlStr.includes('/api/v1/finance/account')) {
-    const method = (request.method || 'GET').toUpperCase();
-    if (method === 'PUT') {
-      const body = JSON.parse(typeof request.body === 'string' ? request.body : '{}');
-      if (typeof body.balance === 'number') {
-        financeAccount.balance = body.balance;
-      }
-      return respondWith({ data: { balance: financeAccount.balance, monthlyBudget: financeAccount.monthlyBudget ?? 20000 } });
-    }
-    return respondWith({ data: { balance: financeAccount.balance, monthlyBudget: financeAccount.monthlyBudget ?? 20000 } });
-  }
-
-  // Subscriptions CRUD
-  const subDeleteMatch = urlStr.match(/\/api\/v1\/subscriptions\/([^/]+)/);
-  if (subDeleteMatch && (request.method || '').toUpperCase() === 'DELETE') {
-    guestSubscriptions = guestSubscriptions.filter(s => s.id !== subDeleteMatch[1]);
-    return respondWith({ data: null });
-  }
-  if (urlStr.includes('/api/v1/subscriptions')) {
-    const method = (request.method || 'GET').toUpperCase();
-    if (method === 'POST') {
-      const body = JSON.parse(typeof request.body === 'string' ? request.body : '{}');
-      const newSub: GuestSubscription = {
-        id: `sub-guest-${Date.now()}`,
-        name: body.name,
-        cost: body.cost,
-        billingDate: body.billingDate || null,
-      };
-      guestSubscriptions.push(newSub);
-      return respondWith({ data: newSub });
-    }
-    return respondWith({ data: guestSubscriptions });
   }
 
   // Finance: slice repayments GET

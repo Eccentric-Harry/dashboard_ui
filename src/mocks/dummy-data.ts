@@ -1,7 +1,7 @@
 import type { DailyTask } from '../types/tasks';
 import type { LearningsSummary, LearningLog, LearningPursuit } from '../types/learnings';
 import type { CalendarItem, CalendarRecurrence } from '../types/calendar';
-import type { DailyFinancialLog, FinancialTransaction, FinancialTotals, LendingRecord, RepaymentInstallment } from '../types/finance';
+import type { DailyFinancialLog, FinancialTransaction, FinancialTotals, LendingRecord, RepaymentInstallment, SubscriptionDTO } from '../types/finance';
 import type { StravaActivity, StravaActivityStats } from '../types/workouts';
 
 const today = new Date();
@@ -659,47 +659,39 @@ const generateCalendarItems = (): CalendarItem[] => {
 
 export const dummyCalendarItems = generateCalendarItems();
 
+// Everyday spending the guest ledger samples from. Big-ticket fixed costs (rent, bills,
+// subscriptions), salary and money sent home are scheduled monthly below instead, so the
+// demo month reads like a real one: one salary, one rent, one transfer home.
 const financeTxTemplates = [
-  { description: 'Zomato Order - Dinner', category: 'Food', type: 'expense', amount: 450 },
-  { description: 'Swiggy - Lunch', category: 'Food', type: 'expense', amount: 320 },
-  { description: 'Uber Ride to Office', category: 'Transport', type: 'expense', amount: 180 },
-  { description: 'Amazon Electronics Purchase', category: 'Shopping', type: 'expense', amount: 2499 },
-  { description: 'Electricity Bill Payment', category: 'Bills', type: 'expense', amount: 1850 },
-  { description: 'Internet Bill - Airtel', category: 'Bills', type: 'expense', amount: 999 },
-  { description: 'Netflix Monthly Subscription', category: 'Entertainment', type: 'expense', amount: 199 },
-  { description: 'Gym Membership Fee', category: 'Health', type: 'expense', amount: 1500 },
-  { description: 'Monthly Rent Payment', category: 'Home', type: 'expense', amount: 15000 },
-  { description: 'Salary Credit - August', category: 'Salary', type: 'income', amount: 85000 },
-  { description: 'Dinner at Italian Restaurant', category: 'Dining', type: 'expense', amount: 1200 },
-  { description: 'Metro Card Recharge', category: 'Transport', type: 'expense', amount: 500 },
-  { description: 'Blinkit Grocery Order', category: 'Groceries', type: 'expense', amount: 780 },
-  { description: 'Phone Recharge - Jio', category: 'Bills', type: 'expense', amount: 349 },
-  { description: 'Weekend Movie Tickets', category: 'Entertainment', type: 'expense', amount: 600 },
-  { description: 'Pharmacy - Medicines', category: 'Health', type: 'expense', amount: 450 },
-  { description: 'Freelance Project Payment', category: 'Income', type: 'income', amount: 25000 },
-  { description: 'DMart Weekly Groceries', category: 'Groceries', type: 'expense', amount: 1250 },
-  { description: 'Ola Auto Ride', category: 'Transport', type: 'expense', amount: 85 },
-  { description: 'Spotify Premium', category: 'Entertainment', type: 'expense', amount: 119 },
-  { description: 'Domino\'s Pizza Order', category: 'Food', type: 'expense', amount: 599 },
-  { description: 'New Running Shoes', category: 'Shopping', type: 'expense', amount: 5499 },
-  { description: 'Water Bill Payment', category: 'Bills', type: 'expense', amount: 650 },
-  { description: 'Breakfast at Cafe', category: 'Dining', type: 'expense', amount: 350 },
-  { description: 'Dividend Credit - Stocks', category: 'Income', type: 'income', amount: 3200 },
-  { description: 'Zepto Quick Delivery', category: 'Groceries', type: 'expense', amount: 420 },
-  { description: 'Yoga Class Fee', category: 'Health', type: 'expense', amount: 2000 },
-  { description: 'Rapido Bike Taxi', category: 'Transport', type: 'expense', amount: 45 },
-  { description: 'Myntra Clothing Order', category: 'Shopping', type: 'expense', amount: 3299 },
-  { description: 'Petrol Refill', category: 'Transport', type: 'expense', amount: 1200 },
-  { description: 'Book Purchase - Amazon', category: 'Shopping', type: 'expense', amount: 799 },
-  { description: 'Haircut at Salon', category: 'Personal', type: 'expense', amount: 500 },
-  { description: 'Insurance Premium Payment', category: 'Bills', type: 'expense', amount: 4500 },
-  { description: 'Birthday Gift for Friend', category: 'Shopping', type: 'expense', amount: 1500 },
-  { description: 'Credit Card Bill Payment', category: 'Bills', type: 'expense', amount: 12000 },
-  { description: 'Stock Trading Profit', category: 'Income', type: 'income', amount: 8500 },
-  { description: 'Saturday Brunch', category: 'Dining', type: 'expense', amount: 850 },
-  { description: 'Protein Powder Purchase', category: 'Health', type: 'expense', amount: 2200 },
-  { description: 'Car Wash Service', category: 'Transport', type: 'expense', amount: 300 },
-  { description: 'Rent Security Deposit Refund', category: 'Income', type: 'income', amount: 15000 },
+  { description: 'Zomato Order - Dinner', category: 'Food', amount: 450, weight: 3 },
+  { description: 'Swiggy - Lunch', category: 'Food', amount: 320, weight: 3 },
+  { description: 'Uber Ride to Office', category: 'Transport', amount: 180, weight: 3 },
+  { description: 'Metro Card Recharge', category: 'Transport', amount: 500, weight: 1 },
+  { description: 'Ola Auto Ride', category: 'Transport', amount: 85, weight: 3 },
+  { description: 'Rapido Bike Taxi', category: 'Transport', amount: 45, weight: 2 },
+  { description: 'Blinkit Grocery Order', category: 'Groceries', amount: 780, weight: 2 },
+  { description: 'DMart Weekly Groceries', category: 'Groceries', amount: 1250, weight: 1 },
+  { description: 'Zepto Quick Delivery', category: 'Groceries', amount: 420, weight: 2 },
+  { description: 'Dinner at Italian Restaurant', category: 'Dining', amount: 1200, weight: 1 },
+  { description: 'Breakfast at Cafe', category: 'Dining', amount: 350, weight: 2 },
+  { description: 'Saturday Brunch', category: 'Dining', amount: 850, weight: 1 },
+  { description: 'Domino\'s Pizza Order', category: 'Food', amount: 599, weight: 1 },
+  { description: 'Weekend Movie Tickets', category: 'Entertainment', amount: 600, weight: 1 },
+  { description: 'Pharmacy - Medicines', category: 'Health', amount: 450, weight: 1 },
+  { description: 'Myntra Clothing Order', category: 'Shopping', amount: 1899, weight: 1 },
+  { description: 'Book Purchase - Amazon', category: 'Shopping', amount: 799, weight: 1 },
+  { description: 'Haircut at Salon', category: 'Personal', amount: 500, weight: 1 },
+  { description: 'Birthday Gift for Friend', category: 'Shopping', amount: 1500, weight: 1 },
+];
+
+/** Recurring bills the guest has on file; payments below link to them by id. */
+export const dummySubscriptions: SubscriptionDTO[] = [
+  { id: 'sub-rent', name: 'PG Rent', cost: 15000, billingDate: null, category: 'Rent', intervalUnit: 'MONTH', intervalCount: 1, monthlyCost: 15000 },
+  { id: 'sub-netflix', name: 'Netflix', cost: 199, billingDate: null, category: 'Subscriptions', intervalUnit: 'MONTH', intervalCount: 1, monthlyCost: 199 },
+  { id: 'sub-spotify', name: 'Spotify', cost: 119, billingDate: null, category: 'Subscriptions', intervalUnit: 'MONTH', intervalCount: 1, monthlyCost: 119 },
+  { id: 'sub-jio', name: 'Jio Prepaid', cost: 399, billingDate: null, category: 'Bills', intervalUnit: 'DAY', intervalCount: 28, monthlyCost: 433.73 },
+  { id: 'sub-icloud', name: 'iCloud+', cost: 75, billingDate: null, category: 'Subscriptions', intervalUnit: 'MONTH', intervalCount: 1, monthlyCost: 75 },
+  { id: 'sub-airtel', name: 'Airtel Broadband', cost: 999, billingDate: null, category: 'Bills', intervalUnit: 'MONTH', intervalCount: 1, monthlyCost: 999 },
 ];
 
 const lendingRecordTemplates = [
@@ -723,66 +715,84 @@ const sliceRepaymentTemplates = [
   { dueDateOffset: -120, amount: '₹2,500', status: 'paid' },
 ];
 
+const localIso = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
 const generateFinanceLogs = (): DailyFinancialLog[] => {
   const logs: DailyFinancialLog[] = [];
-  const baseDate = new Date();
-  let logIdCounter = 1;
+  const now = new Date();
   let txIdCounter = 1;
 
+  // Anchor each bill a fixed number of days back so the demo always shows a mix of
+  // states: paid, due soon, and one overdue (iCloud+ below is never paid this cycle).
+  const anchorOffsets: Record<string, number> = {
+    'sub-rent': 12, 'sub-netflix': 16, 'sub-spotify': 26, 'sub-jio': 23, 'sub-icloud': 3, 'sub-airtel': 2,
+  };
+  for (const sub of dummySubscriptions) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - anchorOffsets[sub.id]);
+    sub.billingDate = localIso(d);
+  }
+  const billDays = new Map<string, typeof dummySubscriptions>();
+  for (const sub of dummySubscriptions) {
+    const anchor = new Date(`${sub.billingDate}T00:00:00`);
+    for (let k = 0; k < 6; k++) {
+      const due = sub.intervalUnit === 'DAY'
+        ? new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() - k * (sub.intervalCount ?? 1))
+        : new Date(anchor.getFullYear(), anchor.getMonth() - k, anchor.getDate());
+      if (sub.id === 'sub-icloud' && k === 0) continue; // left unpaid → overdue in the demo
+      const key = localIso(due);
+      billDays.set(key, [...(billDays.get(key) ?? []), sub]);
+    }
+  }
+
   for (let dayOffset = 89; dayOffset >= 0; dayOffset--) {
-    const d = new Date(baseDate);
-    d.setDate(d.getDate() - dayOffset);
-    const dateStr = d.toISOString().split('T')[0];
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOffset);
+    const dateStr = localIso(d);
     const dayRand = seedRandom(6000 + dayOffset);
-
-    const numTx = 2 + Math.floor(dayRand() * 5);
     const transactions: Record<string, FinancialTransaction[]> = {};
-    let totalExpense = 0;
-    let totalIncome = 0;
+    const totals: FinancialTotals = { totalExpense: 0, totalIncome: 0, totalTransferOut: 0, totalTransferIn: 0 };
 
-    const usedIndices = new Set<number>();
+    const add = (
+      category: string,
+      description: string,
+      amount: number,
+      type: 'Expense' | 'Income' | 'Transfer',
+      extra: Partial<FinancialTransaction> = {},
+    ) => {
+      const at = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 7 + Math.floor(dayRand() * 15), Math.floor(dayRand() * 60));
+      // Never stamp a future time on today's rows.
+      if (at > now) at.setTime(now.getTime() - 60_000 * (1 + Math.floor(dayRand() * 90)));
+      (transactions[category] ??= []).push({
+        id: `ftx-${txIdCounter++}`, description, amount, type, timestamp: at.toISOString(), ...extra,
+      });
+      if (type === 'Income') totals.totalIncome += amount;
+      else if (type === 'Transfer') {
+        if (extra.direction === 'IN') totals.totalTransferIn = (totals.totalTransferIn ?? 0) + amount;
+        else totals.totalTransferOut = (totals.totalTransferOut ?? 0) + amount;
+      } else totals.totalExpense += amount;
+    };
 
-    for (let t = 0; t < numTx; t++) {
-      let idx = (dayOffset * 5 + t * 13) % financeTxTemplates.length;
-      while (usedIndices.has(idx)) {
-        idx = (idx + 1) % financeTxTemplates.length;
-      }
-      usedIndices.add(idx);
+    const dom = d.getDate();
+    if (dom === 1) add('Salary', `Salary Credit - ${d.toLocaleDateString('en-US', { month: 'long' })}`, 85000, 'Income');
+    if (dom === 2) add('Family', 'Sent home to Amma', 20000, 'Transfer', { direction: 'OUT' });
+    if (dom === 18 && dayOffset > 40) add('Income', 'Freelance Project Payment', 18000, 'Income');
+    if (dom === 21 && dayOffset < 40) add('Lending', 'Lent to Rahul', 5000, 'Transfer', { direction: 'OUT' });
+    if (dom === 9 && dayOffset < 30) add('Loan Recovery', 'Priya paid back', 2000, 'Transfer', { direction: 'IN' });
+    // One pre-transfer-era row, logged as spending — the reclassify nudge's demo.
+    if (dayOffset === 64) add('To Home', 'Money to Amma for groceries', 3000, 'Expense');
 
-      const template = financeTxTemplates[idx];
-      const amount = Math.round(template.amount * (0.85 + dayRand() * 0.3));
-      const hour = 6 + Math.floor(dayRand() * 16);
-      const minute = Math.floor(dayRand() * 60);
-      const timestamp = `${dateStr}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00.000Z`;
-
-      const tx: FinancialTransaction = {
-        id: `ftx-${txIdCounter++}`,
-        description: template.description,
-        amount,
-        type: template.type === 'income' ? 'Income' : 'Expense',
-        timestamp,
-      };
-
-      if (!transactions[template.category]) {
-        transactions[template.category] = [];
-      }
-      transactions[template.category].push(tx);
-
-      if (template.type === 'expense') {
-        totalExpense += amount;
-      } else {
-        totalIncome += amount;
-      }
+    for (const sub of billDays.get(dateStr) ?? []) {
+      add(sub.category ?? 'Subscriptions', sub.name, sub.cost, 'Expense', { subscriptionId: sub.id });
     }
 
-    const dailyTotals: FinancialTotals = { totalExpense, totalIncome };
+    const numTx = 1 + Math.floor(dayRand() * 3);
+    const pool = financeTxTemplates.flatMap((t) => Array(t.weight).fill(t) as typeof financeTxTemplates);
+    for (let t = 0; t < numTx; t++) {
+      const template = pool[Math.floor(dayRand() * pool.length)];
+      add(template.category, template.description, Math.round(template.amount * (0.85 + dayRand() * 0.3)), 'Expense');
+    }
 
-    logs.push({
-      id: `fl-${logIdCounter++}`,
-      date: dateStr,
-      dailyTotals,
-      transactions,
-    });
+    logs.push({ id: `fl-${dateStr}`, dateString: dateStr, date: dateStr, dailyTotals: totals, transactions });
   }
   return logs;
 };

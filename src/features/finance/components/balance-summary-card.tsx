@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import { Wallet, Pencil } from 'lucide-react'
 import { useCountUp } from '@/hooks/use-count-up'
 
@@ -5,15 +6,19 @@ interface BalanceSummaryCardProps {
   balance: number | null
   loading?: boolean
   onEdit?: () => void
+  /** Net change this month ("+₹12,400 this month"); omitted when nothing moved. */
+  note?: string
+  noteTone?: 'positive' | 'negative' | 'neutral'
+  stagger?: number
 }
 
-function BalanceSummaryCard({ balance, loading = false, onEdit }: BalanceSummaryCardProps) {
+function BalanceSummaryCard({ balance, loading = false, onEdit, note, noteTone = 'neutral', stagger = 0 }: BalanceSummaryCardProps) {
   // The route's anchor number, so it earns the count-up. The hook renders the
   // final value immediately under prefers-reduced-motion.
   const animated = useCountUp(balance ?? 0)
 
   return (
-    <section className="finance-card finance-balance-card">
+    <section className="finance-card finance-balance-card" style={{ '--i': stagger } as CSSProperties}>
       <div className="finance-tile-head">
         <div className="finance-balance-icon">
           <Wallet size={15} strokeWidth={2.2} />
@@ -35,7 +40,12 @@ function BalanceSummaryCard({ balance, loading = false, onEdit }: BalanceSummary
         {loading ? (
           <div className="skeleton-shimmer skeleton-rect" style={{ width: '90px', height: '18px', borderRadius: '4px' }} />
         ) : (
-          <strong>₹{Math.round(animated).toLocaleString('en-IN')}</strong>
+          <>
+            <strong>₹{Math.round(animated).toLocaleString('en-IN')}</strong>
+            {note && (
+              <span className={`finance-metric-subtitle finance-metric-subtitle--${noteTone}`}>{note}</span>
+            )}
+          </>
         )}
       </div>
     </section>

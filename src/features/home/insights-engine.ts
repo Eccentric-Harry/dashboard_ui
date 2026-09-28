@@ -7,6 +7,7 @@
 // the shared <InsightList> component — one visual system, three domains.
 
 import type { DailyFinancialLog } from '@/types/finance'
+import { logDay, txKind } from '@/lib/finance-ledger'
 import type { DailyLog, MindAnchorOutcome, MindEntry } from '@/types/mind'
 import type { DailyTask } from '@/types/tasks'
 import type { FocusDaySummary } from '@/types/focus'
@@ -104,16 +105,18 @@ export function buildDayRecords(sources: DayRecordSources): DayRecord[] {
     thoughtsByDate.set(date, (thoughtsByDate.get(date) ?? 0) + 1)
   }
 
+  // Keyed by the log's local day: `log.date` is a full Instant on real data, so keying by
+  // it never matched a 'YYYY-MM-DD' lookup and this correlation silently had no data.
   const foodSpendByDate = new Map<string, number>()
   for (const log of sources.finance ?? []) {
     let spend = 0
     for (const [category, transactions] of Object.entries(log.transactions ?? {})) {
       if (!FOOD_CATEGORY_PATTERN.test(category)) continue
       for (const tx of transactions) {
-        if (tx.type === 'Expense') spend += tx.amount
+        if (txKind(tx, category) === 'spending') spend += tx.amount
       }
     }
-    foodSpendByDate.set(log.date, spend)
+    foodSpendByDate.set(logDay(log), spend)
   }
 
   return sources.days.map((date) => {
@@ -671,7 +674,7 @@ function bestPositive(records: DayRecord[], ctx: InsightContext): Insight | null
         icon: 'wallet',
         sentiment: 'positive',
         title: `You're ₹${Math.round(ctx.spending.budgetRemaining).toLocaleString('en-IN')} under budget this month.`,
-        detail: `Spent ₹${Math.round(ctx.spending.totalSpent).toLocaleString('en-IN')} of ₹${Math.round(ctx.spending.monthlyBudget).toLocaleString('en-IN')} (${Math.round(ctx.spending.budgetUtilization)}%).`,
+        detail: `Spent ₹${Math.round(ctx.spending.budgetedSpent ?? ctx.spending.totalSpent).toLocaleString('en-IN')} of ₹${Math.round(ctx.spending.monthlyBudget).toLocaleString('en-IN')} (${Math.round(ctx.spending.budgetUtilization)}%)${ctx.spending.budgetScope === 'FLEX' ? ' on everyday spending' : ''}.`,
         sampleDays: records.length,
         effect: 0.1,
         metric: { value: Math.round(ctx.spending.budgetRemaining), unit: '₹' },

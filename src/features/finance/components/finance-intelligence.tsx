@@ -1,7 +1,7 @@
 // Finance Intelligence — renders the shared engine's finance insights:
 // safe-to-spend hero with the budget burn-down chart (actual vs ideal pace
 // + dotted forecast), month-end projection, category MoM trends, subscription
-// radar, lending exposure, and the Patterns-style insight rows.
+// cash flow, lending exposure, and the Patterns-style insight rows.
 // All math lives in lib/insights; this file only fetches and renders.
 
 import { useEffect, useMemo, useState, type CSSProperties } from 'react'
@@ -22,15 +22,16 @@ import {
 import { getConsistentColor } from '../utils'
 import { financeActions, useFinanceStore } from '@/store/finance-store'
 import { isAwaitingData } from '@/store/zustand-utils'
-import type { DailyFinancialLog } from '@/types/finance'
-import { inr, isoDate, monthLabel } from '@/lib/insights/engine'
+import type { BudgetScope, DailyFinancialLog } from '@/types/finance'
+import type { MoneySummary } from '@/lib/finance-ledger'
+import { inr, isoDate, monthLabel, type Insight, type InsightAction } from '@/lib/insights/engine'
 import {
   buildBurndown,
   categoryTrends,
   financeInsights,
   lendingExposure,
-  subscriptionRadar,
 } from '@/lib/insights/finance'
+import { cn } from '@/lib/utils'
 import type { FinanceEngineInput } from '@/lib/insights/finance'
 import { useCountUp } from '@/hooks/use-count-up'
 import { InsightList } from '@/components/ui/insight-list'
@@ -40,8 +41,15 @@ import type { ChartTooltipProps } from '@/lib/chart-tooltip'
 type FinanceIntelligenceProps = {
   logs: DailyFinancialLog[]
   monthlyBudget: number | null
+  budgetScope: BudgetScope
+  fixedCategories: string[]
   selectedMonthKey: string
   onMonthChange: (monthKey: string) => void
+  months: [string, string][]
+  /** The selected month's cash flow, from the route's single ledger pass. */
+  monthSummary: MoneySummary
+  /** Insight buttons ("Adjust budget", "Move to transfers", "Merge into Bills"). */
+  onInsightAction: (insight: Insight, action: InsightAction) => void
   loading: boolean
   /** Entrance-stagger index; drives the `--i` animation delay. */
   stagger?: number
@@ -96,8 +104,13 @@ const BurndownTooltip = ({ active, payload, label, monthKey }: ChartTooltipProps
 function FinanceIntelligence({
   logs,
   monthlyBudget,
+  budgetScope,
+  fixedCategories,
   selectedMonthKey,
   onMonthChange,
+  months: availableMonths,
+  monthSummary,
+  onInsightAction,
   loading,
   stagger = 0,
 }: FinanceIntelligenceProps) {
@@ -125,11 +138,13 @@ function FinanceIntelligence({
       monthKey: selectedMonthKey,
       logs,
       monthlyBudget,
+      budgetScope,
+      fixedCategories,
       subscriptions,
       lending,
       repayments,
     }),
-    [today, selectedMonthKey, logs, monthlyBudget, subscriptions, lending, repayments],
+    [today, selectedMonthKey, logs, monthlyBudget, budgetScope, fixedCategories, subscriptions, lending, repayments],
   )
 
   // Memoized on the data window — recomputes only when data changes or on ↻.
@@ -138,13 +153,12 @@ function FinanceIntelligence({
       insights: financeInsights(input),
       burndown: buildBurndown(input),
       trends: categoryTrends(input, 6),
-      subs: subscriptionRadar(input),
       exposure: lendingExposure(input),
     }),
     [input],
   )
 
-  const { burndown, trends, subs, exposure, insights } = derived
+  const { burndown, trends, exposure, insights } = derived
   const safeToSpend = insights.find((i) => i.id === 'fin-safe-to-spend')
   const forecast = insights.find((i) => i.id === 'fin-forecast')
   // Hero and forecast render as their own blocks; the lending insight restates the
@@ -156,31 +170,7 @@ function FinanceIntelligence({
 
   const monthName = monthLabel(selectedMonthKey)
 
-  // Same month list the Spending Overview select offers, so the two stay in step.
-  const availableMonths = useMemo(() => {
-    const months = new Map<string, string>()
-    const label = (key: string) =>
-      new Date(`${key}-01T00:00:00`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-    months.set(today.slice(0, 7), label(today.slice(0, 7)))
-    months.set(selectedMonthKey, label(selectedMonthKey))
-    logs.forEach((log) => {
-      const key = log.date.slice(0, 7)
-      if (!months.has(key)) months.set(key, label(key))
-    })
-    return [...months.entries()].sort((a, b) => b[0].localeCompare(a[0]))
-  }, [logs, selectedMonthKey, today])
-
-  const monthTxCount = useMemo(
-    () =>
-      logs.reduce((count, log) => {
-        if (log.date.slice(0, 7) !== selectedMonthKey) return count
-        return (
-          count +
-          Object.values(log.transactions ?? {}).reduce((c, txs) => c + (txs?.length ?? 0), 0)
-        )
-      }, 0),
-    [logs, selectedMonthKey],
-  )
+  const monthTxCount = monthSummary.count
 
   // Y scale is pinned to the two numbers that matter — 0 and the budget — plus
   // headroom for whatever the series actually reaches. Recharts' automatic ticks
@@ -262,6 +252,7 @@ function FinanceIntelligence({
                 white, which had the emphasis exactly inverted. */}
             <p className="fin-intel-eyebrow">
               {burndown.isCurrentMonth ? 'Safe to spend today' : `${monthName} recap`}
+              {burndown.flex && <span className="fin-intel-scope">everyday budget</span>}
             </p>
 
             <div className="fin-intel-hero-panel">
@@ -276,6 +267,9 @@ function FinanceIntelligence({
                   <b className={burndown.avgPerDay > burndown.safePerDay ? 'is-watch' : 'is-good'}>
                     {inr(burndown.avgPerDay)}/day
                   </b>
+                  {burndown.committed > 0 && (
+                    <span className="fin-intel-committed"> · {inr(burndown.committed)} of bills still due, set aside</span>
+                  )}
                 </p>
               </>
             ) : (
@@ -475,35 +469,29 @@ function FinanceIntelligence({
             </article>
           )}
 
-          {subs && (
-            <article className="fin-intel-tile fin-intel-tile--subs">
-              <p className="fin-intel-eyebrow">Subscription radar</p>
+          {monthSummary.count > 0 && (
+            <article className="fin-intel-tile fin-intel-tile--cash">
+              <p className="fin-intel-eyebrow">Cash flow</p>
               <div className="fin-intel-panel">
                 <div className="fin-intel-tile-main">
-                  <b>{inr(subs.monthlyTotal)}</b>
-                  <span>/mo · {subs.count} active</span>
+                  <b className={cn(monthSummary.net < 0 && 'is-negative')}>
+                    {monthSummary.net >= 0 ? '+' : '−'}{inr(Math.abs(monthSummary.net))}
+                  </b>
+                  <span>net change in {monthName}</span>
                 </div>
               </div>
-              {/* Renewals stay on the white surface below the panel, the way
-                  /nutrition's meal rows sit under its stat rail — a list is a
-                  list, and putting it on the colour too would turn the whole
-                  tile back into a wash. */}
-              {subs.dueThisWeek.length > 0 ? (
-                <ul className="fin-intel-renewals">
-                  {subs.dueThisWeek.map((s) => (
-                    <li key={s.name}>
-                      <span>{s.name}</span>
-                      <b>{inr(s.cost)}</b>
-                    </li>
-                  ))}
-                  <li className="total">
-                    <span>renews this week</span>
-                    <b>{inr(subs.dueThisWeekTotal)}</b>
-                  </li>
-                </ul>
-              ) : (
-                <small>nothing renews in the next 7 days</small>
-              )}
+              {/* The flows as a ledger on the card surface: what came in, what you spent,
+                  and what moved without being spent. */}
+              <ul className="fin-intel-flow">
+                <li><span>Income</span><b className="is-in">+{inr(monthSummary.income)}</b></li>
+                <li><span>Spent</span><b>−{inr(monthSummary.spending)}</b></li>
+                {monthSummary.transferOut > 0 && (
+                  <li><span>Sent home / moved</span><b className="is-moved">−{inr(monthSummary.transferOut)}</b></li>
+                )}
+                {monthSummary.transferIn > 0 && (
+                  <li><span>Came back</span><b className="is-in">+{inr(monthSummary.transferIn)}</b></li>
+                )}
+              </ul>
             </article>
           )}
 
@@ -598,7 +586,7 @@ function FinanceIntelligence({
         {listInsights.length > 0 && (
           <div className="fin-intel-list">
             <p className="fin-intel-eyebrow">Patterns</p>
-            <InsightList insights={listInsights} className="ins-list--columns" onAction={() => undefined} />
+            <InsightList insights={listInsights} className="ins-list--columns" onAction={onInsightAction} />
           </div>
         )}
       </div>

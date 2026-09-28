@@ -19,13 +19,23 @@ export const API_DELETE_TRANSACTION: ApiEndpoint<{ id: string }> = {
   method: 'delete',
 };
 
+export const API_RECLASSIFY_CATEGORY: ApiEndpoint = { url: '/finance/categories/reclassify', method: 'post' };
+
 export const API_GET_SLICE_REPAYMENTS: ApiEndpoint = { url: '/finance/slice-repayments', method: 'get' };
 
 export const API_GET_SUBSCRIPTIONS: ApiEndpoint = { url: '/subscriptions', method: 'get' };
 export const API_ADD_SUBSCRIPTION: ApiEndpoint = { url: '/subscriptions', method: 'post' };
+export const API_UPDATE_SUBSCRIPTION: ApiEndpoint<{ id: string }> = {
+  url: ({ id }) => `/subscriptions/${id}`,
+  method: 'put',
+};
 export const API_DELETE_SUBSCRIPTION: ApiEndpoint<{ id: string }> = {
   url: ({ id }) => `/subscriptions/${id}`,
   method: 'delete',
+};
+export const API_PAY_SUBSCRIPTION: ApiEndpoint<{ id: string }> = {
+  url: ({ id }) => `/subscriptions/${id}/payments`,
+  method: 'post',
 };
 
 export const API_GET_LENDING: ApiEndpoint = { url: '/finance/lending', method: 'get' };

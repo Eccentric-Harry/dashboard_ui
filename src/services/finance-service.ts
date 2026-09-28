@@ -11,8 +11,13 @@ import type {
   LendingRecord,
   SpendingSummary,
   TransactionRequest,
+  TransactionDTO,
   SubscriptionRequest,
+  SubscriptionPaymentRequest,
   LendingRequest,
+  BudgetUpdateRequest,
+  CategoryReclassifyRequest,
+  ReclassifyResult,
 } from '../types/finance';
 import * as E from './endpoints/finance-endpoints';
 
@@ -27,12 +32,15 @@ export interface FinanceServiceInterface {
   getSpendingSummary(month?: string): Promise<SafeResult<SpendingSummary>>;
   // Mutations
   updateBalance(balance: number): Promise<SafeResult<FinanceAccount>>;
-  updateBudget(monthlyBudget: number): Promise<SafeResult<FinanceAccount>>;
-  addTransaction(dto: TransactionRequest): Promise<SafeResult<unknown>>;
-  updateTransaction(id: string, dto: TransactionRequest): Promise<SafeResult<unknown>>;
+  updateBudget(dto: BudgetUpdateRequest): Promise<SafeResult<FinanceAccount>>;
+  addTransaction(dto: TransactionRequest): Promise<SafeResult<TransactionDTO>>;
+  updateTransaction(id: string, dto: TransactionRequest): Promise<SafeResult<TransactionDTO>>;
   deleteTransaction(id: string): Promise<SafeResult<void>>;
+  reclassifyCategory(dto: CategoryReclassifyRequest): Promise<SafeResult<ReclassifyResult>>;
   addSubscription(dto: SubscriptionRequest): Promise<SafeResult<SubscriptionDTO>>;
+  updateSubscription(id: string, dto: SubscriptionRequest): Promise<SafeResult<SubscriptionDTO>>;
   deleteSubscription(id: string): Promise<SafeResult<void>>;
+  paySubscription(id: string, dto?: SubscriptionPaymentRequest): Promise<SafeResult<TransactionDTO>>;
   addLending(dto: LendingRequest): Promise<SafeResult<LendingRecord>>;
   updateLending(id: string, dto: LendingRequest): Promise<SafeResult<LendingRecord>>;
   toggleLending(id: string): Promise<SafeResult<LendingRecord>>;
@@ -52,14 +60,18 @@ export const financeService: FinanceServiceInterface = {
 
   updateBalance: (balance) =>
     instance.safeCall<FinanceAccount>(E.API_UPDATE_FINANCE_BALANCE, { body: { balance } }),
-  updateBudget: (monthlyBudget) =>
-    instance.safeCall<FinanceAccount>(E.API_UPDATE_FINANCE_BUDGET, { body: { monthlyBudget } }),
-  addTransaction: (dto) => instance.safeCall(E.API_ADD_TRANSACTION, { body: dto }),
+  updateBudget: (dto) => instance.safeCall<FinanceAccount>(E.API_UPDATE_FINANCE_BUDGET, { body: dto }),
+  addTransaction: (dto) => instance.safeCall<TransactionDTO>(E.API_ADD_TRANSACTION, { body: dto }),
   updateTransaction: (id, dto) =>
-    instance.safeCall(E.API_UPDATE_TRANSACTION, { params: { id }, body: dto }),
+    instance.safeCall<TransactionDTO>(E.API_UPDATE_TRANSACTION, { params: { id }, body: dto }),
   deleteTransaction: (id) => instance.safeCall<void>(E.API_DELETE_TRANSACTION, { params: { id } }),
+  reclassifyCategory: (dto) => instance.safeCall<ReclassifyResult>(E.API_RECLASSIFY_CATEGORY, { body: dto }),
   addSubscription: (dto) => instance.safeCall<SubscriptionDTO>(E.API_ADD_SUBSCRIPTION, { body: dto }),
+  updateSubscription: (id, dto) =>
+    instance.safeCall<SubscriptionDTO>(E.API_UPDATE_SUBSCRIPTION, { params: { id }, body: dto }),
   deleteSubscription: (id) => instance.safeCall<void>(E.API_DELETE_SUBSCRIPTION, { params: { id } }),
+  paySubscription: (id, dto = {}) =>
+    instance.safeCall<TransactionDTO>(E.API_PAY_SUBSCRIPTION, { params: { id }, body: dto }),
   addLending: (dto) => instance.safeCall<LendingRecord>(E.API_ADD_LENDING, { body: dto }),
   updateLending: (id, dto) =>
     instance.safeCall<LendingRecord>(E.API_UPDATE_LENDING, { params: { id }, body: dto }),

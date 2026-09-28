@@ -29,6 +29,8 @@ export interface FinanceMetric {
   useRing?: boolean
   /** One-word verdict chip ("Cruising", "Watch it", "Over budget"). */
   mood?: { label: string; tone: 'good' | 'watch' | 'over' }
+  /** Panel colour override when the verdict tone isn't the point (e.g. money sent home). */
+  panel?: 'heather'
 }
 
 export interface SpendingCategory {

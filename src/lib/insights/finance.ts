@@ -2,7 +2,23 @@
 // budget, subscriptions, lending, and repayment data the finance route already
 // fetches; returns threshold-gated `Insight[]` plus the burn-down / trend
 // payloads the Finance Intelligence charts render. All math lives here.
+//
+// What a transaction counts toward comes from lib/finance-ledger (`txKind`):
+// transfers — money sent home, lent, saved — are never spending, so they stay out
+// of the budget, the trends, the anomaly scan and the savings maths.
 
+import type { DailyFinancialLog, BudgetScope, SubscriptionDTO } from '@/types/finance'
+import {
+  budgetConfigOf,
+  countsTowardBudget,
+  flattenLogs,
+  isFixedEntry,
+  FAMILY_CATEGORY,
+  LEGACY_TRANSFER_BUCKETS,
+  type BudgetConfig,
+  type LedgerEntry,
+} from '@/lib/finance-ledger'
+import { billStatus, monthlyCostOf, stillDueInMonth } from '@/lib/finance-recurring'
 import type { Insight } from './engine'
 import {
   addDaysIso,
@@ -20,26 +36,6 @@ import {
 } from './engine'
 
 // ---------- Inputs ----------
-
-export interface FinanceTxLike {
-  id?: string
-  description?: string
-  amount: number
-  type?: string
-  timestamp?: string
-}
-
-export interface FinanceLogLike {
-  date: string
-  dailyTotals?: { totalExpense?: number; totalIncome?: number }
-  transactions?: Record<string, FinanceTxLike[]>
-}
-
-export interface SubscriptionLike {
-  name: string
-  cost: number
-  billingDate?: string
-}
 
 export interface LendingLike {
   borrower: string
@@ -59,65 +55,56 @@ export interface FinanceEngineInput {
   today: string
   /** The month the view is showing, 'YYYY-MM'. */
   monthKey: string
-  logs: FinanceLogLike[]
+  logs: DailyFinancialLog[]
   monthlyBudget: number | null
+  /** What the budget covers; defaults to ALL spending. */
+  budgetScope?: BudgetScope | null
+  fixedCategories?: string[] | null
   /**
-   * Authoritative month-to-date spend when the caller has a fuller total than
-   * `logs` covers (Home only fetches a 14-day log window).
+   * Authoritative month-to-date *budgeted* spend when the caller has a fuller total
+   * than `logs` covers (Home only fetches a 14-day log window).
    */
   monthTotalSpentOverride?: number | null
-  subscriptions?: SubscriptionLike[] | null
+  subscriptions?: SubscriptionDTO[] | null
   lending?: LendingLike[] | null
   repayments?: RepaymentLike[] | null
 }
 
 const dayOf = (iso: string): string => iso.slice(0, 10)
 
-const isExpense = (tx: FinanceTxLike, category: string): boolean =>
-  tx.type
-    ? tx.type.toLowerCase() === 'expense'
-    : !(category.toLowerCase().includes('income') || category.toLowerCase().includes('salary'))
+/** Transfers into these stay yours, so they count as kept, not as money gone. */
+const SAVINGS_CATEGORIES = new Set(['savings', 'investment', 'investments'])
 
-interface FlatTx {
-  id?: string
-  description: string
-  amount: number
-  category: string
-  date: string
-  expense: boolean
-}
-
-function flatten(logs: FinanceLogLike[]): FlatTx[] {
-  const out: FlatTx[] = []
-  for (const log of logs) {
-    const date = dayOf(log.date)
-    for (const [category, txs] of Object.entries(log.transactions ?? {})) {
-      for (const tx of txs ?? []) {
-        out.push({
-          id: tx.id,
-          description: tx.description ?? '',
-          amount: tx.amount,
-          category,
-          date,
-          expense: isExpense(tx, category),
-        })
-      }
-    }
+// Flattening every log is the costliest step and every rule needs it; memoise on the
+// logs array identity (a new fetch = a new array).
+const flatCache = new WeakMap<DailyFinancialLog[], LedgerEntry[]>()
+function flatten(logs: DailyFinancialLog[]): LedgerEntry[] {
+  let entries = flatCache.get(logs)
+  if (!entries) {
+    entries = flattenLogs(logs)
+    flatCache.set(logs, entries)
   }
-  return out
+  return entries
 }
 
-const txInMonth = (txs: FlatTx[], monthKey: string): FlatTx[] =>
-  txs.filter((t) => monthKeyOf(t.date) === monthKey)
+const txInMonth = (txs: LedgerEntry[], monthKey: string): LedgerEntry[] =>
+  txs.filter((t) => monthKeyOf(t.day) === monthKey)
 
-function categoryTotals(txs: FlatTx[]): Map<string, number> {
+const spendingIn = (txs: LedgerEntry[]): LedgerEntry[] => txs.filter((t) => t.kind === 'spending')
+
+function categoryTotals(txs: LedgerEntry[]): Map<string, number> {
   const totals = new Map<string, number>()
-  for (const t of txs) {
-    if (!t.expense) continue
+  for (const t of spendingIn(txs)) {
     totals.set(t.category, (totals.get(t.category) ?? 0) + t.amount)
   }
   return totals
 }
+
+const configOf = (input: FinanceEngineInput): BudgetConfig =>
+  budgetConfigOf({
+    budgetScope: input.budgetScope ?? undefined,
+    fixedCategories: input.fixedCategories ?? undefined,
+  })
 
 const prevMonthKey = (monthKey: string): string => {
   const [y, m] = monthKey.split('-').map(Number)
@@ -146,8 +133,12 @@ export interface Burndown {
   daysLeft: number
   isCurrentMonth: boolean
   avgPerDay: number
-  /** Budget remaining spread over the remaining days (0 when over budget). */
+  /** Budget remaining, less bills still due, spread over the remaining days (0 when over). */
   safePerDay: number
+  /** Bills still due this month that will land on the budget (ALL scope only). */
+  committed: number
+  /** Whether the budget covers flexible spending only. */
+  flex: boolean
   /** Least-squares projection of the cumulative series to month end. */
   projectedTotal: number
   points: BurndownPoint[]
@@ -162,11 +153,13 @@ export function buildBurndown(input: FinanceEngineInput): Burndown | null {
   const isCurrentMonth = monthKeyOf(input.today) === input.monthKey
   const daysLeft = daysLeftInMonth(input.monthKey, input.today)
 
-  const monthTx = txInMonth(flatten(input.logs), input.monthKey)
+  const config = configOf(input)
+  const entries = flatten(input.logs)
+  const monthTx = txInMonth(entries, input.monthKey)
   const spendByDay = new Map<number, number>()
   for (const t of monthTx) {
-    if (!t.expense) continue
-    const day = Number(t.date.slice(8, 10))
+    if (!countsTowardBudget(t, config)) continue
+    const day = Number(t.day.slice(8, 10))
     spendByDay.set(day, (spendByDay.get(day) ?? 0) + t.amount)
   }
 
@@ -205,6 +198,17 @@ export function buildBurndown(input: FinanceEngineInput): Burndown | null {
     }
   })
 
+  // Bills still due before month end are already spoken for (Copilot's "safe to spend"):
+  // under an ALL budget they will land on it, so they come off today's allowance. A FLEX
+  // budget never includes them, so nothing is reserved.
+  let committed = 0
+  if (isCurrentMonth && config.scope === 'ALL') {
+    for (const sub of input.subscriptions ?? []) {
+      const status = billStatus(sub, entries, input.today)
+      if (stillDueInMonth(status, input.monthKey)) committed += sub.cost
+    }
+  }
+
   return {
     monthKey: input.monthKey,
     budget,
@@ -213,7 +217,9 @@ export function buildBurndown(input: FinanceEngineInput): Burndown | null {
     daysLeft,
     isCurrentMonth,
     avgPerDay: spent / daysElapsed,
-    safePerDay: Math.max(0, budget - spent) / Math.max(daysLeft, 1),
+    safePerDay: Math.max(0, budget - spent - committed) / Math.max(daysLeft, 1),
+    committed,
+    flex: config.scope === 'FLEX',
     projectedTotal,
     points,
   }
@@ -265,25 +271,18 @@ export function subscriptionRadar(input: FinanceEngineInput): SubscriptionRadar 
   const subs = input.subscriptions ?? []
   if (subs.length === 0) return null
   const weekAhead = addDaysIso(input.today, 7)
+  const entries = flatten(input.logs)
   const dueThisWeek: SubscriptionRadar['dueThisWeek'] = []
   for (const sub of subs) {
-    if (!sub.billingDate) continue
-    const renewDay = Number(dayOf(sub.billingDate).slice(8, 10))
-    if (!renewDay) continue
-    // Next occurrence of the billing day-of-month on or after today.
-    const [y, m] = [Number(input.today.slice(0, 4)), Number(input.today.slice(5, 7))]
-    const clamp = (yy: number, mm: number) => Math.min(renewDay, daysInMonth(`${yy}-${String(mm).padStart(2, '0')}`))
-    let next = `${y}-${String(m).padStart(2, '0')}-${String(clamp(y, m)).padStart(2, '0')}`
-    if (next < input.today) {
-      const [ny, nm] = m === 12 ? [y + 1, 1] : [y, m + 1]
-      next = `${ny}-${String(nm).padStart(2, '0')}-${String(clamp(ny, nm)).padStart(2, '0')}`
-    }
-    if (next >= input.today && next <= weekAhead) {
-      dueThisWeek.push({ name: sub.name, cost: sub.cost, renewsOn: next })
+    const status = billStatus(sub, entries, input.today)
+    if (status.state === 'paid' || !status.nextDue) continue
+    if (status.nextDue >= input.today && status.nextDue <= weekAhead) {
+      dueThisWeek.push({ name: sub.name, cost: sub.cost, renewsOn: status.nextDue })
     }
   }
   return {
-    monthlyTotal: sum(subs.map((s) => s.cost)),
+    // Normalised: a yearly plan adds a twelfth, a 28-day plan a little more than its price.
+    monthlyTotal: sum(subs.map(monthlyCostOf)),
     count: subs.length,
     dueThisWeek: dueThisWeek.sort((a, b) => a.renewsOn.localeCompare(b.renewsOn)),
     dueThisWeekTotal: sum(dueThisWeek.map((s) => s.cost)),
@@ -321,10 +320,12 @@ export function lendingExposure(input: FinanceEngineInput): LendingExposure | nu
 
 function safeToSpendRule(input: FinanceEngineInput, burndown: Burndown | null): Insight | null {
   if (!burndown || !burndown.isCurrentMonth) return null
-  const { budget, spent, daysLeft, daysElapsed, safePerDay, avgPerDay } = burndown
+  const { budget, spent, daysLeft, daysElapsed, safePerDay, avgPerDay, committed, flex } = burndown
   const left = budget - spent
   const sampleWindow = `${monthLabel(input.monthKey)}, day ${daysElapsed} of ${daysInMonth(input.monthKey)}`
-  const detail = `Spent ${inr(spent)} of ${inr(budget)} in ${daysElapsed} days (${inr(avgPerDay)}/day). ${left >= 0 ? `${inr(left)} left over ${daysLeft} days → ${inr(safePerDay)}/day.` : `${inr(-left)} over budget with ${daysLeft} days to go.`}`
+  const scopeNote = flex ? ' Budget covers everyday spending; rent and bills are tracked separately.' : ''
+  const committedNote = committed > 0 ? ` ${inr(committed)} of bills still due this month is set aside first.` : ''
+  const detail = `Spent ${inr(spent)} of ${inr(budget)} in ${daysElapsed} days (${inr(avgPerDay)}/day). ${left >= 0 ? `${inr(left)} left over ${daysLeft} days → ${inr(safePerDay)}/day.` : `${inr(-left)} over budget with ${daysLeft} days to go.`}${committedNote}${scopeNote}`
 
   if (left < 0) {
     return {
@@ -413,6 +414,106 @@ function forecastRule(input: FinanceEngineInput, burndown: Burndown | null): Ins
   }
 }
 
+// ---------- Transfers (money that moved but wasn't spent) ----------
+
+export interface TransferSummary {
+  /** Sent home this month. */
+  familyOut: number
+  familyCount: number
+  /** All transfers out / in this month. */
+  out: number
+  in: number
+  /** Average sent home per month over the previous months that had any. */
+  familyAvg: number | null
+  /** Family transfers per month, oldest → newest, ending with `monthKey`. */
+  familyByMonth: { monthKey: string; total: number }[]
+}
+
+const isFamily = (t: LedgerEntry) => t.kind === 'transfer-out' && t.category === FAMILY_CATEGORY
+
+export function transferSummary(input: FinanceEngineInput, months = 6): TransferSummary {
+  const entries = flatten(input.logs)
+  const monthTx = txInMonth(entries, input.monthKey)
+  const familyByMonth: TransferSummary['familyByMonth'] = []
+  let key = input.monthKey
+  for (let i = 0; i < months; i++) {
+    familyByMonth.unshift({ monthKey: key, total: sum(txInMonth(entries, key).filter(isFamily).map((t) => t.amount)) })
+    key = prevMonthKey(key)
+  }
+  const previous = familyByMonth.slice(0, -1).filter((m) => m.total > 0)
+  return {
+    familyOut: sum(monthTx.filter(isFamily).map((t) => t.amount)),
+    familyCount: monthTx.filter(isFamily).length,
+    out: sum(monthTx.filter((t) => t.kind === 'transfer-out').map((t) => t.amount)),
+    in: sum(monthTx.filter((t) => t.kind === 'transfer-in').map((t) => t.amount)),
+    familyAvg: previous.length > 0 ? sum(previous.map((m) => m.total)) / previous.length : null,
+    familyByMonth,
+  }
+}
+
+/**
+ * Legacy categories still logged as spending that are really transfers ("To Home",
+ * "Lending"). Returned so the route can offer a one-tap move — never converted silently.
+ */
+export function legacyTransferBuckets(input: FinanceEngineInput): {
+  category: string
+  target: string
+  direction: 'OUT' | 'IN'
+  label: string
+  total: number
+  count: number
+}[] {
+  const spending = flatten(input.logs).filter((t) => t.kind === 'spending' || t.kind === 'income')
+  return LEGACY_TRANSFER_BUCKETS.flatMap((bucket) => {
+    const rows = spending.filter((t) => t.category === bucket.category)
+    return rows.length > 0 ? [{ ...bucket, total: sum(rows.map((t) => t.amount)), count: rows.length }] : []
+  })
+}
+
+function familyRule(input: FinanceEngineInput): Insight | null {
+  const summary = transferSummary(input)
+  if (summary.familyOut <= 0) return null
+  const vsAvg =
+    summary.familyAvg != null && summary.familyAvg > 0
+      ? Math.round(((summary.familyOut - summary.familyAvg) / summary.familyAvg) * 100)
+      : null
+  return {
+    id: 'fin-family',
+    domain: 'finance',
+    kind: 'trend',
+    sentiment: 'neutral',
+    icon: 'lending',
+    title: `You sent ${inr(summary.familyOut)} home in ${monthLabel(input.monthKey)}${vsAvg != null && Math.abs(vsAvg) >= 10 ? ` — ${Math.abs(vsAvg)}% ${vsAvg > 0 ? 'more' : 'less'} than your usual ${inr(summary.familyAvg ?? 0)}` : ''}. It's kept out of your spending and budget.`,
+    detail: `${summary.familyCount} transfer${summary.familyCount === 1 ? '' : 's'} to family this month. Transfers lower your balance but are never counted as spending.`,
+    sampleWindow: `${monthLabel(input.monthKey)}${summary.familyAvg != null ? ', vs previous months' : ''}`,
+    confidence: 'high',
+    effect: 0.1,
+  }
+}
+
+function legacyTransferRule(input: FinanceEngineInput): Insight | null {
+  const bucket = legacyTransferBuckets(input)[0]
+  if (!bucket) return null
+  const asIncome = bucket.direction === 'IN'
+  return {
+    id: 'fin-legacy-transfers',
+    domain: 'finance',
+    kind: 'anomaly',
+    sentiment: 'watch',
+    icon: 'category',
+    title: `${inr(bucket.total)} in "${bucket.category}" is still counted as ${asIncome ? 'income' : 'spending'} — it's money ${bucket.label}, so it belongs with transfers.`,
+    detail: `${bucket.count} row${bucket.count === 1 ? '' : 's'} logged before transfers existed. Moving ${bucket.count === 1 ? 'it' : 'them'} to "${bucket.target}" takes ${inr(bucket.total)} out of ${asIncome ? 'income' : 'spending and the budget'} without changing your balance.`,
+    sampleWindow: 'all logged history',
+    action: {
+      label: 'Move to transfers',
+      route: '/finance',
+      search: `?reclassify=${encodeURIComponent(bucket.category)}`,
+    },
+    confidence: 'high',
+    effect: 0.4,
+  }
+}
+
 function categoryTrendRule(input: FinanceEngineInput): Insight | null {
   const trends = categoryTrends(input, 3)
   if (trends.length === 0) return null
@@ -466,7 +567,9 @@ function duplicateCategoryRule(input: FinanceEngineInput): Insight | null {
       const b = normalizeCategory(names[j])
       if (!a || !b || a === b) continue
       if (a.startsWith(b) || b.startsWith(a)) {
-        // TODO(seam): deep-link to a real category merge/edit flow once one exists.
+        // Merge into the bigger bucket, so the smaller spelling disappears.
+        const [from, into] =
+          (totals.get(names[i]) ?? 0) >= (totals.get(names[j]) ?? 0) ? [names[j], names[i]] : [names[i], names[j]]
         return {
           id: 'fin-cat-dupes',
           domain: 'finance',
@@ -476,7 +579,11 @@ function duplicateCategoryRule(input: FinanceEngineInput): Insight | null {
           title: `"${names[i]}" and "${names[j]}" look like the same category — merging them would make your trends cleaner.`,
           detail: `${names[i]}: ${inr(totals.get(names[i]) ?? 0)}; ${names[j]}: ${inr(totals.get(names[j]) ?? 0)} this month. Re-categorizing one into the other keeps history comparable.`,
           sampleWindow: `${monthLabel(input.monthKey)} categories`,
-          action: { label: 'Review transactions', route: '/finance' },
+          action: {
+            label: `Merge into ${into}`,
+            route: '/finance',
+            search: `?merge=${encodeURIComponent(from)}&into=${encodeURIComponent(into)}`,
+          },
           confidence: 'high',
           effect: 0.15,
         }
@@ -490,7 +597,11 @@ function subscriptionRule(input: FinanceEngineInput, burndown: Burndown | null):
   const radar = subscriptionRadar(input)
   if (!radar) return null
   const budget = input.monthlyBudget ?? 0
-  const shareOfBudget = budget > 0 ? Math.round((radar.monthlyTotal / budget) * 100) : null
+  // Under an everyday (FLEX) budget, bills aren't part of the budget at all — a share
+  // of it would compare two things that never meet.
+  const shareOfBudget = budget > 0 && configOf(input).scope === 'ALL'
+    ? Math.round((radar.monthlyTotal / budget) * 100)
+    : null
   const weekPart =
     radar.dueThisWeekTotal > 0
       ? ` ${inr(radar.dueThisWeekTotal)} renews this week (${radar.dueThisWeek.map((s) => s.name).join(', ')}).`
@@ -501,7 +612,7 @@ function subscriptionRule(input: FinanceEngineInput, burndown: Burndown | null):
     kind: 'trend',
     sentiment: shareOfBudget != null && shareOfBudget > 15 ? 'watch' : 'neutral',
     icon: 'subscription',
-    title: `${inr(radar.monthlyTotal)}/mo across ${radar.count} subscriptions${shareOfBudget != null ? ` (${shareOfBudget}% of your budget)` : ''}.${weekPart}`,
+    title: `${inr(radar.monthlyTotal)}/mo across ${radar.count} bills & subscriptions${shareOfBudget != null ? ` (${shareOfBudget}% of your budget)` : ''}.${weekPart}`,
     detail: `Recurring load ${inr(radar.monthlyTotal)}/month${budget > 0 ? ` against a ${inr(budget)} budget` : ''}${burndown ? `; that's ${inr(radar.monthlyTotal / daysInMonth(input.monthKey))}/day of your pace` : ''}.`,
     sampleWindow: 'active subscriptions',
     confidence: 'high',
@@ -511,8 +622,15 @@ function subscriptionRule(input: FinanceEngineInput, burndown: Burndown | null):
 
 function savingsRateRule(input: FinanceEngineInput): Insight | null {
   const monthTx = txInMonth(flatten(input.logs), input.monthKey)
-  const income = sum(monthTx.filter((t) => !t.expense).map((t) => t.amount))
-  const expense = sum(monthTx.filter((t) => t.expense).map((t) => t.amount))
+  const income = sum(monthTx.filter((t) => t.kind === 'income').map((t) => t.amount))
+  const spent = sum(monthTx.filter((t) => t.kind === 'spending').map((t) => t.amount))
+  // Money sent home or lent has left you; money moved into savings hasn't.
+  const givenAway = sum(
+    monthTx
+      .filter((t) => t.kind === 'transfer-out' && !SAVINGS_CATEGORIES.has(t.category.toLowerCase()))
+      .map((t) => t.amount),
+  )
+  const expense = spent + givenAway
   if (expense === 0 && income === 0) return null
   if (income === 0) {
     // Data gap, not a failing score.
@@ -538,7 +656,7 @@ function savingsRateRule(input: FinanceEngineInput): Insight | null {
     sentiment: rate >= 20 ? 'positive' : rate >= 5 ? 'neutral' : 'watch',
     icon: 'income',
     title: `You're saving ${rate}% of income this month (${inr(income - expense)} of ${inr(income)}).`,
-    detail: `Income ${inr(income)} − expenses ${inr(expense)} = ${inr(income - expense)} (${rate}%).`,
+    detail: `Income ${inr(income)} − spending ${inr(spent)}${givenAway > 0 ? ` − sent/lent ${inr(givenAway)}` : ''} = ${inr(income - expense)} (${rate}%).`,
     sampleWindow: `${monthLabel(input.monthKey)} so far`,
     confidence: confidenceFrom(monthTx.length, Math.abs(rate) / 100),
     effect: Math.min(1, Math.abs(rate) / 100),
@@ -571,7 +689,9 @@ function lendingRule(input: FinanceEngineInput): Insight | null {
 }
 
 function anomalyRule(input: FinanceEngineInput): Insight | null {
-  const expenses = txInMonth(flatten(input.logs), input.monthKey).filter((t) => t.expense)
+  // Rent and bill payments are expected, however large — only flexible spending can surprise.
+  const config = configOf(input)
+  const expenses = spendingIn(txInMonth(flatten(input.logs), input.monthKey)).filter((t) => !isFixedEntry(t, config))
   if (expenses.length < 8) return null
   const amounts = expenses.map((t) => t.amount)
   const med = median(amounts)
@@ -585,7 +705,7 @@ function anomalyRule(input: FinanceEngineInput): Insight | null {
     sentiment: 'neutral',
     icon: 'anomaly',
     title: `${inr(largest.amount)} to ${largest.description || largest.category} was your largest outflow this month — about ${ratio}× your typical transaction.`,
-    detail: `Largest expense ${inr(largest.amount)} (${largest.category}, ${largest.date}) vs median transaction ${inr(med)} across ${expenses.length} expenses.`,
+    detail: `Largest expense ${inr(largest.amount)} (${largest.category}, ${largest.day}) vs median transaction ${inr(med)} across ${expenses.length} expenses.`,
     sampleWindow: `${monthLabel(input.monthKey)}, ${expenses.length} transactions`,
     confidence: confidenceFrom(expenses.length, Math.min(1, ratio / 10)),
     effect: Math.min(1, ratio / 12),
@@ -598,8 +718,8 @@ function velocityRule(input: FinanceEngineInput): Insight | null {
   const txs = flatten(input.logs)
   const cutTotal = (monthKey: string) =>
     sum(
-      txInMonth(txs, monthKey)
-        .filter((t) => t.expense && Number(t.date.slice(8, 10)) <= dayCut)
+      spendingIn(txInMonth(txs, monthKey))
+        .filter((t) => Number(t.day.slice(8, 10)) <= dayCut)
         .map((t) => t.amount),
     )
   const current = cutTotal(input.monthKey)
@@ -640,9 +760,9 @@ function winRule(input: FinanceEngineInput, burndown: Burndown | null): Insight 
     }
   }
   const dayCut = daysElapsedInMonth(input.monthKey, input.today)
-  const monthTx = txInMonth(flatten(input.logs), input.monthKey).filter((t) => t.expense)
+  const monthTx = spendingIn(txInMonth(flatten(input.logs), input.monthKey))
   if (dayCut >= 7 && monthTx.length > 0) {
-    const spendDays = new Set(monthTx.map((t) => t.date))
+    const spendDays = new Set(monthTx.map((t) => t.day))
     const noSpendDays = dayCut - spendDays.size
     if (noSpendDays >= 3) {
       return {
@@ -691,6 +811,8 @@ export function financeInsights(input: FinanceEngineInput): Insight[] {
     categoryTrendRule(input),
     duplicateCategoryRule(input),
     subscriptionRule(input, burndown),
+    familyRule(input),
+    legacyTransferRule(input),
     savingsRateRule(input),
     lendingRule(input),
     anomalyRule(input),

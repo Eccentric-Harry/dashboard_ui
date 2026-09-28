@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { CalendarCheck, ChevronDown, X, Plus, ArrowUpRight, ArrowDownLeft } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { ArrowDownLeft, ArrowUpRight, CalendarCheck, ChevronDown, Plus, Repeat, X } from 'lucide-react'
 import type { DailyFinancialLog } from '@/types/finance'
-import { getConsistentColor, getIconForCategory } from '../utils'
-import { toneStyle } from '@/lib/tone'
-import { isStandalone } from '@/lib/utils'
+import { flattenLogs, isTransferKind, logDay, summarize, budgetConfigOf } from '@/lib/finance-ledger'
+import { cn, isStandalone } from '@/lib/utils'
 import { MiniMonth } from '@/components/ui/mini-month'
-import type { TransactionProp } from './transactions-card'
+import { getConsistentColor, getIconForCategory } from '../utils'
 
 interface FinanceHeaderProps {
   onAddClick?: () => void
@@ -55,35 +54,6 @@ const HeaderDate = ({ date }: { date: Date }) => (
 
 const isFutureDate = (date: Date) => isoDate(date) > isoDate(new Date())
 
-const getPastelBG = (colorHex: string) => {
-  const hex = colorHex.toLowerCase()
-  if (hex === '#4684ff') return '#e6f0ff'
-  if (hex === '#ff6c61') return '#ffebee'
-  if (hex === '#039855') return '#e6fcf0'
-  if (hex === '#10b981') return '#e6faf4'
-  if (hex === '#7a5af8') return '#f3e8ff'
-  if (hex === '#0ba5ec') return '#ecf8ff'
-  if (hex === '#f97316') return '#fff4e6'
-  if (hex === '#dd2590') return '#fff0f6'
-  if (hex === '#8b5cf6') return '#f7f4ff'
-  if (hex === '#12b76a') return '#e6faf0'
-  if (hex === '#32d583') return '#f0fdf4'
-
-  try {
-    const c = hex.replace('#', '')
-    const r = parseInt(c.substring(0, 2), 16)
-    const g = parseInt(c.substring(2, 4), 16)
-    const b = parseInt(c.substring(4, 6), 16)
-    const pr = Math.round(r * 0.08 + 255 * 0.92)
-    const pg = Math.round(g * 0.08 + 255 * 0.92)
-    const pb = Math.round(b * 0.08 + 255 * 0.92)
-    return `rgb(${pr}, ${pg}, ${pb})`
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  } catch (e) {
-    return '#f3f4f6'
-  }
-}
-
 function FinanceHeader({ onAddClick, logs, selectedDate, onDateChange }: FinanceHeaderProps) {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
   const [pickedDate, setPickedDate] = useState<string | null>(null)
@@ -96,7 +66,7 @@ function FinanceHeader({ onAddClick, logs, selectedDate, onDateChange }: Finance
         (txs) => txs.length > 0,
       )
       if (hasTransactions) {
-        dates.add(log.date.split('T')[0])
+        dates.add(logDay(log))
       }
     })
     return dates
@@ -163,7 +133,7 @@ function FinanceHeader({ onAddClick, logs, selectedDate, onDateChange }: Finance
     let month = 0
     let day = 0
     logs.forEach((log) => {
-      const logDate = log.date.split('T')[0]
+      const logDate = logDay(log)
       if (!logDate.startsWith(monthKey)) return
       let count = 0
       Object.values(log.transactions || {}).forEach((txs) => {
@@ -177,44 +147,13 @@ function FinanceHeader({ onAddClick, logs, selectedDate, onDateChange }: Finance
 
   const pickedDateObject = pickedDate ? parseIsoDate(pickedDate) : null
 
-  const pickedDateTransactions = useMemo(() => {
-    if (!pickedDate) return []
-    const log = logs.find((l) => l.id === pickedDate || l.date.startsWith(pickedDate))
-    if (!log) return []
-    
-    const allTxs: Array<TransactionProp & { timestamp: number }> = []
-    Object.entries(log.transactions || {}).forEach(([category, txs]) => {
-      txs.forEach((tx) => {
-        const isIncome = category.toLowerCase().includes('income')
-        allTxs.push({
-          id: tx.id,
-          merchant: tx.description,
-          detail: new Date(tx.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          category: category,
-          amount: `${isIncome ? '+' : '-'}₹${tx.amount.toLocaleString()}`,
-          tone: isIncome ? 'income' : 'expense',
-          icon: getIconForCategory(category),
-          timestamp: new Date(tx.timestamp).getTime(),
-          rawAmount: tx.amount,
-          rawDate: new Date(tx.timestamp).toISOString().split('T')[0],
-          rawType: isIncome ? 'Income' : 'Expense',
-        })
-      })
-    })
-    
-    return allTxs.sort((a, b) => b.timestamp - a.timestamp)
-  }, [logs, pickedDate])
-
-  const pickedDateTotals = useMemo(() => {
-    if (!pickedDate) return { income: 0, expense: 0 }
-    const log = logs.find((l) => l.id === pickedDate || l.date.startsWith(pickedDate))
-    if (!log) return { income: 0, expense: 0 }
-    
-    return {
-      income: log.dailyTotals?.totalIncome || 0,
-      expense: log.dailyTotals?.totalExpense || 0,
-    }
-  }, [logs, pickedDate])
+  // The picked day's rows through the shared ledger, so a transfer home shows as a
+  // transfer here too (this popover used to call anything not named "income" an expense).
+  const pickedDateTransactions = useMemo(
+    () => (pickedDate ? flattenLogs(logs).filter((e) => e.day === pickedDate) : []),
+    [logs, pickedDate],
+  )
+  const pickedDateTotals = useMemo(() => summarize(pickedDateTransactions, budgetConfigOf(null)), [pickedDateTransactions])
 
   return (
     <header className="finance-header">
@@ -279,100 +218,65 @@ function FinanceHeader({ onAddClick, logs, selectedDate, onDateChange }: Finance
                 </small>
               </div>
               <div className="finance-picked-date-summary">
-                <div className="summary-card income">
+                <div className="summary-card expense">
                   <div className="summary-icon">
                     <ArrowUpRight size={16} />
                   </div>
                   <div>
-                    <span className="summary-label">Daily Income</span>
-                    <strong className="summary-amount">₹{pickedDateTotals.income.toLocaleString()}</strong>
+                    <span className="summary-label">Spent</span>
+                    <strong className="summary-amount">₹{Math.round(pickedDateTotals.spending).toLocaleString('en-IN')}</strong>
                   </div>
                 </div>
-                <div className="summary-card expense">
+                <div className="summary-card income">
                   <div className="summary-icon">
                     <ArrowDownLeft size={16} />
                   </div>
                   <div>
-                    <span className="summary-label">Daily Expenses</span>
-                    <strong className="summary-amount">₹{pickedDateTotals.expense.toLocaleString()}</strong>
+                    <span className="summary-label">
+                      {pickedDateTotals.transferOut > 0 ? 'Income · sent' : 'Income'}
+                    </span>
+                    <strong className="summary-amount">
+                      ₹{Math.round(pickedDateTotals.income).toLocaleString('en-IN')}
+                      {pickedDateTotals.transferOut > 0 && (
+                        <small> · ₹{Math.round(pickedDateTotals.transferOut).toLocaleString('en-IN')} sent</small>
+                      )}
+                    </strong>
                   </div>
                 </div>
               </div>
-              <div className="finance-picked-date-entries">
-                <div className="finance-transaction-table" role="table" aria-label="Transactions for selected date">
-                  <div className="finance-transaction-row header" role="row">
-                    <span role="columnheader">Merchant</span>
-                    <span role="columnheader">Category</span>
-                    <span role="columnheader">Amount (INR)</span>
-                  </div>
-                  <div className="finance-transaction-list" role="rowgroup">
-                    {pickedDateTransactions.length === 0 ? (
-                      <p style={{
-                        textAlign: 'center',
-                        color: 'var(--inline-ink-soft, rgba(23, 28, 25, 0.5))',
-                        fontSize: '13px',
-                        padding: '24px 0',
-                        margin: 0,
-                      }}>No transactions logged on this day.</p>
-                    ) : (
-                      pickedDateTransactions.map((tx, index) => {
-                        const { merchant, detail, category, amount, tone, icon: Icon } = tx;
-                        return (
-                          <div className="finance-transaction-row" key={`${merchant}-${detail}-${index}`} role="row" style={{ cursor: 'default' }}>
-                            <div className="finance-transaction-merchant" role="cell">
-                              <span style={{ 
-                                ...toneStyle({ hue: getConsistentColor(category), bg: getPastelBG(getConsistentColor(category)) }), 
-                                color: `var(--chip-ink, ${getConsistentColor(category)})`,
-                                border: 'none',
-                                borderRadius: '12px',
-                                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)',
-                                width: '42px',
-                                height: '42px',
-                                display: 'grid',
-                                placeItems: 'center',
-                              }}>
-                                <Icon size={14} strokeWidth={2.6} />
-                              </span>
-                              <p>
-                                <b>{merchant}</b>
-                                <small>{detail}</small>
-                              </p>
-                            </div>
-                            <div className="finance-transaction-category" role="cell">
-                              <em style={{ 
-                                ...toneStyle({ hue: getConsistentColor(category), bg: `${getConsistentColor(category)}15` }), 
-                                color: `var(--chip-ink, ${getConsistentColor(category)})`,
-                                border: `1px solid var(--chip-line, ${getConsistentColor(category)}30)`,
-                                padding: '5px 10px',
-                                borderRadius: '8px',
-                                fontSize: '9px',
-                                fontStyle: 'normal',
-                                fontWeight: 700,
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                              }}>
-                                {(() => {
-                                  const CatIcon = getIconForCategory(category);
-                                  return <CatIcon size={10} style={{ marginRight: '4px' }} />;
-                                })()}
-                                {category}
-                              </em>
-                            </div>
-                            <div className="finance-transaction-amount-group" role="cell" style={{ justifySelf: 'end' }}>
-                              <strong className={tone} style={{
-                                fontSize: '13px',
-                                fontWeight: 800,
-                                ...toneStyle({ hue: tone === 'income' ? '#1a8b30' : '#d83542', ink: tone === 'income' ? '#1a8b30' : '#d83542' }),
-                              }}>
-                                {amount}
-                              </strong>
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
+              <div className="finance-picked-date-entries fin-ledger">
+                {pickedDateTransactions.length === 0 ? (
+                  <p className="fin-picked-empty">No transactions logged on this day.</p>
+                ) : (
+                  pickedDateTransactions.map((tx, index) => {
+                    const Icon = getIconForCategory(tx.category)
+                    return (
+                      <div
+                        className={cn('fin-ledger-row', `is-${tx.kind}`)}
+                        key={tx.id || `${tx.description}-${index}`}
+                        style={{ '--chip-hue': getConsistentColor(tx.category) } as CSSProperties}
+                      >
+                        <span className="fin-ledger-icon" aria-hidden="true">
+                          <Icon size={14} strokeWidth={2.3} />
+                        </span>
+                        <span className="fin-ledger-main">
+                          <b>{tx.description || 'Untitled'}</b>
+                          <small>
+                            <em>{tx.category}</em>
+                            {isTransferKind(tx.kind) && <span className="fin-ledger-tag">transfer</span>}
+                            {tx.subscriptionId && (
+                              <span className="fin-ledger-tag"><Repeat size={10} strokeWidth={2.6} /> bill</span>
+                            )}
+                            {tx.time && <span className="fin-ledger-time">{tx.time}</span>}
+                          </small>
+                        </span>
+                        <strong className="fin-ledger-amount">
+                          {tx.kind === 'spending' ? '−' : tx.kind === 'income' ? '+' : ''}₹{Math.round(tx.amount).toLocaleString('en-IN')}
+                        </strong>
+                      </div>
+                    )
+                  })
+                )}
               </div>
             </div>
           </div>
