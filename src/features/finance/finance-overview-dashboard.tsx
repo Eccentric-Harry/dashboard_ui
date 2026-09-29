@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { FinanceHeader } from './components/finance-header'
 import { MonthHero, type BillsGlance } from './components/month-hero'
-import { InsightsCard } from './components/insights-card'
 import { SpendingOverviewCard } from './components/spending-overview-card'
 import { SubscriptionsCard } from './components/subscriptions-card'
 import { RepaymentScheduleCard } from './components/repayment-schedule-card'
@@ -28,17 +27,17 @@ import {
   summarize,
   type LedgerEntry,
 } from '@/lib/finance-ledger'
-import { inr, monthLabel, type Insight, type InsightAction } from '@/lib/insights/engine'
+import { inr, monthLabel } from '@/lib/insights/engine'
 import {
   buildBurndown,
-  categoryTrends,
-  financeInsights,
+  dailyBreakdown,
+  duplicateCategoryPair,
+  spendingComparison,
   legacyTransferBuckets,
   lendingExposure,
   transferSummary,
 } from '@/lib/insights/finance'
 import { billStatus, stillDueInMonth } from '@/lib/finance-recurring'
-import { isAwaitingData } from '@/store/zustand-utils'
 import { celebrationActions } from '@/store/celebration-store'
 
 import './finance-overview.css'
@@ -139,7 +138,6 @@ function FinanceOverviewDashboard() {
   const subscriptions = subscriptionsState.loaded ? subscriptionsState.data : null
   const lending = lendingState.loaded ? lendingState.data : null
   const repayments = repaymentsState.loaded ? repaymentsState.data : null
-  const commitmentsLoading = [subscriptionsState, lendingState, repaymentsState].some(isAwaitingData)
   const engineInput = useMemo(
     () => ({
       today,
@@ -154,21 +152,21 @@ function FinanceOverviewDashboard() {
     }),
     [today, selectedMonthKey, logs, monthlyBudget, config, subscriptions, lending, repayments],
   )
-  const engine = useMemo(() => {
-    const insights = financeInsights(engineInput)
-    return {
+  // The Patterns list was removed (2026-09-29: never read). Its two actionable findings
+  // live on the cards they concern — legacy transfer buckets on Sent home, duplicate
+  // category spellings on Where it went — and the month-to-date comparison in the hero.
+  const engine = useMemo(
+    () => ({
       burndown: buildBurndown(engineInput),
-      trends: categoryTrends(engineInput, 6),
+      days: dailyBreakdown(engineInput),
+      comparison: spendingComparison(engineInput),
       exposure: lendingExposure(engineInput),
       transfers: transferSummary(engineInput),
       legacy: legacyTransferBuckets(engineInput),
-      // The hero already says safe-to-spend, the forecast and what you're owed; the
-      // family insight restates the Sent home card. Patterns only carries the rest.
-      patterns: insights.filter(
-        (i) => !['fin-safe-to-spend', 'fin-forecast', 'fin-lending', 'fin-family'].includes(i.id),
-      ),
-    }
-  }, [engineInput])
+      duplicate: duplicateCategoryPair(engineInput),
+    }),
+    [engineInput],
+  )
   const { transfers, legacy } = engine
 
   const bills = useMemo<BillsGlance>(() => {
@@ -196,14 +194,8 @@ function FinanceOverviewDashboard() {
   }, [subscriptions, entries, today])
 
   // ── Deep links: `?edit=budget`, `?reclassify=To Home`, `?merge=A&into=B` ──
-  // Home's insight buttons land here and Patterns' buttons carry the same query, so both
-  // go through one parser. A deep link opens its dialog once, then the flag is dropped so
-  // a reload doesn't reopen it.
-  const openDialogs = (d: DeepLinkDialogs) => {
-    if (d.budget) setIsEditBudgetOpen(true)
-    if (d.reclassify) setReclassifyTarget(d.reclassify)
-    if (d.merge) setMergeTarget(d.merge)
-  }
+  // Home's insight buttons land here. A deep link opens its dialog once, then the flag is
+  // dropped so a reload doesn't reopen it.
 
   const deepLinkHandled = useRef(false)
   useEffect(() => {
@@ -224,10 +216,6 @@ function FinanceOverviewDashboard() {
     window.history.replaceState(window.history.state, '', `${window.location.pathname}${rest ? `?${rest}` : ''}`)
   }, [logsState.loaded, legacy])
 
-  const handleInsightAction = (_insight: Insight, action: InsightAction) => {
-    if (action.search) openDialogs(dialogsFromParams(new URLSearchParams(action.search), legacy))
-    else ledgerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
 
   // ── Shell events ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -367,6 +355,8 @@ function FinanceOverviewDashboard() {
           months={months}
           onMonthChange={changeMonth}
           burndown={engine.burndown}
+          days={engine.days}
+          comparison={engine.comparison}
           summary={summary}
           budget={monthlyBudget}
           scope={config.scope}
@@ -382,17 +372,10 @@ function FinanceOverviewDashboard() {
           stagger={0}
         />
 
-        <InsightsCard
-          monthKey={selectedMonthKey}
-          trends={engine.trends}
-          insights={engine.patterns}
-          onInsightAction={handleInsightAction}
-          onRefresh={() => void financeActions.loadCommitments()}
-          loading={loading || commitmentsLoading}
-          stagger={1}
-        />
-
-        <div className="fin-col fin-col--main">
+        {/* Rows are balanced rather than two free-running columns: a tall ledger in one
+            column used to hang beside empty space. Breakdown and Bills share a row and
+            stretch to one height; Sent home and the ledger each take the full width. */}
+        <div className="fin-slot fin-slot--breakdown">
           <SpendingOverviewCard
             monthEntries={monthEntries}
             config={config}
@@ -401,35 +384,24 @@ function FinanceOverviewDashboard() {
               setSelectedCategory(category)
               if (category) setLedgerFilter('spending')
             }}
+            mergeSuggestion={engine.duplicate}
+            onMerge={setMergeTarget}
             loading={loading}
-            stagger={2}
+            stagger={1}
           />
-          <div ref={ledgerRef} className="fin-scroll-anchor">
-            <TransactionsCard
-              entries={monthEntries}
-              loading={loading}
-              onOpen={openEntry}
-              categoryFilter={selectedCategory}
-              onClearCategory={() => setSelectedCategory(null)}
-              filter={ledgerFilter}
-              onFilterChange={setLedgerFilter}
-              monthLabel={monthLabel(selectedMonthKey)}
-              stagger={3}
-            />
-          </div>
         </div>
 
-        <div className="fin-col fin-col--side">
-          <div ref={billsRef} className="fin-scroll-anchor">
-            <SubscriptionsCard
-              entries={entries}
-              today={today}
-              onLedgerChanged={refreshData}
-              onCelebrate={celebrate}
-              stagger={2}
-            />
-          </div>
-          <div ref={transfersRef} className="fin-scroll-anchor">
+        <div ref={billsRef} className="fin-slot fin-slot--bills fin-scroll-anchor">
+          <SubscriptionsCard
+            entries={entries}
+            today={today}
+            onLedgerChanged={refreshData}
+            onCelebrate={celebrate}
+            stagger={2}
+          />
+        </div>
+
+        <div ref={transfersRef} className="fin-slot fin-slot--transfers fin-scroll-anchor">
           <TransfersCard
             monthEntries={monthEntries}
             summary={transfers}
@@ -442,20 +414,38 @@ function FinanceOverviewDashboard() {
             onShowAll={showTransfersInLedger}
             stagger={3}
           />
-          </div>
-          {!isGuest && showFinanceGrids && (
+        </div>
+
+        <div ref={ledgerRef} className="fin-slot fin-slot--wide fin-scroll-anchor">
+          <TransactionsCard
+            entries={monthEntries}
+            loading={loading}
+            onOpen={openEntry}
+            categoryFilter={selectedCategory}
+            onClearCategory={() => setSelectedCategory(null)}
+            filter={ledgerFilter}
+            onFilterChange={setLedgerFilter}
+            monthLabel={monthLabel(selectedMonthKey)}
+            stagger={4}
+          />
+        </div>
+
+        {!isGuest && showFinanceGrids && (
+          <div className="fin-slot fin-slot--half">
             <LendingCard
               onEditClick={(record) => setTxModal({ tab: 'Lending', lending: record })}
               onDeleteClick={setDeleteLendingTarget}
               onRefreshTransactions={refreshData}
               onCelebrate={celebrate}
-              stagger={4}
+              stagger={5}
             />
-          )}
-          {!isGuest && showFinanceGrids && (
-            <RepaymentScheduleCard transactions={entries} onRefresh={refreshData} onCelebrate={celebrate} stagger={5} />
-          )}
-        </div>
+          </div>
+        )}
+        {!isGuest && showFinanceGrids && (
+          <div className="fin-slot fin-slot--half">
+            <RepaymentScheduleCard transactions={entries} onRefresh={refreshData} onCelebrate={celebrate} stagger={6} />
+          </div>
+        )}
       </div>
 
       <ConfirmDialog

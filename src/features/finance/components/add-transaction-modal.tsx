@@ -158,8 +158,6 @@ export function AddTransactionModal({
     return byDescription
   }, [history, kind])
 
-  const suggestions = useMemo(() => [...memory.values()].slice(0, 40), [memory])
-
   const isDirty = Boolean(
     amount.trim() || description.trim() || borrower.trim() || lendingAmount.trim() || dueDate.trim() || notes.trim(),
   )
@@ -393,17 +391,11 @@ export function AddTransactionModal({
                 <input
                   id="fin-tx-description"
                   type="text"
-                  list="fin-tx-suggestions"
                   autoComplete="off"
                   placeholder={type === 'Transfer' ? 'e.g. Sent home to Amma' : type === 'Income' ? 'e.g. Salary — September' : 'e.g. Swiggy, Metro recharge'}
                   value={description}
                   onChange={(e) => onDescriptionChange(e.target.value)}
                 />
-                <datalist id="fin-tx-suggestions">
-                  {suggestions.map((s) => (
-                    <option key={s.description} value={s.description}>{s.category}</option>
-                  ))}
-                </datalist>
               </div>
 
               <div className="form-group">

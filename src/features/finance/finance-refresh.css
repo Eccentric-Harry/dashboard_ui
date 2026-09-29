@@ -23,43 +23,52 @@
 }
 
 /* ── Bento ───────────────────────────────────────────────────────────────────
-   Was: every card full-width in one column, so the donut card and the bills
-   card each spent most of their width on white space. Now two columns under the
-   hero rows: the reading column (breakdown, ledger) and the action column (bills,
-   transfers, lending). Each column is its own flex stack so a tall ledger never
-   leaves a hole under a short card beside it. */
+   Balanced rows, not free-running columns. Two independent columns left a tall ledger
+   hanging beside empty space; now Breakdown and Bills share a row and stretch to one
+   height, and Sent home and the ledger each take the full width (the ledger flows its
+   day groups into two columns once it's wide enough). Everything stacks on phones. */
 .finance-dashboard-grid.fin-bento {
   container: finbento / inline-size;
   grid-template-rows: none;
+  align-items: stretch;
 }
 
-.fin-bento > .fin-col {
+.fin-bento > .fin-slot {
   display: flex;
   flex-direction: column;
-  gap: 14px;
   min-width: 0;
-  /* On phones the bento is a flex column; without a cap a column sizes to its widest
+  /* On phones the bento is a flex column; without a cap a slot sizes to its widest
      child's min-content and runs off-screen. */
   max-width: 100%;
+  container-type: inline-size;
 }
 
-.fin-bento > .fin-col--main {
-  grid-column: 1 / span 7;
-}
-
-.fin-bento > .fin-col--side {
-  grid-column: 8 / span 5;
-}
-
-/* Cards inside a column stop claiming grid tracks of their own. */
-.fin-bento .fin-col > .finance-card,
-.fin-bento .fin-col > .fin-scroll-anchor > .finance-card {
-  grid-column: auto;
-  grid-row: auto;
+.fin-bento > .fin-slot > .finance-card {
+  flex: 1 1 auto;
   width: 100%;
   height: auto;
   max-height: none;
   box-sizing: border-box;
+  grid-column: auto;
+  grid-row: auto;
+}
+
+.fin-bento > .fin-slot--breakdown {
+  grid-column: 1 / -1;
+}
+
+/* Bills and Sent home share a row 1:1, stretched to one height. */
+.fin-bento > .fin-slot--bills,
+.fin-bento > .fin-slot--transfers {
+  grid-column: span 6;
+}
+
+.fin-bento > .fin-slot--wide {
+  grid-column: 1 / -1;
+}
+
+.fin-bento > .fin-slot--half {
+  grid-column: span 6;
 }
 
 .fin-scroll-anchor {
@@ -67,17 +76,29 @@
 }
 
 @container finbento (max-width: 780px) {
-  .fin-bento > .fin-col--main,
-  .fin-bento > .fin-col--side {
+  .fin-bento > .fin-slot--bills,
+  .fin-bento > .fin-slot--transfers,
+  .fin-bento > .fin-slot--half {
     grid-column: 1 / -1;
   }
 }
 
 @media (max-width: 768px) {
-  .fin-bento > .fin-col--main,
-  .fin-bento > .fin-col--side {
+  .fin-bento > .fin-slot--bills,
+  .fin-bento > .fin-slot--transfers,
+  .fin-bento > .fin-slot--half {
     grid-column: 1 / -1;
   }
+}
+
+/* A stretched Breakdown card centres its donut + legend in the extra height. */
+.fin-bento .fin-slot > .fin-spending {
+  display: flex;
+  flex-direction: column;
+}
+
+.fin-bento .fin-slot > .fin-spending > .finance-spending-body {
+  flex: 1;
 }
 
 /* Heather panel for the "Sent home" tile. */
@@ -422,14 +443,20 @@
 }
 
 .fin-spending .finance-spending-body {
-  grid-template-columns: minmax(150px, 200px) minmax(0, 1fr);
-  gap: 22px;
+  /* Full-width card: the chart takes the larger share, the legend a readable column. */
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 32px;
   margin-top: 14px;
 }
 
 .fin-spending .finance-donut-container {
   min-height: 0;
-  max-width: 200px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.fin-spending .fin-legend {
+  max-width: 440px;
 }
 
 .fin-donut-skeleton {
@@ -473,7 +500,7 @@
 .fin-donut-center b {
   margin-top: 3px;
   color: var(--fin-ink);
-  font-size: 19px;
+  font-size: 24px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
@@ -1045,71 +1072,6 @@
   text-underline-offset: 3px;
 }
 
-/* ── Intelligence additions ─────────────────────────────────────────────── */
-
-.finance-dashboard .fin-intel-scope {
-  margin-left: 8px;
-  padding: 1px 6px;
-  border-radius: 999px;
-  background: var(--fin-well);
-  color: var(--fin-ink-soft);
-  font-size: 8.5px;
-  letter-spacing: 0.08em;
-}
-
-.finance-dashboard .fin-intel-committed {
-  color: rgba(23, 28, 25, 0.62);
-  font-weight: 600;
-}
-
-.finance-dashboard .fin-intel-tile--cash .fin-intel-panel {
-  background: var(--fin-accent-sand);
-}
-
-.finance-dashboard .fin-intel-tile--cash .fin-intel-tile-main b.is-negative {
-  color: #8d1f29;
-}
-
-.fin-intel-flow {
-  display: flex;
-  flex-direction: column;
-  margin: 8px 2px 0;
-  padding: 0;
-  list-style: none;
-}
-
-.fin-intel-flow li {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 5px 0;
-  font-size: 11px;
-}
-
-.fin-intel-flow li + li {
-  border-top: 1px solid var(--fin-hairline);
-}
-
-.finance-dashboard .fin-intel-flow span {
-  color: var(--fin-ink-soft);
-  font-weight: 600;
-}
-
-.finance-dashboard .fin-intel-flow b {
-  color: var(--fin-ink);
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-}
-
-.finance-dashboard .fin-intel-flow b.is-in {
-  color: var(--fin-income-ink);
-}
-
-.finance-dashboard .fin-intel-flow b.is-moved {
-  color: var(--fin-transfer-ink);
-}
-
 /* ── Header day popover ──────────────────────────────────────────────────── */
 
 .finance-picked-date-entries.fin-ledger {
@@ -1550,8 +1512,7 @@
    leaving a white column beside a headline. Colour only where it means something:
    the verdict figure (rose over / amber watch) and its meter. */
 
-.fin-bento > .fin-hero,
-.fin-bento > .fin-insights {
+.fin-bento > .fin-hero {
   grid-column: 1 / -1;
   grid-row: auto;
 }
@@ -1820,19 +1781,41 @@
   opacity: 0.45;
 }
 
-/* ── Pace chart: full width, short ── */
-.fin-hero-pace {
+/* Stat glyphs: a small tinted tile per figure, so the strip scans like Apple
+   Health's summary rather than a spreadsheet header. Hue via --chip-hue, which
+   theme-dark.css re-tints for graphite. */
+.fin-hero-stat-label {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 12px 0 10px;
+  align-items: center;
+  gap: 6px;
 }
 
-.fin-hero-pace-head {
+.fin-hero-stat-glyph {
+  display: grid;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 6px;
+  background: var(--chip-surface, color-mix(in srgb, var(--chip-hue) 15%, #ffffff));
+  color: var(--chip-ink, color-mix(in oklab, var(--chip-hue), #000 22%));
+}
+
+/* ── Activity: what's been spent beside the month drawn day by day ── */
+.fin-hero-activity {
+  display: grid;
+  grid-template-columns: minmax(168px, 0.27fr) minmax(0, 1fr);
+  align-items: stretch;
+  gap: 26px;
+  padding: 14px 0 12px;
+}
+
+.fin-hero-spent {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 12px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
 }
 
 .fin-hero-eyebrow {
@@ -1843,60 +1826,266 @@
   text-transform: uppercase;
 }
 
-.fin-hero-pace-note {
-  color: var(--fin-ink-soft);
+.finance-dashboard .fin-hero-spent strong {
+  color: var(--fin-ink);
+  font-size: 30px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.fin-hero-delta {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px 3px 7px;
+  border-radius: 999px;
   font-size: 11px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.fin-hero-delta.is-less {
+  background: var(--fin-mood-good-bg);
+  color: var(--fin-mood-good);
+}
+
+.fin-hero-delta.is-more {
+  background: var(--fin-mood-watch-bg);
+  color: var(--fin-mood-watch);
+}
+
+.finance-dashboard .fin-hero-spent small {
+  color: var(--fin-ink-soft);
+  font-size: 10.5px;
   font-weight: 650;
   font-variant-numeric: tabular-nums;
 }
 
-.fin-hero-legend {
-  display: inline-flex;
-  gap: 12px;
+/* ── Daily bars (daily-bars.tsx) ── */
+.fin-days {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.fin-days-plot {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--days, 30), minmax(0, 1fr));
+  align-items: end;
+  gap: 3px;
+  height: 104px;
+  /* Room above for clipped-day value labels. */
+  margin-top: 14px;
+}
+
+.fin-day {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+  outline: none;
+}
+
+.fin-day-bar {
+  display: flex;
+  flex-direction: column-reverse;
+  min-height: 3px;
+  overflow: hidden;
+  border-radius: 4px 4px 2px 2px;
+  transition: opacity var(--fin-dur-fast) ease, filter var(--fin-dur-fast) ease;
+}
+
+.fin-day-bar i {
+  display: block;
+  flex: 1 1 0;
+  min-height: 0;
+  background: var(--seg);
+}
+
+/* A hairline of card colour between categories keeps stacked segments legible. */
+.fin-day-bar i + i {
+  border-bottom: 1px solid var(--ntr-card);
+}
+
+/* Fixed costs under an everyday budget: tracked, not counted. */
+.fin-day-bar i.is-fixed {
+  opacity: 0.32;
+}
+
+.fin-day.is-empty .fin-day-bar {
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(23, 28, 25, 0.1);
+}
+
+/* Days still to come: a ghost at the daily allowance. */
+.fin-day.is-future .fin-day-bar {
+  border: 1px dashed rgba(23, 28, 25, 0.16);
+  border-bottom: 0;
+  background: transparent;
+}
+
+.fin-day.is-today .fin-day-bar {
+  box-shadow: 0 0 0 1.5px var(--ntr-card), 0 0 0 3px var(--fin-ink);
+}
+
+.fin-days-plot:hover .fin-day:not(:hover):not(.is-future) .fin-day-bar {
+  opacity: 0.5;
+}
+
+.fin-day:hover .fin-day-bar,
+.fin-day:focus-visible .fin-day-bar {
+  filter: saturate(1.15) brightness(1.04);
+}
+
+.fin-day:focus-visible .fin-day-bar {
+  box-shadow: 0 0 0 2px var(--ntr-card), 0 0 0 3.5px rgba(23, 28, 25, 0.45);
+}
+
+.fin-day-cap {
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--fin-ink-soft);
+  font-size: 8.5px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.fin-days-allowance {
+  position: absolute;
+  right: 0;
+  left: 0;
+  z-index: 2;
+  height: 0;
+  border-top: 1px dashed rgba(23, 28, 25, 0.3);
+  pointer-events: none;
+}
+
+.fin-days-allowance em {
+  position: absolute;
+  top: -15px;
+  right: 0;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--ntr-card);
+  color: var(--fin-ink-faint);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.fin-day-tip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  z-index: 6;
+  display: none;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 160px;
+  padding: 9px 11px;
+  border: 1px solid var(--ntr-line);
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 10px 26px rgba(23, 27, 21, 0.14);
+  transform: translateX(-50%);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.fin-day.is-start .fin-day-tip {
+  left: 0;
+  transform: none;
+}
+
+.fin-day.is-end .fin-day-tip {
+  right: 0;
+  left: auto;
+  transform: none;
+}
+
+/* :focus, not :focus-visible — a tap on a phone focuses the bar without counting as
+   "visible" focus, and the tooltip is the only way to read a day there. */
+.fin-day:hover .fin-day-tip,
+.fin-day:focus .fin-day-tip {
+  display: flex;
+}
+
+.fin-day-tip b {
+  color: var(--fin-ink-faint);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.fin-day-tip strong {
+  margin-bottom: 2px;
+  color: var(--fin-ink);
+  font-size: 14px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.fin-day-tip span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--fin-ink-soft);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.fin-day-tip span i {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 2px;
+  background: var(--seg);
+}
+
+.fin-day-tip span em {
   margin-left: auto;
+  padding-left: 12px;
+  color: var(--fin-ink);
+  font-style: normal;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.fin-day-tip small {
   color: var(--fin-ink-faint);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 650;
 }
 
-.fin-hero-legend span {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.fin-hero-legend i {
-  display: inline-block;
-  width: 12px;
-  height: 2px;
-  border-radius: 2px;
-  background: var(--fin-chart-line, #232b26);
-}
-
-.fin-hero-legend i.is-ideal {
-  background: rgba(23, 28, 25, 0.25);
-}
-
-.fin-hero-legend i.is-forecast {
-  background: repeating-linear-gradient(90deg, var(--fin-mood-good) 0 3px, transparent 3px 6px);
-}
-
-.fin-hero-legend i.is-forecast.is-over {
-  background: repeating-linear-gradient(90deg, var(--fin-mood-over) 0 3px, transparent 3px 6px);
-}
-
-.fin-hero-plot {
-  height: 132px;
-  min-width: 0;
-  margin: 0 -6px;
-}
-
-.finance-dashboard .fin-hero-empty {
-  margin: 0;
-  padding: 14px 0 16px;
+.fin-days-axis {
+  display: grid;
+  grid-template-columns: repeat(var(--days, 30), minmax(0, 1fr));
+  gap: 3px;
   color: var(--fin-ink-faint);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 9.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.fin-days-axis span {
+  overflow: visible;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.fin-days-axis span.is-today {
+  color: var(--fin-ink);
+  font-weight: 800;
 }
 
 @container finbento (max-width: 560px) {
@@ -1933,62 +2122,82 @@
   }
 
   .fin-hero-days,
-  .fin-hero-budget em,
-  .fin-hero-legend {
+  .fin-hero-budget em {
     display: none;
+  }
+
+  .fin-hero-activity {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .fin-days-plot {
+    height: 88px;
+    gap: 2px;
+  }
+
+  .fin-days-axis {
+    gap: 2px;
   }
 }
 
-/* ── Insights card (trends + patterns) ───────────────────────────────────── */
-
-.finance-dashboard .fin-insights {
-  padding: 16px 22px 18px;
+@container finbento (max-width: 720px) {
+  .fin-hero-activity {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
 }
 
-.finance-dashboard .fin-insights .fin-insights-grid {
-  grid-template-columns: minmax(0, 1fr);
-  gap: 4px;
-}
-
-.finance-dashboard .fin-insights .fin-intel-trends,
-.finance-dashboard .fin-insights .fin-intel-list {
-  padding-top: 12px;
-}
-
-/* Pattern rows at the route's data density — the shared defaults (14/16px padding,
-   36px glyph) suit Home's single column, not a two-column grid of short findings.
-   Scoped here so Home is untouched. */
-.finance-dashboard .fin-insights .ins-list {
+/* ── Breakdown: one-tap merge for two spellings of one category ── */
+.finance-dashboard .fin-legend-merge {
+  display: flex;
+  align-items: center;
   gap: 8px;
+  margin: 8px 0 0;
+  padding: 7px 8px 7px 12px;
+  border-radius: 10px;
+  background: var(--fin-well);
+  color: var(--fin-ink-soft);
+  font-size: 11px;
+  font-weight: 600;
 }
 
-.finance-dashboard .fin-insights .ins-row {
-  gap: 11px;
-  padding: 10px 13px;
+.fin-legend-merge button {
+  flex: none;
+  height: 24px;
+  margin-left: auto;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--fin-ink);
+  color: #ffffff;
+  font-size: 10.5px;
+  font-weight: 800;
+  cursor: pointer;
 }
 
-.finance-dashboard .fin-insights .ins-row-icon {
-  width: 30px;
-  height: 30px;
-}
+/* ── Sent home, full width: story on the left, the transfers on the right ── */
+@container (min-width: 720px) {
+  .finance-dashboard .fin-transfers {
+    display: grid;
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    align-items: start;
+    gap: 12px 28px;
+  }
 
-.finance-dashboard .fin-insights .ins-row-body {
-  gap: 3px;
-}
+  .fin-transfers > .finance-section-head {
+    grid-row: 1;
+    grid-column: 1;
+  }
 
-.finance-dashboard .fin-insights .ins-row-body p {
-  font-size: 12px;
-  line-height: 1.45;
-}
+  .fin-transfers > .fin-transfers-hero {
+    grid-row: 2 / span 2;
+    grid-column: 1;
+  }
 
-.finance-dashboard .fin-insights .fin-intel-trends:first-child::before {
-  display: none;
-}
-
-.fin-insights-skeleton {
-  display: grid;
-  gap: 12px;
-  padding: 14px 0 6px;
+  .fin-transfers > :not(.finance-section-head):not(.fin-transfers-hero) {
+    grid-column: 2;
+  }
 }
 
 /* ══ Legacy-rule shields ═════════════════════════════════════════════════════

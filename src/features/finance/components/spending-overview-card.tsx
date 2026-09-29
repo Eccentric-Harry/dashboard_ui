@@ -12,6 +12,9 @@ interface SpendingOverviewCardProps {
   config: BudgetConfig
   selectedCategory?: string | null
   onCategorySelect?: (category: string | null) => void
+  /** Two spellings of one category this month — offered as a one-tap merge. */
+  mergeSuggestion?: { from: string; into: string } | null
+  onMerge?: (pair: { from: string; into: string }) => void
   loading?: boolean
   stagger?: number
 }
@@ -43,6 +46,8 @@ function SpendingOverviewCard({
   config,
   selectedCategory = null,
   onCategorySelect,
+  mergeSuggestion,
+  onMerge,
   loading = false,
   stagger = 0,
 }: SpendingOverviewCardProps) {
@@ -201,6 +206,14 @@ function SpendingOverviewCard({
                 </button>
               )
             })}
+            {mergeSuggestion && onMerge && (
+              <p className="fin-legend-merge">
+                “{mergeSuggestion.from}” looks like {mergeSuggestion.into}.
+                <button type="button" onClick={() => onMerge(mergeSuggestion)}>
+                  Merge
+                </button>
+              </p>
+            )}
           </div>
         </div>
       )}

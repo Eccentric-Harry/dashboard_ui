@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import type { DailyFinancialLog, FinancialTransaction } from '@/types/finance'
-import { buildBurndown, financeInsights, legacyTransferBuckets } from '@/lib/insights/finance'
+import {
+  buildBurndown,
+  dailyBreakdown,
+  duplicateCategoryPair,
+  financeInsights,
+  legacyTransferBuckets,
+  spendingComparison,
+} from '@/lib/insights/finance'
 
 const tx = (id: string, amount: number, over: Partial<FinancialTransaction> = {}): FinancialTransaction => ({
   id,
@@ -69,5 +76,55 @@ describe('insights', () => {
   it('offers to move legacy "To Home" spending to transfers', () => {
     const legacy = legacyTransferBuckets({ ...input, logs: [day('2026-03-17', { 'To Home': [tx('gold', 30000)] })] })
     expect(legacy).toEqual([expect.objectContaining({ category: 'To Home', target: 'Family', total: 30000, count: 1 })])
+  })
+})
+
+describe('dailyBreakdown', () => {
+  it('stacks each day by category, marks fixed rows, today and the future', () => {
+    const days = dailyBreakdown({
+      ...input,
+      budgetScope: 'FLEX',
+      logs: [
+        day('2026-09-03', { Rent: [tx('rent', 16000)], Food: [tx('f', 200)] }),
+        day('2026-09-28', { Food: [tx('a', 300), tx('b', 100)], Family: [tx('h', 5000, { type: 'Transfer', direction: 'OUT' })] }),
+      ],
+    })
+    expect(days).toHaveLength(30)
+    expect(days[2].segments).toEqual([
+      { category: 'Rent', amount: 16000, fixed: true },
+      { category: 'Food', amount: 200, fixed: false },
+    ])
+    // Transfers never appear as spending.
+    expect(days[27]).toMatchObject({ total: 400, isToday: true, isFuture: false })
+    expect(days[28]).toMatchObject({ total: 0, isFuture: true })
+  })
+})
+
+describe('spendingComparison', () => {
+  it('compares month-to-date against the same days of last month', () => {
+    const cmp = spendingComparison({
+      ...input,
+      logs: [
+        day('2026-08-10', { Food: [tx('a', 1000)] }),
+        day('2026-08-30', { Food: [tx('late', 9000)] }),
+        day('2026-09-10', { Food: [tx('b', 800)] }),
+      ],
+    })!
+    // August's 30th is after "today" (the 28th), so it isn't counted.
+    expect(cmp).toMatchObject({ current: 800, previous: 1000, changePct: -20, previousMonthKey: '2026-08', throughDay: 28 })
+  })
+
+  it('has no percentage when last month is empty', () => {
+    expect(spendingComparison({ ...input, logs: [day('2026-09-10', { Food: [tx('b', 800)] })] })!.changePct).toBeNull()
+  })
+})
+
+describe('duplicateCategoryPair', () => {
+  it('merges the smaller spelling into the bigger bucket', () => {
+    const pair = duplicateCategoryPair({
+      ...input,
+      logs: [day('2026-09-10', { Bills: [tx('a', 2000)], 'Bills & Utilities': [tx('b', 399)] })],
+    })
+    expect(pair).toEqual({ from: 'Bills & Utilities', into: 'Bills' })
   })
 })

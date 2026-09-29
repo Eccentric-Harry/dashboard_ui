@@ -328,6 +328,85 @@ export function lendingExposure(input: FinanceEngineInput): LendingExposure | nu
   }
 }
 
+// ---------- Daily spending & month-to-date comparison (MonthHero) ----------
+
+export interface DaySpend {
+  /** Day of month, 1-based. */
+  day: number
+  date: string
+  total: number
+  /** Spending by category that day, largest first. `fixed` rows (rent, bill payments) are
+   *  kept apart so a FLEX budget can show them as not counted. */
+  segments: { category: string; amount: number; fixed: boolean }[]
+  isToday: boolean
+  isFuture: boolean
+}
+
+/** Every day of the month with its spending split by category — transfers never included. */
+export function dailyBreakdown(input: FinanceEngineInput): DaySpend[] {
+  const config = configOf(input)
+  const byDay = new Map<number, Map<string, { category: string; amount: number; fixed: boolean }>>()
+  for (const t of spendingIn(txInMonth(flatten(input.logs), input.monthKey))) {
+    const day = Number(t.day.slice(8, 10))
+    const fixed = isFixedEntry(t, config)
+    const key = `${t.category}|${fixed}`
+    const cats = byDay.get(day) ?? new Map()
+    const prev = cats.get(key)
+    cats.set(key, { category: t.category, fixed, amount: (prev?.amount ?? 0) + t.amount })
+    byDay.set(day, cats)
+  }
+  return Array.from({ length: daysInMonth(input.monthKey) }, (_, i) => {
+    const day = i + 1
+    const date = `${input.monthKey}-${String(day).padStart(2, '0')}`
+    const segments = [...(byDay.get(day)?.values() ?? [])].sort((a, b) => b.amount - a.amount)
+    return {
+      day,
+      date,
+      total: sum(segments.map((s) => s.amount)),
+      segments,
+      isToday: date === input.today,
+      isFuture: date > input.today,
+    }
+  })
+}
+
+export interface SpendingComparison {
+  current: number
+  previous: number
+  /** Signed percent change vs the previous month; null when there's nothing to compare. */
+  changePct: number | null
+  previousMonthKey: string
+  /** Compared through this day of month (month-to-date), or null for whole months. */
+  throughDay: number | null
+}
+
+/**
+ * This month's spending against last month's *at the same point in the month* (Copilot's
+ * comparison): a mid-month total against a whole previous month would always look good.
+ * Past months compare whole month to whole month.
+ */
+export function spendingComparison(input: FinanceEngineInput): SpendingComparison | null {
+  const isCurrent = monthKeyOf(input.today) === input.monthKey
+  const throughDay = isCurrent ? Number(input.today.slice(8, 10)) : null
+  const previousMonthKey = prevMonthKey(input.monthKey)
+  const entries = flatten(input.logs)
+  const upTo = (monthKey: string) =>
+    sum(
+      spendingIn(txInMonth(entries, monthKey))
+        .filter((t) => throughDay == null || Number(t.day.slice(8, 10)) <= throughDay)
+        .map((t) => t.amount),
+    )
+  const current = upTo(input.monthKey)
+  const previous = upTo(previousMonthKey)
+  return {
+    current,
+    previous,
+    changePct: previous > 0 ? Math.round(((current - previous) / previous) * 100) : null,
+    previousMonthKey,
+    throughDay,
+  }
+}
+
 // ---------- Rules ----------
 
 function safeToSpendRule(input: FinanceEngineInput, burndown: Burndown | null): Insight | null {
@@ -569,8 +648,11 @@ function categoryTrendRule(input: FinanceEngineInput): Insight | null {
 const normalizeCategory = (name: string): string =>
   name.toLowerCase().replace(/[^a-z0-9]/g, '').replace(/s$/, '')
 
-/** Near-duplicate category taxonomy detection, e.g. "Bills" vs "Bills & Utilities". */
-function duplicateCategoryRule(input: FinanceEngineInput): Insight | null {
+/**
+ * Two spellings of one category this month ("Bills" / "Bills & Utilities"), with the
+ * smaller bucket as `from` so a merge makes the odd spelling disappear.
+ */
+export function duplicateCategoryPair(input: FinanceEngineInput): { from: string; into: string } | null {
   const totals = categoryTotals(txInMonth(flatten(input.logs), input.monthKey))
   const names = [...totals.keys()]
   for (let i = 0; i < names.length; i++) {
@@ -579,30 +661,37 @@ function duplicateCategoryRule(input: FinanceEngineInput): Insight | null {
       const b = normalizeCategory(names[j])
       if (!a || !b || a === b) continue
       if (a.startsWith(b) || b.startsWith(a)) {
-        // Merge into the bigger bucket, so the smaller spelling disappears.
-        const [from, into] =
-          (totals.get(names[i]) ?? 0) >= (totals.get(names[j]) ?? 0) ? [names[j], names[i]] : [names[i], names[j]]
-        return {
-          id: 'fin-cat-dupes',
-          domain: 'finance',
-          kind: 'anomaly',
-          sentiment: 'neutral',
-          icon: 'category',
-          title: `"${names[i]}" and "${names[j]}" look like the same category — merging them would make your trends cleaner.`,
-          detail: `${names[i]}: ${inr(totals.get(names[i]) ?? 0)}; ${names[j]}: ${inr(totals.get(names[j]) ?? 0)} this month. Re-categorizing one into the other keeps history comparable.`,
-          sampleWindow: `${monthLabel(input.monthKey)} categories`,
-          action: {
-            label: `Merge into ${into}`,
-            route: '/finance',
-            search: `?merge=${encodeURIComponent(from)}&into=${encodeURIComponent(into)}`,
-          },
-          confidence: 'high',
-          effect: 0.15,
-        }
+        const iBigger = (totals.get(names[i]) ?? 0) >= (totals.get(names[j]) ?? 0)
+        return iBigger ? { from: names[j], into: names[i] } : { from: names[i], into: names[j] }
       }
     }
   }
   return null
+}
+
+/** Near-duplicate category taxonomy detection, e.g. "Bills" vs "Bills & Utilities". */
+function duplicateCategoryRule(input: FinanceEngineInput): Insight | null {
+  const pair = duplicateCategoryPair(input)
+  if (!pair) return null
+  const { from, into } = pair
+  const totals = categoryTotals(txInMonth(flatten(input.logs), input.monthKey))
+  return {
+    id: 'fin-cat-dupes',
+    domain: 'finance',
+    kind: 'anomaly',
+    sentiment: 'neutral',
+    icon: 'category',
+    title: `"${into}" and "${from}" look like the same category — merging them would make your trends cleaner.`,
+    detail: `${into}: ${inr(totals.get(into) ?? 0)}; ${from}: ${inr(totals.get(from) ?? 0)} this month. Re-categorizing one into the other keeps history comparable.`,
+    sampleWindow: `${monthLabel(input.monthKey)} categories`,
+    action: {
+      label: `Merge into ${into}`,
+      route: '/finance',
+      search: `?merge=${encodeURIComponent(from)}&into=${encodeURIComponent(into)}`,
+    },
+    confidence: 'high',
+    effect: 0.15,
+  }
 }
 
 function subscriptionRule(input: FinanceEngineInput, burndown: Burndown | null): Insight | null {
