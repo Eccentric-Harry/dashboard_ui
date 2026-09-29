@@ -66,7 +66,9 @@ function TransfersCard({
           <p>
             {summary.familyCount > 0
               ? `${summary.familyCount} transfer${summary.familyCount === 1 ? '' : 's'} in ${monthLabel} · not counted as spending`
-              : `Nothing sent home in ${monthLabel} yet`}
+              : hasHistory
+                ? `Nothing sent home in ${monthLabel} yet`
+                : 'Money that moves, but isn’t spending'}
           </p>
         </div>
         <button type="button" className="fin-icon-btn" onClick={onLogTransfer} aria-label="Log a transfer" title="Log money sent home">
@@ -74,6 +76,9 @@ function TransfersCard({
         </button>
       </div>
 
+      {/* The well only earns its space once there's something to show — a ₹0 figure
+          in a coloured panel was the loudest thing on the card and said nothing. */}
+      {(summary.familyOut > 0 || hasHistory) && (
       <div className="fin-transfers-hero">
         <div className="fin-transfers-figure">
           <strong>{rupees(summary.familyOut)}</strong>
@@ -98,6 +103,7 @@ function TransfersCard({
           </div>
         )}
       </div>
+      )}
 
       {nudge && (
         <div className="fin-nudge">

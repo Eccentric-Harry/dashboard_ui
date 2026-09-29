@@ -12,9 +12,6 @@ interface SpendingOverviewCardProps {
   config: BudgetConfig
   selectedCategory?: string | null
   onCategorySelect?: (category: string | null) => void
-  months: [string, string][]
-  selectedMonthKey: string
-  onMonthSelect?: (monthKey: string) => void
   loading?: boolean
   stagger?: number
 }
@@ -46,9 +43,6 @@ function SpendingOverviewCard({
   config,
   selectedCategory = null,
   onCategorySelect,
-  months,
-  selectedMonthKey,
-  onMonthSelect,
   loading = false,
   stagger = 0,
 }: SpendingOverviewCardProps) {
@@ -108,18 +102,6 @@ function SpendingOverviewCard({
               : 'Spending only — transfers are tracked separately'}
           </p>
         </div>
-        {months.length > 0 && (
-          <select
-            className="fin-month-select"
-            value={selectedMonthKey}
-            onChange={(e) => onMonthSelect?.(e.target.value)}
-            aria-label="Breakdown month"
-          >
-            {months.map(([key, label]) => (
-              <option key={key} value={key}>{label}</option>
-            ))}
-          </select>
-        )}
       </div>
 
       {loading ? (

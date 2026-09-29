@@ -138,6 +138,7 @@ export function EditBudgetModal({
                     type="button"
                     role="radio"
                     aria-checked={scope === s.scope}
+                    aria-label={`${s.title}: ${s.body}`}
                     className={cn('fin-scope-option', scope === s.scope && 'is-active')}
                     onClick={() => setScope(s.scope)}
                   >

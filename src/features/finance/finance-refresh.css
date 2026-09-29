@@ -38,6 +38,9 @@
   flex-direction: column;
   gap: 14px;
   min-width: 0;
+  /* On phones the bento is a flex column; without a cap a column sizes to its widest
+     child's min-content and runs off-screen. */
+  max-width: 100%;
 }
 
 .fin-bento > .fin-col--main {
@@ -828,9 +831,10 @@
 /* The card's one well: the month's figure beside the six-month history. */
 .fin-transfers-hero {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px 16px;
   padding: 14px 16px 12px;
   border-radius: 18px;
   background: var(--fin-accent-heather);
@@ -1476,7 +1480,9 @@
 
 .fin-scope-option.is-active {
   border-color: transparent;
-  box-shadow: inset 0 0 0 2px #101312;
+  /* A token, not a literal: the dark theme deepens dark shadows, which turned this
+     selection ring invisible on graphite. theme-dark.css flips it to light. */
+  box-shadow: inset 0 0 0 2px var(--fin-select-ring, #101312);
 }
 
 .fin-form-hint {
@@ -1533,5 +1539,522 @@
   .fin-bill-action,
   .fin-icon-btn {
     transition: none;
+  }
+}
+
+/* ══ Month hero ══════════════════════════════════════════════════════════════
+   Stats first. The figures you scan for — Balance and the budget verdict, then
+   month-end, bills, sent home — sit in one dense strip directly under the month
+   line, each said once and split by hairlines. The cumulative chart runs full
+   width and short underneath: a wide, low line uses the card's width instead of
+   leaving a white column beside a headline. Colour only where it means something:
+   the verdict figure (rose over / amber watch) and its meter. */
+
+.fin-bento > .fin-hero,
+.fin-bento > .fin-insights {
+  grid-column: 1 / -1;
+  grid-row: auto;
+}
+
+.finance-dashboard .fin-hero {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 22px 0;
+  overflow: hidden;
+}
+
+.fin-hero-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 28px;
+}
+
+.fin-hero-month {
+  position: relative;
+  display: inline-flex;
+  cursor: pointer;
+}
+
+/* The native select sits invisibly over the label: full keyboard and screen-reader
+   behaviour, without a boxed control competing with the figures. */
+.fin-hero-month select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.fin-hero-month span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--fin-ink-soft);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transition: color var(--fin-dur-fast) ease;
+}
+
+.fin-hero-month:hover span,
+.fin-hero-month:focus-within span {
+  color: var(--fin-ink);
+}
+
+.fin-hero-month:focus-within span {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.fin-hero-days {
+  color: var(--fin-ink-faint);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.fin-hero-days::before {
+  content: '·';
+  margin-right: 10px;
+}
+
+.fin-hero-budget {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  margin-left: auto;
+  padding: 0 12px;
+  border: 1px solid var(--ntr-line);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--fin-ink-soft);
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--fin-dur-fast) ease, color var(--fin-dur-fast) ease;
+}
+
+.fin-hero-budget:hover {
+  background: var(--fin-well);
+  color: var(--fin-ink);
+}
+
+.fin-hero-budget em {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--fin-well);
+  color: var(--fin-ink-faint);
+  font-size: 9.5px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ── Stat strip: the first thing the eye lands on ── */
+.fin-hero-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  margin: 10px -22px 0;
+  border-top: 1px solid var(--fin-hairline);
+  border-bottom: 1px solid var(--fin-hairline);
+}
+
+@container finbento (min-width: 780px) {
+  .fin-hero-stats {
+    grid-template-columns: var(--hero-cols);
+  }
+}
+
+.fin-hero-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  padding: 13px 18px 14px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.fin-hero-stat + .fin-hero-stat {
+  box-shadow: inset 1px 0 0 var(--fin-hairline);
+}
+
+.fin-hero-stat:first-child {
+  padding-left: 22px;
+}
+
+.fin-hero-stat.is-action {
+  cursor: pointer;
+  transition: background var(--fin-dur-fast) ease;
+}
+
+.fin-hero-stat.is-action:hover {
+  background: var(--fin-well);
+}
+
+.fin-hero-stat.is-action:focus-visible {
+  outline: 2px solid rgba(23, 28, 25, 0.35);
+  outline-offset: -2px;
+}
+
+.fin-hero-stat-label {
+  overflow: hidden;
+  color: var(--fin-ink-faint);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.finance-dashboard .fin-hero-stat b {
+  overflow: hidden;
+  color: var(--fin-ink);
+  font-size: 18px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The two leading figures are the ones you open the page for. */
+.finance-dashboard .fin-hero-stat.is-primary b {
+  font-size: 26px;
+  letter-spacing: -0.03em;
+}
+
+.finance-dashboard .fin-hero-stat b.is-over {
+  color: var(--fin-mood-over);
+}
+
+.finance-dashboard .fin-hero-stat small {
+  overflow: hidden;
+  color: var(--fin-ink-soft);
+  font-size: 10.5px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.finance-dashboard .fin-hero-stat small.is-good {
+  color: var(--fin-income-ink);
+}
+
+.finance-dashboard .fin-hero-stat small.is-watch {
+  color: var(--fin-mood-watch);
+}
+
+.finance-dashboard .fin-hero-stat small.is-over {
+  color: var(--fin-mood-over);
+}
+
+/* Meter inside the verdict stat. */
+.fin-meter {
+  display: block;
+  margin: 3px 0 1px;
+}
+
+.fin-meter-track {
+  position: relative;
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(23, 28, 25, 0.08);
+}
+
+.fin-meter-fill,
+.fin-meter-over {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  transition: width 0.6s var(--fin-ease);
+}
+
+.fin-meter-fill {
+  left: 0;
+  border-radius: 999px;
+  background: var(--fin-mood-good);
+}
+
+.fin-hero.is-watch .fin-meter-fill {
+  background: var(--fin-mood-watch);
+}
+
+/* Over budget: the budgeted part goes quiet and only the overflow carries colour. */
+.fin-hero.is-over .fin-meter-fill {
+  border-radius: 999px 0 0 999px;
+  background: rgba(23, 28, 25, 0.26);
+}
+
+.fin-meter-over {
+  border-radius: 0 999px 999px 0;
+  background: var(--fin-mood-over);
+}
+
+.fin-meter-limit,
+.fin-meter-pace {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 2px;
+  background: var(--fin-ink);
+}
+
+.fin-meter-pace {
+  opacity: 0.45;
+}
+
+/* ── Pace chart: full width, short ── */
+.fin-hero-pace {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 0 10px;
+}
+
+.fin-hero-pace-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.fin-hero-eyebrow {
+  color: var(--fin-ink-faint);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.fin-hero-pace-note {
+  color: var(--fin-ink-soft);
+  font-size: 11px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.fin-hero-legend {
+  display: inline-flex;
+  gap: 12px;
+  margin-left: auto;
+  color: var(--fin-ink-faint);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.fin-hero-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.fin-hero-legend i {
+  display: inline-block;
+  width: 12px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--fin-chart-line, #232b26);
+}
+
+.fin-hero-legend i.is-ideal {
+  background: rgba(23, 28, 25, 0.25);
+}
+
+.fin-hero-legend i.is-forecast {
+  background: repeating-linear-gradient(90deg, var(--fin-mood-good) 0 3px, transparent 3px 6px);
+}
+
+.fin-hero-legend i.is-forecast.is-over {
+  background: repeating-linear-gradient(90deg, var(--fin-mood-over) 0 3px, transparent 3px 6px);
+}
+
+.fin-hero-plot {
+  height: 132px;
+  min-width: 0;
+  margin: 0 -6px;
+}
+
+.finance-dashboard .fin-hero-empty {
+  margin: 0;
+  padding: 14px 0 16px;
+  color: var(--fin-ink-faint);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+@container finbento (max-width: 560px) {
+  .fin-hero-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .finance-dashboard .fin-hero {
+    padding: 14px 16px 0;
+  }
+
+  .fin-hero-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: 10px -16px 0;
+  }
+
+  .fin-hero-stat,
+  .fin-hero-stat:first-child {
+    padding-left: 16px;
+  }
+
+  .fin-hero-stat:nth-child(odd) {
+    box-shadow: none;
+  }
+
+  .fin-hero-stat:nth-child(n + 3) {
+    border-top: 1px solid var(--fin-hairline);
+  }
+
+  .finance-dashboard .fin-hero-stat.is-primary b {
+    font-size: 22px;
+  }
+
+  .fin-hero-days,
+  .fin-hero-budget em,
+  .fin-hero-legend {
+    display: none;
+  }
+}
+
+/* ── Insights card (trends + patterns) ───────────────────────────────────── */
+
+.finance-dashboard .fin-insights {
+  padding: 16px 22px 18px;
+}
+
+.finance-dashboard .fin-insights .fin-insights-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+}
+
+.finance-dashboard .fin-insights .fin-intel-trends,
+.finance-dashboard .fin-insights .fin-intel-list {
+  padding-top: 12px;
+}
+
+/* Pattern rows at the route's data density — the shared defaults (14/16px padding,
+   36px glyph) suit Home's single column, not a two-column grid of short findings.
+   Scoped here so Home is untouched. */
+.finance-dashboard .fin-insights .ins-list {
+  gap: 8px;
+}
+
+.finance-dashboard .fin-insights .ins-row {
+  gap: 11px;
+  padding: 10px 13px;
+}
+
+.finance-dashboard .fin-insights .ins-row-icon {
+  width: 30px;
+  height: 30px;
+}
+
+.finance-dashboard .fin-insights .ins-row-body {
+  gap: 3px;
+}
+
+.finance-dashboard .fin-insights .ins-row-body p {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.finance-dashboard .fin-insights .fin-intel-trends:first-child::before {
+  display: none;
+}
+
+.fin-insights-skeleton {
+  display: grid;
+  gap: 12px;
+  padding: 14px 0 6px;
+}
+
+/* ══ Legacy-rule shields ═════════════════════════════════════════════════════
+   finance-overview.css styles every `button` inside `.finance-transactions-card`
+   and `.finance-section-head` (a 28px pill with a translucent fill). On the new
+   ledger that turned each row and filter tab into its own box — invisible on a
+   white card, loud on graphite. These out-rank it at two classes. */
+
+.fin-ledger .fin-ledger-row {
+  height: auto;
+  min-height: 48px;
+  min-width: 0;
+  padding: 7px 10px;
+  border-radius: 12px;
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.fin-ledger .fin-ledger-row + .fin-ledger-row {
+  box-shadow: 0 -1px 0 var(--fin-hairline);
+}
+
+.fin-ledger .fin-ledger-row:hover:not(:disabled) {
+  background: var(--fin-well);
+  box-shadow: none;
+}
+
+.fin-ledger .fin-ledger-row:hover:not(:disabled) + .fin-ledger-row {
+  box-shadow: none;
+}
+
+.fin-ledger .fin-filter-tabs button {
+  height: 26px;
+  min-height: 0;
+  min-width: 0;
+  padding: 0 11px;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--fin-ink-soft);
+  font-size: 11px;
+}
+
+.fin-ledger .fin-filter-tabs button.is-active {
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(23, 28, 25, 0.08);
+  color: var(--fin-ink);
+}
+
+.fin-ledger .fin-filter-chip {
+  height: 26px;
+  min-height: 0;
+  padding: 0 9px 0 11px;
+  border-radius: 999px;
+  background: var(--chip-surface, color-mix(in srgb, var(--chip-hue) 14%, #ffffff));
+  box-shadow: none;
+  color: var(--chip-ink, color-mix(in oklab, var(--chip-hue), #000 30%));
+  font-size: 11px;
+}
+
+@media (max-width: 768px) {
+  .fin-ledger .fin-ledger-row {
+    min-height: 52px;
+    padding: 8px 6px;
   }
 }

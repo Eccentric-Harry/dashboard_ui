@@ -43,15 +43,13 @@ const shortDate = (iso: string) =>
 function statusLine(status: BillStatus): string {
   switch (status.state) {
     case 'paid':
-      return status.lastPaid
-        ? `Paid ${shortDate(status.lastPaid)} · next ${shortDate(status.nextDue!)}`
-        : `Paid · next ${shortDate(status.nextDue!)}`
+      return `Paid · next ${shortDate(status.nextDue!)}`
     case 'due-today':
       return 'Due today'
     case 'due-soon':
       return `Due in ${status.daysUntil} day${status.daysUntil === 1 ? '' : 's'} · ${shortDate(status.nextDue!)}`
     case 'overdue':
-      return `${status.daysOverdue} day${status.daysOverdue === 1 ? '' : 's'} overdue · was due ${shortDate(status.overdueSince!)}`
+      return `${status.daysOverdue} day${status.daysOverdue === 1 ? '' : 's'} overdue`
     case 'upcoming':
       return `Next ${shortDate(status.nextDue!)}`
     default:
@@ -215,7 +213,9 @@ function SubscriptionsCard({ entries, today, onLedgerChanged, onCelebrate, stagg
                   <span className="fin-bill-main">
                     <b>{bill.name}</b>
                     <small>
-                      <span className="fin-bill-cycle">{cycleLabel(bill)}</span>
+                      {/* Monthly is the default and says nothing; only an unusual cycle
+                          earns room next to the status, which is what the row is for. */}
+                      {cycleLabel(bill) !== 'Monthly' && <span className="fin-bill-cycle">{cycleLabel(bill)}</span>}
                       <span className="fin-bill-status">{statusLine(status)}</span>
                     </small>
                   </span>

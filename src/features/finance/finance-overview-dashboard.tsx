@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
-import { ArrowUpRight, HeartHandshake, Landmark, Target } from 'lucide-react'
-import { BalanceSummaryCard } from './components/balance-summary-card'
 import { FinanceHeader } from './components/finance-header'
-import { MetricCard } from './components/metric-card'
+import { MonthHero, type BillsGlance } from './components/month-hero'
+import { InsightsCard } from './components/insights-card'
 import { SpendingOverviewCard } from './components/spending-overview-card'
 import { SubscriptionsCard } from './components/subscriptions-card'
 import { RepaymentScheduleCard } from './components/repayment-schedule-card'
@@ -13,10 +12,8 @@ import { AddTransactionModal, type TransactionFormData } from './components/add-
 import { EditBalanceModal } from './components/edit-balance-modal'
 import { EditBudgetModal } from './components/edit-budget-modal'
 import { LendingCard } from './components/lending-card'
-import { FinanceIntelligence } from './components/finance-intelligence'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { getErrorMessage } from '@/lib/errors'
-import type { FinanceMetric } from './data'
 import type { LendingRecord } from '@/types/finance'
 import { financeService } from '@/services/finance-service'
 import { isGuestSession } from '@/services/http/session'
@@ -31,8 +28,17 @@ import {
   summarize,
   type LedgerEntry,
 } from '@/lib/finance-ledger'
-import { daysElapsedInMonth, daysInMonth, inr, monthLabel, type Insight, type InsightAction } from '@/lib/insights/engine'
-import { legacyTransferBuckets, transferSummary } from '@/lib/insights/finance'
+import { inr, monthLabel, type Insight, type InsightAction } from '@/lib/insights/engine'
+import {
+  buildBurndown,
+  categoryTrends,
+  financeInsights,
+  legacyTransferBuckets,
+  lendingExposure,
+  transferSummary,
+} from '@/lib/insights/finance'
+import { billStatus, stillDueInMonth } from '@/lib/finance-recurring'
+import { isAwaitingData } from '@/store/zustand-utils'
 import { celebrationActions } from '@/store/celebration-store'
 
 import './finance-overview.css'
@@ -47,6 +53,25 @@ type TxModalState =
 
 const monthKeyOfDate = (date: string) => date.slice(0, 7)
 
+const DEEP_LINK_KEYS = ['edit', 'reclassify', 'merge', 'into']
+
+interface DeepLinkDialogs {
+  budget: boolean
+  reclassify: LegacyBucket | null
+  merge: { from: string; into: string } | null
+}
+
+function dialogsFromParams(params: URLSearchParams, legacy: LegacyBucket[]): DeepLinkDialogs {
+  const reclassify = params.get('reclassify')
+  const merge = params.get('merge')
+  const into = params.get('into')
+  return {
+    budget: params.get('edit') === 'budget',
+    reclassify: reclassify ? (legacy.find((b) => b.category === reclassify) ?? null) : null,
+    merge: merge && into ? { from: merge, into } : null,
+  }
+}
+
 function FinanceOverviewDashboard() {
   const isGuest = isGuestSession()
 
@@ -54,6 +79,9 @@ function FinanceOverviewDashboard() {
   const logsState = useFinanceStore.use.dailyLogs()
   const accountState = useFinanceStore.use.account()
   const budgetState = useFinanceStore.use.budget()
+  const subscriptionsState = useFinanceStore.use.subscriptions()
+  const lendingState = useFinanceStore.use.lending()
+  const repaymentsState = useFinanceStore.use.repayments()
   const financeActions = useFinanceStore.use.actions()
 
   const logs = logsState.data
@@ -81,6 +109,8 @@ function FinanceOverviewDashboard() {
   const [reclassifyTarget, setReclassifyTarget] = useState<LegacyBucket | null>(null)
   const [mergeTarget, setMergeTarget] = useState<{ from: string; into: string } | null>(null)
   const ledgerRef = useRef<HTMLDivElement>(null)
+  const billsRef = useRef<HTMLDivElement>(null)
+  const transfersRef = useRef<HTMLDivElement>(null)
 
   const [showFinanceGrids, setShowFinanceGrids] = useState(() => localStorage.getItem('showFinanceGrids') === 'true')
 
@@ -105,6 +135,11 @@ function FinanceOverviewDashboard() {
     () => [...new Set(entries.filter((e) => e.kind === 'spending').map((e) => e.category))],
     [entries],
   )
+  // Commitments settle on their own; a failed one is null and only gates its own insights.
+  const subscriptions = subscriptionsState.loaded ? subscriptionsState.data : null
+  const lending = lendingState.loaded ? lendingState.data : null
+  const repayments = repaymentsState.loaded ? repaymentsState.data : null
+  const commitmentsLoading = [subscriptionsState, lendingState, repaymentsState].some(isAwaitingData)
   const engineInput = useMemo(
     () => ({
       today,
@@ -113,29 +148,62 @@ function FinanceOverviewDashboard() {
       monthlyBudget,
       budgetScope: config.scope,
       fixedCategories: config.fixedCategories,
+      subscriptions,
+      lending,
+      repayments,
     }),
-    [today, selectedMonthKey, logs, monthlyBudget, config],
+    [today, selectedMonthKey, logs, monthlyBudget, config, subscriptions, lending, repayments],
   )
-  const transfers = useMemo(() => transferSummary(engineInput), [engineInput])
-  const legacy = useMemo(() => legacyTransferBuckets(engineInput), [engineInput])
+  const engine = useMemo(() => {
+    const insights = financeInsights(engineInput)
+    return {
+      burndown: buildBurndown(engineInput),
+      trends: categoryTrends(engineInput, 6),
+      exposure: lendingExposure(engineInput),
+      transfers: transferSummary(engineInput),
+      legacy: legacyTransferBuckets(engineInput),
+      // The hero already says safe-to-spend, the forecast and what you're owed; the
+      // family insight restates the Sent home card. Patterns only carries the rest.
+      patterns: insights.filter(
+        (i) => !['fin-safe-to-spend', 'fin-forecast', 'fin-lending', 'fin-family'].includes(i.id),
+      ),
+    }
+  }, [engineInput])
+  const { transfers, legacy } = engine
+
+  const bills = useMemo<BillsGlance>(() => {
+    const subs = subscriptions ?? []
+    const statuses = subs.map((bill) => ({ bill, status: billStatus(bill, entries, today) }))
+    const due = statuses
+      .filter(({ status }) => stillDueInMonth(status, today.slice(0, 7)))
+      .sort((a, b) => (a.status.overdueSince ?? a.status.nextDue ?? '').localeCompare(b.status.overdueSince ?? b.status.nextDue ?? ''))
+    const upcoming = [...statuses]
+      .filter(({ status }) => status.nextDue)
+      .sort((a, b) => (a.status.nextDue ?? '').localeCompare(b.status.nextDue ?? ''))
+    const next = due[0] ?? upcoming[0]
+    return {
+      hasBills: subs.length > 0,
+      dueTotal: due.reduce((sum, d) => sum + d.bill.cost, 0),
+      dueCount: due.length,
+      next: next
+        ? {
+            name: next.bill.name,
+            date: next.status.overdueSince ?? next.status.nextDue ?? today,
+            overdue: next.status.state === 'overdue',
+          }
+        : null,
+    }
+  }, [subscriptions, entries, today])
 
   // ── Deep links: `?edit=budget`, `?reclassify=To Home`, `?merge=A&into=B` ──
-  // Home's insight buttons land here; each opens its dialog once, then the flag is
-  // dropped so a reload doesn't reopen it.
-  const openFromParams = useCallback(
-    (params: URLSearchParams) => {
-      if (params.get('edit') === 'budget') setIsEditBudgetOpen(true)
-      const reclassify = params.get('reclassify')
-      if (reclassify) {
-        const bucket = legacy.find((b) => b.category === reclassify)
-        if (bucket) setReclassifyTarget(bucket)
-      }
-      const merge = params.get('merge')
-      const into = params.get('into')
-      if (merge && into) setMergeTarget({ from: merge, into })
-    },
-    [legacy],
-  )
+  // Home's insight buttons land here and Patterns' buttons carry the same query, so both
+  // go through one parser. A deep link opens its dialog once, then the flag is dropped so
+  // a reload doesn't reopen it.
+  const openDialogs = (d: DeepLinkDialogs) => {
+    if (d.budget) setIsEditBudgetOpen(true)
+    if (d.reclassify) setReclassifyTarget(d.reclassify)
+    if (d.merge) setMergeTarget(d.merge)
+  }
 
   const deepLinkHandled = useRef(false)
   useEffect(() => {
@@ -143,22 +211,23 @@ function FinanceOverviewDashboard() {
     if (deepLinkHandled.current || !logsState.loaded) return
     deepLinkHandled.current = true
     const params = new URLSearchParams(window.location.search)
-    if (!['edit', 'reclassify', 'merge'].some((k) => params.has(k))) return
+    if (!DEEP_LINK_KEYS.some((k) => params.has(k))) return
     // One-shot: reads the URL once after the first ledger load, then clears it.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    openFromParams(params)
-    ;['edit', 'reclassify', 'merge', 'into'].forEach((k) => params.delete(k))
+    const d = dialogsFromParams(params, legacy)
+    /* eslint-disable react-hooks/set-state-in-effect */
+    if (d.budget) setIsEditBudgetOpen(true)
+    if (d.reclassify) setReclassifyTarget(d.reclassify)
+    if (d.merge) setMergeTarget(d.merge)
+    /* eslint-enable react-hooks/set-state-in-effect */
+    DEEP_LINK_KEYS.forEach((k) => params.delete(k))
     const rest = params.toString()
     window.history.replaceState(window.history.state, '', `${window.location.pathname}${rest ? `?${rest}` : ''}`)
-  }, [logsState.loaded, openFromParams])
+  }, [logsState.loaded, legacy])
 
-  const handleInsightAction = useCallback(
-    (_insight: Insight, action: InsightAction) => {
-      if (action.search) openFromParams(new URLSearchParams(action.search))
-      else ledgerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    },
-    [openFromParams],
-  )
+  const handleInsightAction = (_insight: Insight, action: InsightAction) => {
+    if (action.search) openDialogs(dialogsFromParams(new URLSearchParams(action.search), legacy))
+    else ledgerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   // ── Shell events ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -193,72 +262,6 @@ function FinanceOverviewDashboard() {
     setSelectedMonthKey(monthKey)
     setSelectedCategory(null)
   }
-
-  // ── KPI tiles ─────────────────────────────────────────────────────────────
-  const tiles = useMemo(() => {
-    const budget = monthlyBudget ?? 0
-    const flex = config.scope === 'FLEX'
-    const left = budget - summary.budgeted
-    const budgetTone = left < 0 ? 'negative' as const : left < budget * 0.2 ? 'warning' as const : 'positive' as const
-    const daysCounted = daysElapsedInMonth(selectedMonthKey, today) || daysInMonth(selectedMonthKey)
-
-    const budgetTile: FinanceMetric = {
-      label: left >= 0 ? 'Left to spend' : 'Over budget',
-      value: inr(Math.abs(left)),
-      cents: '',
-      change: '',
-      tone: 'positive',
-      icon: Target,
-      subtitle: `${inr(summary.budgeted)} of ${inr(budget)}${flex ? ' · everyday' : ''}`,
-      subtitleTone: budgetTone,
-      progress: budget > 0 ? summary.budgeted / budget : 0,
-      progressTone: budgetTone,
-      useRing: true,
-    }
-    const spentTile: FinanceMetric = {
-      label: 'Spent',
-      value: inr(summary.spending),
-      cents: '',
-      change: '',
-      tone: 'negative',
-      icon: ArrowUpRight,
-      subtitle: summary.spendingCount > 0
-        ? `${inr(summary.spending / daysCounted)}/day · ${summary.spendingCount} transactions`
-        : 'nothing yet',
-      // A fact, not a verdict — the budget tile carries the judgement.
-      subtitleTone: 'neutral',
-    }
-    const familyOnly = transfers.familyOut > 0 && transfers.familyOut === summary.transferOut
-    const moneyOutTile: FinanceMetric = summary.transferOut > 0
-      ? {
-          label: transfers.familyOut > 0 ? 'Sent home' : 'Transferred',
-          value: inr(transfers.familyOut > 0 ? transfers.familyOut : summary.transferOut),
-          cents: '',
-          change: '',
-          tone: 'positive',
-          icon: HeartHandshake,
-          subtitle: familyOnly || transfers.familyOut === 0
-            ? 'not counted as spending'
-            : `+ ${inr(summary.transferOut - transfers.familyOut)} lent or saved`,
-          subtitleTone: 'neutral',
-          panel: 'heather',
-        }
-      : {
-          label: 'Income',
-          value: inr(summary.income),
-          cents: '',
-          change: '',
-          tone: 'positive',
-          icon: Landmark,
-          subtitle: summary.income > 0 ? `${inr(summary.income - summary.spending)} after spending` : 'none logged this month',
-          subtitleTone: summary.income >= summary.spending ? 'positive' : 'neutral',
-        }
-    return [
-      { metric: budgetTile, onEdit: () => setIsEditBudgetOpen(true) },
-      { metric: spentTile },
-      { metric: moneyOutTile },
-    ]
-  }, [monthlyBudget, config.scope, summary, transfers, selectedMonthKey, today])
 
   // ── Mutations ─────────────────────────────────────────────────────────────
   const openEntry = (entry: LedgerEntry) =>
@@ -345,9 +348,8 @@ function FinanceOverviewDashboard() {
     ledgerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
-  const netNote = summary.count > 0
-    ? `${summary.net >= 0 ? '+' : '−'}${inr(Math.abs(summary.net))} in ${monthLabel(selectedMonthKey).split(' ')[0]}`
-    : undefined
+  const jumpTo = (ref: React.RefObject<HTMLDivElement | null>) =>
+    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
   return (
     <section className="finance-dashboard route-scroll" aria-label="Finance overview dashboard">
@@ -360,30 +362,33 @@ function FinanceOverviewDashboard() {
       {/* Entrance stagger: each grid child declares its own index, so cards can be
           added or reordered without any nth-child bookkeeping in the CSS. */}
       <div className={`finance-dashboard-grid fin-bento${isGuest ? ' finance-dashboard-guest' : ''}`}>
-        <div className="finance-stats-row" style={{ '--i': 0 } as CSSProperties}>
-          <BalanceSummaryCard
-            balance={balance}
-            loading={loading && balance === null}
-            onEdit={() => setIsEditBalanceOpen(true)}
-            note={netNote}
-            noteTone={summary.net > 0 ? 'positive' : summary.net < 0 ? 'negative' : 'neutral'}
-          />
-          {tiles.map(({ metric, onEdit }, index) => (
-            <MetricCard key={index} metric={metric} loading={loading} onEdit={onEdit} stagger={index + 1} />
-          ))}
-        </div>
-
-        <FinanceIntelligence
-          logs={logs}
-          monthlyBudget={monthlyBudget}
-          budgetScope={config.scope}
-          fixedCategories={config.fixedCategories}
-          selectedMonthKey={selectedMonthKey}
-          onMonthChange={changeMonth}
+        <MonthHero
+          monthKey={selectedMonthKey}
           months={months}
-          monthSummary={summary}
-          onInsightAction={handleInsightAction}
+          onMonthChange={changeMonth}
+          burndown={engine.burndown}
+          summary={summary}
+          budget={monthlyBudget}
+          scope={config.scope}
+          balance={balance}
+          bills={bills}
+          transfers={transfers}
+          exposure={engine.exposure}
           loading={loading}
+          onEditBalance={() => setIsEditBalanceOpen(true)}
+          onEditBudget={() => setIsEditBudgetOpen(true)}
+          onJumpToBills={() => jumpTo(billsRef)}
+          onJumpToTransfers={() => jumpTo(transfersRef)}
+          stagger={0}
+        />
+
+        <InsightsCard
+          monthKey={selectedMonthKey}
+          trends={engine.trends}
+          insights={engine.patterns}
+          onInsightAction={handleInsightAction}
+          onRefresh={() => void financeActions.loadCommitments()}
+          loading={loading || commitmentsLoading}
           stagger={1}
         />
 
@@ -396,9 +401,6 @@ function FinanceOverviewDashboard() {
               setSelectedCategory(category)
               if (category) setLedgerFilter('spending')
             }}
-            months={months}
-            selectedMonthKey={selectedMonthKey}
-            onMonthSelect={changeMonth}
             loading={loading}
             stagger={2}
           />
@@ -418,13 +420,16 @@ function FinanceOverviewDashboard() {
         </div>
 
         <div className="fin-col fin-col--side">
-          <SubscriptionsCard
-            entries={entries}
-            today={today}
-            onLedgerChanged={refreshData}
-            onCelebrate={celebrate}
-            stagger={2}
-          />
+          <div ref={billsRef} className="fin-scroll-anchor">
+            <SubscriptionsCard
+              entries={entries}
+              today={today}
+              onLedgerChanged={refreshData}
+              onCelebrate={celebrate}
+              stagger={2}
+            />
+          </div>
+          <div ref={transfersRef} className="fin-scroll-anchor">
           <TransfersCard
             monthEntries={monthEntries}
             summary={transfers}
@@ -437,6 +442,7 @@ function FinanceOverviewDashboard() {
             onShowAll={showTransfersInLedger}
             stagger={3}
           />
+          </div>
           {!isGuest && showFinanceGrids && (
             <LendingCard
               onEditClick={(record) => setTxModal({ tab: 'Lending', lending: record })}

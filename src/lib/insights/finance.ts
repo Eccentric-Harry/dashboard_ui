@@ -27,7 +27,6 @@ import {
   daysInMonth,
   daysLeftInMonth,
   inr,
-  linearProjection,
   median,
   monthKeyOf,
   monthLabel,
@@ -133,13 +132,18 @@ export interface Burndown {
   daysLeft: number
   isCurrentMonth: boolean
   avgPerDay: number
+  /** Everyday (non-fixed) spend per day so far — what the forecast carries forward. */
+  dailyRate: number
   /** Budget remaining, less bills still due, spread over the remaining days (0 when over). */
   safePerDay: number
   /** Bills still due this month that will land on the budget (ALL scope only). */
   committed: number
   /** Whether the budget covers flexible spending only. */
   flex: boolean
-  /** Least-squares projection of the cumulative series to month end. */
+  /**
+   * Month-end estimate: spent so far + the everyday daily rate for the days left + bills
+   * still due. One-off fixed costs (rent on the 3rd) are never extrapolated forward.
+   */
   projectedTotal: number
   points: BurndownPoint[]
 }
@@ -157,10 +161,13 @@ export function buildBurndown(input: FinanceEngineInput): Burndown | null {
   const entries = flatten(input.logs)
   const monthTx = txInMonth(entries, input.monthKey)
   const spendByDay = new Map<number, number>()
+  let flexibleSoFar = 0
   for (const t of monthTx) {
     if (!countsTowardBudget(t, config)) continue
     const day = Number(t.day.slice(8, 10))
+    if (day > daysElapsed) continue
     spendByDay.set(day, (spendByDay.get(day) ?? 0) + t.amount)
+    if (!isFixedEntry(t, config)) flexibleSoFar += t.amount
   }
 
   const cumulative: number[] = []
@@ -176,10 +183,25 @@ export function buildBurndown(input: FinanceEngineInput): Burndown | null {
     cumulative[cumulative.length - 1] = spent
   }
 
-  // A partial series would skew the least-squares fit, so fall back to pace.
-  const projectedByFit = seriesReliable ? linearProjection(cumulative, totalDays - 1) : null
-  const projectedByPace = (spent / daysElapsed) * totalDays
-  const projectedTotal = Math.max(spent, projectedByFit ?? projectedByPace)
+  // Bills still due before month end are already spoken for (Copilot's "safe to spend"):
+  // under an ALL budget they will land on it, so they come off today's allowance. A FLEX
+  // budget never includes them, so nothing is reserved.
+  let committed = 0
+  if (isCurrentMonth && config.scope === 'ALL') {
+    for (const sub of input.subscriptions ?? []) {
+      const status = billStatus(sub, entries, input.today)
+      if (stillDueInMonth(status, input.monthKey)) committed += sub.cost
+    }
+  }
+
+  // Forecast = what's spent + the everyday rate carried over the remaining days + bills
+  // still due. This replaced a least-squares line through the cumulative curve, which
+  // under-shoots an accelerating month and was clamped to "spent so far" — so a month
+  // with days to go forecast that nothing more would be spent. With a partial log window
+  // (Home) the everyday split is unknown, so the plain pace stands in.
+  const dailyRate = seriesReliable ? flexibleSoFar / daysElapsed : spent / daysElapsed
+  const remainingDays = Math.max(0, totalDays - daysElapsed)
+  const projectedTotal = isCurrentMonth ? spent + dailyRate * remainingDays + committed : spent
 
   const monthStart = `${input.monthKey}-01`
   const points: BurndownPoint[] = Array.from({ length: totalDays }, (_, i) => {
@@ -198,17 +220,6 @@ export function buildBurndown(input: FinanceEngineInput): Burndown | null {
     }
   })
 
-  // Bills still due before month end are already spoken for (Copilot's "safe to spend"):
-  // under an ALL budget they will land on it, so they come off today's allowance. A FLEX
-  // budget never includes them, so nothing is reserved.
-  let committed = 0
-  if (isCurrentMonth && config.scope === 'ALL') {
-    for (const sub of input.subscriptions ?? []) {
-      const status = billStatus(sub, entries, input.today)
-      if (stillDueInMonth(status, input.monthKey)) committed += sub.cost
-    }
-  }
-
   return {
     monthKey: input.monthKey,
     budget,
@@ -217,6 +228,7 @@ export function buildBurndown(input: FinanceEngineInput): Burndown | null {
     daysLeft,
     isCurrentMonth,
     avgPerDay: spent / daysElapsed,
+    dailyRate,
     safePerDay: Math.max(0, budget - spent - committed) / Math.max(daysLeft, 1),
     committed,
     flex: config.scope === 'FLEX',
@@ -366,7 +378,7 @@ function forecastRule(input: FinanceEngineInput, burndown: Burndown | null): Ins
   const delta = budget - projectedTotal
   const month = monthLabel(input.monthKey)
   const sampleWindow = `projected from ${daysElapsed} days of ${month}`
-  const detail = `Least-squares projection of cumulative spend: ${inr(projectedTotal)} by month end vs ${inr(budget)} budget (${delta >= 0 ? inr(delta) + ' under' : inr(-delta) + ' over'}).`
+  const detail = `${inr(burndown.spent)} spent + ${inr(burndown.dailyRate)}/day of everyday spending for the days left${burndown.committed > 0 ? ` + ${inr(burndown.committed)} of bills still due` : ''} = ${inr(projectedTotal)} by month end vs ${inr(budget)} budget (${delta >= 0 ? inr(delta) + ' under' : inr(-delta) + ' over'}).`
   if (Math.abs(delta) <= budget * 0.03) {
     return {
       id: 'fin-forecast',
