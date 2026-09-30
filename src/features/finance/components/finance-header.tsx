@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type Ref } from 'react'
 import { ArrowDownLeft, ArrowUpRight, CalendarCheck, ChevronDown, Plus, Repeat, X } from 'lucide-react'
 import type { DailyFinancialLog } from '@/types/finance'
 import { flattenLogs, isTransferKind, logDay, summarize, budgetConfigOf } from '@/lib/finance-ledger'
@@ -8,6 +8,8 @@ import { getConsistentColor, getIconForCategory } from '../utils'
 
 interface FinanceHeaderProps {
   onAddClick?: () => void
+  /** The add pill — the route watches it to show its floating twin once it scrolls away. */
+  addButtonRef?: Ref<HTMLButtonElement>
   logs: DailyFinancialLog[]
   selectedDate: string
   onDateChange: (date: string) => void
@@ -54,7 +56,7 @@ const HeaderDate = ({ date }: { date: Date }) => (
 
 const isFutureDate = (date: Date) => isoDate(date) > isoDate(new Date())
 
-function FinanceHeader({ onAddClick, logs, selectedDate, onDateChange }: FinanceHeaderProps) {
+function FinanceHeader({ onAddClick, addButtonRef, logs, selectedDate, onDateChange }: FinanceHeaderProps) {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
   const [pickedDate, setPickedDate] = useState<string | null>(null)
   const calendarRef = useRef<HTMLDivElement>(null)
@@ -286,6 +288,7 @@ function FinanceHeader({ onAddClick, logs, selectedDate, onDateChange }: Finance
       {onAddClick && (
         <div className="finance-header-actions">
           <button
+            ref={addButtonRef}
             type="button"
             onClick={onAddClick}
             className="finance-add-btn add-pill"

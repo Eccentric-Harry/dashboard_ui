@@ -89,6 +89,7 @@ function SpendingOverviewCard({
     [onCategorySelect, selectedCategory],
   )
 
+
   const selectedIndex = selectedCategory ? slices.findIndex((s) => s.label === selectedCategory) : -1
   const centerIndex = selectedIndex !== -1 ? selectedIndex : activeIndex
   const center = centerIndex !== -1 ? slices[centerIndex] : null
@@ -142,8 +143,8 @@ function SpendingOverviewCard({
                     data={slices}
                     cx="50%"
                     cy="50%"
-                    innerRadius="62%"
-                    outerRadius="86%"
+                    innerRadius="70%"
+                    outerRadius="96%"
                     paddingAngle={slices.length > 1 ? 1.2 : 0}
                     cornerRadius={4}
                     dataKey="rawAmount"
@@ -172,40 +173,52 @@ function SpendingOverviewCard({
               </ResponsiveContainer>
             )}
             <div className="fin-donut-center" aria-hidden="true">
-              <span>{center ? center.label : 'Spent'}</span>
-              <b>{rupees(center ? center.rawAmount : total)}</b>
-              {center && <small>{center.share.toFixed(1)}%</small>}
+              {center ? (
+                <>
+                  <span>{center.label}</span>
+                  <b>{rupees(center.rawAmount)}</b>
+                  <small>{center.share.toFixed(1)}%</small>
+                </>
+              ) : (
+                <>
+                  <span>Spent</span>
+                  <b>{rupees(total)}</b>
+                </>
+              )}
             </div>
           </div>
 
-          <div className="fin-legend">
-            {slices.map((s) => {
-              const Icon = getIconForCategory(s.label)
-              return (
-                <button
-                  type="button"
-                  key={s.label}
-                  className={cn(
-                    'fin-legend-row',
-                    selectedCategory === s.label && 'is-selected',
-                    selectedCategory && selectedCategory !== s.label && 'is-dimmed',
-                  )}
-                  onClick={() => toggle(s.label)}
-                  aria-pressed={selectedCategory === s.label}
-                  style={{ '--chip-hue': s.tone } as CSSProperties}
-                >
-                  <span className="fin-legend-swatch" aria-hidden="true">
-                    <Icon size={12} strokeWidth={2.5} />
-                  </span>
-                  <span className="fin-legend-name">
-                    {s.label}
-                    {config.scope === 'FLEX' && s.fixed && <em>fixed</em>}
-                  </span>
-                  <b>{rupees(s.rawAmount)}</b>
-                  <small>{s.share.toFixed(1)}%</small>
-                </button>
-              )
-            })}
+          <div className="fin-legend-wrap">
+            {/* Every category, ranked, one hairline-split row each. */}
+            <div className="fin-legend">
+              {slices.map((s) => {
+                const Icon = getIconForCategory(s.label)
+                return (
+                  <button
+                    type="button"
+                    key={s.label}
+                    className={cn(
+                      'fin-legend-row',
+                      selectedCategory === s.label && 'is-selected',
+                      selectedCategory && selectedCategory !== s.label && 'is-dimmed',
+                    )}
+                    onClick={() => toggle(s.label)}
+                    aria-pressed={selectedCategory === s.label}
+                    style={{ '--chip-hue': s.tone } as CSSProperties}
+                  >
+                    <span className="fin-legend-swatch" aria-hidden="true">
+                      <Icon size={12} strokeWidth={2.5} />
+                    </span>
+                    <span className="fin-legend-name">
+                      {s.label}
+                      {config.scope === 'FLEX' && s.fixed && <em>fixed</em>}
+                    </span>
+                    <b>{rupees(s.rawAmount)}</b>
+                    <small>{s.share.toFixed(1)}%</small>
+                  </button>
+                )
+              })}
+            </div>
             {mergeSuggestion && onMerge && (
               <p className="fin-legend-merge">
                 “{mergeSuggestion.from}” looks like {mergeSuggestion.into}.

@@ -374,6 +374,34 @@
   }
 }
 
+/* Floating add (components/ui/floating-add.css): the dark add pill, folded to its disc. */
+:root[data-theme='dark'] .floating-add {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #24272c;
+  color: var(--dk-ink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 12px 28px rgba(0, 0, 0, 0.5);
+}
+
+:root[data-theme='dark'] .floating-add.is-shown:hover {
+  border-color: rgba(143, 212, 168, 0.35);
+  background: #2a2d33;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 16px 34px rgba(0, 0, 0, 0.55);
+}
+
+:root[data-theme='dark'] .floating-add:focus-visible {
+  outline-color: rgba(143, 212, 168, 0.6);
+}
+
+:root[data-theme='dark'] .floating-add-ic {
+  background: rgba(143, 212, 168, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(143, 212, 168, 0.22);
+  color: var(--dk-accent);
+}
+
+:root[data-theme='dark'] .floating-add:hover .floating-add-ic {
+  background: rgba(143, 212, 168, 0.2);
+}
+
 /* Segmented Manual/AI and Task/Learning toggles: the active slider was deriving
    darker than its track, which reads as a sunken tab. Lift it above the track. */
 :root[data-theme='dark'] .type-toggle-slider {
@@ -1097,6 +1125,37 @@
 :root[data-theme='dark'] .finance-dashboard .fin-intel-hero-panel {
   background: var(--dk-raised);
   box-shadow: inset 0 0 0 1px rgba(120, 190, 145, 0.1), var(--dk-highlight);
+}
+
+:root[data-theme='dark'] .finance-dashboard .fin-meter-limit,
+:root[data-theme='dark'] .finance-dashboard .fin-meter-pace {
+  box-shadow: 0 0 0 2px var(--dk-surface);
+}
+
+/* Ledger: today's calendar leaf is ink with a lime numeral in light. Derived, it
+   inverts to a pale tile where the lime vanishes — so it becomes graphite lit by
+   the accent instead, the same move as the dark add pill. */
+:root[data-theme='dark'] .finance-dashboard .fin-lg-day.is-today .fin-lg-leaf {
+  border-color: rgba(143, 212, 168, 0.3);
+  background: rgba(143, 212, 168, 0.12);
+  box-shadow: var(--dk-highlight);
+}
+
+:root[data-theme='dark'] .finance-dashboard .fin-lg-day.is-today .fin-lg-leaf b {
+  color: var(--dk-accent);
+}
+
+:root[data-theme='dark'] .finance-dashboard .fin-lg-day.is-today .fin-lg-leaf small {
+  color: var(--dk-ink-3);
+}
+
+:root[data-theme='dark'] .finance-dashboard .fin-lg-leaf {
+  background: var(--dk-raised);
+  box-shadow: var(--dk-highlight);
+}
+
+:root[data-theme='dark'] .finance-dashboard .fin-lg-day::before {
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 /* ══ Workouts ════════════════════════════════════════════════════════════ */
@@ -2159,4 +2218,11 @@
 :root[data-theme='dark'] .pursuit-workspace :is(select.pw-input, .pw-edit-line select) option {
   background: var(--dk-overlay);
   color: var(--dk-ink);
+}
+
+/* Finance outline tags: a white hairline on graphite. */
+:root[data-theme='dark'] .finance-dashboard :is(.fin-hero-delta, .fin-wallet-net, .fin-lg-weekday em, .fin-lg-tag, .fin-hero-budget em, .fin-legend-name em) {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: transparent;
+  color: var(--dk-ink-2);
 }

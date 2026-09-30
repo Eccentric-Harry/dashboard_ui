@@ -1,0 +1,111 @@
+/* ── Floating add (floating-add.tsx) ────────────────────────────────────────
+   The shared add pill (index.css) folded down to its lime disc: an ink circle in
+   the stage's right margin, level with the cards' bottom edge, that opens into
+   "＋ Add …" on hover (growing leftwards, over the cards). It rises in once the
+   header pill scrolls away and sinks back when it returns. `right` is measured
+   in the component (the stage's margin); 24px is the fallback before that.
+   Dark mode: theme-dark.css, matching the dark add pill. */
+
+.floating-add {
+  position: fixed;
+  right: 24px;
+  bottom: 18px;
+  z-index: 40;
+  pointer-events: none;
+  display: inline-flex;
+  align-items: center;
+  height: 52px;
+  padding: 5px;
+  border: 0;
+  border-radius: 999px;
+  background: #171b15;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 16px 34px rgba(23, 27, 21, 0.26), 0 2px 6px rgba(23, 27, 21, 0.12);
+  opacity: 0;
+  transform: translateY(18px) scale(0.82);
+  transform-origin: 100% 100%;
+  transition:
+    opacity 0.2s ease,
+    transform 0.34s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.18s ease;
+}
+
+.floating-add.is-shown {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.floating-add.is-shown:hover {
+  box-shadow: 0 20px 40px rgba(23, 27, 21, 0.3), 0 2px 6px rgba(23, 27, 21, 0.12);
+}
+
+.floating-add.is-shown:active {
+  transform: scale(0.96);
+}
+
+.floating-add:focus-visible {
+  outline: 2px solid #171b15;
+  outline-offset: 3px;
+}
+
+.floating-add-ic {
+  display: grid;
+  flex: none;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 999px;
+  background: #cfe965;
+  color: #171b15;
+}
+
+.floating-add-ic svg {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.floating-add:hover .floating-add-ic svg {
+  transform: rotate(90deg);
+}
+
+/* The label is there for hover and keyboard focus; at rest the disc says "add". */
+.floating-add-label {
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-width 0.32s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.18s ease, padding 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.floating-add:hover .floating-add-label,
+.floating-add:focus-visible .floating-add-label {
+  max-width: 180px;
+  padding: 0 14px 0 10px;
+  opacity: 1;
+}
+
+/* Phones have the dock's quick-add bubble (and the stage is no longer a container). */
+@media (max-width: 768px) {
+  .floating-add {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-add,
+  .floating-add-ic svg,
+  .floating-add-label {
+    transition: opacity 0.12s ease;
+  }
+
+  .floating-add,
+  .floating-add.is-shown:active,
+  .floating-add:hover .floating-add-ic svg {
+    transform: none;
+  }
+}

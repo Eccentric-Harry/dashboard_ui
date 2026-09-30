@@ -1,7 +1,21 @@
-import { useMemo, useState, type CSSProperties } from 'react'
+// The month's ledger, read like a journal rather than a table.
+//
+// Each day opens with a calendar leaf (today's is ink with a lime numeral, the add pill's
+// signature) and its weekday in the header's italic serif, and carries a thin "print" of
+// what it was spent on — the same category colours as the daily bars and the breakdown
+// above, so a tall bar in the hero can be found again here at a glance. A dashed rail
+// runs down from the leaf through the day's rows. Rows keep the category as a tinted
+// chip (the add-transaction form's vocabulary) and bill payments show their brand mark.
+//
+// The toolbar is the form's segmented control, with counts, and a running total of
+// whatever is showing (Copilot's search totals): search "Swiggy" and you see what Swiggy
+// cost this month without adding it up.
+
+import { createElement, useMemo, useState, type CSSProperties } from 'react'
 import { ArrowDownLeft, ArrowUpRight, ChevronLeft, ChevronRight, Receipt, Repeat, Search, X } from 'lucide-react'
 import { isTransferKind, signedAmount, type LedgerEntry, type TxKind } from '@/lib/finance-ledger'
 import { cn } from '@/lib/utils'
+import { getBrandIcon, getSubColorStyles } from './bill-brand'
 import { getConsistentColor, getIconForCategory } from '../utils'
 
 export type LedgerFilter = 'all' | 'spending' | 'income' | 'transfers'
@@ -21,7 +35,7 @@ interface TransactionsCardProps {
   stagger?: number
 }
 
-const PAGE_SIZE = 12
+const PAGE_SIZE = 14
 
 const FILTERS: { key: LedgerFilter; label: string }[] = [
   { key: 'all', label: 'All' },
@@ -38,46 +52,143 @@ const matchesFilter = (kind: TxKind, filter: LedgerFilter): boolean =>
 
 const rupees = (n: number) => `₹${Math.round(Math.abs(n)).toLocaleString('en-IN')}`
 
-/** "−₹450" spending, "+₹85,000" income, "₹20,000" with an arrow for transfers. */
+/** "−₹450" spending, "+₹85,000" income, "₹20,000" (with an arrow) for transfers. */
 const amountLabel = (e: LedgerEntry): string =>
   e.kind === 'spending' ? `−${rupees(e.amount)}` : e.kind === 'income' ? `+${rupees(e.amount)}` : rupees(e.amount)
 
+const formatNet = (net: number): string => `${net > 0 ? '+' : net < 0 ? '−' : ''}${rupees(net)}`
+
 /**
- * "Today" / "Yesterday" / "Sat, Sep 26". Compared on local Y-M-D parts rather than by
- * differencing timestamps, which drifts across DST.
+ * "Today" / "Yesterday" / null, compared on local Y-M-D parts rather than by differencing
+ * timestamps, which drifts across DST.
  */
-const dayLabel = (iso: string): string => {
-  const [y, m, d] = iso.split('-').map(Number)
-  if (!y || !m || !d) return iso
-  const date = new Date(y, m - 1, d)
+const relativeDay = (date: Date): string | null => {
   const now = new Date()
   const diff = Math.round((new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - date.getTime()) / 86400000)
-  if (diff === 0) return 'Today'
-  if (diff === 1) return 'Yesterday'
-  return date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })
+  return diff === 0 ? 'Today' : diff === 1 ? 'Yesterday' : null
 }
 
-type DayGroup = { key: string; label: string; net: number; rows: LedgerEntry[] }
+interface DayGroup {
+  key: string
+  date: Date
+  net: number
+  /** The day's spending by category, largest first — drawn as the day's print. */
+  print: { category: string; amount: number }[]
+  rows: LedgerEntry[]
+}
 
 /**
  * Groups a page by day *after* pagination, so every page is PAGE_SIZE rows tall and a
- * day straddling two pages repeats its header. The day total is its net cash change.
+ * day straddling two pages repeats its leaf. The day total is its net cash change.
  */
 const groupByDay = (rows: LedgerEntry[]): DayGroup[] => {
   const groups: DayGroup[] = []
   for (const row of rows) {
     let group = groups[groups.length - 1]
     if (!group || group.key !== row.day) {
-      group = { key: row.day, label: dayLabel(row.day), net: 0, rows: [] }
+      const [y, m, d] = row.day.split('-').map(Number)
+      group = { key: row.day, date: new Date(y, (m || 1) - 1, d || 1), net: 0, print: [], rows: [] }
       groups.push(group)
     }
     group.rows.push(row)
     group.net += signedAmount(row)
+    if (row.kind === 'spending') {
+      const seg = group.print.find((p) => p.category === row.category)
+      if (seg) seg.amount += row.amount
+      else group.print.push({ category: row.category, amount: row.amount })
+    }
   }
+  for (const g of groups) g.print.sort((a, b) => b.amount - a.amount)
   return groups
 }
 
-const formatNet = (net: number): string => `${net > 0 ? '+' : net < 0 ? '−' : ''}${rupees(net)}`
+function LedgerRow({ tx, onOpen }: { tx: LedgerEntry; onOpen?: (entry: LedgerEntry) => void }) {
+  const hue = getConsistentColor(tx.category)
+  const transfer = isTransferKind(tx.kind)
+  const editable = Boolean(tx.id) && Boolean(onOpen)
+  // Only bill payments get a brand mark: they're named after the bill, whereas a free-text
+  // description ("Pineapple juice") would happily match a brand by accident.
+  const brand = tx.subscriptionId ? getBrandIcon(tx.description) : null
+
+  return (
+    <button
+      type="button"
+      className={cn('fin-lg-row', `is-${tx.kind}`)}
+      disabled={!editable}
+      onClick={() => onOpen?.(tx)}
+      aria-label={`${tx.description || 'Untitled'}, ${tx.category}, ${amountLabel(tx)}${editable ? ', edit' : ''}`}
+      style={{ '--chip-hue': hue } as CSSProperties}
+    >
+      {brand ? (
+        <span className="fin-lg-icon is-brand" style={getSubColorStyles(tx.description, hue)} aria-hidden="true">
+          {brand}
+        </span>
+      ) : (
+        <span className="fin-lg-icon" aria-hidden="true">
+          {/* createElement, not a capitalised local: the category is data, and a component
+              built during render trips react-hooks/static-components. */}
+          {createElement(getIconForCategory(tx.category), { size: 14, strokeWidth: 2.3 })}
+        </span>
+      )}
+      <span className="fin-lg-main">
+        <b>{tx.description || 'Untitled'}</b>
+        <small>
+          <span className="fin-lg-cat">{tx.category}</span>
+          {transfer && (
+            <span className="fin-lg-tag">
+              {tx.kind === 'transfer-in' ? <ArrowDownLeft size={10} strokeWidth={2.6} /> : <ArrowUpRight size={10} strokeWidth={2.6} />}
+              {tx.kind === 'transfer-in' ? 'in' : 'transfer'}
+            </span>
+          )}
+          {tx.subscriptionId && (
+            <span className="fin-lg-tag is-bill">
+              <Repeat size={9} strokeWidth={2.6} /> bill
+            </span>
+          )}
+          {tx.time && <span className="fin-lg-time">{tx.time}</span>}
+        </small>
+      </span>
+      <strong className="fin-lg-amount">
+        {transfer && (tx.kind === 'transfer-in' ? <ArrowDownLeft size={11} strokeWidth={2.6} /> : <ArrowUpRight size={11} strokeWidth={2.6} />)}
+        {amountLabel(tx)}
+      </strong>
+    </button>
+  )
+}
+
+function DayBlock({ group, onOpen }: { group: DayGroup; onOpen?: (entry: LedgerEntry) => void }) {
+  const relative = relativeDay(group.date)
+  const spent = group.print.reduce((sum, p) => sum + p.amount, 0)
+  return (
+    <section className={cn('fin-lg-day', relative === 'Today' && 'is-today')} aria-label={group.date.toDateString()}>
+      <span className="fin-lg-leaf" aria-hidden="true">
+        <b>{group.date.getDate()}</b>
+        <small>{group.date.toLocaleDateString('en-US', { month: 'short' })}</small>
+      </span>
+      <div className="fin-lg-day-body">
+        <header className="fin-lg-day-head">
+          <span className="fin-lg-weekday">
+            <strong>{group.date.toLocaleDateString('en-US', { weekday: 'long' })}</strong>
+            {relative && <em>{relative}</em>}
+          </span>
+          <span className={cn('fin-lg-day-net', group.net > 0 && 'is-positive')}>{formatNet(group.net)}</span>
+        </header>
+        {spent > 0 && (
+          <span className="fin-lg-print" role="img" aria-label={`Spent ${rupees(spent)}: ${group.print.map((p) => `${p.category} ${rupees(p.amount)}`).join(', ')}`}>
+            {group.print.map((p) => (
+              <i key={p.category} style={{ flexGrow: p.amount, '--seg': getConsistentColor(p.category) } as CSSProperties} />
+            ))}
+          </span>
+        )}
+        <div className="fin-lg-rows">
+          {group.rows.map((tx, index) => (
+            <LedgerRow key={tx.id || `${tx.description}-${index}`} tx={tx} onOpen={onOpen} />
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
 
 function TransactionsCard({
   entries,
@@ -93,26 +204,53 @@ function TransactionsCard({
   const [page, setPage] = useState(1)
   const [query, setQuery] = useState('')
 
-  const visible = useMemo(() => {
+  // Search and the category chip narrow first; the tabs then split what's left, so each
+  // tab's count answers "how many of *these*".
+  const matching = useMemo(() => {
     const q = query.trim().toLowerCase()
     return entries.filter(
       (e) =>
-        matchesFilter(e.kind, filter) &&
         (!categoryFilter || e.category === categoryFilter) &&
         (!q || e.description.toLowerCase().includes(q) || e.category.toLowerCase().includes(q) || String(e.amount).includes(q)),
     )
-  }, [entries, filter, categoryFilter, query])
+  }, [entries, categoryFilter, query])
+
+  const counts = useMemo(() => {
+    const c: Record<LedgerFilter, number> = { all: matching.length, spending: 0, income: 0, transfers: 0 }
+    for (const e of matching) {
+      if (e.kind === 'spending') c.spending++
+      else if (e.kind === 'income') c.income++
+      else c.transfers++
+    }
+    return c
+  }, [matching])
+
+  const visible = useMemo(() => matching.filter((e) => matchesFilter(e.kind, filter)), [matching, filter])
+
+  const totals = useMemo(() => {
+    let spent = 0
+    let income = 0
+    let moved = 0
+    for (const e of visible) {
+      if (e.kind === 'spending') spent += e.amount
+      else if (e.kind === 'income') income += e.amount
+      else moved += e.amount
+    }
+    return { spent, income, moved }
+  }, [visible])
 
   const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE))
   // A filter can shrink the list under the current page — clamp instead of showing a blank page.
   const safePage = Math.min(page, totalPages)
-  const paginated = visible.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+  const start = (safePage - 1) * PAGE_SIZE
+  const paginated = visible.slice(start, start + PAGE_SIZE)
   const groups = useMemo(() => groupByDay(paginated), [paginated])
   const narrowed = filter !== 'all' || Boolean(categoryFilter) || Boolean(query.trim())
+  const filterIndex = FILTERS.findIndex((f) => f.key === filter)
 
   return (
-    <section className="finance-card finance-transactions-card fin-ledger" style={{ '--i': stagger } as CSSProperties}>
-      <div className="finance-section-head compact">
+    <section className="finance-card fin-lg" style={{ '--i': stagger } as CSSProperties}>
+      <header className="finance-section-head compact fin-lg-head">
         <div>
           <span className="finance-eyebrow">Ledger</span>
           <h2>Transactions</h2>
@@ -120,20 +258,26 @@ function TransactionsCard({
             {narrowed ? `${visible.length} of ${entries.length}` : entries.length} in {monthLabel}
           </p>
         </div>
-        <label className="fin-ledger-search">
+        <label className="fin-lg-search">
           <Search size={13} strokeWidth={2.4} aria-hidden="true" />
           <input
             type="search"
-            placeholder="Search"
+            placeholder="Search merchant, category, amount"
             value={query}
             onChange={(e) => { setQuery(e.target.value); setPage(1) }}
             aria-label="Search transactions"
           />
         </label>
-      </div>
+      </header>
 
-      <div className="fin-ledger-toolbar">
-        <div className="fin-filter-tabs" role="tablist" aria-label="Transaction type">
+      <div className="fin-lg-toolbar">
+        <div
+          className="fin-seg fin-lg-seg"
+          role="tablist"
+          aria-label="Transaction type"
+          style={{ '--seg-count': FILTERS.length, '--seg-i': filterIndex } as CSSProperties}
+        >
+          <span className="fin-seg-pill" aria-hidden="true" />
           {FILTERS.map((f) => (
             <button
               key={f.key}
@@ -144,13 +288,14 @@ function TransactionsCard({
               onClick={() => { onFilterChange(f.key); setPage(1) }}
             >
               {f.label}
+              <em>{counts[f.key]}</em>
             </button>
           ))}
         </div>
         {categoryFilter && (
           <button
             type="button"
-            className="fin-filter-chip"
+            className="fin-lg-filter-chip"
             style={{ '--chip-hue': getConsistentColor(categoryFilter) } as CSSProperties}
             onClick={onClearCategory}
             aria-label={`Clear ${categoryFilter} filter`}
@@ -159,110 +304,89 @@ function TransactionsCard({
             <X size={11} strokeWidth={2.6} />
           </button>
         )}
-      </div>
-
-      <div className="finance-transaction-table" role="table" aria-label="Transactions">
-        <div className="finance-transaction-list" role="rowgroup">
-          {loading ? (
-            Array.from({ length: 6 }).map((_, idx) => (
-              <div className="fin-ledger-row is-skeleton" key={idx} role="row">
-                <span className="skeleton-shimmer skeleton-circle" style={{ width: 30, height: 30 }} />
-                <span style={{ flex: 1 }}>
-                  <span className="skeleton-shimmer skeleton-rect" style={{ width: 130, height: 11 }} />
-                  <span className="skeleton-shimmer skeleton-rect" style={{ width: 80, height: 8, marginTop: 6 }} />
-                </span>
-                <span className="skeleton-shimmer skeleton-rect" style={{ width: 56, height: 13 }} />
+        {!loading && visible.length > 0 && (
+          <dl className="fin-lg-totals" aria-label="Totals for what's showing">
+            {totals.spent > 0 && (
+              <div>
+                <dt>Spent</dt>
+                <dd>{rupees(totals.spent)}</dd>
               </div>
-            ))
-          ) : paginated.length === 0 ? (
-            <div className="fin-empty">
-              <span className="fin-empty-glyph">
-                <Receipt size={20} strokeWidth={2.2} />
-              </span>
-              <p className="fin-empty-title">{narrowed ? 'Nothing matches' : 'Nothing logged yet'}</p>
-              <p className="fin-empty-sub">
-                {narrowed
-                  ? 'Try another filter or clear the search.'
-                  : 'Add your first transaction and this ledger will start tracking your money, day by day.'}
-              </p>
-            </div>
-          ) : (
-            groups.map((group) => (
-              <div className="fin-day-group" key={`${group.key}-${group.rows[0].id}`}>
-                <div className="fin-day-head">
-                  <span className="fin-day-label">{group.label}</span>
-                  <span className={cn('fin-day-total', group.net > 0 && 'is-positive')}>{formatNet(group.net)}</span>
-                </div>
-                {group.rows.map((tx, index) => {
-                  const Icon = getIconForCategory(tx.category)
-                  const transfer = isTransferKind(tx.kind)
-                  const editable = Boolean(tx.id) && Boolean(onOpen)
-                  return (
-                    <button
-                      type="button"
-                      className={cn('fin-ledger-row', `is-${tx.kind}`)}
-                      key={tx.id || `${tx.description}-${index}`}
-                      role="row"
-                      disabled={!editable}
-                      onClick={() => onOpen?.(tx)}
-                      aria-label={`${tx.description}, ${amountLabel(tx)}${editable ? ', edit' : ''}`}
-                      style={{ '--chip-hue': getConsistentColor(tx.category) } as CSSProperties}
-                    >
-                      <span className="fin-ledger-icon" aria-hidden="true">
-                        <Icon size={14} strokeWidth={2.3} />
-                      </span>
-                      <span className="fin-ledger-main" role="cell">
-                        <b>{tx.description || 'Untitled'}</b>
-                        <small>
-                          <em>{tx.category}</em>
-                          {transfer && (
-                            <span className="fin-ledger-tag">
-                              {tx.kind === 'transfer-in' ? <ArrowDownLeft size={10} strokeWidth={2.6} /> : <ArrowUpRight size={10} strokeWidth={2.6} />}
-                              {tx.kind === 'transfer-in' ? 'transfer in' : 'transfer'}
-                            </span>
-                          )}
-                          {tx.subscriptionId && (
-                            <span className="fin-ledger-tag">
-                              <Repeat size={10} strokeWidth={2.6} /> bill
-                            </span>
-                          )}
-                          {tx.time && <span className="fin-ledger-time">{tx.time}</span>}
-                        </small>
-                      </span>
-                      <strong className="fin-ledger-amount" role="cell">{amountLabel(tx)}</strong>
-                    </button>
-                  )
-                })}
+            )}
+            {totals.income > 0 && (
+              <div className="is-income">
+                <dt>In</dt>
+                <dd>+{rupees(totals.income)}</dd>
               </div>
-            ))
-          )}
-        </div>
-        {!loading && totalPages > 1 && (
-          <div className="finance-pagination">
-            <button
-              disabled={safePage === 1}
-              onClick={() => setPage(safePage - 1)}
-              className="pagination-btn"
-              type="button"
-              aria-label="Previous page"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <span className="pagination-info">
-              Page {safePage} of {totalPages}
-            </span>
-            <button
-              disabled={safePage === totalPages}
-              onClick={() => setPage(safePage + 1)}
-              className="pagination-btn"
-              type="button"
-              aria-label="Next page"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
+            )}
+            {totals.moved > 0 && (
+              <div className="is-moved">
+                <dt>Moved</dt>
+                <dd>{rupees(totals.moved)}</dd>
+              </div>
+            )}
+          </dl>
         )}
       </div>
+
+      {loading ? (
+        <div className="fin-lg-days">
+          {Array.from({ length: 2 }).map((_, g) => (
+            <div className="fin-lg-day is-skeleton" key={g}>
+              <span className="fin-lg-leaf skeleton-shimmer" />
+              <div className="fin-lg-day-body">
+                <span className="skeleton-shimmer skeleton-rect" style={{ width: 110, height: 12 }} />
+                {Array.from({ length: 3 }).map((__, i) => (
+                  <div className="fin-lg-row" key={i}>
+                    <span className="fin-lg-icon skeleton-shimmer" />
+                    <span className="fin-lg-main">
+                      <span className="skeleton-shimmer skeleton-rect" style={{ width: 130, height: 11 }} />
+                      <span className="skeleton-shimmer skeleton-rect" style={{ width: 80, height: 8 }} />
+                    </span>
+                    <span className="skeleton-shimmer skeleton-rect" style={{ width: 52, height: 12 }} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : paginated.length === 0 ? (
+        <div className="fin-empty">
+          <span className="fin-empty-glyph">
+            <Receipt size={20} strokeWidth={2.2} />
+          </span>
+          <p className="fin-empty-title">{narrowed ? 'Nothing matches' : 'Nothing logged yet'}</p>
+          <p className="fin-empty-sub">
+            {narrowed
+              ? 'Try another filter or clear the search.'
+              : 'Add your first transaction and this ledger will start tracking your money, day by day.'}
+          </p>
+        </div>
+      ) : (
+        <div className="fin-lg-days">
+          {groups.map((group) => (
+            <DayBlock key={`${group.key}-${group.rows[0].id}`} group={group} onOpen={onOpen} />
+          ))}
+        </div>
+      )}
+
+      {!loading && totalPages > 1 && (
+        <footer className="fin-lg-foot">
+          <span>
+            {start + 1}–{start + paginated.length} of {visible.length}
+          </span>
+          <div className="fin-lg-pager">
+            <button type="button" disabled={safePage === 1} onClick={() => setPage(safePage - 1)} aria-label="Newer transactions">
+              <ChevronLeft size={15} strokeWidth={2.4} />
+            </button>
+            <b>
+              {safePage} <small>/ {totalPages}</small>
+            </b>
+            <button type="button" disabled={safePage === totalPages} onClick={() => setPage(safePage + 1)} aria-label="Older transactions">
+              <ChevronRight size={15} strokeWidth={2.4} />
+            </button>
+          </div>
+        </footer>
+      )}
     </section>
   )
 }

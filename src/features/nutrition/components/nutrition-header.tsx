@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type Ref } from 'react'
 import { CalendarCheck, ChevronDown, LoaderCircle, X, Plus } from 'lucide-react'
 import { useDashboard } from '@/store/dashboard-store'
 import { nutritionService } from '@/services/nutrition-service'
@@ -93,9 +93,11 @@ const extractEntries = (response: unknown): FoodEntry[] => {
 
 interface NutritionHeaderProps {
   onAddClick?: () => void
+  /** The add pill — the route watches it to show its floating twin once it scrolls away. */
+  addButtonRef?: Ref<HTMLButtonElement>
 }
 
-function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
+function NutritionHeader({ onAddClick, addButtonRef }: NutritionHeaderProps) {
   const { data } = useDashboard()
   const foodEntries = useMemo<FoodEntry[]>(() => data?.health?.foodEntries || [], [data?.health?.foodEntries])
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
@@ -388,7 +390,7 @@ function NutritionHeader({ onAddClick }: NutritionHeaderProps) {
 
       <div className="ntr-header-right">
         {onAddClick && (
-          <button type="button" onClick={onAddClick} className="ntr-add-btn add-pill">
+          <button ref={addButtonRef} type="button" onClick={onAddClick} className="ntr-add-btn add-pill">
             <span className="ntr-add-ic add-pill-ic">
               <Plus size={16} strokeWidth={2.75} />
             </span>

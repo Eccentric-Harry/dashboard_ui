@@ -9,6 +9,7 @@ import { ProteinTrendCard } from './components/protein-trend-card'
 import { AddFoodModal } from './components/add-food-modal'
 import { MealDetailsModal } from './components/meal-details-modal'
 import { NutritionIntelligence } from './components/nutrition-intelligence'
+import { FloatingAdd } from '@/components/ui/floating-add'
 import { useDashboard } from '@/store/dashboard-store'
 import { nutritionService } from '@/services/nutrition-service'
 import { getFoodHistory } from './components/food-history'
@@ -159,6 +160,7 @@ function NutritionOverviewDashboard() {
   }
 
   const openAdd = () => setIsAddModalOpen(true)
+  const addButtonRef = useRef<HTMLButtonElement>(null)
 
   // Bottom-dock quick-add bubble opens the same "add meal" modal
   useEffect(() => {
@@ -200,7 +202,7 @@ function NutritionOverviewDashboard() {
       )}
 
       <div style={{ visibility: itemId ? 'hidden' : 'visible', pointerEvents: itemId ? 'none' : 'auto' }}>
-        <NutritionHeader onAddClick={openAdd} />
+        <NutritionHeader onAddClick={openAdd} addButtonRef={addButtonRef} />
         <div className="ntr-grid">
           <MacroBalanceCard />
           <ProteinTrendCard />
@@ -230,6 +232,8 @@ function NutritionOverviewDashboard() {
         <button type="button" className="ntr-mobile-fab" onClick={openAdd} aria-label="Add meal">
           <Plus size={22} strokeWidth={2.5} />
         </button>
+
+        <FloatingAdd watch={addButtonRef} label="Add meal" onClick={openAdd} suppressed={Boolean(itemId)} />
       </div>
 
       <AddFoodModal

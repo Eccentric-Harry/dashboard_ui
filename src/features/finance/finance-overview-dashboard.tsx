@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { FinanceHeader } from './components/finance-header'
-import { MonthHero, type BillsGlance } from './components/month-hero'
+import { MonthHero } from './components/month-hero'
+import { WalletCard, type BillsGlance } from './components/wallet-card'
 import { SpendingOverviewCard } from './components/spending-overview-card'
 import { SubscriptionsCard } from './components/subscriptions-card'
 import { RepaymentScheduleCard } from './components/repayment-schedule-card'
@@ -12,6 +13,7 @@ import { EditBalanceModal } from './components/edit-balance-modal'
 import { EditBudgetModal } from './components/edit-budget-modal'
 import { LendingCard } from './components/lending-card'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { FloatingAdd } from '@/components/ui/floating-add'
 import { getErrorMessage } from '@/lib/errors'
 import type { LendingRecord } from '@/types/finance'
 import { financeService } from '@/services/finance-service'
@@ -34,7 +36,6 @@ import {
   duplicateCategoryPair,
   spendingComparison,
   legacyTransferBuckets,
-  lendingExposure,
   transferSummary,
 } from '@/lib/insights/finance'
 import { billStatus, stillDueInMonth } from '@/lib/finance-recurring'
@@ -109,7 +110,7 @@ function FinanceOverviewDashboard() {
   const [mergeTarget, setMergeTarget] = useState<{ from: string; into: string } | null>(null)
   const ledgerRef = useRef<HTMLDivElement>(null)
   const billsRef = useRef<HTMLDivElement>(null)
-  const transfersRef = useRef<HTMLDivElement>(null)
+  const addButtonRef = useRef<HTMLButtonElement>(null)
 
   const [showFinanceGrids, setShowFinanceGrids] = useState(() => localStorage.getItem('showFinanceGrids') === 'true')
 
@@ -160,7 +161,6 @@ function FinanceOverviewDashboard() {
       burndown: buildBurndown(engineInput),
       days: dailyBreakdown(engineInput),
       comparison: spendingComparison(engineInput),
-      exposure: lendingExposure(engineInput),
       transfers: transferSummary(engineInput),
       legacy: legacyTransferBuckets(engineInput),
       duplicate: duplicateCategoryPair(engineInput),
@@ -336,13 +336,16 @@ function FinanceOverviewDashboard() {
     ledgerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
+  const openAdd = () => setTxModal({ tab: 'Transaction', edit: null })
+
   const jumpTo = (ref: React.RefObject<HTMLDivElement | null>) =>
     ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
   return (
     <section className="finance-dashboard route-scroll" aria-label="Finance overview dashboard">
       <FinanceHeader
-        onAddClick={() => setTxModal({ tab: 'Transaction', edit: null })}
+        onAddClick={openAdd}
+        addButtonRef={addButtonRef}
         logs={logs}
         selectedDate={selectedDate}
         onDateChange={handleDateChange}
@@ -360,21 +363,25 @@ function FinanceOverviewDashboard() {
           summary={summary}
           budget={monthlyBudget}
           scope={config.scope}
+          loading={loading}
+          onEditBudget={() => setIsEditBudgetOpen(true)}
+          stagger={0}
+        />
+        <WalletCard
           balance={balance}
+          summary={summary}
+          monthName={monthLabel(selectedMonthKey).split(' ')[0]}
           bills={bills}
-          transfers={transfers}
-          exposure={engine.exposure}
           loading={loading}
           onEditBalance={() => setIsEditBalanceOpen(true)}
-          onEditBudget={() => setIsEditBudgetOpen(true)}
           onJumpToBills={() => jumpTo(billsRef)}
-          onJumpToTransfers={() => jumpTo(transfersRef)}
-          stagger={0}
+          stagger={1}
         />
 
         {/* Rows are balanced rather than two free-running columns: a tall ledger in one
-            column used to hang beside empty space. Breakdown and Bills share a row and
-            stretch to one height; Sent home and the ledger each take the full width. */}
+            column used to hang beside empty space. Nutrition's 7 + 5 rhythm: spending |
+            wallet, then breakdown | bills, each pair stretched to one height; Sent home and
+            the ledger each take the full width. */}
         <div className="fin-slot fin-slot--breakdown">
           <SpendingOverviewCard
             monthEntries={monthEntries}
@@ -387,7 +394,7 @@ function FinanceOverviewDashboard() {
             mergeSuggestion={engine.duplicate}
             onMerge={setMergeTarget}
             loading={loading}
-            stagger={1}
+            stagger={2}
           />
         </div>
 
@@ -397,11 +404,11 @@ function FinanceOverviewDashboard() {
             today={today}
             onLedgerChanged={refreshData}
             onCelebrate={celebrate}
-            stagger={2}
+            stagger={3}
           />
         </div>
 
-        <div ref={transfersRef} className="fin-slot fin-slot--transfers fin-scroll-anchor">
+        <div className="fin-slot fin-slot--transfers">
           <TransfersCard
             monthEntries={monthEntries}
             summary={transfers}
@@ -412,7 +419,7 @@ function FinanceOverviewDashboard() {
             }
             onReclassify={setReclassifyTarget}
             onShowAll={showTransfersInLedger}
-            stagger={3}
+            stagger={4}
           />
         </div>
 
@@ -426,7 +433,7 @@ function FinanceOverviewDashboard() {
             filter={ledgerFilter}
             onFilterChange={setLedgerFilter}
             monthLabel={monthLabel(selectedMonthKey)}
-            stagger={4}
+            stagger={5}
           />
         </div>
 
@@ -447,6 +454,8 @@ function FinanceOverviewDashboard() {
           </div>
         )}
       </div>
+
+      <FloatingAdd watch={addButtonRef} label="Add transaction" onClick={openAdd} />
 
       <ConfirmDialog
         open={!!deleteTarget}
