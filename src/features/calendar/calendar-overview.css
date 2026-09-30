@@ -4571,3 +4571,249 @@ body.calendar-modal-open .mobile-profile-trigger {
 .reminder-footer .avatar-stack + .reminder-actions button {
   flex: none;
 }
+
+
+/* ── Direct manipulation on the time grid ─────────────────────────────────
+   Drag on empty space to sweep out a block, drag a block to move it, drag its
+   bottom edge to resize (use-grid-drag.ts). Overlays inside a day column never
+   take pointer events, so a press on them still lands on the column itself. */
+.grid-day-column {
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body.calendar-grid-dragging,
+body.calendar-grid-dragging * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+.grid-event-card.is-draggable {
+  cursor: grab;
+}
+
+body.calendar-grid-dragging .grid-event-card,
+body.calendar-grid-dragging .grid-day-column {
+  cursor: grabbing;
+}
+
+.grid-event-card.is-drag-source {
+  opacity: 0.32;
+  filter: saturate(0.6);
+}
+
+.grid-event-resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 8px;
+  cursor: ns-resize;
+}
+
+.grid-event-resize::after {
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  width: 18px;
+  height: 3px;
+  border-radius: 999px;
+  background: currentColor;
+  content: '';
+  opacity: 0;
+  transform: translateX(-50%);
+  transition: opacity 0.15s ease;
+}
+
+.grid-event-card:hover .grid-event-resize::after {
+  opacity: 0.35;
+}
+
+.event-kind-ic {
+  display: inline-block;
+  margin-right: 5px;
+  vertical-align: -1.5px;
+  color: var(--chip-hue, currentColor);
+}
+
+.event-repeat-ic {
+  display: inline-block;
+  margin-left: 5px;
+  vertical-align: -1px;
+  opacity: 0.5;
+}
+
+/* Hover hint: where a click would drop a 1-hour block. */
+.grid-hover-slot {
+  position: absolute;
+  right: 4px;
+  left: 4px;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 6px 8px;
+  box-sizing: border-box;
+  border: 1.5px dashed rgba(13, 148, 136, 0.28);
+  border-radius: 10px;
+  background: rgba(13, 148, 136, 0.04);
+  color: rgba(15, 110, 101, 0.75);
+  font-size: 10.5px;
+  font-weight: 700;
+  pointer-events: none;
+  animation: cal-slot-in 0.12s ease-out;
+}
+
+@keyframes cal-slot-in {
+  from { opacity: 0; }
+}
+
+/* The block being swept out (or waiting in the open modal), and the preview
+   of a block being moved or resized. */
+.grid-drag-ghost {
+  position: absolute;
+  right: 3px;
+  left: 3px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 22px;
+  padding: 5px 10px;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-radius: 10px;
+  pointer-events: none;
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.grid-drag-ghost strong {
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.grid-drag-ghost span {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.8;
+}
+
+.grid-drag-ghost em {
+  font-style: normal;
+  opacity: 0.7;
+}
+
+.grid-drag-ghost.is-create {
+  border: 1.5px solid rgba(13, 148, 136, 0.55);
+  background: rgba(222, 243, 239, 0.94);
+  box-shadow: 0 10px 24px rgba(13, 148, 136, 0.16);
+  color: #0f5f57;
+}
+
+.grid-drag-ghost.is-move {
+  box-shadow: 0 14px 30px rgba(23, 28, 25, 0.18), 0 0 0 1.5px rgba(255, 255, 255, 0.9);
+  transform: scale(1.015);
+}
+
+/* Now line on today's column. */
+.grid-now-line {
+  position: absolute;
+  right: 0;
+  left: 0;
+  z-index: 15;
+  height: 2px;
+  margin-top: -1px;
+  border-radius: 999px;
+  background: #f16977;
+  pointer-events: none;
+}
+
+.grid-now-dot {
+  position: absolute;
+  top: -4px;
+  left: -5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #f16977;
+  box-shadow: 0 0 0 2px #ffffff;
+}
+
+/* Header: jump back to today. */
+.nav-today-btn {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #3f3f46;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.nav-today-btn:hover {
+  background: #f4f4f5;
+  color: #18181b;
+}
+
+.nav-today-btn.is-current {
+  color: #a1a1aa;
+}
+
+/* Per-day load under the day header: how full the day already is. */
+.grid-header-day-card .day-load {
+  margin-top: 4px;
+  color: #71717a;
+  font-size: 10.5px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.grid-header-day-card.is-selected .day-load {
+  color: rgba(13, 148, 136, 0.8);
+}
+
+/* Undo toast after a move/resize. */
+.cal-undo-toast {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 13px;
+}
+
+.cal-undo-toast b {
+  font-weight: 750;
+}
+
+.cal-undo-toast button {
+  flex: none;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(13, 148, 136, 0.12);
+  color: #0f6e65;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .grid-header-day-card .day-load {
+    display: none;
+  }
+
+  /* Touch has no hover — the resize handle is always hinted. */
+  .grid-event-resize {
+    height: 14px;
+  }
+}

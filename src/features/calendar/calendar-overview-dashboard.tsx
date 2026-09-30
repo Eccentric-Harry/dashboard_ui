@@ -25,7 +25,7 @@
  * 5. Attendees: Attendees are not stored or returned in the database/API response.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createElement, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   CalendarDays,
@@ -44,44 +44,42 @@ import {
   Search,
   Trash2,
   AlignLeft,
+  Repeat,
   X,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 import type { AppPath } from '@/app/routes'
-import type { CalendarItem, CalendarItemPayload, CalendarItemType, CalendarRecurrence, GoogleCalendarAccount } from '@/types/calendar'
+import type { CalendarItem, CalendarItemPayload, GoogleCalendarAccount } from '@/types/calendar'
 import { calendarService } from '@/services/calendar-service'
 import { useCalendarStore } from '@/store/calendar-store'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
-import { useConfirmClose } from '@/hooks/use-confirm-close'
 import { MiniMonth } from '@/components/ui/mini-month'
-import { getRoutineIconDetails } from './routine-icon-helper'
 import { getAvatarImage } from '@/lib/avatar'
+import { cn } from '@/lib/utils'
+import {
+  CATEGORY_OPTIONS,
+  clearCustomItemColor,
+  colorForCategory,
+  displayColorForItem,
+  resetCustomCategoryColors,
+  setCustomCategoryColor,
+} from './calendar-colors'
+import {
+  DAY_MINUTES,
+  formatClockTime,
+  formatDuration,
+  formatMinuteRange,
+  formatShortTime,
+  minutesToTime,
+  timeToMinutes,
+} from './calendar-time'
+import { useGridDrag, type GridDrag } from './use-grid-drag'
+import { iconForItem } from './calendar-icons'
+import { CalendarItemModal, type CalendarDraft } from './components/calendar-item-modal'
 
 
 import './calendar-overview.css'
-
-const TYPE_OPTIONS: CalendarItemType[] = ['TASK', 'EVENT', 'REMINDER', 'MILESTONE']
-
-const CATEGORY_HUES: Record<string, number> = {
-  personal: 270,
-  work: 210,
-  health: 142,
-  learning: 175,
-  finance: 35,
-  social: 330,
-}
-
-function hueForCategory(category?: string) {
-  const normalized = (category || '').trim().toLowerCase()
-  if (!normalized) return 210
-  if (CATEGORY_HUES[normalized] !== undefined) return CATEGORY_HUES[normalized]
-  let hash = 0
-  for (let i = 0; i < normalized.length; i++) {
-    hash = normalized.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  return Math.abs(hash) % 360
-}
 
 /*
 const MOCK_USERS = [
@@ -167,17 +165,6 @@ function getMockAttendeesForItem(item: CalendarItem) {
   return attendeesList
 }
 */
-
-function overrideLightColors(colorStr: string) {
-  const upper = colorStr.toUpperCase()
-  if (upper === '#C8F3A3' || upper === 'C8F3A3') return '#7c3aed' // Bold Violet
-  if (upper === '#9EE7E8' || upper === '9EE7E8') return '#10b981' // Bold Emerald
-  if (upper === '#9BD7FF' || upper === '9BD7FF') return '#2563eb' // Bold Blue
-  if (upper === '#C9BFF6' || upper === 'C9BFF6') return '#0d9488' // Bold Teal
-  if (upper === '#FFD37D' || upper === 'FFD37D') return '#d97706' // Bold Amber
-  if (upper === '#FFB4D2' || upper === 'FFB4D2') return '#db2777' // Bold Pink/Rose
-  return colorStr
-}
 
 function bannerForCategory(category?: string) {
   const cat = (category || 'default').toLowerCase()
@@ -271,52 +258,6 @@ function formatSelectedDateHeader(dateStr: string) {
   return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 }
 
-const CATEGORY_OPTIONS = [
-  { label: 'Personal', color: '#7c3aed' },
-  { label: 'Work', color: '#2563eb' },
-  { label: 'Health', color: '#10b981' },
-  { label: 'Learning', color: '#0d9488' },
-  { label: 'Finance', color: '#d97706' },
-  { label: 'Social', color: '#db2777' },
-  { label: 'Movies', color: '#e11d48' },
-]
-
-// Mirrors the Google Calendar event-color palette 1:1 (see GOOGLE_EVENT_COLORS
-// in the backend's GoogleCalendarClient) so a per-event override picked here
-// maps onto the exact same colorId when pushed to a synced Google Calendar.
-const EVENT_COLOR_SWATCHES = [
-  { name: 'Lavender', hex: '#7986cb' },
-  { name: 'Sage', hex: '#33b679' },
-  { name: 'Grape', hex: '#8e24aa' },
-  { name: 'Flamingo', hex: '#e67c73' },
-  { name: 'Banana', hex: '#f6bf26' },
-  { name: 'Tangerine', hex: '#f4511e' },
-  { name: 'Peacock', hex: '#039be5' },
-  { name: 'Graphite', hex: '#616161' },
-  { name: 'Blueberry', hex: '#3f51b5' },
-  { name: 'Basil', hex: '#0b8043' },
-  { name: 'Tomato', hex: '#d50000' },
-]
-
-/**
- * Single source of truth for what color an item renders with, everywhere
- * (filters, month capsules, grid chips, popover, sidebar card). A per-event
- * custom color (picked via the swatch grid in the edit modal, stored locally
- * keyed by item id) always wins first — this is the Google Calendar-style
- * "override this one event" color. Otherwise the category determines the
- * color — registered categories use the shared palette and unknown ones a
- * stable hash hue. A stored item color only applies as a last resort when the
- * item has no category at all (e.g. some Google-synced events).
- */
-function displayColorForItem(item: { id?: string; category?: string; color?: string }) {
-  const override = getCustomItemColor(item)
-  if (override) return override
-  const normalized = (item.category || '').trim().toLowerCase()
-  if (normalized) return colorForCategory(item.category!)
-  if (item.color) return overrideLightColors(item.color)
-  return colorForCategory('Personal')
-}
-
 function getPopoverStyle(rect: { top: number; left: number; width: number; height: number }) {
   if (typeof window === 'undefined') return {}
   const isMobile = window.innerWidth <= 600
@@ -402,8 +343,8 @@ type CalendarOverviewDashboardProps = {
 }
 
 type ModalState =
-  | { open: false; item?: never; date?: never }
-  | { open: true; item?: CalendarItem; date: string }
+  | { open: false; item?: never; date?: never; draft?: never }
+  | { open: true; item?: CalendarItem; date: string; draft?: CalendarDraft }
 
 const CalendarSkeleton = ({ viewType }: { viewType: 'daily' | 'weekly' | 'monthly' }) => {
   return (
@@ -544,6 +485,99 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
 
   const canvasContainerRef = useRef<HTMLDivElement | null>(null)
   const weeklyScrollContainerRef = useRef<HTMLDivElement | null>(null)
+
+  // Minute-of-day clock for the now-line; ticks once a minute.
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 60_000)
+    return () => window.clearInterval(timer)
+  }, [])
+  const todayIso = toISODate(now)
+  const nowMinutes = now.getHours() * 60 + now.getMinutes()
+
+  // Move / resize: optimistic, then the server, then a toast that can undo it.
+  const rescheduleItem = async (item: CalendarItem, date: string, startTime: string, endTime: string, undoable = true) => {
+    if (!item.id) return
+    const id = item.id
+    const payload: CalendarItemPayload = {
+      title: item.title,
+      date,
+      itemType: item.itemType,
+      category: item.category,
+      color: item.color,
+      allDay: false,
+      startTime,
+      endTime,
+      notes: item.notes,
+      completed: item.completed,
+      cancelled: item.cancelled,
+      recurrenceFrequency: item.recurrenceFrequency ?? 'NONE',
+      recurrenceUntil: item.recurrenceUntil,
+    }
+    calendarActions.applyItems((prev) => prev.map((it) => (it.id === id ? { ...it, date, startTime, endTime, allDay: false } : it)))
+    try {
+      const res = await calendarService.updateItem(id, payload)
+      if (res.error) throw new Error(res.error.message)
+      window.dispatchEvent(new CustomEvent('calendar-updated'))
+      if (!undoable) return
+      const day = parseISODate(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+      const range = formatMinuteRange(timeToMinutes(startTime), timeToMinutes(endTime))
+      toast.success(
+        (t) => (
+          <span className="cal-undo-toast">
+            <span>
+              <b>{item.title}</b> · {date === item.date ? '' : `${day} · `}{range}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                toast.dismiss(t.id)
+                void rescheduleItem(
+                  { ...item, date, startTime, endTime },
+                  item.date,
+                  item.startTime ?? startTime,
+                  item.endTime ??
+                    (item.startTime ? minutesToTime(Math.min(DAY_MINUTES - 1, timeToMinutes(item.startTime) + 60)) : endTime),
+                  false,
+                )
+              }}
+            >
+              Undo
+            </button>
+          </span>
+        ),
+        { duration: 6000 },
+      )
+    } catch (error) {
+      calendarActions.applyItems((prev) => prev.map((it) => (it.id === id ? item : it)))
+      toast.error(error instanceof Error ? error.message : 'Could not move that block')
+    }
+  }
+
+  const {
+    drag,
+    hover,
+    registerColumn,
+    columnPointerDown,
+    columnPointerMove,
+    clearHover,
+    itemPointerDown,
+    consumeClick,
+  } = useGridDrag({
+    scrollRef: weeklyScrollContainerRef,
+    canCreate: () => !selectedItemKey && !anchorRect && !overflowDay && !modal.open,
+    onCreate: (date, start, end) => {
+      setSelectedItemKey(null)
+      setAnchorRect(null)
+      setOverflowDay(null)
+      setModal({ open: true, date, draft: { startTime: minutesToTime(start), endTime: minutesToTime(end) } })
+    },
+    onCommit: (item, date, start, end) => {
+      void rescheduleItem(item, date, minutesToTime(start), minutesToTime(end))
+    },
+  })
+
+  const searchInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -939,6 +973,12 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   }, [items, upcomingItems, upcomingCardIndex])
 
   const twoDays = useMemo(() => getTwoDays(selectedDate), [selectedDate])
+  const viewShowsToday =
+    viewType === 'monthly'
+      ? selectedDate.slice(0, 7) === todayIso.slice(0, 7)
+      : viewType === 'weekly'
+        ? twoDays.some((d) => toISODate(d) === todayIso)
+        : selectedDate === todayIso
   
   const weekItemsByDay = useMemo(() => {
     return twoDays.map((d) => {
@@ -974,6 +1014,37 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   const handleDateSelect = (dateStr: string) => {
     updateSelectedDate(dateStr)
   }
+
+  const stepSize = viewType === 'weekly' ? 2 : 1
+  const goToToday = () => updateSelectedDate(toISODate(new Date()))
+
+  // Keyboard shortcuts (Notion Calendar / Google style). Never while typing,
+  // never while a modal or dialog owns the keyboard.
+  const shortcutHandler = useRef<(e: KeyboardEvent) => void>(() => {})
+  useEffect(() => {
+    shortcutHandler.current = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented) return
+      const target = e.target as HTMLElement | null
+      if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return
+      if (modal.open || deleteTarget || colorEditModalOpen || document.body.classList.contains('calendar-grid-dragging')) return
+      const key = e.key.toLowerCase()
+      if (key === 't') goToToday()
+      else if (key === 'd') setViewType('daily')
+      else if (key === 'w' || key === '2') setViewType('weekly')
+      else if (key === 'm') setViewType('monthly')
+      else if (key === 'arrowleft' || key === 'j') handleStep(-stepSize)
+      else if (key === 'arrowright' || key === 'k') handleStep(stepSize)
+      else if (key === 'n' || key === 'c') setModal({ open: true, date: selectedDate })
+      else if (key === '/') searchInputRef.current?.focus()
+      else return
+      e.preventDefault()
+    }
+  })
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => shortcutHandler.current(e)
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   // Mutations apply optimistically: the local list updates instantly, the API
   // call runs in the background, and 'calendar-updated' triggers a single
@@ -1155,7 +1226,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
               {/* Navigation & view selection row */}
           <div className="stage-navigation-row">
             <div className="date-range-navigator">
-              <button type="button" className="nav-arrow" onClick={() => handleStep(viewType === 'weekly' ? -2 : -1)}>
+              <button type="button" className="nav-arrow" onClick={() => handleStep(-stepSize)} aria-label="Previous" title="Previous (←)">
                 <ChevronLeft size={16} />
               </button>
               <h2 className="range-title">
@@ -1163,8 +1234,16 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                   ? formatSelectedDateHeader(selectedDate)
                   : parseISODate(selectedDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
               </h2>
-              <button type="button" className="nav-arrow" onClick={() => handleStep(viewType === 'weekly' ? 2 : 1)}>
+              <button type="button" className="nav-arrow" onClick={() => handleStep(stepSize)} aria-label="Next" title="Next (→)">
                 <ChevronRight size={16} />
+              </button>
+              <button
+                type="button"
+                className={cn('nav-today-btn', viewShowsToday && 'is-current')}
+                onClick={goToToday}
+                title="Jump to today (T)"
+              >
+                Today
               </button>
             </div>
 
@@ -1175,6 +1254,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                   type="button"
                   className={`view-tab ${viewType === view ? 'is-selected' : ''}`}
                   onClick={() => setViewType(view)}
+                  title={`${view === 'weekly' ? '2-Day' : view.charAt(0).toUpperCase() + view.slice(1)} (${view === 'daily' ? 'D' : view === 'weekly' ? 'W' : 'M'})`}
                 >
                   {view === 'weekly' ? '2-Day' : view.charAt(0).toUpperCase() + view.slice(1)}
                 </button>
@@ -1186,6 +1266,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                 type="button"
                 className="create-event-btn add-pill"
                 onClick={() => setModal({ open: true, date: selectedDate })}
+                title="New block (N) — or drag on the grid"
               >
                 <span className="add-pill-ic"><Plus size={16} strokeWidth={2.75} /></span>
                 <span className="create-event-text-desktop">Add event</span>
@@ -1237,6 +1318,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                         >
                           <span className="day-name">{d.toLocaleDateString('en-US', { weekday: 'long' })}</span>
                           <strong className="day-number-pill">{d.getDate()}</strong>
+                          <span className="day-load">{describeDayLoad(dayItems)}</span>
                         </div>
                         {dayAllDayItems.length > 0 && (
                           <div className="all-day-events-container" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -1300,24 +1382,58 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                       const iso = toISODate(d)
                       const dayItems = viewType === 'weekly' ? weekItemsByDay[dayIdx] : selectedItems
                       const positioned = getPositionedItems(dayItems)
+                      const isTodayCol = iso === todayIso
+                      const draftGhost: GridDrag | null =
+                        drag?.kind === 'create' && drag.date === iso
+                          ? drag
+                          : !drag && modal.open && !modal.item && modal.draft && modal.date === iso
+                            ? { kind: 'create', date: iso, start: timeToMinutes(modal.draft.startTime), end: timeToMinutes(modal.draft.endTime) }
+                            : null
+                      const moveGhost = drag && drag.kind !== 'create' && drag.date === iso ? drag : null
+                      const draggingId = drag && drag.kind !== 'create' ? drag.item.id : undefined
                       return (
-                        <div key={iso} className="grid-day-column">
+                        <div
+                          key={iso}
+                          ref={registerColumn(iso)}
+                          className={cn('grid-day-column', isTodayCol && 'is-today')}
+                          onPointerDown={(e) => columnPointerDown(e, iso)}
+                          onPointerMove={(e) => columnPointerMove(e, iso)}
+                          onPointerLeave={clearHover}
+                        >
+                          {hover && hover.date === iso && !drag && !modal.open && (
+                            <div className="grid-hover-slot" style={{ top: minutePct(hover.minute), height: minutePct(60) }} aria-hidden="true">
+                              <Plus size={11} strokeWidth={2.8} />
+                              {formatShortTime(hover.minute)}
+                            </div>
+                          )}
                           {positioned.map(({ item, top, height, width, left }) => {
                             const status = getItemStatus(item, iso)
                             const isActive = activeItem && itemKey(item) === itemKey(activeItem)
                             const isAllDay = item.allDay || !item.startTime
                             const cardStyles = getEventStyleClasses(item)
+                            const canDrag = Boolean(item.id) && !isRecurring(item)
+                            const isDragSource = Boolean(draggingId) && item.id === draggingId
                             return (
                               <button
                                 type="button"
                                 key={itemKey(item)}
-                                className={`grid-event-card status-${status} ${isActive ? 'is-active' : ''} ${cardStyles.className}`}
+                                className={cn(
+                                  'grid-event-card',
+                                  `status-${status}`,
+                                  isActive && 'is-active',
+                                  canDrag && 'is-draggable',
+                                  isDragSource && 'is-drag-source',
+                                  cardStyles.className,
+                                )}
+                                onPointerDown={canDrag ? (e) => itemPointerDown(e, item, iso, 'move') : (e) => e.stopPropagation()}
                                 onClick={(e) => {
                                   e.stopPropagation()
+                                  if (consumeClick()) return
                                   const rect = e.currentTarget.getBoundingClientRect()
                                   setSelectedItemKey(itemKey(item))
                                   setAnchorRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
                                 }}
+                                title={canDrag ? undefined : isRecurring(item) ? 'Repeating block — edit it to change the whole series' : undefined}
                                 style={{
                                   position: 'absolute',
                                   top: `${top}px`,
@@ -1338,7 +1454,11 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                                 ) : (
                                   <div className={`event-card-content ${height < 46 ? 'is-compact' : ''}`}>
                                     <div className="event-details-top">
-                                      <strong className="event-title">{item.title}</strong>
+                                      <strong className="event-title">
+                                        {createElement(iconForItem(item), { size: 11, strokeWidth: 2.5, className: 'event-kind-ic', 'aria-hidden': true })}
+                                        {item.title}
+                                        {isRecurring(item) && <Repeat size={10} strokeWidth={2.6} className="event-repeat-ic" aria-label="Repeats" />}
+                                      </strong>
                                       <span className="event-time">
                                         <Clock size={12} />
                                         {formatItemTime(item)}
@@ -1346,9 +1466,48 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                                     </div>
                                   </div>
                                 )}
+                                {canDrag && (
+                                  <span
+                                    className="grid-event-resize"
+                                    aria-hidden="true"
+                                    onPointerDown={(e) => itemPointerDown(e, item, iso, 'resize')}
+                                  />
+                                )}
                               </button>
                             )
                           })}
+                          {moveGhost && (
+                            <div
+                              className="grid-drag-ghost is-move"
+                              style={{
+                                ...getEventStyleClasses(moveGhost.item).style,
+                                top: minutePct(moveGhost.start),
+                                height: minutePct(moveGhost.end - moveGhost.start),
+                              } as React.CSSProperties}
+                              aria-hidden="true"
+                            >
+                              <strong>{moveGhost.item.title}</strong>
+                              <span>{formatMinuteRange(moveGhost.start, moveGhost.end)}</span>
+                            </div>
+                          )}
+                          {draftGhost && (
+                            <div
+                              className="grid-drag-ghost is-create"
+                              style={{ top: minutePct(draftGhost.start), height: minutePct(draftGhost.end - draftGhost.start) }}
+                              aria-hidden="true"
+                            >
+                              <strong>(No title)</strong>
+                              <span>
+                                {formatMinuteRange(draftGhost.start, draftGhost.end)}
+                                <em>{formatDuration(draftGhost.end - draftGhost.start)}</em>
+                              </span>
+                            </div>
+                          )}
+                          {isTodayCol && (
+                            <div className="grid-now-line" style={{ top: minutePct(nowMinutes) }} aria-hidden="true">
+                              <span className="grid-now-dot" />
+                            </div>
+                          )}
                         </div>
                       )
                     })}
@@ -1560,11 +1719,18 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
               <Search size={14} className="search-icon" />
               <input
                 type="text"
+                ref={searchInputRef}
                 placeholder="Search a task..."
                 value={searchQuery}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setSearchQuery('')
+                    e.currentTarget.blur()
+                  }
+                }}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <kbd className="search-shortcut">⌘S</kbd>
+              <kbd className="search-shortcut" title="Press / to search">/</kbd>
             </div>
           </div>
 
@@ -1865,9 +2031,16 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
 
       {modal.open && createPortal(
         <CalendarItemModal
+          key={modal.item ? itemKey(modal.item) : `new-${modal.date}-${modal.draft?.startTime ?? ''}`}
           date={modal.date}
           item={modal.item}
+          draft={modal.draft}
+          items={items}
           existingCustomCategories={existingCustomCategories}
+          onDelete={(target) => {
+            setModal({ open: false })
+            setDeleteTarget(target)
+          }}
           onClose={() => setModal({ open: false })}
           onSaved={() => {
             setModal({ open: false })
@@ -1945,13 +2118,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
                 type="button"
                 className="color-edit-reset"
                 onClick={() => {
-                  actualCategories.forEach((cat) => {
-                    // Remove custom override so defaults are restored
-                    const normalized = cat.trim().toLowerCase()
-                    delete _customCategoryColors[normalized]
-                  })
-                  // eslint-disable-next-line no-empty
-                  try { localStorage.setItem(CUSTOM_COLORS_KEY, JSON.stringify(_customCategoryColors)) } catch {}
+                  resetCustomCategoryColors(actualCategories)
                   const fresh: Record<string, string> = {}
                   actualCategories.forEach((cat) => { fresh[cat] = colorForCategory(cat) })
                   setColorEditDraft(fresh)
@@ -1994,442 +2161,27 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   )
 }
 
-function CalendarItemModal({
-  date,
-  item,
-  existingCustomCategories = [],
-  onClose,
-  onSaved,
-}: {
-  date: string
-  item?: CalendarItem
-  existingCustomCategories?: string[]
-  onClose: () => void
-  onSaved: () => void
-}) {
-  useEffect(() => {
-    document.body.classList.add('calendar-modal-open')
-    return () => document.body.classList.remove('calendar-modal-open')
-  }, [])
+/** '3 blocks · 4h 30m' — how full a day already is. */
+function describeDayLoad(dayItems: CalendarItem[]) {
+  const live = dayItems.filter((item) => !item.cancelled)
+  if (live.length === 0) return 'Free'
+  const booked = live.reduce((sum, item) => {
+    if (item.allDay || !item.startTime) return sum
+    const start = timeToMinutes(item.startTime)
+    const end = item.endTime ? timeToMinutes(item.endTime) : start + 60
+    return sum + Math.max(0, end - start)
+  }, 0)
+  const count = `${live.length} ${live.length === 1 ? 'block' : 'blocks'}`
+  return booked ? `${count} · ${formatDuration(booked)}` : count
+}
 
-  const [saving, setSaving] = useState(false)
-  const [title, setTitle] = useState(item?.title ?? '')
-  const [itemDate, setItemDate] = useState(item?.originalDate ?? item?.date ?? date)
-  const [itemType, setItemType] = useState<CalendarItemType>(item?.itemType ?? 'TASK')
-  const [category, setCategory] = useState(item?.category ?? 'Personal')
-  // Per-event color override (Google Calendar-style): undefined means "follow
-  // the category color"; a hex means the user explicitly picked a swatch for
-  // this one event, independent of its category.
-  const [colorOverride, setColorOverride] = useState<string | undefined>(() => getCustomItemColor(item ?? {}))
-  const categoryColor = colorForCategory(category)
-  const [startTime, setStartTime] = useState(item?.startTime ?? '09:00')
-  const [endTime, setEndTime] = useState(item?.endTime ?? '10:00')
-  const [notes, setNotes] = useState(item?.notes ?? '')
-  const [completed, setCompleted] = useState(item?.completed ?? false)
-  const [recurrenceFrequency, setRecurrenceFrequency] = useState<CalendarRecurrence>(item?.recurrenceFrequency ?? 'NONE')
-  const [recurrenceUntil, setRecurrenceUntil] = useState(item?.recurrenceUntil ?? '')
-  const [error, setError] = useState('')
-  const [showCustomCategory, setShowCustomCategory] = useState(false)
-  const [customCategoryInput, setCustomCategoryInput] = useState('')
-  const [customCategories, setCustomCategories] = useState<string[]>(() => {
-    const unique = new Set(existingCustomCategories)
-    if (item?.category) {
-      const standardLabels = new Set(CATEGORY_OPTIONS.map((opt) => opt.label))
-      const trimmed = item.category.trim()
-      if (trimmed && !standardLabels.has(trimmed)) {
-        unique.add(trimmed)
-      }
-    }
-    try {
-      const saved = localStorage.getItem('calendar_custom_categories')
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        if (Array.isArray(parsed)) {
-          parsed.forEach((c) => unique.add(c.trim()))
-        }
-      }
-    } catch {
-      // ignore
-    }
-    return Array.from(unique)
-  })
+function isRecurring(item: CalendarItem) {
+  return Boolean(item.recurrenceFrequency && item.recurrenceFrequency !== 'NONE')
+}
 
-  const allCategoryOptions = [...CATEGORY_OPTIONS, ...customCategories.map((name) => ({ label: name, color: colorForCategory(name) }))]
-
-  const handleCategory = (nextCategory: string) => {
-    if (nextCategory === '__custom__') {
-      setShowCustomCategory(true)
-      setCustomCategoryInput('')
-      return
-    }
-    setShowCustomCategory(false)
-    setCategory(nextCategory)
-  }
-
-  const handleAddCustomCategory = () => {
-    const trimmed = customCategoryInput.trim()
-    if (!trimmed) return
-    // eslint-disable-next-line no-useless-assignment
-    let nextList = customCategories
-    if (!customCategories.includes(trimmed)) {
-      nextList = [...customCategories, trimmed]
-      setCustomCategories(nextList)
-      try {
-        localStorage.setItem('calendar_custom_categories', JSON.stringify(nextList))
-      } catch (e) {
-        console.error('Failed to save custom category to localStorage', e)
-      }
-    }
-    setCategory(trimmed)
-    setShowCustomCategory(false)
-    setCustomCategoryInput('')
-  }
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
-    if (!title.trim()) return setError('Title is required')
-    if (endTime && startTime >= endTime) return setError('End time must be after start time')
-
-    setSaving(true)
-    setError('')
-    const payload: CalendarItemPayload = {
-      title: title.trim(),
-      date: itemDate,
-      itemType,
-      category,
-      color: colorOverride ?? categoryColor,
-      allDay: false,
-      startTime,
-      endTime,
-      notes: notes.trim() || undefined,
-      completed,
-      recurrenceFrequency,
-      recurrenceUntil: recurrenceFrequency === 'NONE' ? undefined : recurrenceUntil || undefined,
-    }
-
-    try {
-      if (item?.id) {
-        const res = await calendarService.updateItem(item.id, payload)
-        if (res.error) throw new Error(res.error.message)
-        if (colorOverride) setCustomItemColor(item.id, colorOverride)
-        else clearCustomItemColor(item.id)
-        let toastMsg = `Updated "${title.trim()}"`
-        if (item.title !== title.trim()) {
-          toastMsg = `Task title updated from "${item.title}" to "${title.trim()}"`
-        } else if (item.date !== itemDate && item.originalDate !== itemDate) {
-          toastMsg = `Task moved from ${item.date} to ${itemDate}`
-        } else if (item.startTime !== startTime) {
-          toastMsg = `Task time updated from ${item.startTime || 'none'} to ${startTime || 'none'}`
-        }
-        toast.success(toastMsg)
-      } else {
-        const res = await calendarService.createItem(payload)
-        if (res.error) throw new Error(res.error.message)
-        if (colorOverride && res.data?.id) setCustomItemColor(res.data.id, colorOverride)
-        toast.success(`Added "${title.trim()}"`)
-      }
-      onSaved()
-    } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Failed to save item')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const tempItem = { title, category, notes, itemType, startTime, endTime, ...(colorOverride ? { color: colorOverride } : {}) }
-  const routineIconDetails = getRoutineIconDetails(tempItem)
-  const RoutineIcon = routineIconDetails.icon
-
-  const getFormattedTimeRange = () => {
-    if (!startTime) return 'All day'
-    try {
-      const formatTime = (t: string) => {
-        if (!t || !t.includes(':')) return ''
-        const [h, m] = t.split(':').map(Number)
-        if (isNaN(h) || isNaN(m)) return ''
-        return new Date(2000, 0, 1, h, m).toLocaleTimeString('en-US', {
-          hour: 'numeric',
-          minute: m ? '2-digit' : undefined,
-        })
-      }
-      const start = formatTime(startTime)
-      if (!start) return 'All day'
-      const end = endTime ? formatTime(endTime) : ''
-      return end ? `${start} - ${end}` : start
-    } catch {
-      return startTime
-    }
-  }
-
-  const isDirty = item
-    ? title.trim() !== (item.title ?? '') || notes.trim() !== (item.notes ?? '') || category !== (item.category ?? 'Personal')
-    : title.trim() !== '' || notes.trim() !== '' || customCategoryInput.trim() !== ''
-
-  const { requestClose: handleGuardedClose, dialog: confirmCloseDialog } = useConfirmClose(isDirty, onClose)
-
-  return (
-    <>
-    <div className="tasks-add-modal-overlay theme-glassmorphic" onClick={handleGuardedClose}>
-      <div className="tasks-add-entry-modal" onClick={(event) => event.stopPropagation()}>
-        <div className="modal-header">
-          <h3>{item ? 'Edit routine block' : 'Add routine block'}</h3>
-          <button type="button" className="close-modal-btn" onClick={handleGuardedClose} aria-label="Close">
-            <X size={16} />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="add-entry-form">
-          <div className="tasks-modal-grid">
-            {/* Left Column: Form */}
-            <div className="tasks-modal-form-col">
-              <div className="form-group">
-                <label>ROUTINE TITLE</label>
-                <input
-                  type="text"
-                  autoFocus
-                  placeholder="e.g. Morning Walk, Read Book..."
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="form-input"
-                />
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>TYPE</label>
-                  <select
-                    value={itemType}
-                    onChange={(e) => setItemType(e.target.value as CalendarItemType)}
-                    className="form-input"
-                  >
-                    {TYPE_OPTIONS.map((option) => (
-                      <option key={option} value={option}>{option}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>CATEGORY</label>
-                  {showCustomCategory ? (
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                      <input
-                        type="text"
-                        placeholder="Enter category name"
-                        value={customCategoryInput}
-                        onChange={(e) => setCustomCategoryInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') { e.preventDefault(); handleAddCustomCategory() }
-                        }}
-                        className="form-input"
-                        autoFocus
-                        style={{ flex: 1 }}
-                      />
-                      <button
-                        type="button"
-                        className="modal-btn-save"
-                        onClick={handleAddCustomCategory}
-                        disabled={!customCategoryInput.trim()}
-                        style={{ padding: '0 12px', fontSize: '11px', whiteSpace: 'nowrap', height: 'auto' }}
-                      >
-                        Add
-                      </button>
-                      <button
-                        type="button"
-                        className="modal-btn-cancel"
-                        onClick={() => setShowCustomCategory(false)}
-                        style={{ padding: '0 10px', fontSize: '11px', whiteSpace: 'nowrap', height: 'auto' }}
-                      >
-                        Back
-                      </button>
-                    </div>
-                  ) : (
-                    <select
-                      value={category}
-                      onChange={(e) => handleCategory(e.target.value)}
-                      className="form-input"
-                    >
-                      {allCategoryOptions.map((option) => (
-                        <option key={option.label} value={option.label}>{option.label}</option>
-                      ))}
-                      <option value="__custom__">+ Add custom...</option>
-                    </select>
-                  )}
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>EVENT COLOR</label>
-                <div className="color-swatch-row">
-                  <button
-                    type="button"
-                    className={`color-swatch-dot color-swatch-default ${!colorOverride ? 'is-selected' : ''}`}
-                    style={{ '--swatch-color': categoryColor } as React.CSSProperties}
-                    onClick={() => setColorOverride(undefined)}
-                    title="Match category color"
-                    aria-label="Match category color"
-                  >
-                    {!colorOverride && <Check size={11} strokeWidth={3} />}
-                  </button>
-                  {EVENT_COLOR_SWATCHES.map((swatch) => (
-                    <button
-                      key={swatch.hex}
-                      type="button"
-                      className={`color-swatch-dot ${colorOverride === swatch.hex ? 'is-selected' : ''}`}
-                      style={{ '--swatch-color': swatch.hex } as React.CSSProperties}
-                      onClick={() => setColorOverride(swatch.hex)}
-                      title={swatch.name}
-                      aria-label={swatch.name}
-                    >
-                      {colorOverride === swatch.hex && <Check size={11} strokeWidth={3} />}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>DATE</label>
-                  <div className="input-with-icon">
-                    <input
-                      type="date"
-                      value={itemDate}
-                      onChange={(e) => setItemDate(e.target.value)}
-                      className="form-input"
-                    />
-                    <CalendarDays size={14} className="input-icon" />
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label>REPEATS</label>
-                  <select
-                    value={recurrenceFrequency}
-                    onChange={(e) => setRecurrenceFrequency(e.target.value as CalendarRecurrence)}
-                    className="form-input"
-                  >
-                    <option value="NONE">Does not repeat</option>
-                    <option value="DAILY">Daily</option>
-                    <option value="WEEKLY">Weekly</option>
-                    <option value="MONTHLY">Monthly</option>
-                  </select>
-                </div>
-              </div>
-
-              {recurrenceFrequency !== 'NONE' && (
-                <div className="form-group">
-                  <label>REPEAT UNTIL</label>
-                  <div className="input-with-icon">
-                    <input
-                      type="date"
-                      value={recurrenceUntil}
-                      onChange={(e) => setRecurrenceUntil(e.target.value)}
-                      min={itemDate}
-                      className="form-input"
-                    />
-                    <CalendarDays size={14} className="input-icon" />
-                  </div>
-                </div>
-              )}
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>STARTS</label>
-                  <div className="input-with-icon">
-                    <input
-                      type="time"
-                      value={startTime}
-                      onChange={(e) => setStartTime(e.target.value)}
-                      className="form-input"
-                    />
-                    <Clock size={14} className="input-icon" />
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label>ENDS</label>
-                  <div className="input-with-icon">
-                    <input
-                      type="time"
-                      value={endTime}
-                      onChange={(e) => setEndTime(e.target.value)}
-                      className="form-input"
-                    />
-                    <Clock size={14} className="input-icon" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>NOTES OR CHECKLIST (OPTIONAL)</label>
-                <textarea
-                  placeholder="Add context to your event"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="form-input"
-                  rows={3}
-                />
-              </div>
-
-              <label className="calendar-checkbox-row" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', fontWeight: 700, color: 'var(--inline-ink-soft, rgba(16, 19, 18, 0.5))', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '4px' }}>
-                <input 
-                  type="checkbox" 
-                  checked={completed} 
-                  onChange={(e) => setCompleted(e.target.checked)} 
-                  style={{ width: '16px', height: '16px', borderRadius: '4px', accentColor: 'var(--inline-ink, #101312)', cursor: 'pointer' }}
-                />
-                Completed
-              </label>
-            </div>
-
-            {/* Right Column: Preview */}
-            <div className="tasks-modal-preview-col">
-              <div className="preview-label">Preview</div>
-              
-              <div
-                className="routine-card preview-mode"
-                style={{
-                  pointerEvents: 'none',
-                  width: '100%',
-                  maxWidth: '280px',
-                  '--card-color-default': routineIconDetails.color,
-                  '--card-bg-default': routineIconDetails.bg
-                } as React.CSSProperties}
-              >
-                <span className="routine-card-icon">
-                  <RoutineIcon size={16} />
-                </span>
-                <div className="routine-card-copy" style={{ display: 'grid', gap: '2px', flex: 1, minWidth: 0 }}>
-                  <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--inline-ink-faint, rgba(16, 19, 18, 0.4))', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    {getFormattedTimeRange()}
-                  </span>
-                  <strong style={{ fontSize: '13.5px', fontWeight: 700, color: 'var(--inline-ink, #101312)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title || 'Untitled Routine'}</strong>
-                  <p style={{ margin: 0, fontSize: '11.5px', color: 'var(--inline-ink-soft, rgba(16, 19, 18, 0.55))', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {notes || 'No description provided.'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="modal-footer-actions">
-            {item?.createdAt ? (
-              <div className="modal-last-updated">
-                Created: {new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-              </div>
-            ) : <div />}
-            {error && <p className="calendar-form-error" style={{ color: '#b4232e', fontSize: '11px', fontWeight: 800 }}>{error}</p>}
-            <div className="modal-btn-group">
-              <button type="button" className="modal-btn-cancel" onClick={handleGuardedClose}>
-                Cancel
-              </button>
-              <button type="submit" className="modal-btn-save" disabled={!title.trim() || saving}>
-                {saving ? <Loader2 className="animate-spin" size={16} /> : 'Save routine'}
-              </button>
-            </div>
-          </div>
-        </form>
-      </div>
-    </div>
-    {confirmCloseDialog}
-    </>
-  )
+/** Vertical position on the 24h grid as a percentage of the column height. */
+function minutePct(minutes: number) {
+  return `${(minutes / DAY_MINUTES) * 100}%`
 }
 
 function byDate(items: CalendarItem[], date: string) {
@@ -2450,11 +2202,6 @@ function getItemStatus(item: CalendarItem, selectedDate: string) {
   const end = item.endTime ? timeToMinutes(item.endTime) : start + 60
   if (now >= start && now < end) return 'current'
   return now >= end ? 'past' : 'future'
-}
-
-function timeToMinutes(time: string) {
-  const [hours, minutes] = time.split(':').map(Number)
-  return hours * 60 + minutes
 }
 
 function itemKey(item: CalendarItem) {
@@ -2480,13 +2227,6 @@ function formatItemTime(item: CalendarItem) {
   return item.endTime ? `${start} - ${formatClockTime(item.endTime)}` : start
 }
 
-function formatClockTime(time: string) {
-  const [hours, minutes] = time.split(':').map(Number)
-  return new Date(2000, 0, 1, hours, minutes).toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-  })
-}
 
 
 
@@ -2502,73 +2242,6 @@ function toISODate(date: Date) {
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
 }
-
-const CUSTOM_COLORS_KEY = 'calendar_category_custom_colors'
-
-let _customCategoryColors: Record<string, string> = (() => {
-  try {
-    const saved = localStorage.getItem(CUSTOM_COLORS_KEY)
-    if (saved) return JSON.parse(saved)
-  // eslint-disable-next-line no-empty
-  } catch {}
-  return {}
-})()
-
-function setCustomCategoryColor(category: string, color: string) {
-  _customCategoryColors = { ..._customCategoryColors, [category.toLowerCase()]: color }
-  // eslint-disable-next-line no-empty
-  try { localStorage.setItem(CUSTOM_COLORS_KEY, JSON.stringify(_customCategoryColors)) } catch {}
-}
-
-function colorForCategory(category: string) {
-  const normalized = (category || '').trim().toLowerCase()
-  if (_customCategoryColors[normalized]) return _customCategoryColors[normalized]
-  const match = CATEGORY_OPTIONS.find((option) => option.label.toLowerCase() === normalized)
-  if (match) return match.color
-  const h = hueForCategory(category)
-  return `hsl(${h}, 55%, 42%)`
-}
-
-// Per-event color overrides (Google Calendar-style "change this one event's
-// color" independent of its category/calendar), keyed by item id and stored
-// locally — same mechanism as the per-category custom colors above.
-const ITEM_COLOR_OVERRIDES_KEY = 'calendar_item_custom_colors'
-
-let _customItemColors: Record<string, string> = (() => {
-  try {
-    const saved = localStorage.getItem(ITEM_COLOR_OVERRIDES_KEY)
-    if (saved) return JSON.parse(saved)
-  // eslint-disable-next-line no-empty
-  } catch {}
-  return {}
-})()
-
-function getCustomItemColor(item: { id?: string }) {
-  if (!item.id) return undefined
-  return _customItemColors[item.id]
-}
-
-function setCustomItemColor(id: string, color: string) {
-  _customItemColors = { ..._customItemColors, [id]: color }
-  // eslint-disable-next-line no-empty
-  try { localStorage.setItem(ITEM_COLOR_OVERRIDES_KEY, JSON.stringify(_customItemColors)) } catch {}
-}
-
-function clearCustomItemColor(id: string) {
-  if (!(id in _customItemColors)) return
-  const next = { ..._customItemColors }
-  delete next[id]
-  _customItemColors = next
-  // eslint-disable-next-line no-empty
-  try { localStorage.setItem(ITEM_COLOR_OVERRIDES_KEY, JSON.stringify(_customItemColors)) } catch {}
-}
-
-
-
-
-
-
-
 
 function calculateTimeStyles(item: CalendarItem) {
   if (item.allDay || !item.startTime) {
