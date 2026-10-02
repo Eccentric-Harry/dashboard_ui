@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Heart, Pause, Phone, Play, RotateCcw, ShieldAlert, X } from 'lucide-react'
+import { HELPLINES } from '@/lib/helplines'
 import { cn } from '@/lib/utils'
 
 const PAUSE_SECONDS = 60
@@ -12,12 +13,6 @@ const COPING_STEPS = [
   'Step outside, or just to a different room.',
   "Message one person. You don't have to explain anything.",
   'Remind yourself: a feeling is weather, not the climate.',
-]
-
-const HELPLINES = [
-  { name: 'Tele-MANAS (Govt. of India, 24/7)', display: '14416', tel: 'tel:14416' },
-  { name: 'AASRA (24/7)', display: '+91 98204 66726', tel: 'tel:+919820466726' },
-  { name: 'iCall', display: '+91 91529 87821', tel: 'tel:+919152987821' },
 ]
 
 type SosOverlayProps = {

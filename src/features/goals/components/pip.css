@@ -1,0 +1,267 @@
+/* Pip — the camp's sprout spirit. Colours are tokens; motion is per mood and all of it
+   stops under prefers-reduced-motion. Shapes inside the SVG use transform-box: fill-box so
+   each part rotates around its own centre. Every selector is prefixed like
+   goals-overview.css, so the derived dark pass leaves Pip's colours alone. */
+
+:where(:root:not([data-theme='none'])) .pip {
+  --pip-body: #ffe0b5;
+  --pip-shade: #f6c58f;
+  --pip-belly: #fff3e0;
+  --pip-ink: #2a2140;
+  --pip-cheek: #ff8fa8;
+  --pip-leaf: #58c98e;
+  --pip-leaf-deep: #2f9c63;
+  --pip-foot: #f0ae74;
+  --pip-star: #ffcb3d;
+
+  overflow: visible;
+  flex: 0 0 auto;
+}
+
+:where(:root:not([data-theme='none'])) .pip * {
+  transform-box: fill-box;
+}
+
+:where(:root:not([data-theme='none'])) .pip-shadow {
+  fill: rgba(42, 33, 64, 0.16);
+  transform-origin: center;
+}
+
+:where(:root:not([data-theme='none'])) .pip-rig {
+  transform-origin: 50% 100%;
+  animation: pip-bob 3.2s ease-in-out infinite;
+}
+
+:where(:root:not([data-theme='none'])) .pip-body { fill: var(--pip-body); }
+:where(:root:not([data-theme='none'])) .pip-shade { fill: var(--pip-shade); opacity: 0.75; }
+:where(:root:not([data-theme='none'])) .pip-belly { fill: var(--pip-belly); }
+:where(:root:not([data-theme='none'])) .pip-gloss { fill: #ffffff; opacity: 0.55; }
+:where(:root:not([data-theme='none'])) .pip-cheek { fill: var(--pip-cheek); opacity: 0.55; }
+:where(:root:not([data-theme='none'])) .pip-foot { fill: var(--pip-foot); }
+
+:where(:root:not([data-theme='none'])) .pip-arm rect { fill: var(--pip-shade); }
+:where(:root:not([data-theme='none'])) .pip-arm--l { transform-origin: 100% 50%; }
+:where(:root:not([data-theme='none'])) .pip-arm--r { transform-origin: 0% 50%; }
+
+:where(:root:not([data-theme='none'])) .pip-stem {
+  fill: none;
+  stroke: var(--pip-leaf-deep);
+  stroke-width: 3.2;
+  stroke-linecap: round;
+}
+
+:where(:root:not([data-theme='none'])) .pip-leaf { fill: var(--pip-leaf); }
+:where(:root:not([data-theme='none'])) .pip-leaf--r { fill: var(--pip-leaf-deep); opacity: 0.9; }
+
+:where(:root:not([data-theme='none'])) .pip-sprout {
+  transform-origin: 50% 100%;
+  animation: pip-sway 3.6s ease-in-out infinite;
+}
+
+:where(:root:not([data-theme='none'])) .pip-eyes ellipse { fill: var(--pip-ink); }
+:where(:root:not([data-theme='none'])) .pip-glint { fill: #ffffff; }
+:where(:root:not([data-theme='none'])) .pip-eyes path,
+:where(:root:not([data-theme='none'])) .pip-mouth--smile {
+  fill: none;
+  stroke: var(--pip-ink);
+  stroke-width: 3.4;
+  stroke-linecap: round;
+}
+
+:where(:root:not([data-theme='none'])) .pip-mouth--open { fill: var(--pip-ink); }
+:where(:root:not([data-theme='none'])) .pip-mouth--o { fill: var(--pip-ink); }
+
+:where(:root:not([data-theme='none'])) .pip-eyes--open {
+  transform-origin: center;
+  animation: pip-blink 4.8s infinite;
+}
+
+/* Which face each mood wears. */
+:where(:root:not([data-theme='none'])) .pip-eyes--happy,
+:where(:root:not([data-theme='none'])) .pip-eyes--sleepy,
+:where(:root:not([data-theme='none'])) .pip-mouth--open,
+:where(:root:not([data-theme='none'])) .pip-mouth--o,
+:where(:root:not([data-theme='none'])) .pip-fx {
+  display: none;
+}
+
+:where(:root:not([data-theme='none'])) .pip[data-mood='celebrating'] .pip-eyes--open,
+:where(:root:not([data-theme='none'])) .pip[data-mood='proud'] .pip-eyes--open,
+:where(:root:not([data-theme='none'])) .pip[data-mood='cozy'] .pip-eyes--open,
+:where(:root:not([data-theme='none'])) .pip[data-mood='waking'] .pip-eyes--open {
+  display: none;
+}
+
+:where(:root:not([data-theme='none'])) .pip[data-mood='celebrating'] .pip-eyes--happy,
+:where(:root:not([data-theme='none'])) .pip[data-mood='proud'] .pip-eyes--happy,
+:where(:root:not([data-theme='none'])) .pip[data-mood='cozy'] .pip-eyes--sleepy,
+:where(:root:not([data-theme='none'])) .pip[data-mood='waking'] .pip-eyes--sleepy {
+  display: inline;
+}
+
+:where(:root:not([data-theme='none'])) .pip[data-mood='celebrating'] .pip-mouth--smile,
+:where(:root:not([data-theme='none'])) .pip[data-mood='waking'] .pip-mouth--smile {
+  display: none;
+}
+
+:where(:root:not([data-theme='none'])) .pip[data-mood='celebrating'] .pip-mouth--open,
+:where(:root:not([data-theme='none'])) .pip[data-mood='waking'] .pip-mouth--o {
+  display: inline;
+}
+
+:where(:root:not([data-theme='none'])) .pip[data-mood='celebrating'] .pip-fx--stars,
+:where(:root:not([data-theme='none'])) .pip[data-mood='proud'] .pip-fx--stars,
+:where(:root:not([data-theme='none'])) .pip[data-mood='cozy'] .pip-fx--z {
+  display: inline;
+}
+
+:where(:root:not([data-theme='none'])) .pip-fx--stars path {
+  fill: var(--pip-star);
+  transform-origin: center;
+  animation: pip-twinkle 1.4s ease-in-out infinite;
+}
+
+:where(:root:not([data-theme='none'])) .pip-fx--stars path:nth-child(2) { animation-delay: 0.35s; }
+:where(:root:not([data-theme='none'])) .pip-fx--stars path:nth-child(3) { animation-delay: 0.7s; }
+
+:where(:root:not([data-theme='none'])) .pip-fx--z text {
+  fill: var(--pip-ink);
+  opacity: 0.55;
+  font-family: 'Fredoka', 'Nunito', system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  animation: pip-z 3s ease-in-out infinite;
+}
+
+:where(:root:not([data-theme='none'])) .pip-fx--z text:nth-child(2) {
+  font-size: 10px;
+  animation-delay: 1.4s;
+}
+
+/* Mood motion. */
+:where(:root:not([data-theme='none'])) .pip[data-mood='celebrating'] .pip-rig {
+  animation: pip-hop 0.85s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+}
+
+:where(:root:not([data-theme='none'])) .pip[data-mood='celebrating'] .pip-arm--l { animation: pip-cheer-l 0.85s ease-in-out infinite; }
+:where(:root:not([data-theme='none'])) .pip[data-mood='celebrating'] .pip-arm--r { animation: pip-cheer-r 0.85s ease-in-out infinite; }
+
+:where(:root:not([data-theme='none'])) .pip[data-mood='proud'] .pip-rig {
+  animation: pip-puff 2.4s ease-in-out infinite;
+}
+
+:where(:root:not([data-theme='none'])) .pip[data-mood='welcome'] .pip-arm--r {
+  animation: pip-wave 1.6s ease-in-out infinite;
+}
+
+:where(:root:not([data-theme='none'])) .pip[data-mood='eager'] .pip-rig {
+  animation: pip-eager 1.8s ease-in-out infinite;
+}
+
+:where(:root:not([data-theme='none'])) .pip[data-mood='waking'] .pip-arm--l { animation: pip-stretch-l 3.6s ease-in-out infinite; }
+:where(:root:not([data-theme='none'])) .pip[data-mood='waking'] .pip-arm--r { animation: pip-stretch-r 3.6s ease-in-out infinite; }
+
+:where(:root:not([data-theme='none'])) .pip[data-mood='cozy'] .pip-rig {
+  animation-duration: 5.2s;
+}
+
+@keyframes pip-bob {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  50% { transform: translateY(-2px) scale(0.99, 1.02); }
+}
+
+@keyframes pip-sway {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+}
+
+@keyframes pip-blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.12); }
+}
+
+@keyframes pip-hop {
+  0% { transform: translateY(0) scale(1.08, 0.9); }
+  35% { transform: translateY(-16px) scale(0.94, 1.08); }
+  70% { transform: translateY(0) scale(1.06, 0.92); }
+  100% { transform: translateY(0) scale(1.08, 0.9); }
+}
+
+@keyframes pip-cheer-l {
+  0%, 100% { transform: rotate(0deg); }
+  40% { transform: rotate(48deg) translateY(-6px); }
+}
+
+@keyframes pip-cheer-r {
+  0%, 100% { transform: rotate(0deg); }
+  40% { transform: rotate(-48deg) translateY(-6px); }
+}
+
+@keyframes pip-wave {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-55deg) translateY(-4px); }
+  50% { transform: rotate(-30deg) translateY(-4px); }
+  75% { transform: rotate(-55deg) translateY(-4px); }
+}
+
+@keyframes pip-puff {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04, 1.03) translateY(-1px); }
+}
+
+@keyframes pip-eager {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  50% { transform: rotate(4deg) translateY(-3px); }
+}
+
+@keyframes pip-stretch-l {
+  0%, 60%, 100% { transform: rotate(0deg); }
+  20%, 40% { transform: rotate(70deg) translateY(-8px); }
+}
+
+@keyframes pip-stretch-r {
+  0%, 60%, 100% { transform: rotate(0deg); }
+  20%, 40% { transform: rotate(-70deg) translateY(-8px); }
+}
+
+@keyframes pip-twinkle {
+  0%, 100% { transform: scale(0.6) rotate(0deg); opacity: 0.4; }
+  50% { transform: scale(1.15) rotate(20deg); opacity: 1; }
+}
+
+@keyframes pip-z {
+  0% { transform: translate(0, 6px); opacity: 0; }
+  30% { opacity: 0.6; }
+  100% { transform: translate(6px, -10px); opacity: 0; }
+}
+
+:where(:root:not([data-theme='none'])) .pip-leaf--third { fill: var(--pip-leaf); opacity: 0.92; }
+
+:where(:root:not([data-theme='none'])) .pip-bloom,
+:where(:root:not([data-theme='none'])) .pip-bud {
+  transform-origin: 50% 100%;
+  animation: pip-bloom-in 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* A piece just put on lands with a little pop. */
+:where(:root:not([data-theme='none'])) .pip-wear {
+  transform-origin: 50% 100%;
+  animation: pip-wear-on 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes pip-wear-on {
+  0% { transform: translateY(-10px) scale(0.6); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes pip-bloom-in {
+  0% { transform: scale(0.2); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(:root:not([data-theme='none'])) .pip *,
+  :where(:root:not([data-theme='none'])) .pip-rig {
+    animation: none !important;
+  }
+}

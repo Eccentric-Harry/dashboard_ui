@@ -8,7 +8,7 @@
 // Colours are hex, or `var(--token, fallback)` for callers who want a route token —
 // those resolve against the anchor element, so a route's dark re-pointing applies.
 
-export type CelebrationPaletteName = 'confetti' | 'lime' | 'water' | 'finance'
+export type CelebrationPaletteName = 'confetti' | 'lime' | 'water' | 'finance' | 'candy' | 'path'
 
 interface PaletteSpec {
   light: readonly string[]
@@ -46,6 +46,19 @@ const PALETTES: Record<CelebrationPaletteName, PaletteSpec> = {
     dark: ['#8fd4a8', '#a8d4b6', '#f3d49b', '#b3b9f0', '#e4a283', '#9cc6e8'],
     accent: { light: '#4b7a63', dark: '#8fd4a8' },
   },
+  // Goals — the camp's candy jars: every goal colour at once, led by tangerine and mint.
+  candy: {
+    light: ['#ff9f5a', '#ff9f5a', '#3fcb91', '#3fcb91', '#52b4ff', '#a07cff', '#ff6f95', '#ffcb3d', '#2fc4be', '#fff3e0'],
+    dark: ['#ffb27a', '#ffb27a', '#5fd9a6', '#5fd9a6', '#78c4ff', '#b89cff', '#ff8eab', '#ffd666', '#55d3cd', '#f4efff'],
+    accent: { light: '#ff9f5a', dark: '#ffb27a' },
+  },
+  // The Quiet Path — mist, lake and birch: soft blues and sage with a little warm light.
+  path: {
+    light: ['#9fc3e4', '#9fc3e4', '#b9d9c8', '#b9d9c8', '#fff3e0', '#c9bfe8', '#ffe08a', '#ffffff'],
+    dark: ['#a9cdee', '#a9cdee', '#c3e3d2', '#c3e3d2', '#fff3e0', '#d3c9f2', '#ffe08a', '#f4efff'],
+    accent: { light: '#7ba3c8', dark: '#a9cdee' },
+  },
+
 }
 
 const VAR_RE = /^var\(\s*(--[\w-]+)\s*(?:,\s*(.+))?\)$/

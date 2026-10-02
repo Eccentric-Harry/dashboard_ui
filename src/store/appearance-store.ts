@@ -21,7 +21,7 @@ const SURFACE_KEY = 'surfaceStyle';
 const THEME_KEY = 'themePreference';
 export const DARK_THEME_ROUTES: ReadonlySet<string> = new Set([
   '/home', '/nutrition', '/finance', '/learnings', '/tasks', '/workouts',
-  '/calendar', '/prompts', '/people', '/profile', '/mind',
+  '/calendar', '/prompts', '/people', '/profile', '/mind', '/goals',
 ]);
 const THEME_COLOR = { glass: '#dfe4df', solid: '#f5f6f8', dark: '#0c0d0f' } as const;
 

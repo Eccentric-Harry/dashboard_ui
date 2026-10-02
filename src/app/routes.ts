@@ -14,6 +14,7 @@ export const APP_PATHS = [
   '/people',
   '/profile',
   '/mind',
+  '/goals',
 ] as const
 
 export type AppPath = (typeof APP_PATHS)[number]

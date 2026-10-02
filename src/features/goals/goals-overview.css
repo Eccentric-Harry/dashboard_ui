@@ -1,0 +1,1301 @@
+/* /goals — "The Camp", a full-screen world (design/GOALS_BUDDY_PLAN.md, direction v2).
+   A deliberate, user-approved exception to the app's pastel-glass system: no rail, no
+   dock, no HUD; the screen is the camp. Goals are paper lanterns on a string across the
+   sky, the week is a trail of stepping stones to the camp chest, Pip lives by the fire.
+
+   Every selector here starts with :where(:root:not([data-theme='none'])). It always
+   matches and adds no specificity, but it contains "data-theme", which is how
+   config/postcss-dark-theme.ts and postcss-solid-surface.ts know to leave a rule alone:
+   the camp is a picture, not chrome, so it keeps its authored colours in every theme
+   (night camp comes from the real night sky). Its sheets, book and letters are paper in
+   that picture and do the same (camp-ui.css, goal-modal.css). Keep the prefix on any rule
+   you add. Type: Sour Gummy (display), Nunito (body), Shantell Sans (the characters' voice). */
+
+/* ---------- Tokens ---------- */
+
+:where(:root:not([data-theme='none'])) .camp-world,
+:where(:root:not([data-theme='none'])) .gl-modal-backdrop {
+  --tb-ink: #2a2140;
+  --tb-ink-2: #6b6180;
+  --tb-ink-3: #a29ab3;
+  --tb-card: #fffcf7;
+  --tb-rim: #efe3d3;
+  --tb-lip: #e2d0b9;
+  --tb-well: #f8efe3;
+  --tb-well-2: #f2e5d4;
+  --tb-shadow: 0 14px 30px rgba(74, 52, 30, 0.07);
+  --tb-primary: #2a2140;
+  --tb-primary-lip: #110b20;
+  --tb-on-primary: #ffffff;
+  --tb-good: #1f8f5f;
+  --tb-good-soft: #d9f4e6;
+  --tb-watch: #8a5a00;
+  --tb-watch-soft: #fff0c9;
+  --tb-rest: #6b6180;
+  --tb-rest-soft: #efe9f5;
+  --tb-skeleton: #f1e7da;
+  --tb-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --tb-display: 'Sour Gummy', 'Nunito', ui-rounded, system-ui, sans-serif;
+  --tb-body: 'Nunito', ui-rounded, system-ui, sans-serif;
+  --tb-voice: 'Shantell Sans', 'Nunito', ui-rounded, system-ui, sans-serif;
+}
+
+:where(:root:not([data-theme='none'])) .camp-world [data-color='tangerine'], :where(:root:not([data-theme='none'])) .gl-modal-backdrop [data-color='tangerine'] { --c-fill: #ff9f5a; --c-lip: #e0742c; --c-soft: #ffe7d4; --c-ink: #8a3b0c; --c-on: #ffffff; }
+:where(:root:not([data-theme='none'])) .camp-world [data-color='mint'], :where(:root:not([data-theme='none'])) .gl-modal-backdrop [data-color='mint'] { --c-fill: #3fcb91; --c-lip: #23a56f; --c-soft: #d6f5e7; --c-ink: #0d5c3c; --c-on: #ffffff; }
+:where(:root:not([data-theme='none'])) .camp-world [data-color='sky'], :where(:root:not([data-theme='none'])) .gl-modal-backdrop [data-color='sky'] { --c-fill: #52b4ff; --c-lip: #2a8edd; --c-soft: #dbeeff; --c-ink: #0e4a7e; --c-on: #ffffff; }
+:where(:root:not([data-theme='none'])) .camp-world [data-color='grape'], :where(:root:not([data-theme='none'])) .gl-modal-backdrop [data-color='grape'] { --c-fill: #a07cff; --c-lip: #7a55e0; --c-soft: #ece4ff; --c-ink: #41239e; --c-on: #ffffff; }
+:where(:root:not([data-theme='none'])) .camp-world [data-color='berry'], :where(:root:not([data-theme='none'])) .gl-modal-backdrop [data-color='berry'] { --c-fill: #ff6f95; --c-lip: #de4772; --c-soft: #ffe1e9; --c-ink: #8a1c3d; --c-on: #ffffff; }
+:where(:root:not([data-theme='none'])) .camp-world [data-color='lemon'], :where(:root:not([data-theme='none'])) .gl-modal-backdrop [data-color='lemon'] { --c-fill: #ffcb3d; --c-lip: #dfa412; --c-soft: #fff2c7; --c-ink: #6e4d00; --c-on: #5c3f00; }
+:where(:root:not([data-theme='none'])) .camp-world [data-color='teal'], :where(:root:not([data-theme='none'])) .gl-modal-backdrop [data-color='teal'] { --c-fill: #2fc4be; --c-lip: #179f99; --c-soft: #d3f4f2; --c-ink: #0a5a56; --c-on: #ffffff; }
+
+/* The world's own materials, re-pointed per sky below. */
+:where(:root:not([data-theme='none'])) .camp-world {
+  --sky-top: #8fd3ff;
+  --sky-bottom: #e4f6ff;
+  --orb: #ffd25a;
+  --orb-halo: rgba(255, 220, 110, 0.32);
+  --orb-x: 830px;
+  --orb-y: 196px;
+  --orb-scale: 1;
+  --star-opacity: 0;
+  --cloud: #ffffff;
+  --cloud-opacity: 0.92;
+  --far: #a9e0b6;
+  --near: #7fcf8f;
+  --ground: #7fcf8f;
+  --ground-deep: #6cbf7d;
+  --tree: #58ac6b;
+  --ground-ink: #24532f;
+  --tent: #ff8f6b;
+  --tent-deep: #e0674a;
+  --log: #a8693f;
+  --fire-glow: #ffb84d;
+  --wood: #c98e57;
+  --wood-dark: #9c6536;
+  --wood-ink: #fff4e3;
+  --wood-ink-2: rgba(255, 244, 227, 0.78);
+  --paper: #fffaf0;
+  --paper-lip: #e7d6bd;
+  --paper-ink: #2a2140;
+  --paper-ink-2: #7a6f8c;
+  --stone: #f3ece0;
+  --stone-lip: #cbbca4;
+  --cord: #6b5440;
+  --cap: #4a3b52;
+  --halo-opacity: 0.45;
+  --bar-ink: #2a2140;
+  --bar-chip: rgba(255, 255, 255, 0.72);
+  --bar-chip-line: rgba(255, 255, 255, 0.95);
+  --lantern-w: 80px;
+  --lantern-h: 94px;
+}
+
+:where(:root:not([data-theme='none'])) .camp--dawn {
+  --sky-top: #b9b1ff;
+  --sky-bottom: #ffd9c4;
+  --orb: #ffb36b;
+  --orb-halo: rgba(255, 179, 107, 0.4);
+  --orb-x: 180px;
+  --orb-y: 222px;
+  --far: #e9b8ad;
+  --near: #92c98c;
+  --ground: #92c98c;
+  --ground-deep: #80b97a;
+  --tree: #79a96f;
+  --cloud: #fff1ec;
+}
+
+:where(:root:not([data-theme='none'])) .camp--golden {
+  --sky-top: #ff9a7a;
+  --sky-bottom: #ffd99a;
+  --orb: #ff7a45;
+  --orb-halo: rgba(255, 140, 80, 0.45);
+  --orb-x: 790px;
+  --orb-y: 226px;
+  --far: #e2a77d;
+  --near: #a9c07a;
+  --ground: #a9c07a;
+  --ground-deep: #97ae68;
+  --tree: #849b55;
+  --ground-ink: #3f4a1f;
+  --cloud: #ffe4d1;
+  --halo-opacity: 0.6;
+}
+
+:where(:root:not([data-theme='none'])) .camp--night {
+  --sky-top: #141744;
+  --sky-bottom: #363b7a;
+  --orb: #fff1c2;
+  --orb-halo: rgba(255, 241, 194, 0.14);
+  --orb-x: 840px;
+  --orb-y: 200px;
+  --star-opacity: 1;
+  --cloud-opacity: 0;
+  --far: #2b3468;
+  --near: #1f2853;
+  --ground: #1f2853;
+  --ground-deep: #1a2247;
+  --tree: #26346a;
+  --ground-ink: #c9d0ff;
+  --tent: #c86c58;
+  --tent-deep: #9e4f40;
+  --log: #6e4a33;
+  --wood: #8f6040;
+  --wood-dark: #5e3d26;
+  --stone: #3b416f;
+  --stone-lip: #232850;
+  --cord: #9a90c4;
+  --cap: #2a2440;
+  --halo-opacity: 0.95;
+  --bar-ink: #ffffff;
+  --bar-chip: rgba(255, 255, 255, 0.12);
+  --bar-chip-line: rgba(255, 255, 255, 0.24);
+}
+
+/* ---------- The world ---------- */
+
+:where(:root:not([data-theme='none'])) .camp-world {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) clamp(280px, 47%, 460px);
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bottom) 72%);
+  color: var(--tb-ink);
+  font-family: var(--tb-body);
+  isolation: isolate;
+  transition: background 1.4s ease;
+}
+
+:where(:root:not([data-theme='none'])) .camp-world :focus-visible {
+  outline: 3px solid #52b4ff;
+  outline-offset: 3px;
+}
+
+:where(:root:not([data-theme='none'])) .sky-deco {
+  position: absolute;
+  inset: 0 0 auto 0;
+  width: 100%;
+  height: 62%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+:where(:root:not([data-theme='none'])) .sky-stars circle {
+  fill: #ffffff;
+  opacity: var(--star-opacity);
+  animation: sky-twinkle 3s ease-in-out infinite;
+}
+
+:where(:root:not([data-theme='none'])) .sky-orb {
+  transform: translate(var(--orb-x), var(--orb-y)) scale(var(--orb-scale));
+  transition: transform 1.4s ease;
+}
+
+:where(:root:not([data-theme='none'])) .sky-orb-core { fill: var(--orb); }
+:where(:root:not([data-theme='none'])) .sky-orb-halo { fill: var(--orb-halo); }
+:where(:root:not([data-theme='none'])) .sky-moon { display: none; }
+:where(:root:not([data-theme='none'])) .camp--night .sky-moon { display: inline; }
+:where(:root:not([data-theme='none'])) .camp--night .sky-sun { display: none; }
+
+:where(:root:not([data-theme='none'])) .sky-cloud {
+  fill: var(--cloud);
+  opacity: var(--cloud-opacity);
+  animation: sky-drift 40s ease-in-out infinite alternate;
+}
+
+:where(:root:not([data-theme='none'])) .sky-cloud--slow { animation-duration: 58s; animation-direction: alternate-reverse; }
+:where(:root:not([data-theme='none'])) .sky-cloud--far { opacity: calc(var(--cloud-opacity) * 0.7); animation-duration: 70s; }
+
+/* ---------- Top bar ---------- */
+
+:where(:root:not([data-theme='none'])) .world-bar {
+  position: relative;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: max(14px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) 0 max(18px, env(safe-area-inset-left));
+}
+
+:where(:root:not([data-theme='none'])) .world-exit {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px 0 11px;
+  border: 1.5px solid var(--bar-chip-line);
+  border-radius: 999px;
+  background: var(--bar-chip);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--bar-ink);
+  font-family: var(--tb-display);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s var(--tb-spring);
+}
+
+:where(:root:not([data-theme='none'])) .world-exit:hover { transform: translateX(-2px); }
+
+:where(:root:not([data-theme='none'])) .world-day {
+  margin: 0;
+  color: var(--bar-ink);
+  font-family: var(--tb-display);
+  font-size: 16px;
+  font-weight: 700;
+  font-stretch: 106%;
+  white-space: nowrap;
+}
+
+:where(:root:not([data-theme='none'])) .world-day span { opacity: 0.75; }
+
+:where(:root:not([data-theme='none'])) .world-counters {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+:where(:root:not([data-theme='none'])) .world-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1.5px solid var(--bar-chip-line);
+  border-radius: 999px;
+  background: var(--bar-chip);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--bar-ink);
+  white-space: nowrap;
+}
+
+:where(:root:not([data-theme='none'])) .world-chip > svg { color: #ff8a3d; }
+:where(:root:not([data-theme='none'])) .world-chip:nth-child(2) > svg { color: #f5b400; }
+
+:where(:root:not([data-theme='none'])) .world-chip strong {
+  font-family: var(--tb-display);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+:where(:root:not([data-theme='none'])) .world-chip small {
+  font-size: 11px;
+  font-weight: 850;
+  opacity: 0.7;
+}
+
+:where(:root:not([data-theme='none'])) .world-breathe {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1.5px solid var(--bar-chip-line);
+  border-radius: 999px;
+  background: var(--bar-chip);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--bar-ink);
+  cursor: pointer;
+  opacity: 0.8;
+}
+
+:where(:root:not([data-theme='none'])) .world-breathe:hover { opacity: 1; }
+
+/* ---------- The sky band: lantern strings ---------- */
+
+:where(:root:not([data-theme='none'])) .world-sky {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+  padding: 4px max(10px, env(safe-area-inset-right)) 0 max(10px, env(safe-area-inset-left));
+}
+
+:where(:root:not([data-theme='none'])) .lanterns {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+:where(:root:not([data-theme='none'])) .lantern-row {
+  position: relative;
+  padding: 0 26px;
+}
+
+:where(:root:not([data-theme='none'])) .lantern-cordline {
+  position: absolute;
+  top: 0;
+  left: 18px;
+  right: 18px;
+  width: calc(100% - 36px);
+  overflow: visible;
+}
+
+:where(:root:not([data-theme='none'])) .lantern-cordline path {
+  fill: none;
+  stroke: var(--cord);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+:where(:root:not([data-theme='none'])) .lantern-post {
+  position: absolute;
+  top: -10px;
+  width: 10px;
+  height: 46px;
+  border-radius: 5px;
+  background: var(--wood);
+  box-shadow: inset -3px 0 0 var(--wood-dark);
+}
+
+:where(:root:not([data-theme='none'])) .lantern-post--l { left: 12px; }
+:where(:root:not([data-theme='none'])) .lantern-post--r { right: 12px; }
+
+:where(:root:not([data-theme='none'])) .lantern-slots {
+  position: relative;
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+}
+
+:where(:root:not([data-theme='none'])) .lantern {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: calc(5px + var(--drop, 0px));
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:where(:root:not([data-theme='none'])) .lantern-hang {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform-origin: 50% 0;
+  animation: lantern-sway 4.6s ease-in-out infinite;
+  animation-delay: var(--sway-delay, 0s);
+}
+
+:where(:root:not([data-theme='none'])) .lantern-cord {
+  width: 2px;
+  height: 14px;
+  background: var(--cord);
+}
+
+:where(:root:not([data-theme='none'])) .lantern-halo {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  width: calc(var(--lantern-w) * 2.3);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--c-fill) 70%, transparent) 0%, transparent 66%);
+  opacity: 0;
+  transform: translateX(-50%) scale(0.7);
+  transition: opacity 0.6s ease, transform 0.6s var(--tb-spring);
+  pointer-events: none;
+}
+
+:where(:root:not([data-theme='none'])) .lantern.is-lit .lantern-halo {
+  opacity: var(--halo-opacity);
+  transform: translateX(-50%) scale(1);
+}
+
+:where(:root:not([data-theme='none'])) .lantern.is-charging .lantern-halo {
+  opacity: calc(var(--halo-opacity) * 0.7);
+  transform: translateX(-50%) scale(0.9);
+}
+
+:where(:root:not([data-theme='none'])) .lantern-cap,
+:where(:root:not([data-theme='none'])) .lantern-base {
+  position: relative;
+  z-index: 1;
+  width: calc(var(--lantern-w) * 0.56);
+  height: 8px;
+  border-radius: 5px;
+  background: var(--cap);
+}
+
+:where(:root:not([data-theme='none'])) .lantern-base { width: calc(var(--lantern-w) * 0.44); }
+
+:where(:root:not([data-theme='none'])) .lantern-body {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: var(--lantern-w);
+  height: var(--lantern-h);
+  margin: -2px 0;
+  overflow: hidden;
+  border: 2.5px solid var(--c-fill, #cbbca4);
+  border-radius: 48% 48% 44% 44% / 40% 40% 36% 36%;
+  background: var(--paper);
+  transition: transform 0.18s ease, background 0.4s ease;
+}
+
+:where(:root:not([data-theme='none'])) .lantern-light {
+  --level: 0;
+  position: absolute;
+  inset: auto 0 0 0;
+  height: calc(var(--level) * 100%);
+  background: linear-gradient(to top, var(--c-fill), color-mix(in srgb, var(--c-fill) 55%, #ffffff));
+  transition: height 0.55s var(--tb-spring);
+}
+
+:where(:root:not([data-theme='none'])) .lantern.is-charging .lantern-light { transition: height 0.64s linear; }
+
+:where(:root:not([data-theme='none'])) .lantern-ribs {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(90deg, transparent 47%, rgba(42, 33, 64, 0.07) 47% 53%, transparent 53%),
+    repeating-linear-gradient(180deg, transparent 0 calc(25% - 1.5px), rgba(42, 33, 64, 0.09) calc(25% - 1.5px) 25%);
+  pointer-events: none;
+}
+
+:where(:root:not([data-theme='none'])) .lantern-icon {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  color: var(--c-ink, #6b5d4a);
+  transition: color 0.3s ease;
+}
+
+:where(:root:not([data-theme='none'])) .lantern.is-lit .lantern-icon,
+:where(:root:not([data-theme='none'])) .lantern.is-charging .lantern-icon { color: var(--c-on, #ffffff); }
+
+:where(:root:not([data-theme='none'])) .lantern.has-light .lantern-icon { color: var(--c-ink); }
+
+:where(:root:not([data-theme='none'])) .lantern.is-lit .lantern-body {
+  background: var(--c-fill);
+  border-color: var(--c-lip);
+}
+
+:where(:root:not([data-theme='none'])) .lantern-check {
+  position: absolute;
+  top: 7px;
+  right: 6px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+  background: var(--c-lip);
+  color: #ffffff;
+  animation: lantern-stamp 0.5s var(--tb-spring);
+}
+
+:where(:root:not([data-theme='none'])) .lantern-tassel {
+  position: relative;
+  z-index: 1;
+  width: 5px;
+  height: 16px;
+  border-radius: 0 0 4px 4px;
+  background: var(--c-lip, #cbbca4);
+}
+
+:where(:root:not([data-theme='none'])) .lantern-tag {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  max-width: 160px;
+  margin-top: 7px;
+  padding: 7px 13px 8px;
+  border-radius: 13px;
+  background: var(--paper);
+  box-shadow: 0 3px 0 var(--paper-lip);
+  color: var(--paper-ink);
+  text-align: center;
+}
+
+/* The whole name, on two balanced lines if it needs them — never an ellipsis mid-word. */
+:where(:root:not([data-theme='none'])) .lantern-name {
+  display: -webkit-box;
+  overflow: hidden;
+  max-width: 136px;
+  font-family: var(--tb-display);
+  font-size: 17px;
+  font-weight: 800;
+  font-stretch: 104%;
+  line-height: 1.04;
+  overflow-wrap: break-word;
+  text-wrap: balance;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+:where(:root:not([data-theme='none'])) .lantern-name.is-long { font-size: 15px; font-stretch: 100%; }
+
+:where(:root:not([data-theme='none'])) .lantern-figure {
+  color: var(--paper-ink-2);
+  font-size: 12px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+:where(:root:not([data-theme='none'])) .lantern-figure strong {
+  color: var(--c-ink, var(--paper-ink));
+  font-family: var(--tb-display);
+  font-size: 19px;
+  font-weight: 900;
+}
+
+:where(:root:not([data-theme='none'])) .lantern-week {
+  display: flex;
+  gap: 3px;
+  margin-top: 3px;
+}
+
+:where(:root:not([data-theme='none'])) .lantern-week i {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--paper-ink) 14%, transparent);
+}
+
+:where(:root:not([data-theme='none'])) .lantern-week i.is-hit { background: var(--c-fill); }
+:where(:root:not([data-theme='none'])) .lantern-week i.is-today { box-shadow: 0 0 0 1.5px var(--paper), 0 0 0 3px var(--c-fill); }
+:where(:root:not([data-theme='none'])) .lantern-week i.is-off { opacity: 0.4; }
+
+:where(:root:not([data-theme='none'])) .lantern.is-holdable:hover .lantern-hang,
+:where(:root:not([data-theme='none'])) .lantern--add:hover .lantern-hang {
+  animation-duration: 1.6s;
+}
+
+:where(:root:not([data-theme='none'])) .lantern.is-charging .lantern-body { transform: scale(0.94, 0.96); }
+:where(:root:not([data-theme='none'])) .lantern.is-charging .lantern-hang { animation: lantern-shiver 0.12s linear infinite; }
+
+:where(:root:not([data-theme='none'])) .lantern.is-popped .lantern-hang { animation: lantern-swing 0.9s var(--tb-spring); }
+:where(:root:not([data-theme='none'])) .lantern.is-popped .lantern-body { animation: lantern-flash 0.7s ease-out; }
+:where(:root:not([data-theme='none'])) .lantern.is-nudged .lantern-hang { animation: lantern-nudge 0.5s ease; }
+
+:where(:root:not([data-theme='none'])) .lantern--add .lantern-body {
+  border-style: dashed;
+  border-color: var(--cord);
+  background: color-mix(in srgb, var(--paper) 55%, transparent);
+  color: var(--cord);
+}
+
+:where(:root:not([data-theme='none'])) .lantern--add .lantern-tag {
+  background: color-mix(in srgb, var(--paper) 70%, transparent);
+  box-shadow: none;
+}
+
+:where(:root:not([data-theme='none'])) .lantern--ghost .lantern-body {
+  border-color: color-mix(in srgb, var(--cord) 40%, transparent);
+  background: color-mix(in srgb, var(--paper) 45%, transparent);
+  animation: sky-pulse 1.4s ease-in-out infinite;
+}
+
+/* The empty camp's pinned note. */
+:where(:root:not([data-theme='none'])) .starter-note {
+  position: relative;
+  z-index: 4;
+  align-self: center;
+  width: min(640px, calc(100% - 24px));
+  margin: 4px auto 0;
+  padding: 16px 20px 18px;
+  border-radius: 20px;
+  background: var(--paper);
+  box-shadow: 0 5px 0 var(--paper-lip), 0 18px 40px rgba(42, 33, 64, 0.16);
+  color: var(--paper-ink);
+  transform: rotate(-0.6deg);
+}
+
+:where(:root:not([data-theme='none'])) .starter-note::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  width: 84px;
+  height: 22px;
+  border-radius: 4px;
+  background: rgba(255, 203, 61, 0.7);
+  transform: translateX(-50%) rotate(2deg);
+}
+
+:where(:root:not([data-theme='none'])) .starter-note-kicker {
+  margin: 0;
+  color: var(--paper-ink-2);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+:where(:root:not([data-theme='none'])) .starter-note-title {
+  margin: 2px 0 0;
+  font-family: var(--tb-display);
+  font-size: 24px;
+  font-weight: 800;
+  font-stretch: 106%;
+  line-height: 1.1;
+}
+
+:where(:root:not([data-theme='none'])) .starter-note-line {
+  margin: 4px 0 12px;
+  color: var(--paper-ink-2);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+:where(:root:not([data-theme='none'])) .starter-note-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+:where(:root:not([data-theme='none'])) .starter-pick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 11px;
+  border: 2px solid var(--c-fill);
+  border-radius: 15px;
+  background: var(--c-soft);
+  box-shadow: 0 4px 0 var(--c-lip);
+  color: var(--c-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+:where(:root:not([data-theme='none'])) .starter-pick:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--c-lip); }
+:where(:root:not([data-theme='none'])) .starter-pick:active { transform: translateY(4px); box-shadow: 0 0 0 var(--c-lip); }
+
+:where(:root:not([data-theme='none'])) .starter-badge {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: var(--c-fill);
+  box-shadow: 0 3px 0 var(--c-lip);
+  color: var(--c-on);
+}
+
+:where(:root:not([data-theme='none'])) .starter-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+:where(:root:not([data-theme='none'])) .starter-text span {
+  font-family: var(--tb-display);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+:where(:root:not([data-theme='none'])) .starter-text small {
+  font-size: 11px;
+  font-weight: 800;
+  opacity: 0.75;
+}
+
+:where(:root:not([data-theme='none'])) .world-error {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 auto;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: var(--paper);
+  box-shadow: 0 4px 0 var(--paper-lip);
+  color: var(--paper-ink);
+  font-weight: 800;
+}
+
+:where(:root:not([data-theme='none'])) .world-error p { margin: 0; }
+
+/* ---------- The ground ---------- */
+
+:where(:root:not([data-theme='none'])) .world-ground {
+  position: relative;
+  z-index: 2;
+  min-height: 0;
+  background: linear-gradient(180deg, var(--ground) 0%, var(--ground-deep) 100%);
+  transition: background 1.4s ease;
+}
+
+:where(:root:not([data-theme='none'])) .ground-crest {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% - 40px);
+  width: 100%;
+  height: 150px;
+  pointer-events: none;
+}
+
+:where(:root:not([data-theme='none'])) .ground-far { fill: var(--far); transition: fill 1.4s ease; }
+:where(:root:not([data-theme='none'])) .ground-near { fill: var(--ground); transition: fill 1.4s ease; }
+:where(:root:not([data-theme='none'])) .ground-trees path { fill: var(--tree); }
+
+:where(:root:not([data-theme='none'])) .ground-deco {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+:where(:root:not([data-theme='none'])) .deco-tuft {
+  fill: none;
+  stroke: var(--tree);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  opacity: 0.8;
+}
+
+:where(:root:not([data-theme='none'])) .deco-flower {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: deco-nod 5s ease-in-out infinite;
+}
+
+:where(:root:not([data-theme='none'])) .deco-flower line {
+  stroke: var(--tree);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+:where(:root:not([data-theme='none'])) .deco-flower circle {
+  fill: var(--c-fill);
+}
+
+:where(:root:not([data-theme='none'])) .deco-flower .deco-flower-eye {
+  fill: #fff6d6;
+}
+
+:where(:root:not([data-theme='none'])) .camp--night .deco-flower circle {
+  fill: color-mix(in srgb, var(--c-fill) 45%, var(--ground));
+}
+
+:where(:root:not([data-theme='none'])) .deco-pebble {
+  fill: color-mix(in srgb, var(--stone) 70%, var(--ground));
+}
+
+@keyframes deco-nod {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+}
+
+:where(:root:not([data-theme='none'])) .ground-stage {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(260px, 1fr) auto;
+  align-items: end;
+  gap: 20px;
+  height: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 max(28px, env(safe-area-inset-right)) max(22px, env(safe-area-inset-bottom)) max(28px, env(safe-area-inset-left));
+}
+
+:where(:root:not([data-theme='none'])) .ground-trail-side {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 18px;
+  min-width: 0;
+  height: 100%;
+}
+
+/* The wooden signboard — the week's finding, in the world rather than on a card. */
+:where(:root:not([data-theme='none'])) .signboard {
+  position: relative;
+  align-self: flex-start;
+  max-width: min(100%, 440px);
+}
+
+:where(:root:not([data-theme='none'])) .signboard-post {
+  position: absolute;
+  left: 30px;
+  top: 60%;
+  width: 12px;
+  height: 90px;
+  border-radius: 6px;
+  background: var(--wood-dark);
+  z-index: -1;
+}
+
+:where(:root:not([data-theme='none'])) .signboard-plank {
+  padding: 11px 18px 13px;
+  border-radius: 16px;
+  background:
+    repeating-linear-gradient(180deg, transparent 0 14px, rgba(0, 0, 0, 0.05) 14px 16px),
+    var(--wood);
+  box-shadow: 0 5px 0 var(--wood-dark), 0 12px 24px rgba(0, 0, 0, 0.12);
+  color: var(--wood-ink);
+  transform: rotate(-1.2deg);
+}
+
+:where(:root:not([data-theme='none'])) .signboard-kicker {
+  margin: 0;
+  color: var(--wood-ink-2);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+:where(:root:not([data-theme='none'])) .signboard-title {
+  margin: 1px 0 0;
+  font-family: var(--tb-display);
+  font-size: clamp(20px, 2.4vw, 28px);
+  font-weight: 800;
+  font-stretch: 106%;
+  line-height: 1.08;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.12);
+}
+
+/* The trail: seven stepping stones and the camp chest. */
+:where(:root:not([data-theme='none'])) .trail {
+  position: relative;
+  min-width: 0;
+}
+
+:where(:root:not([data-theme='none'])) .trail-path {
+  position: absolute;
+  inset: 4px 0 20px;
+  width: 100%;
+  height: calc(100% - 24px);
+  overflow: visible;
+}
+
+:where(:root:not([data-theme='none'])) .trail-path path {
+  fill: none;
+  stroke: color-mix(in srgb, var(--ground-ink) 22%, transparent);
+  stroke-width: 9;
+  stroke-linecap: round;
+  stroke-dasharray: 1 16;
+}
+
+:where(:root:not([data-theme='none'])) .trail-stones {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  align-items: end;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+:where(:root:not([data-theme='none'])) .stone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  transform: translateY(calc(sin(var(--i, 0) * 1.3rad) * 7px));
+}
+
+:where(:root:not([data-theme='none'])) .stone-face {
+  display: grid;
+  place-items: center;
+  width: clamp(38px, 4.2vw, 50px);
+  aspect-ratio: 1.12;
+  border-radius: 46% 54% 50% 50% / 52% 48% 52% 48%;
+  background: var(--stone);
+  box-shadow: 0 5px 0 var(--stone-lip);
+}
+
+:where(:root:not([data-theme='none'])) .stone.is-future .stone-face {
+  background: color-mix(in srgb, var(--stone) 45%, transparent);
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--stone-lip) 40%, transparent);
+}
+
+:where(:root:not([data-theme='none'])) .stone.is-today .stone-face {
+  box-shadow: 0 5px 0 var(--stone-lip), 0 0 0 3px #ffffff, 0 0 0 6px color-mix(in srgb, #ffffff 35%, transparent);
+  animation: stone-glow 2.4s ease-in-out infinite;
+}
+
+:where(:root:not([data-theme='none'])) .stone-pebbles {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 3px;
+  max-width: 34px;
+}
+
+:where(:root:not([data-theme='none'])) .stone-pebbles i {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--c-fill);
+  box-shadow: 0 2px 0 var(--c-lip);
+}
+
+:where(:root:not([data-theme='none'])) .stone-pebbles em {
+  color: var(--paper-ink-2);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+:where(:root:not([data-theme='none'])) .stone-day {
+  color: var(--ground-ink);
+  font-family: var(--tb-display);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+:where(:root:not([data-theme='none'])) .stone.is-today .stone-day { opacity: 1; }
+:where(:root:not([data-theme='none'])) .stone.is-future .stone-day { opacity: 0.55; }
+
+:where(:root:not([data-theme='none'])) .stone-flag {
+  position: absolute;
+  bottom: calc(100% + 2px);
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--paper);
+  box-shadow: 0 2px 0 var(--paper-lip);
+  color: var(--paper-ink);
+  font-size: 9.5px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  animation: stone-flag 2.4s ease-in-out infinite;
+}
+
+/* The camp: Pip, the tent and the fire. */
+:where(:root:not([data-theme='none'])) .ground-camp {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  min-width: 0;
+  height: 100%;
+}
+
+:where(:root:not([data-theme='none'])) .camp-diorama {
+  width: min(100%, 420px);
+  height: auto;
+  overflow: visible;
+}
+
+:where(:root:not([data-theme='none'])) .pip-bubble {
+  position: relative;
+  max-width: min(100%, 330px);
+  margin: 0 0 12px 18px;
+  padding: 11px 15px 12px;
+  border: 2px solid #f1e6d6;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 4px 0 rgba(42, 33, 64, 0.12);
+  color: #2a2140;
+  font-family: var(--tb-voice);
+  font-size: 14px;
+  font-weight: 500;
+  font-variation-settings: 'BNCE' 45, 'INFM' 55;
+  line-height: 1.38;
+  animation: bubble-in 0.5s var(--tb-spring);
+}
+
+:where(:root:not([data-theme='none'])) .pip-bubble::after {
+  content: '';
+  position: absolute;
+  left: 34px;
+  bottom: -9px;
+  width: 15px;
+  height: 15px;
+  border-right: 2px solid #f1e6d6;
+  border-bottom: 2px solid #f1e6d6;
+  border-bottom-right-radius: 4px;
+  background: #ffffff;
+  transform: rotate(45deg);
+}
+
+:where(:root:not([data-theme='none'])) .camp-tent-cloth { fill: var(--tent); }
+:where(:root:not([data-theme='none'])) .camp-tent-flap { fill: var(--tent-deep); }
+:where(:root:not([data-theme='none'])) .camp-tent-stripe { stroke: rgba(255, 255, 255, 0.55); stroke-width: 3; stroke-linecap: round; }
+:where(:root:not([data-theme='none'])) .camp-tent-pole { stroke: var(--wood-dark); stroke-width: 2.5; stroke-linecap: round; }
+:where(:root:not([data-theme='none'])) .camp-tent-flag { fill: #ffcb3d; animation: tent-flag 2.2s ease-in-out infinite; transform-box: fill-box; transform-origin: 0 50%; }
+:where(:root:not([data-theme='none'])) .camp-log { fill: var(--log); }
+
+:where(:root:not([data-theme='none'])) .camp-flame {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  transition: transform 0.8s var(--tb-spring);
+}
+
+:where(:root:not([data-theme='none'])) .camp-flame-outer,
+:where(:root:not([data-theme='none'])) .camp-flame-inner {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+:where(:root:not([data-theme='none'])) .camp-flame-outer { fill: #ff8a3d; animation: flicker 1.6s ease-in-out infinite; }
+:where(:root:not([data-theme='none'])) .camp-flame-inner { fill: #ffd34d; animation: flicker 1.1s ease-in-out infinite reverse; }
+
+:where(:root:not([data-theme='none'])) .tb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 40px;
+  padding: 0 16px;
+  border: 2px solid var(--tb-rim);
+  border-radius: 14px;
+  background: var(--tb-card);
+  box-shadow: 0 4px 0 var(--tb-lip);
+  color: var(--tb-ink);
+  font-family: var(--tb-display);
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+:where(:root:not([data-theme='none'])) .tb-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 5px 0 var(--tb-lip); }
+:where(:root:not([data-theme='none'])) .tb-btn:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 0 0 var(--tb-lip); }
+:where(:root:not([data-theme='none'])) .tb-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+:where(:root:not([data-theme='none'])) .tb-btn--primary {
+  border-color: var(--tb-primary);
+  background: var(--tb-primary);
+  box-shadow: 0 4px 0 var(--tb-primary-lip);
+  color: var(--tb-on-primary);
+}
+
+:where(:root:not([data-theme='none'])) .tb-btn--primary:hover:not(:disabled) { box-shadow: 0 5px 0 var(--tb-primary-lip); }
+
+:where(:root:not([data-theme='none'])) .tb-btn--sm {
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 11px;
+  font-size: 13px;
+  box-shadow: 0 3px 0 var(--tb-lip);
+}
+
+:where(:root:not([data-theme='none'])) .tb-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 2px;
+  border: 0;
+  background: none;
+  color: var(--tb-ink-2);
+  font-family: var(--tb-display);
+  font-size: 13.5px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+:where(:root:not([data-theme='none'])) .tb-link:hover:not(:disabled) { color: var(--tb-ink); }
+:where(:root:not([data-theme='none'])) .tb-link.is-danger:hover:not(:disabled) { color: #d23a5f; }
+
+/* ---------- Bigger screens get bigger lanterns ---------- */
+
+@media (min-width: 1300px) and (min-height: 800px) {
+  :where(:root:not([data-theme='none'])) .camp-world {
+    --lantern-w: 92px;
+    --lantern-h: 108px;
+  }
+
+  :where(:root:not([data-theme='none'])) .lantern-name { font-size: 18px; }
+  :where(:root:not([data-theme='none'])) .lantern-name.is-long { font-size: 16px; }
+}
+
+@media (max-height: 680px) and (min-width: 761px) {
+  :where(:root:not([data-theme='none'])) .camp-world {
+    --lantern-w: 72px;
+    --lantern-h: 86px;
+    grid-template-rows: auto minmax(0, 1fr) clamp(250px, 45%, 400px);
+  }
+
+  :where(:root:not([data-theme='none'])) .lantern-tag { padding: 4px 9px 5px; }
+  :where(:root:not([data-theme='none'])) .lantern-name { font-size: 14px; }
+  :where(:root:not([data-theme='none'])) .lantern-name.is-long { font-size: 13px; }
+  :where(:root:not([data-theme='none'])) .pip-bubble { font-size: 13px; padding: 9px 13px 10px; }
+  :where(:root:not([data-theme='none'])) .signboard-title { font-size: 21px; }
+}
+
+/* ---------- Phone: the camp stacks and scrolls ---------- */
+
+@media (max-width: 760px) {
+  :where(:root:not([data-theme='none'])) .camp-world {
+    --lantern-w: 52px;
+    --lantern-h: 60px;
+    --orb-x: 760px;
+    --orb-y: 40px;
+    --orb-scale: 0.6;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  :where(:root:not([data-theme='none'])) .world-bar {
+    grid-template-columns: auto 1fr;
+    row-gap: 8px;
+  }
+
+  :where(:root:not([data-theme='none'])) .world-day {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    font-size: 15px;
+  }
+
+  :where(:root:not([data-theme='none'])) .world-chip small { display: none; }
+
+  :where(:root:not([data-theme='none'])) .world-sky {
+    flex: 0 0 auto;
+    padding-top: 12px;
+    padding-bottom: 8px;
+  }
+
+  :where(:root:not([data-theme='none'])) .lantern-row { padding: 0 14px; }
+  :where(:root:not([data-theme='none'])) .lantern-tag { max-width: 108px; padding: 5px 8px 6px; }
+  :where(:root:not([data-theme='none'])) .lantern-name { max-width: 100px; font-size: 13.5px; }
+  :where(:root:not([data-theme='none'])) .lantern-name.is-long { font-size: 12px; }
+  :where(:root:not([data-theme='none'])) .lantern-figure { font-size: 10px; }
+  :where(:root:not([data-theme='none'])) .lantern-figure strong { font-size: 14px; }
+  :where(:root:not([data-theme='none'])) .lantern-week i { width: 5px; height: 5px; }
+
+  :where(:root:not([data-theme='none'])) .starter-note-grid { grid-template-columns: minmax(0, 1fr); }
+
+  :where(:root:not([data-theme='none'])) .world-ground {
+    flex: 1 0 auto;
+    margin-top: 70px;
+  }
+
+  :where(:root:not([data-theme='none'])) .ground-stage {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    padding-top: 0;
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
+  }
+
+  :where(:root:not([data-theme='none'])) .ground-camp { order: -1; height: auto; margin-top: -54px; }
+  :where(:root:not([data-theme='none'])) .ground-trail-side { height: auto; padding-top: 6px; }
+  :where(:root:not([data-theme='none'])) .camp-diorama { width: min(100%, 340px); }
+  :where(:root:not([data-theme='none'])) .pip-bubble { max-width: 100%; margin-left: 4px; }
+
+  :where(:root:not([data-theme='none'])) .ground-trail-side { gap: 30px; }
+}
+
+/* ---------- Motion ---------- */
+
+@keyframes sky-twinkle {
+  0%, 100% { opacity: calc(var(--star-opacity) * 0.35); }
+  50% { opacity: var(--star-opacity); }
+}
+
+@keyframes sky-drift {
+  from { transform: translateX(-30px); }
+  to { transform: translateX(40px); }
+}
+
+@keyframes sky-pulse {
+  50% { opacity: 0.55; }
+}
+
+@keyframes lantern-sway {
+  0%, 100% { transform: rotate(-2.2deg); }
+  50% { transform: rotate(2.2deg); }
+}
+
+@keyframes lantern-shiver {
+  0%, 100% { transform: rotate(-0.8deg); }
+  50% { transform: rotate(0.8deg); }
+}
+
+@keyframes lantern-swing {
+  0% { transform: rotate(0deg) scale(1); }
+  20% { transform: rotate(14deg) scale(1.08); }
+  45% { transform: rotate(-10deg); }
+  70% { transform: rotate(5deg); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+
+@keyframes lantern-flash {
+  0% { filter: brightness(1.8) saturate(1.2); }
+  100% { filter: none; }
+}
+
+@keyframes lantern-nudge {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-7deg); }
+  55% { transform: rotate(6deg); }
+  80% { transform: rotate(-3deg); }
+}
+
+@keyframes lantern-stamp {
+  0% { transform: scale(2.2) rotate(-30deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes stone-glow {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.08); }
+}
+
+@keyframes stone-flag {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes flicker {
+  0%, 100% { transform: scale(1, 1) skewX(0deg); }
+  30% { transform: scale(0.94, 1.06) skewX(-3deg); }
+  60% { transform: scale(1.05, 0.95) skewX(3deg); }
+}
+
+@keyframes tent-flag {
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(0.82); }
+}
+
+@keyframes bubble-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(:root:not([data-theme='none'])) .camp-world *,
+  :where(:root:not([data-theme='none'])) .camp-world *::before,
+  :where(:root:not([data-theme='none'])) .camp-world *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
