@@ -91,8 +91,8 @@ describe('dailyBreakdown', () => {
     })
     expect(days).toHaveLength(30)
     expect(days[2].segments).toEqual([
-      { category: 'Rent', amount: 16000, fixed: true },
-      { category: 'Food', amount: 200, fixed: false },
+      { category: 'Rent', amount: 16000, fixed: true, fromSavings: false },
+      { category: 'Food', amount: 200, fixed: false, fromSavings: false },
     ])
     // Transfers never appear as spending.
     expect(days[27]).toMatchObject({ total: 400, isToday: true, isFuture: false })

@@ -19,7 +19,7 @@ import { sleepService } from '../services/sleep-service';
 import { tasksService } from '../services/tasks-service';
 import { workoutsService } from '../services/workouts-service';
 import type { SafeResult } from '../types/api';
-import type { DailyFinancialLog, SpendingSummary } from '../types/finance';
+import type { DailyFinancialLog, FinanceAccount, SavingsGoal, SpendingSummary } from '../types/finance';
 import type { FocusDaySummary, FocusSuggestion } from '../types/focus';
 import type { LearningsSummary } from '../types/learnings';
 import type { DailyLog, MindEntry, MindSummary } from '../types/mind';
@@ -63,6 +63,9 @@ interface HomeState {
   focusSuggestions: HomeSlice<FocusSuggestion[]>;
   spending: HomeSlice<SpendingSummary>;
   finance: HomeSlice<DailyFinancialLog[]>;
+  /** Savings goals + the account's payday — only for the payday / goal-ready insights. */
+  goals: HomeSlice<SavingsGoal[]>;
+  financeAccount: HomeSlice<FinanceAccount>;
 }
 
 type SliceKey = {
@@ -114,6 +117,8 @@ const initialState: HomeState = {
   focusSuggestions: emptySlice(),
   spending: emptySlice(),
   finance: emptySlice(),
+  goals: emptySlice(),
+  financeAccount: emptySlice(),
 };
 
 const useHomeStoreBase = create<HomeStore>()(
@@ -164,6 +169,8 @@ const useHomeStoreBase = create<HomeStore>()(
           loadAnchors(),
           settle('spending', () => financeService.getSpendingSummary(w.today.slice(0, 7))),
           settle('finance', () => financeService.getDailyLogs(w.days)),
+          settle('goals', () => financeService.getSavingsGoals()),
+          settle('financeAccount', () => financeService.getAccount()),
         ]);
 
       return {

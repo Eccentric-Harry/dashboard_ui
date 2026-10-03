@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { createElement, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { ArrowDownLeft, ArrowUpRight, Loader2, Plus, Trash2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import type { LendingRecord, TransactionType, TransferDirection } from '@/types/finance'
@@ -14,8 +14,13 @@ import {
   type LedgerEntry,
   type TxKind,
 } from '@/lib/finance-ledger'
+import { spanWords } from '@/lib/finance-goals'
+import { GOAL_ICONS, type GoalTag } from '../goal-icons'
 import { cn } from '@/lib/utils'
 import { getConsistentColor, getIconForCategory } from '../utils'
+
+/** Transfers in this category can belong to a savings goal. */
+const SAVINGS_CATEGORY = 'Savings'
 
 import faaahAudio from '@/assets/faaah.mp3'
 import { getErrorMessage } from '@/lib/errors'
@@ -29,6 +34,8 @@ export interface TransactionFormData {
   type: TransactionType
   direction?: TransferDirection
   date: string
+  /** The savings goal a Savings transfer belongs to. */
+  goalId?: string | null
 }
 
 interface AddTransactionModalProps {
@@ -45,6 +52,10 @@ interface AddTransactionModalProps {
   history?: LedgerEntry[]
   /** Edit mode only — asks the route to confirm and delete. */
   onDelete?: (tx: TransactionFormData) => void
+  /** Live savings goals, offered when money moves into or out of Savings. */
+  goals?: (GoalTag & { id: string })[]
+  /** The lead savings goal, for "≈ 2 weeks of saving for iPhone 18 Pro" under a big expense. */
+  goalLens?: { name: string; perDay: number } | null
 }
 
 const KINDS: { type: TransactionType; label: string }[] = [
@@ -78,6 +89,8 @@ export function AddTransactionModal({
   preset,
   history = [],
   onDelete,
+  goals = [],
+  goalLens = null,
 }: AddTransactionModalProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -92,6 +105,7 @@ export function AddTransactionModal({
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
   const [date, setDate] = useState(localToday)
+  const [goalId, setGoalId] = useState<string | null>(null)
   const amountRef = useRef<HTMLInputElement>(null)
 
   // Lending form
@@ -118,6 +132,7 @@ export function AddTransactionModal({
     setAmount(tx?.amount ? String(tx.amount) : '')
     setDescription(tx?.description ?? '')
     setDate(tx?.date ?? localToday())
+    setGoalId(tx?.goalId ?? null)
 
     const lend = isEdit ? initialLendingData : null
     setBorrower(lend?.borrower ?? '')
@@ -158,9 +173,19 @@ export function AddTransactionModal({
     return byDescription
   }, [history, kind])
 
-  const isDirty = Boolean(
-    amount.trim() || description.trim() || borrower.trim() || lendingAmount.trim() || dueDate.trim() || notes.trim(),
-  )
+  // Editing an existing row starts filled in, so it's only dirty once something changes.
+  const editing = isEdit && activeTab === 'Transaction' ? initialTransactionData : null
+  const isDirty = editing
+    ? amount !== String(editing.amount) ||
+      description !== editing.description ||
+      (customCategory ?? category) !== editing.category ||
+      type !== editing.type ||
+      date !== editing.date ||
+      goalId !== (editing.goalId ?? null)
+    : Boolean(
+        (isEdit ? '' : amount.trim() || description.trim()) ||
+          borrower.trim() || lendingAmount.trim() || dueDate.trim() || notes.trim(),
+      )
   const { requestClose, dialog: confirmCloseDialog } = useConfirmClose(isDirty, onClose)
 
   if (!isOpen) return null
@@ -204,6 +229,14 @@ export function AddTransactionModal({
 
     setLoading(true)
     try {
+      const offersGoals = type === 'Transfer' && finalCategory === SAVINGS_CATEGORY && goals.length > 0
+      const initialGoal = initialTransactionData?.goalId ?? null
+      // A plain edit never touches the goal link (omitted = keep); '' unlinks it.
+      const goalField = offersGoals
+        ? isEdit
+          ? goalId !== initialGoal ? { goalId: goalId ?? '' } : {}
+          : goalId ? { goalId } : {}
+        : {}
       const payload = {
         description: description.trim(),
         amount: numAmount,
@@ -211,6 +244,7 @@ export function AddTransactionModal({
         type,
         direction: type === 'Transfer' ? direction : undefined,
         date,
+        ...goalField,
       }
       const verb = isEdit ? 'Updated' : 'Saved'
       const res = isEdit && initialTransactionData?.id
@@ -292,6 +326,12 @@ export function AddTransactionModal({
     : activeTab === 'Lending' ? 'Record lending' : 'Add transaction'
 
   const kindIndex = KINDS.findIndex((k) => k.type === type)
+  const numericAmount = parseFloat(amount)
+  const goalDaysOfSpend =
+    goalLens && type === 'Expense' && !isEdit && Number.isFinite(numericAmount) && numericAmount >= 500
+      ? numericAmount / goalLens.perDay
+      : null
+  const showGoalChips = type === 'Transfer' && (customCategory ?? category) === SAVINGS_CATEGORY && goals.length > 0
 
   return (
     <>
@@ -361,28 +401,44 @@ export function AddTransactionModal({
                       <ArrowDownLeft size={13} strokeWidth={2.4} /> Money in
                     </button>
                   </div>
-                  <p>
-                    Sent home, lent, moved to savings. Changes your balance, but never counts
-                    as spending or against your budget.
+                  <p title="Sent home, lent, moved to savings — it changes your balance, but never counts as spending or against your budget.">
+                    Never counts as spending.
                   </p>
                 </div>
               )}
 
-              <label className="fin-amount-field">
-                <span className="fin-amount-prefix">₹</span>
+              {/* The date rides on the amount's line — one row instead of a field of its own,
+                  so the form fits without scrolling. */}
+              <div className="fin-amount-row">
+                <label className="fin-amount-field">
+                  <span className="fin-amount-prefix">₹</span>
+                  <input
+                    ref={amountRef}
+                    type="number"
+                    inputMode="decimal"
+                    step="0.01"
+                    min="0.01"
+                    placeholder="0"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    aria-label="Amount in rupees"
+                    autoFocus
+                  />
+                </label>
                 <input
-                  ref={amountRef}
-                  type="number"
-                  inputMode="decimal"
-                  step="0.01"
-                  min="0.01"
-                  placeholder="0"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  aria-label="Amount in rupees"
-                  autoFocus
+                  id="fin-tx-date"
+                  className="fin-date-pill"
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  aria-label="Date"
                 />
-              </label>
+              </div>
+              {goalDaysOfSpend != null && goalDaysOfSpend >= 1 && (
+                <p className="fin-goal-lens">
+                  That's about <b>{spanWords(goalDaysOfSpend)}</b> of saving for {goalLens?.name}
+                </p>
+              )}
 
               <div className="form-group">
                 <label htmlFor="fin-tx-description">
@@ -436,10 +492,26 @@ export function AddTransactionModal({
                 </div>
               </div>
 
-              <div className="form-group">
-                <label htmlFor="fin-tx-date">Date</label>
-                <input id="fin-tx-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-              </div>
+              {showGoalChips && (
+                <div className="form-group">
+                  <label>For a goal?</label>
+                  <div className="fin-chip-grid is-goals" role="listbox" aria-label="Savings goal">
+                    {goals.map((g) => (
+                      <button
+                        key={g.id}
+                        type="button"
+                        role="option"
+                        aria-selected={goalId === g.id}
+                        className={cn('fin-cat-chip fin-goal-chip-opt', g.color && `fin-goal--${g.color}`, goalId === g.id && 'is-active')}
+                        onClick={() => setGoalId(goalId === g.id ? null : g.id)}
+                      >
+                        {createElement(GOAL_ICONS[g.icon] ?? GOAL_ICONS.piggy, { size: 11, strokeWidth: 2.4 })}
+                        {g.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {error && <p className="add-tx-error">{error}</p>}
 

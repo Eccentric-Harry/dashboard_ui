@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { homeActions, useHomeStore, type HomeWindow } from '@/store/home-store'
 import type { RemoteDataStatus } from '@/store/zustand-utils'
-import type { DailyFinancialLog, SpendingSummary } from '@/types/finance'
+import type { DailyFinancialLog, FinanceAccount, SavingsGoal, SpendingSummary } from '@/types/finance'
 import type { FocusDaySummary, FocusSuggestion } from '@/types/focus'
 import type { LearningsSummary } from '@/types/learnings'
 import type { DailyLog, MindEntry, MindSummary } from '@/types/mind'
@@ -39,6 +39,8 @@ export interface HomeData {
   focusSuggestions: Slice<FocusSuggestion[]>
   spending: Slice<SpendingSummary>
   finance: Slice<DailyFinancialLog[]>
+  goals: Slice<SavingsGoal[]>
+  financeAccount: Slice<FinanceAccount>
   refetch: () => Promise<void>
   reloadAnchors: () => Promise<void>
   reloadMindEntries: () => Promise<void>
@@ -83,6 +85,8 @@ export function useHomeData(): HomeData {
   const focusSuggestions = useHomeStore.use.focusSuggestions()
   const spending = useHomeStore.use.spending()
   const finance = useHomeStore.use.finance()
+  const goals = useHomeStore.use.goals()
+  const financeAccount = useHomeStore.use.financeAccount()
 
   useEffect(() => {
     void homeActions.load(homeWindow)
@@ -115,6 +119,8 @@ export function useHomeData(): HomeData {
     focusSuggestions,
     spending,
     finance,
+    goals,
+    financeAccount,
     refetch: homeActions.refetch,
     reloadAnchors: homeActions.reloadAnchors,
     reloadMindEntries: homeActions.reloadMindEntries,

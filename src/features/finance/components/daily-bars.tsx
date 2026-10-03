@@ -15,7 +15,8 @@ interface DailyBarsProps {
   days: DaySpend[]
   /** Budget ÷ days in month — drawn as the daily line. Null without a budget. */
   allowance: number | null
-  /** Under an everyday (FLEX) budget, fixed costs are shown faded: tracked, not counted. */
+  /** Under an everyday (FLEX) budget, fixed costs are shown faded: tracked, not counted.
+   *  A purchase from a savings goal is always faded — it never counts. */
   flex: boolean
 }
 
@@ -75,8 +76,8 @@ function DailyBars({ days, allowance, flex }: DailyBarsProps) {
                 {!d.isFuture &&
                   d.segments.map((s) => (
                     <i
-                      key={`${s.category}-${s.fixed}`}
-                      className={cn(flex && s.fixed && 'is-fixed')}
+                      key={`${s.category}-${s.fixed}-${s.fromSavings}`}
+                      className={cn(((flex && s.fixed) || s.fromSavings) && 'is-fixed')}
                       style={{ flexGrow: s.amount, '--seg': getConsistentColor(s.category) } as CSSProperties}
                     />
                   ))}
@@ -86,10 +87,10 @@ function DailyBars({ days, allowance, flex }: DailyBarsProps) {
                   <b>{shortDate(d.date)}</b>
                   <strong>{d.total > 0 ? inr(d.total) : 'No spending'}</strong>
                   {d.segments.slice(0, 3).map((s) => (
-                    <span key={`${s.category}-${s.fixed}`} style={{ '--seg': getConsistentColor(s.category) } as CSSProperties}>
+                    <span key={`${s.category}-${s.fixed}-${s.fromSavings}`} style={{ '--seg': getConsistentColor(s.category) } as CSSProperties}>
                       <i />
                       {s.category}
-                      {flex && s.fixed && ' (fixed)'}
+                      {s.fromSavings ? ' (from savings)' : flex && s.fixed && ' (fixed)'}
                       <em>{inr(s.amount)}</em>
                     </span>
                   ))}

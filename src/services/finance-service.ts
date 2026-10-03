@@ -18,6 +18,11 @@ import type {
   BudgetUpdateRequest,
   CategoryReclassifyRequest,
   ReclassifyResult,
+  SavingsGoal,
+  SavingsGoalRequest,
+  GoalMoneyRequest,
+  GoalPurchaseRequest,
+  IncomePlanRequest,
 } from '../types/finance';
 import * as E from './endpoints/finance-endpoints';
 
@@ -45,6 +50,15 @@ export interface FinanceServiceInterface {
   updateLending(id: string, dto: LendingRequest): Promise<SafeResult<LendingRecord>>;
   toggleLending(id: string): Promise<SafeResult<LendingRecord>>;
   deleteLending(id: string): Promise<SafeResult<void>>;
+  // Savings goals
+  updateIncomePlan(dto: IncomePlanRequest): Promise<SafeResult<FinanceAccount>>;
+  getSavingsGoals(includeArchived?: boolean): Promise<SafeResult<SavingsGoal[]>>;
+  addSavingsGoal(dto: SavingsGoalRequest): Promise<SafeResult<SavingsGoal>>;
+  updateSavingsGoal(id: string, dto: SavingsGoalRequest): Promise<SafeResult<SavingsGoal>>;
+  setAsideForGoal(id: string, dto: GoalMoneyRequest): Promise<SafeResult<SavingsGoal>>;
+  takeOutOfGoal(id: string, dto: GoalMoneyRequest): Promise<SafeResult<SavingsGoal>>;
+  buyGoal(id: string, dto: GoalPurchaseRequest): Promise<SafeResult<SavingsGoal>>;
+  archiveGoal(id: string, release: boolean): Promise<SafeResult<SavingsGoal>>;
 }
 
 export const financeService: FinanceServiceInterface = {
@@ -77,4 +91,17 @@ export const financeService: FinanceServiceInterface = {
     instance.safeCall<LendingRecord>(E.API_UPDATE_LENDING, { params: { id }, body: dto }),
   toggleLending: (id) => instance.safeCall<LendingRecord>(E.API_TOGGLE_LENDING, { params: { id } }),
   deleteLending: (id) => instance.safeCall<void>(E.API_DELETE_LENDING, { params: { id } }),
+
+  updateIncomePlan: (dto) => instance.safeCall<FinanceAccount>(E.API_UPDATE_INCOME_PLAN, { body: dto }),
+  getSavingsGoals: (includeArchived = false) =>
+    instance.safeCall<SavingsGoal[]>(E.API_GET_SAVINGS_GOALS, { query: { includeArchived } }),
+  addSavingsGoal: (dto) => instance.safeCall<SavingsGoal>(E.API_ADD_SAVINGS_GOAL, { body: dto }),
+  updateSavingsGoal: (id, dto) =>
+    instance.safeCall<SavingsGoal>(E.API_UPDATE_SAVINGS_GOAL, { params: { id }, body: dto }),
+  setAsideForGoal: (id, dto) =>
+    instance.safeCall<SavingsGoal>(E.API_SET_ASIDE_FOR_GOAL, { params: { id }, body: dto }),
+  takeOutOfGoal: (id, dto) => instance.safeCall<SavingsGoal>(E.API_TAKE_OUT_OF_GOAL, { params: { id }, body: dto }),
+  buyGoal: (id, dto) => instance.safeCall<SavingsGoal>(E.API_BUY_GOAL, { params: { id }, body: dto }),
+  archiveGoal: (id, release) =>
+    instance.safeCall<SavingsGoal>(E.API_ARCHIVE_GOAL, { params: { id }, body: { release } }),
 };

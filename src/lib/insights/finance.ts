@@ -13,6 +13,7 @@ import {
   countsTowardBudget,
   flattenLogs,
   isFixedEntry,
+  isFromSavings,
   FAMILY_CATEGORY,
   LEGACY_TRANSFER_BUCKETS,
   type BudgetConfig,
@@ -91,9 +92,16 @@ const txInMonth = (txs: LedgerEntry[], monthKey: string): LedgerEntry[] =>
 
 const spendingIn = (txs: LedgerEntry[]): LedgerEntry[] => txs.filter((t) => t.kind === 'spending')
 
+/**
+ * Spending the month actually chose: a purchase paid for from a savings goal was planned
+ * months ago, so trends, the month-to-date comparison and the anomaly scan skip it — the
+ * phone you saved for is not a "Shopping +900%" surprise.
+ */
+const everydayIn = (txs: LedgerEntry[]): LedgerEntry[] => txs.filter((t) => t.kind === 'spending' && !isFromSavings(t))
+
 function categoryTotals(txs: LedgerEntry[]): Map<string, number> {
   const totals = new Map<string, number>()
-  for (const t of spendingIn(txs)) {
+  for (const t of everydayIn(txs)) {
     totals.set(t.category, (totals.get(t.category) ?? 0) + t.amount)
   }
   return totals
@@ -336,8 +344,9 @@ export interface DaySpend {
   date: string
   total: number
   /** Spending by category that day, largest first. `fixed` rows (rent, bill payments) are
-   *  kept apart so a FLEX budget can show them as not counted. */
-  segments: { category: string; amount: number; fixed: boolean }[]
+   *  kept apart so a FLEX budget can show them as not counted; `fromSavings` rows (a goal
+   *  purchase) never count against the budget at all. */
+  segments: { category: string; amount: number; fixed: boolean; fromSavings: boolean }[]
   isToday: boolean
   isFuture: boolean
 }
@@ -345,14 +354,15 @@ export interface DaySpend {
 /** Every day of the month with its spending split by category — transfers never included. */
 export function dailyBreakdown(input: FinanceEngineInput): DaySpend[] {
   const config = configOf(input)
-  const byDay = new Map<number, Map<string, { category: string; amount: number; fixed: boolean }>>()
+  const byDay = new Map<number, Map<string, { category: string; amount: number; fixed: boolean; fromSavings: boolean }>>()
   for (const t of spendingIn(txInMonth(flatten(input.logs), input.monthKey))) {
     const day = Number(t.day.slice(8, 10))
-    const fixed = isFixedEntry(t, config)
-    const key = `${t.category}|${fixed}`
+    const fromSavings = isFromSavings(t)
+    const fixed = !fromSavings && isFixedEntry(t, config)
+    const key = `${t.category}|${fixed}|${fromSavings}`
     const cats = byDay.get(day) ?? new Map()
     const prev = cats.get(key)
-    cats.set(key, { category: t.category, fixed, amount: (prev?.amount ?? 0) + t.amount })
+    cats.set(key, { category: t.category, fixed, fromSavings, amount: (prev?.amount ?? 0) + t.amount })
     byDay.set(day, cats)
   }
   return Array.from({ length: daysInMonth(input.monthKey) }, (_, i) => {
@@ -392,7 +402,7 @@ export function spendingComparison(input: FinanceEngineInput): SpendingCompariso
   const entries = flatten(input.logs)
   const upTo = (monthKey: string) =>
     sum(
-      spendingIn(txInMonth(entries, monthKey))
+      everydayIn(txInMonth(entries, monthKey))
         .filter((t) => throughDay == null || Number(t.day.slice(8, 10)) <= throughDay)
         .map((t) => t.amount),
     )
@@ -724,7 +734,7 @@ function subscriptionRule(input: FinanceEngineInput, burndown: Burndown | null):
 function savingsRateRule(input: FinanceEngineInput): Insight | null {
   const monthTx = txInMonth(flatten(input.logs), input.monthKey)
   const income = sum(monthTx.filter((t) => t.kind === 'income').map((t) => t.amount))
-  const spent = sum(monthTx.filter((t) => t.kind === 'spending').map((t) => t.amount))
+  const spent = sum(everydayIn(monthTx).map((t) => t.amount))
   // Money sent home or lent has left you; money moved into savings hasn't.
   const givenAway = sum(
     monthTx
@@ -792,7 +802,7 @@ function lendingRule(input: FinanceEngineInput): Insight | null {
 function anomalyRule(input: FinanceEngineInput): Insight | null {
   // Rent and bill payments are expected, however large — only flexible spending can surprise.
   const config = configOf(input)
-  const expenses = spendingIn(txInMonth(flatten(input.logs), input.monthKey)).filter((t) => !isFixedEntry(t, config))
+  const expenses = everydayIn(txInMonth(flatten(input.logs), input.monthKey)).filter((t) => !isFixedEntry(t, config))
   if (expenses.length < 8) return null
   const amounts = expenses.map((t) => t.amount)
   const med = median(amounts)
@@ -819,7 +829,7 @@ function velocityRule(input: FinanceEngineInput): Insight | null {
   const txs = flatten(input.logs)
   const cutTotal = (monthKey: string) =>
     sum(
-      spendingIn(txInMonth(txs, monthKey))
+      everydayIn(txInMonth(txs, monthKey))
         .filter((t) => Number(t.day.slice(8, 10)) <= dayCut)
         .map((t) => t.amount),
     )

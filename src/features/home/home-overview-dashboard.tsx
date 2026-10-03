@@ -31,6 +31,7 @@ import { WeekRollupCard } from './components/week-rollup-card'
 import { buildDayRecords, countActiveDays, focusCoverage, generateInsights, INSIGHT_WINDOW_DAYS } from './insights-engine'
 import { promoteForHome } from '@/lib/insights/engine'
 import { financeInsights } from '@/lib/insights/finance'
+import { savingsGoalInsights } from '@/lib/finance-goals'
 import { buildMindDays, mindInsights } from '@/lib/insights/mind'
 import { nutritionDaysFromSummary, nutritionInsights } from '@/lib/insights/nutrition'
 import { lastNDates, SLEEP_TARGET_MINUTES, WATER_QUICK_ADD_ML } from './home-types'
@@ -182,6 +183,16 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
     if (financeInput) {
       domainInsights.push(...financeInsights(financeInput))
     }
+    // The payday plan is the one finance moment that can't wait for the ranking: it's
+    // the day to pay yourself first. It takes a slot of its own while it's due.
+    const goalNotes = savingsGoalInsights({
+      goals: home.goals.data,
+      logs: home.finance.data,
+      today: home.today,
+      payday: home.financeAccount.data?.payday,
+    })
+    const payday = goalNotes.find((i) => i.id === 'fin-goal-payday')
+    domainInsights.push(...goalNotes.filter((i) => i !== payday))
     if (home.mindEntries.data) {
       domainInsights.push(
         ...mindInsights({
@@ -191,8 +202,9 @@ function HomeOverviewDashboard({ onNavigate }: HomeOverviewDashboardProps) {
         }),
       )
     }
-    return promoteForHome(domainInsights, 2)
-  }, [home.nutrition.data, financeInput, home.mindEntries.data, home.today])
+    const promoted = promoteForHome(domainInsights, payday ? 1 : 2)
+    return payday ? [payday, ...promoted] : promoted
+  }, [home.nutrition.data, financeInput, home.mindEntries.data, home.today, home.goals.data, home.finance.data, home.financeAccount.data])
 
   const insights = useMemo(
     () =>

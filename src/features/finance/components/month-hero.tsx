@@ -68,7 +68,9 @@ function MonthHero({
   // Under an everyday (FLEX) budget the figure beside the meter must be what the meter
   // measures — rent and bills are named separately in the line below it.
   const flexFigure = hasBudget && scope === 'FLEX'
-  const figure = flexFigure ? spent : summary.spending
+  // A purchase paid for from a savings goal is named in the meta line, never in the figure:
+  // the phone you saved for for six months is not this month's spending story.
+  const figure = flexFigure ? spent : summary.spending - summary.fromSavings
   const spentShown = useCountUp(Math.round(figure))
   const pct = hasBudget ? Math.round((spent / (budget ?? 1)) * 100) : 0
   const allowance = hasBudget ? (budget ?? 0) / daysInMonth(monthKey) : null
@@ -105,8 +107,10 @@ function MonthHero({
     else meta.push({ text: `${inr(perDay)}/day` })
     if (forecast != null) meta.push({ text: `≈ ${inr(forecast)} by month-end` })
     if (flexFigure && summary.fixed > 0) meta.push({ text: `+ ${inr(summary.fixed)} rent & bills` })
+    if (summary.fromSavings > 0) meta.push({ text: `+ ${inr(summary.fromSavings)} from savings` })
   } else if (summary.spendingCount > 0) {
     meta.push({ text: `${summary.spendingCount} expense${summary.spendingCount === 1 ? '' : 's'}` })
+    if (summary.fromSavings > 0) meta.push({ text: `+ ${inr(summary.fromSavings)} from savings` })
   }
 
   // ── Month-to-date comparison ────────────────────────────────────────────

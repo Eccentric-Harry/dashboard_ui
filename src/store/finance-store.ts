@@ -19,6 +19,7 @@ import type {
   FinanceAccount,
   LendingRecord,
   RepaymentInstallment,
+  SavingsGoal,
   SubscriptionDTO,
 } from '../types/finance';
 
@@ -29,6 +30,8 @@ interface FinanceState {
   subscriptions: RemoteDataStatus<SubscriptionDTO[]>;
   lending: RemoteDataStatus<LendingRecord[]>;
   repayments: RemoteDataStatus<RepaymentInstallment[]>;
+  /** Savings goals (archived included — plans filter them), money derived server-side from the ledger. */
+  goals: RemoteDataStatus<SavingsGoal[]>;
 }
 
 interface FinanceActions {
@@ -43,10 +46,15 @@ interface FinanceActions {
     loadRepayments: () => Promise<void>;
     /** Refresh subscriptions, lending and repayments together. */
     loadCommitments: () => Promise<void>;
+    loadGoals: () => Promise<void>;
+    /** After money moves into / out of a goal: the goal list, the ledger and the balance. */
+    loadGoalsAndLedger: () => Promise<void>;
     /** Optimistic local updates after a successful edit-modal save. */
     applyBalance: (balance: number) => void;
     /** The saved budget settings (amount + what it covers), as the server returned them. */
     applyBudget: (account: Pick<FinanceAccount, 'monthlyBudget'> & Partial<FinanceAccount>) => void;
+    /** The saved take-home pay + payday. */
+    applyIncomePlan: (plan: Pick<FinanceAccount, 'takeHomeMonthly' | 'payday'>) => void;
   };
 }
 
@@ -59,6 +67,7 @@ const initialState: FinanceState = {
   subscriptions: emptyRemoteStateWithArray<SubscriptionDTO>(),
   lending: emptyRemoteStateWithArray<LendingRecord>(),
   repayments: emptyRemoteStateWithArray<RepaymentInstallment>(),
+  goals: emptyRemoteStateWithArray<SavingsGoal>(),
 };
 
 const useFinanceStoreBase = create<FinanceStore>()(
@@ -102,6 +111,14 @@ const useFinanceStoreBase = create<FinanceStore>()(
             get().actions.loadRepayments(),
           ]);
         },
+        loadGoals: async () => {
+          // Archived goals come too, so old ledger rows can still name their goal; every
+          // plan and card filters them out.
+          await requestAndSet<FinanceStore, 'goals'>('goals', () => financeService.getSavingsGoals(true), set);
+        },
+        loadGoalsAndLedger: async () => {
+          await Promise.all([get().actions.loadGoals(), get().actions.loadAll()]);
+        },
         applyBalance: (balance) =>
           set((state) => {
             const prev = state.account.data;
@@ -122,6 +139,14 @@ const useFinanceStoreBase = create<FinanceStore>()(
                 fixedCategories: saved.fixedCategories ?? prev?.fixedCategories,
               };
               slice.loaded = true;
+            }
+          }),
+        applyIncomePlan: (plan) =>
+          set((state) => {
+            for (const slice of [state.budget, state.account]) {
+              if (!slice.data) continue;
+              slice.data.takeHomeMonthly = plan.takeHomeMonthly ?? null;
+              slice.data.payday = plan.payday ?? null;
             }
           }),
       },

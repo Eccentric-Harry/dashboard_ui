@@ -1,0 +1,1400 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   Finance — savings goals ("Saving for")
+
+   The Saving-for card (beside Bills), the goal workspace at /finance?goal=<id>, and
+   the goal / set-aside / pay modals. Loads after finance-refresh.css and speaks its
+   grammar: one well per card at most, hairlines between rows, one confident flat hue
+   per element. Each goal owns one hue, set by `.fin-goal--<color>` as --goal-hue and
+   used only for its ring, its progress fill and its tinted disc.
+
+   Light values only — the dark sibling of every rule is derived at build time
+   (config/postcss-dark-theme.ts); the goal hues are lifted by hand in theme-dark.css.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+.finance-dashboard {
+  /* Saved for a goal: kept, not gone — a deep sage so it never reads as spending. */
+  --fin-saved-ink: #3f7d6a;
+}
+
+/* Goal hues — desaturated, at one lightness, never neon. */
+.fin-goal--sage { --goal-hue: #5b9478; }
+.fin-goal--sky { --goal-hue: #5689b8; }
+.fin-goal--heather { --goal-hue: #8574b6; }
+.fin-goal--sand { --goal-hue: #b5853c; }
+.fin-goal--clay { --goal-hue: #bd6c5c; }
+.fin-goal--teal { --goal-hue: #3b8f89; }
+
+/* ── Bento: Bills | Saving for share a row; Sent home takes the full width ────── */
+.fin-bento > .fin-slot--goals {
+  grid-column: span 6;
+}
+
+.fin-bento > .fin-slot--transfers {
+  grid-column: 1 / -1;
+}
+
+@container finbento (max-width: 780px) {
+  .fin-bento > .fin-slot--goals {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 768px) {
+  .fin-bento > .fin-slot--goals {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ── The jar: an emoji in a soft disc, ringed by progress ─────────────────── */
+.fin-jar {
+  position: relative;
+  display: grid;
+  flex: none;
+  width: var(--jar, 40px);
+  height: var(--jar, 40px);
+  place-items: center;
+}
+
+/* The ring only — the icon inside the face is an svg too. */
+.fin-jar > svg {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg);
+}
+
+.fin-jar-track {
+  stroke: color-mix(in srgb, var(--goal-hue, #5b9478) 16%, transparent);
+}
+
+.fin-jar-fill {
+  stroke: var(--goal-hue, #5b9478);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.8s var(--fin-ease);
+}
+
+.fin-jar-face {
+  display: grid;
+  width: calc(var(--jar, 40px) - 11px);
+  height: calc(var(--jar, 40px) - 11px);
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--goal-hue, #5b9478) 13%, transparent);
+  color: var(--goal-hue, #5b9478);
+}
+
+/* ── Saving-for card ──────────────────────────────────────────────────────── */
+.finance-dashboard .fin-goals {
+  display: flex;
+  flex-direction: column;
+  padding: 22px 20px 16px;
+}
+
+.fin-goals .finance-section-head {
+  align-items: flex-start;
+}
+
+.fin-goal-list {
+  display: flex;
+  flex-direction: column;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fin-goal-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.fin-goal-row + .fin-goal-row {
+  border-top: 1px solid var(--fin-hairline);
+}
+
+.fin-goal-row.is-skeleton {
+  gap: 11px;
+  padding: 9px 4px;
+}
+
+.fin-goal-open {
+  display: grid;
+  flex: 1;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  min-height: 56px;
+  padding: 6px 6px 6px 3px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--fin-dur-fast) ease;
+}
+
+.fin-goal-open:hover {
+  background: var(--fin-well);
+}
+
+.fin-goal-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.finance-dashboard .fin-goal-main b {
+  overflow: hidden;
+  color: var(--fin-ink);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.finance-dashboard .fin-goal-main small {
+  overflow: hidden;
+  color: var(--fin-ink-soft);
+  font-size: 10.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.finance-dashboard .fin-goal-main small.is-good { color: var(--fin-mood-good); }
+.finance-dashboard .fin-goal-main small.is-watch { color: var(--fin-mood-watch); font-weight: 700; }
+.finance-dashboard .fin-goal-main small.is-done { color: var(--fin-ink-faint); }
+
+.fin-goal-figure {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.finance-dashboard .fin-goal-figure strong {
+  color: var(--fin-ink);
+  font-size: 12.5px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.finance-dashboard .fin-goal-figure small {
+  color: var(--fin-ink-faint);
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.fin-goal-row.is-bought .fin-goal-main b,
+.fin-goal-row.is-bought .fin-goal-figure strong,
+.fin-goal-row.is-paused .fin-goal-figure strong {
+  color: var(--fin-ink-faint);
+}
+
+.fin-goal-row.is-paused .fin-jar,
+.fin-goal-row.is-bought .fin-jar {
+  opacity: 0.6;
+}
+
+/* One action per row: set aside this payday's amount, or buy once it's ready. */
+.fin-goal-action {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 52px;
+  height: 28px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--fin-well);
+  color: var(--fin-ink);
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: transform var(--fin-dur-fast) var(--fin-spring), background var(--fin-dur-fast) ease;
+}
+
+.fin-goal-action:hover {
+  transform: scale(1.05);
+}
+
+.fin-goal-action:active {
+  transform: scale(0.95);
+}
+
+.fin-goal-action.is-due,
+.fin-goal-action.is-buy {
+  background: var(--fin-ink);
+  color: #ffffff;
+}
+
+.fin-goal-action.is-done {
+  min-width: 28px;
+  width: 28px;
+  padding: 0;
+  background: var(--fin-mood-good-bg);
+  color: var(--fin-mood-good);
+  cursor: default;
+}
+
+.fin-goal-action.is-done:hover {
+  transform: none;
+}
+
+/* The month's one nudge, closing the card over a hairline. */
+.fin-goal-nudge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: auto;
+  padding: 12px 2px 0;
+  border-top: 1px solid var(--fin-hairline);
+}
+
+/* The nudge sits on the card's foot, never flush against the last row. */
+.fin-goals > .fin-goal-list,
+.fin-goals > .fin-legend-more {
+  margin-bottom: 12px;
+}
+
+.finance-dashboard .fin-goal-nudge p {
+  margin: 0;
+  color: var(--fin-ink-soft);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.finance-dashboard .fin-goal-nudge p b {
+  color: var(--fin-ink);
+  font-weight: 800;
+}
+
+.fin-goal-nudge.is-good p b {
+  color: var(--fin-mood-good);
+}
+
+.finance-dashboard .fin-goal-nudge button {
+  flex: none;
+  height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--fin-mood-good-bg);
+  color: var(--fin-mood-good);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.finance-dashboard .fin-goal-nudge button:hover {
+  filter: brightness(0.96);
+}
+
+/* ── Wallet: what's set aside, the saved segment, the payday well ─────────── */
+.fin-wallet-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.fin-wallet-chips .fin-wallet-net {
+  margin-top: 10px;
+}
+
+.fin-wallet-net.is-saved {
+  background: color-mix(in srgb, var(--fin-saved-ink) 11%, transparent);
+  color: var(--fin-saved-ink);
+}
+
+.fin-flow-track i.is-saved { background: var(--fin-saved-ink); }
+.fin-flow-key span.is-saved::before { background: var(--fin-saved-ink); }
+
+.fin-wallet-bills.is-payday {
+  --fin-bill-tone: var(--fin-saved-ink);
+}
+
+/* ── Ledger: a row that moved money for a goal ───────────────────────────── */
+.finance-dashboard .fin-lg-tag.is-goal {
+  max-width: 160px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--goal-hue, var(--fin-saved-ink)) 11%, transparent);
+  color: var(--goal-hue, var(--fin-saved-ink));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.finance-dashboard .fin-lg-tag.is-goal svg {
+  color: inherit;
+}
+
+/* "For a goal?" chips take their goal's hue, the way category chips take theirs — a size
+   down from the category chips so a few goals sit on one line and the form never scrolls. */
+.fin-cat-chip.fin-goal-chip-opt {
+  --chip-hue: var(--goal-hue);
+  gap: 4px;
+  height: 26px;
+  padding: 0 9px;
+  font-size: 11px;
+}
+
+.fin-chip-grid.is-goals {
+  gap: 5px;
+}
+
+/* ── Add-transaction: a big spend in days of goal saving ─────────────────── */
+.finance-dashboard .fin-goal-lens {
+  margin: -4px 0 0;
+  color: var(--fin-ink-soft);
+  font-size: 11.5px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.finance-dashboard .fin-goal-lens b {
+  color: var(--fin-mood-watch);
+  font-weight: 800;
+}
+
+/* ── Modals ───────────────────────────────────────────────────────────────── */
+.fin-seg.is-goal button.is-active {
+  color: var(--goal-hue);
+}
+
+.fin-goal-namebar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fin-goal-icon-big {
+  display: grid;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--goal-hue) 14%, transparent);
+  color: var(--goal-hue);
+}
+
+.finance-dashboard .fin-goal-name-input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--ntr-line);
+  border-radius: 12px;
+  background: #ffffff;
+  color: var(--fin-ink);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.finance-dashboard .fin-goal-name-input:focus {
+  border-color: var(--goal-hue);
+  outline: none;
+}
+
+.fin-goal-icon-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: -4px;
+}
+
+.finance-dashboard .fin-goal-icon-row > button {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--fin-ink-soft);
+  cursor: pointer;
+  transition: background var(--fin-dur-fast) ease, color var(--fin-dur-fast) ease;
+}
+
+.finance-dashboard .fin-goal-icon-row > button:hover {
+  background: var(--fin-well);
+  color: var(--fin-ink);
+}
+
+.finance-dashboard .fin-goal-icon-row > button.is-active {
+  background: color-mix(in srgb, var(--goal-hue) 16%, transparent);
+  color: var(--goal-hue);
+}
+
+.fin-goal-swatches {
+  display: flex;
+  gap: 7px;
+  margin-top: -4px;
+  padding-left: 7px;
+}
+
+.finance-dashboard .fin-goal-swatch {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--goal-hue);
+  cursor: pointer;
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 3px transparent;
+  transition: box-shadow var(--fin-dur-fast) ease;
+}
+
+.finance-dashboard .fin-goal-swatch.is-active {
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px var(--goal-hue);
+}
+
+.fin-goal-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.fin-goal-chips.is-small {
+  margin: 8px 0 0;
+}
+
+.fin-goal-chips.is-small .fin-cat-chip {
+  height: 26px;
+  font-size: 11px;
+}
+
+.fin-goal-knock {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: -6px;
+}
+
+.finance-dashboard .fin-goal-knock-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--fin-well);
+  color: var(--fin-ink-soft);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.finance-dashboard .fin-goal-knock-toggle b {
+  color: var(--fin-ink);
+  font-weight: 800;
+}
+
+.finance-dashboard .fin-goal-knock-toggle[aria-expanded='true'] svg {
+  transform: rotate(180deg);
+}
+
+.fin-goal-inline-amount {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--ntr-line);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.finance-dashboard .fin-goal-inline-amount span {
+  color: var(--fin-ink-soft);
+  font-weight: 700;
+}
+
+.finance-dashboard .fin-goal-inline-amount input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fin-ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  outline: none;
+}
+
+.finance-dashboard .fin-goal-inline-amount em {
+  color: var(--fin-ink-faint);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.finance-dashboard .fin-goal-preview small.is-hint {
+  color: var(--fin-mood-watch);
+}
+
+.finance-dashboard .fin-form-delete.is-quiet {
+  color: var(--fin-ink-soft);
+}
+
+.finance-dashboard .add-tx-submit.is-quiet {
+  background: var(--fin-well);
+  color: var(--fin-ink);
+}
+
+.fin-goal-money-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fin-goal-money-title em {
+  overflow: hidden;
+  color: var(--fin-ink-soft);
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.form-row.is-single {
+  grid-template-columns: 1fr;
+}
+
+/* ── Workspace (/finance?goal=<id>) ───────────────────────────────────────── */
+.fin-goal-ws {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fin-goal-ws-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 52px;
+  padding: 0 4px 0 0;
+}
+
+.finance-dashboard .fin-goal-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  padding: 0 12px 0 8px;
+  border: 1px solid var(--ntr-line);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--fin-ink);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.finance-dashboard .fin-goal-back svg {
+  transition: transform 0.18s ease;
+}
+
+.finance-dashboard .fin-goal-back:hover svg {
+  transform: translateX(-2px);
+}
+
+.fin-goal-ws-spacer {
+  flex: 1;
+}
+
+.fin-goal-ws-grid > .fin-goal-hero {
+  grid-column: span 7;
+}
+
+.fin-goal-ws-grid > .fin-goal-plan {
+  grid-column: span 5;
+}
+
+.fin-goal-ws-grid > .fin-goal-history {
+  grid-column: span 7;
+}
+
+.fin-goal-ws-grid > .fin-goal-history.is-wide {
+  grid-column: 1 / -1;
+}
+
+.fin-goal-ws-grid > .fin-goal-price {
+  grid-column: span 5;
+}
+
+@container finbento (max-width: 780px) {
+  .fin-goal-ws-grid > .fin-goal-hero,
+  .fin-goal-ws-grid > .fin-goal-plan,
+  .fin-goal-ws-grid > .fin-goal-history,
+  .fin-goal-ws-grid > .fin-goal-price {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 768px) {
+  .fin-goal-ws-grid > .fin-goal-hero,
+  .fin-goal-ws-grid > .fin-goal-plan,
+  .fin-goal-ws-grid > .fin-goal-history,
+  .fin-goal-ws-grid > .fin-goal-price {
+    grid-column: 1 / -1;
+  }
+}
+
+.finance-dashboard .fin-goal-ws .finance-card {
+  height: auto;
+  max-height: none;
+}
+
+/* Hero */
+.finance-dashboard .fin-goal-hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 22px 16px;
+  /* clip, not hidden: the corner glow overhangs the card, and a hidden overflow can
+     still be scrolled sideways by focus or scrollIntoView. */
+  overflow: clip;
+  isolation: isolate;
+}
+
+/* One light source: a faint glow of the goal's own hue from the top-right corner. */
+.finance-dashboard .fin-goal-hero::before {
+  position: absolute;
+  z-index: -1;
+  top: -120px;
+  right: -120px;
+  width: 340px;
+  height: 340px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--goal-hue) 10%, transparent), transparent);
+  content: '';
+  pointer-events: none;
+}
+
+.fin-goal-hero-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fin-goal-hero-top > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.fin-goal-hero-top .finance-eyebrow {
+  margin: 0;
+}
+
+.finance-dashboard .fin-goal-hero-name {
+  margin: 2px 0 0;
+  overflow: hidden;
+  color: var(--fin-ink);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fin-goal-chip {
+  flex: none;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.fin-goal-chip.is-good { background: var(--fin-mood-good-bg); color: var(--fin-mood-good); }
+.fin-goal-chip.is-watch { background: var(--fin-mood-watch-bg); color: var(--fin-mood-watch); }
+.fin-goal-chip.is-quiet,
+.fin-goal-chip.is-done { background: var(--fin-well); color: var(--fin-ink-soft); }
+
+.finance-dashboard .fin-goal-finding {
+  margin-top: 14px;
+}
+
+.fin-goal-of {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 5px;
+  color: var(--fin-ink-soft);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.fin-goal-of b {
+  color: var(--goal-hue);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.finance-dashboard .fin-goal-meter .fin-meter-fill {
+  background: var(--goal-hue);
+}
+
+.fin-goal-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.finance-dashboard .fin-goal-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--fin-ink);
+  color: #ffffff;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: transform var(--fin-dur-fast) var(--fin-spring);
+}
+
+.finance-dashboard .fin-goal-primary:hover {
+  transform: translateY(-1px);
+}
+
+.finance-dashboard .fin-goal-primary:active {
+  transform: scale(0.97);
+}
+
+.finance-dashboard .fin-soft-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--fin-well);
+  color: var(--fin-ink);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background var(--fin-dur-fast) ease;
+}
+
+.finance-dashboard .fin-soft-btn:hover {
+  background: rgba(23, 28, 25, 0.07);
+}
+
+.finance-dashboard .fin-soft-btn.is-small {
+  height: 28px;
+  padding: 0 11px;
+  font-size: 11.5px;
+}
+
+.finance-dashboard .fin-text-btn {
+  margin-left: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--fin-ink-faint);
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.finance-dashboard .fin-text-btn:hover {
+  color: var(--fin-ink);
+}
+
+.fin-goal-hero-chart {
+  margin-top: 16px;
+}
+
+/* The goal over time */
+.fin-goal-chart {
+  margin: 0;
+}
+
+.fin-goal-chart svg {
+  display: block;
+  width: 100%;
+  height: 132px;
+  overflow: visible;
+}
+
+.fin-goal-chart svg * {
+  vector-effect: non-scaling-stroke;
+}
+
+.fin-goal-chart-area {
+  fill: color-mix(in srgb, var(--goal-hue) 12%, transparent);
+}
+
+.fin-goal-chart-line {
+  fill: none;
+  stroke: var(--goal-hue);
+  stroke-width: 2.25;
+  stroke-linejoin: round;
+}
+
+.fin-goal-chart-plan {
+  stroke: var(--fin-ink-faint);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 5;
+}
+
+.fin-goal-chart-projection {
+  stroke: var(--goal-hue);
+  stroke-width: 1.75;
+  stroke-dasharray: 1.5 4;
+  stroke-linecap: round;
+}
+
+.fin-goal-chart-target {
+  stroke: var(--fin-hairline);
+  stroke-width: 1;
+}
+
+.fin-goal-chart-today {
+  stroke: var(--fin-ink-faint);
+  stroke-width: 1;
+  opacity: 0.5;
+}
+
+.fin-goal-chart figcaption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 6px;
+  color: var(--fin-ink-faint);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.fin-goal-chart-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fin-goal-chart-key i {
+  display: inline-block;
+  width: 12px;
+  height: 0;
+  margin-left: 6px;
+  border-top: 2px solid var(--goal-hue);
+}
+
+.fin-goal-chart-key i.is-plan {
+  border-top: 2px dashed var(--fin-ink-faint);
+}
+
+.fin-goal-chart-key i.is-pace {
+  border-top: 2px dotted var(--goal-hue);
+}
+
+/* Plan card */
+.finance-dashboard .fin-goal-plan,
+.finance-dashboard .fin-goal-history,
+.finance-dashboard .fin-goal-price {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 20px 18px;
+}
+
+.fin-goal-sim {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--fin-well);
+}
+
+.fin-goal-sim-read {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+
+.finance-dashboard .fin-goal-sim-read span {
+  color: var(--fin-ink-soft);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.finance-dashboard .fin-goal-sim-read strong {
+  color: var(--fin-ink);
+  font-family: var(--fin-num-font);
+  font-size: 24px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+
+.finance-dashboard .fin-goal-sim-read em {
+  color: var(--fin-ink-soft);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.finance-dashboard .fin-goal-sim-read em b {
+  color: var(--goal-hue);
+  font-weight: 800;
+}
+
+.fin-goal-sim input[type='range'] {
+  width: 100%;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--goal-hue);
+  cursor: pointer;
+}
+
+.fin-goal-sim-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 28px;
+}
+
+.finance-dashboard .fin-goal-sim-foot small {
+  color: var(--fin-ink-faint);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* The month's waterfall — hairline rows, the room for this goal as the total. */
+.fin-goal-waterfall dl {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.fin-goal-waterfall dl > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 2px;
+}
+
+.fin-goal-waterfall dl > div + div {
+  border-top: 1px solid var(--fin-hairline);
+}
+
+.finance-dashboard .fin-goal-waterfall dt {
+  color: var(--fin-ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.finance-dashboard .fin-goal-waterfall dd {
+  margin: 0;
+  color: var(--fin-ink);
+  font-size: 12.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.fin-goal-waterfall dl > div.is-total {
+  border-top: 1px solid rgba(23, 28, 25, 0.16);
+}
+
+.finance-dashboard .fin-goal-waterfall .is-total dt {
+  color: var(--fin-ink);
+  font-weight: 700;
+}
+
+.finance-dashboard .fin-goal-waterfall .is-total dd {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.finance-dashboard .fin-goal-waterfall dd.is-short {
+  color: var(--fin-mood-watch);
+}
+
+.finance-dashboard .fin-goal-verdict {
+  margin: 6px 0 0;
+  padding: 9px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.fin-goal-verdict.is-good { background: var(--fin-mood-good-bg); color: var(--fin-mood-good); }
+.fin-goal-verdict.is-watch { background: var(--fin-mood-watch-bg); color: var(--fin-mood-watch); }
+
+.finance-dashboard .fin-goal-income-cta {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px;
+  border: 1px dashed rgba(23, 28, 25, 0.16);
+  border-radius: 14px;
+  background: transparent;
+  color: var(--fin-saved-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.finance-dashboard .fin-goal-income-cta:hover {
+  background: var(--fin-well);
+}
+
+.finance-dashboard .fin-goal-income-cta > svg {
+  justify-self: center;
+}
+
+.finance-dashboard .fin-goal-income-cta b {
+  display: block;
+  color: var(--fin-ink);
+  font-size: 12.5px;
+  font-weight: 800;
+}
+
+.finance-dashboard .fin-goal-income-cta small {
+  display: block;
+  margin-top: 2px;
+  color: var(--fin-ink-soft);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.fin-goal-levers {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fin-goal-levers li {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 8px;
+  color: var(--fin-ink-soft);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.fin-goal-levers li svg {
+  margin-top: 1px;
+  color: var(--fin-mood-watch);
+}
+
+.fin-goal-next {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.finance-dashboard .fin-goal-next p {
+  margin: 0;
+  color: var(--fin-ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+/* History */
+.fin-goal-rows {
+  display: flex;
+  flex-direction: column;
+  margin: -6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fin-goal-rows li + li {
+  border-top: 1px solid var(--fin-hairline);
+}
+
+.finance-dashboard .fin-goal-rows button {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 46px;
+  padding: 6px 4px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.finance-dashboard .fin-goal-rows button:hover:not(:disabled) {
+  background: var(--fin-well);
+}
+
+.fin-goal-row-ic {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 10px;
+}
+
+.fin-goal-row-ic.is-in { background: color-mix(in srgb, var(--goal-hue) 14%, transparent); color: var(--goal-hue); }
+.fin-goal-row-ic.is-out { background: var(--fin-mood-watch-bg); color: var(--fin-mood-watch); }
+.fin-goal-row-ic.is-buy { background: var(--fin-well); color: var(--fin-ink); }
+
+.fin-goal-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.finance-dashboard .fin-goal-row-main b {
+  overflow: hidden;
+  color: var(--fin-ink);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.finance-dashboard .fin-goal-row-main small {
+  color: var(--fin-ink-faint);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.finance-dashboard .fin-goal-rows strong {
+  font-size: 12.5px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.finance-dashboard .fin-goal-rows strong.is-in { color: var(--goal-hue); }
+.finance-dashboard .fin-goal-rows strong.is-out { color: var(--fin-mood-watch); }
+.finance-dashboard .fin-goal-rows strong.is-buy { color: var(--fin-ink); }
+
+.finance-dashboard .fin-goal-empty {
+  margin: 0;
+  padding: 18px 4px;
+  color: var(--fin-ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Price */
+.fin-goal-price .finance-section-head {
+  align-items: flex-start;
+}
+
+.fin-goal-price-list {
+  display: flex;
+  flex-direction: column;
+  margin: -6px 0 0;
+}
+
+.fin-goal-price-list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 2px;
+}
+
+.fin-goal-price-list > div + div {
+  border-top: 1px solid var(--fin-hairline);
+}
+
+.finance-dashboard .fin-goal-price-list dt {
+  color: var(--fin-ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.finance-dashboard .fin-goal-price-list dd {
+  margin: 0;
+  color: var(--fin-ink);
+  font-size: 12.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.fin-goal-price-list > div.is-total {
+  border-top: 1px solid rgba(23, 28, 25, 0.16);
+}
+
+.finance-dashboard .fin-goal-price-list .is-total dt {
+  color: var(--fin-ink);
+  font-weight: 700;
+}
+
+.finance-dashboard .fin-goal-price-list .is-total dd {
+  color: var(--goal-hue);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.finance-dashboard .fin-goal-note {
+  margin: 0;
+  color: var(--fin-ink-soft);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* Not found */
+.finance-dashboard .fin-goal-missing {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 28px;
+}
+
+.finance-dashboard .fin-goal-missing h2 {
+  margin: 0;
+  color: var(--fin-ink);
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.finance-dashboard .fin-goal-missing p {
+  margin: 0 0 6px;
+  color: var(--fin-ink-soft);
+  font-size: 12.5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fin-jar-fill,
+  .fin-goal-action,
+  .fin-goal-primary,
+  .fin-goal-back svg {
+    transition: none;
+  }
+}
+
+/* Phones: the floating profile avatar owns the top-right corner, and the chart key
+   has no room beside its dates. */
+@media (max-width: 768px) {
+  .fin-goal-ws-bar {
+    padding-right: 64px;
+  }
+
+  .fin-goal-chart-key {
+    display: none;
+  }
+}
+
+.fin-goal-chart-key {
+  white-space: nowrap;
+}
+
+/* Narrow slots (phones): the amount drops under the name so the name and status line
+   get the row's full width instead of truncating beside a figure and a pill. */
+@container (max-width: 440px) {
+  .fin-goal-open {
+    grid-template-columns: 40px minmax(0, 1fr);
+    row-gap: 4px;
+  }
+
+  .fin-goal-figure {
+    grid-column: 2;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 5px;
+  }
+
+  .finance-dashboard .fin-goal-main small {
+    white-space: normal;
+  }
+}
+
+/* ── Goal modal: two columns, so it never scrolls ─────────────────────────── */
+.finance-modal-popover.fin-form-modal.fin-goal-modal.is-split {
+  width: min(780px, calc(100vw - 32px));
+}
+
+.fin-goal-form-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px 28px;
+  align-items: start;
+}
+
+.fin-goal-form-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.fin-goal-preview.is-empty {
+  background: var(--fin-well);
+}
+
+@media (max-width: 760px) {
+  .fin-goal-form-cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The money modal's title carries the goal's icon. */
+.fin-goal-title-ic {
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  place-items: center;
+  align-self: center;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--goal-hue) 14%, transparent);
+  color: var(--goal-hue);
+}

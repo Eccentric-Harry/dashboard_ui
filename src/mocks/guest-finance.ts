@@ -1,5 +1,5 @@
-// Guest-mode finance API: the in-memory mirror of FinanceController, SubscriptionController
-// and the spending summary. Same semantics as the backend (`util/MoneyFlow.java`): transfers
+// Guest-mode finance API: the in-memory mirror of FinanceController, SubscriptionController,
+// SavingsGoalController and the spending summary. Same semantics as the backend (`util/MoneyFlow.java`): transfers
 // move the balance but are never spending or income; a FLEX budget skips fixed costs.
 // Pure over module state — `resolveGuestFinance` returns null for anything it doesn't own.
 
@@ -17,6 +17,8 @@ import type {
   BudgetScope,
   DailyFinancialLog,
   FinancialTransaction,
+  SavingsGoal,
+  SavingsGoalRequest,
   SubscriptionDTO,
   TransactionDTO,
 } from '@/types/finance';
@@ -28,11 +30,20 @@ interface Response {
 
 const logs: DailyFinancialLog[] = dummyFinanceLogs;
 let subscriptions: SubscriptionDTO[] = dummySubscriptions.map((s) => ({ ...s }));
-const account: { balance: number; monthlyBudget: number; budgetScope: BudgetScope; fixedCategories: string[] } = {
+const account: {
+  balance: number;
+  monthlyBudget: number;
+  budgetScope: BudgetScope;
+  fixedCategories: string[];
+  takeHomeMonthly: number | null;
+  payday: number | null;
+} = {
   balance: 245080,
   monthlyBudget: 30000,
   budgetScope: 'FLEX',
   fixedCategories: [...DEFAULT_FIXED_CATEGORIES],
+  takeHomeMonthly: 95000,
+  payday: 1,
 };
 
 const ok = (data: unknown): Response => ({ status: 200, body: { data } });
@@ -87,6 +98,7 @@ interface TxBody {
   type: 'Expense' | 'Income' | 'Transfer';
   direction?: 'OUT' | 'IN';
   subscriptionId?: string;
+  goalId?: string;
   date: string;
 }
 
@@ -98,6 +110,7 @@ function insert(body: TxBody, id: string, timestamp: string): TransactionDTO {
     type: body.type,
     direction: body.type === 'Transfer' ? (body.direction === 'IN' ? 'IN' : 'OUT') : null,
     subscriptionId: body.subscriptionId ?? null,
+    goalId: body.goalId || null,
     timestamp,
   };
   const log = logFor(body.date);
@@ -137,7 +150,12 @@ export function resolveGuestFinance(url: URL, method: string, rawBody?: string):
     if (method === 'PUT') {
       const next = body() as TxBody;
       return ok(insert(
-        { ...next, subscriptionId: next.subscriptionId ?? old.subscriptionId ?? undefined },
+        {
+          ...next,
+          subscriptionId: next.subscriptionId ?? old.subscriptionId ?? undefined,
+          // Omitted keeps the goal link; '' unlinks it (FinanceService.updateTransaction).
+          goalId: next.goalId !== undefined ? next.goalId : old.goalId ?? undefined,
+        },
         old.id,
         stampFor(next.date, new Date(old.timestamp)),
       ));
@@ -183,6 +201,16 @@ export function resolveGuestFinance(url: URL, method: string, rawBody?: string):
     }
     return ok(accountDto());
   }
+
+  if (path.endsWith('/api/v1/finance/account/income') && method === 'PUT') {
+    const next = body();
+    account.takeHomeMonthly = typeof next.takeHomeMonthly === 'number' ? next.takeHomeMonthly : null;
+    account.payday = typeof next.payday === 'number' ? next.payday : null;
+    return ok(accountDto());
+  }
+
+  const goals = resolveGuestGoals(path, method, body);
+  if (goals) return goals;
 
   if (path.endsWith('/api/v1/finance/account/balance') || path.endsWith('/api/v1/finance/account')) {
     if (method === 'PUT') {
@@ -274,4 +302,201 @@ function toSubscription(id: string, next: Partial<SubscriptionDTO>): Subscriptio
     intervalCount: count,
     monthlyCost: Math.round(((cost * 30.4375) / days) * 100) / 100,
   };
+}
+
+// ── Savings goals (SavingsGoalService mirror) ────────────────────────────────
+// Only the plan is stored; a goal's money is derived from ledger rows carrying its id.
+
+type GuestGoal = Omit<SavingsGoal, 'saved' | 'setAside' | 'takenOut' | 'spent' | 'contributions' | 'firstContributionDate' | 'lastContributionDate'>;
+
+const isoShift = (months: number, day = 1): string => {
+  const t = new Date();
+  const d = new Date(t.getFullYear(), t.getMonth() + months, day);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+/** "To Safety net · September leftover" — the same ledger line SavingsGoalService.describe writes. */
+const describe = (direction: 'OUT' | 'IN', goal: Pick<GuestGoal, 'name'>, note?: string | null): string =>
+  `${direction === 'IN' ? 'From' : 'To'} ${goal.name}${note?.trim() ? ` · ${note.trim()}` : ''}`;
+
+const baseGoal = (over: Partial<GuestGoal> & Pick<GuestGoal, 'id' | 'name' | 'kind'>): GuestGoal => ({
+  icon: null,
+  color: null,
+  targetAmount: null,
+  listPrice: null,
+  exchangeValue: null,
+  cardOffer: null,
+  targetDate: null,
+  plannedMonthly: null,
+  keptAt: null,
+  startDate: localToday(),
+  priority: 0,
+  status: 'ACTIVE',
+  boughtOn: null,
+  boughtFor: null,
+  ...over,
+});
+
+let goals: GuestGoal[] = [
+  baseGoal({
+    id: 'goal-guest-safety', name: 'Safety net', kind: 'SAFETY_NET', icon: 'shield', color: 'sage',
+    targetAmount: 150000, plannedMonthly: 6000, keptAt: 'Liquid fund', startDate: isoShift(-4), priority: 0,
+  }),
+  baseGoal({
+    id: 'goal-guest-phone', name: 'iPhone 18 Pro', kind: 'PURCHASE', icon: 'phone', color: 'sky',
+    listPrice: 164900, exchangeValue: 30000, cardOffer: 5000, targetAmount: 129900,
+    targetDate: isoShift(5), keptAt: 'SBI RD', startDate: isoShift(-2), priority: 1,
+  }),
+  baseGoal({
+    id: 'goal-guest-goa', name: 'Goa in December', kind: 'TRIP', icon: 'beach', color: 'sand',
+    targetAmount: 24000, targetDate: isoShift(3, 15), keptAt: 'Savings account', startDate: isoShift(-1), priority: 2,
+  }),
+];
+
+// Seed the set-asides into the ledger, on past paydays, the way the real API writes them.
+const SEED: [string, number, number][] = [
+  ['goal-guest-safety', -4, 6000], ['goal-guest-safety', -3, 6000], ['goal-guest-safety', -2, 6000], ['goal-guest-safety', -1, 6000],
+  ['goal-guest-phone', -2, 18000], ['goal-guest-phone', -1, 18000],
+  ['goal-guest-goa', -1, 6000],
+];
+for (const [goalId, months, amount] of SEED) {
+  const goal = goals.find((g) => g.id === goalId)!;
+  const day = isoShift(months);
+  insert(
+    { description: describe('OUT', goal, null), amount, category: 'Savings', type: 'Transfer', direction: 'OUT', goalId, date: day },
+    `ftx-guest-seed-${goalId}-${months}`,
+    stampFor(day),
+  );
+}
+
+function tally(goalId: string) {
+  let setAside = 0;
+  let takenOut = 0;
+  let spent = 0;
+  let contributions = 0;
+  let first: string | null = null;
+  let last: string | null = null;
+  for (const e of flattenLogs(logs)) {
+    if (e.goalId !== goalId) continue;
+    if (e.kind === 'transfer-out') {
+      setAside += e.amount;
+      contributions++;
+      if (!first || e.day < first) first = e.day;
+      if (!last || e.day > last) last = e.day;
+    } else if (e.kind === 'transfer-in') takenOut += e.amount;
+    else if (e.kind === 'spending') spent += e.amount;
+  }
+  return {
+    saved: Math.max(0, setAside - takenOut),
+    setAside,
+    takenOut,
+    spent,
+    contributions,
+    firstContributionDate: first,
+    lastContributionDate: last,
+  };
+}
+
+const goalDto = (g: GuestGoal): SavingsGoal => ({ ...g, ...tally(g.id) });
+
+function applyGoal(goal: GuestGoal, next: SavingsGoalRequest): GuestGoal | string {
+  const kind = next.kind ?? 'PURCHASE';
+  let target = next.targetAmount ?? null;
+  if (target == null && next.listPrice) target = next.listPrice - (next.exchangeValue ?? 0) - (next.cardOffer ?? 0);
+  if (target != null && target <= 0) return 'The exchange and offer cover the whole price — nothing to save';
+  if (target == null && kind !== 'OPEN') return 'Set how much this goal needs';
+  return {
+    ...goal,
+    name: next.name.trim(),
+    kind,
+    icon: next.icon ?? null,
+    color: next.color ?? null,
+    targetAmount: target,
+    listPrice: next.listPrice ?? null,
+    exchangeValue: next.exchangeValue ?? null,
+    cardOffer: next.cardOffer ?? null,
+    targetDate: next.targetDate || null,
+    plannedMonthly: next.plannedMonthly ?? null,
+    keptAt: next.keptAt?.trim() || null,
+    startDate: next.startDate ?? goal.startDate,
+    priority: next.priority ?? goal.priority,
+  };
+}
+
+const goalTransfer = (goal: GuestGoal, direction: 'OUT' | 'IN', amount: number, date: string, description: string) =>
+  insert(
+    { description, amount, category: 'Savings', type: 'Transfer', direction, goalId: goal.id, date },
+    `ftx-guest-${Date.now()}-${Math.round(Math.random() * 1e6)}`,
+    stampFor(date),
+  );
+
+function resolveGuestGoals(path: string, method: string, body: () => Record<string, unknown>): Response | null {
+  if (!path.includes('/api/v1/savings-goals')) return null;
+
+  const action = path.match(/\/api\/v1\/savings-goals\/([^/]+)\/(set-aside|take-out|buy|archive)$/);
+  if (action && method === 'POST') {
+    const goal = goals.find((g) => g.id === action[1]);
+    if (!goal) return bad('Savings goal not found');
+    const next = body() as { amount?: number; price?: number; date?: string; note?: string; category?: string; description?: string; release?: boolean };
+    const date = next.date || localToday();
+    const held = tally(goal.id).saved;
+    if (action[2] === 'set-aside') {
+      if (goal.status === 'BOUGHT' || goal.status === 'ARCHIVED') return bad(`Can't set money aside for ${goal.name}`);
+      goalTransfer(goal, 'OUT', Number(next.amount), date, describe('OUT', goal, next.note));
+    } else if (action[2] === 'take-out') {
+      if (Number(next.amount) > held) return bad(`Only ${held} is set aside for ${goal.name}`);
+      goalTransfer(goal, 'IN', Number(next.amount), date, describe('IN', goal, next.note));
+    } else if (action[2] === 'buy') {
+      const price = Number(next.price);
+      const fromGoal = Math.min(held, price);
+      if (fromGoal > 0) goalTransfer(goal, 'IN', fromGoal, date, describe('IN', goal, 'paid for it'));
+      insert(
+        { description: next.description || goal.name, amount: price, category: next.category || 'Shopping', type: 'Expense', goalId: goal.id, date },
+        `ftx-guest-${Date.now()}-buy`,
+        stampFor(date),
+      );
+      goal.status = 'BOUGHT';
+      goal.boughtOn = date;
+      goal.boughtFor = price;
+    } else {
+      if (next.release && held > 0) goalTransfer(goal, 'IN', held, localToday(), describe('IN', goal, 'goal archived'));
+      goal.status = 'ARCHIVED';
+    }
+    return ok(goalDto(goal));
+  }
+
+  const one = path.match(/\/api\/v1\/savings-goals\/([^/]+)$/);
+  if (one && method === 'PUT') {
+    const index = goals.findIndex((g) => g.id === one[1]);
+    if (index === -1) return bad('Savings goal not found');
+    const next = body() as unknown as SavingsGoalRequest;
+    const applied = applyGoal(goals[index], next);
+    if (typeof applied === 'string') return bad(applied);
+    if (next.status) {
+      if (next.status === 'ACTIVE' && applied.status === 'BOUGHT') {
+        applied.boughtOn = null;
+        applied.boughtFor = null;
+      }
+      applied.status = next.status;
+    }
+    goals[index] = applied;
+    return ok(goalDto(applied));
+  }
+
+  if (path.endsWith('/api/v1/savings-goals')) {
+    if (method === 'POST') {
+      const next = body() as unknown as SavingsGoalRequest;
+      const live = goals.filter((g) => g.status !== 'ARCHIVED').length;
+      if (live >= 12) return bad('You already have 12 goals — archive one before adding another');
+      const created = applyGoal(
+        baseGoal({ id: `goal-guest-${Date.now()}`, name: '', kind: 'PURCHASE', priority: Math.max(-1, ...goals.map((g) => g.priority)) + 1 }),
+        next,
+      );
+      if (typeof created === 'string') return bad(created);
+      goals = [...goals, created];
+      return ok(goalDto(created));
+    }
+    return ok(goals.map(goalDto));
+  }
+  return null;
 }

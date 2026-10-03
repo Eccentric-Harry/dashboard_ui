@@ -24,6 +24,7 @@ const pay = (day: string, over: Partial<LedgerEntry> = {}): LedgerEntry => ({
   at: 0,
   time: null,
   subscriptionId: 's1',
+  goalId: null,
   ...over,
 })
 

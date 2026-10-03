@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import { PieChart as PieChartIcon } from 'lucide-react'
-import { isFixedEntry, type BudgetConfig, type LedgerEntry } from '@/lib/finance-ledger'
+import { isFixedEntry, isFromSavings, type BudgetConfig, type LedgerEntry } from '@/lib/finance-ledger'
 import type { ChartTooltipProps } from '@/lib/chart-tooltip'
 import { cn } from '@/lib/utils'
 import { getConsistentColor, getIconForCategory } from '../utils'
@@ -51,12 +51,19 @@ function SpendingOverviewCard({
   loading = false,
   stagger = 0,
 }: SpendingOverviewCardProps) {
-  const { slices, total, fixedTotal } = useMemo(() => {
+  const { slices, total, fixedTotal, fromSavings } = useMemo(() => {
     const totals = new Map<string, { amount: number; fixed: boolean }>()
     let sum = 0
     let fixed = 0
+    let saved = 0
     for (const e of monthEntries) {
       if (e.kind !== 'spending') continue
+      // A purchase paid for from a savings goal is named under the heading, not drawn as a
+      // slice: one planned phone would otherwise be the whole donut for the month.
+      if (isFromSavings(e)) {
+        saved += e.amount
+        continue
+      }
       const isFixed = isFixedEntry(e, config)
       const prev = totals.get(e.category)
       totals.set(e.category, { amount: (prev?.amount ?? 0) + e.amount, fixed: (prev?.fixed ?? true) && isFixed })
@@ -72,7 +79,7 @@ function SpendingOverviewCard({
         fixed: v.fixed,
       }))
       .sort((a, b) => b.rawAmount - a.rawAmount)
-    return { slices: list, total: sum, fixedTotal: fixed }
+    return { slices: list, total: sum, fixedTotal: fixed, fromSavings: saved }
   }, [monthEntries, config])
 
   const [isMounted, setIsMounted] = useState(false)
@@ -106,6 +113,7 @@ function SpendingOverviewCard({
                 ? `${rupees(total - fixedTotal)} everyday · ${rupees(fixedTotal)} rent & bills`
                 : `${rupees(total)} spent across ${slices.length} categories`
               : 'Spending only — transfers are tracked separately'}
+            {fromSavings > 0 && ` · ${rupees(fromSavings)} from savings`}
           </p>
         </div>
       </div>

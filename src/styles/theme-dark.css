@@ -1090,6 +1090,7 @@
   /* Transfers (sent home, lent) and money in keep their hue on graphite. */
   --fin-transfer-ink: #b9a9e6;
   --fin-income-ink: #7dc39d;
+  --fin-saved-ink: #86c7b0;
   --fin-hairline: rgba(255, 255, 255, 0.07);
   --fin-well: rgba(255, 255, 255, 0.05);
   --fin-select-ring: #eceef0;
@@ -1108,6 +1109,14 @@
   --fin-chart-line: #eceef0;
   --fin-chart-dot-ring: #1f2226;
 }
+
+/* Savings-goal hues, lifted for graphite — one lightness, low chroma, never neon. */
+:root[data-theme='dark'] .fin-goal--sage { --goal-hue: #8cc4a6; }
+:root[data-theme='dark'] .fin-goal--sky { --goal-hue: #8fb6de; }
+:root[data-theme='dark'] .fin-goal--heather { --goal-hue: #b3a5e0; }
+:root[data-theme='dark'] .fin-goal--sand { --goal-hue: #d9b07a; }
+:root[data-theme='dark'] .fin-goal--clay { --goal-hue: #e0998a; }
+:root[data-theme='dark'] .fin-goal--teal { --goal-hue: #7cc3bd; }
 
 :root[data-theme='dark'] .finance-dashboard .fin-intel {
   --fin-tint-sage: linear-gradient(150deg, rgba(120, 190, 145, 0.14), rgba(120, 190, 145, 0.04));

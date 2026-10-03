@@ -49,7 +49,8 @@ function TransfersCard({
   onShowAll,
   stagger = 0,
 }: TransfersCardProps) {
-  const transfers = useMemo(() => monthEntries.filter((e) => isTransferKind(e.kind)), [monthEntries])
+  // Money set aside for a savings goal has its own card (Saving for), so it isn't listed here.
+  const transfers = useMemo(() => monthEntries.filter((e) => isTransferKind(e.kind) && !e.goalId), [monthEntries])
   const peak = Math.max(...summary.familyByMonth.map((m) => m.total), 1)
   const hasHistory = summary.familyByMonth.some((m) => m.total > 0)
   const other = transfers.filter((t) => t.category !== FAMILY_CATEGORY)

@@ -1,13 +1,15 @@
 // Where the money stands — beside the spending hero on the first row.
 //
-// The balance is the card's one figure, with how much it moved this month. Under it,
-// Copilot's "net this month": money in against money out as two capsules on one scale,
-// the out capsule split into what was spent and what was only moved (sent home, lent) —
-// transfers lower the balance but are never spending. Bills close the card as one row
-// that jumps to the Bills card.
+// The balance is the card's one figure, with how much it moved this month — and, once
+// savings goals exist, how much sits set aside for them, so balance + set aside matches
+// what the bank app shows. Under it, Copilot's "net this month": money in against money
+// out on one bar, out split into what was spent, what was only moved (sent home, lent)
+// and what was saved for a goal — transfers lower the balance but are never spending.
+// The card's one well is the payday plan around payday (what each goal asks this
+// cycle), and the bills row the rest of the month.
 
 import type { CSSProperties } from 'react'
-import { ArrowDownRight, ArrowUpRight, Check, ChevronRight, Pencil, Repeat } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, Check, ChevronRight, Pencil, PiggyBank, Repeat } from 'lucide-react'
 import type { MoneySummary } from '@/lib/finance-ledger'
 import { inr } from '@/lib/insights/engine'
 import { cn } from '@/lib/utils'
@@ -22,25 +24,54 @@ export interface BillsGlance {
   next: { name: string; date: string; overdue: boolean } | null
 }
 
+/** Savings goals as the wallet sees them. */
+export interface GoalsGlance {
+  /** Held across live goals (not yet spent). */
+  setAside: number
+  count: number
+  /** This cycle's set-asides still to do; shown in the well around payday. */
+  payday: { total: number; first: { name: string; amount: number; keptAt: string | null } | null; count: number } | null
+}
+
 interface WalletCardProps {
   balance: number | null
   summary: MoneySummary
   monthName: string
   bills: BillsGlance
+  goals: GoalsGlance
   loading: boolean
   onEditBalance: () => void
   onJumpToBills: () => void
+  onPaydayPlan: () => void
   stagger?: number
 }
 
 const shortDate = (iso: string) =>
   new Date(`${iso}T00:00:00`).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })
 
-function WalletCard({ balance, summary, monthName, bills, loading, onEditBalance, onJumpToBills, stagger = 0 }: WalletCardProps) {
-  const moneyIn = summary.income + summary.transferIn
-  const moneyOut = summary.spending + summary.transferOut
+function WalletCard({
+  balance,
+  summary,
+  monthName,
+  bills,
+  goals,
+  loading,
+  onEditBalance,
+  onJumpToBills,
+  onPaydayPlan,
+  stagger = 0,
+}: WalletCardProps) {
+  // Goal money netted on one side: a month that set aside more than it took back shows
+  // "saved" going out; a month that drew a goal down (the purchase month) shows it coming in.
+  const goalNet = summary.setAside - summary.takenOut
+  const saved = Math.max(goalNet, 0)
+  const fromGoals = Math.max(-goalNet, 0)
+  const movedOut = summary.transferOut - summary.setAside
+  const moneyIn = summary.income + (summary.transferIn - summary.takenOut) + fromGoals
+  const moneyOut = summary.spending + movedOut + saved
   const scale = Math.max(moneyIn, moneyOut, 1)
   const moved = moneyIn > 0 || moneyOut > 0
+  const kept = moneyIn - moneyOut
 
   const billState = !bills.next
     ? null
@@ -70,13 +101,21 @@ function WalletCard({ balance, summary, monthName, bills, loading, onEditBalance
           <div className="fin-wallet-balance">
             <span className="fin-hero-label">Balance</span>
             <strong>{balance == null ? '—' : <Money value={balance} sign={balance < 0 ? '−' : ''} />}</strong>
-            {moved && (
-              <span className={cn('fin-wallet-net', summary.net >= 0 ? 'is-up' : 'is-down')}>
-                {summary.net >= 0 ? <ArrowUpRight size={12} strokeWidth={2.6} /> : <ArrowDownRight size={12} strokeWidth={2.6} />}
-                {summary.net >= 0 ? '+' : '−'}
-                {inr(Math.abs(summary.net))} in {monthName}
-              </span>
-            )}
+            <span className="fin-wallet-chips">
+              {moved && (
+                <span className={cn('fin-wallet-net', summary.net >= 0 ? 'is-up' : 'is-down')}>
+                  {summary.net >= 0 ? <ArrowUpRight size={12} strokeWidth={2.6} /> : <ArrowDownRight size={12} strokeWidth={2.6} />}
+                  {summary.net >= 0 ? '+' : '−'}
+                  {inr(Math.abs(summary.net))} in {monthName}
+                </span>
+              )}
+              {goals.setAside > 0 && (
+                <span className="fin-wallet-net is-saved" title="Held for your savings goals — not in the balance above">
+                  <PiggyBank size={12} strokeWidth={2.4} />
+                  {inr(goals.setAside)} set aside
+                </span>
+              )}
+            </span>
           </div>
 
           <div className="fin-flow">
@@ -95,17 +134,19 @@ function WalletCard({ balance, summary, monthName, bills, loading, onEditBalance
             <span
               className="fin-flow-track"
               role="img"
-              aria-label={`Spent ${inr(summary.spending)}, moved ${inr(summary.transferOut)}, kept ${inr(Math.max(summary.net, 0))}`}
+              aria-label={`Spent ${inr(summary.spending)}, moved ${inr(movedOut)}, saved ${inr(saved)}, kept ${inr(Math.max(kept, 0))}`}
             >
               <i className="is-spent" style={{ width: `${(summary.spending / scale) * 100}%` }} />
-              {summary.transferOut > 0 && <i className="is-moved" style={{ width: `${(summary.transferOut / scale) * 100}%` }} />}
-              {summary.net > 0 && <i className="is-kept" style={{ width: `${(summary.net / scale) * 100}%` }} />}
+              {movedOut > 0 && <i className="is-moved" style={{ width: `${(movedOut / scale) * 100}%` }} />}
+              {saved > 0 && <i className="is-saved" style={{ width: `${(saved / scale) * 100}%` }} />}
+              {kept > 0 && <i className="is-kept" style={{ width: `${(kept / scale) * 100}%` }} />}
             </span>
             {moved ? (
               <p className="fin-flow-key">
                 <span className="is-spent">Spent {inr(summary.spending)}</span>
-                {summary.transferOut > 0 && <span className="is-moved">Moved {inr(summary.transferOut)}</span>}
-                {summary.net > 0 && <span className="is-kept">Kept {inr(summary.net)}</span>}
+                {movedOut > 0 && <span className="is-moved">Moved {inr(movedOut)}</span>}
+                {saved > 0 && <span className="is-saved">Saved {inr(saved)}</span>}
+                {kept > 0 && <span className="is-kept">Kept {inr(kept)}</span>}
                 {moneyIn === 0 && <span>No income logged</span>}
               </p>
             ) : (
@@ -113,7 +154,22 @@ function WalletCard({ balance, summary, monthName, bills, loading, onEditBalance
             )}
           </div>
 
-          {billState && (
+          {goals.payday?.first ? (
+            <button type="button" className="fin-wallet-bills is-payday" onClick={onPaydayPlan}>
+              <span className="fin-wallet-bills-ic" aria-hidden="true">
+                <PiggyBank size={14} strokeWidth={2.3} />
+              </span>
+              <span className="fin-wallet-bills-main">
+                <b>Payday · set aside {inr(goals.payday.total)}</b>
+                <small>
+                  {inr(goals.payday.first.amount)} to {goals.payday.first.name}
+                  {goals.payday.first.keptAt && ` · ${goals.payday.first.keptAt}`}
+                  {goals.payday.count > 1 && ` · ${goals.payday.count - 1} more`}
+                </small>
+              </span>
+              <ChevronRight size={15} strokeWidth={2.4} aria-hidden="true" />
+            </button>
+          ) : billState && (
             <button type="button" className={cn('fin-wallet-bills', `is-${billState.tone}`)} onClick={onJumpToBills}>
               <span className="fin-wallet-bills-ic" aria-hidden="true">
                 {billState.tone === 'good' ? <Check size={13} strokeWidth={2.8} /> : <Repeat size={13} strokeWidth={2.4} />}

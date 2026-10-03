@@ -16,6 +16,7 @@ import { ArrowDownLeft, ArrowUpRight, ChevronLeft, ChevronRight, Receipt, Repeat
 import { isTransferKind, signedAmount, type LedgerEntry, type TxKind } from '@/lib/finance-ledger'
 import { cn } from '@/lib/utils'
 import { getBrandIcon, getSubColorStyles } from './bill-brand'
+import { GOAL_ICONS, type GoalTag } from '../goal-icons'
 import { getConsistentColor, getIconForCategory } from '../utils'
 
 export type LedgerFilter = 'all' | 'spending' | 'income' | 'transfers'
@@ -31,6 +32,8 @@ interface TransactionsCardProps {
   filter: LedgerFilter
   onFilterChange: (filter: LedgerFilter) => void
   monthLabel: string
+  /** Savings goal names by id, for the tag on goal rows. */
+  goalLabels?: GoalLabels
   /** Entrance-stagger index; drives the `--i` animation delay. */
   stagger?: number
 }
@@ -102,13 +105,18 @@ const groupByDay = (rows: LedgerEntry[]): DayGroup[] => {
   return groups
 }
 
-function LedgerRow({ tx, onOpen }: { tx: LedgerEntry; onOpen?: (entry: LedgerEntry) => void }) {
+/** Goal id → its name, icon and hue, for the tag on rows that moved money for a savings goal. */
+type GoalLabels = Record<string, GoalTag>
+
+function LedgerRow({ tx, onOpen, goalLabels }: { tx: LedgerEntry; onOpen?: (entry: LedgerEntry) => void; goalLabels?: GoalLabels }) {
   const hue = getConsistentColor(tx.category)
   const transfer = isTransferKind(tx.kind)
   const editable = Boolean(tx.id) && Boolean(onOpen)
   // Only bill payments get a brand mark: they're named after the bill, whereas a free-text
   // description ("Pineapple juice") would happily match a brand by accident.
   const brand = tx.subscriptionId ? getBrandIcon(tx.description) : null
+  // Money moved for a savings goal wears the goal's own icon and hue, as a bill wears its brand.
+  const goal = tx.goalId ? goalLabels?.[tx.goalId] : undefined
 
   return (
     <button
@@ -122,6 +130,14 @@ function LedgerRow({ tx, onOpen }: { tx: LedgerEntry; onOpen?: (entry: LedgerEnt
       {brand ? (
         <span className="fin-lg-icon is-brand" style={getSubColorStyles(tx.description, hue)} aria-hidden="true">
           {brand}
+        </span>
+      ) : goal ? (
+        <span
+          className={cn('fin-lg-icon', goal.color && `fin-goal--${goal.color}`)}
+          style={{ '--chip-hue': 'var(--goal-hue)' } as CSSProperties}
+          aria-hidden="true"
+        >
+          {createElement(GOAL_ICONS[goal.icon] ?? GOAL_ICONS.piggy, { size: 14, strokeWidth: 2.3 })}
         </span>
       ) : (
         <span className="fin-lg-icon" aria-hidden="true">
@@ -145,6 +161,7 @@ function LedgerRow({ tx, onOpen }: { tx: LedgerEntry; onOpen?: (entry: LedgerEnt
               <Repeat size={9} strokeWidth={2.6} /> bill
             </span>
           )}
+          {tx.goalId && <GoalLedgerTag tx={tx} goal={goalLabels?.[tx.goalId]} />}
           {tx.time && <span className="fin-lg-time">{tx.time}</span>}
         </small>
       </span>
@@ -156,7 +173,22 @@ function LedgerRow({ tx, onOpen }: { tx: LedgerEntry; onOpen?: (entry: LedgerEnt
   )
 }
 
-function DayBlock({ group, onOpen }: { group: DayGroup; onOpen?: (entry: LedgerEntry) => void }) {
+/**
+ * The goal a row belongs to. Set-asides already name their goal ("To Safety net"), so the
+ * tag then just says it's goal money; a purchase made from a goal says so.
+ */
+function GoalLedgerTag({ tx, goal }: { tx: LedgerEntry; goal?: GoalTag }) {
+  const named = goal != null && tx.description.includes(goal.name)
+  const label = tx.kind === 'spending' ? 'from savings' : named || !goal ? 'goal' : goal.name
+  return (
+    <span className={cn('fin-lg-tag is-goal', goal?.color && `fin-goal--${goal.color}`)}>
+      {goal && createElement(GOAL_ICONS[goal.icon] ?? GOAL_ICONS.piggy, { size: 10, strokeWidth: 2.6 })}
+      {label}
+    </span>
+  )
+}
+
+function DayBlock({ group, onOpen, goalLabels }: { group: DayGroup; onOpen?: (entry: LedgerEntry) => void; goalLabels?: GoalLabels }) {
   const relative = relativeDay(group.date)
   const spent = group.print.reduce((sum, p) => sum + p.amount, 0)
   return (
@@ -182,7 +214,7 @@ function DayBlock({ group, onOpen }: { group: DayGroup; onOpen?: (entry: LedgerE
         )}
         <div className="fin-lg-rows">
           {group.rows.map((tx, index) => (
-            <LedgerRow key={tx.id || `${tx.description}-${index}`} tx={tx} onOpen={onOpen} />
+            <LedgerRow key={tx.id || `${tx.description}-${index}`} tx={tx} onOpen={onOpen} goalLabels={goalLabels} />
           ))}
         </div>
       </div>
@@ -199,6 +231,7 @@ function TransactionsCard({
   filter,
   onFilterChange,
   monthLabel,
+  goalLabels,
   stagger = 0,
 }: TransactionsCardProps) {
   const [page, setPage] = useState(1)
@@ -364,7 +397,7 @@ function TransactionsCard({
       ) : (
         <div className="fin-lg-days">
           {groups.map((group) => (
-            <DayBlock key={`${group.key}-${group.rows[0].id}`} group={group} onOpen={onOpen} />
+            <DayBlock key={`${group.key}-${group.rows[0].id}`} group={group} onOpen={onOpen} goalLabels={goalLabels} />
           ))}
         </div>
       )}

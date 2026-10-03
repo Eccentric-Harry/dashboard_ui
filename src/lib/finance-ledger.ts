@@ -33,6 +33,8 @@ export interface LedgerEntry {
   /** Clock time ("09:14 PM"), or null when the row was stored at midnight (no real time). */
   time: string | null
   subscriptionId: string | null
+  /** Savings goal this row sets aside for (transfer-out), takes out of (transfer-in), or was bought from (spending). */
+  goalId: string | null
 }
 
 export interface BudgetConfig {
@@ -136,6 +138,7 @@ export function flattenLogs(logs: DailyFinancialLog[]): LedgerEntry[] {
           at: Number.isNaN(at.getTime()) ? 0 : at.getTime(),
           time: clockTime(at),
           subscriptionId: tx.subscriptionId ?? null,
+          goalId: tx.goalId ?? null,
         })
       }
     }
@@ -163,9 +166,17 @@ export function isFixedEntry(entry: Pick<LedgerEntry, 'category' | 'subscription
   return Boolean(entry.subscriptionId) || fixedSetOf(config).has(entry.category.trim().toLowerCase())
 }
 
-/** Whether a row counts against the monthly budget. Only spending ever does. */
+/**
+ * A purchase paid for from a savings goal. Still spending — the money is gone — but it was
+ * saved for over earlier months, so it never counts against this month's budget, the
+ * forecast, the trends or the anomaly scan (backend `MoneyFlow.isFromSavings`).
+ */
+export const isFromSavings = (entry: Pick<LedgerEntry, 'kind' | 'goalId'>): boolean =>
+  entry.kind === 'spending' && Boolean(entry.goalId)
+
+/** Whether a row counts against the monthly budget. Only spending ever does, and never a goal purchase. */
 export function countsTowardBudget(entry: LedgerEntry, config: BudgetConfig): boolean {
-  if (entry.kind !== 'spending') return false
+  if (entry.kind !== 'spending' || entry.goalId) return false
   return config.scope === 'ALL' || !isFixedEntry(entry, config)
 }
 
@@ -178,6 +189,12 @@ export interface MoneySummary {
   budgeted: number
   /** Fixed-cost spending (rent, bills, recurring payments). */
   fixed: number
+  /** Purchases paid for from a savings goal (included in `spending`, never in `budgeted`). */
+  fromSavings: number
+  /** Money set aside for goals (included in `transferOut`). */
+  setAside: number
+  /** Money taken back out of goals, incl. what paid for a goal purchase (included in `transferIn`). */
+  takenOut: number
   income: number
   transferOut: number
   transferIn: number
@@ -189,7 +206,8 @@ export interface MoneySummary {
 
 export function summarize(entries: LedgerEntry[], config: BudgetConfig): MoneySummary {
   const s: MoneySummary = {
-    spending: 0, budgeted: 0, fixed: 0, income: 0, transferOut: 0, transferIn: 0, net: 0, count: 0, spendingCount: 0,
+    spending: 0, budgeted: 0, fixed: 0, fromSavings: 0, setAside: 0, takenOut: 0,
+    income: 0, transferOut: 0, transferIn: 0, net: 0, count: 0, spendingCount: 0,
   }
   for (const e of entries) {
     s.count++
@@ -198,10 +216,16 @@ export function summarize(entries: LedgerEntry[], config: BudgetConfig): MoneySu
       s.spending += e.amount
       s.spendingCount++
       if (countsTowardBudget(e, config)) s.budgeted += e.amount
-      if (isFixedEntry(e, config)) s.fixed += e.amount
+      if (e.goalId) s.fromSavings += e.amount
+      else if (isFixedEntry(e, config)) s.fixed += e.amount
     } else if (e.kind === 'income') s.income += e.amount
-    else if (e.kind === 'transfer-out') s.transferOut += e.amount
-    else s.transferIn += e.amount
+    else if (e.kind === 'transfer-out') {
+      s.transferOut += e.amount
+      if (e.goalId) s.setAside += e.amount
+    } else {
+      s.transferIn += e.amount
+      if (e.goalId) s.takenOut += e.amount
+    }
   }
   return s
 }

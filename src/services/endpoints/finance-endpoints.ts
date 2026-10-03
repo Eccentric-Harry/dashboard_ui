@@ -52,3 +52,28 @@ export const API_DELETE_LENDING: ApiEndpoint<{ id: string }> = {
   url: ({ id }) => `/finance/lending/${id}`,
   method: 'delete',
 };
+
+export const API_UPDATE_INCOME_PLAN: ApiEndpoint = { url: '/finance/account/income', method: 'put' };
+
+export const API_GET_SAVINGS_GOALS: ApiEndpoint = { url: '/savings-goals', method: 'get' };
+export const API_ADD_SAVINGS_GOAL: ApiEndpoint = { url: '/savings-goals', method: 'post' };
+export const API_UPDATE_SAVINGS_GOAL: ApiEndpoint<{ id: string }> = {
+  url: ({ id }) => `/savings-goals/${id}`,
+  method: 'put',
+};
+export const API_SET_ASIDE_FOR_GOAL: ApiEndpoint<{ id: string }> = {
+  url: ({ id }) => `/savings-goals/${id}/set-aside`,
+  method: 'post',
+};
+export const API_TAKE_OUT_OF_GOAL: ApiEndpoint<{ id: string }> = {
+  url: ({ id }) => `/savings-goals/${id}/take-out`,
+  method: 'post',
+};
+export const API_BUY_GOAL: ApiEndpoint<{ id: string }> = {
+  url: ({ id }) => `/savings-goals/${id}/buy`,
+  method: 'post',
+};
+export const API_ARCHIVE_GOAL: ApiEndpoint<{ id: string }> = {
+  url: ({ id }) => `/savings-goals/${id}/archive`,
+  method: 'post',
+};

@@ -258,7 +258,7 @@ function App() {
 
   let content;
   if (pathname === '/finance') {
-    content = <FinanceOverview activePath={pathname} onNavigate={navigateTo} />
+    content = <FinanceOverview activePath={pathname} onNavigate={navigateTo} searchParams={searchParams} />
   } else if (pathname === '/nutrition') {
     content = <NutritionOverview activePath={pathname} onNavigate={navigateTo} />
   } else if (pathname === '/learnings') {

@@ -6,16 +6,17 @@ import { FinanceOverviewDashboard } from './'
 
 type FinanceOverviewProps = {
   activePath: AppPath
-  onNavigate: (pathname: AppPath) => void
+  onNavigate: (pathname: AppPath, search?: string) => void
+  searchParams: URLSearchParams
 }
 
-function FinanceOverview({ activePath, onNavigate }: FinanceOverviewProps) {
+function FinanceOverview({ activePath, onNavigate, searchParams }: FinanceOverviewProps) {
   return (
     <main className="dashboard-shell">
       <div className="dashboard-stage" aria-label="Finance overview">
         <SideRail activePath={activePath} onNavigate={onNavigate} />
         <TopChip />
-        <FinanceOverviewDashboard />
+        <FinanceOverviewDashboard searchParams={searchParams} onNavigate={onNavigate} />
       </div>
     </main>
   )

@@ -1167,8 +1167,19 @@
 
 .finance-modal-popover.fin-form-modal {
   width: min(440px, calc(100vw - 32px));
-  max-height: min(88vh, 760px);
+  /* A percentage, not vh: the backdrop is fixed to the real window, so 100% is the whole
+     window at any html zoom. `88vh` was rendered at the zoom factor (0.8 in a 620px-tall
+     window) and capped the modal at ~436px — every form scrolled inside itself. */
+  max-height: min(100%, 880px);
   padding: 22px 18px 14px 22px;
+}
+
+/* Phones: the floating profile avatar sits in the top-right corner, above anything
+   rendered inside the route — keep a tall form's close button out from under it. */
+@media (max-width: 768px) {
+  .finance-modal-backdrop:has(.fin-form-modal) {
+    padding-top: 72px;
+  }
 }
 
 .finance-modal-popover .fin-form-title {
@@ -1243,21 +1254,25 @@
   color: #5d4f8a;
 }
 
+/* Direction and what a transfer means, on one line. */
 .fin-transfer-note {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 8px 10px;
   border-radius: 14px;
   background: var(--fin-accent-heather, #d9d2e8);
 }
 
 .fin-transfer-note p {
+  flex: 1 1 0;
+  min-width: 120px;
   margin: 0;
   color: rgba(23, 28, 25, 0.7);
   font-size: 11.5px;
   font-weight: 600;
-  line-height: 1.45;
+  line-height: 1.35;
 }
 
 .fin-direction {
@@ -1300,6 +1315,37 @@
 
 .fin-amount-field:focus-within {
   border-color: rgba(23, 28, 25, 0.45);
+}
+
+/* Amount and date on one line, under one rule — the date doesn't need a field of its own. */
+.fin-amount-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  border-bottom: 1.5px solid rgba(23, 28, 25, 0.12);
+  transition: border-color 0.2s ease;
+}
+
+.fin-amount-row:focus-within {
+  border-color: rgba(23, 28, 25, 0.45);
+}
+
+.fin-amount-row .fin-amount-field {
+  flex: 1;
+  min-width: 0;
+  border-bottom: 0;
+}
+
+.add-tx-form .fin-amount-row .fin-date-pill {
+  flex: none;
+  width: auto;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .fin-amount-prefix {
