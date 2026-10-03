@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowDownToLine, ArrowUpFromLine, Cloud, CloudOff, Loader2, LogOut, MoreHorizontal, Plus } from 'lucide-react'
+import { ArrowDownToLine, ArrowUpFromLine, Cloud, CloudOff, Loader2, LogOut, Plus, RefreshCw } from 'lucide-react'
 
 import type { GoogleSyncStatus } from '@/types/calendar'
 import { PopoverMenu } from './composer/popover-menu'
@@ -51,46 +51,54 @@ export function GoogleSync({ status, pulling, pushing, disconnecting, connecting
         const busy = pulling === account.email || pushing === account.email
         return (
           <div key={account.email} className="cv-sync-row">
-            <span className="cv-sync-ic" aria-hidden="true">
-              <Cloud size={14} strokeWidth={2.2} />
-            </span>
-            <span className="cv-sync-text">
-              <b title={account.email}>{account.email}</b>
-              <small>{pulling === account.email ? 'Pulling…' : pushing === account.email ? 'Pushing…' : syncedAgo(account.lastSyncedAt)}</small>
-            </span>
+            <button
+              type="button"
+              className="cv-sync-main"
+              onClick={(e) => setMenu({ email: account.email, anchor: e.currentTarget })}
+              title={account.email}
+            >
+              <Cloud size={14} strokeWidth={2.2} className="cv-sync-cloud" aria-hidden="true" />
+              <span className="cv-sync-text">
+                <b>Google Calendar</b>
+                <small>{busy ? 'Syncing…' : syncedAgo(account.lastSyncedAt)}</small>
+              </span>
+            </button>
             <button
               type="button"
               className="cv-icon-btn is-sm"
               disabled={busy}
               onClick={() => onPull(account.email)}
-              title="Pull the latest from Google"
-              aria-label="Pull from Google"
+              title="Sync now"
+              aria-label="Sync now"
             >
-              {pulling === account.email ? <Loader2 size={13} className="animate-spin" /> : <ArrowDownToLine size={13} strokeWidth={2.2} />}
-            </button>
-            <button
-              type="button"
-              className="cv-icon-btn is-sm"
-              disabled={busy}
-              onClick={() => onPush(account.email)}
-              title="Push local-only blocks to Google"
-              aria-label="Push to Google"
-            >
-              {pushing === account.email ? <Loader2 size={13} className="animate-spin" /> : <ArrowUpFromLine size={13} strokeWidth={2.2} />}
-            </button>
-            <button
-              type="button"
-              className="cv-icon-btn is-sm"
-              aria-label="Account options"
-              onClick={(e) => setMenu({ email: account.email, anchor: e.currentTarget })}
-            >
-              <MoreHorizontal size={14} />
+              <RefreshCw size={13} strokeWidth={2.2} className={busy ? 'animate-spin' : undefined} />
             </button>
           </div>
         )
       })}
 
-      <PopoverMenu anchor={menu?.anchor ?? null} open={Boolean(menu)} onClose={() => setMenu(null)} width={200}>
+      <PopoverMenu anchor={menu?.anchor ?? null} open={Boolean(menu)} onClose={() => setMenu(null)} width={220}>
+        {menu && <p className="cv-menu-note">{menu.email}</p>}
+        <button
+          type="button"
+          className="cv-menu-action"
+          onClick={() => {
+            if (menu) onPull(menu.email)
+            setMenu(null)
+          }}
+        >
+          <ArrowDownToLine size={13} /> Pull from Google
+        </button>
+        <button
+          type="button"
+          className="cv-menu-action"
+          onClick={() => {
+            if (menu) onPush(menu.email)
+            setMenu(null)
+          }}
+        >
+          <ArrowUpFromLine size={13} /> Push local blocks
+        </button>
         <button
           type="button"
           className="cv-menu-action"

@@ -8,7 +8,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent } from 'react'
 import { createPortal } from 'react-dom'
-import { Keyboard, RefreshCw } from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 import type { AppPath } from '@/app/routes'
@@ -41,7 +41,6 @@ import { CalendarItemModal, type CalendarDraft } from './components/calendar-ite
 import { CalendarList } from './components/calendar-list'
 import { CalendarToolbar } from './components/calendar-toolbar'
 import { ColorEditDialog, DeleteSeriesDialog, ShortcutsDialog } from './components/calendar-dialogs'
-import { DayBrief } from './components/day-brief'
 import { DayOverflow, EventPopover, type AnchorRect } from './components/event-popover'
 import { GoogleSync } from './components/google-sync'
 import { MiniMonth } from './components/mini-month'
@@ -49,6 +48,7 @@ import { MonthView } from './components/month-view'
 import { QuickAdd } from './components/quick-add'
 import { TimeGrid } from './components/time-grid'
 import { UpNext } from './components/up-next'
+import { WeekPulse } from './components/week-pulse'
 
 import './calendar-overview.css'
 
@@ -662,7 +662,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
       </button>
     </div>
   ) : timeGridView ? (
-    <div className={cn('cv-dayview', effectiveView === 'day' && 'has-brief')}>
+    <div className="cv-dayview">
       <TimeGrid
         days={days}
         itemsByDay={itemsByDay}
@@ -685,18 +685,6 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
         }}
         onCreateAllDay={(iso) => openComposer({ date: iso, seed: { date: iso, allDay: true } })}
       />
-      {effectiveView === 'day' && (
-        <DayBrief
-          iso={selectedDate}
-          items={itemsByDay.get(selectedDate) ?? []}
-          todayIso={todayIso}
-          nowMinutes={nowMinutes}
-          activeKey={activeKey}
-          onOpen={openItem}
-          onToggleDone={toggleDone}
-          onCreateSlot={(start, end) => openComposer({ date: selectedDate, draft: { startTime: minutesToTime(start), endTime: minutesToTime(end) } })}
-        />
-      )}
     </div>
   ) : effectiveView === 'month' ? (
     <MonthView
@@ -767,6 +755,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
             onShowAll={() => updateHidden([])}
             onEditColors={() => setColorsOpen(true)}
           />
+          {!phone && <WeekPulse selected={selectedDate} todayIso={todayIso} itemsByDay={itemsByDay} onPick={goTo} />}
           <div className="cv-side-foot">
             <GoogleSync
               status={googleState.data}
@@ -779,9 +768,6 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
               onPush={pushGoogle}
               onDisconnect={setDisconnectTarget}
             />
-            <button type="button" className="cv-icon-btn is-sm cv-keys-btn" onClick={() => setShortcutsOpen(true)} aria-label="Keyboard shortcuts" title="Keyboard shortcuts (?)">
-              <Keyboard size={14} />
-            </button>
           </div>
         </aside>
 

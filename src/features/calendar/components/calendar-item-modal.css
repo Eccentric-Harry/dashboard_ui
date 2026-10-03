@@ -492,7 +492,7 @@
 }
 
 .cal-glance-span.is-clash {
-  background: var(--cv-danger);
+  background: var(--cv-warn);
   opacity: 0.55;
 }
 
@@ -558,7 +558,7 @@
 }
 
 .cal-glance-status.is-warn {
-  color: var(--cv-danger);
+  color: var(--cv-warn);
 }
 
 /* ── Footer ────────────────────────────────────────────────────────────── */

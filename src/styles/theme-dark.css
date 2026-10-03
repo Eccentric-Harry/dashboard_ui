@@ -1598,6 +1598,7 @@
   --cv-now-ink: #f4a693;
   --cv-on-now: #2a120c;
   --cv-now-soft: rgba(240, 147, 124, 0.16);
+  --cv-warn: #e8b78f;
   --cv-danger: #f28b95;
   --cv-danger-soft: rgba(242, 139, 149, 0.12);
   --cv-scrim: rgba(0, 0, 0, 0.55);
@@ -1607,6 +1608,12 @@
   --cv-ev-ink-base: #ffffff;
   --cv-ev-ink: 52%;
   --cv-ev-edge: 30%;
+}
+
+/* On overlays (#25282d) the card-level control grey disappears; step it up. */
+:root[data-theme='dark'] :is(.cal-composer-modal, .cal-menu, .cv-pop, .cv-dialog) {
+  --cv-control: rgba(255, 255, 255, 0.065);
+  --cv-control-hover: rgba(255, 255, 255, 0.1);
 }
 
 /* Hovered and live blocks step up from the darker base. */

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react'
-import { ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen, Plus, Search, X } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen, Plus, Search, X } from 'lucide-react'
 
 import type { CalendarItem } from '@/types/calendar'
 import { cn } from '@/lib/utils'
@@ -7,6 +7,7 @@ import { eventHue } from '../calendar-colors'
 import { VIEWS, parseISODate, type CalendarView } from '../calendar-dates'
 import { isTimed, itemKey, itemSpan, matchesQuery } from '../calendar-layout'
 import { formatShortTime } from '../calendar-time'
+import { MenuItem, PopoverMenu } from './composer/popover-menu'
 
 type Props = {
   view: CalendarView
@@ -49,6 +50,8 @@ export function CalendarToolbar({
   onAdd,
 }: Props) {
   const [cursor, setCursor] = useState(0)
+  const [viewOpen, setViewOpen] = useState(false)
+  const [viewAnchor, setViewAnchor] = useState<HTMLButtonElement | null>(null)
   const wrapRef = useRef<HTMLDivElement | null>(null)
   const searching = searchOpen || Boolean(query)
 
@@ -174,21 +177,31 @@ export function CalendarToolbar({
           )}
         </div>
 
-        <div className="cv-views" role="tablist" aria-label="View">
+        <button
+          ref={setViewAnchor}
+          type="button"
+          className="cv-view-pick"
+          aria-haspopup="menu"
+          aria-expanded={viewOpen}
+          onClick={() => setViewOpen((o) => !o)}
+        >
+          {VIEWS.find((v) => v.id === view)?.label}
+          <ChevronDown size={14} strokeWidth={2.2} />
+        </button>
+        <PopoverMenu anchor={viewAnchor} open={viewOpen} onClose={() => setViewOpen(false)} width={190}>
           {VIEWS.map((v) => (
-            <button
+            <MenuItem
               key={v.id}
-              type="button"
-              role="tab"
-              aria-selected={view === v.id}
-              className={cn('cv-view', view === v.id && 'is-active', !v.mobile && 'is-desktop-only')}
-              onClick={() => onView(v.id)}
-              title={`${v.label} (${v.key})`}
-            >
-              {v.label}
-            </button>
+              label={v.label}
+              hint={`Press ${v.key}`}
+              selected={view === v.id}
+              onSelect={() => {
+                onView(v.id)
+                setViewOpen(false)
+              }}
+            />
           ))}
-        </div>
+        </PopoverMenu>
 
         <button type="button" className="add-pill cv-add" onClick={onAdd} title="New block (N) — or drag on the grid">
           <span className="add-pill-ic">

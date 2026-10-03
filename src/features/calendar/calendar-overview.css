@@ -41,6 +41,7 @@
   --cv-now-ink: #c04a2e;
   --cv-on-now: #ffffff;
   --cv-now-soft: rgba(220, 90, 60, 0.12);
+  --cv-warn: #a4552b;
   --cv-danger: #c0485a;
   --cv-danger-soft: #fbe8eb;
   --cv-scrim: rgba(16, 19, 18, 0.26);
@@ -388,6 +389,32 @@
   background: var(--cv-chip-active);
   box-shadow: var(--cv-chip-active-shadow);
   color: var(--cv-ink);
+}
+
+/* View: one quiet dropdown instead of five tabs. */
+.cv-view-pick {
+  display: inline-flex;
+  height: 34px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--cv-ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cv-view-pick:hover,
+.cv-view-pick[aria-expanded='true'] {
+  background: var(--cv-control);
+}
+
+.cv-view-pick svg {
+  color: var(--cv-ink-3);
 }
 
 /* The shared add pill folds to its disc when the stage gets narrow. */
@@ -1163,6 +1190,87 @@ svg.cv-quick-go {
   text-align: right;
 }
 
+/* Week at a glance */
+.cv-pulse-total {
+  color: var(--cv-ink-2);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.cv-pulse-bars {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.cv-pulse-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.cv-pulse-track {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 44px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--cv-control);
+}
+
+.cv-pulse-track i {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: var(--h);
+  min-height: 0;
+  border-radius: 6px;
+  background: var(--cv-ink-3);
+  opacity: 0.55;
+  transition: height 0.4s ease;
+}
+
+.cv-pulse-day:hover .cv-pulse-track i {
+  opacity: 0.8;
+}
+
+.cv-pulse-day.is-past .cv-pulse-track i {
+  opacity: 0.25;
+}
+
+.cv-pulse-day.is-today .cv-pulse-track i {
+  background: var(--cv-now);
+  opacity: 0.9;
+}
+
+.cv-pulse-day.is-selected .cv-pulse-track {
+  box-shadow: inset 0 0 0 1.5px var(--cv-ink-3);
+}
+
+.cv-pulse-wd {
+  color: var(--cv-ink-3);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.cv-pulse-day.is-today .cv-pulse-wd {
+  color: var(--cv-now-ink);
+}
+
+.cv-pulse-note {
+  margin: 8px 0 0;
+  color: var(--cv-ink-2);
+  font-size: 11.5px;
+}
+
 /* Footer: Google sync + shortcuts */
 .cv-side-foot {
   display: flex;
@@ -1182,27 +1290,50 @@ svg.cv-quick-go {
 }
 
 .cv-sync-row {
-  display: grid;
-  grid-template-columns: 26px minmax(0, 1fr) auto auto auto;
+  display: flex;
   align-items: center;
   gap: 2px;
 }
 
-.cv-sync-ic {
-  display: grid;
-  width: 26px;
-  height: 26px;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--cv-control);
-  color: var(--cv-ink-2);
+.cv-sync-main {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cv-sync-main:hover {
+  background: var(--cv-hover);
+}
+
+.cv-sync-cloud {
+  flex: none;
+  color: var(--cv-ink-3);
+}
+
+.cv-menu-note {
+  margin: 0;
+  padding: 6px 10px 8px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--cv-line);
+  color: var(--cv-ink-3);
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .cv-sync-text {
   display: flex;
   min-width: 0;
   flex-direction: column;
-  padding-left: 6px;
 }
 
 .cv-sync-text b {
