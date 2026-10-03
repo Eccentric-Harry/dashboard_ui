@@ -1,20 +1,5 @@
-import { createElement, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
-import {
-  AlignLeft,
-  Bell,
-  CalendarDays,
-  Check,
-  ChevronDown,
-  Flag,
-  ListChecks,
-  Loader2,
-  Plus,
-  Repeat,
-  Sun,
-  Trash2,
-  Users,
-  X,
-} from 'lucide-react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { AlignLeft, Check, ChevronDown, CircleCheck, Clock, ListChecks, Loader2, Plus, Repeat, Trash2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 import type { CalendarItem, CalendarItemPayload, CalendarItemType, CalendarRecurrence } from '@/types/calendar'
@@ -32,25 +17,15 @@ import {
   saveCustomCategories,
   setCustomItemColor,
 } from '../calendar-colors'
-import { iconForItem } from '../calendar-icons'
 import { DAY_MINUTES, DEFAULT_BLOCK_MINUTES, formatDuration, formatMinuteRange, minutesToTime, timeToMinutes } from '../calendar-time'
 import { parseEntry, type ParseKind } from '../natural-language'
 import { DayGlance } from './composer/day-glance'
 import { MenuItem, PopoverMenu } from './composer/popover-menu'
 import { TimeSelect } from './composer/time-select'
+import { MiniMonth } from './mini-month'
 
 import './calendar-item-modal.css'
 
-// ── Vocabulary ───────────────────────────────────────────────────────────────
-
-const TYPES: { value: CalendarItemType; label: string; hint: string; icon: typeof ListChecks }[] = [
-  { value: 'TASK', label: 'Task', hint: 'Something to get done', icon: ListChecks },
-  { value: 'EVENT', label: 'Event', hint: 'Time you’re somewhere', icon: Users },
-  { value: 'REMINDER', label: 'Reminder', hint: 'A nudge at a time', icon: Bell },
-  { value: 'MILESTONE', label: 'Milestone', hint: 'A marker worth noting', icon: Flag },
-]
-
-const DURATIONS = [15, 30, 45, 60, 90, 120]
 const SLOTS = Array.from({ length: DAY_MINUTES / 15 }, (_, i) => i * 15)
 
 export type CalendarDraft = { startTime: string; endTime: string }
@@ -60,6 +35,10 @@ type Props = {
   item?: CalendarItem
   /** Times swept out on the grid — a new block starts from these. */
   draft?: CalendarDraft
+  /** A new block prefilled from another one (Duplicate). Its title is taken as typed, not re-parsed. */
+  seed?: Partial<CalendarItem>
+  /** Words carried over from Quick add — parsed like anything typed here. */
+  initialText?: string
   /** Loaded items: the day glance and overlap check read these. */
   items: CalendarItem[]
   existingCustomCategories?: string[]
@@ -87,6 +66,15 @@ function ordinal(n: number) {
   return n + (s[(v - 20) % 10] || s[v] || s[0])
 }
 
+/** 'Today, Oct 4' / 'Tomorrow, Oct 5' / 'Wed, Oct 7' — what the date control reads. */
+function dateButtonLabel(iso: string, todayIso: string) {
+  const d = parseISODate(iso)
+  const md = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const rel = dayLabel(iso, todayIso)
+  if (rel === 'Today' || rel === 'Tomorrow' || rel === 'Yesterday') return `${rel}, ${md}`
+  return `${d.toLocaleDateString('en-US', { weekday: 'short' })}, ${md}`
+}
+
 function dayLabel(iso: string, todayIso: string) {
   const d = parseISODate(iso)
   const diff = Math.round((d.getTime() - parseISODate(todayIso).getTime()) / 86_400_000)
@@ -110,6 +98,8 @@ export function CalendarItemModal({
   date,
   item,
   draft,
+  seed,
+  initialText,
   items,
   existingCustomCategories = [],
   onClose,
@@ -129,28 +119,28 @@ export function CalendarItemModal({
 
   // ── Form state ──
   const [initialWhen] = useState<When>(() => {
-    const start = timeToMinutes(item?.startTime ?? draft?.startTime ?? '09:00')
-    const endRaw = item?.endTime ?? draft?.endTime
+    const from = item ?? seed
+    const start = timeToMinutes(from?.startTime ?? draft?.startTime ?? '09:00')
+    const endRaw = from?.endTime ?? draft?.endTime
     // Some synced items carry a start but no end — treat them as an hour long.
     const end = endRaw ? timeToMinutes(endRaw) : Math.min(DAY_MINUTES, start + DEFAULT_BLOCK_MINUTES)
     return {
-      date: item?.originalDate ?? item?.date ?? date,
+      date: item?.originalDate ?? item?.date ?? seed?.date ?? date,
       start,
       end: end >= DAY_MINUTES - 1 ? DAY_MINUTES : end,
-      allDay: item ? Boolean(item.allDay || !item.startTime) : false,
-      recurrence: item?.recurrenceFrequency ?? 'NONE',
+      allDay: from ? Boolean(from.allDay || !from.startTime) : false,
+      recurrence: from?.recurrenceFrequency ?? 'NONE',
     }
   })
 
-  const [text, setText] = useState(item?.title ?? '')
+  const [text, setText] = useState(item?.title ?? seed?.title ?? initialText ?? '')
   const [base, setBase] = useState<When>(initialWhen)
-  const [dismissed, setDismissed] = useState<ParseKind[]>([])
-  const [itemType, setItemType] = useState<CalendarItemType>(item?.itemType ?? 'TASK')
-  const [category, setCategory] = useState(item?.category ?? 'Personal')
-  const [colorOverride, setColorOverride] = useState<string | undefined>(() => getCustomItemColor(item ?? {}))
-  const [recurrenceUntil, setRecurrenceUntil] = useState(item?.recurrenceUntil ?? '')
-  const [notes, setNotes] = useState(item?.notes ?? '')
-  const [notesOpen, setNotesOpen] = useState(Boolean(item?.notes))
+  const [dismissed, setDismissed] = useState<ParseKind[]>(() => (seed ? ['date', 'time', 'duration', 'repeat', 'allDay'] : []))
+  const [itemType, setItemType] = useState<CalendarItemType>(item?.itemType ?? seed?.itemType ?? 'EVENT')
+  const [category, setCategory] = useState(item?.category ?? seed?.category ?? 'Personal')
+  const [colorOverride, setColorOverride] = useState<string | undefined>(() => getCustomItemColor(item ?? seed ?? {}))
+  const [recurrenceUntil, setRecurrenceUntil] = useState(item?.recurrenceUntil ?? seed?.recurrenceUntil ?? '')
+  const [notes, setNotes] = useState(item?.notes ?? seed?.notes ?? '')
   const [completed, setCompleted] = useState(item?.completed ?? false)
   const [customCategories, setCustomCategories] = useState<string[]>(() => {
     const standard = new Set(CATEGORY_OPTIONS.map((o) => o.label))
@@ -162,8 +152,8 @@ export function CalendarItemModal({
   const [newCategory, setNewCategory] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [menu, setMenu] = useState<null | 'type' | 'category' | 'repeat'>(null)
-  const [typeAnchor, setTypeAnchor] = useState<HTMLElement | null>(null)
+  const [menu, setMenu] = useState<null | 'date' | 'category' | 'repeat'>(null)
+  const [dateAnchor, setDateAnchor] = useState<HTMLElement | null>(null)
   const [categoryAnchor, setCategoryAnchor] = useState<HTMLElement | null>(null)
   const [repeatAnchor, setRepeatAnchor] = useState<HTMLElement | null>(null)
 
@@ -202,8 +192,6 @@ export function CalendarItemModal({
   // ── Derived ──
   const categoryColor = colorForCategory(category)
   const accent = colorOverride ?? categoryColor
-  const blockIcon = iconForItem({ title: title || text, category, itemType })
-  const typeMeta = TYPES.find((t) => t.value === itemType) ?? TYPES[0]
   const duration = when.end - when.start
   const timesValid = when.allDay || duration > 0
   const categories = [...CATEGORY_OPTIONS.map((o) => o.label), ...customCategories]
@@ -213,11 +201,12 @@ export function CalendarItemModal({
     [items, when.date, editingId],
   )
 
-  const dayChoices = useMemo(() => {
-    const list = Array.from({ length: 7 }, (_, i) => toISO(new Date(today.getFullYear(), today.getMonth(), today.getDate() + i)))
-    if (!list.includes(when.date)) list.unshift(when.date)
-    return list
-  }, [today, when.date])
+  // The date picker's dots come from the loaded blocks.
+  const itemsByDay = useMemo(() => {
+    const map = new Map<string, CalendarItem[]>()
+    for (const it of items) map.set(it.date, [...(map.get(it.date) ?? []), it])
+    return map
+  }, [items])
 
   const isDirty = item
     ? text.trim() !== (item.title ?? '') ||
@@ -307,18 +296,20 @@ export function CalendarItemModal({
     }
   }
 
-  const heading = isEdit ? 'Edit block' : 'New block'
+  const heading = isEdit ? 'Edit block' : seed ? 'Duplicate block' : 'New block'
   const endOptions = [...SLOTS.filter((m) => m > when.start), DAY_MINUTES]
+  const isTask = itemType === 'TASK'
+  const toggle = (m: 'date' | 'category' | 'repeat') => setMenu(menu === m ? null : m)
 
   return (
     <>
-      <div className="cal-modal-backdrop" role="presentation" onClick={requestClose}>
+      <div className="cv-portal cal-modal-backdrop" role="presentation" onClick={requestClose}>
         <div
           className="cal-composer-modal"
           role="dialog"
           aria-modal="true"
           aria-label={heading}
-          style={{ '--cal-accent': accent } as CSSProperties}
+          style={{ '--ev': accent } as CSSProperties}
           onClick={(e) => e.stopPropagation()}
         >
           <form
@@ -332,243 +323,266 @@ export function CalendarItemModal({
               }
             }}
           >
-            <header className="cal-composer-top">
-              <span className="cal-eyebrow">{heading}</span>
+            <header className="cal-head">
+              <span className="cal-head-label">{heading}</span>
               <button type="button" className="cal-icon-btn" onClick={requestClose} aria-label="Close">
-                <X size={15} />
+                <X size={16} />
               </button>
             </header>
 
-            <div className="cal-composer-body">
-              {/* ── Name ── */}
-              <div className="cal-name-row">
-                <span className="cal-name-icon" aria-hidden="true">
-                  {createElement(blockIcon, { size: 20, strokeWidth: 2.2 })}
-                </span>
-                <div className="cal-name-stack">
-                  <input
-                    className="cal-name-input"
-                    type="text"
-                    autoFocus
-                    autoComplete="off"
-                    maxLength={160}
-                    placeholder={isEdit ? 'Name' : 'What’s the plan?'}
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    aria-label="Name"
-                  />
-                  {parsedChips.length > 0 ? (
-                    <div className="cal-parsed" aria-live="polite">
-                      <span className="cal-parsed-lead">Understood</span>
-                      {parsedChips.map((chip) => (
-                        <span key={chip.kind} className="cal-parsed-chip">
-                          {chip.label}
-                          <button
-                            type="button"
-                            aria-label={`Keep “${chip.label}” in the name instead`}
-                            title="Keep this in the name instead"
-                            onClick={() => setDismissed((d) => [...d, chip.kind])}
-                          >
-                            <X size={10} strokeWidth={3} />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    !isEdit && (
-                      <p className="cal-name-hint">
-                        Type it how you’d say it — <em>“Gym tomorrow 7am for 45m”</em> or <em>“Standup 10–10:15 every day”</em>
-                      </p>
-                    )
-                  )}
-                </div>
-              </div>
-
-              {/* ── When ── */}
-              <section className="cal-when" aria-label="When">
-                <div className="cal-day-row" role="radiogroup" aria-label="Day">
-                  {dayChoices.map((iso) => {
-                    const d = parseISODate(iso)
-                    const label = dayLabel(iso, todayIso)
-                    const relative = label === 'Today' || label === 'Tomorrow'
-                    return (
-                      <button
-                        key={iso}
-                        type="button"
-                        role="radio"
-                        aria-checked={when.date === iso}
-                        className={cn('cal-day-pill', when.date === iso && 'is-selected', relative && 'is-relative')}
-                        onClick={() => edit({ date: iso })}
-                      >
-                        {relative ? (
-                          <b>{label}</b>
-                        ) : (
-                          <>
-                            <small>{d.toLocaleDateString('en-US', { weekday: 'short' })}</small>
-                            <b>{d.getDate()}</b>
-                          </>
-                        )}
-                      </button>
-                    )
-                  })}
-                  <label className="cal-day-pill is-picker" title="Pick a date">
-                    <CalendarDays size={15} strokeWidth={2.2} />
-                    <input
-                      type="date"
-                      value={when.date}
-                      aria-label="Pick a date"
-                      onClick={(e) => {
-                        try {
-                          e.currentTarget.showPicker()
-                        } catch {
-                          // older browsers open the picker on their own
-                        }
-                      }}
-                      onChange={(e) => e.target.value && edit({ date: e.target.value })}
-                    />
-                  </label>
-                </div>
-
-                <div className="cal-time-row">
-                  {when.allDay ? (
-                    <span className="cal-allday-note">
-                      <Sun size={14} strokeWidth={2.2} /> All day · {dayLabel(when.date, todayIso)}
-                    </span>
-                  ) : (
-                    <>
-                      <TimeSelect
-                        ariaLabel="Starts"
-                        value={when.start}
-                        options={SLOTS}
-                        onChange={(s) => edit({ start: s, end: Math.min(DAY_MINUTES, s + (duration > 0 ? duration : 60)) })}
-                      />
-                      <span className="cal-time-arrow" aria-hidden="true">→</span>
-                      <TimeSelect ariaLabel="Ends" value={when.end} from={when.start} options={endOptions} onChange={(e) => edit({ end: e })} />
-                      <span className={cn('cal-length', !timesValid && 'is-bad')}>
-                        {timesValid ? formatDuration(duration) : 'Ends before it starts'}
-                      </span>
-                    </>
-                  )}
-                  <label className="cal-switch">
-                    <input type="checkbox" checked={when.allDay} onChange={(e) => edit({ allDay: e.target.checked })} />
-                    <span className="cal-switch-track" aria-hidden="true" />
-                    <span>All day</span>
-                  </label>
-                </div>
-
-                {!when.allDay && (
-                  <>
-                    <div className="cal-length-row" role="group" aria-label="Length">
-                      {DURATIONS.map((d) => (
+            {/* ── Title ── */}
+            <div className="cal-row cal-title-row">
+              <button
+                type="button"
+                className="cal-swatch-btn"
+                onClick={() => toggle('category')}
+                aria-label={`Calendar: ${category}`}
+                title={category}
+              />
+              <div className="cal-title-stack">
+                <input
+                  className="cal-title-input"
+                  type="text"
+                  autoFocus
+                  autoComplete="off"
+                  maxLength={160}
+                  placeholder="Add a title"
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  aria-label="Title"
+                />
+                {parsedChips.length > 0 ? (
+                  <div className="cal-parsed" aria-live="polite">
+                    {parsedChips.map((chip) => (
+                      <span key={chip.kind} className="cal-parsed-chip">
+                        {chip.label}
                         <button
-                          key={d}
                           type="button"
-                          className={cn('cal-length-chip', duration === d && 'is-active')}
-                          onClick={() => edit({ end: Math.min(DAY_MINUTES, when.start + d) })}
+                          aria-label={`Keep “${chip.label}” in the title instead`}
+                          title="Keep this in the title instead"
+                          onClick={() => setDismissed((d) => [...d, chip.kind])}
                         >
-                          {formatDuration(d)}
+                          <X size={10} strokeWidth={2.8} />
                         </button>
-                      ))}
-                    </div>
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  !isEdit &&
+                  !text && <p className="cal-hint">Type it naturally — “Gym tomorrow 7am for 45m”</p>
+                )}
+              </div>
+            </div>
+
+            <div className="cal-group">
+              {/* ── When ── */}
+              <div className="cal-row is-top">
+                <span className="cal-row-ic" aria-hidden="true">
+                  <Clock size={17} strokeWidth={2} />
+                </span>
+                <div className="cal-when">
+                  <div className="cal-when-line">
+                    <button
+                      ref={setDateAnchor}
+                      type="button"
+                      className={cn('cal-pick', menu === 'date' && 'is-open')}
+                      aria-haspopup="dialog"
+                      aria-expanded={menu === 'date'}
+                      onClick={() => toggle('date')}
+                    >
+                      {dateButtonLabel(when.date, todayIso)}
+                    </button>
+                    {!when.allDay && (
+                      <>
+                        <TimeSelect
+                          ariaLabel="Starts"
+                          value={when.start}
+                          options={SLOTS}
+                          onChange={(st) => edit({ start: st, end: Math.min(DAY_MINUTES, st + (duration > 0 ? duration : 60)) })}
+                        />
+                        <span className="cal-dash" aria-hidden="true">–</span>
+                        <TimeSelect ariaLabel="Ends" value={when.end} from={when.start} options={endOptions} onChange={(en) => edit({ end: en })} />
+                        <span className={cn('cal-len', !timesValid && 'is-bad')}>{timesValid ? formatDuration(duration) : 'Ends too early'}</span>
+                      </>
+                    )}
+                    <label className="cal-switch is-inline">
+                      <input type="checkbox" checked={when.allDay} onChange={(e) => edit({ allDay: e.target.checked })} />
+                      <span className="cal-switch-track" aria-hidden="true" />
+                      <span>All day</span>
+                    </label>
+                  </div>
+                  {!when.allDay && (
                     <DayGlance
                       others={dayOthers}
                       start={when.start}
                       end={timesValid ? when.end : when.start + 15}
                       now={when.date === todayIso ? today.getHours() * 60 + today.getMinutes() : undefined}
-                      onChange={(s, e) => edit({ start: s, end: e })}
+                      onChange={(st, en) => edit({ start: st, end: en })}
                     />
-                  </>
-                )}
-              </section>
-
-              {/* ── Properties ── */}
-              <div className="cal-props" aria-label="Details">
-                <PropPill refFn={setTypeAnchor} open={menu === 'type'} onClick={() => setMenu(menu === 'type' ? null : 'type')} icon={createElement(typeMeta.icon, { size: 13, strokeWidth: 2.4 })}>
-                  {typeMeta.label}
-                </PropPill>
-                <PropPill
-                  refFn={setCategoryAnchor}
-                  open={menu === 'category'}
-                  onClick={() => setMenu(menu === 'category' ? null : 'category')}
-                  icon={<span className="cal-dot" style={{ background: accent }} />}
-                >
-                  {category}
-                </PropPill>
-                <PropPill
-                  refFn={setRepeatAnchor}
-                  open={menu === 'repeat'}
-                  active={when.recurrence !== 'NONE'}
-                  onClick={() => setMenu(menu === 'repeat' ? null : 'repeat')}
-                  icon={<Repeat size={13} strokeWidth={2.4} />}
-                >
-                  {repeatLabel(when.recurrence, when.date)}
-                </PropPill>
-                <button type="button" className={cn('cal-prop', notesOpen && 'is-active')} onClick={() => setNotesOpen((o) => !o)} aria-expanded={notesOpen}>
-                  <AlignLeft size={13} strokeWidth={2.4} /> Notes
-                </button>
-                {isEdit && (
-                  <button type="button" className={cn('cal-prop', completed && 'is-done')} onClick={() => setCompleted((c) => !c)} aria-pressed={completed}>
-                    <Check size={13} strokeWidth={2.8} /> {completed ? 'Done' : 'Mark done'}
-                  </button>
-                )}
+                  )}
+                </div>
               </div>
 
-              {isSeries && <p className="cal-series-note">Changes apply to every occurrence of this repeating block.</p>}
+              {/* ── Repeat ── */}
+              <div className="cal-row">
+                <span className="cal-row-ic" aria-hidden="true">
+                  <Repeat size={17} strokeWidth={2} />
+                </span>
+                <div>
+                  <button
+                    ref={setRepeatAnchor}
+                    type="button"
+                    className={cn('cal-pick', menu === 'repeat' && 'is-open', when.recurrence === 'NONE' && 'is-muted')}
+                    aria-haspopup="menu"
+                    aria-expanded={menu === 'repeat'}
+                    onClick={() => toggle('repeat')}
+                  >
+                    {repeatLabel(when.recurrence, when.date)}
+                    {when.recurrence !== 'NONE' && recurrenceUntil && (
+                      <span className="cal-pick-sub">
+                        until {parseISODate(recurrenceUntil).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </span>
+                    )}
+                    <ChevronDown size={14} strokeWidth={2.2} className="cal-pick-caret" />
+                  </button>
+                </div>
+              </div>
 
-              {notesOpen && (
+              {/* ── Calendar ── */}
+              <div className="cal-row">
+                <span className="cal-row-ic" aria-hidden="true">
+                  <span className="cal-dot is-lg" style={{ background: accent }} />
+                </span>
+                <div>
+                  <button
+                    ref={setCategoryAnchor}
+                    type="button"
+                    className={cn('cal-pick', menu === 'category' && 'is-open')}
+                    aria-haspopup="menu"
+                    aria-expanded={menu === 'category'}
+                    onClick={() => toggle('category')}
+                  >
+                    {category}
+                    {colorOverride && <span className="cal-pick-sub">custom colour</span>}
+                    <ChevronDown size={14} strokeWidth={2.2} className="cal-pick-caret" />
+                  </button>
+                </div>
+              </div>
+
+              {/* ── Task ── */}
+              <label className="cal-row is-switch">
+                <span className="cal-row-ic" aria-hidden="true">
+                  <ListChecks size={17} strokeWidth={2} />
+                </span>
+                <span className="cal-row-text">
+                  <b>Add to task list</b>
+                  <small>{isTask ? 'Shows on Tasks with a checkbox' : 'Calendar only'}</small>
+                </span>
+                <span className="cal-switch">
+                  <input
+                    type="checkbox"
+                    checked={isTask}
+                    onChange={(e) => setItemType(e.target.checked ? 'TASK' : item?.itemType && item.itemType !== 'TASK' ? item.itemType : 'EVENT')}
+                  />
+                  <span className="cal-switch-track" aria-hidden="true" />
+                </span>
+              </label>
+
+              {isEdit && (
+                <label className="cal-row is-switch">
+                  <span className="cal-row-ic" aria-hidden="true">
+                    <CircleCheck size={17} strokeWidth={2} />
+                  </span>
+                  <span className="cal-row-text">
+                    <b>Done</b>
+                  </span>
+                  <span className="cal-switch">
+                    <input type="checkbox" checked={completed} onChange={(e) => setCompleted(e.target.checked)} />
+                    <span className="cal-switch-track" aria-hidden="true" />
+                  </span>
+                </label>
+              )}
+
+              {/* ── Notes ── */}
+              <div className="cal-row is-top">
+                <span className="cal-row-ic" aria-hidden="true">
+                  <AlignLeft size={17} strokeWidth={2} />
+                </span>
                 <textarea
                   className="cal-notes"
-                  placeholder="Context, links, a checklist ( - [ ] item )…"
+                  placeholder="Add notes or a checklist (- [ ] item)"
+                  aria-label="Notes"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  rows={3}
-                  autoFocus={!item?.notes}
+                  rows={notes.split('\n').length > 1 ? 3 : 1}
                 />
-              )}
+              </div>
             </div>
 
-            <footer className="cal-composer-foot">
-              {isEdit && onDelete && item ? (
-                <button type="button" className="cal-delete" onClick={() => onDelete(item)}>
-                  <Trash2 size={14} strokeWidth={2.2} /> Delete
-                </button>
-              ) : (
-                <span className="cal-keys" aria-hidden="true">
-                  <kbd>⌘</kbd>
-                  <kbd>↵</kbd> save <span className="cal-keys-sep" /> <kbd>esc</kbd> close
-                </span>
-              )}
-              {error && <p className="cal-error" role="alert">{error}</p>}
-              <div className="cal-foot-actions">
-                <button type="button" className="cal-ghost-btn" onClick={requestClose}>Cancel</button>
-                <button type="submit" className="cal-primary-btn" disabled={saving || !title}>
-                  {saving ? <Loader2 className="animate-spin" size={16} /> : isEdit ? 'Save' : 'Add to calendar'}
-                </button>
+            {isSeries && <p className="cal-series-note">Changes apply to every occurrence of this repeating block.</p>}
+
+            <footer className="cal-foot">
+              <div className="cal-foot-lead">
+                {error ? (
+                  <p className="cal-error" role="alert">
+                    {error}
+                  </p>
+                ) : isEdit && onDelete && item ? (
+                  <button type="button" className="cal-delete" onClick={() => onDelete(item)}>
+                    <Trash2 size={14} strokeWidth={2.2} /> Delete
+                  </button>
+                ) : (
+                  <span className="cal-keys" aria-hidden="true">
+                    <kbd>⌘</kbd>
+                    <kbd>↵</kbd> to save
+                  </span>
+                )}
               </div>
+              <button type="button" className="cal-btn is-neutral" onClick={requestClose}>
+                Cancel
+              </button>
+              <button type="submit" className="cal-btn is-primary" disabled={saving || !title}>
+                {saving ? <Loader2 className="animate-spin" size={15} /> : isEdit ? 'Save' : 'Add to calendar'}
+              </button>
             </footer>
           </form>
         </div>
       </div>
 
-      {/* ── Menus (portalled so the body can never clip them) ── */}
-      <PopoverMenu anchor={typeAnchor} open={menu === 'type'} onClose={() => setMenu(null)} width={230}>
-        {TYPES.map((t) => (
-          <MenuItem
-            key={t.value}
-            icon={createElement(t.icon, { size: 14, strokeWidth: 2.2 })}
-            label={t.label}
-            hint={t.hint}
-            selected={itemType === t.value}
-            onSelect={() => {
-              setItemType(t.value)
-              setMenu(null)
-            }}
-          />
-        ))}
+      {/* ── Menus (portalled so nothing can clip them) ── */}
+      <PopoverMenu anchor={dateAnchor} open={menu === 'date'} onClose={() => setMenu(null)} width={268} className="cal-date-menu">
+        <div className="cal-date-quick">
+          {[0, 1, 7].map((n) => {
+            const iso = toISO(new Date(today.getFullYear(), today.getMonth(), today.getDate() + n))
+            return (
+              <button
+                key={n}
+                type="button"
+                className={cn(when.date === iso && 'is-on')}
+                onClick={() => {
+                  edit({ date: iso })
+                  setMenu(null)
+                }}
+              >
+                {n === 0 ? 'Today' : n === 1 ? 'Tomorrow' : 'In a week'}
+              </button>
+            )
+          })}
+        </div>
+        <MiniMonth
+          selected={when.date}
+          todayIso={todayIso}
+          inView={[]}
+          itemsByDay={itemsByDay}
+          onSelect={(iso) => {
+            edit({ date: iso })
+            setMenu(null)
+          }}
+        />
       </PopoverMenu>
 
-      <PopoverMenu anchor={categoryAnchor} open={menu === 'category'} onClose={() => setMenu(null)} width={248}>
-        <div className="cal-menu-scroll">
+      <PopoverMenu anchor={categoryAnchor} open={menu === 'category'} onClose={() => setMenu(null)} width={264} className="cal-cat-menu">
+        <div className="cal-menu-list">
           {categories.map((c) => (
             <MenuItem
               key={c}
@@ -582,10 +596,10 @@ export function CalendarItemModal({
             />
           ))}
         </div>
-        <div className="cal-menu-new">
-          <Plus size={13} strokeWidth={2.4} />
+        <label className="cal-menu-new">
+          <Plus size={14} strokeWidth={2.2} />
           <input
-            placeholder="New category"
+            placeholder="New calendar"
             value={newCategory}
             maxLength={32}
             onChange={(e) => setNewCategory(e.target.value)}
@@ -596,7 +610,7 @@ export function CalendarItemModal({
               }
             }}
           />
-        </div>
+        </label>
         <div className="cal-menu-section">
           <span className="cal-menu-heading">Colour for this block</span>
           <div className="cal-swatches">
@@ -608,24 +622,26 @@ export function CalendarItemModal({
               title={`Same as ${category}`}
               aria-label={`Same as ${category}`}
             >
-              Auto
+              {!colorOverride && <Check size={11} strokeWidth={3} />}
             </button>
-            {EVENT_COLOR_SWATCHES.map((s) => (
+            {EVENT_COLOR_SWATCHES.map((sw) => (
               <button
-                key={s.hex}
+                key={sw.hex}
                 type="button"
-                className={cn('cal-swatch', colorOverride === s.hex && 'is-selected')}
-                style={{ '--swatch': s.hex } as CSSProperties}
-                onClick={() => setColorOverride(s.hex)}
-                title={s.name}
-                aria-label={s.name}
-              />
+                className={cn('cal-swatch', colorOverride === sw.hex && 'is-selected')}
+                style={{ '--swatch': sw.hex } as CSSProperties}
+                onClick={() => setColorOverride(sw.hex)}
+                title={sw.name}
+                aria-label={sw.name}
+              >
+                {colorOverride === sw.hex && <Check size={11} strokeWidth={3} />}
+              </button>
             ))}
           </div>
         </div>
       </PopoverMenu>
 
-      <PopoverMenu anchor={repeatAnchor} open={menu === 'repeat'} onClose={() => setMenu(null)} width={250}>
+      <PopoverMenu anchor={repeatAnchor} open={menu === 'repeat'} onClose={() => setMenu(null)} width={240}>
         {(['NONE', 'DAILY', 'WEEKLY', 'MONTHLY'] as CalendarRecurrence[]).map((r) => (
           <MenuItem
             key={r}
@@ -639,11 +655,11 @@ export function CalendarItemModal({
         ))}
         {when.recurrence !== 'NONE' && (
           <label className="cal-menu-until">
-            <span>Until</span>
+            <span>Ends</span>
             <input type="date" value={recurrenceUntil} min={when.date} onChange={(e) => setRecurrenceUntil(e.target.value)} />
             {recurrenceUntil && (
-              <button type="button" onClick={() => setRecurrenceUntil('')} aria-label="Repeat forever">
-                <X size={11} strokeWidth={2.6} />
+              <button type="button" onClick={() => setRecurrenceUntil('')} aria-label="Repeat forever" title="Repeat forever">
+                <X size={12} strokeWidth={2.4} />
               </button>
             )}
           </label>
@@ -655,33 +671,3 @@ export function CalendarItemModal({
   )
 }
 
-function PropPill({
-  refFn,
-  open,
-  active,
-  onClick,
-  icon,
-  children,
-}: {
-  refFn: (el: HTMLElement | null) => void
-  open: boolean
-  active?: boolean
-  onClick: () => void
-  icon: ReactNode
-  children: ReactNode
-}) {
-  return (
-    <button
-      ref={refFn}
-      type="button"
-      className={cn('cal-prop', (open || active) && 'is-active')}
-      aria-haspopup="menu"
-      aria-expanded={open}
-      onClick={onClick}
-    >
-      {icon}
-      <span className="cal-prop-label">{children}</span>
-      <ChevronDown size={12} strokeWidth={2.4} className="cal-prop-caret" />
-    </button>
-  )
-}

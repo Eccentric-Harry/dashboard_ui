@@ -67,8 +67,6 @@
 :root[data-theme='dark'] .workouts-card,
 :root[data-theme='dark'] .learnings-card,
 :root[data-theme='dark'] .learnings-stat-card,
-:root[data-theme='dark'] .routine-navigator,
-:root[data-theme='dark'] .focus-canvas,
 :root[data-theme='dark'] .prompts-card,
 :root[data-theme='dark'] .hud-panel {
   background: var(--dk-surface) !important;
@@ -1565,185 +1563,99 @@
   outline-color: var(--dk-ink);
 }
 
-/* ══ Calendar ════════════════════════════════════════════════════════════ */
+/* ══ Calendar ════════════════════════════════════════════════════════════
+   /calendar runs on --cv-* tokens (calendar-overview.css), so its dark pass is
+   this block: graphite steps and hairlines, blocks drawn as low washes of
+   their own hue with lifted same-hue ink, and the ember "now" hue lifted off
+   red so it reads as time, not alarm. */
 
-/* The teal "upcoming task" slab becomes graphite lit by teal. The source rule
-   is !important throughout, so this has to be too. */
-:root[data-theme='dark'] .quick-reminder-card {
-  padding: 18px 18px 16px !important;
-  border: 1px solid var(--dk-line) !important;
-  background: var(--dk-raised) !important;
-  color: var(--dk-ink) !important;
-  box-shadow: var(--dk-highlight) !important;
-  min-height: 0 !important;
+:root[data-theme='dark'] :is(.calendar-dashboard, .cv-portal) {
+  --cv-surface: var(--dk-surface);
+  --cv-card-line: var(--dk-line);
+  --cv-shadow: var(--dk-highlight);
+  --cv-overlay: var(--dk-overlay);
+  --cv-pop-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 24px 56px rgba(0, 0, 0, 0.55);
+  --cv-ink: var(--dk-ink);
+  --cv-ink-2: var(--dk-ink-2);
+  --cv-ink-3: var(--dk-ink-3);
+  --cv-line: rgba(255, 255, 255, 0.06);
+  --cv-line-strong: rgba(255, 255, 255, 0.12);
+  --cv-grid-line: rgba(255, 255, 255, 0.055);
+  --cv-grid-half: rgba(255, 255, 255, 0.022);
+  --cv-well: var(--dk-raised);
+  --cv-control: #24272c;
+  --cv-control-hover: #2c2f35;
+  --cv-hover: rgba(255, 255, 255, 0.035);
+  --cv-weekend: rgba(255, 255, 255, 0.012);
+  --cv-night: rgba(0, 0, 0, 0.16);
+  --cv-band: rgba(255, 255, 255, 0.05);
+  --cv-chip-active: #33363c;
+  --cv-chip-active-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --cv-primary-bg: #eceef0;
+  --cv-primary-ink: #111315;
+  --cv-focus: rgba(255, 255, 255, 0.06);
+  --cv-now: #f0937c;
+  --cv-now-ink: #f4a693;
+  --cv-on-now: #2a120c;
+  --cv-now-soft: rgba(240, 147, 124, 0.16);
+  --cv-danger: #f28b95;
+  --cv-danger-soft: rgba(242, 139, 149, 0.12);
+  --cv-scrim: rgba(0, 0, 0, 0.55);
+
+  --cv-ev-base: #1f2125;
+  --cv-ev-fill: 24%;
+  --cv-ev-ink-base: #ffffff;
+  --cv-ev-ink: 52%;
+  --cv-ev-edge: 30%;
 }
 
-/* No edge bar or ring: the card is a plain raised surface, and the event's
-   own colour (--rc-accent, set inline per event) is carried by a small lit dot
-   beside the eyebrow — enough to tell events apart without framing the card. */
-:root[data-theme='dark'] .quick-reminder-card:hover {
-  transform: none;
+/* Hovered and live blocks step up from the darker base. */
+:root[data-theme='dark'] .cv-ev:hover,
+:root[data-theme='dark'] .cv-ev.is-live {
+  --cv-ev-fill: 32%;
 }
 
-:root[data-theme='dark'] .quick-reminder-card::before {
-  content: none;
+:root[data-theme='dark'] .cv-chip {
+  --cv-ev-fill: 30%;
 }
 
-:root[data-theme='dark'] .reminder-eyebrow {
-  gap: 8px;
-  margin-bottom: 8px;
-  color: var(--dk-ink-3);
-  font-weight: 650;
-  letter-spacing: 0.08em;
-  opacity: 1;
+:root[data-theme='dark'] .cv-chip:hover {
+  --cv-ev-fill: 38%;
 }
 
-:root[data-theme='dark'] .reminder-eyebrow::before {
-  content: '';
-  flex: none;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: color-mix(in oklab, var(--rc-accent, #2dd4bf), #fff 15%);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--rc-accent, #2dd4bf) 22%, transparent);
+:root[data-theme='dark'] .cv-ev.is-active,
+:root[data-theme='dark'] .cv-chip.is-active {
+  box-shadow: 0 0 0 2px var(--cv-surface), 0 0 0 3.5px var(--ev), 0 14px 30px -8px rgba(0, 0, 0, 0.7);
 }
 
-:root[data-theme='dark'] .upcoming-carousel-controls {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 2px;
-  border-radius: 999px;
-  background: var(--dk-wash-strong);
+:root[data-theme='dark'] .cv-ghost.is-create,
+:root[data-theme='dark'] .cv-ghost.is-move {
+  box-shadow: 0 14px 30px -8px rgba(0, 0, 0, 0.7);
 }
 
-:root[data-theme='dark'] .carousel-arrow {
-  display: grid;
-  width: 22px;
-  height: 22px;
-  place-items: center;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--dk-ink-2);
-  font-size: 14px;
-  line-height: 1;
-  cursor: pointer;
+/* The category tick sits on a strong hue fill; dark ink reads better there. */
+:root[data-theme='dark'] .cv-cal-box {
+  color: #111315;
 }
 
-:root[data-theme='dark'] .carousel-arrow:hover:not(:disabled) {
-  background: var(--dk-wash-strong);
-  color: var(--dk-ink);
+:root[data-theme='dark'] .cv-btn.is-danger {
+  color: #2a0f13;
 }
 
-:root[data-theme='dark'] .carousel-arrow:disabled {
-  opacity: 0.35;
-  cursor: default;
+:root[data-theme='dark'] .cv-btn.is-ghost {
+  background: rgba(255, 255, 255, 0.07);
 }
 
-:root[data-theme='dark'] .carousel-index {
-  min-width: 26px;
-  color: var(--dk-ink-2);
-  font-size: 10.5px;
-  font-weight: 650;
-  font-variant-numeric: tabular-nums;
-  text-align: center;
+:root[data-theme='dark'] .cv-btn.is-ghost:hover {
+  background: rgba(255, 255, 255, 0.11);
 }
 
-:root[data-theme='dark'] .reminder-title {
-  color: var(--dk-ink);
+:root[data-theme='dark'] .cv-menu-action:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
 }
 
-:root[data-theme='dark'] .reminder-time-row {
-  margin-bottom: 14px;
-  color: var(--dk-ink-2);
-  opacity: 1;
-}
-
-:root[data-theme='dark'] .reminder-actions .btn-decline {
-  background: transparent;
-  color: var(--dk-ink-2);
-  box-shadow: inset 0 0 0 1px var(--dk-line-strong);
-}
-
-:root[data-theme='dark'] .reminder-actions .btn-decline:hover {
-  background: var(--dk-wash);
-  color: var(--dk-ink);
-  transform: none;
-}
-
-:root[data-theme='dark'] .reminder-actions .btn-accept {
-  background: color-mix(in srgb, var(--rc-accent, #2dd4bf) 18%, transparent);
-  color: color-mix(in oklab, var(--rc-accent, #2dd4bf), #fff 45%);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--rc-accent, #2dd4bf) 38%, transparent);
-}
-
-:root[data-theme='dark'] .reminder-actions .btn-accept:hover {
-  background: color-mix(in srgb, var(--rc-accent, #2dd4bf) 26%, transparent);
-  transform: none;
-}
-
-/* Mini calendar accordion header */
-:root[data-theme='dark'] .sidebar-month-toggle {
-  color: var(--dk-ink);
-}
-
-:root[data-theme='dark'] .sidebar-month-toggle:hover {
-  background: var(--dk-wash);
-}
-
-:root[data-theme='dark'] .sidebar-month-toggle-ic {
-  background: rgba(45, 180, 165, 0.14);
-  color: #6fd3c5;
-}
-
-:root[data-theme='dark'] .sidebar-month-toggle-text small {
-  color: var(--dk-ink-3);
-}
-
-:root[data-theme='dark'] .sidebar-month-body {
-  border-top-color: var(--dk-line);
-}
-
-/* Routine cards carry a pastel --card-bg inline (from the preview/tag colour).
-   In dark, ignore that pastel and tint a raised graphite by --card-color
-   instead, so every event hue stays legible without a light slab. The
-   glassmorphic source rules are !important, so these must be too. */
-:root[data-theme='dark'] .routine-card {
-  background: color-mix(in srgb, var(--card-color, #1d4ed8) 10%, var(--dk-raised)) !important;
-  border: 1px solid color-mix(in srgb, var(--card-color, #1d4ed8) 26%, var(--dk-line)) !important;
-  box-shadow: var(--dk-highlight) !important;
-  color: var(--dk-ink);
-}
-
-:root[data-theme='dark'] .routine-card:hover {
-  background: color-mix(in srgb, var(--card-color, #1d4ed8) 15%, var(--dk-raised)) !important;
-  border-color: color-mix(in srgb, var(--card-color, #1d4ed8) 40%, var(--dk-line)) !important;
-}
-
-:root[data-theme='dark'] .routine-card.is-active {
-  background: color-mix(in srgb, var(--card-color, #1d4ed8) 20%, var(--dk-raised)) !important;
-  border-color: color-mix(in srgb, var(--card-color, #1d4ed8) 58%, var(--dk-line)) !important;
-  box-shadow: 0 12px 32px color-mix(in srgb, var(--card-color, #1d4ed8) 14%, transparent), var(--dk-highlight) !important;
-}
-
-:root[data-theme='dark'] .routine-card-icon,
-:root[data-theme='dark'] .routine-card.is-active .routine-card-icon {
-  background: color-mix(in srgb, var(--card-color, #1d4ed8) 24%, var(--dk-surface)) !important;
-  color: color-mix(in srgb, var(--card-color, #1d4ed8) 55%, #ffffff) !important;
-  box-shadow: none !important;
-}
-
-:root[data-theme='dark'] .focus-summary-card {
-  background: radial-gradient(120% 95% at 0% 0%, color-mix(in srgb, var(--focus-color, #1d4ed8) 22%, transparent), transparent 62%), var(--dk-panel) !important;
-  border-color: color-mix(in srgb, var(--focus-color, #1d4ed8) 30%, var(--dk-line)) !important;
-  box-shadow: var(--dk-highlight) !important;
-}
-
-:root[data-theme='dark'] .focus-icon {
-  background: color-mix(in srgb, var(--focus-color, #1d4ed8) 24%, var(--dk-surface)) !important;
-  border-color: var(--dk-line) !important;
-  color: color-mix(in srgb, var(--focus-color, #1d4ed8) 55%, #ffffff) !important;
+:root[data-theme='dark'] .cv-toast button {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 /* The date-picker popover borrows .learnings-card's translucent glass; with no

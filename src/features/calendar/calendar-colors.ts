@@ -141,6 +141,16 @@ export function displayColorForItem(item: { id?: string; category?: string; colo
   return colorForCategory('Personal')
 }
 
+/**
+ * The hue a block is drawn in, as a CSS colour. Legacy synced colours can
+ * arrive without their '#'. Views feed it to CSS as `--ev` and let the
+ * stylesheet derive the fill and ink for each theme.
+ */
+export function eventHue(item: { id?: string; category?: string; color?: string }) {
+  const color = displayColorForItem(item)
+  return /^(#|hsl|rgb|oklch)/i.test(color) ? color : `#${color}`
+}
+
 const CUSTOM_CATEGORIES_KEY = 'calendar_custom_categories'
 
 export function readCustomCategories(): string[] {

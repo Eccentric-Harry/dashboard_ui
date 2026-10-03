@@ -81,7 +81,7 @@ export function PopoverMenu({ anchor, open, onClose, children, width = 240, clas
   return createPortal(
     <div
       ref={ref}
-      className={cn('cal-menu', className)}
+      className={cn('cv-portal cal-menu', className)}
       role="menu"
       style={{
         width,

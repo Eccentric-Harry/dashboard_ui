@@ -14,7 +14,7 @@ import {
   PartyPopper,
   Phone,
   Plane,
-  Sparkles,
+  User,
   Users,
   Wallet,
   type LucideIcon,
@@ -47,7 +47,7 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   learning: BookOpen,
   finance: Wallet,
   social: Users,
-  personal: Sparkles,
+  personal: User,
   movies: PartyPopper,
 }
 
@@ -66,6 +66,22 @@ export function iconForItem(item: { title?: string; category?: string; itemType?
   const byCategory = CATEGORY_ICONS[(item.category || '').trim().toLowerCase()]
   if (byCategory) return byCategory
   return TYPE_ICONS[item.itemType ?? 'TASK'] ?? ListChecks
+}
+
+// Quick add has no category picker, so it guesses one from the words in the
+// title. Anything it can't place lands in Personal, the composer's default.
+const CATEGORY_RULES: [RegExp, string][] = [
+  [/\b(gym|workout|run|jog|yoga|walk|swim|cycle|hike|stretch|meditat\w*|doctor|dentist|therapy|physio|sleep|nap)\b/, 'Health'],
+  [/\b(meeting|standup|stand-up|sync|sprint|client|interview|retro|1:1|deploy|release|office|work)\b/, 'Work'],
+  [/\b(study|learn\w*|read\w*|course|class|lecture|lesson|leetcode|practice|tutorial|exam|homework)\b/, 'Learning'],
+  [/\b(pay|bill|budget|bank|invest\w*|tax|rent|emi|insurance|salary|invoice)\b/, 'Finance'],
+  [/\b(movie|cinema|film|netflix)\b/, 'Movies'],
+  [/\b(party|birthday|wedding|anniversary|dinner|lunch|brunch|drinks|catch.?up|date night|hangout|call with|visit)\b/, 'Social'],
+]
+
+export function guessCategory(title: string) {
+  const t = title.toLowerCase()
+  return CATEGORY_RULES.find(([re]) => re.test(t))?.[1] ?? 'Personal'
 }
 
 export { TYPE_ICONS }

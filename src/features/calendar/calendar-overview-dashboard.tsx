@@ -1,341 +1,56 @@
-/**
- * CODEBASE ANALYSIS FINDINGS (PHASE 1)
- * 
- * 1A — FRONTEND ANALYSIS
- * 1. Page Component: `CalendarOverview` in `components/views/calendar-view.tsx` acts as the frame. It renders `CalendarOverviewDashboard` inside `dashboard-stage`.
- * 2. Weekly/Day Grid Component: Implemented directly in `CalendarOverviewDashboard` (this file). Day headers are mapped over `weekDays` or `selectedDate` under `.grid-header-days`, and day columns are mapped under `.grid-columns-container` rendering `.grid-day-column`.
- * 3. Event Card/Chip Component: Rendered as `<button className="grid-event-card">` within each `.grid-day-column`.
- * 4. Left Sidebar Panel: Contains `.sidebar-search-block` (Search Input), `.sidebar-month-card` (`MiniMonth` component), `.quick-reminder-card` (Meeting Reminder), `.calendar-filter-card` (Filters Accordion), and `.calendar-other-accordion` (Other Calendars).
- * 5. Custom Hooks: State (e.g. `selectedDate`, `items`, `viewType`, `categoryFilters`) is managed directly via React standard hooks (`useState`, `useMemo`, `useCallback`, `useEffect`).
- * 6. TypeScript Interfaces: `CalendarItem` (defined in `types/calendar.ts`) contains: `id`, `occurrenceId`, `date`, `originalDate`, `title`, `startTime`, `endTime`, `allDay`, `itemType`, `category`, `color`, `notes`, `completed`, `cancelled`, `sortOrder`, `recurrenceFrequency`, `recurrenceUntil`, `history`, `createdAt`. It has no `attendees` field.
- * 7. API Service: `calendarService` (services/calendar-service.ts) wraps every calendar endpoint over the shared Axios client; `calendar-store` holds the loaded range and Google sync status.
- * 
- * 1B — BACKEND ANALYSIS
- * 1. Controller: `CalendarController` in backend handles requests mapped to `/api/v1/calendar/items`.
- * 2. Endpoints:
- *    - GET `/api/v1/calendar/items/range`: Accepts query params `startDate` and `endDate`. Returns a list of `CalendarItemOccurrence` wrapped in `ApiResponse`.
- *    - GET `/api/v1/calendar/items/{id}`: Fetches a single source `DailyTask` item.
- *    - POST `/api/v1/calendar/items`: Creates a new calendar item (request payload: `CalendarItemRequest`).
- *    - PUT `/api/v1/calendar/items/{id}`: Updates a source calendar item.
- *    - PATCH `/api/v1/calendar/items/{id}/toggle`: Toggles completion.
- *    - PATCH `/api/v1/calendar/items/{id}/toggle-cancel`: Toggles cancellation.
- *    - DELETE `/api/v1/calendar/items/{id}`: Deletes a calendar item or a specific occurrence.
- * 3. Entity Class: `DailyTask` (MongoDB collection `daily_tasks`) has: `id`, `userId`, `title`, `date`, `scheduledTime`, `startTime`, `endTime`, `allDay`, `itemType`, `category`, `color`, `notes`, `completed`, `cancelled`, `status`, `completedAt`, `sortOrder`, `recurrenceFrequency`, `recurrenceUntil`, `completedDates`, `cancelledDates`, `excludedDates`, `subtasks`, `tags`, `history`, `googleEventId`, `lastSyncedAt`, `createdAt`, `updatedAt`.
- * 4. Enums: Recurrence is defined by `CalendarRecurrence` (`NONE`, `DAILY`, `WEEKLY`, `MONTHLY`). Event types in UI are `TASK`, `EVENT`, `REMINDER`, `MILESTONE`.
- * 5. Attendees: Attendees are not stored or returned in the database/API response.
- */
+// /calendar — a personal calendar in the Apple / Google / Notion Calendar mould:
+// a sidebar (quick add, month, up next, calendars, Google sync) beside one
+// stage that draws Day, Work week, Week, Month or Agenda. Server state lives in
+// calendar-store; everything here is view state plus the mutations, which run
+// optimistically and broadcast 'calendar-updated' for a guarded refetch.
+// The pure maths is in calendar-dates.ts / calendar-layout.ts; each view and
+// sidebar block is its own component under components/.
 
-import { createElement, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent } from 'react'
 import { createPortal } from 'react-dom'
-import {
-  CalendarDays,
-  Check,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  Loader2,
-  Maximize2,
-  Minimize2,
-  MoreHorizontal,
-  Palette,
-  Pencil,
-  Plus,
-  Search,
-  Trash2,
-  AlignLeft,
-  Repeat,
-  X,
-} from 'lucide-react'
+import { Keyboard, RefreshCw } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 import type { AppPath } from '@/app/routes'
-import type { CalendarItem, CalendarItemPayload, GoogleCalendarAccount } from '@/types/calendar'
+import type { CalendarItem, CalendarItemPayload } from '@/types/calendar'
 import { calendarService } from '@/services/calendar-service'
 import { useCalendarStore } from '@/store/calendar-store'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
-import { MiniMonth } from '@/components/ui/mini-month'
-import { getAvatarImage } from '@/lib/avatar'
+import { getErrorMessage } from '@/lib/errors'
 import { cn } from '@/lib/utils'
+import { clearCustomItemColor, resetCustomCategoryColors, setCustomCategoryColor } from './calendar-colors'
 import {
-  CATEGORY_OPTIONS,
-  clearCustomItemColor,
-  colorForCategory,
-  displayColorForItem,
-  resetCustomCategoryColors,
-  setCustomCategoryColor,
-} from './calendar-colors'
-import {
-  DAY_MINUTES,
-  formatClockTime,
-  formatDuration,
-  formatMinuteRange,
-  formatShortTime,
-  minutesToTime,
-  timeToMinutes,
-} from './calendar-time'
+  AGENDA_DAYS,
+  VIEWS,
+  addDaysIso,
+  fetchRange,
+  gridDays,
+  parseISODate,
+  rangeHeading,
+  relativeDay,
+  stepDate,
+  toISODate,
+  viewDates,
+  type CalendarView,
+} from './calendar-dates'
+import { compareItems, isTimed, itemKey, itemSpan, minutesByCategory } from './calendar-layout'
+import { DAY_MINUTES, formatDuration, formatMinuteRange, minutesToTime, timeToMinutes } from './calendar-time'
 import { useGridDrag, type GridDrag } from './use-grid-drag'
-import { iconForItem } from './calendar-icons'
+import { AgendaView } from './components/agenda-view'
 import { CalendarItemModal, type CalendarDraft } from './components/calendar-item-modal'
-
+import { CalendarList } from './components/calendar-list'
+import { CalendarToolbar } from './components/calendar-toolbar'
+import { ColorEditDialog, DeleteSeriesDialog, ShortcutsDialog } from './components/calendar-dialogs'
+import { DayBrief } from './components/day-brief'
+import { DayOverflow, EventPopover, type AnchorRect } from './components/event-popover'
+import { GoogleSync } from './components/google-sync'
+import { MiniMonth } from './components/mini-month'
+import { MonthView } from './components/month-view'
+import { QuickAdd } from './components/quick-add'
+import { TimeGrid } from './components/time-grid'
+import { UpNext } from './components/up-next'
 
 import './calendar-overview.css'
-
-/*
-const MOCK_USERS = [
-  { name: 'John Doe', avatar: getAvatarImage('luffy') },
-  { name: 'Sarah Connor', avatar: getAvatarImage('avatar1') },
-  { name: 'Alex Mercer', avatar: getAvatarImage('avatar2') },
-  { name: 'Emma Watson', avatar: getAvatarImage('avatar3') },
-  { name: 'Bruce Wayne', avatar: '' },
-  { name: 'Clark Kent', avatar: '' },
-]
-*/
-
-function getInitials(name: string) {
-  const parts = name.trim().split(/\s+/)
-  if (parts.length === 0) return ''
-  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase()
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-}
-
-function getInitialsBg(name: string) {
-  let hash = 0
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  const h = Math.abs(hash) % 360
-  return `hsl(${h}, 60%, 80%)`
-}
-
-function getInitialsColor(name: string) {
-  let hash = 0
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  const h = Math.abs(hash) % 360
-  return `hsl(${h}, 60%, 25%)`
-}
-
-function getEventClassification(item: CalendarItem): 'BIRTHDAY' | 'DEADLINE' | 'MEETING' | 'MILESTONE' | 'PERSONAL' | 'TASK' | 'DEFAULT' {
-  const titleLower = (item.title || '').toLowerCase()
-  const categoryLower = (item.category || '').toLowerCase()
-  const typeUpper = (item.itemType || '').toUpperCase()
-
-  if (categoryLower === 'birthday' || titleLower.includes('birthday')) {
-    return 'BIRTHDAY'
-  }
-  if (titleLower.includes('deadline') || titleLower.includes('due') || titleLower.includes('submit')) {
-    return 'DEADLINE'
-  }
-  if (
-    typeUpper === 'EVENT' ||
-    categoryLower === 'social' ||
-    titleLower.includes('meeting') ||
-    titleLower.includes('sync') ||
-    titleLower.includes('huddle') ||
-    titleLower.includes('call')
-  ) {
-    return 'MEETING'
-  }
-  if (typeUpper === 'MILESTONE') {
-    return 'MILESTONE'
-  }
-  if (categoryLower === 'personal') {
-    return 'PERSONAL'
-  }
-  if (typeUpper === 'TASK') {
-    return 'TASK'
-  }
-  return 'DEFAULT'
-}
-
-/*
-function getMockAttendeesForItem(item: CalendarItem) {
-  const isMeeting = getEventClassification(item) === 'MEETING'
-  if (!isMeeting) return []
-
-  const hash = item.id ? item.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) : item.title.length
-  const count = (hash % 4) + 2
-  
-  const attendeesList = []
-  for (let i = 0; i < count; i++) {
-    attendeesList.push(MOCK_USERS[(hash + i) % MOCK_USERS.length])
-  }
-  return attendeesList
-}
-*/
-
-function bannerForCategory(category?: string) {
-  const cat = (category || 'default').toLowerCase()
-  if (cat === 'personal') return '/banners/personal.jpg'
-  if (cat === 'work') return '/banners/work.jpg'
-  if (cat === 'health') return '/banners/health.jpg'
-  if (cat === 'learning') return '/banners/learning.jpg'
-  return '/banners/default.jpg'
-}
-
-function getEventStyleClasses(item: CalendarItem) {
-  const color = displayColorForItem(item)
-
-  let formattedColor = color
-  if (!color.startsWith('#') && !color.startsWith('hsl')) {
-    formattedColor = `#${color}`
-  }
-  
-  // Subtle pastel background (12% of the theme color mixed with white)
-  const bgSubtle = `color-mix(in srgb, ${formattedColor} 12%, #ffffff)`
-  
-  return {
-    style: {
-      '--chip-hue': formattedColor,
-      backgroundColor: `var(--chip-surface, ${bgSubtle})`,
-      color: 'var(--chip-ink, #1e293b)',
-      fontWeight: '600',
-      borderRadius: '8px',
-      border: 'none',
-      boxShadow: 'none',
-    },
-    className: 'event-custom',
-  }
-}
-
-function renderAvatarStack(attendees: Array<{ name: string; avatar: string }>) {
-  if (!attendees || attendees.length === 0) return null
-  const maxVisible = 3
-  const visibleAttendees = attendees.slice(0, maxVisible)
-  const remaining = attendees.length - maxVisible
-
-  return (
-    <div className="event-avatar-stack">
-      {visibleAttendees.map((att, idx) => {
-        const initials = getInitials(att.name)
-        const bg = getInitialsBg(att.name)
-        const textColor = getInitialsColor(att.name)
-        return att.avatar ? (
-          <img
-            key={idx}
-            src={att.avatar}
-            alt={att.name}
-            className="avatar-circle"
-            style={{ zIndex: 5 - idx }}
-          />
-        ) : (
-          <span
-            key={idx}
-            className="avatar-circle-initials"
-            style={{
-              zIndex: 5 - idx,
-              backgroundColor: bg,
-              color: textColor,
-            }}
-          >
-            {initials}
-          </span>
-        )
-      })}
-      {remaining > 0 && (
-        <span className="avatar-more-badge" style={{ zIndex: 1 }}>
-          +{remaining}
-        </span>
-      )}
-    </div>
-  )
-}
-
-function getTwoDays(dateStr: string) {
-  const selected = parseISODate(dateStr)
-
-  return Array.from({ length: 2 }, (_, idx) => {
-    const d = new Date(selected)
-    d.setDate(selected.getDate() + idx)
-    return d
-  })
-}
-
-function formatSelectedDateHeader(dateStr: string) {
-  const date = parseISODate(dateStr)
-  return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-}
-
-function getPopoverStyle(rect: { top: number; left: number; width: number; height: number }) {
-  if (typeof window === 'undefined') return {}
-  const isMobile = window.innerWidth <= 600
-
-  if (isMobile) {
-    return {
-      position: 'fixed' as const,
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
-      width: 'calc(100vw - 32px)',
-      maxWidth: '400px',
-      zIndex: 2000,
-    }
-  }
-
-  const popoverWidth = 400
-  const popoverHeight = 440 // estimated max height
-  const gap = 8
-  const padding = 16
-  const sidebarBoundary = 490 // Desktop sidebar boundary
-
-  // Horizontal calculation: default right side of the card
-  let left = rect.left + rect.width + gap
-  if (left + popoverWidth + padding > window.innerWidth) {
-    // Try left side, ensuring it doesn't overlap the left sidebar menu area
-    const leftTry = rect.left - popoverWidth - gap
-    if (leftTry >= sidebarBoundary) {
-      left = leftTry
-    } else {
-      // Overlap the event chip itself (align right edges) instead of pushing to the left part of the screen
-      left = Math.max(sidebarBoundary, rect.left + rect.width - popoverWidth)
-    }
-  }
-
-  // Vertical calculation: default center alignment relative to the chip
-  let top = rect.top + (rect.height / 2) - (popoverHeight / 2)
-  // Clamp top to keep it in viewport
-  top = Math.max(padding, Math.min(window.innerHeight - popoverHeight - padding, top))
-
-  return {
-    position: 'fixed' as const,
-    top: `${top}px`,
-    left: `${left}px`,
-    zIndex: 2000,
-  }
-}
-
-function getOverflowPopoverStyle(rect: { top: number; left: number; width: number; height: number }) {
-  if (typeof window === 'undefined') return {}
-  const isMobile = window.innerWidth <= 600
-
-  if (isMobile) {
-    return {
-      position: 'fixed' as const,
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
-      width: 'calc(100vw - 48px)',
-      maxWidth: '320px',
-      zIndex: 2000,
-    }
-  }
-
-  // Sit on top of the day cell, slightly expanded beyond its bounds
-  const width = Math.max(rect.width + 32, 260)
-  const padding = 12
-  const left = Math.max(padding, Math.min(window.innerWidth - width - padding, rect.left - 16))
-  const top = Math.max(padding, Math.min(window.innerHeight - 340, rect.top - 8))
-
-  return {
-    position: 'fixed' as const,
-    top: `${top}px`,
-    left: `${left}px`,
-    width: `${width}px`,
-    zIndex: 2000,
-  }
-}
 
 type CalendarOverviewDashboardProps = {
   searchParams: URLSearchParams
@@ -343,159 +58,295 @@ type CalendarOverviewDashboardProps = {
 }
 
 type ModalState =
-  | { open: false; item?: never; date?: never; draft?: never }
-  | { open: true; item?: CalendarItem; date: string; draft?: CalendarDraft }
+  | { open: false }
+  | { open: true; date: string; item?: CalendarItem; draft?: CalendarDraft; seed?: Partial<CalendarItem>; text?: string }
 
-const CalendarSkeleton = ({ viewType }: { viewType: 'daily' | 'weekly' | 'monthly' }) => {
-  return (
-    <div className={`calendar-skeleton view-${viewType}`}>
-      {/* Header / Navigation row skeleton */}
-      <div className="skeleton-nav-row">
-        <div className="skeleton-pill skeleton-date" />
-        <div className="skeleton-pill skeleton-tabs" />
-        <div className="skeleton-pill skeleton-btn" />
-      </div>
+const BASE_CATEGORIES = ['Work', 'Personal', 'Health', 'Learning', 'Finance', 'Social']
+const PHONE_QUERY = '(max-width: 768px)'
+const VIEW_KEY = 'calendarView'
+const SIDEBAR_KEY = 'calendarSidebar'
+const HIDDEN_KEY = 'calendarHiddenCategories'
 
-      {viewType === 'monthly' ? (
-        <div className="skeleton-monthly-grid">
-          <div className="skeleton-month-header">
-            {Array.from({ length: 7 }).map((_, i) => (
-              <div key={i} className="skeleton-month-header-cell" />
-            ))}
-          </div>
-          <div className="skeleton-month-cells">
-            {Array.from({ length: 35 }).map((_, i) => (
-              <div key={i} className="skeleton-month-cell">
-                <div className="skeleton-month-date" />
-                {i % 4 === 0 && <div className="skeleton-month-event" />}
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <>
-          {/* Grid header skeleton */}
-          <div className="skeleton-grid-header" style={{ gridTemplateColumns: `var(--cal-time-gutter) repeat(${viewType === 'weekly' ? 2 : 1}, minmax(0, 1fr))` }}>
-            <div className="skeleton-tz-box" />
-            {Array.from({ length: viewType === 'weekly' ? 2 : 1 }).map((_, i) => (
-              <div key={i} className="skeleton-day-card" />
-            ))}
-          </div>
+function readStorage(key: string) {
+  try {
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
 
-          {/* Grid body skeleton */}
-          <div className="skeleton-grid-body" style={{ gridTemplateColumns: `var(--cal-time-gutter) repeat(${viewType === 'weekly' ? 2 : 1}, minmax(0, 1fr))` }}>
-            <div className="skeleton-time-column">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="skeleton-time-slot" />
-              ))}
-            </div>
-            <div className="skeleton-columns" style={{ gridColumn: `span ${viewType === 'weekly' ? 2 : 1}`, gridTemplateColumns: `repeat(${viewType === 'weekly' ? 2 : 1}, minmax(0, 1fr))` }}>
-              {Array.from({ length: viewType === 'weekly' ? 2 : 1 }).map((_, i) => (
-                <div key={i} className="skeleton-column">
-                  {i === 0 && (
-                    <>
-                      <div className="skeleton-event-chip" style={{ top: '20%', height: '80px', width: '90%' }} />
-                      <div className="skeleton-event-chip" style={{ top: '55%', height: '50px', width: '80%' }} />
-                    </>
-                  )}
-                  {i === 1 && (
-                    <div className="skeleton-event-chip" style={{ top: '35%', height: '110px', width: '85%' }} />
-                  )}
-                  {i === 2 && (
-                    <div className="skeleton-event-chip" style={{ top: '15%', height: '60px', width: '90%' }} />
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  )
+function writeStorage(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    // storage blocked — the choice still holds for this visit
+  }
+}
+
+function isPhone() {
+  return typeof window !== 'undefined' && window.matchMedia(PHONE_QUERY).matches
+}
+
+function usePhone() {
+  const [phone, setPhone] = useState(isPhone)
+  useEffect(() => {
+    const mq = window.matchMedia(PHONE_QUERY)
+    const onChange = () => setPhone(mq.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+  return phone
+}
+
+function initialView(): CalendarView {
+  const stored = readStorage(VIEW_KEY) as CalendarView | null
+  const meta = VIEWS.find((v) => v.id === stored)
+  if (isPhone()) return meta?.mobile ? meta.id : 'day'
+  return meta?.id ?? 'week'
+}
+
+function rectOf(el: Element): AnchorRect {
+  const r = el.getBoundingClientRect()
+  return { top: r.top, left: r.left, width: r.width, height: r.height }
+}
+
+function typingTarget(target: EventTarget | null) {
+  const el = target as HTMLElement | null
+  return Boolean(el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)))
 }
 
 function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOverviewDashboardProps) {
-  const [selectedDate, setSelectedDate] = useState(() => {
-    const fromParams = searchParams.get('date')
-    if (fromParams) return fromParams
-    const isGuest = localStorage.getItem('isGuest') === 'true'
-    if (isGuest) return '2026-06-09'
-    return toISODate(new Date())
-  })
-  // Calendar server state comes from the calendar store; UI state stays local.
-  const calendarItemsState = useCalendarStore.use.items()
-  const googleStatusState = useCalendarStore.use.googleStatus()
-  const upcomingItems = useCalendarStore.use.upcoming()
-  const calendarActions = useCalendarStore.use.actions()
-  const items = calendarItemsState.data
-  const googleSyncStatus = googleStatusState.data
-  const [selectedItemKey, setSelectedItemKey] = useState<string | null>(null)
-  const [anchorRect, setAnchorRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null)
-  const [overflowDay, setOverflowDay] = useState<{ date: string; rect: { top: number; left: number; width: number; height: number } } | null>(null)
-  const loading = calendarItemsState.loading
-  const hasLoadedOnce = calendarItemsState.loaded || calendarItemsState.hasErrors
-  const [modal, setModal] = useState<ModalState>({ open: false })
-  const [deleteTarget, setDeleteTarget] = useState<CalendarItem | null>(null)
-
-  // Bottom-dock quick-add bubble opens the same "add routine" modal
-  useEffect(() => {
-    const handler = () => setModal((curr) => (curr.open ? curr : { open: true, date: selectedDate }))
-    window.addEventListener('mobile-quick-add', handler)
-    return () => window.removeEventListener('mobile-quick-add', handler)
-  }, [selectedDate])
-
-  // Phone defaults; 768px matches the calendar's phone-layout media queries.
-  const [viewType, setViewType] = useState<'daily' | 'weekly' | 'monthly'>(() => {
-    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
-      return 'daily'
-    }
-    return 'weekly'
-  })
-  const [searchQuery, setSearchQuery] = useState('')
-  const [uncheckedCategories, setUncheckedCategories] = useState<string[]>([])
-  const [upcomingCardIndex, setUpcomingCardIndex] = useState(0)
-  const [filtersOpen, setFiltersOpen] = useState(() => {
-    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
-      return false
-    }
-    return true
-  })
-  const [filterMenuOpen, setFilterMenuOpen] = useState(false)
-  // The month grid is the tallest block in the sidebar and pushed Google
-  // Calendar below the fold. Collapsed by default; the choice is remembered.
-  const [monthOpen, setMonthOpen] = useState(() => {
-    try {
-      return localStorage.getItem('calendarMiniMonthOpen') === 'true'
-    } catch {
-      return false
-    }
-  })
-  const toggleMonthOpen = () => {
-    const next = !monthOpen
-    setMonthOpen(next)
-    try {
-      localStorage.setItem('calendarMiniMonthOpen', String(next))
-    } catch {
-      // storage blocked — the toggle still works for this visit
-    }
-  }
-  const [colorEditModalOpen, setColorEditModalOpen] = useState(false)
-  const [colorEditDraft, setColorEditDraft] = useState<Record<string, string>>({})
-  const [isFullView, setIsFullView] = useState(false)
-
-  const canvasContainerRef = useRef<HTMLDivElement | null>(null)
-  const weeklyScrollContainerRef = useRef<HTMLDivElement | null>(null)
-
-  // Minute-of-day clock for the now-line; ticks once a minute.
+  // ── Clock ── minute resolution drives the now-line, live blocks and Up next.
   const [now, setNow] = useState(() => new Date())
   useEffect(() => {
-    const timer = window.setInterval(() => setNow(new Date()), 60_000)
+    const timer = window.setInterval(() => setNow(new Date()), 30_000)
     return () => window.clearInterval(timer)
   }, [])
   const todayIso = toISODate(now)
   const nowMinutes = now.getHours() * 60 + now.getMinutes()
 
-  // Move / resize: optimistic, then the server, then a toast that can undo it.
+  // ── View state ──
+  const paramDate = searchParams.get('date')
+  const [selectedDate, setSelectedDate] = useState(() => paramDate ?? toISODate(new Date()))
+  const [seenParam, setSeenParam] = useState(paramDate)
+  if (paramDate !== seenParam) {
+    setSeenParam(paramDate)
+    if (paramDate && paramDate !== selectedDate) setSelectedDate(paramDate)
+  }
+  const [view, setViewState] = useState<CalendarView>(initialView)
+  const phone = usePhone()
+  // Week doesn't fit a phone; a remembered Week or Work week opens as Day there.
+  const effectiveView: CalendarView = phone && (view === 'week' || view === 'workweek') ? 'day' : view
+  const [sidebarOpen, setSidebarOpen] = useState(() => readStorage(SIDEBAR_KEY) === 'open')
+  const [query, setQuery] = useState('')
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [hidden, setHidden] = useState<string[]>(() => {
+    try {
+      const parsed = JSON.parse(readStorage(HIDDEN_KEY) ?? '[]')
+      return Array.isArray(parsed) ? parsed.filter((c) => typeof c === 'string') : []
+    } catch {
+      return []
+    }
+  })
+  const [, setColorVersion] = useState(0)
+
+  const [pop, setPop] = useState<{ item: CalendarItem; rect: AnchorRect | null } | null>(null)
+  const [overflow, setOverflow] = useState<{ iso: string; rect: AnchorRect } | null>(null)
+  const [modal, setModal] = useState<ModalState>({ open: false })
+  const [deleteTarget, setDeleteTarget] = useState<CalendarItem | null>(null)
+  const [colorsOpen, setColorsOpen] = useState(false)
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  const [disconnectTarget, setDisconnectTarget] = useState<string | null>(null)
+  const [pendingFocus, setPendingFocus] = useState<CalendarItem | null>(null)
+
+  const [googlePulling, setGooglePulling] = useState<string | null>(null)
+  const [googlePushing, setGooglePushing] = useState<string | null>(null)
+  const [googleDisconnecting, setGoogleDisconnecting] = useState<string | null>(null)
+  const [googleConnecting, setGoogleConnecting] = useState(false)
+
+  const gridScrollRef = useRef<HTMLDivElement | null>(null)
+  const searchRef = useRef<HTMLInputElement | null>(null)
+  const quickRef = useRef<HTMLInputElement | null>(null)
+
+  // ── Server state ──
+  const itemsState = useCalendarStore.use.items()
+  const googleState = useCalendarStore.use.googleStatus()
+  const upcoming = useCalendarStore.use.upcoming()
+  const calendarActions = useCalendarStore.use.actions()
+  const items = itemsState.data
+  const firstLoad = itemsState.loading && !itemsState.loaded && !itemsState.hasErrors
+  const loadFailed = itemsState.hasErrors && !itemsState.loaded
+
+  const range = useMemo(() => fetchRange(effectiveView, selectedDate), [effectiveView, selectedDate])
+
+  const loadItems = useCallback(async () => {
+    const res = await calendarActions.loadItems(range.start, range.end)
+    if (res?.error) toast.error(res.error.message || 'Couldn’t load the calendar')
+  }, [calendarActions, range.start, range.end])
+
+  // Up next reads its own window (today → a week out) so it stays right
+  // whichever month the main view has wandered to.
+  const loadUpcoming = useCallback(async () => {
+    const start = toISODate(new Date())
+    const res = await calendarService.getItemsForRange(start, addDaysIso(start, 7))
+    if (!res.error) calendarActions.setUpcoming(res.data ?? [])
+  }, [calendarActions])
+
+  useEffect(() => {
+    const timer = window.setTimeout(loadItems, 0)
+    return () => window.clearTimeout(timer)
+  }, [loadItems])
+
+  useEffect(() => {
+    const timer = window.setTimeout(loadUpcoming, 0)
+    return () => window.clearTimeout(timer)
+  }, [loadUpcoming, todayIso])
+
+  useEffect(() => {
+    const onUpdate = () => {
+      void loadItems()
+      void loadUpcoming()
+    }
+    window.addEventListener('calendar-updated', onUpdate)
+    return () => window.removeEventListener('calendar-updated', onUpdate)
+  }, [loadItems, loadUpcoming])
+
+  useEffect(() => {
+    void calendarActions.loadGoogleStatus()
+  }, [calendarActions])
+
+  // ── Derived ── (plain per-render work: a few hundred items at most)
+  const categories = [...new Set([...BASE_CATEGORIES, ...items.map((item) => item.category?.trim() ?? '').filter(Boolean)])]
+  const isShown = (item: CalendarItem) => !hidden.includes(item.category?.trim() || 'Personal')
+  const visibleItems = items.filter(isShown)
+  const itemsByDay = new Map<string, CalendarItem[]>()
+  for (const item of visibleItems) {
+    const list = itemsByDay.get(item.date)
+    if (list) list.push(item)
+    else itemsByDay.set(item.date, [item])
+  }
+  for (const list of itemsByDay.values()) list.sort(compareItems)
+
+  const dates = useMemo(() => viewDates(effectiveView, selectedDate), [effectiveView, selectedDate])
+  const days = useMemo(() => gridDays(effectiveView, selectedDate), [effectiveView, selectedDate])
+  const showsToday = effectiveView === 'month' ? selectedDate.slice(0, 7) === todayIso.slice(0, 7) : dates.includes(todayIso)
+
+  const inRange = new Set(dates)
+  const categoryMinutes = minutesByCategory(items.filter((item) => inRange.has(item.date)))
+
+  const rangeLabel =
+    effectiveView === 'week'
+      ? showsToday
+        ? 'This week'
+        : 'That week'
+      : effectiveView === 'day'
+        ? relativeDay(selectedDate, todayIso)
+        : effectiveView === 'workweek'
+          ? showsToday
+            ? 'This work week'
+            : 'Work week'
+          : effectiveView === 'month'
+            ? parseISODate(selectedDate).toLocaleDateString('en-US', { month: 'long' })
+            : 'Next 3 weeks'
+
+  let heading = rangeHeading(effectiveView, selectedDate)
+  if (effectiveView === 'month') {
+    const monthItems = visibleItems.filter((item) => inRange.has(item.date) && !item.cancelled)
+    const minutes = [...minutesByCategory(monthItems).values()].reduce((a, b) => a + b, 0)
+    heading = { ...heading, eyebrow: `${monthItems.length} ${monthItems.length === 1 ? 'block' : 'blocks'}${minutes ? ` · ${formatDuration(minutes)}` : ''}` }
+  }
+
+  // The open card follows the item through refetches and optimistic edits.
+  const popKey = pop ? itemKey(pop.item) : null
+  const popItem = pop ? (items.find((it) => itemKey(it) === popKey) ?? upcoming.find((it) => itemKey(it) === popKey) ?? pop.item) : null
+  const activeKey = popItem ? itemKey(popItem) : null
+
+  // ── Navigation ──
+  const goTo = useCallback(
+    (date: string) => {
+      setSelectedDate(date)
+      setPop(null)
+      setOverflow(null)
+      onNavigate('/calendar', `?date=${date}`)
+    },
+    [onNavigate, setSelectedDate, setPop, setOverflow],
+  )
+
+  const setView = useCallback((next: CalendarView) => {
+    setViewState(next)
+    writeStorage(VIEW_KEY, next)
+    setPop(null)
+    setOverflow(null)
+  }, [setViewState, setPop, setOverflow])
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarOpen((open) => {
+      writeStorage(SIDEBAR_KEY, open ? 'closed' : 'open')
+      return !open
+    })
+  }, [setSidebarOpen])
+
+  const updateHidden = (next: string[]) => {
+    setHidden(next)
+    writeStorage(HIDDEN_KEY, JSON.stringify(next))
+  }
+
+  const openItem = useCallback((item: CalendarItem, e: ReactMouseEvent<HTMLElement> | ReactKeyboardEvent<HTMLElement>) => {
+    e.stopPropagation()
+    setOverflow(null)
+    setPop({ item, rect: rectOf(e.currentTarget) })
+  }, [setOverflow, setPop])
+
+  const openComposer = useCallback((state: Omit<Extract<ModalState, { open: true }>, 'open'>) => {
+    setPop(null)
+    setOverflow(null)
+    setModal({ open: true, ...state })
+  }, [setPop, setOverflow, setModal])
+
+  // A search pick (or anything else) can ask for an item's card once the view has drawn it.
+  useEffect(() => {
+    if (!pendingFocus) return
+    const timer = window.setTimeout(() => {
+      const id = pendingFocus.occurrenceId ?? pendingFocus.id
+      const el = id ? document.querySelector(`.calendar-dashboard [data-ev-key="${CSS.escape(id)}"]`) : null
+      if (el) {
+        el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+        window.setTimeout(() => setPop({ item: pendingFocus, rect: rectOf(el) }), 260)
+      } else {
+        setPop({ item: pendingFocus, rect: null })
+      }
+      setPendingFocus(null)
+    }, 80)
+    return () => window.clearTimeout(timer)
+  }, [pendingFocus])
+
+  // Land the time grid on something useful when the visible days change: now
+  // when today is in view, otherwise just before the first block (or 8 AM).
+  const firstStart = Math.min(8 * 60, ...days.flatMap((d) => (itemsByDay.get(toISODate(d)) ?? []).filter(isTimed).map((it) => itemSpan(it).start)))
+  const scrolledFor = useRef('')
+  useEffect(() => {
+    if (effectiveView === 'month' || effectiveView === 'agenda' || firstLoad) return
+    const key = `${effectiveView}:${toISODate(days[0])}`
+    if (scrolledFor.current === key) return
+    const el = gridScrollRef.current
+    const body = el?.querySelector<HTMLElement>('.cv-grid-body')
+    if (!el || !body) return
+    scrolledFor.current = key
+    const isos = days.map(toISODate)
+    let minute: number
+    let center = false
+    if (isos.includes(todayIso)) {
+      minute = nowMinutes
+      center = true
+    } else {
+      minute = Math.max(0, firstStart - 30)
+    }
+    const head = el.querySelector<HTMLElement>('.cv-grid-head')?.offsetHeight ?? 0
+    const y = body.offsetTop + (minute / DAY_MINUTES) * body.offsetHeight
+    el.scrollTo({ top: Math.max(0, center ? y - head - (el.clientHeight - head) / 2.4 : y - head), behavior: 'smooth' })
+  }, [effectiveView, days, firstLoad, firstStart, todayIso, nowMinutes])
+
+  // ── Mutations ──
   const rescheduleItem = async (item: CalendarItem, date: string, startTime: string, endTime: string, undoable = true) => {
     if (!item.id) return
     const id = item.id
@@ -520,26 +371,21 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
       if (res.error) throw new Error(res.error.message)
       window.dispatchEvent(new CustomEvent('calendar-updated'))
       if (!undoable) return
-      const day = parseISODate(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
       const range = formatMinuteRange(timeToMinutes(startTime), timeToMinutes(endTime))
       toast.success(
         (t) => (
-          <span className="cal-undo-toast">
+          <span className="cv-toast">
             <span>
-              <b>{item.title}</b> · {date === item.date ? '' : `${day} · `}{range}
+              <b>{item.title}</b> · {date === item.date ? '' : `${relativeDay(date, toISODate(new Date()))} · `}
+              {range}
             </span>
             <button
               type="button"
               onClick={() => {
                 toast.dismiss(t.id)
-                void rescheduleItem(
-                  { ...item, date, startTime, endTime },
-                  item.date,
-                  item.startTime ?? startTime,
-                  item.endTime ??
-                    (item.startTime ? minutesToTime(Math.min(DAY_MINUTES - 1, timeToMinutes(item.startTime) + 60)) : endTime),
-                  false,
-                )
+                const origStart = item.startTime ?? startTime
+                const origEnd = item.endTime ?? minutesToTime(Math.min(DAY_MINUTES - 1, timeToMinutes(origStart) + 60))
+                void rescheduleItem({ ...item, date, startTime, endTime }, item.date, origStart, origEnd, false)
               }}
             >
               Undo
@@ -550,1804 +396,527 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
       )
     } catch (error) {
       calendarActions.applyItems((prev) => prev.map((it) => (it.id === id ? item : it)))
-      toast.error(error instanceof Error ? error.message : 'Could not move that block')
+      toast.error(getErrorMessage(error, 'Couldn’t move that block'))
     }
   }
 
-  const {
-    drag,
-    hover,
-    registerColumn,
-    columnPointerDown,
-    columnPointerMove,
-    clearHover,
-    itemPointerDown,
-    consumeClick,
-  } = useGridDrag({
-    scrollRef: weeklyScrollContainerRef,
-    canCreate: () => !selectedItemKey && !anchorRect && !overflowDay && !modal.open,
-    onCreate: (date, start, end) => {
-      setSelectedItemKey(null)
-      setAnchorRect(null)
-      setOverflowDay(null)
-      setModal({ open: true, date, draft: { startTime: minutesToTime(start), endTime: minutesToTime(end) } })
-    },
-    onCommit: (item, date, start, end) => {
-      void rescheduleItem(item, date, minutesToTime(start), minutesToTime(end))
-    },
-  })
-
-  const searchInputRef = useRef<HTMLInputElement | null>(null)
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      // 1. Daily/Weekly view: vertical auto-scroll to current time — only
-      // when today is actually in view. Looking at a past/future date is a
-      // deliberate choice to browse that day, not a cue to jump to "now".
-      const isTodayInView = selectedDate === toISODate(new Date())
-      if ((viewType === 'daily' || viewType === 'weekly') && isTodayInView && weeklyScrollContainerRef.current) {
-        const container = weeklyScrollContainerRef.current
-        const now = new Date()
-        const currentHour = now.getHours()
-        const currentMinute = now.getMinutes()
-        const minutesSinceMidnight = currentHour * 60 + currentMinute
-        const timeOffset = (minutesSinceMidnight / 60) * 80 // each hour row is 80px tall
-
-        const isInternallyScrollable = container.scrollHeight > container.clientHeight + 8
-        if (isInternallyScrollable) {
-          // Desktop: the grid scrolls inside its own container — center current time.
-          container.scrollTo({
-            top: Math.max(0, timeOffset - container.clientHeight / 2),
-            behavior: 'smooth',
-          })
-        } else {
-          // Mobile: the grid flows freely and the page itself scrolls (Apple
-          // Calendar style) — scroll the window so current time is centered.
-          const containerTop = container.getBoundingClientRect().top + window.scrollY
-          window.scrollTo({
-            top: Math.max(0, containerTop + timeOffset - window.innerHeight / 2),
-            behavior: 'smooth',
-          })
-        }
-      }
-      
-      // 2. Monthly view: horizontal auto-scroll to current day (is-today cell)
-      if (viewType === 'monthly' && canvasContainerRef.current) {
-        const container = canvasContainerRef.current
-        const todayCell = container.querySelector('.month-day-cell.is-today')
-        if (todayCell) {
-          const containerRect = container.getBoundingClientRect()
-          const cellRect = todayCell.getBoundingClientRect()
-          const offset = cellRect.left - containerRect.left - (containerRect.width - cellRect.width) / 2
-          container.scrollTo({
-            left: container.scrollLeft + offset,
-            behavior: 'smooth'
-          })
-        }
-      }
-    }, 200)
-
-    return () => clearTimeout(timer)
-  }, [viewType, selectedDate, loading, items])
-
-  const [profileAvatar, setProfileAvatar] = useState(() => getAvatarImage(localStorage.getItem('avatarUrl') || 'luffy'))
-  const [googlePushingEmail, setGooglePushingEmail] = useState<string | null>(null)
-  const [googleSyncingEmail, setGoogleSyncingEmail] = useState<string | null>(null)
-  const [googleDisconnectingEmail, setGoogleDisconnectingEmail] = useState<string | null>(null)
-  const [googleConnecting, setGoogleConnecting] = useState(false)
-
-  useEffect(() => {
-    const handleProfileUpdate = () => {
-      setProfileAvatar(getAvatarImage(localStorage.getItem('avatarUrl') || 'luffy'))
-    }
-
-    window.addEventListener('profile-updated', handleProfileUpdate)
-    return () => window.removeEventListener('profile-updated', handleProfileUpdate)
-  }, [])
-
-  useEffect(() => {
-    if (deleteTarget) {
-      document.body.classList.add('calendar-modal-open')
-    } else {
-      document.body.classList.remove('calendar-modal-open')
-    }
-  }, [deleteTarget])
-
-  useEffect(() => {
-    const handleDocumentClick = () => {
-      setSelectedItemKey(null)
-      setAnchorRect(null)
-      setOverflowDay(null)
-    }
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setSelectedItemKey(null)
-        setAnchorRect(null)
-        setOverflowDay(null)
-      }
-    }
-    document.addEventListener('click', handleDocumentClick)
-    document.addEventListener('keydown', handleKeyDown)
-    return () => {
-      document.removeEventListener('click', handleDocumentClick)
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [])
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSelectedItemKey(null)
-    setAnchorRect(null)
-    setOverflowDay(null)
-  }, [isFullView])
-
-  // The fetch window must always cover everything the current view can render.
-  // Monthly: the exact month grid. Daily/3-day: a 4-week window snapped to week
-  // boundaries so navigating between nearby dates reuses the same range (no refetch).
-  const visibleRange = useMemo(() => {
-    const selected = parseISODate(selectedDate)
-    if (viewType === 'monthly') {
-      const gridDays = monthGrid(selected)
-      return { start: toISODate(gridDays[0]), end: toISODate(gridDays[gridDays.length - 1]) }
-    }
-    const anchor = startOfWeek(selected)
-    const start = new Date(anchor)
-    start.setDate(anchor.getDate() - 7)
-    const end = new Date(anchor)
-    end.setDate(anchor.getDate() + 20)
-    return { start: toISODate(start), end: toISODate(end) }
-  }, [selectedDate, viewType])
-
-  const loadUpcomingItem = useCallback(async () => {
+  const toggleDone = async (item: CalendarItem) => {
+    if (!item.id) return
+    const key = itemKey(item)
+    const next = !item.completed
+    const patch = (value: boolean) => (prev: CalendarItem[]) => prev.map((it) => (itemKey(it) === key ? { ...it, completed: value } : it))
+    calendarActions.applyItems(patch(next))
+    calendarActions.setUpcoming(patch(next)(upcoming))
     try {
-      const now = new Date()
-      const todayStr = toISODate(now)
-      const nowMinutes = now.getHours() * 60 + now.getMinutes()
-      const futureDate = new Date()
-      futureDate.setDate(futureDate.getDate() + 30)
-      const futureStr = toISODate(futureDate)
-
-      const response = await calendarService.getItemsForRange(todayStr, futureStr)
-      const candidates = (response?.data ?? []).filter((item: CalendarItem) => {
-        if (item.completed || item.cancelled) return false
-        if (item.date > todayStr) return true
-        // For today's items, skip timed events whose endTime has already passed
-        if (item.date === todayStr) {
-          if (!item.startTime || item.allDay) return true
-          const endMinutes = item.endTime ? timeToMinutes(item.endTime) : timeToMinutes(item.startTime) + 60
-          return endMinutes > nowMinutes
-        }
-        return false
-      })
-
-      candidates.sort((a: CalendarItem, b: CalendarItem) => {
-        const dateCompare = a.date.localeCompare(b.date)
-        if (dateCompare !== 0) return dateCompare
-        return (a.startTime ?? '99:99').localeCompare(b.startTime ?? '99:99')
-      })
-
-      calendarActions.setUpcoming(candidates.slice(0, 5))
-      setUpcomingCardIndex(0)
-    } catch (err) {
-      console.error('Failed to load upcoming item', err)
+      const res = await calendarService.toggleItem(item.id, item.recurrenceFrequency && item.recurrenceFrequency !== 'NONE' ? item.date : undefined)
+      if (res.error) throw new Error(res.error.message)
+      toast.success(next ? `Done — “${item.title}”` : `Reopened “${item.title}”`)
+      window.dispatchEvent(new CustomEvent('calendar-updated'))
+    } catch (error) {
+      calendarActions.applyItems(patch(Boolean(item.completed)))
+      toast.error(getErrorMessage(error, 'Couldn’t update that block'))
     }
-  }, [calendarActions])
-
-  // The monotonic seq guard now lives inside the store's loadItems action, so
-  // rapid date clicks can never leave stale data on screen.
-  const loadItems = useCallback(async () => {
-    const res = await calendarActions.loadItems(visibleRange.start, visibleRange.end)
-    if (res?.error) {
-      toast.error(res.error.message || 'Failed to load calendar')
-    }
-  }, [calendarActions, visibleRange.end, visibleRange.start])
-
-  useEffect(() => {
-    const timer = window.setTimeout(loadItems, 0)
-    return () => window.clearTimeout(timer)
-  }, [loadItems])
-
-  useEffect(() => {
-    const timer = window.setTimeout(loadUpcomingItem, 0)
-    return () => window.clearTimeout(timer)
-  }, [loadUpcomingItem])
-
-  useEffect(() => {
-    const handleCalendarUpdate = () => {
-      loadItems()
-      loadUpcomingItem()
-    }
-    window.addEventListener('calendar-updated', handleCalendarUpdate)
-    return () => {
-      window.removeEventListener('calendar-updated', handleCalendarUpdate)
-    }
-  }, [loadItems, loadUpcomingItem])
-
-  useEffect(() => {
-    void calendarActions.loadGoogleStatus()
-  }, [calendarActions])
-
-  const refreshGoogleStatus = async () => {
-    await calendarActions.loadGoogleStatus()
   }
 
-  const handleGoogleConnect = async () => {
+  const toggleCancel = async (item: CalendarItem) => {
+    if (!item.id) return
+    const key = itemKey(item)
+    const next = !item.cancelled
+    calendarActions.applyItems((prev) => prev.map((it) => (itemKey(it) === key ? { ...it, cancelled: next } : it)))
+    try {
+      const recurring = item.recurrenceFrequency && item.recurrenceFrequency !== 'NONE'
+      const res = await calendarService.toggleCancelItem(item.id, recurring ? item.date : undefined)
+      if (res.error) throw new Error(res.error.message)
+      toast.success(next ? (recurring ? `Skipped “${item.title}” this time` : `Cancelled “${item.title}”`) : `Restored “${item.title}”`)
+      window.dispatchEvent(new CustomEvent('calendar-updated'))
+    } catch (error) {
+      calendarActions.applyItems((prev) => prev.map((it) => (itemKey(it) === key ? { ...it, cancelled: item.cancelled } : it)))
+      toast.error(getErrorMessage(error, 'Couldn’t update that block'))
+    }
+  }
+
+  const deleteItem = async (target: CalendarItem, mode: 'ONE' | 'ONLY_THIS' | 'ALL') => {
+    if (!target.id) return
+    const prevItems = items.slice()
+    calendarActions.applyItems((prev) =>
+      prev.filter((it) => (mode === 'ONLY_THIS' ? !(it.id === target.id && it.date === target.date) : it.id !== target.id)),
+    )
+    setDeleteTarget(null)
+    setPop(null)
+    try {
+      const res = await calendarService.deleteItem(target.id, mode === 'ONLY_THIS' ? target.date : undefined)
+      if (res.error) throw new Error(res.error.message)
+      if (mode !== 'ONLY_THIS') clearCustomItemColor(target.id)
+      toast.success(mode === 'ONLY_THIS' ? 'Removed this occurrence' : mode === 'ALL' ? 'Deleted the series' : `Deleted “${target.title}”`)
+      window.dispatchEvent(new CustomEvent('calendar-updated'))
+    } catch (error) {
+      calendarActions.applyItems(() => prevItems)
+      toast.error(getErrorMessage(error, 'Couldn’t delete that block'))
+    }
+  }
+
+  const quickCreate = async (payload: CalendarItemPayload) => {
+    const res = await calendarService.createItem(payload)
+    if (res.error || !res.data) {
+      toast.error(res.error?.message || 'Couldn’t add that')
+      return false
+    }
+    const created = res.data
+    window.dispatchEvent(new CustomEvent('calendar-updated'))
+    const when = payload.allDay
+      ? relativeDay(payload.date, todayIso)
+      : `${relativeDay(payload.date, todayIso)} · ${formatMinuteRange(timeToMinutes(payload.startTime!), timeToMinutes(payload.endTime!))}`
+    const visible = dates.includes(payload.date)
+    toast.success(
+      (t) => (
+        <span className="cv-toast">
+          <span>
+            Added <b>{payload.title}</b> · {when}
+          </span>
+          {!visible && (
+            <button
+              type="button"
+              onClick={() => {
+                toast.dismiss(t.id)
+                goTo(payload.date)
+              }}
+            >
+              Show
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={async () => {
+              toast.dismiss(t.id)
+              if (!created.id) return
+              const del = await calendarService.deleteItem(created.id)
+              if (del.error) toast.error('Couldn’t undo that')
+              else window.dispatchEvent(new CustomEvent('calendar-updated'))
+            }}
+          >
+            Undo
+          </button>
+        </span>
+      ),
+      { duration: 6000 },
+    )
+    return true
+  }
+
+  // ── Google ──
+  const refreshGoogle = () => calendarActions.loadGoogleStatus()
+
+  const connectGoogle = async () => {
     setGoogleConnecting(true)
     try {
       const res = await calendarService.getGoogleAuthUrl()
       if (res.error) throw new Error(res.error.message)
       const url = res.data?.url
-      if (!url) throw new Error('No auth URL returned')
+      if (!url) throw new Error('No sign-in link came back')
       const popup = window.open(url, 'google-oauth', 'width=600,height=700,left=200,top=100')
       const onMsg = (e: MessageEvent) => {
         if (e.data?.type === 'GOOGLE_CALENDAR_CONNECTED') {
           window.removeEventListener('message', onMsg)
-          refreshGoogleStatus().catch(() => {})
+          void refreshGoogle()
           toast.success(`Connected ${e.data.email}`)
           setGoogleConnecting(false)
         }
       }
       window.addEventListener('message', onMsg)
-      // Fallback: if popup closes without postMessage
-      const timer = setInterval(() => {
+      const timer = window.setInterval(() => {
         if (popup?.closed) {
-          clearInterval(timer)
+          window.clearInterval(timer)
           window.removeEventListener('message', onMsg)
           setGoogleConnecting(false)
-          refreshGoogleStatus().catch(() => {})
+          void refreshGoogle()
         }
       }, 800)
     } catch (err) {
-      toast.error((err as Error).message ?? 'Failed to start Google login')
+      toast.error(getErrorMessage(err, 'Couldn’t start Google sign-in'))
       setGoogleConnecting(false)
     }
   }
 
-  const handleGooglePushLocal = async (email?: string) => {
-    setGooglePushingEmail(email ?? '__all__')
+  const pullGoogle = async (email: string) => {
+    setGooglePulling(email)
+    try {
+      const res = await calendarService.syncGoogle(email)
+      if (res.error) throw new Error(res.error.message)
+      toast.success('Pulling the latest from Google')
+      await refreshGoogle()
+      window.dispatchEvent(new CustomEvent('calendar-updated'))
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Sync failed'))
+    } finally {
+      setGooglePulling(null)
+    }
+  }
+
+  const pushGoogle = async (email: string) => {
+    setGooglePushing(email)
     try {
       const res = await calendarService.pushLocalToGoogle(email)
       if (res.error) throw new Error(res.error.message)
       const pushed = res.data?.totalPushed ?? 0
-      toast.success(`Pushed ${pushed} event${pushed === 1 ? '' : 's'} to Google Calendar`)
+      toast.success(pushed ? `Pushed ${pushed} block${pushed === 1 ? '' : 's'} to Google` : 'Google already has everything')
     } catch (err) {
-      toast.error((err as Error).message ?? 'Failed to push events')
+      toast.error(getErrorMessage(err, 'Couldn’t push to Google'))
     } finally {
-      setGooglePushingEmail(null)
+      setGooglePushing(null)
     }
   }
 
-  const handleGooglePullSync = async (email?: string) => {
-    setGoogleSyncingEmail(email ?? '__all__')
-    try {
-      const res = await calendarService.syncGoogle(email)
-      if (res.error) throw new Error(res.error.message)
-      toast.success('Google Calendar sync triggered')
-      await refreshGoogleStatus()
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (err) {
-      toast.error('Sync failed')
-    } finally {
-      setGoogleSyncingEmail(null)
-    }
-  }
-
-  const handleGoogleDisconnect = async (email: string) => {
-    if (!window.confirm(`Disconnect ${email} from Google Calendar sync?`)) return
-    setGoogleDisconnectingEmail(email)
+  const disconnectGoogle = async (email: string) => {
+    setDisconnectTarget(null)
+    setGoogleDisconnecting(email)
     try {
       const res = await calendarService.disconnectGoogle(email)
       if (res.error) throw new Error(res.error.message)
       toast.success(`Disconnected ${email}`)
-      await refreshGoogleStatus()
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      await refreshGoogle()
     } catch (err) {
-      toast.error('Failed to disconnect account')
+      toast.error(getErrorMessage(err, 'Couldn’t disconnect that account'))
     } finally {
-      setGoogleDisconnectingEmail(null)
+      setGoogleDisconnecting(null)
     }
   }
 
-  const actualCategories = useMemo(() => {
-    const cats = new Set<string>()
-    cats.add('Work')
-    cats.add('Personal')
-    cats.add('Health')
-    cats.add('Learning')
-    cats.add('Finance')
-    cats.add('Social')
-    items.forEach((item) => {
-      if (item.category) {
-        const formatted = item.category.trim()
-        if (formatted) cats.add(formatted)
-      }
-    })
-    return Array.from(cats)
-  }, [items])
+  // ── Grid drag ──
+  const grid = useGridDrag({
+    scrollRef: gridScrollRef,
+    canCreate: () => !pop && !overflow && !modal.open,
+    onCreate: (date, start, end) => openComposer({ date, draft: { startTime: minutesToTime(start), endTime: minutesToTime(end) } }),
+    onCommit: (item, date, start, end) => void rescheduleItem(item, date, minutesToTime(start), minutesToTime(end)),
+  })
 
-  const existingCustomCategories = useMemo(() => {
-    const standardLabels = new Set(CATEGORY_OPTIONS.map((opt) => opt.label))
-    const custom = new Set<string>()
-    
-    try {
-      const saved = localStorage.getItem('calendar_custom_categories')
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        if (Array.isArray(parsed)) {
-          parsed.forEach((cat) => {
-            const trimmed = cat.trim()
-            if (trimmed) custom.add(trimmed)
-          })
-        }
-      }
-    } catch (e) {
-      console.error('Failed to load custom categories from localStorage', e)
-    }
+  const pendingDraft: GridDrag | null =
+    modal.open && !modal.item && modal.draft
+      ? { kind: 'create', date: modal.date, start: timeToMinutes(modal.draft.startTime), end: timeToMinutes(modal.draft.endTime) }
+      : null
 
-    items.forEach((item) => {
-      if (item.category) {
-        const trimmed = item.category.trim()
-        if (trimmed && !standardLabels.has(trimmed)) {
-          custom.add(trimmed)
-        }
-      }
-    })
-
-    return Array.from(custom)
-  }, [items])
-
-  const filteredItems = useMemo(() => {
-    return items.filter((item) => {
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase().trim()
-        const title = (item.title || '').toLowerCase()
-        const notes = (item.notes || '').toLowerCase()
-        if (!title.includes(query) && !notes.includes(query)) {
-          return false
-        }
-      }
-      const itemCategory = item.category || 'Personal'
-      return !uncheckedCategories.includes(itemCategory)
-    })
-  }, [items, searchQuery, uncheckedCategories])
-
-  const selectedItems = useMemo(() => byDate(filteredItems, selectedDate), [filteredItems, selectedDate])
-
-  const sidebarUpcomingItem = useMemo(() => {
-    // 1. Prioritize a timed event happening right now today
-    const todayStr = toISODate(new Date())
-    const now = new Date().getHours() * 60 + new Date().getMinutes()
-    
-    // Get all today's items from the local loaded items
-    const todayItems = items.filter(item => item.date === todayStr && !item.completed && !item.cancelled)
-    
-    const current = todayItems.find(item => {
-      if (!item.startTime) return false
-      const start = timeToMinutes(item.startTime)
-      const end = item.endTime ? timeToMinutes(item.endTime) : start + 60
-      return now >= start && now < end
-    })
-    
-    if (current) {
-      return { item: current, label: 'Live Now' }
-    }
-    
-    // 2. Next, check if there's an all-day event for today
-    const todayAllDay = todayItems.find(item => item.allDay || !item.startTime)
-    if (todayAllDay) {
-      return { item: todayAllDay, label: "Today's Event" }
-    }
-    
-    // 3. Next, use the loaded upcomingItems carousel
-    const upcomingItem = upcomingItems[upcomingCardIndex] ?? null
-    if (upcomingItem) {
-      const todayStr2 = toISODate(new Date())
-      const nowMin2 = new Date().getHours() * 60 + new Date().getMinutes()
-      const isPast = upcomingItem.date < todayStr2 ||
-        (upcomingItem.date === todayStr2 && upcomingItem.endTime && timeToMinutes(upcomingItem.endTime) <= nowMin2)
-      const classification = getEventClassification(upcomingItem)
-      let eyebrow = isPast ? 'Past activity' : 'Upcoming event'
-      if (!isPast) {
-        if (classification === 'MEETING') eyebrow = 'Upcoming meeting'
-        else if (classification === 'DEADLINE' || classification === 'TASK') eyebrow = 'Upcoming task'
-        else if (classification === 'MILESTONE') eyebrow = 'Upcoming milestone'
-      }
-      return { item: upcomingItem, label: eyebrow }
-    }
-    
-    // 4. Fallback to mock item
-    return {
-      item: {
-        id: 'mock-meeting',
-        title: 'UX Huddle Call',
-        startTime: '09:00',
-        endTime: '09:30',
-        date: todayStr,
-        itemType: 'EVENT',
-        category: 'Social',
-        completed: false,
-        cancelled: false,
-      } as CalendarItem,
-      label: 'Meeting reminder'
-    }
-  }, [items, upcomingItems, upcomingCardIndex])
-
-  const twoDays = useMemo(() => getTwoDays(selectedDate), [selectedDate])
-  const viewShowsToday =
-    viewType === 'monthly'
-      ? selectedDate.slice(0, 7) === todayIso.slice(0, 7)
-      : viewType === 'weekly'
-        ? twoDays.some((d) => toISODate(d) === todayIso)
-        : selectedDate === todayIso
-  
-  const weekItemsByDay = useMemo(() => {
-    return twoDays.map((d) => {
-      const iso = toISODate(d)
-      const dayItems = filteredItems.filter((item) => item.date === iso)
-      return dayItems.sort(compareItems)
-    })
-  }, [twoDays, filteredItems])
-
-  const activeItem = useMemo(() => {
-    if (selectedItemKey) {
-      return filteredItems.find((item) => itemKey(item) === selectedItemKey) ?? null
-    }
-    return null
-  }, [selectedItemKey, filteredItems])
-
-  const updateSelectedDate = (date: string) => {
-    setSelectedDate(date)
-    setSelectedItemKey(null)
-    onNavigate('/calendar', `?date=${date}`)
-  }
-
-  const handleStep = (direction: number) => {
-    const date = parseISODate(selectedDate)
-    if (viewType === 'monthly') {
-      date.setMonth(date.getMonth() + direction)
-    } else {
-      date.setDate(date.getDate() + direction)
-    }
-    updateSelectedDate(toISODate(date))
-  }
-
-  const handleDateSelect = (dateStr: string) => {
-    updateSelectedDate(dateStr)
-  }
-
-  const stepSize = viewType === 'weekly' ? 2 : 1
-  const goToToday = () => updateSelectedDate(toISODate(new Date()))
-
-  // Keyboard shortcuts (Notion Calendar / Google style). Never while typing,
-  // never while a modal or dialog owns the keyboard.
-  const shortcutHandler = useRef<(e: KeyboardEvent) => void>(() => {})
+  // ── Global listeners ──
   useEffect(() => {
-    shortcutHandler.current = (e: KeyboardEvent) => {
-      if (e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented) return
-      const target = e.target as HTMLElement | null
-      if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return
-      if (modal.open || deleteTarget || colorEditModalOpen || document.body.classList.contains('calendar-grid-dragging')) return
+    const handler = () => setModal((m) => (m.open ? m : { open: true, date: selectedDate }))
+    window.addEventListener('mobile-quick-add', handler)
+    return () => window.removeEventListener('mobile-quick-add', handler)
+  }, [selectedDate])
+
+  useEffect(() => {
+    if (!deleteTarget) return
+    document.body.classList.add('calendar-modal-open')
+    return () => document.body.classList.remove('calendar-modal-open')
+  }, [deleteTarget])
+
+  // Keyboard (Google / Notion Calendar keys). Never while typing, and never
+  // while a modal or a drag owns the keyboard.
+  const shortcut = useRef<(e: KeyboardEvent) => void>(() => {})
+  useEffect(() => {
+    shortcut.current = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented || typingTarget(e.target)) return
+      if (modal.open || deleteTarget || colorsOpen || shortcutsOpen || disconnectTarget) return
+      if (document.body.classList.contains('calendar-grid-dragging')) return
       const key = e.key.toLowerCase()
-      if (key === 't') goToToday()
-      else if (key === 'd') setViewType('daily')
-      else if (key === 'w' || key === '2') setViewType('weekly')
-      else if (key === 'm') setViewType('monthly')
-      else if (key === 'arrowleft' || key === 'j') handleStep(-stepSize)
-      else if (key === 'arrowright' || key === 'k') handleStep(stepSize)
-      else if (key === 'n' || key === 'c') setModal({ open: true, date: selectedDate })
-      else if (key === '/') searchInputRef.current?.focus()
+      const views: Record<string, CalendarView> = { d: 'day', x: 'workweek', w: 'week', m: 'month', a: 'agenda', '1': 'day', '2': 'workweek', '3': 'week', '4': 'month', '5': 'agenda' }
+      if (views[key]) setView(views[key])
+      else if (key === 't') goTo(toISODate(new Date()))
+      else if (key === 'arrowleft' || key === 'j') goTo(stepDate(effectiveView, selectedDate, -1))
+      else if (key === 'arrowright' || key === 'k') goTo(stepDate(effectiveView, selectedDate, 1))
+      else if (key === 'n' || key === 'c') openComposer({ date: selectedDate })
+      else if (key === '/') setSearchOpen(true)
+      else if (key === '[') toggleSidebar()
+      else if (key === '?') setShortcutsOpen(true)
+      else if (key === 'q') {
+        if (!sidebarOpen) toggleSidebar()
+        window.setTimeout(() => quickRef.current?.focus(), 0)
+      } else if (key === 'e' && popItem) openComposer({ item: popItem, date: popItem.date })
+      else if ((key === 'backspace' || key === 'delete') && popItem) {
+        setDeleteTarget(popItem)
+        setPop(null)
+      }
       else return
       e.preventDefault()
     }
   })
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => shortcutHandler.current(e)
+    const onKey = (e: KeyboardEvent) => shortcut.current(e)
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  // Mutations apply optimistically: the local list updates instantly, the API
-  // call runs in the background, and 'calendar-updated' triggers a single
-  // guarded refetch for server truth. On failure the local change is reverted.
-  const handleToggle = async (item: CalendarItem) => {
-    if (!item.id) return
-    const key = itemKey(item)
-    const nextCompleted = !item.completed
-    calendarActions.applyItems((prev) => prev.map((it) => (itemKey(it) === key ? { ...it, completed: nextCompleted } : it)))
-    try {
-      const isRecurring = item.recurrenceFrequency && item.recurrenceFrequency !== 'NONE'
-      const res = await calendarService.toggleItem(item.id, isRecurring ? item.date : undefined)
-      if (res.error) throw new Error(res.error.message)
-      toast.success(nextCompleted ? `Completed "${item.title}"` : `Reopened "${item.title}"`)
-      window.dispatchEvent(new CustomEvent('calendar-updated'))
-    } catch (error) {
-      calendarActions.applyItems((prev) => prev.map((it) => (itemKey(it) === key ? { ...it, completed: item.completed } : it)))
-      toast.error(error instanceof Error ? error.message : 'Failed to update item')
-    }
-  }
+  // ── Render ──
+  const hourPx = effectiveView === 'day' ? (phone ? 56 : 60) : phone ? 52 : 48
+  const timeGridView = effectiveView === 'day' || effectiveView === 'workweek' || effectiveView === 'week'
 
-  const handleToggleCancel = async (item: CalendarItem) => {
-    if (!item.id) return
-    const key = itemKey(item)
-    const nextCancelled = !item.cancelled
-    calendarActions.applyItems((prev) => prev.map((it) => (itemKey(it) === key ? { ...it, cancelled: nextCancelled } : it)))
-    try {
-      const isRecurring = item.recurrenceFrequency && item.recurrenceFrequency !== 'NONE'
-      const res = await calendarService.toggleCancelItem(item.id, isRecurring ? item.date : undefined)
-      if (res.error) throw new Error(res.error.message)
-      toast.success(nextCancelled ? `Cancelled "${item.title}"` : `Restored "${item.title}"`)
-      window.dispatchEvent(new CustomEvent('calendar-updated'))
-    } catch (error) {
-      calendarActions.applyItems((prev) => prev.map((it) => (itemKey(it) === key ? { ...it, cancelled: item.cancelled } : it)))
-      toast.error(error instanceof Error ? error.message : 'Failed to update item')
-    }
-  }
-
-  const handleDelete = async () => {
-    const target = deleteTarget
-    if (!target?.id) return
-    const prevItems = items
-    calendarActions.applyItems((prev) => prev.filter((it) => it.id !== target.id))
-    setDeleteTarget(null)
-    setSelectedItemKey(null)
-    setAnchorRect(null)
-    try {
-      const res = await calendarService.deleteItem(target.id)
-      if (res.error) throw new Error(res.error.message)
-      clearCustomItemColor(target.id)
-      toast.success(`Deleted "${target.title}"`)
-      window.dispatchEvent(new CustomEvent('calendar-updated'))
-    } catch (error) {
-      calendarActions.applyItems(() => prevItems)
-      toast.error(error instanceof Error ? error.message : 'Failed to delete item')
-    }
-  }
-
-
-  const handleDeleteRecurring = async (mode: 'ONLY_THIS' | 'ALL') => {
-    const target = deleteTarget
-    if (!target?.id) return
-    const prevItems = items
-    calendarActions.applyItems((prev) =>
-      prev.filter((it) => (mode === 'ONLY_THIS' ? !(it.id === target.id && it.date === target.date) : it.id !== target.id)),
-    )
-    setDeleteTarget(null)
-    setSelectedItemKey(null)
-    setAnchorRect(null)
-    try {
-      const res = await calendarService.deleteItem(target.id, mode === 'ONLY_THIS' ? target.date : undefined)
-      if (res.error) throw new Error(res.error.message)
-      if (mode === 'ALL') clearCustomItemColor(target.id)
-      toast.success(mode === 'ONLY_THIS' ? 'Occurrence deleted' : 'Recurring routine deleted')
-      window.dispatchEvent(new CustomEvent('calendar-updated'))
-    } catch (error) {
-      calendarActions.applyItems(() => prevItems)
-      toast.error(error instanceof Error ? error.message : 'Failed to delete item')
-    }
-  }
-
-  const HOUR_TICKS = useMemo(() => {
-    return Array.from({ length: 24 }, (_, i) => {
-      const h = i
-      const label = h === 0 ? '12 AM' : h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h - 12} PM`
-      return { hour: h, label }
-    })
-  }, [])
-
-  const MonthViewGrid = () => {
-    const current = parseISODate(selectedDate)
-    const days = monthGrid(current)
-    
-    return (
-      <div className="monthly-view-grid">
-        <div className="month-grid-header">
-          {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((day) => (
-            <div key={day} className="month-grid-header-cell">{day}</div>
-          ))}
-        </div>
-        <div className="month-grid-body">
-          {days.map((d) => {
-            const iso = toISODate(d)
-            const isSelected = iso === selectedDate
-            const isToday = iso === toISODate(new Date())
-            const isSameMonth = d.getMonth() === current.getMonth()
-            const dayItems = filteredItems.filter((item) => item.date === iso)
-            
-            return (
-              <div
-                key={iso}
-                className={`month-day-cell ${isSelected ? 'is-selected' : ''} ${isToday ? 'is-today' : ''} ${isSameMonth ? 'is-current-month' : 'is-other-month'}`}
-                onClick={() => updateSelectedDate(iso)}
-              >
-                <span className="month-day-num">{d.getDate()}</span>
-                <div className="month-day-events">
-                  {dayItems.slice(0, 3).map((item) => (
-                    <div
-                      key={itemKey(item)}
-                      className="month-event-capsule"
-                      style={{ '--capsule-color': displayColorForItem(item), cursor: 'pointer' } as React.CSSProperties}
-                      title={item.title}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        const rect = e.currentTarget.getBoundingClientRect()
-                        setSelectedItemKey(itemKey(item))
-                        setOverflowDay(null)
-                        setAnchorRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
-                      }}
-                    >
-                      {item.title}
-                    </div>
-                  ))}
-                  {dayItems.length > 3 && (
-                    <button
-                      type="button"
-                      className="month-more-indicator"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        const cell = e.currentTarget.closest('.month-day-cell')
-                        const rect = (cell ?? e.currentTarget).getBoundingClientRect()
-                        setSelectedItemKey(null)
-                        setAnchorRect(null)
-                        setOverflowDay({ date: iso, rect: { top: rect.top, left: rect.left, width: rect.width, height: rect.height } })
-                      }}
-                    >
-                      +{dayItems.length - 3} more
-                    </button>
-                  )}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-    )
-  }
-
-  const renderMainCanvas = (isFullMode: boolean) => {
-    return (
-      <main
-        className={`focus-canvas ${isFullMode ? 'is-full-view-active' : ''}`}
-        onClick={() => {
-          if (isFullMode) setIsFullView(false)
+  const stage = firstLoad ? (
+    <div className="cv-skeleton" aria-busy="true" aria-label="Loading calendar">
+      {Array.from({ length: 6 }, (_, i) => (
+        <span key={i} style={{ top: `${12 + i * 13}%`, left: `${14 + ((i * 17) % 60)}%`, height: `${7 + (i % 3) * 4}%` }} />
+      ))}
+    </div>
+  ) : loadFailed && items.length === 0 ? (
+    <div className="cv-empty">
+      <strong>The calendar didn’t load</strong>
+      <span>{getErrorMessage(itemsState.error, 'The server didn’t answer.')}</span>
+      <button type="button" className="cv-btn is-ghost" onClick={() => void loadItems()}>
+        <RefreshCw size={13} /> Try again
+      </button>
+    </div>
+  ) : timeGridView ? (
+    <div className={cn('cv-dayview', effectiveView === 'day' && 'has-brief')}>
+      <TimeGrid
+        days={days}
+        itemsByDay={itemsByDay}
+        todayIso={todayIso}
+        nowMinutes={nowMinutes}
+        hourPx={hourPx}
+        activeKey={activeKey}
+        query={query}
+        scrollRef={gridScrollRef}
+        grid={grid}
+        pendingDraft={pendingDraft}
+        interactive={!pop && !overflow && !modal.open}
+        showDayLoad={effectiveView === 'day'}
+        onOpen={openItem}
+        onToggleDone={toggleDone}
+        onPickDay={(iso) => {
+          if (effectiveView === 'day') return
+          goTo(iso)
+          setView('day')
         }}
-      >
-        <div
-          className="calendar-main-stage"
-          onClick={(e) => {
-            e.stopPropagation()
-            setSelectedItemKey(null)
-            setAnchorRect(null)
-          }}
-        >
-          {loading && !hasLoadedOnce ? (
-            <CalendarSkeleton viewType={viewType} />
-          ) : (
-            <>
-              {/* Navigation & view selection row */}
-          <div className="stage-navigation-row">
-            <div className="date-range-navigator">
-              <button type="button" className="nav-arrow" onClick={() => handleStep(-stepSize)} aria-label="Previous" title="Previous (←)">
-                <ChevronLeft size={16} />
-              </button>
-              <h2 className="range-title">
-                {viewType === 'weekly' || viewType === 'daily'
-                  ? formatSelectedDateHeader(selectedDate)
-                  : parseISODate(selectedDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-              </h2>
-              <button type="button" className="nav-arrow" onClick={() => handleStep(stepSize)} aria-label="Next" title="Next (→)">
-                <ChevronRight size={16} />
-              </button>
-              <button
-                type="button"
-                className={cn('nav-today-btn', viewShowsToday && 'is-current')}
-                onClick={goToToday}
-                title="Jump to today (T)"
-              >
-                Today
-              </button>
-            </div>
-
-            <div className="view-switcher-tabs">
-              {(['daily', 'weekly', 'monthly'] as const).map((view) => (
-                <button
-                  key={view}
-                  type="button"
-                  className={`view-tab ${viewType === view ? 'is-selected' : ''}`}
-                  onClick={() => setViewType(view)}
-                  title={`${view === 'weekly' ? '2-Day' : view.charAt(0).toUpperCase() + view.slice(1)} (${view === 'daily' ? 'D' : view === 'weekly' ? 'W' : 'M'})`}
-                >
-                  {view === 'weekly' ? '2-Day' : view.charAt(0).toUpperCase() + view.slice(1)}
-                </button>
-              ))}
-            </div>
-
-            <div className="stage-actions-group">
-              <button
-                type="button"
-                className="create-event-btn add-pill"
-                onClick={() => setModal({ open: true, date: selectedDate })}
-                title="New block (N) — or drag on the grid"
-              >
-                <span className="add-pill-ic"><Plus size={16} strokeWidth={2.75} /></span>
-                <span className="create-event-text-desktop">Add event</span>
-                <span className="create-event-text-ipad">Add</span>
-              </button>
-              <button
-                type="button"
-                className="calendar-expand-btn"
-                onClick={() => setIsFullView(!isFullView)}
-                aria-label={isFullView ? "Minimize calendar" : "Expand calendar"}
-                title={isFullView ? "Minimize calendar" : "Expand calendar"}
-              >
-                {isFullView ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-              </button>
-            </div>
-          </div>
-
-          {/* Stage Calendar Body Grid */}
-          <div className="stage-grid-canvas" ref={canvasContainerRef}>
-            {viewType === 'monthly' ? (
-              <MonthViewGrid />
-            ) : (
-              <div className={`calendar-grid-scrollable view-${viewType}`} ref={weeklyScrollContainerRef}>
-                {/* Day Columns Header */}
-                <div className="grid-header-days" style={{ gridTemplateColumns: `var(--cal-time-gutter) repeat(${viewType === 'weekly' ? 2 : 1}, minmax(0, 1fr))` }}>
-                  <div className="grid-header-tz">
-                    <span>{viewType === 'weekly' ? 'GMT+5:30' : 'Time'}</span>
-                  </div>
-                  {(viewType === 'weekly' ? twoDays : [parseISODate(selectedDate)]).map((d, dayIdx) => {
-                    const iso = toISODate(d)
-                    const isSelected = iso === selectedDate
-                    const isToday = iso === toISODate(new Date())
-                    const dayItems = viewType === 'weekly' ? weekItemsByDay[dayIdx] : selectedItems
-                    const dayAllDayItems = dayItems.filter((item) => item.allDay || !item.startTime)
-                    return (
-                      <div
-                        key={iso}
-                        className="grid-header-column-wrapper"
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 8,
-                          padding: '4px 0',
-                        }}
-                      >
-                        <div
-                          className={`grid-header-day-card ${isSelected ? 'is-selected' : ''} ${isToday ? 'is-today' : ''}`}
-                          onClick={() => updateSelectedDate(iso)}
-                        >
-                          <span className="day-name">{d.toLocaleDateString('en-US', { weekday: 'long' })}</span>
-                          <strong className="day-number-pill">{d.getDate()}</strong>
-                          <span className="day-load">{describeDayLoad(dayItems)}</span>
-                        </div>
-                        {dayAllDayItems.length > 0 && (
-                          <div className="all-day-events-container" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                            {dayAllDayItems.map((item) => {
-                              const cardStyles = getEventStyleClasses(item)
-                              const isActive = activeItem && itemKey(item) === itemKey(activeItem)
-                              return (
-                                <button
-                                  type="button"
-                                  key={itemKey(item)}
-                                  className={`all-day-event-chip ${isActive ? 'is-active' : ''}`}
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    const rect = e.currentTarget.getBoundingClientRect()
-                                    setSelectedItemKey(itemKey(item))
-                                    setAnchorRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
-                                  }}
-                                  style={{
-                                    width: '100%',
-                                    textAlign: 'left',
-                                    padding: '6px 8px',
-                                    borderRadius: '6px',
-                                    fontSize: '11px',
-                                    fontWeight: '700',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    ...({ '--chip-hue': cardStyles.style['--chip-hue'] } as React.CSSProperties),
-                                    backgroundColor: cardStyles.style.backgroundColor,
-                                    color: cardStyles.style.color,
-                                    boxShadow: isActive ? `0 0 0 2px var(--ring-cutout, #ffffff), 0 0 0 4px ${displayColorForItem(item)}` : 'none',
-                                    zIndex: isActive ? 2 : 1,
-                                  }}
-                                >
-                                  <div className="event-title" style={{ fontSize: 11, WebkitLineClamp: 1, color: 'inherit' }}>
-                                    {item.title}
-                                  </div>
-                                </button>
-                              )
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-
-                {/* Grid hour cells */}
-                <div className="grid-body-canvas">
-                  <div className="grid-lines-container">
-                    {HOUR_TICKS.map((tick) => (
-                      <div key={tick.hour} className="grid-hour-row" style={{ height: 80 }}>
-                        <span className="hour-label">{tick.label}</span>
-                        <div className="grid-line" />
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="grid-columns-container" style={{ gridTemplateColumns: `var(--cal-time-gutter) repeat(${viewType === 'weekly' ? 2 : 1}, minmax(0, 1fr))` }}>
-                    <div className="time-column-spacer" />
-                    {(viewType === 'weekly' ? twoDays : [parseISODate(selectedDate)]).map((d, dayIdx) => {
-                      const iso = toISODate(d)
-                      const dayItems = viewType === 'weekly' ? weekItemsByDay[dayIdx] : selectedItems
-                      const positioned = getPositionedItems(dayItems)
-                      const isTodayCol = iso === todayIso
-                      const draftGhost: GridDrag | null =
-                        drag?.kind === 'create' && drag.date === iso
-                          ? drag
-                          : !drag && modal.open && !modal.item && modal.draft && modal.date === iso
-                            ? { kind: 'create', date: iso, start: timeToMinutes(modal.draft.startTime), end: timeToMinutes(modal.draft.endTime) }
-                            : null
-                      const moveGhost = drag && drag.kind !== 'create' && drag.date === iso ? drag : null
-                      const draggingId = drag && drag.kind !== 'create' ? drag.item.id : undefined
-                      return (
-                        <div
-                          key={iso}
-                          ref={registerColumn(iso)}
-                          className={cn('grid-day-column', isTodayCol && 'is-today')}
-                          onPointerDown={(e) => columnPointerDown(e, iso)}
-                          onPointerMove={(e) => columnPointerMove(e, iso)}
-                          onPointerLeave={clearHover}
-                        >
-                          {hover && hover.date === iso && !drag && !modal.open && (
-                            <div className="grid-hover-slot" style={{ top: minutePct(hover.minute), height: minutePct(60) }} aria-hidden="true">
-                              <Plus size={11} strokeWidth={2.8} />
-                              {formatShortTime(hover.minute)}
-                            </div>
-                          )}
-                          {positioned.map(({ item, top, height, width, left }) => {
-                            const status = getItemStatus(item, iso)
-                            const isActive = activeItem && itemKey(item) === itemKey(activeItem)
-                            const isAllDay = item.allDay || !item.startTime
-                            const cardStyles = getEventStyleClasses(item)
-                            const canDrag = Boolean(item.id) && !isRecurring(item)
-                            const isDragSource = Boolean(draggingId) && item.id === draggingId
-                            return (
-                              <button
-                                type="button"
-                                key={itemKey(item)}
-                                className={cn(
-                                  'grid-event-card',
-                                  `status-${status}`,
-                                  isActive && 'is-active',
-                                  canDrag && 'is-draggable',
-                                  isDragSource && 'is-drag-source',
-                                  cardStyles.className,
-                                )}
-                                onPointerDown={canDrag ? (e) => itemPointerDown(e, item, iso, 'move') : (e) => e.stopPropagation()}
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  if (consumeClick()) return
-                                  const rect = e.currentTarget.getBoundingClientRect()
-                                  setSelectedItemKey(itemKey(item))
-                                  setAnchorRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
-                                }}
-                                title={canDrag ? undefined : isRecurring(item) ? 'Repeating block — edit it to change the whole series' : undefined}
-                                style={{
-                                  position: 'absolute',
-                                  top: `${top}px`,
-                                  height: `${height}px`,
-                                  width: width,
-                                  left: left,
-                                  ...cardStyles.style,
-                                  ...(isActive ? {
-                                    boxShadow: `0 0 0 2px var(--ring-cutout, #ffffff), 0 0 0 4px ${displayColorForItem(item)}`,
-                                    zIndex: 11,
-                                  } : {})
-                                } as React.CSSProperties}
-                              >
-                                {isAllDay ? (
-                                  <div className="event-card-content is-all-day">
-                                    <strong className="event-title">{item.title}</strong>
-                                  </div>
-                                ) : (
-                                  <div className={`event-card-content ${height < 46 ? 'is-compact' : ''}`}>
-                                    <div className="event-details-top">
-                                      <strong className="event-title">
-                                        {createElement(iconForItem(item), { size: 11, strokeWidth: 2.5, className: 'event-kind-ic', 'aria-hidden': true })}
-                                        {item.title}
-                                        {isRecurring(item) && <Repeat size={10} strokeWidth={2.6} className="event-repeat-ic" aria-label="Repeats" />}
-                                      </strong>
-                                      <span className="event-time">
-                                        <Clock size={12} />
-                                        {formatItemTime(item)}
-                                      </span>
-                                    </div>
-                                  </div>
-                                )}
-                                {canDrag && (
-                                  <span
-                                    className="grid-event-resize"
-                                    aria-hidden="true"
-                                    onPointerDown={(e) => itemPointerDown(e, item, iso, 'resize')}
-                                  />
-                                )}
-                              </button>
-                            )
-                          })}
-                          {moveGhost && (
-                            <div
-                              className="grid-drag-ghost is-move"
-                              style={{
-                                ...getEventStyleClasses(moveGhost.item).style,
-                                top: minutePct(moveGhost.start),
-                                height: minutePct(moveGhost.end - moveGhost.start),
-                              } as React.CSSProperties}
-                              aria-hidden="true"
-                            >
-                              <strong>{moveGhost.item.title}</strong>
-                              <span>{formatMinuteRange(moveGhost.start, moveGhost.end)}</span>
-                            </div>
-                          )}
-                          {draftGhost && (
-                            <div
-                              className="grid-drag-ghost is-create"
-                              style={{ top: minutePct(draftGhost.start), height: minutePct(draftGhost.end - draftGhost.start) }}
-                              aria-hidden="true"
-                            >
-                              <strong>(No title)</strong>
-                              <span>
-                                {formatMinuteRange(draftGhost.start, draftGhost.end)}
-                                <em>{formatDuration(draftGhost.end - draftGhost.start)}</em>
-                              </span>
-                            </div>
-                          )}
-                          {isTodayCol && (
-                            <div className="grid-now-line" style={{ top: minutePct(nowMinutes) }} aria-hidden="true">
-                              <span className="grid-now-dot" />
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Google Calendar Overlap Popover Card */}
-            {activeItem && anchorRect && createPortal(
-              <>
-                <div className="popover-backdrop-mobile" onClick={() => {
-                  setSelectedItemKey(null)
-                  setAnchorRect(null)
-                }} />
-                <div
-                  className="calendar-details-popover"
-                  style={getPopoverStyle(anchorRect)}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {/* Banner Image header */}
-                  <div 
-                    className="popover-banner-header"
-                    style={{
-                      height: '140px',
-                      backgroundImage: `url(${bannerForCategory(activeItem.category)})`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                      position: 'relative'
-                    }}
-                  >
-                    {/* Top-Right Action overlay */}
-                    <div className="popover-banner-actions">
-                      <button 
-                        type="button" 
-                        className="popover-action-btn"
-                        title="Edit"
-                        onClick={() => {
-                          setSelectedItemKey(null)
-                          setAnchorRect(null)
-                          setModal({ open: true, item: activeItem, date: activeItem.date })
-                        }}
-                      >
-                        <Pencil size={15} />
-                      </button>
-                      <button
-                        type="button"
-                        className="popover-action-btn"
-                        title="Delete"
-                        onClick={() => {
-                          setDeleteTarget(activeItem)
-                          setSelectedItemKey(null)
-                          setAnchorRect(null)
-                        }}
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                      <button
-                        type="button"
-                        className="popover-action-btn close-btn"
-                        title="Close"
-                        onClick={() => {
-                          setSelectedItemKey(null)
-                          setAnchorRect(null)
-                        }}
-                      >
-                        <X size={15} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Popover content body */}
-                  <div className="popover-body-content">
-                    <div className="popover-title-row">
-                      <span
-                        className="category-bullet"
-                        style={{ backgroundColor: displayColorForItem(activeItem) }}
-                      />
-                      <div className="title-text-col">
-                        <h4 className="popover-title">{activeItem.title}</h4>
-                        <span className="popover-category-tag" style={{ color: displayColorForItem(activeItem) }}>
-                          {activeItem.category || 'Personal'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="popover-detail-section">
-                      <div className="popover-detail-row">
-                        <Clock size={16} className="detail-icon" />
-                        <div className="detail-text">
-                          <span className="detail-date-range">
-                            {formatSelectedDateHeader(activeItem.date)}
-                          </span>
-                          <span className="detail-time-range">
-                            {activeItem.allDay || !activeItem.startTime ? 'All day' : `${activeItem.startTime} - ${activeItem.endTime || ''}`}
-                          </span>
-                        </div>
-                      </div>
-
-                      {activeItem.notes && (
-                        <div className="popover-detail-row align-start">
-                          <AlignLeft size={16} className="detail-icon mt-0.5" />
-                          <span className="detail-text notes-text">{stripChecklist(activeItem.notes) || activeItem.notes}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Bottom Actions footer */}
-                  <div className="popover-footer-actions">
-                    <span className="going-label">Complete task?</span>
-                    <div className="going-options">
-                      <button
-                        type="button"
-                        className={`going-btn ${activeItem.completed ? 'is-active' : ''}`}
-                        onClick={() => {
-                          if (!activeItem.completed) handleToggle(activeItem)
-                        }}
-                      >
-                        Yes
-                      </button>
-                      <button
-                        type="button"
-                        className={`going-btn ${!activeItem.completed ? 'is-active' : ''}`}
-                        onClick={() => {
-                          if (activeItem.completed) handleToggle(activeItem)
-                        }}
-                      >
-                        No
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </>,
-              document.body
-            )}
-
-            {/* "+N more" day overflow popover (Google Calendar style) */}
-            {overflowDay && createPortal(
-              <>
-                <div className="popover-backdrop-mobile" onClick={() => setOverflowDay(null)} />
-                <div
-                  className="month-overflow-popover"
-                  style={getOverflowPopoverStyle(overflowDay.rect)}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="overflow-popover-header">
-                    <div className="overflow-popover-date">
-                      <span className="overflow-day-name">
-                        {parseISODate(overflowDay.date).toLocaleDateString('en-US', { weekday: 'short' })}
-                      </span>
-                      <strong className="overflow-day-number">{parseISODate(overflowDay.date).getDate()}</strong>
-                    </div>
-                    <button type="button" className="overflow-close-btn" aria-label="Close" onClick={() => setOverflowDay(null)}>
-                      <X size={14} />
-                    </button>
-                  </div>
-                  <div className="overflow-popover-list">
-                    {byDate(filteredItems, overflowDay.date).map((item) => (
-                      <button
-                        type="button"
-                        key={itemKey(item)}
-                        className={`overflow-event-row ${item.completed ? 'is-completed' : ''}`}
-                        style={{ '--capsule-color': displayColorForItem(item) } as React.CSSProperties}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          const rect = e.currentTarget.getBoundingClientRect()
-                          setOverflowDay(null)
-                          setSelectedItemKey(itemKey(item))
-                          setAnchorRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
-                        }}
-                      >
-                        <span className="overflow-event-dot" />
-                        <span className="overflow-event-title">{item.title}</span>
-                        <span className="overflow-event-time">
-                          {item.allDay || !item.startTime ? 'All day' : formatClockTime(item.startTime)}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </>,
-              document.body
-            )}
-          </div>
-          </>
-        )}
-        </div>
-      </main>
-    )
-  }
+        onCreateAllDay={(iso) => openComposer({ date: iso, seed: { date: iso, allDay: true } })}
+      />
+      {effectiveView === 'day' && (
+        <DayBrief
+          iso={selectedDate}
+          items={itemsByDay.get(selectedDate) ?? []}
+          todayIso={todayIso}
+          nowMinutes={nowMinutes}
+          activeKey={activeKey}
+          onOpen={openItem}
+          onToggleDone={toggleDone}
+          onCreateSlot={(start, end) => openComposer({ date: selectedDate, draft: { startTime: minutesToTime(start), endTime: minutesToTime(end) } })}
+        />
+      )}
+    </div>
+  ) : effectiveView === 'month' ? (
+    <MonthView
+      selected={selectedDate}
+      itemsByDay={itemsByDay}
+      todayIso={todayIso}
+      nowMinutes={nowMinutes}
+      activeKey={activeKey}
+      query={query}
+      onOpen={openItem}
+      onToggleDone={toggleDone}
+      onOverflow={(iso, cell) => {
+        setPop(null)
+        setOverflow({ iso, rect: rectOf(cell) })
+      }}
+      onPickDay={(iso) => {
+        goTo(iso)
+        setView('day')
+      }}
+      onCreate={(iso) => openComposer({ date: iso })}
+    />
+  ) : (
+    <AgendaView
+      start={selectedDate}
+      days={AGENDA_DAYS}
+      itemsByDay={itemsByDay}
+      todayIso={todayIso}
+      nowMinutes={nowMinutes}
+      activeKey={activeKey}
+      query={query}
+      onOpen={openItem}
+      onToggleDone={toggleDone}
+      onCreate={(iso) => openComposer({ date: iso })}
+      onPickDay={(iso) => {
+        goTo(iso)
+        setView('day')
+      }}
+    />
+  )
 
   return (
-    <section className="calendar-dashboard theme-glassmorphic" aria-label="Daily routine">
-      <header className="calendar-header">
-        <div>
-          <span className="calendar-eyebrow">Routine & Schedule</span>
-          <h1>Daily Routine</h1>
-          <p>Plan your day, track tasks, and build consistent habits.</p>
-        </div>
-      </header>
-
-      <div className="calendar-focus-split">
-        {/* Left Sidebar Panel */}
-        <aside className="routine-navigator">
-          {/* Search Input Bar */}
-          <div className="sidebar-search-block">
-            <div className="search-input-wrapper">
-              <Search size={14} className="search-icon" />
-              <input
-                type="text"
-                ref={searchInputRef}
-                placeholder="Search a task..."
-                value={searchQuery}
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape') {
-                    setSearchQuery('')
-                    e.currentTarget.blur()
-                  }
-                }}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <kbd className="search-shortcut" title="Press / to search">/</kbd>
-            </div>
-          </div>
-
-          {/* Mini Calendar Widget — accordion, collapsed by default */}
-          <div className={`sidebar-month-card${monthOpen ? '' : ' is-collapsed'}`}>
-            <button
-              type="button"
-              className="sidebar-month-toggle"
-              onClick={toggleMonthOpen}
-              aria-expanded={monthOpen}
-              aria-controls="sidebar-month-body"
-            >
-              <span className="sidebar-month-toggle-ic" aria-hidden="true">
-                <CalendarDays size={15} strokeWidth={2.2} />
-              </span>
-              <span className="sidebar-month-toggle-text">
-                <b>Calendar</b>
-                <small>
-                  {parseISODate(selectedDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
-                </small>
-              </span>
-              <ChevronDown size={14} className={`accordion-chevron ${monthOpen ? 'open' : ''}`} />
-            </button>
-            {monthOpen && (
-              <div id="sidebar-month-body" className="sidebar-month-body">
-                <MiniMonth
-                  selectedDate={selectedDate}
-                  onSelect={handleDateSelect}
-                  allowFuture
-                  highlightedRange={viewType === 'weekly' ? twoDays.map((d) => toISODate(d)) : undefined}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Dynamic Upcoming/Live Card */}
-          {sidebarUpcomingItem && (() => {
-            const { item: sidebarItem, label: sidebarLabel } = sidebarUpcomingItem
-            const categoryColor = displayColorForItem(sidebarItem)
-            const showCarousel = upcomingItems.length > 1 && sidebarItem.id !== 'mock-meeting'
-
-            return (
-              <div
-                className="quick-reminder-card"
-                style={{
-                  background: `linear-gradient(135deg, ${categoryColor}, ${categoryColor})`,
-                  boxShadow: `0 10px 25px ${categoryColor}40`,
-                  '--rc-accent': categoryColor,
-                } as React.CSSProperties}
-              >
-                <div className="reminder-eyebrow">
-                  {sidebarLabel}
-                  {showCarousel && (
-                    <span className="upcoming-carousel-controls">
-                      <button
-                        type="button"
-                        className="carousel-arrow"
-                        onClick={(e) => { e.stopPropagation(); setUpcomingCardIndex(i => Math.max(0, i - 1)) }}
-                        disabled={upcomingCardIndex === 0}
-                        aria-label="Previous"
-                      >‹</button>
-                      <span className="carousel-index">{upcomingCardIndex + 1}/{upcomingItems.length}</span>
-                      <button
-                        type="button"
-                        className="carousel-arrow"
-                        onClick={(e) => { e.stopPropagation(); setUpcomingCardIndex(i => Math.min(upcomingItems.length - 1, i + 1)) }}
-                        disabled={upcomingCardIndex === upcomingItems.length - 1}
-                        aria-label="Next"
-                      >›</button>
-                    </span>
-                  )}
-                </div>
-                <h3 className="reminder-title">{sidebarItem.title}</h3>
-                <div className="reminder-time-row">
-                  <Clock size={12} />
-                  <span>
-                    {(() => {
-                      const todayStr = toISODate(new Date())
-                      const isToday = sidebarItem.date === todayStr
-                      const datePart = isToday 
-                        ? '' 
-                        : `${parseISODate(sidebarItem.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • `
-                      
-                      const timePart = sidebarItem.allDay || !sidebarItem.startTime
-                        ? 'All day'
-                        : `${formatClockTime(sidebarItem.startTime)} - ${formatClockTime(sidebarItem.endTime || '10:00')}`
-                      
-                      return `${datePart}${timePart}`
-                    })()}
-                  </span>
-                </div>
-                <div className="reminder-footer">
-                  {sidebarItem.id === 'mock-meeting' && renderAvatarStack([
-                    { name: 'John Doe', avatar: profileAvatar },
-                    { name: 'Sarah Connor', avatar: getAvatarImage('avatar1') },
-                    { name: 'Alex Mercer', avatar: getAvatarImage('avatar2') },
-                    { name: 'Emma Watson', avatar: getAvatarImage('avatar3') },
-                  ])}
-                  <div className="reminder-actions">
-                    <button
-                      type="button"
-                      className="btn-decline"
-                      aria-label={sidebarItem.id === 'mock-meeting' ? 'Decline' : 'Skip'}
-                      onClick={() => {
-                        if (sidebarItem.id !== 'mock-meeting') {
-                          handleToggleCancel(sidebarItem)
-                        } else {
-                          toast.success('Mock meeting declined')
-                        }
-                      }}
-                    >
-                      <X size={13} strokeWidth={2.4} />
-                      <span>{sidebarItem.id === 'mock-meeting' ? 'Decline' : 'Skip'}</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-accept"
-                      aria-label={sidebarItem.id === 'mock-meeting' ? 'Accept' : 'Done'}
-                      onClick={() => {
-                        if (sidebarItem.id !== 'mock-meeting') {
-                          handleToggle(sidebarItem)
-                        } else {
-                          toast.success('Mock meeting accepted')
-                        }
-                      }}
-                    >
-                      <Check size={13} strokeWidth={2.6} />
-                      <span>{sidebarItem.id === 'mock-meeting' ? 'Accept' : 'Done'}</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )
-          })()}
-
-          {/* Filters Collapsible Accordion */}
-          <div className="calendar-filter-card">
-            <div className="filter-header-row">
-              <button
-                type="button"
-                className="filter-header-btn"
-                onClick={() => setFiltersOpen(!filtersOpen)}
-              >
-                <span>Filters</span>
-                <ChevronDown size={14} className={`accordion-chevron ${filtersOpen ? 'open' : ''}`} />
-              </button>
-              <div className="filter-menu-anchor">
-                <button
-                  type="button"
-                  className="filter-three-dot"
-                  onClick={(e) => { e.stopPropagation(); setFilterMenuOpen(!filterMenuOpen) }}
-                  title="Filter options"
-                >
-                  <MoreHorizontal size={14} />
-                </button>
-                {filterMenuOpen && (
-                  <>
-                    <div className="filter-menu-backdrop" onClick={() => setFilterMenuOpen(false)} />
-                    <div className="filter-menu-dropdown">
-                      <button
-                        type="button"
-                        className="filter-menu-item"
-                        onClick={() => {
-                          setFiltersOpen(!filtersOpen)
-                          setFilterMenuOpen(false)
-                        }}
-                      >
-                        {filtersOpen ? 'Hide filters' : 'Show filters'}
-                      </button>
-                      <button
-                        type="button"
-                        className="filter-menu-item"
-                        onClick={() => {
-                          const draft: Record<string, string> = {}
-                          actualCategories.forEach((cat) => { draft[cat] = colorForCategory(cat) })
-                          setColorEditDraft(draft)
-                          setColorEditModalOpen(true)
-                          setFilterMenuOpen(false)
-                        }}
-                      >
-                        <Palette size={11} />
-                        Edit colors
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-            {filtersOpen && (
-              <div className="filter-list">
-                {actualCategories.map((cat) => {
-                  const checked = !uncheckedCategories.includes(cat)
-                  const color = colorForCategory(cat)
-                  return (
-                    <div key={cat} className="filter-checkbox-row">
-                      <label className="filter-checkbox-item">
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => {
-                            if (checked) {
-                              setUncheckedCategories([...uncheckedCategories, cat])
-                            } else {
-                              setUncheckedCategories(uncheckedCategories.filter((c) => c !== cat))
-                            }
-                          }}
-                        />
-                        <span className="checkbox-custom" style={{ '--checkbox-color': color } as React.CSSProperties} />
-                        <span className="checkbox-label">{cat}</span>
-                      </label>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Google Calendar Sync Card */}
-          <div className="calendar-google-sync-card">
-            <div className="google-sync-header">
-              <span className="google-sync-dot" style={{ background: googleSyncStatus?.connected ? '#4caf50' : '#aaa' }} />
-              <span className="google-sync-label">Google Calendar</span>
-            </div>
-
-            {(googleSyncStatus?.accounts ?? []).map((account: GoogleCalendarAccount) => {
-              const isPulling = googleSyncingEmail === account.email
-              const isPushing = googlePushingEmail === account.email
-              const isDisconnecting = googleDisconnectingEmail === account.email
-              return (
-                <div key={account.email} className="google-account-row">
-                  <div className="google-account-info">
-                    <span className="google-account-email">{account.email}</span>
-                    {account.lastSyncedAt && (
-                      <span className="google-account-synced">
-                        {new Date(account.lastSyncedAt).toLocaleDateString()}
-                      </span>
-                    )}
-                  </div>
-                  <div className="google-sync-actions">
-                    <button
-                      type="button"
-                      className="google-sync-btn"
-                      disabled={isPulling || isPushing}
-                      onClick={() => handleGooglePullSync(account.email)}
-                      title="Pull latest events from this Google account"
-                    >
-                      {isPulling ? <Loader2 size={11} className="spin-icon" /> : '↓'} Pull
-                    </button>
-                    <button
-                      type="button"
-                      className="google-sync-btn google-sync-btn--push"
-                      disabled={isPulling || isPushing}
-                      onClick={() => handleGooglePushLocal(account.email)}
-                      title="Push local-only events to this Google account"
-                    >
-                      {isPushing ? <Loader2 size={11} className="spin-icon" /> : '↑'} Push
-                    </button>
-                    <button
-                      type="button"
-                      className="google-sync-btn google-sync-btn--disconnect"
-                      disabled={isDisconnecting}
-                      onClick={() => handleGoogleDisconnect(account.email)}
-                      title="Disconnect this Google account"
-                    >
-                      {isDisconnecting ? <Loader2 size={11} className="spin-icon" /> : '×'}
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-
-            <button
-              type="button"
-              className="google-connect-btn"
-              disabled={googleConnecting}
-              onClick={handleGoogleConnect}
-            >
-              {googleConnecting ? <Loader2 size={11} className="spin-icon" /> : '+'}
-              {googleConnecting ? ' Connecting…' : (googleSyncStatus?.connected ? ' Add account' : ' Connect Google')}
+    <section className="calendar-dashboard" aria-label="Calendar">
+      <div className={cn('cv-shell', !sidebarOpen && 'is-side-closed', `is-view-${effectiveView}`)}>
+        <aside className="cv-side route-scroll" aria-label="Calendar sidebar" hidden={!sidebarOpen && !phone}>
+          <QuickAdd
+            inputRef={quickRef}
+            defaultDate={selectedDate < todayIso ? todayIso : selectedDate}
+            todayIso={todayIso}
+            onCreate={quickCreate}
+            onExpand={(text) => openComposer({ date: selectedDate < todayIso ? todayIso : selectedDate, text })}
+          />
+          <UpNext
+            items={upcoming.filter(isShown)}
+            todayIso={todayIso}
+            nowMinutes={nowMinutes}
+            onOpen={openItem}
+            onToggleDone={toggleDone}
+            onPlan={() => quickRef.current?.focus()}
+          />
+          {!phone && <MiniMonth selected={selectedDate} todayIso={todayIso} inView={effectiveView === 'month' ? [] : dates} itemsByDay={itemsByDay} onSelect={goTo} />}
+          <CalendarList
+            categories={categories}
+            unchecked={hidden}
+            minutes={categoryMinutes}
+            rangeLabel={rangeLabel}
+            onToggle={(c) => updateHidden(hidden.includes(c) ? hidden.filter((h) => h !== c) : [...hidden, c])}
+            onOnly={(c) => updateHidden(categories.filter((x) => x !== c))}
+            onShowAll={() => updateHidden([])}
+            onEditColors={() => setColorsOpen(true)}
+          />
+          <div className="cv-side-foot">
+            <GoogleSync
+              status={googleState.data}
+              pulling={googlePulling}
+              pushing={googlePushing}
+              disconnecting={googleDisconnecting}
+              connecting={googleConnecting}
+              onConnect={connectGoogle}
+              onPull={pullGoogle}
+              onPush={pushGoogle}
+              onDisconnect={setDisconnectTarget}
+            />
+            <button type="button" className="cv-icon-btn is-sm cv-keys-btn" onClick={() => setShortcutsOpen(true)} aria-label="Keyboard shortcuts" title="Keyboard shortcuts (?)">
+              <Keyboard size={14} />
             </button>
           </div>
-
         </aside>
 
-        {/* Right Main Grid Stage */}
-        {isFullView ? (
-          <div className="focus-canvas-placeholder" style={{ flex: 1 }} />
-        ) : (
-          renderMainCanvas(false)
-        )}
+        <main className="cv-main">
+          <CalendarToolbar
+            view={effectiveView}
+            heading={heading}
+            showsToday={showsToday}
+            sidebarOpen={sidebarOpen}
+            query={query}
+            searchOpen={searchOpen}
+            searchRef={searchRef}
+            items={items}
+            todayIso={todayIso}
+            onView={setView}
+            onStep={(dir) => goTo(stepDate(effectiveView, selectedDate, dir))}
+            onToday={() => goTo(toISODate(new Date()))}
+            onToggleSidebar={toggleSidebar}
+            onQuery={setQuery}
+            onSearchOpen={setSearchOpen}
+            onPickResult={(item) => {
+              setQuery('')
+              setSearchOpen(false)
+              if (hidden.includes(item.category?.trim() || 'Personal')) updateHidden(hidden.filter((h) => h !== (item.category?.trim() || 'Personal')))
+              goTo(item.date)
+              setPendingFocus(item)
+            }}
+            onAdd={() => openComposer({ date: selectedDate })}
+          />
+          <div className="cv-stage">{stage}</div>
+        </main>
       </div>
 
-      {isFullView && createPortal(
-        renderMainCanvas(true),
-        document.body
+      {popItem && (
+        <EventPopover
+          key={itemKey(popItem)}
+          item={popItem}
+          anchor={pop?.rect ?? null}
+          onClose={() => setPop(null)}
+          onEdit={() => openComposer({ item: popItem, date: popItem.date })}
+          onDuplicate={() => openComposer({ date: popItem.date, seed: popItem })}
+          onDelete={() => {
+            setDeleteTarget(popItem)
+            setPop(null)
+          }}
+          onToggleDone={() => void toggleDone(popItem)}
+          onToggleCancel={() => void toggleCancel(popItem)}
+        />
       )}
 
-
-      {modal.open && createPortal(
-        <CalendarItemModal
-          key={modal.item ? itemKey(modal.item) : `new-${modal.date}-${modal.draft?.startTime ?? ''}`}
-          date={modal.date}
-          item={modal.item}
-          draft={modal.draft}
-          items={items}
-          existingCustomCategories={existingCustomCategories}
-          onDelete={(target) => {
-            setModal({ open: false })
-            setDeleteTarget(target)
+      {overflow && (
+        <DayOverflow
+          iso={overflow.iso}
+          items={itemsByDay.get(overflow.iso) ?? []}
+          anchor={overflow.rect}
+          onClose={() => setOverflow(null)}
+          onOpen={(item, rect) => {
+            setOverflow(null)
+            setPop({ item, rect })
           }}
-          onClose={() => setModal({ open: false })}
-          onSaved={() => {
-            setModal({ open: false })
-            window.dispatchEvent(new CustomEvent('calendar-updated'))
-          }}
-        />,
-        document.body
+        />
       )}
 
-      {deleteTarget && createPortal(
-        deleteTarget.recurrenceFrequency && deleteTarget.recurrenceFrequency !== 'NONE' ? (
-          <div className="calendar-modal-backdrop" onClick={() => setDeleteTarget(null)}>
-            <div className="calendar-delete-dialog" onClick={(event) => event.stopPropagation()}>
-              <span className="calendar-delete-icon"><Trash2 size={20} /></span>
-              <h2>Delete recurring routine?</h2>
-              <p>Choose whether to remove only this occurrence or the complete series.</p>
-              <button type="button" className="danger" onClick={() => handleDeleteRecurring('ONLY_THIS')}>
-                Delete this occurrence
-              </button>
-              <button type="button" className="danger-secondary" onClick={() => handleDeleteRecurring('ALL')}>
-                Delete entire series
-              </button>
-              <button type="button" className="cancel" onClick={() => setDeleteTarget(null)}>Cancel</button>
-            </div>
-          </div>
+      {modal.open &&
+        createPortal(
+          <CalendarItemModal
+            key={modal.item ? itemKey(modal.item) : `new-${modal.date}-${modal.draft?.startTime ?? ''}-${modal.seed?.title ?? modal.text ?? ''}`}
+            date={modal.date}
+            item={modal.item}
+            draft={modal.draft}
+            seed={modal.seed}
+            initialText={modal.text}
+            items={items}
+            existingCustomCategories={categories.filter((c) => !BASE_CATEGORIES.includes(c))}
+            onDelete={(target) => {
+              setModal({ open: false })
+              setDeleteTarget(target)
+            }}
+            onClose={() => setModal({ open: false })}
+            onSaved={() => {
+              setModal({ open: false })
+              window.dispatchEvent(new CustomEvent('calendar-updated'))
+            }}
+          />,
+          document.body,
+        )}
+
+      {deleteTarget &&
+        (deleteTarget.recurrenceFrequency && deleteTarget.recurrenceFrequency !== 'NONE' ? (
+          <DeleteSeriesDialog
+            title={deleteTarget.title}
+            onOnlyThis={() => void deleteItem(deleteTarget, 'ONLY_THIS')}
+            onAll={() => void deleteItem(deleteTarget, 'ALL')}
+            onCancel={() => setDeleteTarget(null)}
+          />
         ) : (
           <ConfirmDialog
             open
-            title="Delete routine?"
-            message={`Remove "${deleteTarget.title}" from your schedule?`}
-            onConfirm={handleDelete}
+            title="Delete this block?"
+            message={`“${deleteTarget.title}” will be removed from your calendar.`}
+            onConfirm={() => void deleteItem(deleteTarget, 'ONE')}
             onCancel={() => setDeleteTarget(null)}
           />
-        ),
-        document.body
+        ))}
+
+      {disconnectTarget && (
+        <ConfirmDialog
+          open
+          title="Disconnect Google?"
+          message={`Stop syncing ${disconnectTarget}. Blocks already here stay.`}
+          confirmLabel="Disconnect"
+          onConfirm={() => void disconnectGoogle(disconnectTarget)}
+          onCancel={() => setDisconnectTarget(null)}
+        />
       )}
 
-      {/* Color Edit Modal */}
-      {colorEditModalOpen && createPortal(
-        <div className="calendar-modal-backdrop" onClick={() => setColorEditModalOpen(false)}>
-          <div className="color-edit-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="color-edit-modal-header">
-              <Palette size={15} />
-              <span>Edit category colors</span>
-              <button type="button" className="color-edit-close" onClick={() => setColorEditModalOpen(false)}>
-                <X size={14} />
-              </button>
-            </div>
-            <div className="color-edit-list">
-              {actualCategories.map((cat) => (
-                <div key={cat} className="color-edit-row">
-                  <span
-                    className="color-edit-dot"
-                    style={{ background: colorEditDraft[cat] ?? colorForCategory(cat) }}
-                  />
-                  <span className="color-edit-label">{cat}</span>
-                  <label
-                    className="color-edit-swatch"
-                    style={{ background: colorEditDraft[cat] ?? colorForCategory(cat) }}
-                    title={`Pick color for ${cat}`}
-                  >
-                    <input
-                      type="color"
-                      value={colorEditDraft[cat] ?? colorForCategory(cat)}
-                      onChange={(e) => {
-                        setColorEditDraft((prev) => ({ ...prev, [cat]: e.target.value }))
-                      }}
-                    />
-                  </label>
-                </div>
-              ))}
-            </div>
-            <div className="color-edit-footer">
-              <button
-                type="button"
-                className="color-edit-reset"
-                onClick={() => {
-                  resetCustomCategoryColors(actualCategories)
-                  const fresh: Record<string, string> = {}
-                  actualCategories.forEach((cat) => { fresh[cat] = colorForCategory(cat) })
-                  setColorEditDraft(fresh)
-                  setUncheckedCategories([...uncheckedCategories])
-                }}
-              >
-                Reset all
-              </button>
-              <button
-                type="button"
-                className="color-edit-apply"
-                onClick={() => {
-                  Object.entries(colorEditDraft).forEach(([cat, color]) => {
-                    setCustomCategoryColor(cat, color)
-                  })
-                  setColorEditModalOpen(false)
-                  setUncheckedCategories([...uncheckedCategories])
-                }}
-              >
-                Apply
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
+      {colorsOpen && (
+        <ColorEditDialog
+          categories={categories}
+          onClose={() => setColorsOpen(false)}
+          onReset={() => {
+            resetCustomCategoryColors(categories)
+            setColorVersion((v) => v + 1)
+          }}
+          onApply={(colors) => {
+            Object.entries(colors).forEach(([c, color]) => setCustomCategoryColor(c, color))
+            setColorsOpen(false)
+            setColorVersion((v) => v + 1)
+          }}
+        />
       )}
 
-      {/* Mobile FAB */}
-      {!modal.open && !deleteTarget && (
-        <button 
-          type="button" 
-          className="calendar-mobile-fab" 
-          onClick={() => setModal({ open: true, date: selectedDate })}
-          aria-label="Add routine"
-        >
-          <Plus size={24} strokeWidth={2.5} />
-        </button>
-      )}
+      {shortcutsOpen && <ShortcutsDialog onClose={() => setShortcutsOpen(false)} />}
     </section>
   )
-}
-
-/** '3 blocks · 4h 30m' — how full a day already is. */
-function describeDayLoad(dayItems: CalendarItem[]) {
-  const live = dayItems.filter((item) => !item.cancelled)
-  if (live.length === 0) return 'Free'
-  const booked = live.reduce((sum, item) => {
-    if (item.allDay || !item.startTime) return sum
-    const start = timeToMinutes(item.startTime)
-    const end = item.endTime ? timeToMinutes(item.endTime) : start + 60
-    return sum + Math.max(0, end - start)
-  }, 0)
-  const count = `${live.length} ${live.length === 1 ? 'block' : 'blocks'}`
-  return booked ? `${count} · ${formatDuration(booked)}` : count
-}
-
-function isRecurring(item: CalendarItem) {
-  return Boolean(item.recurrenceFrequency && item.recurrenceFrequency !== 'NONE')
-}
-
-/** Vertical position on the 24h grid as a percentage of the column height. */
-function minutePct(minutes: number) {
-  return `${(minutes / DAY_MINUTES) * 100}%`
-}
-
-function byDate(items: CalendarItem[], date: string) {
-  return items.filter((item) => item.date === date).sort(compareItems)
-}
-
-function compareItems(a: CalendarItem, b: CalendarItem) {
-  if (Boolean(a.allDay) !== Boolean(b.allDay)) return a.allDay ? 1 : -1
-  return (a.startTime ?? '99:99').localeCompare(b.startTime ?? '99:99')
-}
-
-function getItemStatus(item: CalendarItem, selectedDate: string) {
-  if (item.cancelled) return 'cancelled'
-  if (item.completed) return 'past'
-  if (selectedDate !== toISODate(new Date()) || !item.startTime) return 'future'
-  const now = new Date().getHours() * 60 + new Date().getMinutes()
-  const start = timeToMinutes(item.startTime)
-  const end = item.endTime ? timeToMinutes(item.endTime) : start + 60
-  if (now >= start && now < end) return 'current'
-  return now >= end ? 'past' : 'future'
-}
-
-function itemKey(item: CalendarItem) {
-  return item.occurrenceId ?? `${item.id ?? item.title}-${item.date}-${item.startTime ?? 'all-day'}`
-}
-
-
-
-function stripChecklist(notes?: string) {
-  if (!notes) return ''
-  return notes
-    .split('\n')
-    .filter((line) => !/^[-*]\s+\[[ xX]\]\s+/.test(line.trim()))
-    .join(' ')
-    .trim()
-}
-
-
-
-function formatItemTime(item: CalendarItem) {
-  if (item.allDay || !item.startTime) return 'All day'
-  const start = formatClockTime(item.startTime)
-  return item.endTime ? `${start} - ${formatClockTime(item.endTime)}` : start
-}
-
-
-
-
-
-function parseISODate(value: string) {
-  const [year, month, day] = value.split('-').map(Number)
-  return new Date(year, month - 1, day)
-}
-
-function toISODate(date: Date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
-function calculateTimeStyles(item: CalendarItem) {
-  if (item.allDay || !item.startTime) {
-    return { top: 0, height: 50, isAllDay: true }
-  }
-  
-  const startMin = timeToMinutes(item.startTime)
-  const endMin = item.endTime ? timeToMinutes(item.endTime) : startMin + 60
-  
-  const gridStartMin = 0 * 60
-  const gridEndMin = 24 * 60
-  
-  const clampedStart = Math.max(gridStartMin, Math.min(gridEndMin, startMin))
-  const clampedEnd = Math.max(gridStartMin, Math.min(gridEndMin, endMin))
-  
-  const topOffset = ((clampedStart - gridStartMin) / 60) * 80
-  const heightVal = ((clampedEnd - clampedStart) / 60) * 80
-  
-  return {
-    top: topOffset,
-    height: Math.max(52, heightVal),
-    isAllDay: false
-  }
-}
-
-interface PositionedItem {
-  item: CalendarItem
-  top: number
-  height: number
-  width: string
-  left: string
-  isAllDay: boolean
-}
-
-function getPositionedItems(dayItems: CalendarItem[]): PositionedItem[] {
-  const timed = dayItems.filter((item) => !item.allDay && item.startTime)
-  
-  const result: PositionedItem[] = []
-  const sorted = [...timed].sort((a, b) => (a.startTime ?? '').localeCompare(b.startTime ?? ''))
-  
-  const columns: CalendarItem[][] = []
-  for (const item of sorted) {
-    let placed = false
-    for (let colIdx = 0; colIdx < columns.length; colIdx++) {
-      const lastItem = columns[colIdx][columns[colIdx].length - 1]
-      const lastEnd = lastItem.endTime ? timeToMinutes(lastItem.endTime) : timeToMinutes(lastItem.startTime ?? '00:00') + 60
-      const currentStart = timeToMinutes(item.startTime ?? '00:00')
-      
-      if (currentStart >= lastEnd) {
-        columns[colIdx].push(item)
-        placed = true
-        break
-      }
-    }
-    if (!placed) {
-      columns.push([item])
-    }
-  }
-  
-  const totalCols = columns.length
-  const GAP_PX = 4
-  columns.forEach((colItems, colIdx) => {
-    colItems.forEach((item, itemIdx) => {
-      const { top, height, isAllDay } = calculateTimeStyles(item)
-      // calculateTimeStyles enforces a minimum readable height for short
-      // events, which can otherwise run past the start of the next stacked
-      // item even though their times don't actually overlap — clamp it.
-      const nextItem = colItems[itemIdx + 1]
-      const maxHeight = nextItem ? calculateTimeStyles(nextItem).top - top - GAP_PX : height
-      const clampedHeight = Math.max(24, Math.min(height, maxHeight))
-      result.push({
-        item,
-        top,
-        height: clampedHeight,
-        width: `${100 / totalCols}%`,
-        left: `${(colIdx * 100) / totalCols}%`,
-        isAllDay
-      })
-    })
-  })
-
-  return result
-}
-
-function monthGrid(date: Date) {
-  const first = new Date(date.getFullYear(), date.getMonth(), 1)
-  const gridStart = startOfWeek(first)
-  const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0)
-  const gridEnd = startOfWeek(lastDay)
-  gridEnd.setDate(gridEnd.getDate() + 6)
-  const totalDays = Math.round((gridEnd.getTime() - gridStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
-  return daysBetween(gridStart, totalDays)
-}
-
-function daysBetween(start: Date, count: number) {
-  return Array.from({ length: count }, (_, index) => {
-    const date = new Date(start)
-    date.setDate(start.getDate() + index)
-    return date
-  })
-}
-
-function startOfWeek(date: Date) {
-  const next = new Date(date)
-  next.setDate(date.getDate() - date.getDay())
-  return next
 }
 
 export { CalendarOverviewDashboard }

@@ -2477,3 +2477,70 @@ select.form-input {
     background: rgba(16, 19, 18, 0.07);
   }
 }
+
+/* ── Moved from calendar-overview.css (2026-10-03) ─────────────────────────
+   Tasks has always leaned on these two rules, which lived in the calendar
+   stylesheet and only applied because every route's CSS ships in one bundle.
+   The calendar redesign replaced that file, so they live with their user now. */
+
+
+.routine-card-dropdown {
+  position: absolute;
+  right: 0;
+  top: 44px;
+  min-width: 200px;
+  padding: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 16px;
+  background: rgba(250, 252, 247, 0.97);
+  box-shadow: 0 12px 40px rgba(45, 60, 48, 0.1), 0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(18px);
+  z-index: 10;
+}
+
+.routine-card-dropdown button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: #151a18;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  transition: background 120ms ease;
+}
+
+.routine-card-dropdown button:hover {
+  background: rgba(21, 26, 24, 0.06);
+}
+
+.routine-card-dropdown button.danger {
+  color: #d32f2f;
+}
+
+.routine-card-dropdown button.danger:hover {
+  background: rgba(211, 47, 47, 0.08);
+}
+
+
+/* Flex layout columns equal width fix */
+.form-row .form-group {
+  min-width: 0;
+}
+
+/* Calendar Modal Width Overrides for Desktop */
+@media (min-width: 769px) {
+  .tasks-add-modal-overlay .tasks-add-entry-modal {
+    width: 840px;
+    transform: translateX(74px);
+  }
+
+  .tasks-add-entry-modal .tasks-modal-grid {
+    grid-template-columns: 1.4fr 1fr;
+  }
+}

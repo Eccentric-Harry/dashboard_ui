@@ -1,5 +1,5 @@
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { AlertTriangle, Sparkles } from 'lucide-react'
+import { AlertTriangle, CircleCheck } from 'lucide-react'
 
 import type { CalendarItem } from '@/types/calendar'
 import { cn } from '@/lib/utils'
@@ -81,7 +81,7 @@ export function DayGlance({ others, start, end, onChange, now }: Props) {
   }
 
   const ticks: number[] = []
-  for (let h = Math.ceil(lo / 180) * 180; h <= lo + range; h += 180) ticks.push(h)
+  for (let h = Math.ceil(lo / 360) * 360; h <= lo + range; h += 360) ticks.push(h)
 
   return (
     <div className="cal-glance">
@@ -126,7 +126,7 @@ export function DayGlance({ others, start, end, onChange, now }: Props) {
         ))}
       </div>
       <p className={cn('cal-glance-status', `is-${status.tone}`)}>
-        {status.tone === 'warn' ? <AlertTriangle size={12} strokeWidth={2.4} /> : <Sparkles size={12} strokeWidth={2.4} />}
+        {status.tone === 'warn' ? <AlertTriangle size={12} strokeWidth={2.4} /> : <CircleCheck size={12} strokeWidth={2.4} />}
         <span>{status.text}</span>
       </p>
     </div>

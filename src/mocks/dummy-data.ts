@@ -616,16 +616,19 @@ const generateCalendarItems = (): CalendarItem[] => {
   const baseDate = new Date();
   let idCounter = 1;
 
-  for (let dayOffset = 9; dayOffset >= 0; dayOffset--) {
+  // Ten days back through six ahead, so every calendar view has a past and a future.
+  for (let dayOffset = 9; dayOffset >= -6; dayOffset--) {
     const d = new Date(baseDate);
     d.setDate(d.getDate() - dayOffset);
-    const dateStr = d.toISOString().split('T')[0];
-    const dayRand = seedRandom(5000 + dayOffset);
+    // Local date — toISOString() is UTC and reads as yesterday before 05:30 IST.
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const dayRand = seedRandom(5000 + dayOffset + (dayOffset < 0 ? 40 : 0));
 
     const numItems = 5 + Math.floor(dayRand() * 5);
 
     for (let t = 0; t < numItems; t++) {
-      const templateIdx = (dayOffset * 3 + t * 7) % calendarItemTemplates.length;
+      const n = calendarItemTemplates.length;
+      const templateIdx = (((dayOffset * 3 + t * 7) % n) + n) % n;
       const template = calendarItemTemplates[templateIdx];
 
       const isRecurring = (dayOffset === 0 || dayOffset === 5) && t === 0;
@@ -644,7 +647,7 @@ const generateCalendarItems = (): CalendarItem[] => {
         category: template.category,
         color: template.color,
         notes: template.notes,
-        completed: dayRand() > 0.5,
+        completed: dayOffset > 0 ? dayRand() > 0.5 : dayOffset === 0 && t < 2,
         sortOrder: t + 1,
         recurrenceFrequency: recurrenceFreq,
         recurrenceUntil: isRecurring
