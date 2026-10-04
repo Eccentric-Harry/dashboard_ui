@@ -238,13 +238,14 @@ button {
   line-height: 1.65;
 }
 
+/* One canvas, edge to edge: the shell is the only layer that paints the page, and
+   the stage, the rail and the HUD all sit on it transparently. Radial glows here
+   used to stop dead at the stage's edges (the stage painted its own flat copy over
+   them), which read as a vertical seam either side of the content. */
 .dashboard-shell {
   min-height: 100svh;
   overflow: auto;
-  background:
-    radial-gradient(circle at 64% 22%, rgba(246, 251, 220, 0.72), transparent 14%),
-    radial-gradient(circle at 22% 80%, rgba(190, 226, 204, 0.46), transparent 20%),
-    #dfe4df;
+  background: #dfe4df;
 }
 
 .dashboard-stage {
@@ -255,7 +256,7 @@ button {
   min-height: 900px;
   margin: 0 auto;
   overflow: hidden;
-  background: #dfe4df;
+  background: transparent;
 }
 
 .dashboard-stage::before,
@@ -1682,7 +1683,7 @@ button {
     height: auto;
     min-height: 0;
     overflow: visible;
-    background: #dfe4df;
+    background: transparent;
     display: flex;
     flex-direction: column;
     padding: 20px 16px 0;

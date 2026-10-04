@@ -369,7 +369,7 @@ function App() {
           here rather than per route so all eleven get them, and after the route so
           every overlay below still paints on top. Self-gating: renders nothing at
           all until the window is wide enough. */}
-      <HudGutters activePath={pathname} />
+      <HudGutters activePath={pathname} onNavigate={navigateTo} />
       <MobileProfileTrigger onNavigate={navigateTo} activePath={pathname} />
       <NotificationCenter />
       {/* Mounted once at the root so the Spiral Breaker is one tap from any route. */}

@@ -13,9 +13,13 @@
 :root[data-surface='solid'],
 :root[data-surface='solid'] body,
 :root[data-surface='solid'] .app-shell,
-:root[data-surface='solid'] .dashboard-shell,
-:root[data-surface='solid'] .dashboard-stage {
+:root[data-surface='solid'] .dashboard-shell {
   background: var(--solid-canvas);
+}
+
+/* The stage never paints — the shell is the one canvas (index.css). */
+:root[data-surface='solid'] .dashboard-stage {
+  background: transparent;
 }
 
 /* Solid means opaque: no frosted blur anywhere (also a real paint-cost win on

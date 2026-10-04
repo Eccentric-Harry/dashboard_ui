@@ -1,72 +1,47 @@
-/* HUD — the instrument surfaces that frame the stage.
+/* HUD — the command center that frames the stage on a wide window.
    Scoped entirely under .hud-root; nothing here leaks into a route.
 
-   A bento column in the spare canvas either side of the stage: several small
-   cards stacked, one module each, exactly the grammar every route already uses.
-   Roomy where there is width for it and narrower on a windowed session (see the
-   [data-narrow] block at the end), so the side stats survive as far down as they
-   physically can.
+   A bento column in the spare canvas either side of the stage: three small cards
+   each side, one question per card, in exactly the grammar every route already
+   uses — white route-card surface, #eae9e0 hairline, the two-layer shadow,
+   uppercase tracked eyebrows, rounded numerals for figures (no monospace: that was
+   what made the old version read as a debug overlay). Roomy where there is width
+   for it and narrower on a windowed session ([data-narrow] at the end).
 
-   Why a stack of panels rather than one tall card: a single card leaves the
-   column as short as its own content, floating in the middle of a mostly-empty
-   band — which is exactly how the first version read. A stack pinned top and
-   bottom, with one panel flexing to absorb the slack, makes the pair a frame
-   around the stage instead of two objects adrift in it.
+   The stack is pinned top and bottom on the side rail's horizon, and one card per
+   column (Up next, Today) takes the spare height, so a tall window has no dead air
+   below the stack.
 
-   Making it look native to the app rather than a debug overlay bolted on:
-   - Each panel is a route card. The same recipe Nutrition and Home use — white
-     surface, #eae9e0 hairline, the two-layer shadow — so it sits in the same
-     plane as everything else on screen.
-   - Labels are the app's (Inter, uppercase, wide-tracked). Only the *numbers*
-     are monospace, with tabular figures. That split keeps the readout
-     instrument-like while the card around it stays Life OS.
-   - Paired readings go in a 2-up metric grid rather than four leader rows; it
-     halves the vertical run and reads far denser, which is the house style.
-   - Three semantic colours, straight from the route palette: sage = fine,
-     amber = watch, rose = act. No neon.
-   - Motion is near-zero: one 2.4s pulse on the backend dot when it is healthy.
-
-   Dark is derived at build time from these light values by
-   config/postcss-dark-theme.ts, with the card tier pinned by hand in
-   theme-dark.css (see the Cards block there). */
+   Dark is derived at build time by config/postcss-dark-theme.ts, with the card tier
+   pinned by hand in theme-dark.css (its Cards block lists .hud-panel). */
 
 .hud-root {
   position: fixed;
   inset: 0;
   z-index: 2;
-  /* Chrome, not content: nothing out here may intercept a click aimed at a card,
-     a modal scrim or the side rail. The few real controls opt back in. */
+  /* Chrome, not content: the canvas out here never intercepts a click. Cards and
+     the toggle opt back in. */
   pointer-events: none;
 
-  /* Borrowed wholesale from the Home/Nutrition token set so a palette change
-     there carries out here instead of drifting. */
   --hud-ink: #171b15;
   --hud-ink-2: #6b7165;
   --hud-ink-3: #999e91;
   --hud-card: #ffffff;
   --hud-well: #f7f6f1;
   --hud-line: #eae9e0;
-  --hud-line-soft: #f2f1ea;
-  --hud-radius: 20px;
+  --hud-radius: 22px;
   --hud-shadow: 0 1px 2px rgba(23, 27, 21, 0.03), 0 10px 30px rgba(23, 27, 21, 0.05);
-  --hud-good: #2e6b4f;
-  --hud-watch: #9a5a10;
+  --hud-shadow-hover: 0 2px 4px rgba(23, 27, 21, 0.04), 0 16px 36px rgba(23, 27, 21, 0.08);
+  --hud-good: #4f8a6c;
+  --hud-watch: #b07a2a;
   --hud-bad: #c0596e;
-  --hud-track: rgba(23, 27, 21, 0.09);
-  --hud-rain: #7f9fc4;
-  --hud-mono: ui-monospace, SFMono-Regular, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+  --hud-track: rgba(23, 27, 21, 0.08);
+  --hud-num: ui-rounded, 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 }
 
-/* The spare band beside the stage, to the pixel: .dashboard-stage is
-   min(100%, 1200px) centred by auto margins in a viewport-sized shell, so the
-   leftover either side is exactly half of what is past 1200px. Percentages on a
-   fixed element resolve against the same box the stage's do, at any html zoom. */
-/* The band mirrors `.dashboard-stage` on both axes, because the column inside it
-   is positioned off percentages that have to mean the same thing they do there:
-   horizontally it takes exactly the leftover beside a 1200px-wide centred stage,
-   and vertically it matches the stage's own 1200px cap and auto margins. Without
-   the vertical half, a window taller than 1200px puts the stage 20-odd pixels
-   lower than the band and the HUD's top edge misses the rail's by that much. */
+/* The spare band beside the stage, mirroring `.dashboard-stage` on both axes:
+   horizontally the leftover beside a 1200px centred stage, vertically the stage's
+   own 1200px cap — or a tall window puts the HUD's top edge off the rail's. */
 .hud-gutter {
   position: absolute;
   top: max(0px, calc((100% - 1200px) / 2));
@@ -83,16 +58,9 @@
   right: 0;
 }
 
-/* Horizontally: centred in the band rather than hugging either edge. Flush to
-   the stage the stack reads as a third content column; flush to the window it
-   drifts out of peripheral range on a wide display. Centred, the pair reads as a
-   frame.
-
-   Vertically: the same top as the side rail, which is also the top of the first
-   card row — deliberately the *identical* expression from `.side-rail` in
-   index.css, including the 40px bottom margin, so the three vertical elements on
-   screen share one horizon instead of each starting somewhere else. Keep them in
-   sync if that rule ever moves. */
+/* Centred in the band; the identical top/bottom expression as `.side-rail` in
+   index.css, so the HUD, the rail and the first card row share one horizon. Keep
+   them in sync if that rule moves. */
 .hud-column {
   position: absolute;
   top: clamp(20px, calc(100% - 739px), 161px);
@@ -100,32 +68,15 @@
   bottom: 40px;
   left: 0;
   display: flex;
-  /* Two caps, one inset. On a wide window the max is what binds; on a windowed
-     one the band is, and the card is already within ~8px of the screen edge —
-     that inset is the floor, not a style choice. The inset is shared with the
-     narrow scale below on purpose: were they different, the card would visibly
-     *shrink* as the window crossed into the roomy scale. */
-  width: min(320px, 100% - 16px);
+  width: min(300px, 100% - 16px);
   flex-direction: column;
   margin: 0 auto;
-  /* The stack itself is never a surface — it is the canvas showing between the
-     panels that makes them read as separate cards rather than one slab with
-     dividers. (A dark-theme override did paint it once; see the Cards block in
-     theme-dark.css, which lists .hud-panel, not .hud-column.) */
   background: none;
   gap: 14px;
   animation: hud-enter 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-/* Without data (the location prompt) the stack shrink-wraps from that top edge
-   instead of stretching: pulling two sentences across a whole window would be a
-   worse gap than the one it fixes. */
-.hud-column:not(.is-filled) {
-  bottom: auto;
-  max-height: calc(100% - 201px);
-}
-
-.hud-column--telemetry {
+.hud-column--pulse {
   animation-delay: 60ms;
 }
 
@@ -141,638 +92,542 @@
   }
 }
 
-/* ── Panel ───────────────────────────────────────────────────────────────── */
+/* ── Card ────────────────────────────────────────────────────────────────── */
 
 .hud-panel {
+  pointer-events: auto;
+  position: relative;
   display: flex;
   overflow: hidden;
   flex: 0 0 auto;
   flex-direction: column;
-  padding: 13px 15px 14px;
+  padding: 14px 16px 15px;
   border: 1px solid var(--hud-line);
   border-radius: var(--hud-radius);
   background: var(--hud-card);
   box-shadow: var(--hud-shadow);
-  gap: 5px;
+  color: var(--hud-ink);
+  gap: 8px;
 }
 
-/* Slack is shared, not dumped. Giving it all to one panel just moved the hole —
-   the grow panel's plot caps out and the empty space reappears inside its card. So
-   every panel takes a share (never shrinking below its content), and the one
-   holding a plot or a log takes rather more, because those are the two things
-   that genuinely read better at any height. */
-.hud-column.is-filled .hud-panel {
-  flex: 1 0 auto;
-}
-
-.hud-column.is-filled .hud-panel--grow {
-  min-height: 0;
-  flex: 2.4 1 auto;
-}
-
-/* Inside a panel only the plot, the log and the outlook rows may give up height.
-   Everything else is fixed, so a column that runs out of room shortens its chart
-   rather than clipping the temperature off the top of the card. */
-.hud-panel > * {
-  flex: 0 0 auto;
-}
-
-.hud-panel > .hud-hourly,
-.hud-panel > .hud-stream,
-.hud-panel > .hud-outlook {
+.hud-panel--grow {
   min-height: 0;
   flex: 1 1 auto;
+}
+
+.hud-panel.is-link {
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.hud-panel.is-link:hover {
+  border-color: #dedcd0;
+  box-shadow: var(--hud-shadow-hover);
+  transform: translateY(-1px);
+}
+
+.hud-panel.is-link:focus-visible {
+  outline: 2px solid rgba(91, 148, 120, 0.55);
+  outline-offset: 2px;
 }
 
 .hud-panel-head {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
+  align-items: center;
   gap: 8px;
-  margin-bottom: 3px;
 }
 
 .hud-eyebrow {
+  min-width: 0;
+  overflow: hidden;
   color: var(--hud-ink-3);
   font-size: 9.5px;
   font-weight: 700;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
+  text-overflow: ellipsis;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .hud-panel-meta {
+  margin-left: auto;
   overflow: hidden;
-  color: var(--hud-ink-2);
-  font-size: 10px;
-  font-weight: 500;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* ── Clock panel ─────────────────────────────────────────────────────────── */
-
-.hud-clock-time {
-  display: block;
-  margin: 1px 0 4px;
-  color: var(--hud-ink);
-  font-family: var(--hud-mono);
-  font-size: 31px;
-  font-variant-numeric: tabular-nums;
-  font-weight: 500;
-  letter-spacing: -0.03em;
-  line-height: 1;
-}
-
-.hud-clock-time--small {
-  font-size: 25px;
-}
-
-.hud-clock-rows {
-  display: flex;
-  flex-direction: column;
-  padding-top: 8px;
-  border-top: 1px solid var(--hud-line-soft);
-  gap: 1px;
-}
-
-/* ── Row: label ···· value ───────────────────────────────────────────────── */
-
-.hud-row {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  line-height: 1.6;
-}
-
-.hud-row-label {
   color: var(--hud-ink-2);
   font-size: 10.5px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-/* The leader is what turns a stack of rows into a readout rather than a list. */
-.hud-row-leader {
-  flex: 1 1 auto;
-  min-width: 8px;
-  border-bottom: 1px dotted var(--hud-line);
-  transform: translateY(1px);
-}
-
-.hud-row-value {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--hud-ink);
-  font-family: var(--hud-mono);
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-/* ── Metric grid — paired readings, 2-up ─────────────────────────────────── */
-/* Four leader rows down a 200px column is a lot of vertical run for very little
-   information. Two columns of label-over-value halves it and reads denser, which
-   is the house preference everywhere else. */
-
-.hud-metric-grid {
-  display: grid;
-  margin-top: 3px;
-  gap: 7px 10px;
-  grid-template-columns: 1fr 1fr;
-}
-
-.hud-metric {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  padding: 6px 8px 5px;
-  border-radius: 9px;
-  background: var(--hud-well);
-  gap: 1px;
-}
-
-/* Cells are dropped when a browser cannot supply them, so the count is not fixed.
-   An odd last one takes the whole row rather than leaving a hole beside it. */
-.hud-metric:last-child:nth-child(odd) {
-  grid-column: 1 / -1;
-}
-
-.hud-metric-label {
-  overflow: hidden;
-  color: var(--hud-ink-3);
-  font-size: 8.5px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-overflow: ellipsis;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.hud-metric-value {
-  overflow: hidden;
-  color: var(--hud-ink);
-  font-family: var(--hud-mono);
-  font-size: 11.5px;
-  font-variant-numeric: tabular-nums;
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* ── Hero value inside a panel ───────────────────────────────────────────── */
-
-.hud-hero {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin-bottom: 1px;
-}
-
-.hud-hero-value {
-  color: var(--hud-ink);
-  font-family: var(--hud-mono);
-  font-size: 30px;
-  font-variant-numeric: tabular-nums;
-  font-weight: 500;
-  letter-spacing: -0.03em;
-  line-height: 1;
-}
-
-.hud-hero-value--sm {
-  font-size: 22px;
-}
-
-.hud-hero-glyph {
-  color: var(--hud-ink-2);
-  font-size: 16px;
-  line-height: 1;
-}
-
-.hud-hero-unit,
-.hud-hero-aside {
-  color: var(--hud-ink-3);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.hud-hero-aside {
+/* The "opens a route" hint: faint at rest, there on hover. */
+.hud-open {
+  flex: none;
   margin-left: auto;
-  font-family: var(--hud-mono);
-  letter-spacing: 0.02em;
-  text-transform: none;
-}
-
-/* ── Bar, scale, dot, sparkline ──────────────────────────────────────────── */
-
-.hud-bar {
-  overflow: hidden;
-  width: 100%;
-  height: 3px;
-  margin: 5px 0 2px;
-  border-radius: 3px;
-  background: var(--hud-track);
-}
-
-.hud-bar-fill {
-  display: block;
-  height: 100%;
-  border-radius: 3px;
-  background: var(--hud-ink-2);
-  transition: width 600ms cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.hud-bar-fill.hud-tone-good {
-  background: var(--hud-good);
-}
-
-.hud-bar-fill.hud-tone-watch {
-  background: var(--hud-watch);
-}
-
-.hud-bar-fill.hud-tone-bad {
-  background: var(--hud-bad);
-}
-
-.hud-scale {
-  position: relative;
-  width: 100%;
-  height: 3px;
-  margin: 7px 0 3px;
-  border-radius: 3px;
-  background: var(--hud-track);
-}
-
-.hud-scale-tick {
-  position: absolute;
-  top: -2px;
-  width: 1px;
-  height: 7px;
-  background: var(--hud-line);
-}
-
-.hud-scale-marker {
-  position: absolute;
-  top: -2.5px;
-  width: 8px;
-  height: 8px;
-  border: 2px solid var(--hud-card);
-  border-radius: 50%;
-  margin-left: -4px;
-  background: var(--hud-ink-2);
-}
-
-.hud-scale-marker.hud-tone-good {
-  background: var(--hud-good);
-}
-
-.hud-scale-marker.hud-tone-watch {
-  background: var(--hud-watch);
-}
-
-.hud-scale-marker.hud-tone-bad {
-  background: var(--hud-bad);
-}
-
-.hud-dot {
-  width: 6px;
-  height: 6px;
-  flex: none;
-  border-radius: 50%;
-  background: var(--hud-ink-3);
-}
-
-.hud-dot.hud-tone-good {
-  background: var(--hud-good);
-}
-
-.hud-dot.hud-tone-watch {
-  background: var(--hud-watch);
-}
-
-.hud-dot.hud-tone-bad {
-  background: var(--hud-bad);
-}
-
-.hud-dot.is-pulsing {
-  animation: hud-pulse 2400ms ease-in-out infinite;
-}
-
-@keyframes hud-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.35;
-  }
-}
-
-.hud-spark-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 2px 0 1px;
-}
-
-.hud-spark {
-  width: 100%;
-  min-width: 0;
-  flex: 1 1 auto;
-  stroke: var(--hud-ink-2);
-  stroke-linejoin: round;
-  stroke-width: 1.4;
-}
-
-.hud-spark.hud-tone-good {
-  stroke: var(--hud-good);
-}
-
-.hud-spark.hud-tone-watch {
-  stroke: var(--hud-watch);
-}
-
-.hud-spark.hud-tone-bad {
-  stroke: var(--hud-bad);
-}
-
-.hud-spark.is-empty {
-  border-bottom: 1px dotted var(--hud-line);
-}
-
-/* ── Hourly forecast strip ───────────────────────────────────────────────── */
-
-.hud-hourly {
-  display: flex;
-  min-height: 0;
-  flex: 1 1 auto;
-  flex-direction: column;
-  padding-top: 9px;
-  margin-top: 5px;
-  border-top: 1px solid var(--hud-line-soft);
-  gap: 5px;
-}
-
-.hud-hourly-plot {
-  position: relative;
-  min-height: 30px;
-  /* The plot absorbs most of a tall window, but past about this it stops telling
-     you more and starts looking like a stretched artefact. */
-  max-height: 190px;
-  flex: 1 1 auto;
-}
-
-.hud-hourly-svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.hud-hourly-line {
-  stroke: var(--hud-ink);
-  stroke-linejoin: round;
-  stroke-width: 1.5;
-}
-
-.hud-hourly-rain {
-  fill: var(--hud-rain);
-}
-
-.hud-hourly-peak,
-.hud-hourly-trough {
-  position: absolute;
-  right: 0;
   color: var(--hud-ink-3);
-  font-family: var(--hud-mono);
-  font-size: 9px;
-  font-weight: 600;
+  opacity: 0;
+  transition: opacity 160ms ease;
 }
 
-.hud-hourly-peak {
-  top: -2px;
+.hud-panel-meta + .hud-open {
+  margin-left: 0;
 }
 
-.hud-hourly-trough {
-  bottom: 0;
+.hud-panel.is-link:hover .hud-open,
+.hud-panel.is-link:focus-visible .hud-open {
+  opacity: 1;
 }
 
-.hud-hourly-axis {
+.hud-foot {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-}
-
-.hud-hourly-tick {
-  color: var(--hud-ink-3);
-  font-family: var(--hud-mono);
-  font-size: 8.5px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-}
-
-.hud-hourly-note {
-  color: var(--hud-rain);
-  font-size: 9px;
-  font-weight: 600;
-}
-
-/* ── Outlook rows ────────────────────────────────────────────────────────── */
-
-.hud-outlook {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  margin: 1px 0 0;
-  padding: 0;
-  gap: 2px;
-  list-style: none;
-}
-
-.hud-outlook-row {
-  display: flex;
-  align-items: center;
-  flex: 1 1 auto;
-  padding: 3px 0;
-  gap: 8px;
-}
-
-.hud-outlook-day {
-  width: 30px;
-  flex: none;
-  color: var(--hud-ink-2);
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
-
-.hud-outlook-glyph {
-  flex: none;
-  color: var(--hud-ink-2);
-  font-size: 12px;
-}
-
-.hud-outlook-rain {
-  flex: 1 1 auto;
-  color: var(--hud-rain);
-  font-family: var(--hud-mono);
-  font-size: 9px;
-  font-weight: 600;
-}
-
-.hud-outlook-range {
-  display: flex;
-  flex: none;
-  gap: 8px;
-  font-family: var(--hud-mono);
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-}
-
-.hud-outlook-low {
-  color: var(--hud-ink-3);
-}
-
-.hud-outlook-high {
-  color: var(--hud-ink);
-}
-
-/* ── Request stream ──────────────────────────────────────────────────────── */
-
-.hud-stream {
-  display: flex;
-  min-height: 0;
-  flex: 1 1 auto;
-  flex-direction: column;
-  overflow: hidden;
+  gap: 2px 10px;
   margin: 0;
-  padding: 0;
-  font-family: var(--hud-mono);
-  font-variant-numeric: tabular-nums;
-  gap: 2px;
-  list-style: none;
-  /* The list is handed more rows than can fit so it always reaches the bottom of
-     the panel; the fade is what stops the last one being chopped in half. */
-  mask-image: linear-gradient(to bottom, #000 calc(100% - 16px), transparent);
-}
-
-.hud-stream-line {
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: 7px;
-  font-size: 10px;
-  line-height: 1.55;
-}
-
-.hud-stream-method {
-  width: 30px;
-  flex: none;
-  color: var(--hud-ink-3);
-  font-weight: 700;
-}
-
-.hud-stream-path {
-  overflow: hidden;
-  flex: 1 1 auto;
   color: var(--hud-ink-2);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 600;
 }
-
-.hud-stream-status {
-  flex: none;
-  font-weight: 700;
-}
-
-.hud-stream-ms {
-  width: 32px;
-  flex: none;
-  color: var(--hud-ink-3);
-  text-align: right;
-}
-
-/* ── Notes, footer, controls ─────────────────────────────────────────────── */
 
 .hud-note {
   margin: 0;
   color: var(--hud-ink-2);
-  font-size: 10.5px;
-  line-height: 1.55;
+  font-size: 11.5px;
+  line-height: 1.45;
 }
 
-/* Sits under the stack, on the canvas rather than in a panel — it is a caption
-   for the whole column, not a reading of its own. */
-.hud-column-foot {
+/* A headline figure with its caption beside it. */
+.hud-big {
   display: flex;
-  align-items: center;
-  flex: none;
-  padding: 0 4px;
-  color: var(--hud-ink-3);
-  gap: 5px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 7px;
+  margin: 0;
+  color: var(--hud-ink);
+  font-family: var(--hud-num);
+  font-size: 26px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
 }
 
-.hud-column-foot-text {
+.hud-big small {
+  color: var(--hud-ink-2);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.hud-tone-good { color: var(--hud-good); }
+.hud-tone-watch { color: var(--hud-watch); }
+.hud-tone-bad { color: var(--hud-bad); }
+
+/* Capsule meter */
+.hud-meter {
+  display: block;
   overflow: hidden;
-  font-size: 9.5px;
-  font-weight: 500;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--hud-track);
 }
 
-.hud-action,
-.hud-toggle {
-  /* The only things out here that take a pointer. */
+.hud-meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--hud-hue, var(--hud-ink-3));
+  transition: width 400ms ease;
+}
+
+.hud-meter-fill.hud-tone-idle { background: var(--hud-hue, #b9bdb2); }
+.hud-meter-fill.hud-tone-good { background: var(--hud-hue, var(--hud-good)); }
+.hud-meter-fill.hud-tone-watch { background: var(--hud-hue, var(--hud-watch)); }
+.hud-meter-fill.hud-tone-bad { background: var(--hud-hue, var(--hud-bad)); }
+
+/* Small pill control inside a card */
+.hud-chip-btn {
   pointer-events: auto;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 160ms ease, color 160ms ease, border-color 160ms ease, opacity 160ms ease;
-}
-
-.hud-action {
-  margin-top: 9px;
-  padding: 6px 11px;
+  align-self: flex-start;
+  gap: 5px;
+  height: 26px;
+  padding: 0 11px;
   border: 1px solid var(--hud-line);
   border-radius: 999px;
   background: var(--hud-well);
   color: var(--hud-ink);
-  font-size: 10px;
+  font-family: inherit;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.hud-chip-btn:hover:not(:disabled) {
+  border-color: rgba(91, 148, 120, 0.4);
+  background: #ffffff;
+}
+
+.hud-chip-btn:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+/* Loading lines */
+.hud-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hud-skeleton i {
+  display: block;
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--hud-track), rgba(23, 27, 21, 0.04), var(--hud-track));
+  background-size: 200% 100%;
+  animation: hud-sheen 1.4s linear infinite;
+}
+
+.hud-skeleton i:nth-child(2) { width: 80%; }
+.hud-skeleton i:nth-child(3) { width: 60%; }
+
+@keyframes hud-sheen {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+/* ── Clock ───────────────────────────────────────────────────────────────── */
+
+.hud-clock {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  margin: 2px 0 2px;
+  font-family: var(--hud-num);
+  font-variant-numeric: tabular-nums;
+}
+
+.hud-clock-hm {
+  color: var(--hud-ink);
+  font-size: 46px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+}
+
+.hud-clock-side {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 3px;
+  line-height: 1.05;
+}
+
+.hud-clock-s {
+  color: var(--hud-ink-3);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.hud-clock-ap {
+  color: var(--hud-ink-2);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+/* ── Up next ─────────────────────────────────────────────────────────────── */
+
+.hud-live {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 11px 11px;
+  border-radius: 14px;
+  background: rgba(79, 138, 108, 0.08);
+}
+
+.hud-live-tag {
+  align-self: flex-start;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--hud-good);
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
-.hud-action:hover:not(:disabled) {
-  background: #eceefb;
-  border-color: #d8d7cc;
+.hud-live-title {
+  overflow: hidden;
+  color: var(--hud-ink);
+  font-size: 13px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.hud-action:disabled {
-  cursor: default;
-  opacity: 0.55;
+.hud-live-meta {
+  color: var(--hud-ink-2);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.hud-agenda {
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  /* A short card fades its last rows out instead of cutting one in half. */
+  mask-image: linear-gradient(180deg, #000 calc(100% - 28px), transparent);
+}
+
+.hud-agenda li {
+  flex: none;
+}
+
+.hud-agenda .hud-agenda-day {
+  display: block;
+  padding: 10px 0 2px;
+  border-top: 0;
+  color: var(--hud-ink-3);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.hud-agenda .hud-agenda-day + li {
+  border-top: 0;
+}
+
+.hud-agenda li.is-later .hud-agenda-title,
+.hud-agenda li.is-later .hud-agenda-time {
+  color: var(--hud-ink-2);
+}
+
+.hud-agenda li {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 0;
+  border-top: 1px solid var(--hud-line);
+}
+
+.hud-agenda li:first-child {
+  border-top: 0;
+  padding-top: 2px;
+}
+
+.hud-agenda-time {
+  color: var(--hud-ink-2);
+  font-family: var(--hud-num);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.hud-agenda-title {
+  overflow: hidden;
+  color: var(--hud-ink);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hud-agenda-in {
+  color: var(--hud-good);
+  font-size: 10.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.hud-agenda li.is-first .hud-agenda-title {
+  font-weight: 700;
+}
+
+.hud-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+  color: var(--hud-ink-2);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+.hud-empty b {
+  color: var(--hud-ink);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+/* Tasks sit at the foot of the card, whatever its height. */
+.hud-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--hud-line);
+}
+
+/* ── Focus ───────────────────────────────────────────────────────────────── */
+
+.hud-focus-time {
+  margin: 0;
+  color: var(--hud-ink);
+  font-family: var(--hud-num);
+  font-size: 30px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.hud-focus-what {
+  margin: 0;
+  overflow: hidden;
+  color: var(--hud-ink-2);
+  font-size: 11.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Today's rings ───────────────────────────────────────────────────────── */
+
+.hud-rings-wrap {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  min-height: 96px;
+  padding: 6px 0;
+}
+
+/* The rings grow with the card's spare height, up to a size that still reads as a
+   widget rather than a poster. */
+.hud-rings {
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  max-height: 200px;
+  aspect-ratio: 1;
+}
+
+.hud-ring-track {
+  stroke: color-mix(in srgb, var(--hud-hue) 16%, transparent);
+}
+
+.hud-ring-fill {
+  stroke: var(--hud-hue);
+  transition: stroke-dashoffset 600ms ease;
+}
+
+.hud-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hud-legend li {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+}
+
+.hud-legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.hud-legend-label {
+  color: var(--hud-ink-2);
+  font-weight: 600;
+}
+
+.hud-legend-value {
+  color: var(--hud-ink);
+  font-family: var(--hud-num);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ── Outside ─────────────────────────────────────────────────────────────── */
+
+.hud-weather {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hud-weather-ic {
+  flex: none;
+  color: var(--hud-ink-2);
+}
+
+.hud-weather-temp {
+  color: var(--hud-ink);
+  font-family: var(--hud-num);
+  font-size: 30px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.hud-weather-range {
+  margin-left: auto;
+  color: var(--hud-ink-2);
+  font-family: var(--hud-num);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: right;
 }
 
 /* ── Toggle ──────────────────────────────────────────────────────────────── */
 
 .hud-toggle {
+  pointer-events: auto;
   position: absolute;
   bottom: 13px;
   left: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 5px 9px;
   border: 1px solid transparent;
   border-radius: 999px;
   background: transparent;
   color: var(--hud-ink-3);
+  font-family: inherit;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.14em;
+  cursor: pointer;
   opacity: 0.45;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease, opacity 160ms ease;
 }
 
 .hud-toggle:hover {
@@ -783,9 +638,7 @@
 }
 
 /* ── Narrow scale (windowed session) ────────────────────────────────────── */
-/* Same panels, one step down in every dimension. Type bottoms out at 9px — below
-   that the metadata stops being readable at a glance, which is the only thing
-   this feature is for. */
+/* Same cards, one step down in every dimension; type bottoms out at 9px. */
 
 .hud-root[data-narrow='true'] .hud-column {
   width: min(240px, 100% - 16px);
@@ -793,131 +646,39 @@
 }
 
 .hud-root[data-narrow='true'] .hud-panel {
-  padding: 11px 12px 12px;
-  border-radius: 16px;
-  gap: 4px;
+  padding: 12px 13px 13px;
+  border-radius: 18px;
+  gap: 7px;
 }
 
-.hud-root[data-narrow='true'] .hud-clock-time {
-  font-size: 24px;
+.hud-root[data-narrow='true'] .hud-clock-hm {
+  font-size: 38px;
 }
 
-.hud-root[data-narrow='true'] .hud-clock-time--small {
-  font-size: 19px;
-}
-
-.hud-root[data-narrow='true'] .hud-eyebrow {
-  font-size: 8.5px;
-  letter-spacing: 0.13em;
-}
-
-.hud-root[data-narrow='true'] .hud-panel-meta {
-  font-size: 9px;
-}
-
-.hud-root[data-narrow='true'] .hud-row {
-  gap: 5px;
-  line-height: 1.5;
-}
-
-.hud-root[data-narrow='true'] .hud-row-label {
-  font-size: 9.5px;
-}
-
-.hud-root[data-narrow='true'] .hud-row-value {
-  font-size: 10px;
-}
-
-.hud-root[data-narrow='true'] .hud-metric-grid {
-  gap: 5px 7px;
-}
-
-.hud-root[data-narrow='true'] .hud-metric {
-  padding: 5px 6px 4px;
-  border-radius: 7px;
-}
-
-.hud-root[data-narrow='true'] .hud-metric-label {
-  font-size: 8px;
-  letter-spacing: 0.08em;
-}
-
-.hud-root[data-narrow='true'] .hud-metric-value {
-  font-size: 10px;
-}
-
-.hud-root[data-narrow='true'] .hud-hero-value {
+.hud-root[data-narrow='true'] .hud-big,
+.hud-root[data-narrow='true'] .hud-focus-time,
+.hud-root[data-narrow='true'] .hud-weather-temp {
   font-size: 23px;
 }
 
-.hud-root[data-narrow='true'] .hud-hero-value--sm {
-  font-size: 18px;
-}
-
-.hud-root[data-narrow='true'] .hud-hero-glyph {
-  font-size: 13px;
-}
-
-.hud-root[data-narrow='true'] .hud-hero-unit,
-.hud-root[data-narrow='true'] .hud-hero-aside {
-  font-size: 8px;
-}
-
-.hud-root[data-narrow='true'] .hud-hourly-plot {
-  max-height: 96px;
-}
-
-.hud-root[data-narrow='true'] .hud-outlook-day {
-  width: 26px;
-  font-size: 8.5px;
-}
-
-.hud-root[data-narrow='true'] .hud-outlook-range {
+.hud-root[data-narrow='true'] .hud-agenda li {
+  grid-template-columns: 50px minmax(0, 1fr) auto;
   gap: 6px;
-  font-size: 10px;
 }
 
-.hud-root[data-narrow='true'] .hud-stream-line {
-  gap: 5px;
-  font-size: 9px;
-}
-
-.hud-root[data-narrow='true'] .hud-stream-method {
-  width: 25px;
-}
-
-.hud-root[data-narrow='true'] .hud-stream-ms {
-  width: 26px;
-}
-
-.hud-root[data-narrow='true'] .hud-note,
-.hud-root[data-narrow='true'] .hud-column-foot-text {
-  font-size: 9.5px;
-}
-
-.hud-root[data-narrow='true'] .hud-action {
-  padding: 5px 9px;
-  font-size: 9px;
-}
-
-/* Under 769px the shell stops being a fixed frame, the stage fills the window
-   and the bottom dock owns the lower edge — there is nowhere for this to go. */
-@media (max-width: 768px) {
-  .hud-root {
-    display: none;
-  }
+.hud-root[data-narrow='true'] .hud-agenda-in {
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hud-column {
+  .hud-column,
+  .hud-skeleton i {
     animation: none;
   }
 
-  .hud-dot.is-pulsing {
-    animation: none;
-  }
-
-  .hud-bar-fill {
+  .hud-panel.is-link,
+  .hud-panel.is-link:hover {
+    transform: none;
     transition: none;
   }
 }
