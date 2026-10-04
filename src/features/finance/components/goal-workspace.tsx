@@ -54,6 +54,7 @@ import { Money } from './money'
 import { Filmstrip, PhotoLightbox, ShowcaseStage } from './goal-showcase'
 import { useLivePhotos } from '../use-live-photos'
 import { withPresetShowcase } from '../goal-presets'
+import { isDarkThemeActive, useAppearanceStore } from '@/store/appearance-store'
 import { GoalPhotosModal, GoalReasonModal } from './goal-photos-modal'
 import { GoalNumbers, GoalRow } from './goal-numbers'
 
@@ -95,6 +96,10 @@ interface GoalWorkspaceProps {
 
 function GoalWorkspace(props: GoalWorkspaceProps) {
   const { plan, color, loading, onBack } = props
+  // Built-in photos come in a black-studio set and a white-cut-out set, one per theme.
+  const themePreference = useAppearanceStore.use.themePreference()
+  const activePath = useAppearanceStore.use.activePath()
+  const dark = isDarkThemeActive({ themePreference, activePath })
 
   if (!plan) {
     return (
@@ -132,7 +137,7 @@ function GoalWorkspace(props: GoalWorkspaceProps) {
       </div>
 
       {plan.goal.kind === 'PURCHASE' || plan.goal.kind === 'TRIP' ? (
-        <ShowcaseLayout {...props} {...withPreset(plan)} />
+        <ShowcaseLayout {...props} {...withPreset(plan, dark)} />
       ) : (
         <div className="finance-dashboard-grid fin-bento fin-goal-ws-grid">
           <GoalHero {...props} plan={plan} />
@@ -147,8 +152,8 @@ function GoalWorkspace(props: GoalWorkspaceProps) {
 // ── Showcase layout (a purchase or a trip) ───────────────────────────────────
 
 /** The plan with any built-in photos filled in, and whether they're the built-in set. */
-function withPreset(plan: GoalPlan): { plan: GoalPlan; builtInPhotos: boolean } {
-  const goal = withPresetShowcase(plan.goal)
+function withPreset(plan: GoalPlan, dark: boolean): { plan: GoalPlan; builtInPhotos: boolean } {
+  const goal = withPresetShowcase(plan.goal, dark)
   return goal === plan.goal ? { plan, builtInPhotos: false } : { plan: { ...plan, goal }, builtInPhotos: true }
 }
 
