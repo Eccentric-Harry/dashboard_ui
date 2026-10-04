@@ -1,0 +1,143 @@
+/* Gutter clock (gutter-clock.tsx) — type on the canvas, no card.
+
+   The band is the leftover beside the 1200px stage, mirrored on both axes exactly
+   as the old HUD gutter was (so its top meets the side rail's horizon), and it is a
+   size container: the time scales with the band and the whole clock steps out of
+   the way when the band is too narrow to hold it. */
+
+.gutter-clock {
+  position: fixed;
+  z-index: 2;
+  top: max(0px, calc((100% - 1200px) / 2));
+  bottom: max(0px, calc((100% - 1200px) / 2));
+  left: 0;
+  width: max(0px, calc((100% - 1200px) / 2));
+  container-type: inline-size;
+  pointer-events: none;
+
+  --clock-ink: #171b15;
+  --clock-ink-2: #6b7165;
+  --clock-ink-3: #9aa094;
+  --clock-track: rgba(23, 27, 21, 0.08);
+  --clock-sweep: #5b9478;
+}
+
+/* The identical top expression as `.side-rail` in index.css: the clock, the rail and
+   the first card row share one horizon. Keep them in sync if that rule moves. */
+.gutter-clock-face {
+  position: absolute;
+  top: clamp(20px, calc(100% - 739px), 161px);
+  left: 50%;
+  display: flex;
+  width: max-content;
+  max-width: calc(100% - 24px);
+  flex-direction: column;
+  align-items: flex-start;
+  transform: translateX(-50%);
+  animation: gutter-clock-in 600ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.gutter-clock-date {
+  color: var(--clock-ink-2);
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(14px, 7.2cqi, 19px);
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+}
+
+.gutter-clock-time {
+  display: flex;
+  align-items: baseline;
+  margin-top: 2px;
+  color: var(--clock-ink);
+  font-family: ui-rounded, 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: clamp(52px, 31cqi, 92px);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  line-height: 0.92;
+  white-space: nowrap;
+}
+
+/* The colon sits a touch lighter and higher, the way watch faces set it. */
+.gutter-clock-colon {
+  margin: 0 0.02em;
+  color: var(--clock-ink-3);
+  font-weight: 500;
+  transform: translateY(-0.06em);
+}
+
+.gutter-clock-ap {
+  margin-left: 0.18em;
+  color: var(--clock-ink-3);
+  font-size: 0.2em;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* A hairline under the time that fills across the minute. */
+.gutter-clock-track {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  width: 100%;
+  height: 2px;
+  margin-top: 14px;
+  border-radius: 2px;
+  background: var(--clock-track);
+}
+
+.gutter-clock-track i {
+  position: absolute;
+  inset: 0;
+  display: block;
+  border-radius: inherit;
+  background: var(--clock-sweep);
+  transform: scaleX(0);
+  transform-origin: left center;
+  animation: gutter-clock-sweep 60s linear both;
+}
+
+@keyframes gutter-clock-sweep {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes gutter-clock-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(-50%);
+  }
+}
+
+/* Too narrow a band to set the time well: step out of the way entirely. */
+@container (max-width: 179px) {
+  .gutter-clock-face {
+    display: none;
+  }
+}
+
+/* Phones and tablets have no band beside the stage. */
+@media (max-width: 768px) {
+  .gutter-clock {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gutter-clock-face {
+    animation: none;
+  }
+
+  .gutter-clock-track {
+    display: none;
+  }
+}

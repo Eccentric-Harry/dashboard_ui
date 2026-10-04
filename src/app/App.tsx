@@ -27,7 +27,7 @@ import { OverlayLoader } from '../components/ui/overlay-loader'
 import { CelebrationLayer } from '../components/ui/celebration-layer'
 import { NotificationCenter } from '../components/layout/notification-center'
 import { SpiralBreakerOverlay } from '../features/spiral-breaker/spiral-breaker-overlay';
-import { HudGutters } from '../features/hud/hud-gutters';
+import { GutterClock } from '../features/clock/gutter-clock';
 import { VisitorAuthPopup } from '../features/auth/visitor-auth-popup'
 
 // Signing in or out reloads the page, so the session is fixed for this app lifetime.
@@ -365,11 +365,9 @@ function App() {
       <div key={pathname} className="route-view-container">
         {content}
       </div>
-      {/* Ambient instrument columns in the canvas either side of the stage. Mounted
-          here rather than per route so all eleven get them, and after the route so
-          every overlay below still paints on top. Self-gating: renders nothing at
-          all until the window is wide enough. */}
-      <HudGutters activePath={pathname} onNavigate={navigateTo} />
+      {/* The clock in the canvas beside the stage (wide windows only). Mounted here so
+          every route has it, and before the overlays so they paint on top. */}
+      <GutterClock />
       <MobileProfileTrigger onNavigate={navigateTo} activePath={pathname} />
       <NotificationCenter />
       {/* Mounted once at the root so the Spiral Breaker is one tap from any route. */}

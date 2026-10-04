@@ -67,8 +67,7 @@
 :root[data-theme='dark'] .workouts-card,
 :root[data-theme='dark'] .learnings-card,
 :root[data-theme='dark'] .learnings-stat-card,
-:root[data-theme='dark'] .prompts-card,
-:root[data-theme='dark'] .hud-panel {
+:root[data-theme='dark'] .prompts-card {
   background: var(--dk-surface) !important;
   border-color: var(--dk-line) !important;
 }
