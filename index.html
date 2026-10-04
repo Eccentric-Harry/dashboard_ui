@@ -16,7 +16,13 @@
     try {
       var root = document.documentElement;
       var themeMeta = document.querySelector('meta[name="theme-color"]');
-      if (localStorage.getItem('surfaceStyle') === 'solid') {
+      // Glass ↔ solid is remembered per theme: light defaults to glass, dark to solid
+      // (appearance-store.ts). The old single key counts as the light choice.
+      var themePref = localStorage.getItem('themePreference') === 'dark' ? 'dark' : 'light';
+      var surface = localStorage.getItem('surfaceStyle.' + themePref) ||
+        (themePref === 'light' ? localStorage.getItem('surfaceStyle') : null) ||
+        (themePref === 'dark' ? 'solid' : 'glass');
+      if (surface === 'solid') {
         root.dataset.surface = 'solid';
         themeMeta.setAttribute('content', '#f5f6f8');
       }

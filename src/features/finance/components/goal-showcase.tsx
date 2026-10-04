@@ -44,6 +44,8 @@ interface ShowcaseStageProps {
 
 export function ShowcaseStage({ goal, photos, index, onIndex, onBroken, onOpen, onEdit, onFind, onPasteLink, finding, paused }: ShowcaseStageProps) {
   const [hovered, setHovered] = useState(false)
+  const touchX = useRef<number | null>(null)
+  const swiped = useRef(false)
   const count = photos.length
   const current = photos[Math.min(index, Math.max(0, count - 1))]
 
@@ -98,8 +100,32 @@ export function ShowcaseStage({ goal, photos, index, onIndex, onBroken, onOpen, 
       onMouseLeave={() => setHovered(false)}
       onFocus={() => setHovered(true)}
       onBlur={() => setHovered(false)}
+      // Phones: swipe between shots (the filmstrip is hidden there).
+      onTouchStart={(e) => {
+        touchX.current = e.touches[0].clientX
+        swiped.current = false
+      }}
+      onTouchEnd={(e) => {
+        const start = touchX.current
+        touchX.current = null
+        if (start == null || count < 2) return
+        const dx = e.changedTouches[0].clientX - start
+        if (Math.abs(dx) > 40) {
+          swiped.current = true
+          go(dx < 0 ? 1 : -1)
+        }
+      }}
     >
-      <button type="button" className="fin-goal-stage-frame" onClick={onOpen} aria-label={`View ${goal.name} photos full screen`}>
+      <button
+        type="button"
+        className="fin-goal-stage-frame"
+        onClick={() => {
+          if (swiped.current) {
+            swiped.current = false
+            return
+          }
+          onOpen()
+        }} aria-label={`View ${goal.name} photos full screen`}>
         {/* Keyed, so each change fades the new shot up out of the stage's own tone. */}
         <img
           key={current.url}
@@ -125,8 +151,8 @@ export function ShowcaseStage({ goal, photos, index, onIndex, onBroken, onOpen, 
       )}
 
       <div className="fin-goal-stage-top">
-        <button type="button" className="fin-goal-stage-pill" onClick={onEdit}>
-          <Images size={12} strokeWidth={2.4} /> Photos
+        <button type="button" className="fin-goal-stage-pill" onClick={onEdit} aria-label="Photos">
+          <Images size={12} strokeWidth={2.4} /> <span>Photos</span>
         </button>
         <button type="button" className="fin-goal-stage-pill is-icon" onClick={onOpen} aria-label="Full screen">
           <Maximize2 size={12} strokeWidth={2.4} />

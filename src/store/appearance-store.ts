@@ -1,7 +1,8 @@
 // Appearance store — client-side look preferences, persisted to localStorage and
 // applied as attributes on <html>. index.html applies both before first paint so
 // nothing flashes on load; this store owns every change after that.
-//   data-surface — glass ↔ solid.
+//   data-surface — glass ↔ solid, remembered per theme: light defaults to glass and
+//                  dark to solid until the user picks otherwise for that theme.
 //   data-theme   — "dark" only while the preference is dark *and* the current
 //                  route has been reviewed for dark (DARK_THEME_ROUTES). Other
 //                  routes keep rendering light rather than half-dark.
@@ -17,7 +18,10 @@ export type ThemePreference = 'light' | 'dark';
 
 // Keep keys and routes in sync with the inline script in index.html. A new route
 // joins this list only after it has been reviewed in dark.
+/** Legacy single choice (before surfaces were per theme) — read as the light choice. */
 const SURFACE_KEY = 'surfaceStyle';
+const surfaceKey = (theme: ThemePreference) => `${SURFACE_KEY}.${theme}`;
+const DEFAULT_SURFACE: Record<ThemePreference, SurfaceStyle> = { light: 'glass', dark: 'solid' };
 const THEME_KEY = 'themePreference';
 export const DARK_THEME_ROUTES: ReadonlySet<string> = new Set([
   '/home', '/nutrition', '/finance', '/learnings', '/tasks', '/workouts',
@@ -57,6 +61,17 @@ function persist(key: string, value: string) {
   } catch {
     // storage blocked — the switch still applies for this session
   }
+}
+
+/** The surface for a theme: the user's pick for that theme, else its default. */
+function surfaceFor(theme: ThemePreference): SurfaceStyle {
+  try {
+    const stored = localStorage.getItem(surfaceKey(theme)) ?? (theme === 'light' ? localStorage.getItem(SURFACE_KEY) : null);
+    if (stored === 'solid' || stored === 'glass') return stored;
+  } catch {
+    // storage blocked — fall back to the theme's default
+  }
+  return DEFAULT_SURFACE[theme];
 }
 
 // App.tsx normalizes the route and syncs it in a layout effect; this only needs
@@ -114,13 +129,13 @@ const useAppearanceStoreBase = create<AppearanceStore>()(
       };
 
       return {
-        surfaceStyle: readStored<SurfaceStyle>(SURFACE_KEY, 'solid', 'glass'),
+        surfaceStyle: surfaceFor(readStored<ThemePreference>(THEME_KEY, 'dark', 'light')),
         themePreference: readStored<ThemePreference>(THEME_KEY, 'dark', 'light'),
         activePath: readInitialPath(),
         actions: {
           setSurfaceStyle: (style) => {
             if (style === get().surfaceStyle) return;
-            persist(SURFACE_KEY, style);
+            persist(surfaceKey(get().themePreference), style);
             withCrossfade(() => commit((state) => { state.surfaceStyle = style; }));
           },
           toggleSurfaceStyle: () => {
@@ -129,7 +144,11 @@ const useAppearanceStoreBase = create<AppearanceStore>()(
           setThemePreference: (theme) => {
             if (theme === get().themePreference) return;
             persist(THEME_KEY, theme);
-            withCrossfade(() => commit((state) => { state.themePreference = theme; }));
+            const surface = surfaceFor(theme);
+            withCrossfade(() => commit((state) => {
+              state.themePreference = theme;
+              state.surfaceStyle = surface;
+            }));
           },
           toggleTheme: () => {
             get().actions.setThemePreference(get().themePreference === 'dark' ? 'light' : 'dark');
@@ -150,10 +169,11 @@ applyAppearance(useAppearanceStoreBase.getState());
 
 // Follow changes made in another tab.
 window.addEventListener('storage', (e) => {
-  if (e.key === SURFACE_KEY) {
-    useAppearanceStoreBase.setState({ surfaceStyle: e.newValue === 'solid' ? 'solid' : 'glass' });
-  } else if (e.key === THEME_KEY) {
-    useAppearanceStoreBase.setState({ themePreference: e.newValue === 'dark' ? 'dark' : 'light' });
+  if (e.key === THEME_KEY || e.key?.startsWith(SURFACE_KEY)) {
+    const themePreference: ThemePreference = e.key === THEME_KEY
+      ? (e.newValue === 'dark' ? 'dark' : 'light')
+      : useAppearanceStoreBase.getState().themePreference;
+    useAppearanceStoreBase.setState({ themePreference, surfaceStyle: surfaceFor(themePreference) });
   } else {
     return;
   }

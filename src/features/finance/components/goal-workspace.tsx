@@ -131,7 +131,13 @@ function GoalWorkspace(props: GoalWorkspaceProps) {
           <ChevronLeft size={16} strokeWidth={2.4} /> Finance
         </button>
         <span className="fin-goal-ws-spacer" aria-hidden="true" />
-        <button type="button" className="fin-icon-btn" onClick={props.onEdit} aria-label="Edit goal" title="Edit goal">
+        <button
+          type="button"
+          className={cn('fin-icon-btn fin-goal-ws-edit', (plan.goal.kind === 'PURCHASE' || plan.goal.kind === 'TRIP') && 'has-showcase')}
+          onClick={props.onEdit}
+          aria-label="Edit goal"
+          title="Edit goal"
+        >
           <Pencil size={13} strokeWidth={2.4} />
         </button>
       </div>
@@ -288,7 +294,7 @@ function ShowcaseLayout(props: GoalWorkspaceProps & { plan: GoalPlan; builtInPho
 }
 
 /** The right-hand side of the showcase: name, what's in, when it's yours, the next move. */
-function ShowcaseInfo({ plan, payday, paydayKnown, onSetAside, onTakeOut, onBuy }: GoalWorkspaceProps & { plan: GoalPlan }) {
+function ShowcaseInfo({ plan, payday, paydayKnown, onSetAside, onTakeOut, onBuy, onEdit }: GoalWorkspaceProps & { plan: GoalPlan }) {
   const { goal } = plan
   const showcase = goal.showcase
   const status = statusLine(plan)
@@ -315,10 +321,16 @@ function ShowcaseInfo({ plan, payday, paydayKnown, onSetAside, onTakeOut, onBuy 
       <header className="fin-goal-show-top">
         <span className="finance-eyebrow">
           {KIND_LABEL[goal.kind]}
-          {goal.keptAt && ` · kept at ${goal.keptAt}`}
+          {goal.keptAt && <span className="fin-goal-show-kept"> · kept at {goal.keptAt}</span>}
         </span>
-        <span className={cn('fin-goal-chip', `is-${status.tone}`)}>
-          {plan.state === 'on-track' && plan.dueThisCycle >= 1 ? 'On track' : status.text.split(' · ')[0]}
+        <span className="fin-goal-show-top-end">
+          <span className={cn('fin-goal-chip', `is-${status.tone}`)}>
+            {plan.state === 'on-track' && plan.dueThisCycle >= 1 ? 'On track' : status.text.split(' · ')[0]}
+          </span>
+          {/* Phones: edit lives here — the top bar's corner belongs to the profile avatar. */}
+          <button type="button" className="fin-icon-btn fin-goal-show-edit" onClick={onEdit} aria-label="Edit goal" title="Edit goal">
+            <Pencil size={13} strokeWidth={2.4} />
+          </button>
         </span>
       </header>
       <h1 className="fin-goal-show-name">{goal.name}</h1>

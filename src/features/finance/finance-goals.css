@@ -2810,3 +2810,94 @@ li:hover > .fin-goal-x,
     animation: none;
   }
 }
+
+/* Showcase on phones: the photo leads edge to edge, swipe replaces the filmstrip, and
+   the controls shrink to corner icons so nothing sits on the product. Edit moves into
+   the details header (the bar's right corner belongs to the floating profile avatar). */
+.fin-goal-show-top-end {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+}
+
+.finance-dashboard .fin-goal-show-edit {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .finance-dashboard .fin-goal-ws-edit.has-showcase {
+    display: none;
+  }
+
+  .finance-dashboard .fin-goal-show-edit {
+    display: inline-grid;
+  }
+
+  .finance-dashboard .fin-goal-show {
+    gap: 16px;
+    padding: 8px 8px 18px;
+  }
+
+  .fin-goal-show-info {
+    padding: 0 10px;
+  }
+
+  .fin-goal-stage {
+    aspect-ratio: 16 / 10;
+    border-radius: 16px;
+  }
+
+  .fin-goal-strip {
+    display: none;
+  }
+
+  .fin-goal-stage-top {
+    top: 8px;
+    right: 8px;
+  }
+
+  .finance-dashboard .fin-goal-stage-pill {
+    width: 30px;
+    height: 30px;
+    justify-content: center;
+    padding: 0;
+    opacity: 0.9;
+  }
+
+  .finance-dashboard .fin-goal-stage-pill > span,
+  .finance-dashboard .fin-goal-stage-pill.is-icon,
+  .finance-dashboard .fin-goal-stage-nav {
+    display: none;
+  }
+
+  /* Shots sit whole above a strip for the dots, so the dots never land on the phone.
+     Both photo sets have flat backdrops (black / white), so the band is seamless. */
+  .fin-goal-stage-img.is-fill {
+    box-sizing: border-box;
+    padding-bottom: 20px;
+    object-fit: contain;
+    animation: finStageIn 0.9s ease both;
+  }
+
+  .fin-goal-stage-dots {
+    bottom: 8px;
+  }
+
+  .fin-goal-show-kept {
+    display: none;
+  }
+
+  .finance-dashboard .fin-goal-show-name {
+    margin-top: 8px;
+    font-size: 30px;
+  }
+
+  .finance-dashboard .fin-goal-show-figure strong {
+    font-size: 34px;
+  }
+
+  .fin-goal-show-actions {
+    padding-top: 14px;
+  }
+}
