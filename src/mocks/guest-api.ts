@@ -26,6 +26,8 @@ import {
   toggleStepInPursuit,
 } from '@/features/learnings/pursuit-tree';
 import { resolveGuestFinance } from './guest-finance';
+import { resolveGuestGoals } from './guest-goals';
+import { resolveGuestProgram } from './guest-program';
 
 let calendarItems = [...dummyCalendarItems];
 let lendingRecords = [...dummyLendingRecords];
@@ -369,6 +371,14 @@ export function resolveGuestRequest(request: GuestRequest): GuestResponse | null
   // Finance ledger, budget, bills and the spending summary live in their own resolver.
   const finance = resolveGuestFinance(urlObj, (request.method || 'GET').toUpperCase(), request.body);
   if (finance) return finance;
+
+  // Goals board, goals and check-ins (the GoalProgress rules, ported).
+  const goalsResponse = resolveGuestGoals(urlObj, (request.method || 'GET').toUpperCase(), request.body);
+  if (goalsResponse) return goalsResponse;
+
+  // The Lighthouse's program (ProgramController's storage rules, ported).
+  const programResponse = resolveGuestProgram(urlObj, (request.method || 'GET').toUpperCase(), request.body);
+  if (programResponse) return programResponse;
 
   // ── Notifications & Web Push ──────────────────────────────────────────
   // A guest has no account and therefore no device the backend could push to. These are

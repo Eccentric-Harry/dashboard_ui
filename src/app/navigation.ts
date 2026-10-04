@@ -6,6 +6,7 @@ import {
   CheckSquare,
   CircleDollarSign,
   Dumbbell,
+  Goal,
   GraduationCap,
   Home,
   LogOut,
@@ -30,6 +31,7 @@ export interface DashboardNavItem {
 // Desktop sidebar nav — the full route list
 export const navItems: DashboardNavItem[] = [
   { label: 'Home', icon: Home, to: '/home' },
+  { label: 'Goals', icon: Goal, to: '/goals' },
   { label: 'Learnings Map', icon: GraduationCap, to: '/learnings' },
   { label: 'Nutrition Overview', icon: Utensils, to: '/nutrition' },
   { label: 'Calendar', icon: CalendarDays, to: '/calendar' },

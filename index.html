@@ -29,7 +29,7 @@
       var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
       var path = (standalone && localStorage.getItem('pwa_last_path')) || location.pathname;
       if (path === '/') path = '/home';
-      if (localStorage.getItem('themePreference') === 'dark' && ['/home', '/nutrition', '/finance', '/learnings', '/tasks', '/workouts', '/calendar', '/calender', '/prompts', '/people', '/profile', '/mind'].indexOf(path) !== -1) {
+      if (localStorage.getItem('themePreference') === 'dark' && ['/home', '/nutrition', '/finance', '/learnings', '/tasks', '/workouts', '/calendar', '/calender', '/prompts', '/people', '/profile', '/mind', '/goals'].indexOf(path) !== -1) {
         root.dataset.theme = 'dark';
         themeMeta.setAttribute('content', '#0c0d0f');
       }
@@ -39,7 +39,7 @@
   <link rel="manifest" href="/manifest.json" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500..900&family=Shantell+Sans:wght,BNCE,INFM@400..700,-100..100,0..100&family=Sour+Gummy:wdth,wght@100..125,500..900&family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
   <title>Life OS</title>
 </head>
 

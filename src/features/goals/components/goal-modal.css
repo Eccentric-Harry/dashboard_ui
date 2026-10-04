@@ -1,0 +1,476 @@
+/* The goal workshop — creating or shaping a goal, in the camp's toybox language, inside a
+   camp sheet with the lantern being made hanging above it. The form carries the goal's
+   data-color, so every selected chip, the read well and the badge wear that candy. Every
+   selector is prefixed like goals-overview.css, so the derived dark/solid passes leave
+   the camp's paper alone. */
+
+
+
+
+
+:where(:root:not([data-theme='none'])) .gl-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 22px 0;
+}
+
+:where(:root:not([data-theme='none'])) .gl-modal-head h2 {
+  margin: 2px 0 0;
+  overflow: hidden;
+  color: var(--tb-ink);
+  font-family: var(--tb-display);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+}
+
+:where(:root:not([data-theme='none'])) .gl-modal-head-goal {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+:where(:root:not([data-theme='none'])) .gl-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  color: var(--tb-ink-3);
+  font-size: 10.5px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+:where(:root:not([data-theme='none'])) .gl-badge {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 15px;
+  background: var(--c-fill, #ff9f5a);
+  box-shadow: 0 4px 0 var(--c-lip, #e0742c);
+  color: var(--c-on, #ffffff);
+}
+
+:where(:root:not([data-theme='none'])) .gl-badge--live {
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+  animation: gl-wobble 0.5s var(--tb-spring);
+}
+
+:where(:root:not([data-theme='none'])) .gl-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px 22px 4px;
+  overflow-y: auto;
+}
+
+:where(:root:not([data-theme='none'])) .gl-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+:where(:root:not([data-theme='none'])) .gl-field > span {
+  color: var(--tb-ink-3);
+  font-size: 10.5px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+:where(:root:not([data-theme='none'])) .gl-field > span em {
+  font-style: normal;
+  letter-spacing: 0;
+  opacity: 0.75;
+  text-transform: none;
+}
+
+:where(:root:not([data-theme='none'])) .gl-field-row {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 10px;
+}
+
+:where(:root:not([data-theme='none'])) .gl-field-row .gl-unit-chips {
+  grid-column: 1 / -1;
+}
+
+:where(:root:not([data-theme='none'])) .gl-input {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding: 0 14px;
+  border: 2px solid var(--tb-rim);
+  border-radius: 14px;
+  background: var(--tb-well);
+  color: var(--tb-ink);
+  font-family: var(--tb-body);
+  font-size: 14px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+:where(:root:not([data-theme='none'])) .gl-input:focus {
+  outline: none;
+  border-color: var(--c-fill, #52b4ff);
+  background: var(--tb-card);
+}
+
+:where(:root:not([data-theme='none'])) .gl-input::placeholder {
+  color: var(--tb-ink-3);
+  font-weight: 700;
+}
+
+:where(:root:not([data-theme='none'])) .gl-input--number {
+  font-family: var(--tb-display);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* Numbers are typed or picked from chips — the browser's spinners only add noise. */
+:where(:root:not([data-theme='none'])) .gl-input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+:where(:root:not([data-theme='none'])) .gl-input[type='number']::-webkit-outer-spin-button,
+:where(:root:not([data-theme='none'])) .gl-input[type='number']::-webkit-inner-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+/* Colour — seven candy gumdrops. */
+:where(:root:not([data-theme='none'])) .gl-color-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+:where(:root:not([data-theme='none'])) .gl-color-choice {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 3px solid var(--tb-card);
+  border-radius: 999px;
+  background: var(--c-fill);
+  box-shadow: 0 3px 0 var(--c-lip), 0 0 0 2px var(--tb-rim);
+  cursor: pointer;
+  transition: transform 0.2s var(--tb-spring), box-shadow 0.15s ease;
+}
+
+:where(:root:not([data-theme='none'])) .gl-color-choice:hover {
+  transform: translateY(-2px) scale(1.06);
+}
+
+:where(:root:not([data-theme='none'])) .gl-color-choice.is-on {
+  transform: scale(1.12);
+  box-shadow: 0 3px 0 var(--c-lip), 0 0 0 3px var(--tb-ink);
+}
+
+/* Icon picker — chunky keys; the chosen one wears the goal's candy. */
+:where(:root:not([data-theme='none'])) .gl-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
+  gap: 7px;
+}
+
+:where(:root:not([data-theme='none'])) .gl-icon-choice {
+  display: grid;
+  place-items: center;
+  height: 38px;
+  border: 2px solid var(--tb-rim);
+  border-radius: 12px;
+  background: var(--tb-card);
+  box-shadow: 0 3px 0 var(--tb-lip);
+  color: var(--tb-ink-2);
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s ease, color 0.15s ease;
+}
+
+:where(:root:not([data-theme='none'])) .gl-icon-choice:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 var(--tb-lip);
+}
+
+:where(:root:not([data-theme='none'])) .gl-icon-choice.is-on {
+  border-color: var(--c-fill);
+  background: var(--c-fill);
+  box-shadow: 0 3px 0 var(--c-lip);
+  color: var(--c-on, #ffffff);
+}
+
+/* Shape — four chunky choices; the example line is what makes each obvious. */
+:where(:root:not([data-theme='none'])) .gl-shape-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+:where(:root:not([data-theme='none'])) .gl-shape {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px;
+  border: 2px solid var(--tb-rim);
+  border-radius: 16px;
+  background: var(--tb-card);
+  box-shadow: 0 4px 0 var(--tb-lip);
+  color: var(--tb-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s ease;
+}
+
+:where(:root:not([data-theme='none'])) .gl-shape strong {
+  font-family: var(--tb-display);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+:where(:root:not([data-theme='none'])) .gl-shape small {
+  color: var(--tb-ink-3);
+  font-size: 11.5px;
+  font-weight: 800;
+}
+
+:where(:root:not([data-theme='none'])) .gl-shape:active {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 var(--tb-lip);
+}
+
+:where(:root:not([data-theme='none'])) .gl-shape.is-on {
+  border-color: var(--c-fill);
+  background: var(--c-soft);
+  box-shadow: 0 4px 0 var(--c-lip);
+  color: var(--c-ink);
+}
+
+:where(:root:not([data-theme='none'])) .gl-shape.is-on small {
+  color: var(--c-ink);
+  opacity: 0.75;
+}
+
+:where(:root:not([data-theme='none'])) .gl-unit-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+:where(:root:not([data-theme='none'])) .gl-chip {
+  height: 32px;
+  padding: 0 12px;
+  border: 2px solid var(--tb-rim);
+  border-radius: 999px;
+  background: var(--tb-card);
+  box-shadow: 0 3px 0 var(--tb-lip);
+  color: var(--tb-ink-2);
+  font-family: var(--tb-body);
+  font-size: 12px;
+  font-weight: 850;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+:where(:root:not([data-theme='none'])) .gl-chip:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 var(--tb-lip);
+}
+
+:where(:root:not([data-theme='none'])) .gl-chip.is-on {
+  border-color: var(--c-fill);
+  background: var(--c-fill);
+  box-shadow: 0 3px 0 var(--c-lip);
+  color: var(--c-on, #ffffff);
+}
+
+/* Days that keep the week — seven taps, not a spinner. */
+:where(:root:not([data-theme='none'])) .gl-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 7px;
+}
+
+:where(:root:not([data-theme='none'])) .gl-day-choice {
+  height: 42px;
+  border: 2px solid var(--tb-rim);
+  border-radius: 13px;
+  background: var(--tb-card);
+  box-shadow: 0 4px 0 var(--tb-lip);
+  color: var(--tb-ink-2);
+  font-family: var(--tb-display);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+:where(:root:not([data-theme='none'])) .gl-day-choice:active {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 var(--tb-lip);
+}
+
+:where(:root:not([data-theme='none'])) .gl-day-choice.is-on {
+  border-color: var(--c-fill);
+  background: var(--c-fill);
+  box-shadow: 0 4px 0 var(--c-lip);
+  color: var(--c-on, #ffffff);
+}
+
+/* The "so what" read — one candy well per modal. */
+:where(:root:not([data-theme='none'])) .gl-read {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 14px 16px;
+  border: 2px solid var(--c-fill, #ff9f5a);
+  border-radius: 18px;
+  /* Laid over the card colour so a translucent night-camp tint stays opaque — the
+     sticky well must hide the fields scrolling under it. */
+  background: linear-gradient(var(--c-soft, #ffe7d4), var(--c-soft, #ffe7d4)), var(--tb-card);
+  color: var(--c-ink, #8a3b0c);
+}
+
+:where(:root:not([data-theme='none'])) .gl-read p {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+:where(:root:not([data-theme='none'])) .gl-read small {
+  font-size: 11.5px;
+  font-weight: 750;
+  opacity: 0.75;
+}
+
+/* In the goal form the read sticks to the bottom of the scrolling body, so the
+   sentence stays in view in a short window while the fields above it scroll. */
+:where(:root:not([data-theme='none'])) .gl-read--sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  box-shadow: 0 -12px 14px 2px var(--tb-card);
+}
+
+:where(:root:not([data-theme='none'])) .gl-read-badge {
+  flex: 0 0 auto;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: var(--c-fill);
+  box-shadow: 0 2px 0 var(--c-lip);
+  color: var(--c-on, #ffffff);
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+  animation: gl-wobble 0.5s var(--tb-spring);
+}
+
+:where(:root:not([data-theme='none'])) .gl-modal-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 22px 22px;
+}
+
+:where(:root:not([data-theme='none'])) .gl-modal-hint {
+  margin: 0;
+  color: var(--tb-ink-3);
+  font-size: 11.5px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+:where(:root:not([data-theme='none'])) .gl-modal-hint.is-error {
+  color: #d23a5f;
+}
+
+:where(:root:not([data-theme='none'])) .gl-modal-danger {
+  display: flex;
+  gap: 12px;
+}
+
+:where(:root:not([data-theme='none'])) .gl-modal-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 10px;
+}
+
+@keyframes gl-wobble {
+  0% { transform: scale(0.85) rotate(-6deg); }
+  60% { transform: scale(1.08) rotate(3deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+/* The workshop's own frame inside the camp sheet: a header, a scrolling body, a footer. */
+:where(:root:not([data-theme='none'])) .gw {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+:where(:root:not([data-theme='none'])) .gw .gl-modal-body {
+  min-height: 0;
+  overscroll-behavior: contain;
+}
+
+:where(:root:not([data-theme='none'])) .gw .gl-modal-head { padding-top: 28px; }
+:where(:root:not([data-theme='none'])) .gw .gl-modal-head-goal { flex: 1 1 auto; }
+
+:where(:root:not([data-theme='none'])) .gw .gl-modal-head h2 {
+  font-size: 25px;
+  font-weight: 800;
+  font-stretch: 106%;
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+
+:where(:root:not([data-theme='none'])) .gw .gl-modal-foot {
+  border-top: 2px dashed var(--tb-rim);
+  background: color-mix(in srgb, var(--c-soft) 45%, #fffaf0);
+}
+
+/* Picking a world of its own. */
+:where(:root:not([data-theme='none'])) .gl-world-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 8px;
+}
+
+:where(:root:not([data-theme='none'])) .gl-world small { line-height: 1.35; }
+
+:where(:root:not([data-theme='none'])) .gl-world--path {
+  background:
+    radial-gradient(circle at 88% 22%, rgba(255, 255, 255, 0.85) 0 7px, transparent 8px),
+    linear-gradient(160deg, #e6f2f7 0%, #d6ecd9 60%, #c3e2c8 100%);
+}
+
+:where(:root:not([data-theme='none'])) .gl-world--path.is-on { background: linear-gradient(160deg, #dbeeff 0%, #cfeedd 100%); }
+
+@media (min-width: 761px) and (max-height: 819px) {
+  :where(:root:not([data-theme='none'])) .gw .gl-modal-head { padding-top: 22px; }
+}
+
+@media (max-width: 760px) {
+  :where(:root:not([data-theme='none'])) .gl-shape-grid,
+  :where(:root:not([data-theme='none'])) .gl-world-grid { grid-template-columns: minmax(0, 1fr); }
+  :where(:root:not([data-theme='none'])) .gw .gl-modal-head { padding-top: 8px; }
+  :where(:root:not([data-theme='none'])) .gw .gl-modal-foot { flex-direction: column; align-items: stretch; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+  :where(:root:not([data-theme='none'])) .gw .gl-modal-actions { justify-content: flex-end; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(:root:not([data-theme='none'])) .gl-badge--live,
+  :where(:root:not([data-theme='none'])) .gl-read-badge { animation: none; }
+}

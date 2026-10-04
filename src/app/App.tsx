@@ -14,6 +14,7 @@ import { TasksOverview } from '../features/tasks/tasks-page'
 import { PeopleOverview } from '../features/people/people-page'
 import { ProfileOverview } from '../features/profile/profile-page'
 import { MindOverview } from '../features/mind/mind-page'
+import { GoalsOverview } from '../features/goals/goals-page'
 import { getAvatarImage } from '../lib/avatar'
 import { isStandalone } from '../lib/utils'
 import { resolveAuthGate, subscribeToActiveRequests } from '../services/http/axios-client'
@@ -277,6 +278,8 @@ function App() {
     content = <ProfileOverview activePath={pathname} onNavigate={navigateTo} />
   } else if (pathname === '/mind') {
     content = <MindOverview activePath={pathname} onNavigate={navigateTo} />
+  } else if (pathname === '/goals') {
+    content = <GoalsOverview activePath={pathname} onNavigate={navigateTo} searchParams={searchParams} />
   } else {
     content = <HomeOverview activePath={pathname} onNavigate={navigateTo} />
   }
@@ -366,9 +369,10 @@ function App() {
         {content}
       </div>
       {/* The clock in the canvas beside the stage (wide windows only). Mounted here so
-          every route has it, and before the overlays so they paint on top. */}
-      <GutterClock />
-      <MobileProfileTrigger onNavigate={navigateTo} activePath={pathname} />
+          every route has it, and before the overlays so they paint on top. /goals is a
+          full-screen world with its own way out — no clock, no profile chip. */}
+      {pathname !== '/goals' && <GutterClock />}
+      {pathname !== '/goals' && <MobileProfileTrigger onNavigate={navigateTo} activePath={pathname} />}
       <NotificationCenter />
       {/* Mounted once at the root so the Spiral Breaker is one tap from any route. */}
       <SpiralBreakerOverlay />
