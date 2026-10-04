@@ -3,14 +3,15 @@
 // note that climbs as the day fills (Duolingo's combo idea), a claim rings a rising major
 // third, each character "talks" in quick pitched blips (Animal Crossing's animalese idea).
 //
-// One voice for all of it: wooden plucks (a marimba-ish sine with an inharmonic partial and a
-// tiny click), glassy FM bells for rewards, a gentle high shelf so nothing is shrill, and one
-// shared small room (a generated reverb) so every effect sounds like it lives in the same place.
-//
 // Effects are on by default and muted with one tap (remembered per device); the ambience
 // (fire crackle, crickets at night, birds by day) is a separate opt-in. Nothing plays until
 // the first gesture — browsers only start an AudioContext from one, and every effect here
 // answers a gesture anyway.
+//
+// Timing (the sounds themselves are unchanged): a press plays its sound on pointer *down* —
+// the instant a finger lands — not on click after release, and a gesture gets one sound, so
+// the tap/open/page that would follow it a beat later is dropped (onPress, PRESS_ECHOES).
+// Newer role names (confirm, celebrate, stone…) are aliases for these same original sounds.
 
 import { useSyncExternalStore } from 'react'
 import { HOLD_MS } from './use-hold'
@@ -44,6 +45,9 @@ export type CampSoundName =
   | 'select'
   | 'stone'
   | 'start'
+  | 'small'
+  | 'confirm'
+  | 'celebrate'
 
 export type CampVoice = 'pip' | 'wren' | 'fen' | 'moss' | 'kiri' | 'bo' | 'tova' | 'ollie' | 'bram' | 'luma' | 'dot' | 'gus' | 'sora'
 
@@ -66,6 +70,16 @@ const writePref = (key: string, on: boolean) => {
   } catch {
     // Private mode or blocked storage: the choice just lasts for this visit.
   }
+}
+
+/** Role names → the original sound each one plays. */
+const ALIASES: Partial<Record<CampSoundName, CampSoundName>> = {
+  select: 'pop',
+  stone: 'sparkle',
+  start: 'chime',
+  small: 'chime',
+  confirm: 'chime',
+  celebrate: 'week-kept',
 }
 
 /** Sounds a press already covers when they follow it within a moment. */
@@ -98,46 +112,6 @@ interface ToneOpts {
   slideTo?: number
   slideFrom?: number
   lowpass?: number
-  /** Stereo position, -1 (left) to 1 (right). */
-  pan?: number
-}
-
-interface PluckOpts {
-  gain?: number
-  /** Seconds to fade out. */
-  decay?: number
-  pan?: number
-}
-
-interface BellOpts {
-  gain?: number
-  /** Modulator : carrier — 3.5 is glassy, 1.4 is warm. */
-  ratio?: number
-  /** How bright the strike is (FM index); it settles as the note rings. */
-  index?: number
-  attack?: number
-  pan?: number
-}
-
-/** A small room as an impulse response: decaying, darkening noise, a little different per ear. */
-function roomImpulse(ctx: BaseAudioContext, seconds: number): AudioBuffer {
-  const len = Math.floor(ctx.sampleRate * seconds)
-  const buf = ctx.createBuffer(2, len, ctx.sampleRate)
-  for (let ch = 0; ch < 2; ch++) {
-    const data = buf.getChannelData(ch)
-    let seed = 99991 + ch * 7919
-    let low = 0
-    for (let i = 0; i < len; i++) {
-      seed = (seed * 16807) % 2147483647
-      const white = (seed / 2147483647) * 2 - 1
-      const t = i / len
-      // Darker as it decays, like air and soft walls do.
-      const a = 0.55 - 0.4 * t
-      low += a * (white - low)
-      data[i] = low * Math.pow(1 - t, 3.4) * (i < ctx.sampleRate * 0.008 ? i / (ctx.sampleRate * 0.008) : 1)
-    }
-  }
-  return buf
 }
 
 interface NoiseOpts {
@@ -152,7 +126,7 @@ class CampSoundEngine {
   private ctx: AudioContext | null = null
   private master: GainNode | null = null
   private noiseBuffer: AudioBuffer | null = null
-  private charge: { osc: OscillatorNode; gain: GainNode; twin?: OscillatorNode } | null = null
+  private charge: { osc: OscillatorNode; gain: GainNode } | null = null
   private ambienceTimers: number[] = []
   private ambienceBed: { src: AudioBufferSourceNode; gain: GainNode } | null = null
   private scene: AmbienceScene = 'day'
@@ -230,30 +204,11 @@ class CampSoundEngine {
         return null
       }
       const comp = this.ctx.createDynamicsCompressor()
-      comp.threshold.value = -18
-      comp.knee.value = 12
+      comp.threshold.value = -16
       comp.ratio.value = 4
-      // Take the edge off the top end so nothing is shrill on laptop speakers.
-      const shelf = this.ctx.createBiquadFilter()
-      shelf.type = 'highshelf'
-      shelf.frequency.value = 6500
-      shelf.gain.value = -5
       this.master = this.ctx.createGain()
       this.master.gain.value = 0.55
-      this.master.connect(shelf)
-      shelf.connect(comp)
-      // The shared room: a short reverb send under everything.
-      try {
-        const room = this.ctx.createConvolver()
-        room.buffer = roomImpulse(this.ctx, 1.4)
-        const wet = this.ctx.createGain()
-        wet.gain.value = 0.2
-        shelf.connect(room)
-        room.connect(wet)
-        wet.connect(comp)
-      } catch {
-        // No convolver (very old browsers): dry is fine.
-      }
+      this.master.connect(comp)
       comp.connect(this.ctx.destination)
       const len = Math.floor(this.ctx.sampleRate * 1.5)
       this.noiseBuffer = this.ctx.createBuffer(1, len, this.ctx.sampleRate)
@@ -295,58 +250,9 @@ class CampSoundEngine {
       node = lp
     }
     node.connect(g)
-    g.connect(this.panned(o.pan))
+    g.connect(this.master)
     osc.start(start)
     osc.stop(start + dur + 0.02)
-  }
-
-  /** Where a voice goes: straight to the master, or through a panner when it has a place. */
-  private panned(pan?: number): AudioNode {
-    const ctx = this.ctx!
-    if (!pan || typeof ctx.createStereoPanner !== 'function') return this.master!
-    const p = ctx.createStereoPanner()
-    p.pan.value = Math.max(-1, Math.min(1, pan))
-    p.connect(this.master!)
-    return p
-  }
-
-  /** A wooden pluck: a sine, a quick inharmonic partial (marimba-ish) and a tiny click. */
-  private pluck(freq: number, at: number, o: PluckOpts = {}) {
-    const gain = o.gain ?? 0.18
-    const decay = o.decay ?? 0.5
-    this.tone(freq, at, decay, { type: 'sine', gain, attack: 0.003, pan: o.pan })
-    this.tone(freq * 3.93, at, Math.min(0.14, decay * 0.35), { type: 'sine', gain: gain * 0.22, attack: 0.002, pan: o.pan })
-    this.tone(freq * 2, at, decay * 0.5, { type: 'triangle', gain: gain * 0.12, attack: 0.004, pan: o.pan })
-    this.noise(at, 0.012, { filter: 'highpass', freq: 2800, gain: gain * 0.18 })
-  }
-
-  /** A glassy bell by FM synthesis: bright on the strike, mellowing as it rings. */
-  private fmBell(freq: number, at: number, dur: number, o: BellOpts = {}) {
-    const ctx = this.ctx
-    if (!ctx || !this.master) return
-    const start = ctx.currentTime + at
-    const carrier = ctx.createOscillator()
-    const mod = ctx.createOscillator()
-    const depth = ctx.createGain()
-    const env = ctx.createGain()
-    carrier.frequency.value = freq
-    mod.frequency.value = freq * (o.ratio ?? 3.5)
-    const index = o.index ?? 1.6
-    depth.gain.setValueAtTime(freq * index, start)
-    depth.gain.exponentialRampToValueAtTime(Math.max(1, freq * index * 0.08), start + dur * 0.7)
-    const peak = o.gain ?? 0.1
-    const attack = o.attack ?? 0.004
-    env.gain.setValueAtTime(0.0001, start)
-    env.gain.exponentialRampToValueAtTime(peak, start + attack)
-    env.gain.exponentialRampToValueAtTime(0.0001, start + dur)
-    mod.connect(depth)
-    depth.connect(carrier.frequency)
-    carrier.connect(env)
-    env.connect(this.panned(o.pan))
-    mod.start(start)
-    carrier.start(start)
-    mod.stop(start + dur + 0.05)
-    carrier.stop(start + dur + 0.05)
   }
 
   private noise(at: number, dur: number, o: NoiseOpts = {}) {
@@ -379,14 +285,15 @@ class CampSoundEngine {
   // ── Effects ──────────────────────────────────────────────────────────
 
   /** `step` picks the note for a lantern pop — how many are lit today, so the run climbs. */
-  play(name: CampSoundName, opts: { step?: number } = {}) {
+  play(name: CampSoundName, opts: { step?: number } = {}, fromPress = false) {
     if (!this.snapshot.enabled || !this.audio()) return
-    // The press already answered with its own tick; a click/open/page sound arriving a beat
-    // later for the same gesture would only sound like an echo of it.
-    if (PRESS_ECHOES.has(name) && performance.now() - this.lastPress < 400) return
-    switch (name) {
+    // The press already answered with its own sound; the same gesture's click/open/page a
+    // beat later would only sound like a late echo of it.
+    if (!fromPress && PRESS_ECHOES.has(name) && performance.now() - this.lastPress < 400) return
+    switch (ALIASES[name] ?? name) {
       case 'tap':
-        this.pluck(740, 0, { gain: 0.11, decay: 0.12 })
+        this.tone(520, 0, 0.08, { type: 'triangle', gain: 0.18, slideTo: 360 })
+        this.noise(0, 0.03, { freq: 2600, q: 2, gain: 0.05 })
         break
       case 'nudge':
         this.tone(300, 0, 0.22, { type: 'sine', gain: 0.22, slideFrom: 620, slideTo: 260 })
@@ -394,38 +301,40 @@ class CampSoundEngine {
         break
       case 'pop': {
         const f = PENTATONIC[Math.min(PENTATONIC.length - 1, Math.max(0, opts.step ?? 0))]
-        this.tone(f, 0, 0.16, { type: 'sine', gain: 0.22, slideFrom: f * 0.6 })
-        this.pluck(f, 0.012, { gain: 0.2, decay: 0.55 })
-        this.fmBell(f * 2, 0.05, 0.7, { gain: 0.045, ratio: 3.5, index: 1.2, pan: 0.15 })
+        this.tone(f, 0, 0.2, { type: 'sine', gain: 0.38, slideFrom: f * 0.55 })
+        this.tone(f * 2, 0.04, 0.42, { type: 'triangle', gain: 0.09 })
+        this.tone(f * 3, 0.07, 0.3, { type: 'sine', gain: 0.04 })
+        this.noise(0, 0.06, { filter: 'highpass', freq: 5000, gain: 0.05 })
         break
       }
       case 'chime':
-        this.fmBell(1046.5, 0, 0.9, { gain: 0.11, ratio: 3.5, index: 1.4, pan: -0.12 })
-        this.fmBell(1318.51, 0.11, 1.2, { gain: 0.11, ratio: 3.5, index: 1.4, pan: 0.12 })
+        this.tone(1046.5, 0, 0.32, { type: 'triangle', gain: 0.2 })
+        this.tone(1318.51, 0.1, 0.55, { type: 'triangle', gain: 0.2 })
+        this.tone(2637, 0.1, 0.4, { type: 'sine', gain: 0.03 })
         break
       case 'coin':
         this.tone(987.77, 0, 0.07, { type: 'square', gain: 0.06, lowpass: 5000 })
         this.tone(1318.51, 0.07, 0.3, { type: 'square', gain: 0.06, lowpass: 5000 })
         break
       case 'sparkle':
-        ;[2093, 2637, 3136, 4186].forEach((n, i) => this.fmBell(n, i * 0.05, 0.5, { gain: 0.03, ratio: 3.5, index: 0.9, pan: -0.3 + i * 0.2 }))
+        this.arpeggio([2093, 2637, 3136, 4186, 3520], 0.045, 0.16, { type: 'triangle', gain: 0.05 })
         break
       case 'open':
-        this.noise(0, 0.2, { freq: 500, freqTo: 1900, q: 0.8, gain: 0.045 })
-        this.pluck(659.25, 0.05, { gain: 0.06, decay: 0.25 })
+        this.noise(0, 0.24, { freq: 420, freqTo: 2400, q: 0.9, gain: 0.08 })
+        this.tone(660, 0.05, 0.16, { type: 'sine', gain: 0.06, slideFrom: 440 })
         break
       case 'close':
-        this.noise(0, 0.16, { freq: 1800, freqTo: 500, q: 0.8, gain: 0.04 })
+        this.noise(0, 0.2, { freq: 2200, freqTo: 480, q: 0.9, gain: 0.06 })
         break
       case 'page':
-        this.noise(0, 0.15, { filter: 'bandpass', freq: 2400, freqTo: 900, q: 0.6, gain: 0.05 })
-        this.noise(0.08, 0.04, { filter: 'highpass', freq: 3800, gain: 0.02 })
+        this.noise(0, 0.22, { filter: 'bandpass', freq: 3200, freqTo: 1100, q: 0.7, gain: 0.09 })
+        this.noise(0.12, 0.05, { filter: 'highpass', freq: 4000, gain: 0.04 })
         break
       case 'step-up':
-        this.pluck(784, 0, { gain: 0.07, decay: 0.09 })
+        this.tone(760, 0, 0.05, { type: 'triangle', gain: 0.09 })
         break
       case 'step-down':
-        this.pluck(587.33, 0, { gain: 0.065, decay: 0.09 })
+        this.tone(560, 0, 0.05, { type: 'triangle', gain: 0.08 })
         break
       case 'chest-shake':
         ;[0, 0.11, 0.2].forEach((t, i) => {
@@ -460,9 +369,8 @@ class CampSoundEngine {
         this.arpeggio([2637, 3136, 4186, 5274], 0.06, 0.2, { type: 'sine', gain: 0.03 }, 0.55)
         break
       case 'week-kept':
-        ;[523.25, 783.99, 1046.5, 1318.51, 1567.98].forEach((n, i) => this.pluck(n, i * 0.075, { gain: 0.15, decay: 0.8, pan: -0.3 + i * 0.15 }))
-        this.fmBell(2093, 0.38, 1.6, { gain: 0.05, ratio: 3.5, index: 1, attack: 0.02 })
-        this.fmBell(1046.5, 0.38, 1.8, { gain: 0.05, ratio: 1.4, index: 0.8, attack: 0.03 })
+        this.arpeggio([523.25, 783.99, 1046.5, 1318.51, 1567.98], 0.07, 0.5, { type: 'triangle', gain: 0.16 })
+        this.tone(2093, 0.4, 0.9, { type: 'sine', gain: 0.05, attack: 0.03 })
         break
       case 'soft-no':
         this.tone(240, 0, 0.14, { type: 'sine', gain: 0.16, slideTo: 200 })
@@ -497,24 +405,6 @@ class CampSoundEngine {
         this.tone(196, 0, 6.0, { type: 'sine', gain: 0.035, attack: 0.6, slideTo: 147 })
         this.noise(0, 5.6, { filter: 'bandpass', freq: 1400, freqTo: 500, q: 0.5, gain: 0.014 })
         break
-      case 'select': {
-        // An answer in a questionnaire: one pluck, a step up the scale per statement.
-        const f = PENTATONIC[Math.min(PENTATONIC.length - 1, Math.max(0, opts.step ?? 0))]
-        this.pluck(f, 0, { gain: 0.14, decay: 0.42 })
-        break
-      }
-      case 'stone':
-        // A stone set in the tower: a soft knock, then a clear note.
-        this.tone(190, 0, 0.12, { type: 'triangle', gain: 0.2, slideTo: 120 })
-        this.noise(0, 0.05, { filter: 'lowpass', freq: 800, gain: 0.09 })
-        this.pluck(1046.5, 0.06, { gain: 0.13, decay: 0.8 })
-        this.fmBell(2093, 0.1, 1.1, { gain: 0.03, ratio: 3.5, index: 1 })
-        break
-      case 'start':
-        // Something begins: three rising plucks and a bell.
-        ;[659.25, 783.99, 1046.5].forEach((n, i) => this.pluck(n, i * 0.09, { gain: 0.13, decay: 0.6, pan: -0.2 + i * 0.2 }))
-        this.fmBell(1567.98, 0.27, 1.2, { gain: 0.06, ratio: 3.5, index: 1.2 })
-        break
     }
   }
 
@@ -537,35 +427,18 @@ class CampSoundEngine {
     if (!this.snapshot.enabled || this.charge) return
     const ctx = this.audio()
     if (!ctx || !this.master) return
-    const t = ctx.currentTime
-    const end = t + HOLD_MS / 1000
-    // Two slightly detuned voices through a filter that opens as the charge fills.
     const osc = ctx.createOscillator()
-    const twin = ctx.createOscillator()
-    osc.type = 'triangle'
-    twin.type = 'sawtooth'
-    osc.frequency.setValueAtTime(220, t)
-    osc.frequency.exponentialRampToValueAtTime(880, end)
-    twin.frequency.setValueAtTime(221.5, t)
-    twin.frequency.exponentialRampToValueAtTime(884, end)
-    const lp = ctx.createBiquadFilter()
-    lp.type = 'lowpass'
-    lp.frequency.setValueAtTime(500, t)
-    lp.frequency.exponentialRampToValueAtTime(2600, end)
-    const twinGain = ctx.createGain()
-    twinGain.gain.value = 0.35
     const g = ctx.createGain()
+    osc.type = 'triangle'
+    const t = ctx.currentTime
+    osc.frequency.setValueAtTime(220, t)
+    osc.frequency.exponentialRampToValueAtTime(880, t + HOLD_MS / 1000)
     g.gain.setValueAtTime(0.0001, t)
-    g.gain.exponentialRampToValueAtTime(0.065, t + 0.08)
-    osc.connect(lp)
-    twin.connect(twinGain)
-    twinGain.connect(lp)
-    lp.connect(g)
+    g.gain.exponentialRampToValueAtTime(0.07, t + 0.08)
+    osc.connect(g)
     g.connect(this.master)
     osc.start(t)
-    twin.start(t)
-    twin.stop(end + 1.5)
-    this.charge = { osc, gain: g, twin }
+    this.charge = { osc, gain: g }
   }
 
   chargeStop() {
@@ -578,7 +451,6 @@ class CampSoundEngine {
     c.gain.gain.setValueAtTime(Math.max(0.0001, c.gain.gain.value), t)
     c.gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.07)
     c.osc.stop(t + 0.09)
-    c.twin?.stop(t + 0.09)
   }
 
   /** A character "says" a line: one pitched blip per letter, capped so it never drones. */
@@ -859,7 +731,7 @@ class CampSoundEngine {
     if (this.snapshot.ambience && this.ctx) this.startAmbience()
     if (typeof document !== 'undefined') {
       document.addEventListener('pointerdown', this.onPress, { capture: true })
-      document.addEventListener('keydown', this.warm, { capture: true, once: true })
+      document.addEventListener('keydown', this.onKeyPress, { capture: true })
     }
   }
 
@@ -870,24 +742,48 @@ class CampSoundEngine {
 
   private lastPress = -Infinity
 
+  /** Whether a press (pointer down, or Enter/Space on a control) happened in the last `ms`. */
+  pressedWithin(ms: number) {
+    return performance.now() - this.lastPress < ms
+  }
+
   /**
-   * Real-time feedback: the tick sounds on pointer *down* — the instant a finger lands — not
-   * on click, which only fires after release, or after a sheet has rendered. Anything that
-   * makes its own sound on the press (a hold's hum, an answer's pluck) opts out with
-   * data-quiet-press.
+   * The one sound a press makes, chosen at the press: the control's own `data-sound` (and
+   * `data-sound-step`) when it has one; otherwise a primary button in the lighthouse says
+   * "confirm" and anything else taps. `data-sound="none"` is silent; `data-quiet-press` (a
+   * hold, which hums instead) opts out.
    */
-  private onPress = (e: PointerEvent) => {
-    if (e.button !== 0 || !this.snapshot.enabled) return
-    const t = e.target as Element | null
-    if (!t || !t.closest('.camp-world, .cs-root, .gl-modal-backdrop')) return
+  private soundFor(hit: Element): { name: CampSoundName | 'none'; step: number } {
+    const tagged = hit.closest('[data-sound]')
+    if (tagged) return { name: tagged.getAttribute('data-sound') as CampSoundName | 'none', step: Number(tagged.getAttribute('data-sound-step') ?? 0) }
+    if (hit.closest('.lh-world') && hit.matches('.lh-btn--primary, .lh-btn--candy')) return { name: 'confirm', step: 0 }
+    return { name: 'tap', step: 0 }
+  }
+
+  private pressOn(target: EventTarget | null) {
+    if (!this.snapshot.enabled) return
+    const t = target as Element | null
+    if (!t || typeof t.closest !== 'function' || !t.closest('.camp-world, .cs-root, .gl-modal-backdrop')) return
     const hit = t.closest('button, a[href], [role="button"], [role="radio"], [role="tab"], label, input[type="checkbox"]')
     if (!hit || hit.closest('[data-quiet-press], .lantern, .lh-hold') || (hit as HTMLButtonElement).disabled) {
       this.warm()
       return
     }
     this.lastPress = performance.now()
-    if (!this.audio()) return
-    this.pluck(740, 0, { gain: 0.11, decay: 0.12 })
+    const { name, step } = this.soundFor(hit)
+    if (name !== 'none') this.play(name, { step }, true)
+  }
+
+  /** Real-time feedback: the sound starts the instant a finger lands, not on release. */
+  private onPress = (e: PointerEvent) => {
+    if (e.button === 0) this.pressOn(e.target)
+  }
+
+  private onKeyPress = (e: KeyboardEvent) => {
+    if (e.repeat || (e.key !== 'Enter' && e.key !== ' ')) return
+    const el = e.target as HTMLElement | null
+    if (!el || el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable) return
+    this.pressOn(el)
   }
 
   /** Leaving the camp: hush everything. */
@@ -895,7 +791,7 @@ class CampSoundEngine {
     this.active = false
     if (typeof document !== 'undefined') {
       document.removeEventListener('pointerdown', this.onPress, { capture: true })
-      document.removeEventListener('keydown', this.warm, { capture: true })
+      document.removeEventListener('keydown', this.onKeyPress, { capture: true })
     }
     this.chargeStop()
     this.stopAmbience()

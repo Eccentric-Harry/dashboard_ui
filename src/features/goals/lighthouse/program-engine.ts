@@ -482,3 +482,17 @@ export function daysAway(logs: ProgramLog[], today: string): number | null {
   const last = logs.reduce<string | null>((m, l) => (l.date <= today && (!m || l.date > m) ? l.date : m), null)
   return last ? daysBetween(last, today) : null
 }
+
+/**
+ * The sound logging this would make, decided before it's saved so it can play on the press:
+ * closing the week's target celebrates, the full version pops (a step up the scale per track
+ * already done today), the small version is one soft note.
+ */
+export function logSound(ctx: ProgramCtx, track: ProgramTrackKey, level: 'FULL' | 'MIN'): { name: 'celebrate' | 'pop' | 'small'; step: number } {
+  const step = ctx.program.tracks.filter((t) => t.key !== track && isDone(dayCell(ctx, t.key, ctx.today).status)).length
+  if (isWeekly(track) && !isDone(dayCell(ctx, track, ctx.today).status)) {
+    const wk = weekCount(ctx, track, weekStartOf(ctx.today))
+    if (wk.target != null && wk.done + 1 === wk.target) return { name: 'celebrate', step }
+  }
+  return { name: level === 'FULL' ? 'pop' : 'small', step }
+}

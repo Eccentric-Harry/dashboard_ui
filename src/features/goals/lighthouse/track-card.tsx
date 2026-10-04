@@ -15,6 +15,7 @@ import {
   isDone,
   isWeekly,
   keptPromises,
+  logSound,
   nextLiftDay,
   nextRun,
   opensDay,
@@ -110,7 +111,21 @@ function WeekDots({ ctx, track, done, target }: { ctx: ProgramCtx; track: Progra
 const DONE_WORD: Partial<Record<DayCell['status'], string>> = { full: 'Done', min: 'Small version', rest: 'Rest day' }
 
 /** Hold the circle to log the full version — a ring winds up, then the check lands. */
-function HoldCircle({ done, rest, busy, label, onComplete, onTap }: { done: boolean; rest: boolean; busy: boolean; label: string; onComplete: () => void; onTap: () => void }) {
+function HoldCircle({
+  done,
+  rest,
+  busy,
+  label,
+  onComplete,
+  onTap,
+}: {
+  done: boolean
+  rest: boolean
+  busy: boolean
+  label: string
+  onComplete: () => void
+  onTap: () => void
+}) {
   const hold = useHold({
     enabled: !done && !busy,
     onComplete: () => {
@@ -143,6 +158,7 @@ function HoldCircle({ done, rest, busy, label, onComplete, onTap }: { done: bool
     <button
       type="button"
       className={cn('lh-hold', done && 'is-done', hold.charging && 'is-charging', hold.nudged && 'is-nudged')}
+      data-quiet-press
       {...handlers}
       disabled={busy}
       aria-label={done ? `${label} — logged. Open it` : `Hold to log: ${label}`}
@@ -215,6 +231,7 @@ function TrackRow({ ctx, track, busy, onHoldFull, onSmall, onOpen, onMood, onUrg
               key={m.score}
               type="button"
               className={cn('lh-mood-dot-btn', moodValue === m.score && 'is-on')}
+              data-sound="tap"
               style={{ ['--mood' as string]: m.color }}
               disabled={busy}
               onClick={at((el) => onMood(m.score, el))}
@@ -242,7 +259,15 @@ function TrackRow({ ctx, track, busy, onHoldFull, onSmall, onOpen, onMood, onUrg
             }}
           />
           {!done && (
-            <button type="button" className="lh-small-link" onClick={at((el) => onSmall(track, el))} disabled={busy} title={fillCopy(meta.min, target, floor)}>
+            <button
+              type="button"
+              className="lh-small-link"
+              data-sound={logSound(ctx, track, 'MIN').name}
+              data-sound-step={logSound(ctx, track, 'MIN').step}
+              onClick={at((el) => onSmall(track, el))}
+              disabled={busy}
+              title={fillCopy(meta.min, target, floor)}
+            >
               <Sprout size={12} strokeWidth={2.8} aria-hidden="true" /> small version
             </button>
           )}

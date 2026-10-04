@@ -275,12 +275,10 @@ function Questionnaire({ type, ctx, assessments, api }: { type: 'ROSENBERG' | 'W
     if (done) return
     const at = index
     setAnswers((a) => a.map((x, j) => (j === at ? v : x)))
-    if (!sounded) campSound.play('select', { step: at })
+    // A press already played this answer's note; keys 1–6 haven't.
+    if (!sounded && !campSound.pressedWithin(300)) campSound.play(at === items.length - 1 ? 'confirm' : 'select', { step: at })
     if (advance.current) window.clearTimeout(advance.current)
-    advance.current = window.setTimeout(() => {
-      setIndex((i) => (i === at ? at + 1 : i))
-      if (at === items.length - 1) campSound.play('chime')
-    }, 260)
+    advance.current = window.setTimeout(() => setIndex((i) => (i === at ? at + 1 : i)), 260)
   }
   const go = (to: number) => {
     if (advance.current) window.clearTimeout(advance.current)
@@ -348,10 +346,8 @@ function Questionnaire({ type, ctx, assessments, api }: { type: 'ROSENBERG' | 'W
                     role="radio"
                     aria-checked={answers[index] === v}
                     className={cn('lh-qz-opt', answers[index] === v && 'is-on')}
-                    data-quiet-press
-                    onPointerDown={(e) => {
-                      if (e.button === 0) campSound.play('select', { step: index })
-                    }}
+                    data-sound={index === items.length - 1 ? 'confirm' : 'select'}
+                    data-sound-step={index}
                     onClick={(e) => choose(v, e.detail > 0)}
                   >
                     <kbd>{v + 1}</kbd>

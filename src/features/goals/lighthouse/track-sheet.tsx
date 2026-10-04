@@ -6,7 +6,6 @@ import type { LiftSet, ProgramLog, ProgramTrackKey } from '@/types/program'
 import { learningsService } from '@/services/learnings-service'
 import { cn } from '@/lib/utils'
 import { CampSheet } from '../components/camp-sheet'
-import { campSound } from '../camp-sound'
 import { addDays } from '../goal-format'
 import {
   BUNDLE_TIP,
@@ -31,6 +30,7 @@ import {
   isOn,
   keptPromises,
   lastSet,
+  logSound,
   logsOn,
   nextLiftDay,
   nextRun,
@@ -194,7 +194,7 @@ function RunForm({ ctx, api, busy, onCoach }: FormProps) {
             <p className="lh-coach-summary">{next.summary}</p>
             <p className="lh-small">{sessionMinutes(next)} minutes with a 5-minute walk either side. Repeat a week whenever you like — the coach moves on only when you finish a run.</p>
           </div>
-          <button type="button" className="lh-btn lh-btn--candy lh-btn--lg" onClick={(e) => onCoach(e.currentTarget)}>
+          <button type="button" className="lh-btn lh-btn--candy lh-btn--lg" data-sound="tap" onClick={(e) => onCoach(e.currentTarget)}>
             <Play size={18} strokeWidth={2.8} aria-hidden="true" /> Start the coach
           </button>
         </section>
@@ -235,7 +235,7 @@ function RunForm({ ctx, api, busy, onCoach }: FormProps) {
           ))}
         </div>
       )}
-      <button type="button" className="lh-btn lh-btn--primary lh-btn--wide" disabled={busy} onClick={() => void log()}>
+      <button type="button" className="lh-btn lh-btn--primary lh-btn--wide" disabled={busy} onClick={() => void log()} {...soundAttrs(ctx, 'run', level)}>
         {level === 'REST' ? 'Log a rest day' : level === 'MIN' ? 'Log the small version' : 'Log the run'}
       </button>
       <p className="lh-tip">
@@ -309,10 +309,16 @@ function LiftForm({ ctx, api, busy }: FormProps) {
         <Lightbulb size={14} strokeWidth={2.6} aria-hidden="true" /> {LIFT_SAFETY}
       </p>
       <div className="lh-row">
-        <button type="button" className="lh-btn lh-btn--primary" disabled={busy} onClick={() => void logFull()}>
+        <button type="button" className="lh-btn lh-btn--primary" disabled={busy} onClick={() => void logFull()} {...soundAttrs(ctx, 'lift', 'FULL')}>
           Log {plan.name}
         </button>
-        <button type="button" className="lh-btn lh-btn--soft" disabled={busy} onClick={() => void api.addLog({ track: 'lift', date: ctx.today, level: 'MIN', session: 'lift-min' }, { anchor: anchor('lift') })}>
+        <button
+          type="button"
+          className="lh-btn lh-btn--soft"
+          disabled={busy}
+          {...soundAttrs(ctx, 'lift', 'MIN')}
+          onClick={() => void api.addLog({ track: 'lift', date: ctx.today, level: 'MIN', session: 'lift-min' }, { anchor: anchor('lift') })}
+        >
           Small version
         </button>
         <button type="button" className="lh-btn lh-btn--ghost" disabled={busy} onClick={() => void api.addLog({ track: 'lift', date: ctx.today, level: 'REST' }, { anchor: anchor('lift') })}>
@@ -345,13 +351,19 @@ function ProteinForm({ ctx, api, busy, onNavigate }: FormProps) {
           </p>
         )}
       </section>
-      <button type="button" className="lh-btn lh-btn--candy lh-btn--wide" onClick={() => onNavigate('/nutrition')}>
+      <button type="button" className="lh-btn lh-btn--candy lh-btn--wide" data-sound="tap" onClick={() => onNavigate('/nutrition')}>
         <ExternalLink size={15} strokeWidth={2.6} aria-hidden="true" /> Log meals on Nutrition
       </button>
       <p className="lh-kicker">Ate without logging? Write the day’s total</p>
       <div className="lh-row">
         <Stepper value={grams} onChange={setGrams} step={5} min={0} max={400} unit="g" label="protein grams" />
-        <button type="button" className="lh-btn lh-btn--soft" disabled={busy} onClick={() => void api.addLog({ track: 'protein', date: ctx.today, value: grams }, { anchor: anchor('protein'), detail: `${grams} g of protein` })}>
+        <button
+          type="button"
+          className="lh-btn lh-btn--soft"
+          disabled={busy}
+          {...soundAttrs(ctx, 'protein', 'FULL')}
+          onClick={() => void api.addLog({ track: 'protein', date: ctx.today, value: grams }, { anchor: anchor('protein'), detail: `${grams} g of protein` })}
+        >
           Save {grams} g
         </button>
       </div>
@@ -457,6 +469,7 @@ function LearnForm({ ctx, api, busy, onNavigate }: FormProps) {
         type="button"
         className="lh-btn lh-btn--primary lh-btn--wide"
         disabled={busy || (level === 'MIN' && !line.trim())}
+        {...soundAttrs(ctx, 'learn', level)}
         onClick={() =>
           void api.addLog(
             { track: 'learn', date: ctx.today, level, minutes, tag: where, pursuitId: pursuitId || null, text: line.trim() || null },
@@ -546,8 +559,6 @@ function RegardForm({ ctx, api, busy }: FormProps) {
   const [prompt, setPrompt] = useState(() => Math.abs(ctx.today.split('-').reduce((n, x) => n + Number(x), 0)) % KIND_PROMPTS.length)
   const save = async () => {
     // The stone sounds as you press, not when the server answers; a milestone rings bigger.
-    const next = keptPromises(ctx.logs) + 1
-    campSound.play(next === 25 || next === 50 || next === 100 ? 'week-kept' : 'stone')
     const saved = await api.addLog(
       { track: 'regard', date: ctx.today, level: kind.trim() ? 'FULL' : 'MIN', text: promise.trim(), kind: kind.trim() || null },
       { anchor: anchor('regard'), soundPlayed: true },
@@ -573,7 +584,13 @@ function RegardForm({ ctx, api, busy }: FormProps) {
         </span>
         <textarea className="lh-text" rows={2} maxLength={280} value={kind} onChange={(e) => setKind(e.target.value)} placeholder="One kind sentence to yourself (optional on a hard day)" />
       </label>
-      <button type="button" className="lh-btn lh-btn--primary lh-btn--wide" disabled={busy || !promise.trim()} onClick={() => void save()}>
+      <button
+        type="button"
+        className="lh-btn lh-btn--primary lh-btn--wide"
+        disabled={busy || !promise.trim()}
+        data-sound={[25, 50, 100].includes(keptPromises(ctx.logs) + 1) ? 'celebrate' : 'stone'}
+        onClick={() => void save()}
+      >
         Lay the stone
       </button>
       {recent.length > 0 && (
@@ -587,6 +604,13 @@ function RegardForm({ ctx, api, busy }: FormProps) {
       )}
     </div>
   )
+}
+
+/** The press sound for a log button: what logging this will sound like, decided up front. */
+function soundAttrs(ctx: ProgramCtx, track: ProgramTrackKey, level: 'FULL' | 'MIN' | 'REST') {
+  if (level === 'REST') return { 'data-sound': 'tap' }
+  const s = logSound(ctx, track, level)
+  return { 'data-sound': s.name, 'data-sound-step': s.step }
 }
 
 // ── Starting a track before its day ────────────────────────────────────
@@ -613,11 +637,11 @@ function StartNow({ track, ctx, api }: { track: ProgramTrackKey; ctx: ProgramCtx
         type="button"
         className="lh-btn lh-btn--candy"
         disabled={saving}
+        data-sound="start"
         onClick={async () => {
           setSaving(true)
-          const ok = await api.saveSettings({ opens: { [track]: ctx.today } }, `${meta.name} is on from ${beforeStart ? 'day 1' : 'today'}.`)
+          await api.saveSettings({ opens: { [track]: ctx.today } }, `${meta.name} is on from ${beforeStart ? 'day 1' : 'today'}.`)
           setSaving(false)
-          if (ok) campSound.play('start')
         }}
       >
         <Play size={14} strokeWidth={3} aria-hidden="true" /> Start {beforeStart ? 'on day 1' : 'today'}
@@ -726,7 +750,7 @@ function Recent({ track, ctx, api }: { track: ProgramTrackKey; ctx: ProgramCtx; 
           <li key={l.id}>
             <small>{l.date === ctx.today ? 'Today' : shortDay(l.date)}</small>
             <span>{summary(l)}</span>
-            <button type="button" className="lh-icon-btn" onClick={() => void api.deleteLog(l.id)} aria-label="Undo this entry">
+            <button type="button" className="lh-icon-btn" data-sound="soft-no" onClick={() => void api.deleteLog(l.id)} aria-label="Undo this entry">
               <Trash2 size={14} strokeWidth={2.6} />
             </button>
           </li>
