@@ -22,11 +22,12 @@ import { skyPhase } from '../sky-phase'
 import { campSound, useCampSoundPrefs } from '../camp-sound'
 import { buddyNameOf } from '../camp-catalog'
 import { pipGrowth } from '../pip-growth'
-import { MILESTONES, checkpointsDue, dayCell, dayNumber, isWeekly, keptPromises, lighthouseStage, programLength, weekCount, weekStartOf, type ProgramCtx } from './program-engine'
+import { MILESTONES, activeTracks, checkpointsDue, isDone, logSound, dayCell, dayNumber, isWeekly, keptPromises, lighthouseStage, programLength, weekCount, weekStartOf, type ProgramCtx } from './program-engine'
 import { trackMeta } from './program-content'
-import { momentLine, situationLine, type KeeperMoment, type KeeperOffer } from './lighthouse-voice'
+import { introLines, keeperLines, momentLine, type KeeperMoment, type KeeperOffer } from './lighthouse-voice'
+import { useKeeperTalk } from './use-keeper-talk'
 import type { LighthouseApi, LogOptions } from './lighthouse-api'
-import { LighthouseScene, type SceneObject } from './lighthouse-scene'
+import { LighthouseScene, type SceneLight, type SceneObject } from './lighthouse-scene'
 import { PhaseSign } from './phase-sign'
 import { GuideSheet } from './guide-sheet'
 import { TodayDeck } from './today-deck'
@@ -181,23 +182,42 @@ function LighthouseWorld({ onBack, onLeave }: LighthouseWorldProps) {
   const due = ctx ? checkpointsDue(ctx.program, data?.assessments ?? [], today) : []
 
   // ── Pip ──
+  // Everything true worth saying, most useful first; the bubble rotates through it (tap Pip).
+  // A reaction to something that just happened takes over for a few seconds.
+  const assessments = data?.assessments
+  const lines = useMemo(() => {
+    if (!ctx) return introLines(buddyName)
+    const all = keeperLines(ctx, now, assessments ?? [], buddyName)
+    return all.filter((l) => !(l.offer && dismissed === `${today}:${l.offer.track}`))
+  }, [ctx, now, assessments, buddyName, dismissed, today])
+  const talk = useKeeperTalk(lines, today)
   const pip = useMemo(() => {
-    if (!ctx) return { mood: 'waking' as const, line: isAwaitingData(remote) ? 'Lighting the lamp…' : 'A lighthouse on the edge of the camp. Ninety days, one stone at a time.' }
-    if (moment) return momentLine(moment, ctx)
-    const line = situationLine(ctx, now, buddyName)
-    if (line.offer && dismissed === `${today}:${line.offer.track}`) {
-      return { mood: 'content' as const, line: `Day ${Math.max(1, dayNumber(ctx.program, today))} of ${programLength(ctx.program)}. One stone at a time.` }
-    }
-    return line
-  }, [ctx, moment, now, buddyName, dismissed, today, remote])
+    if (!ctx && isAwaitingData(remote)) return { mood: 'waking' as const, line: 'Lighting the lamp…' }
+    if (moment && ctx) return momentLine(moment, ctx)
+    return talk.line ?? { mood: 'content' as const, line: 'One stone at a time.' }
+  }, [ctx, moment, remote, talk.line])
+  const talkTo = () => {
+    if (moment) setMoment(null)
+    talk.next()
+  }
 
-  const lastSpoken = useRef('')
-  useEffect(() => {
-    if (moment && pip.line !== lastSpoken.current) {
-      lastSpoken.current = pip.line
-      campSound.voice('pip', pip.line)
-    }
-  }, [moment, pip.line])
+  // ── Today's lights: a lantern on the water per track that's on, lit once it's done ──
+  const lights: SceneLight[] | null = useMemo(() => {
+    if (!ctx) return null
+    const p = ctx.program
+    const d = dayNumber(p, today)
+    if (d > programLength(p)) return null
+    return activeTracks(p, d < 1 ? p.startDate : today).map((key) => {
+      if (d < 1) return { key, lit: false }
+      const status = dayCell(ctx, key, today).status
+      const wk = isWeekly(key) ? weekCount(ctx, key, weekStartOf(today)) : null
+      return { key, lit: isDone(status) || (key === 'mood' && status === 'logged') || (!!wk && wk.target != null && wk.done >= wk.target) }
+    })
+  }, [ctx, today])
+  const lightsLabel = !ctx || !lights ? '' : dayNumber(ctx.program, today) < 1 ? `Lights from ${dayMonth(ctx.program.startDate)}` : `Today · ${lights.filter((l) => l.lit).length} of ${lights.length} lit`
+
+  // Pip doesn't "talk" in blips here: a reply comes after the server, and a second, later
+  // sound for one gesture reads as lag. The bubble is enough.
 
   // ── Writes ──
 
@@ -301,12 +321,14 @@ function LighthouseWorld({ onBack, onLeave }: LighthouseWorldProps) {
         const pid = id()
         const before = currentCtx()
         if (!pid || !before) return null
+        // A press already made this gesture's one sound; the reply mustn't make another.
+        const sounded = opts?.soundPlayed || campSound.pressedWithin(1500)
         markBusy(payload.track, true)
         try {
           const res = await programService.addLog(pid, payload)
           if (res.error || !res.data) return fail(res.error?.message, 'Couldn’t save that — try again.')
           programActions.applyLog(res.data)
-          react(before, res.data, opts)
+          react(before, res.data, { ...opts, soundPlayed: sounded })
           return res.data
         } finally {
           markBusy(payload.track, false)
@@ -316,12 +338,13 @@ function LighthouseWorld({ onBack, onLeave }: LighthouseWorldProps) {
         const pid = id()
         const before = currentCtx()
         if (!pid || !before) return null
+        const sounded = opts?.soundPlayed || campSound.pressedWithin(1500)
         markBusy(payload.track, true)
         try {
           const res = await programService.updateLog(pid, logId, payload)
           if (res.error || !res.data) return fail(res.error?.message, 'Couldn’t update that — try again.')
           programActions.applyLog(res.data)
-          react(before, res.data, opts)
+          react(before, res.data, { ...opts, soundPlayed: sounded })
           return res.data
         } finally {
           markBusy(payload.track, false)
@@ -330,13 +353,14 @@ function LighthouseWorld({ onBack, onLeave }: LighthouseWorldProps) {
       deleteLog: async (logId) => {
         const pid = id()
         if (!pid) return false
+        const sounded = campSound.pressedWithin(1500)
         const res = await programService.deleteLog(pid, logId)
         if (res.error) {
           toast.error(res.error.message || 'Couldn’t undo that.')
           return false
         }
         programActions.removeLog(logId)
-        campSound.play('soft-no')
+        if (!sounded) campSound.play('soft-no')
         return true
       },
       saveSettings: async (payload, message) => {
@@ -354,6 +378,7 @@ function LighthouseWorld({ onBack, onLeave }: LighthouseWorldProps) {
       writeLetter: async (key, text) => {
         const pid = id()
         if (!pid) return false
+        const sounded = campSound.pressedWithin(1500)
         const res = await programService.writeLetter(pid, key, text)
         if (res.error || !res.data) {
           toast.error(res.error?.message || 'Couldn’t keep that letter — try again.')
@@ -361,13 +386,14 @@ function LighthouseWorld({ onBack, onLeave }: LighthouseWorldProps) {
         }
         programActions.applyProgram(res.data)
         const letter = res.data.letters[key]
-        campSound.play(letter?.sealed ? 'chest-shake' : 'page')
+        if (!sounded) campSound.play('confirm')
         setMoment({ kind: 'letter', sealedUntil: letter?.sealed ? letter.opensOn : null })
         return true
       },
       saveReview: async (weekStart, payload) => {
         const pid = id()
         if (!pid) return false
+        const sounded = campSound.pressedWithin(1500)
         const res = await programService.saveReview(pid, weekStart, payload)
         if (res.error || !res.data) {
           toast.error(res.error?.message || 'Couldn’t save the review.')
@@ -376,17 +402,18 @@ function LighthouseWorld({ onBack, onLeave }: LighthouseWorldProps) {
         programActions.applyReview(res.data.review)
         programActions.applyProgram(res.data.program)
         celebrationActions.celebrate({ anchor: document.querySelector<HTMLElement>('.lh-scene'), palette: 'candy', intensity: 'echo', label: 'Weekly review saved', once: { key: 'lh-review', scope: weekStart } })
-        campSound.play('chime')
+        if (!sounded) campSound.play('confirm')
         setMoment({ kind: 'review' })
         return true
       },
       addAssessment: async (payload) => {
         const pid = id()
         if (!pid) return null
+        const sounded = campSound.pressedWithin(1500)
         const res = await programService.addAssessment(pid, payload)
         if (res.error || !res.data) return fail(res.error?.message, 'Couldn’t save that check-in.')
         programActions.applyAssessment(res.data)
-        campSound.play('chime')
+        if (!sounded) campSound.play('confirm')
         setMoment({ kind: 'checkpoint' })
         return res.data
       },
@@ -432,7 +459,7 @@ function LighthouseWorld({ onBack, onLeave }: LighthouseWorldProps) {
       return
     }
     await programActions.load(today)
-    campSound.play('week-kept')
+    if (!campSound.pressedWithin(4000)) campSound.play('celebrate')
     celebrationActions.celebrate({ anchor: document.querySelector<HTMLElement>('.lh-scene'), palette: 'candy', label: 'The first stone is the plan', detail: `Day 1 is ${dayMonth(payload.startDate)}` })
   }
 
@@ -508,16 +535,10 @@ function LighthouseWorld({ onBack, onLeave }: LighthouseWorldProps) {
    * week's target rings the week, otherwise a pop that climbs with how many are done today.
    */
   const soundNow = (track: ProgramTrackKey, level: 'FULL' | 'MIN') => {
-    if (!ctx) return
-    if (isWeekly(track)) {
-      const wk = weekCount(ctx, track, weekStartOf(today))
-      if (wk.target != null && wk.done + 1 === wk.target && !['full', 'min'].includes(dayCell(ctx, track, today).status)) {
-        campSound.play('week-kept')
-        return
-      }
-    }
-    const doneToday = ctx.program.tracks.filter((t) => t.key !== track && ['full', 'min'].includes(dayCell(ctx, t.key, today).status)).length
-    campSound.play(level === 'FULL' ? 'pop' : 'chime', { step: doneToday })
+    // A tapped "small version" link already sounded on its press; a completed hold hasn't.
+    if (!ctx || campSound.pressedWithin(600)) return
+    const s = logSound(ctx, track, level)
+    campSound.play(s.name, { step: s.step })
   }
 
   const logSession = (track: ProgramTrackKey, level: 'FULL' | 'MIN', el: HTMLElement) => {
@@ -593,14 +614,20 @@ function LighthouseWorld({ onBack, onLeave }: LighthouseWorldProps) {
             kept={kept}
             stage={stage}
             fresh={fresh}
+            showNext={!!ctx && dayNumber(ctx.program, today) >= 1}
             pip={pip}
+            talk={moment || !talk.line ? null : { index: talk.index, count: talk.count }}
             buddyName={buddyName}
             wear={wear}
             growth={growth}
             flagUp={due.length > 0}
             bottleGlint={!!ctx && (!ctx.program.letters.to23 || (!!ctx.program.letters.to23 && !ctx.program.letters.to23.sealed))}
             reviewDue={reviewDue}
+            lights={lights}
+            lightsLabel={lightsLabel}
             onObject={(o, el) => (ctx ? onObject(o, el) : undefined)}
+            onLight={(track, el) => openTrack(track, el)}
+            onPip={talkTo}
             onOffer={onOffer}
             onDismissOffer={dismissOffer}
           />

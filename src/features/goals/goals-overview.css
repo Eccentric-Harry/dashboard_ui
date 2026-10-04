@@ -1304,11 +1304,11 @@
 
 :where(:root:not([data-theme='none'])) .camp-lighthouse {
   position: absolute;
-  right: 21%;
-  bottom: -34px;
+  right: 17%;
+  bottom: -14px;
   z-index: 1;
-  width: 52px;
-  height: 86px;
+  width: clamp(124px, 11vw, 168px);
+  aspect-ratio: 120 / 150;
   padding: 0;
   border: 0;
   background: none;
@@ -1317,44 +1317,76 @@
 }
 
 :where(:root:not([data-theme='none'])) .camp-lighthouse:hover,
-:where(:root:not([data-theme='none'])) .camp-lighthouse:focus-visible { transform: translateY(-4px) scale(1.06); }
-:where(:root:not([data-theme='none'])) .camp-lighthouse svg { width: 100%; height: 100%; overflow: visible; }
-:where(:root:not([data-theme='none'])) .camp-lh-land { fill: var(--far); transition: fill 1.4s ease; }
+:where(:root:not([data-theme='none'])) .camp-lighthouse:focus-visible { transform: translateY(-4px) scale(1.05); }
+:where(:root:not([data-theme='none'])) .camp-lighthouse svg { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 6px 10px rgba(18, 12, 40, 0.18)); }
+:where(:root:not([data-theme='none'])) .camp-lh-sea { fill: #74cdf2; transition: fill 1.4s ease; }
+:where(:root:not([data-theme='none'])) .camp-lh-wave { fill: none; stroke: #ffffff; stroke-linecap: round; stroke-width: 1.6; opacity: 0.7; }
+:where(:root:not([data-theme='none'])) .camp-lh-land { fill: #cdbfae; transition: fill 1.4s ease; }
+:where(:root:not([data-theme='none'])) .camp-lh-grass { fill: #8fd894; transition: fill 1.4s ease; }
+:where(:root:not([data-theme='none'])) .camp-lh-cottage { fill: #fff4e2; stroke: #5d4a5f; stroke-width: 1; }
+:where(:root:not([data-theme='none'])) .camp-lh-roof { fill: #ff9f6a; stroke: #5d4a5f; stroke-linejoin: round; stroke-width: 1; }
 :where(:root:not([data-theme='none'])) .camp-lh-tower { fill: #fffaf2; stroke: #5d4a5f; stroke-linejoin: round; stroke-width: 1.6; }
 :where(:root:not([data-theme='none'])) .camp-lh-stripe { fill: #ff8fa6; }
+:where(:root:not([data-theme='none'])) .camp-lh-win { fill: #ffe9a8; stroke: #5d4a5f; stroke-width: 0.8; }
+:where(:root:not([data-theme='none'])) .camp-lh-door { fill: #5d4a5f; }
 :where(:root:not([data-theme='none'])) .camp-lh-gallery { fill: #5d4a5f; }
 :where(:root:not([data-theme='none'])) .camp-lh-lamp { fill: #c4e8ff; stroke: #5d4a5f; stroke-width: 1.3; }
 :where(:root:not([data-theme='none'])) .camp-lh-dome { fill: #ff8fa6; stroke: #5d4a5f; stroke-width: 1.3; }
+:where(:root:not([data-theme='none'])) .camp-lh-ball { fill: #5d4a5f; }
 :where(:root:not([data-theme='none'])) .camp-lh-pole { fill: none; stroke: #5d4a5f; stroke-linecap: round; stroke-width: 1.8; }
 :where(:root:not([data-theme='none'])) .camp-lh-flag { fill: #52b4ff; transform-box: fill-box; transform-origin: left center; animation: camp-lh-flag 1.6s ease-in-out infinite alternate; }
 :where(:root:not([data-theme='none'])) .camp-lh-glow { fill: #ffd25a; opacity: 0; transition: opacity 1s ease; }
+:where(:root:not([data-theme='none'])) .camp-lh-beam { opacity: 0; transform-box: view-box; transform-origin: 60px 40px; transition: opacity 1s ease; }
+:where(:root:not([data-theme='none'])) .camp-lh-beam path { opacity: 0.55; }
 :where(:root:not([data-theme='none'])) .camp--night .camp-lh-glow,
-:where(:root:not([data-theme='none'])) .camp-lighthouse.is-lit .camp-lh-glow { opacity: 0.4; }
+:where(:root:not([data-theme='none'])) .camp-lighthouse.is-lit .camp-lh-glow { opacity: 0.45; }
+:where(:root:not([data-theme='none'])) .camp--night .camp-lh-beam,
+:where(:root:not([data-theme='none'])) .camp-lighthouse.is-lit .camp-lh-beam { opacity: 1; animation: camp-lh-sweep 10s linear infinite; }
 :where(:root:not([data-theme='none'])) .camp--night .camp-lh-lamp,
 :where(:root:not([data-theme='none'])) .camp-lighthouse.is-lit .camp-lh-lamp { fill: #fff3b0; }
+:where(:root:not([data-theme='none'])) .camp--night .camp-lh-sea { fill: #2b3473; }
+:where(:root:not([data-theme='none'])) .camp--night .camp-lh-wave { stroke: #b9c2ff; opacity: 0.45; }
+:where(:root:not([data-theme='none'])) .camp--night .camp-lh-land { fill: #4d4a73; }
+:where(:root:not([data-theme='none'])) .camp--night .camp-lh-grass { fill: #2c4170; }
+:where(:root:not([data-theme='none'])) .camp--night .camp-lh-cottage { fill: #cfc9ef; }
+:where(:root:not([data-theme='none'])) .camp--night .camp-lh-roof { fill: #a8665a; }
+:where(:root:not([data-theme='none'])) .camp--night .camp-lh-tower { fill: #e7e4ff; }
+:where(:root:not([data-theme='none'])) .camp--night .camp-lh-win { fill: #ffd25a; filter: drop-shadow(0 0 2px #ffd25a); }
+:where(:root:not([data-theme='none'])) .camp--golden .camp-lh-sea { fill: #ffb995; }
+:where(:root:not([data-theme='none'])) .camp--dawn .camp-lh-sea { fill: #f0bfd0; }
 
 :where(:root:not([data-theme='none'])) .camp-lighthouse-flag {
   position: absolute;
-  top: calc(100% - 6px);
+  top: calc(100% - 4px);
   left: 50%;
-  padding: 1px 8px 2px;
-  border: 2px solid var(--bar-chip-line);
-  border-radius: 999px;
-  background: var(--bar-chip);
-  color: var(--bar-ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3px 11px 4px;
+  border-radius: 12px;
+  background: var(--paper, #fffaf0);
+  box-shadow: 0 3px 0 var(--paper-lip, #e7d6bd), 0 8px 18px rgba(18, 12, 40, 0.18);
+  color: var(--paper-ink, #2a2140);
   font-family: var(--tb-display);
-  font-size: 11.5px;
-  font-weight: 800;
+  line-height: 1.1;
   white-space: nowrap;
   transform: translateX(-50%);
 }
+:where(:root:not([data-theme='none'])) .camp-lighthouse-flag strong { font-size: 13px; font-weight: 800; }
+:where(:root:not([data-theme='none'])) .camp-lighthouse-flag small { font-family: var(--tb-body); font-size: 10.5px; font-weight: 800; opacity: 0.7; }
 
 @keyframes camp-lh-flag { from { transform: skewY(-5deg) scaleX(0.92); } to { transform: skewY(5deg) scaleX(1.05); } }
+/* A slow sweep out to the right, across and back — like a lamp turning, seen side on. */
+@keyframes camp-lh-sweep { 0%, 100% { transform: scaleX(1); opacity: 1; } 45% { transform: scaleX(0.05); opacity: 0.2; } 50% { transform: scaleX(-1); opacity: 1; } 95% { transform: scaleX(-0.05); opacity: 0.2; } }
 
 @media (max-width: 760px) {
-  :where(:root:not([data-theme='none'])) .camp-lighthouse { right: 10px; bottom: 14px; width: 38px; height: 64px; }
+  :where(:root:not([data-theme='none'])) .camp-lighthouse { right: 6px; bottom: 10px; width: 84px; }
+  :where(:root:not([data-theme='none'])) .camp-lighthouse-flag { padding: 2px 8px 3px; }
+  :where(:root:not([data-theme='none'])) .camp-lighthouse-flag strong { font-size: 11px; }
+  :where(:root:not([data-theme='none'])) .camp-lighthouse-flag small { font-size: 9.5px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :where(:root:not([data-theme='none'])) .camp-lh-flag { animation: none; }
+  :where(:root:not([data-theme='none'])) .camp-lh-flag,
+  :where(:root:not([data-theme='none'])) .camp-lh-beam { animation: none !important; }
 }

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
-import type { CampChestOpenResult, CampLookPayload, CampQuestClaimResult, CampView, GoalCheckInPayload, GoalPayload, GoalProgressView } from '@/types/goals'
+import type { CampChestOpenResult, CampDecorSpot, CampLookPayload, CampQuestClaimResult, CampView, GoalCheckInPayload, GoalPayload, GoalProgressView } from '@/types/goals'
 import { goalsService } from '@/services/goals-service'
 import { goalsActions, useGoalsStore } from '@/store/goals-store'
 import { isAwaitingData } from '@/store/zustand-utils'
@@ -11,6 +11,7 @@ import { SkyDeco } from './components/sky-deco'
 import { WorldBar } from './components/world-bar'
 import { LanternString } from './components/lantern-string'
 import { WorldGround } from './components/world-ground'
+import { isTentDecor } from './components/camp-decor-data'
 import { JournalBook, type JournalPage } from './components/journal-book'
 import { GoalModal } from './components/goal-modal'
 import { LanternFocus } from './components/lantern-focus'
@@ -388,6 +389,23 @@ function GoalsOverviewDashboard({ onExit, onOpenWorld, onOpenLighthouse }: Goals
     [today],
   )
 
+  // ── Arranging the meadow ──
+  const [arranging, setArranging] = useState(false)
+  const [savingYard, setSavingYard] = useState(false)
+  const hasYard = (camp?.decor ?? []).some((id) => !isTentDecor(id))
+  const saveYard = async (spots: Record<string, CampDecorSpot>) => {
+    if (!camp) return
+    setSavingYard(true)
+    try {
+      await handleLook({ buddyName: camp.buddyName ?? null, equipped: camp.equipped, decor: camp.decor, decorAt: { ...camp.decorAt, ...spots } })
+      setArranging(false)
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Couldn’t save the camp — try again.'))
+    } finally {
+      setSavingYard(false)
+    }
+  }
+
   const openCreate = (preset?: GoalPayload, origin?: Origin) => {
     if (goals.length >= MAX_ACTIVE_GOALS) return
     setGoalModal({ mode: 'create', preset, origin })
@@ -424,7 +442,7 @@ function GoalsOverviewDashboard({ onExit, onOpenWorld, onOpenLighthouse }: Goals
       <div className="camp-scene" inert={sheetOpen}>
         <SkyDeco />
         {phase === 'night' && !sheetOpen && <ShootingStar onWish={() => setMoment({ kind: 'wish' })} />}
-        <WorldBar greeting={GREETING[phase]} dateLabel={dayLabel(today)} bestStreak={bestStreak} sparks={camp?.sparks ?? 0} onExit={onExit} />
+        <WorldBar greeting={GREETING[phase]} dateLabel={dayLabel(today)} bestStreak={bestStreak} sparks={camp?.sparks ?? 0} onExit={onExit} onArrange={hasYard && !arranging ? () => setArranging(true) : undefined} />
 
         <section className="world-sky" aria-label="Today's lanterns">
           {/* Far off on the horizon: the way to the 90-day program. */}
@@ -474,6 +492,7 @@ function GoalsOverviewDashboard({ onExit, onOpenWorld, onOpenLighthouse }: Goals
           onOpenChest={openChestReveal}
           onOpenLetter={openLetter}
           onOpenCorner={openCorner}
+          yard={{ decorAt: camp?.decorAt ?? {}, arranging, saving: savingYard, onDone: (spots) => void saveYard(spots), onCancel: () => setArranging(false) }}
         />
       </div>
 

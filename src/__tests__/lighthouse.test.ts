@@ -20,7 +20,7 @@ import {
   type ProgramCtx,
 } from '@/features/goals/lighthouse/program-engine'
 import { C25K, sessionMinutes, TRACKS } from '@/features/goals/lighthouse/program-content'
-import { momentLine, situationLine, type KeeperMoment } from '@/features/goals/lighthouse/lighthouse-voice'
+import { introLines, keeperLines, momentLine, situationLine, type KeeperMoment } from '@/features/goals/lighthouse/lighthouse-voice'
 import { joinIfThen, splitIfThen } from '@/features/goals/lighthouse/lh-utils'
 
 const START = '2026-10-05' // a Monday — day 1
@@ -341,10 +341,30 @@ describe('Pip at the lighthouse', () => {
       const today = day(n)
       const logs = n > 10 ? [log('regard', day(n - 3), { text: 'a' }), log('lift', day(n - 1), { level: 'FULL' })] : []
       const c = ctx(today, logs, { sources: { ...noSources(), sleep: n % 7 === 0 ? { [today]: 300, [day(n - 1)]: 300, [day(n - 2)]: 300 } : {} } })
-      for (const hour of [7, 15, 22]) lines.push(situationLine(c, new Date(2026, 9, 5, hour)).line)
+      for (const hour of [1, 7, 15, 18, 21]) {
+        lines.push(situationLine(c, new Date(2026, 9, 5, hour)).line)
+        lines.push(...keeperLines(c, new Date(2026, 9, 5, hour), []).map((l) => l.line))
+      }
       for (const m of moments) lines.push(momentLine(m, c).line)
     }
+    lines.push(...introLines().map((l) => l.line))
     for (const line of lines) expect(line, line).not.toMatch(BANNED)
+  })
+
+  it('has something specific to say, and never the same thing twice in one breath', () => {
+    const c = ctx(day(20), [log('lift', day(19), { level: 'FULL' }), log('regard', day(19), { text: 'a' })])
+    const lines = keeperLines(c, new Date(2026, 9, 24, 15), [])
+    expect(lines.length).toBeGreaterThan(4)
+    expect(new Set(lines.map((l) => l.key)).size).toBe(lines.length)
+    expect(new Set(lines.map((l) => l.line)).size).toBe(lines.length)
+    expect(lines.some((l) => /1 stone laid/.test(l.line))).toBe(true)
+    expect(lines.some((l) => /This week so far: 1 lift/.test(l.line))).toBe(true)
+  })
+
+  it('never nudges food in its chatter', () => {
+    for (let n = 1; n <= 90; n += 3) {
+      for (const l of keeperLines(ctx(day(n)), new Date(2026, 9, 5, 12), [])) expect(l.line, l.line).not.toMatch(/protein|\beat\b|food/i)
+    }
   })
 })
 

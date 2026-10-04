@@ -9,7 +9,9 @@ import { goalColor } from '../goal-palette'
 import type { PipStage } from '../pip-growth'
 import type { JournalPage } from './journal-book'
 import type { PipCornerTab } from './pip-corner'
-import { CampDecor } from './camp-decor'
+import type { CampDecorSpot } from '@/types/goals'
+import { TentDecor } from './camp-decor'
+import { CampYard } from './camp-yard'
 import { FenCart, Moss, Wren } from './camp-characters'
 import { Pip } from './pip'
 
@@ -35,6 +37,14 @@ type WorldGroundProps = {
   onOpenChest: (origin: HTMLElement) => void
   onOpenLetter: (origin: HTMLElement) => void
   onOpenCorner: (tab: PipCornerTab, origin: HTMLElement) => void
+  /** The meadow: where decorations stand, and whether they're being moved. */
+  yard: {
+    decorAt: Record<string, CampDecorSpot>
+    arranging: boolean
+    saving: boolean
+    onDone: (spots: Record<string, CampDecorSpot>) => void
+    onCancel: () => void
+  }
 }
 
 const PEBBLES_SHOWN = 4
@@ -58,8 +68,9 @@ function daysLeft(today: string, weekStart: string): number {
 /**
  * The ground the camp stands on: a hill crest; the wooden signboard with the week's
  * finding and Wren perched on it with the day's letter; the trail of stepping stones (a
- * pebble per goal that counted) to the camp chest; the tent and fire with Pip and any
- * decorations from Fen; Fen's cart; and Moss with the journal. Every one of them is
+ * pebble per goal that counted) to the camp chest; the tent and fire with Pip (and Fen's
+ * bunting or fairy lights on the tent); Fen's cart; Moss with the journal; and the meadow,
+ * where every other decoration stands wherever you placed it (camp-yard.tsx). Every one of them is
  * something to tap — objects and characters in a place, not cards in a grid.
  */
 function WorldGround({
@@ -80,6 +91,7 @@ function WorldGround({
   onOpenChest,
   onOpenLetter,
   onOpenCorner,
+  yard,
 }: WorldGroundProps) {
   const lit = goals.filter((g) => g.today.hit).length
   const ratio = goals.length ? lit / goals.length : 0
@@ -125,7 +137,9 @@ function WorldGround({
         ))}
       </svg>
 
-      <div className="ground-stage">
+      <CampYard decor={look.decor} decorAt={yard.decorAt} arranging={yard.arranging} saving={yard.saving} onDone={yard.onDone} onCancel={yard.onCancel} />
+
+      <div className="ground-stage" inert={yard.arranging}>
         <div className="ground-trail-side">
           <button type="button" className="market-cart" onClick={at((el) => onOpenCorner('shop', el))} aria-label="Fen's cart — spend sparks on things for your buddy and the camp">
             <FenCart talking={talking === 'fen'} />
@@ -246,7 +260,7 @@ function WorldGround({
                 <rect className="camp-log" x="-19" y="-4" width="38" height="8" rx="4" transform="rotate(14)" />
                 <rect className="camp-log" x="-19" y="-4" width="38" height="8" rx="4" transform="rotate(-14)" />
               </g>
-              <CampDecor ids={look.decor} />
+              <TentDecor ids={look.decor} />
               <Pip mood={pip.mood} size={104} x={4} y={140 - 110} className="camp-pip" wear={look.wear} stage={look.stage} name={buddyName} />
             </svg>
             <button

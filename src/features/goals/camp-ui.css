@@ -1012,6 +1012,97 @@
 :where(:root:not([data-theme='none'])) .cd-glow { opacity: 0.18; }
 :where(:root:not([data-theme='none'])) .camp--night .cd-glow,
 :where(:root:not([data-theme='none'])) .camp--golden .cd-glow { opacity: 0.5; animation: cd-glow 2.6s ease-in-out infinite; }
+:where(:root:not([data-theme='none'])) .cd-spin { transform-origin: center; animation: cd-spin 5s linear infinite; }
+:where(:root:not([data-theme='none'])) .cd-petal { animation: cd-petal 7s ease-in infinite; }
+:where(:root:not([data-theme='none'])) .cd-petal--b { animation-delay: -3.5s; }
+:where(:root:not([data-theme='none'])) .cd-lamp-glass { transition: fill 1s ease; }
+:where(:root:not([data-theme='none'])) .camp--night .cd-lamp-glass,
+:where(:root:not([data-theme='none'])) .camp--golden .cd-lamp-glass { fill: #ffd25a; }
+:where(:root:not([data-theme='none'])) .camp--night .cd-water { fill: #3a4a8c; }
+
+/* ---------- The meadow: decorations wherever you put them ---------- */
+
+:where(:root:not([data-theme='none'])) .camp-yard {
+  --k: clamp(1px, 0.1vw, 1.45px);
+  position: absolute;
+  inset: 30px 0 0;
+  /* Behind the camp's own things: Pip, the tent, the cart and the sign stay in front. */
+  z-index: 0;
+  pointer-events: none;
+}
+:where(:root:not([data-theme='none'])) .yard-piece {
+  position: absolute;
+  width: calc(var(--w) * var(--k) * 1.3);
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: none;
+  pointer-events: none;
+  transform: translate(-50%, -100%);
+  transition: transform 0.18s var(--tb-spring), filter 0.18s ease;
+}
+:where(:root:not([data-theme='none'])) .yard-art { display: block; width: 100%; height: auto; overflow: visible; }
+:where(:root:not([data-theme='none'])) .camp-yard.is-arranging { z-index: 6; }
+:where(:root:not([data-theme='none'])) .is-arranging .yard-piece {
+  pointer-events: auto;
+  touch-action: none;
+  cursor: grab;
+  outline: 2px dashed color-mix(in srgb, var(--bar-ink) 55%, transparent);
+  outline-offset: 5px;
+}
+:where(:root:not([data-theme='none'])) .is-arranging .yard-piece:hover { transform: translate(-50%, -100%) translateY(-3px); }
+:where(:root:not([data-theme='none'])) .yard-piece.is-dragging {
+  z-index: 2;
+  cursor: grabbing;
+  outline-style: solid;
+  filter: drop-shadow(0 12px 10px rgba(18, 12, 40, 0.28));
+  transform: translate(-50%, -100%) translateY(-6px) scale(1.06);
+}
+:where(:root:not([data-theme='none'])) .camp-yard.is-arranging ~ .ground-stage { opacity: 0.42; filter: saturate(0.7); transition: opacity 0.25s ease; }
+
+:where(:root:not([data-theme='none'])) .yard-bar {
+  position: fixed;
+  left: 50%;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 24px);
+  padding: 8px 8px 8px 16px;
+  border-radius: 999px;
+  background: var(--paper);
+  box-shadow: 0 4px 0 var(--paper-lip), 0 16px 34px rgba(18, 12, 40, 0.28);
+  color: var(--paper-ink);
+  font-family: var(--tb-body);
+  transform: translateX(-50%);
+  animation: yard-bar-in 0.35s var(--tb-spring);
+}
+:where(:root:not([data-theme='none'])) .yard-bar-hint { font-size: 13px; font-weight: 800; }
+:where(:root:not([data-theme='none'])) .yard-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 34px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--paper-lip) 55%, var(--paper));
+  color: var(--paper-ink);
+  font: 800 13px var(--tb-body);
+  cursor: pointer;
+}
+:where(:root:not([data-theme='none'])) .yard-btn:disabled { opacity: 0.6; cursor: default; }
+:where(:root:not([data-theme='none'])) .yard-btn--done { background: #3fcb91; box-shadow: 0 3px 0 #23a56f; color: #ffffff; }
+@keyframes yard-bar-in { from { opacity: 0; transform: translate(-50%, 16px); } to { opacity: 1; transform: translateX(-50%); } }
+@keyframes cd-spin { to { transform: rotate(360deg); } }
+@keyframes cd-petal { 0% { opacity: 0; transform: translate(0, 0); } 15% { opacity: 1; } 100% { opacity: 0; transform: translate(-14px, 34px) rotate(140deg); } }
+@media (max-width: 760px) {
+  :where(:root:not([data-theme='none'])) .yard-bar-hint { display: none; }
+  :where(:root:not([data-theme='none'])) .camp-yard { --k: 0.78px; }
+  :where(:root:not([data-theme='none'])) .world-bar .world-exit span { display: none; }
+}
+
 :where(:root:not([data-theme='none'])) .cd-bulb { opacity: 0.75; }
 :where(:root:not([data-theme='none'])) .camp--night .cd-bulb,
 :where(:root:not([data-theme='none'])) .camp--golden .cd-bulb { animation: cd-twinkle 1.4s ease-in-out infinite; filter: drop-shadow(0 0 3px currentColor); }
@@ -1030,7 +1121,10 @@
 
 :where(:root:not([data-theme='none'])) .market-cart .cc { width: 100%; height: auto; }
 :where(:root:not([data-theme='none'])) .market-cart:hover { transform: translateY(-3px); }
-:where(:root:not([data-theme='none'])) .market-cart:hover .cc-wheel { animation: cc-roll 0.8s ease-in-out; }
+/* Each wheel turns about its own hub (fill-box), and the cart rolls a little forward with it. */
+:where(:root:not([data-theme='none'])) .market-cart .cc-wheel { transform-box: fill-box; transform-origin: center; }
+:where(:root:not([data-theme='none'])) .market-cart:hover .cc-wheel { animation: cc-wheel-rock 0.9s cubic-bezier(0.45, 0, 0.3, 1); }
+:where(:root:not([data-theme='none'])) .market-cart:hover .cc { animation: cc-cart-roll 0.9s cubic-bezier(0.45, 0, 0.3, 1); }
 
 /* Moss and the journal, at the camp's edge. */
 :where(:root:not([data-theme='none'])) .ground-market {
@@ -2658,8 +2752,18 @@
   50% { transform: scale(1.12); }
 }
 
-@keyframes cc-roll {
-  to { transform: rotate(360deg); }
+/* The cart rolls 6 units forward and back; a wheel of radius 12 turns 6/12 rad (≈29°) to
+   match, so the wheels grip the ground instead of spinning in place. */
+@keyframes cc-wheel-rock {
+  0% { transform: rotate(0deg); }
+  60% { transform: rotate(29deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@keyframes cc-cart-roll {
+  0% { transform: translateX(0); }
+  60% { transform: translateX(6px); }
+  100% { transform: translateX(0); }
 }
 
 @keyframes chest-wiggle {

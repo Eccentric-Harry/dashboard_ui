@@ -111,13 +111,17 @@ function FenCart({ className, talking, open }: CharacterProps & { open?: boolean
       {/* Wheels */}
       <g className="cc-wheel">
         <circle cx="34" cy="116" r="12" fill="#6e4a33" />
-        <circle cx="34" cy="116" r="7" fill="#c98e57" />
-        <circle cx="34" cy="116" r="2.5" fill="#6e4a33" />
+        <circle cx="34" cy="116" r="8.4" fill="#c98e57" />
+        <path d="M34 107.6 V124.4 M25.6 116 H42.4 M28.1 110.1 L39.9 121.9 M39.9 110.1 L28.1 121.9" stroke="#6e4a33" strokeWidth="1.8" strokeLinecap="round" />
+        <circle cx="34" cy="116" r="3" fill="#6e4a33" />
+        <circle cx="30.8" cy="111.4" r="1.3" fill="#e2b07c" opacity="0.8" />
       </g>
       <g className="cc-wheel">
         <circle cx="116" cy="116" r="12" fill="#6e4a33" />
-        <circle cx="116" cy="116" r="7" fill="#c98e57" />
-        <circle cx="116" cy="116" r="2.5" fill="#6e4a33" />
+        <circle cx="116" cy="116" r="8.4" fill="#c98e57" />
+        <path d="M116 107.6 V124.4 M107.6 116 H124.4 M110.1 110.1 L121.9 121.9 M121.9 110.1 L110.1 121.9" stroke="#6e4a33" strokeWidth="1.8" strokeLinecap="round" />
+        <circle cx="116" cy="116" r="3" fill="#6e4a33" />
+        <circle cx="112.8" cy="111.4" r="1.3" fill="#e2b07c" opacity="0.8" />
       </g>
       {/* The sign */}
       <g className="cc-fen-sign">

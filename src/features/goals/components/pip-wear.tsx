@@ -81,6 +81,26 @@ function Hat({ id }: { id: string }) {
           <circle cx="80" cy="-16" r="3.4" fill="#ffcb3d" />
         </g>
       )
+    case 'bucket-hat':
+      return (
+        <g className="pip-wear pip-wear--hat">
+          <path d="M22 46 C 30 40, 90 40, 98 46 C 96 52, 24 52, 22 46 Z" fill="#3fcb91" />
+          <path d="M34 43 C 34 22, 86 22, 86 43 Z" fill="#6fdcab" />
+          <path d="M34 39 C 50 43, 70 43, 86 39 L 86 35 C 70 39, 50 39, 34 35 Z" fill="#23a56f" />
+          <path d="M44 29 q2 -2 4 0 M62 26 q2 -2 4 0 M74 31 q2 -2 4 0" stroke="#ffffff" strokeWidth="1.8" fill="none" strokeLinecap="round" opacity="0.8" />
+        </g>
+      )
+    case 'headphones':
+      return (
+        <g className="pip-wear pip-wear--hat">
+          <path d="M24 64 C 20 20, 100 20, 96 64" fill="none" stroke="#41239e" strokeWidth="6" strokeLinecap="round" />
+          <path d="M26 58 C 24 28, 96 28, 94 58" fill="none" stroke="#a07cff" strokeWidth="3" strokeLinecap="round" />
+          <rect x="14" y="54" width="16" height="24" rx="7" fill="#a07cff" stroke="#41239e" strokeWidth="2.4" />
+          <rect x="90" y="54" width="16" height="24" rx="7" fill="#a07cff" stroke="#41239e" strokeWidth="2.4" />
+          <circle cx="22" cy="66" r="3.2" fill="#ffcb3d" />
+          <circle cx="98" cy="66" r="3.2" fill="#ffcb3d" />
+        </g>
+      )
     case 'crown':
       return (
         <g className="pip-wear pip-wear--hat">
@@ -130,6 +150,39 @@ function Neck({ id }: { id: string }) {
           <path d="M34 103 v8 M48 106 v8 M62 107 v8 M76 106 v8 M90 102 v8" stroke="#ffd34d" strokeWidth="3" strokeLinecap="round" />
         </g>
       )
+    case 'flower-lei':
+      return (
+        <g className="pip-wear pip-wear--neck">
+          {(
+            [
+              [28, 99, '#ff6f95'],
+              [38, 105, '#ffcb3d'],
+              [49, 109, '#a07cff'],
+              [60, 111, '#ff9f5a'],
+              [71, 109, '#52b4ff'],
+              [82, 105, '#ff6f95'],
+              [92, 99, '#ffcb3d'],
+            ] as const
+          ).map(([x, y, c]) => (
+            <g key={x} transform={`translate(${x} ${y})`}>
+              <circle cx="0" cy="-3.4" r="3.6" fill={c} />
+              <circle cx="3.4" cy="0" r="3.6" fill={c} />
+              <circle cx="0" cy="3.4" r="3.6" fill={c} />
+              <circle cx="-3.4" cy="0" r="3.6" fill={c} />
+              <circle cx="0" cy="0" r="2.2" fill="#fff6d6" />
+            </g>
+          ))}
+        </g>
+      )
+    case 'medal':
+      return (
+        <g className="pip-wear pip-wear--neck">
+          <path d="M40 96 L 56 118 M80 96 L 64 118" stroke="#52b4ff" strokeWidth="6" strokeLinecap="round" />
+          <path d="M44 96 L 58 116 M76 96 L 62 116" stroke="#ff6f95" strokeWidth="2" strokeLinecap="round" />
+          <circle cx="60" cy="121" r="9" fill="#ffcb3d" stroke="#dfa412" strokeWidth="2.4" />
+          <path d="M60 115.5 L61.8 119.4 66 119.8 62.8 122.6 63.8 126.8 60 124.6 56.2 126.8 57.2 122.6 54 119.8 58.2 119.4 Z" fill="#fff3c4" />
+        </g>
+      )
     default:
       return null
   }
@@ -163,6 +216,25 @@ function Face({ id }: { id: string }) {
           ))}
           <path d="M56 70 Q 60 67 64 70" fill="none" stroke="#41239e" strokeWidth="2.6" strokeLinecap="round" />
           <path d="M40 66 l3 -3 M70 66 l3 -3" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" opacity="0.85" />
+        </g>
+      )
+    case 'heart-shades':
+      return (
+        <g className="pip-wear pip-wear--face">
+          {[45, 75].map((x) => (
+            <path
+              key={x}
+              transform={`translate(${x} 70)`}
+              d="M0 11 C -16 0, -14 -12, -6 -11 C -2 -10.5, 0 -7, 0 -5 C 0 -7, 2 -10.5, 6 -11 C 14 -12, 16 0, 0 11 Z"
+              fill="#ff6f95"
+              stroke="#8a1c3d"
+              strokeWidth="2.2"
+              strokeLinejoin="round"
+            />
+          ))}
+          <path d="M56 68 Q 60 65 64 68" fill="none" stroke="#8a1c3d" strokeWidth="2.6" strokeLinecap="round" />
+          <path d="M33 66 L 24 63 M87 66 L 96 63" stroke="#8a1c3d" strokeWidth="2.4" strokeLinecap="round" />
+          <path d="M39 64 q2 -3 5 -3 M69 64 q2 -3 5 -3" stroke="#ffffff" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.85" />
         </g>
       )
     default:

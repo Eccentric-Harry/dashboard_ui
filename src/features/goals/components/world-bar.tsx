@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowLeft, Flame, LifeBuoy, Music, Volume2, VolumeX } from 'lucide-react'
+import { ArrowLeft, Flame, LifeBuoy, Move, Music, Volume2, VolumeX } from 'lucide-react'
 import { spiralActions } from '@/store/spiral-store'
 import { cn } from '@/lib/utils'
 import { campSound, useCampSoundPrefs } from '../camp-sound'
@@ -10,6 +10,8 @@ type WorldBarProps = {
   bestStreak: number
   sparks: number
   onExit: () => void
+  /** Present when there's something in the meadow to move around. */
+  onArrange?: () => void
 }
 
 /**
@@ -17,7 +19,7 @@ type WorldBarProps = {
  * sound, and the Spiral Breaker — which stays one tap away on every route, this one
  * included. The sparks chip is where earned sparks fly to (spark-fly.ts).
  */
-function WorldBar({ greeting, dateLabel, bestStreak, sparks, onExit }: WorldBarProps) {
+function WorldBar({ greeting, dateLabel, bestStreak, sparks, onExit, onArrange }: WorldBarProps) {
   const { enabled, ambience } = useCampSoundPrefs()
   const [menu, setMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
@@ -90,6 +92,11 @@ function WorldBar({ greeting, dateLabel, bestStreak, sparks, onExit }: WorldBarP
             </div>
           )}
         </div>
+        {onArrange && (
+          <button type="button" className="world-breathe" onClick={onArrange} aria-label="Arrange the camp — move decorations around" title="Arrange the camp">
+            <Move size={16} strokeWidth={2.4} />
+          </button>
+        )}
         <button type="button" className="world-breathe" onClick={() => spiralActions.open()} aria-label="Spiral breaker" title="Spiral breaker">
           <LifeBuoy size={16} strokeWidth={2.4} />
         </button>

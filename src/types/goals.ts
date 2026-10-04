@@ -203,6 +203,8 @@ export interface CampView {
   owned: string[];
   equipped: Partial<Record<CampWearSlot, string>>;
   decor: string[];
+  /** Where each meadow decoration stands, if it's been moved (else its default spot). */
+  decorAt: Record<string, CampDecorSpot>;
   /** Empty means there's nothing in the chest right now. */
   chest: CampChestItem[];
   quests: CampQuest[];
@@ -226,10 +228,18 @@ export interface CampQuestClaimResult {
   camp: CampView;
 }
 
+/** A spot in the camp's meadow: fractions (0–1) across its width and down its depth. */
+export interface CampDecorSpot {
+  x: number;
+  y: number;
+}
+
 export interface CampLookPayload {
   buddyName?: string | null;
   equipped: Partial<Record<CampWearSlot, string>>;
   decor: string[];
+  /** Omitted keeps the current spots; spots for decorations not out are dropped. */
+  decorAt?: Record<string, CampDecorSpot>;
 }
 
 export interface GoalPayload {

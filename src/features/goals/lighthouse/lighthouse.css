@@ -128,10 +128,10 @@
   position: absolute;
   z-index: 3;
   width: min(92%, 340px);
-  padding: 10px 14px 12px;
+  padding: 9px 14px 12px;
   border-radius: 20px;
-  background: #ffffff;
-  box-shadow: 0 1px 0 rgba(43, 36, 65, 0.06), 0 14px 34px rgba(18, 12, 40, 0.16);
+  background: var(--lh-paper);
+  box-shadow: 0 3px 0 var(--lh-paper-lip), 0 14px 34px rgba(18, 12, 40, 0.18);
   color: var(--lh-ink);
   animation: lh-bubble-in 0.42s var(--tb-spring);
 }
@@ -145,12 +145,15 @@
   height: 16px;
   margin-left: -8px;
   border-radius: 0 0 4px 0;
-  background: #ffffff;
+  background: var(--lh-paper);
+  box-shadow: 3px 3px 0 -0.5px var(--lh-paper-lip);
   transform: rotate(45deg);
 }
 
 :where(:root:not([data-theme='none'])) .lh-bubble-name {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 1px;
   color: var(--lh-muted);
   font-size: 11px;
@@ -334,7 +337,7 @@
 /* Things to tap in the picture. Tags show on hover and focus, always on touch screens, and
    on anything that needs you (with a small badge). */
 :where(:root:not([data-theme='none'])) .lh-obj { cursor: pointer; outline: none; }
-:where(:root:not([data-theme='none'])) .lh-obj > :not(.lh-tag):not(.lh-obj-hit) { transition: transform 0.2s var(--tb-spring); }
+:where(:root:not([data-theme='none'])) .lh-obj > :not(.lh-tag):not(.lh-obj-hit):not(.lh-light-pool) { transition: transform 0.2s var(--tb-spring); }
 :where(:root:not([data-theme='none'])) .lh-obj:hover > :not(.lh-tag):not(.lh-obj-hit),
 :where(:root:not([data-theme='none'])) .lh-obj:focus-visible > :not(.lh-tag):not(.lh-obj-hit) { transform: translateY(-2px); }
 :where(:root:not([data-theme='none'])) .lh-obj-hit { fill: transparent; }
@@ -342,16 +345,18 @@
 :where(:root:not([data-theme='none'])) .lh-obj--tower:hover > *,
 :where(:root:not([data-theme='none'])) .lh-obj--tower:focus-visible > * { transform: none; }
 
-:where(:root:not([data-theme='none'])) .lh-tag { opacity: 0; pointer-events: none; transition: opacity 0.18s ease, transform 0.18s ease; }
-:where(:root:not([data-theme='none'])) .lh-tag rect { fill: #ffffff; filter: drop-shadow(0 2px 4px rgba(18, 12, 40, 0.18)); }
-:where(:root:not([data-theme='none'])) .lh-tag text { fill: var(--lh-ink); font-family: var(--lh-font); font-size: 11px; font-weight: 900; }
+:where(:root:not([data-theme='none'])) .lh-tag { pointer-events: none; transition: transform 0.18s var(--tb-spring); }
+:where(:root:not([data-theme='none'])) .lh-tag-lip { fill: var(--lh-paper-lip); }
+:where(:root:not([data-theme='none'])) .lh-tag-face { fill: var(--lh-paper); transition: fill 0.18s ease; }
+:where(:root:not([data-theme='none'])) .lh-tag text { fill: var(--lh-ink); font-family: var(--lh-font); font-size: 9.5px; font-weight: 900; letter-spacing: 0.01em; }
+:where(:root:not([data-theme='none'])) .lh-tag-dot { fill: #ff6f95; stroke: var(--lh-paper); stroke-width: 2; }
+:where(:root:not([data-theme='none'])) .camp--night .lh-tag { opacity: 0.94; }
 :where(:root:not([data-theme='none'])) .lh-obj:hover .lh-tag,
-:where(:root:not([data-theme='none'])) .lh-obj:focus-visible .lh-tag,
-:where(:root:not([data-theme='none'])) .lh-obj.is-due .lh-tag { opacity: 1; }
-
-@media (hover: none) {
-  :where(:root:not([data-theme='none'])) .lh-tag { opacity: 1; }
-}
+:where(:root:not([data-theme='none'])) .lh-obj:focus-visible .lh-tag { transform: translateY(-1.5px); }
+:where(:root:not([data-theme='none'])) .lh-obj:hover .lh-tag-face,
+:where(:root:not([data-theme='none'])) .lh-obj:focus-visible .lh-tag-face,
+:where(:root:not([data-theme='none'])) .lh-obj.is-due .lh-tag-face { fill: #fff6c8; }
+:where(:root:not([data-theme='none'])) .lh-tag.is-due .lh-tag-dot { transform-box: fill-box; transform-origin: center; animation: lh-pulse 1.8s ease-in-out infinite; }
 
 :where(:root:not([data-theme='none'])) .lh-badge { fill: #ff6f95; stroke: #ffffff; stroke-width: 2; transform-box: fill-box; transform-origin: center; animation: lh-pulse 1.8s ease-in-out infinite; }
 
@@ -377,6 +382,112 @@
 :where(:root:not([data-theme='none'])) .lh-bottle-shadow { fill: #10204a; opacity: 0.14; }
 
 :where(:root:not([data-theme='none'])) .lh-pip { overflow: visible; }
+
+/* ---------- Pip talks: tap him, or the arrow, for the next thing on his mind ---------- */
+
+:where(:root:not([data-theme='none'])) .lh-pip-talk { cursor: pointer; outline: none; }
+:where(:root:not([data-theme='none'])) .lh-pip-talk .lh-obj-hit { fill: transparent; }
+:where(:root:not([data-theme='none'])) .lh-pip-talk:focus-visible .lh-obj-hit { stroke: #52b4ff; stroke-width: 3; }
+:where(:root:not([data-theme='none'])) .lh-pip-hop { transform-box: fill-box; transform-origin: 50% 100%; animation: lh-hop 0.5s var(--tb-spring); }
+:where(:root:not([data-theme='none'])) .lh-bubble-dots { display: inline-flex; gap: 3px; }
+:where(:root:not([data-theme='none'])) .lh-bubble-dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--lh-line-2); transition: background 0.2s ease, width 0.2s ease; }
+:where(:root:not([data-theme='none'])) .lh-bubble-dots i.is-on { width: 12px; border-radius: 3px; background: var(--lh-muted); }
+:where(:root:not([data-theme='none'])) .lh-bubble p { padding-right: 26px; }
+:where(:root:not([data-theme='none'])) .lh-bubble-next {
+  position: absolute;
+  right: 9px;
+  bottom: 9px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--lh-soft-2);
+  box-shadow: 0 2px 0 var(--lh-paper-lip);
+  color: var(--lh-text);
+  cursor: pointer;
+  transition: transform 0.15s var(--tb-spring), background 0.15s ease;
+}
+:where(:root:not([data-theme='none'])) .lh-bubble-next:hover { background: #fff2c7; transform: translateX(1px); }
+:where(:root:not([data-theme='none'])) .lh-bubble-next:active { transform: translateY(2px); box-shadow: none; }
+
+/* ---------- The sky's lamp, and life on the island ---------- */
+
+:where(:root:not([data-theme='none'])) .lh-world .sky-orb { display: none; }
+:where(:root:not([data-theme='none'])) .lh-orb { transition: transform 1.4s ease; pointer-events: none; }
+:where(:root:not([data-theme='none'])) .lh-orb--sun { --orb-glow: #fff1b8; transform: translate(612px, 96px); }
+:where(:root:not([data-theme='none'])) .lh-orb--sun .lh-orb-core { fill: #ffe27a; }
+:where(:root:not([data-theme='none'])) .camp--dawn .lh-orb--sun { --orb-glow: #ffd0c2; transform: translate(222px, 300px); }
+:where(:root:not([data-theme='none'])) .camp--dawn .lh-orb--sun .lh-orb-core { fill: #ffc4a8; }
+:where(:root:not([data-theme='none'])) .camp--golden .lh-orb--sun { --orb-glow: #ffc58a; transform: translate(622px, 288px); }
+:where(:root:not([data-theme='none'])) .camp--golden .lh-orb--sun .lh-orb-core { fill: #ffab6b; }
+:where(:root:not([data-theme='none'])) .lh-orb--moon { display: none; --orb-glow: #d9dcff; transform: translate(606px, 98px); }
+:where(:root:not([data-theme='none'])) .lh-orb--moon .lh-orb-core { fill: #fff1c4; }
+:where(:root:not([data-theme='none'])) .lh-moon-dimple { fill: #e8d9a6; }
+:where(:root:not([data-theme='none'])) .camp--night .lh-orb--moon { display: inline; }
+:where(:root:not([data-theme='none'])) .camp--night .lh-orb--sun { display: none; }
+
+:where(:root:not([data-theme='none'])) .lh-twinkles path { display: none; fill: #fff6d6; transform-box: fill-box; transform-origin: center; animation: lh-twinkle 3.2s ease-in-out infinite; }
+:where(:root:not([data-theme='none'])) .camp--night .lh-twinkles path { display: inline; }
+
+:where(:root:not([data-theme='none'])) .lh-ship-hull { fill: color-mix(in srgb, var(--far) 55%, #1b1530); }
+:where(:root:not([data-theme='none'])) .lh-ship-cabin { fill: color-mix(in srgb, var(--far) 70%, #ffffff); }
+:where(:root:not([data-theme='none'])) .lh-ship-mast { stroke: color-mix(in srgb, var(--far) 50%, #1b1530); stroke-width: 1; }
+:where(:root:not([data-theme='none'])) .lh-ship-light { fill: #ffe27a; opacity: 0; }
+:where(:root:not([data-theme='none'])) .camp--night .lh-ship-light { opacity: 1; animation: lh-blink 2.4s steps(1) infinite; }
+:where(:root:not([data-theme='none'])) .lh-ship { animation: lh-ship 90s linear infinite alternate; }
+
+:where(:root:not([data-theme='none'])) .lh-boulders path { fill: var(--rock-deep); }
+:where(:root:not([data-theme='none'])) .lh-seal-rock { fill: var(--rock-deep); }
+:where(:root:not([data-theme='none'])) .lh-seal-body, :where(:root:not([data-theme='none'])) .lh-seal-flipper { fill: #9aa3b8; }
+:where(:root:not([data-theme='none'])) .camp--night .lh-seal-body, :where(:root:not([data-theme='none'])) .camp--night .lh-seal-flipper { fill: #6d7396; }
+:where(:root:not([data-theme='none'])) .lh-seal-eye { fill: none; stroke: #2a2140; stroke-linecap: round; stroke-width: 1.1; }
+:where(:root:not([data-theme='none'])) .lh-seal-nose { fill: #2a2140; }
+:where(:root:not([data-theme='none'])) .lh-zz text { fill: #ffffff; font-family: var(--lh-font); font-size: 7px; font-weight: 900; opacity: 0; }
+:where(:root:not([data-theme='none'])) .camp--night .lh-zz text { animation: lh-zz 3.6s ease-in-out infinite; }
+:where(:root:not([data-theme='none'])) .camp--night .lh-zz text:nth-child(2) { animation-delay: -1.8s; }
+
+:where(:root:not([data-theme='none'])) .lh-perch { transition: opacity 0.6s ease; }
+:where(:root:not([data-theme='none'])) .camp--night .lh-perch { opacity: 0; }
+:where(:root:not([data-theme='none'])) .lh-cottage-box { fill: #9c6536; }
+:where(:root:not([data-theme='none'])) .lh-barrel { fill: #b47a49; }
+:where(:root:not([data-theme='none'])) .lh-barrel-hoop { stroke: #6b5440; stroke-width: 1.2; }
+:where(:root:not([data-theme='none'])) .lh-supplies { pointer-events: none; }
+:where(:root:not([data-theme='none'])) .camp--night .lh-crate, :where(:root:not([data-theme='none'])) .camp--night .lh-barrel { filter: brightness(0.72); }
+
+:where(:root:not([data-theme='none'])) .lh-post, :where(:root:not([data-theme='none'])) .lh-post-arm { stroke: #6b5440; stroke-linecap: round; stroke-width: 2.2; }
+:where(:root:not([data-theme='none'])) .lh-post-cage { fill: #fff3c4; stroke: #6b5440; stroke-width: 1.2; }
+:where(:root:not([data-theme='none'])) .lh-post-roof { fill: #6b5440; }
+:where(:root:not([data-theme='none'])) .lh-door-lamp { fill: #fff3c4; stroke: var(--tower-rim); stroke-width: 0.8; }
+:where(:root:not([data-theme='none'])) .lh-night-glow { opacity: 0; transition: opacity 1.4s ease; pointer-events: none; }
+:where(:root:not([data-theme='none'])) .camp--night .lh-night-glow, :where(:root:not([data-theme='none'])) .camp--golden .lh-night-glow { opacity: 1; }
+:where(:root:not([data-theme='none'])) .camp--night .lh-post-cage, :where(:root:not([data-theme='none'])) .camp--night .lh-door-lamp { fill: #ffd25a; }
+:where(:root:not([data-theme='none'])) .camp--night .lh-tower-window { filter: drop-shadow(0 0 4px #ffd25a); }
+
+:where(:root:not([data-theme='none'])) .lh-fireflies circle { display: none; fill: #fff3a0; filter: drop-shadow(0 0 3px #ffe27a); animation: lh-firefly 7s ease-in-out infinite; }
+:where(:root:not([data-theme='none'])) .camp--night .lh-fireflies circle { display: inline; }
+
+/* The next stone to lay: lighter, rimmed in gold. Still — nothing here blinks at you. */
+:where(:root:not([data-theme='none'])) .lh-stone.is-next { fill: color-mix(in srgb, var(--stone-bare) 55%, #fff6c8); stroke: #ffcb3d; stroke-width: 0.9; }
+
+/* ---------- Today's lights: lanterns on the water ---------- */
+
+:where(:root:not([data-theme='none'])) .lh-light-paper { fill: color-mix(in srgb, var(--lh-paper) 88%, transparent); stroke: var(--lh-paper-lip); stroke-width: 1; transition: fill 0.4s ease; }
+:where(:root:not([data-theme='none'])) .lh-light-cap, :where(:root:not([data-theme='none'])) .lh-light-raft { fill: #9c6536; }
+:where(:root:not([data-theme='none'])) .lh-light-icon { color: #b3a58f; transition: color 0.4s ease; }
+:where(:root:not([data-theme='none'])) .lh-light-reflect { fill: none; stroke: var(--foam); stroke-linecap: round; stroke-width: 1.6; opacity: 0.35; }
+:where(:root:not([data-theme='none'])) .camp--night .lh-light.is-dim .lh-light-paper { fill: #3c4174; stroke: #535995; }
+:where(:root:not([data-theme='none'])) .camp--night .lh-light.is-dim .lh-light-icon { color: #8b90c4; }
+:where(:root:not([data-theme='none'])) .camp--night .lh-light-cap, :where(:root:not([data-theme='none'])) .camp--night .lh-light-raft { fill: #5d4552; }
+:where(:root:not([data-theme='none'])) .lh-light.is-lit .lh-light-paper { fill: color-mix(in srgb, var(--c-fill) 42%, #fff8de); stroke: var(--c-lip); }
+:where(:root:not([data-theme='none'])) .lh-light.is-lit .lh-light-icon { color: var(--c-ink); }
+:where(:root:not([data-theme='none'])) .lh-light.is-lit .lh-light-reflect { stroke: var(--c-fill); opacity: 0.7; animation: lh-glint 4s ease-in-out infinite; }
+:where(:root:not([data-theme='none'])) .lh-light-glow { fill: var(--c-fill); opacity: 0.22; filter: blur(6px); pointer-events: none; }
+:where(:root:not([data-theme='none'])) .lh-light-pool { fill: var(--c-fill); opacity: 0.3; filter: blur(3px); pointer-events: none; }
+:where(:root:not([data-theme='none'])) .camp--night .lh-light-glow { opacity: 0.45; }
+:where(:root:not([data-theme='none'])) .camp--night .lh-light.is-lit .lh-light-paper { fill: color-mix(in srgb, var(--c-fill) 35%, #fff3c4); }
+:where(:root:not([data-theme='none'])) .lh-light .lh-obj-hit { fill: transparent; }
 
 /* ---------- The log: a sign, three tags, and paper slips over the sky ---------- */
 
@@ -1907,26 +2018,42 @@
   line-height: 28px;
 }
 
-/* A writing pad: a fixed page of ruled lines that scrolls with the words. */
+/* The letter card: plain warm paper and one fine inset frame — a good notecard, not an
+   airmail envelope. (The camp keeps its airmail stripes for Wren's letters.) */
+:where(:root:not([data-theme='none'])) .lh-world .cs-card--letter { background: #fffdf8; }
+
+:where(:root:not([data-theme='none'])) .lh-world .cs-card--letter::after {
+  inset: 9px;
+  padding: 0;
+  border: 1.5px solid rgba(222, 71, 114, 0.3);
+  border-radius: 20px;
+  background: none;
+  -webkit-mask: none;
+  mask: none;
+}
+
+/* A writing pad: no box, just faint ruled lines on the paper, scrolling with the words. */
 :where(:root:not([data-theme='none'])) .lh-letter-input {
   height: 252px;
   min-height: 0;
   max-height: none;
-  padding: 4px 16px;
+  padding: 4px 4px;
   overflow-y: auto;
-  background: repeating-linear-gradient(180deg, #ffffff 0 27px, #f0e2cd 27px 28px);
+  border-radius: 0;
+  background: repeating-linear-gradient(180deg, transparent 0 27px, rgba(42, 33, 64, 0.08) 27px 28px);
   background-attachment: local;
+  box-shadow: none;
   field-sizing: fixed;
 }
+
+:where(:root:not([data-theme='none'])) .lh-letter-input:focus { box-shadow: none; background: repeating-linear-gradient(180deg, transparent 0 27px, rgba(222, 71, 114, 0.22) 27px 28px); background-attachment: local; }
 
 :where(:root:not([data-theme='none'])) .lh-letter-paper {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 10px 16px 14px;
-  border-radius: 16px;
-  background: repeating-linear-gradient(180deg, #fffdf8 0 27px, #f0e2cd 27px 28px);
-  box-shadow: inset 0 0 0 2px var(--tb-rim);
+  padding: 6px 4px 10px;
+  background: repeating-linear-gradient(180deg, transparent 0 27px, rgba(42, 33, 64, 0.08) 27px 28px);
 }
 
 :where(:root:not([data-theme='none'])) .lh-letter-text { margin: 0; white-space: pre-wrap; }
@@ -2325,6 +2452,12 @@
 
 /* ---------- Motion ---------- */
 
+@keyframes lh-hop { 0% { transform: translateY(0) scale(1, 1); } 30% { transform: translateY(-9px) scale(0.96, 1.05); } 60% { transform: translateY(0) scale(1.06, 0.94); } 100% { transform: none; } }
+@keyframes lh-twinkle { 0%, 100% { opacity: 0.25; transform: scale(0.7); } 50% { opacity: 1; transform: scale(1); } }
+@keyframes lh-blink { 0%, 60% { opacity: 1; } 61%, 100% { opacity: 0.15; } }
+@keyframes lh-ship { from { transform: translateX(0); } to { transform: translateX(40px); } }
+@keyframes lh-zz { 0% { opacity: 0; transform: translateY(4px); } 40% { opacity: 0.8; } 100% { opacity: 0; transform: translateY(-6px); } }
+@keyframes lh-firefly { 0%, 100% { opacity: 0.15; transform: translate(0, 0); } 30% { opacity: 1; transform: translate(4px, -5px); } 60% { opacity: 0.5; transform: translate(-3px, -2px); } }
 @keyframes lh-bubble-in { from { opacity: 0; transform: translateY(8px) scale(0.96); } to { opacity: 1; transform: none; } }
 @keyframes lh-qz-in { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
 @keyframes lh-gauge-in { from { stroke-dasharray: 0 var(--len); } }
@@ -2368,12 +2501,37 @@
   :where(:root:not([data-theme='none'])) .lh-bar-title strong { font-size: 17px; }
   :where(:root:not([data-theme='none'])) .lh-bar-title small { max-width: 100%; overflow: hidden; font-size: 11.5px; text-overflow: ellipsis; white-space: nowrap; }
   :where(:root:not([data-theme='none'])) .lh-bar-chips { gap: 5px; }
+  /* One calm row: back, the title on one line, then compact round buttons. */
+  :where(:root:not([data-theme='none'])) .lh-bar { gap: 8px; padding-top: max(10px, env(safe-area-inset-top)); padding-bottom: 2px; }
+  :where(:root:not([data-theme='none'])) .lh-bar-title { align-items: flex-start; text-align: left; }
+  :where(:root:not([data-theme='none'])) .lh-bar-title strong { max-width: 100%; overflow: hidden; font-size: 16px; text-overflow: ellipsis; white-space: nowrap; }
+  :where(:root:not([data-theme='none'])) .lh-bar-title small { font-size: 11px; }
+  :where(:root:not([data-theme='none'])) .lh-bar .world-exit,
+  :where(:root:not([data-theme='none'])) .lh-bar .world-breathe { width: 34px; height: 34px; padding: 0; justify-content: center; }
+  :where(:root:not([data-theme='none'])) .lh-bar .world-chip { height: 34px; padding: 0 10px 0 9px; gap: 5px; }
+  :where(:root:not([data-theme='none'])) .lh-bar-chips { gap: 4px; }
+
+  /* Pip's bubble fits the phone and leaves the tower in view. */
+  :where(:root:not([data-theme='none'])) .lh-bubble { padding: 8px 12px 10px; border-radius: 18px; }
+  :where(:root:not([data-theme='none'])) .lh-bubble p { font-size: 13.5px; line-height: 1.32; }
+
+  /* The sign: tighter plank, a smaller day token, only the current phase named. */
+  :where(:root:not([data-theme='none'])) .lh-sign-plank { padding: 11px 13px 10px 16px; border-radius: 16px; column-gap: 10px; }
+  :where(:root:not([data-theme='none'])) .lh-sign-kicker { font-size: 10px; }
+  :where(:root:not([data-theme='none'])) .lh-sign-title { font-size: 16px; }
+  :where(:root:not([data-theme='none'])) .lh-sign-day { width: 52px; padding: 5px 0 6px; border-radius: 13px; }
+  :where(:root:not([data-theme='none'])) .lh-sign-day strong { font-size: 21px; }
+  :where(:root:not([data-theme='none'])) .lh-sign-day small { font-size: 9.5px; }
+  :where(:root:not([data-theme='none'])) .lh-sign-voyage { margin-top: 9px; }
+  :where(:root:not([data-theme='none'])) .lh-sign-groove { height: 7px; }
+  :where(:root:not([data-theme='none'])) .lh-sign-phase:not(.is-now) { visibility: hidden; }
+  :where(:root:not([data-theme='none'])) .lh-tabs { flex-wrap: nowrap; gap: 6px; margin-top: 12px; }
+  :where(:root:not([data-theme='none'])) .lh-tab { flex: 1 1 0; justify-content: center; height: 34px; padding: 0 10px; font-size: 13.5px; }
   :where(:root:not([data-theme='none'])) .lh-bar-chips .world-chip small,
   :where(:root:not([data-theme='none'])) .lh-chip-day { display: none; }
 
   :where(:root:not([data-theme='none'])) .lh-stage { display: flex; flex-direction: column; gap: 0; padding: 0; }
-  :where(:root:not([data-theme='none'])) .lh-scene { flex: 0 0 auto; height: clamp(300px, 46vh, 400px); }
-  :where(:root:not([data-theme='none'])) .lh-bubble p { font-size: 14.5px; }
+  :where(:root:not([data-theme='none'])) .lh-scene { flex: 0 0 auto; height: clamp(290px, 43vh, 370px); }
 
   :where(:root:not([data-theme='none'])) .lh-deck { min-height: 70vh; padding: 4px 14px 0; }
   :where(:root:not([data-theme='none'])) .lh-deck-body { overflow: visible; margin: 0; padding: 14px 0 max(28px, env(safe-area-inset-bottom)); -webkit-mask-image: none; mask-image: none; }

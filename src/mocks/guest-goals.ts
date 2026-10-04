@@ -14,6 +14,7 @@ import type {
   CampSeasonWeek,
   CampSticker,
   CampView,
+  CampDecorSpot,
   CampWearSlot,
   Goal,
   GoalBoard,
@@ -252,6 +253,19 @@ const ITEMS: { id: string; slot: string; price: number }[] = [
   { id: 'fairy-lights', slot: 'decor', price: 100 },
   { id: 'guitar', slot: 'decor', price: 120 },
   { id: 'telescope', slot: 'decor', price: 180 },
+  { id: 'headphones', slot: 'hat', price: 85 },
+  { id: 'bucket-hat', slot: 'hat', price: 65 },
+  { id: 'flower-lei', slot: 'neck', price: 60 },
+  { id: 'medal', slot: 'neck', price: 110 },
+  { id: 'heart-shades', slot: 'face', price: 80 },
+  { id: 'lamp-post', slot: 'decor', price: 90 },
+  { id: 'pumpkins', slot: 'decor', price: 55 },
+  { id: 'pinwheel', slot: 'decor', price: 45 },
+  { id: 'birdhouse', slot: 'decor', price: 75 },
+  { id: 'pond', slot: 'decor', price: 140 },
+  { id: 'picnic', slot: 'decor', price: 95 },
+  { id: 'signpost', slot: 'decor', price: 70 },
+  { id: 'cherry-tree', slot: 'decor', price: 220 },
 ];
 
 /** Java's String.hashCode, so the guest picks the same quests the server would. */
@@ -408,11 +422,12 @@ interface GuestCamp {
   owned: string[];
   equipped: Partial<Record<CampWearSlot, string>>;
   decor: string[];
+  decorAt: Record<string, CampDecorSpot>;
   chestPaid: Record<string, number>;
   questsClaimed: string[];
 }
 
-const camp: GuestCamp = { buddyName: null, sparks: 0, sparksEarned: 0, owned: [], equipped: {}, decor: [], chestPaid: {}, questsClaimed: [] };
+const camp: GuestCamp = { buddyName: null, sparks: 0, sparksEarned: 0, owned: [], equipped: {}, decor: [], decorAt: {}, chestPaid: {}, questsClaimed: [] };
 
 const activeGoals = () => goals.filter((g) => g.status === 'ACTIVE').sort((a, b) => a.order - b.order);
 
@@ -432,6 +447,7 @@ function campView(today: string): CampView {
     owned: [...camp.owned],
     equipped: { ...camp.equipped },
     decor: [...camp.decor],
+    decorAt: { ...camp.decorAt },
     chest: campChest(views, camp.chestPaid),
     quests: campQuests(today, active, claimed),
     questsYesterday: campQuests(addDays(today, -1), active, claimed).filter((q) => q.done && !q.claimed),
@@ -483,7 +499,7 @@ function resolveCamp(path: string, method: string, body: () => unknown, today: s
   }
 
   if (path.endsWith('/goals/camp/look') && method === 'PUT') {
-    const look = body() as { buddyName?: string | null; equipped?: Record<string, string>; decor?: string[] };
+    const look = body() as { buddyName?: string | null; equipped?: Record<string, string>; decor?: string[]; decorAt?: Record<string, CampDecorSpot> };
     const equipped: Partial<Record<CampWearSlot, string>> = {};
     for (const [slot, id] of Object.entries(look.equipped ?? {})) {
       if (!id) continue;
@@ -500,7 +516,15 @@ function resolveCamp(path: string, method: string, body: () => unknown, today: s
     if (name && !/^[\p{L}][\p{L} '-]{0,15}$/u.test(name)) return bad("a name uses letters, spaces, ' and -");
     camp.buddyName = name;
     camp.equipped = equipped;
+    const spots = look.decorAt ?? camp.decorAt;
+    const decorAt: Record<string, CampDecorSpot> = {};
+    for (const [id, spot] of Object.entries(spots)) {
+      if (!decor.includes(id)) continue;
+      if (![spot?.x, spot?.y].every((v) => typeof v === 'number' && v >= 0 && v <= 1)) return bad('That spot is outside the camp.');
+      decorAt[id] = { x: spot.x, y: spot.y };
+    }
     camp.decor = decor;
+    camp.decorAt = decorAt;
     return ok(campView(today));
   }
 
