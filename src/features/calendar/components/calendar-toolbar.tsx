@@ -28,6 +28,8 @@ type Props = {
   onSearchOpen: (open: boolean) => void
   onPickResult: (item: CalendarItem) => void
   onAdd: () => void
+  /** Phones only offer the views that fit (Day, Month, Agenda). */
+  phone?: boolean
 }
 
 export function CalendarToolbar({
@@ -48,6 +50,7 @@ export function CalendarToolbar({
   onSearchOpen,
   onPickResult,
   onAdd,
+  phone = false,
 }: Props) {
   const [cursor, setCursor] = useState(0)
   const [viewOpen, setViewOpen] = useState(false)
@@ -189,11 +192,11 @@ export function CalendarToolbar({
           <ChevronDown size={14} strokeWidth={2.2} />
         </button>
         <PopoverMenu anchor={viewAnchor} open={viewOpen} onClose={() => setViewOpen(false)} width={190}>
-          {VIEWS.map((v) => (
+          {VIEWS.filter((v) => !phone || v.mobile).map((v) => (
             <MenuItem
               key={v.id}
               label={v.label}
-              hint={`Press ${v.key}`}
+              hint={phone ? undefined : `Press ${v.key}`}
               selected={view === v.id}
               onSelect={() => {
                 onView(v.id)

@@ -49,6 +49,7 @@ import { QuickAdd } from './components/quick-add'
 import { TimeGrid } from './components/time-grid'
 import { UpNext } from './components/up-next'
 import { WeekPulse } from './components/week-pulse'
+import { WeekStrip } from './components/week-strip'
 
 import './calendar-overview.css'
 
@@ -167,6 +168,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   const gridScrollRef = useRef<HTMLDivElement | null>(null)
   const searchRef = useRef<HTMLInputElement | null>(null)
   const quickRef = useRef<HTMLInputElement | null>(null)
+  const swipe = useRef<{ x: number; y: number } | null>(null)
 
   // ── Server state ──
   const itemsState = useCalendarStore.use.items()
@@ -174,7 +176,9 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
   const upcoming = useCalendarStore.use.upcoming()
   const calendarActions = useCalendarStore.use.actions()
   const items = itemsState.data
-  const firstLoad = itemsState.loading && !itemsState.loaded && !itemsState.hasErrors
+  // "Not loaded yet" counts as loading: rendering the grid before the first fetch
+  // starts would let it scroll, then be swapped for the skeleton and remount at the top.
+  const firstLoad = !itemsState.loaded && !itemsState.hasErrors
   const loadFailed = itemsState.hasErrors && !itemsState.loaded
 
   const range = useMemo(() => fetchRange(effectiveView, selectedDate), [effectiveView, selectedDate])
@@ -331,6 +335,9 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     const el = gridScrollRef.current
     const body = el?.querySelector<HTMLElement>('.cv-grid-body')
     if (!el || !body) return
+    // The first landing is instant: a smooth scroll started while the page is
+    // still settling (fonts, the store filling in) gets cancelled on phones.
+    const first = scrolledFor.current === ''
     scrolledFor.current = key
     const isos = days.map(toISODate)
     let minute: number
@@ -343,7 +350,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     }
     const head = el.querySelector<HTMLElement>('.cv-grid-head')?.offsetHeight ?? 0
     const y = body.offsetTop + (minute / DAY_MINUTES) * body.offsetHeight
-    el.scrollTo({ top: Math.max(0, center ? y - head - (el.clientHeight - head) / 2.4 : y - head), behavior: 'smooth' })
+    el.scrollTo({ top: Math.max(0, center ? y - head - (el.clientHeight - head) / 2.4 : y - head), behavior: first ? 'auto' : 'smooth' })
   }, [effectiveView, days, firstLoad, firstStart, todayIso, nowMinutes])
 
   // ── Mutations ──
@@ -729,6 +736,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
     <section className="calendar-dashboard" aria-label="Calendar">
       <div className={cn('cv-shell', !sidebarOpen && 'is-side-closed', `is-view-${effectiveView}`)}>
         <aside className="cv-side route-scroll" aria-label="Calendar sidebar" hidden={!sidebarOpen && !phone}>
+          {!phone && (
           <QuickAdd
             inputRef={quickRef}
             defaultDate={selectedDate < todayIso ? todayIso : selectedDate}
@@ -736,6 +744,7 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
             onCreate={quickCreate}
             onExpand={(text) => openComposer({ date: selectedDate < todayIso ? todayIso : selectedDate, text })}
           />
+          )}
           <UpNext
             items={upcoming.filter(isShown)}
             todayIso={todayIso}
@@ -796,8 +805,34 @@ function CalendarOverviewDashboard({ searchParams, onNavigate }: CalendarOvervie
               setPendingFocus(item)
             }}
             onAdd={() => openComposer({ date: selectedDate })}
+            phone={phone}
           />
-          <div className="cv-stage">{stage}</div>
+          {phone && effectiveView === 'day' && (
+            <WeekStrip
+              selected={selectedDate}
+              todayIso={todayIso}
+              itemsByDay={itemsByDay}
+              onPick={goTo}
+              onWeek={(dir) => goTo(addDaysIso(selectedDate, 7 * dir))}
+            />
+          )}
+          <div
+            className="cv-stage"
+            onTouchStart={(e) => {
+              swipe.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+            }}
+            onTouchEnd={(e) => {
+              // Phone Day view: swipe sideways for the previous / next day (iOS Calendar).
+              const start = swipe.current
+              swipe.current = null
+              if (!start || !phone || effectiveView !== 'day' || document.body.classList.contains('calendar-grid-dragging')) return
+              const dx = e.changedTouches[0].clientX - start.x
+              const dy = e.changedTouches[0].clientY - start.y
+              if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 2) goTo(addDaysIso(selectedDate, dx < 0 ? 1 : -1))
+            }}
+          >
+            {stage}
+          </div>
         </main>
       </div>
 

@@ -3354,45 +3354,85 @@ body.calendar-modal-open .mobile-profile-trigger {
 /* ── Phone ─────────────────────────────────────────────────────────────── */
 
 @media (max-width: 768px) {
+  /* iOS Calendar's phone shape: one compact header row, a week strip, then the
+     day's timeline filling the screen down to the dock. The sidebar's useful
+     parts (Up next, calendars, Google) follow as their own cards. */
   .calendar-dashboard {
     position: static;
     display: block;
     min-height: 100svh;
-    padding: 14px 10px 110px;
-    --cv-gutter: 42px;
+    padding: 12px 12px 120px;
+    --cv-gutter: 44px;
     --cv-radius: 22px;
   }
 
   .cv-shell {
     display: flex;
     flex-direction: column;
+    gap: 12px;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .cv-main,
+  .cv-side > section,
+  .cv-side-foot {
+    border: 1px solid var(--cv-card-line);
+    border-radius: var(--cv-radius);
+    background: var(--cv-surface);
+    box-shadow: var(--cv-shadow);
   }
 
   .cv-main {
     order: 0;
+    overflow: hidden;
   }
 
   .cv-side {
     order: 1;
+    gap: 12px;
+    padding: 0;
     overflow: visible;
+    border: 0;
+  }
+
+  .cv-side > section,
+  .cv-side-foot {
     padding: 14px;
-    border-top: 1px solid var(--cv-line);
-    border-right: 0;
+  }
+
+  .cv-side-foot {
+    margin-top: 0;
+    padding: 8px 10px;
+  }
+
+  /* Up next is its own card here, so its inner well would be a box in a box. */
+  .cv-upnext-hero,
+  .cv-upnext.is-empty {
+    padding: 2px 2px 4px;
+    background: transparent;
+    box-shadow: none;
   }
 
   .cv-side-toggle,
   .cv-add,
-  .cv-keys-btn {
+  .cv-eyebrow {
     display: none !important;
   }
 
+  /* One header row; the right edge stays clear for the avatar badge. */
   .cv-toolbar {
-    flex-wrap: wrap;
-    padding: 12px 10px 10px 14px;
+    gap: 6px;
+    padding: 12px 54px 10px 16px;
+    border-bottom: 0;
   }
 
   .cv-toolbar-lead {
     flex: 1;
+    gap: 2px;
   }
 
   .cv-heading {
@@ -3400,43 +3440,59 @@ body.calendar-modal-open .mobile-profile-trigger {
   }
 
   .cv-title {
-    font-size: 19px;
+    font-size: 21px;
   }
 
-  .cv-eyebrow {
-    font-size: 9px;
-    letter-spacing: 0.1em;
-  }
-
-  .cv-shell.is-view-day .cv-title em {
+  .cv-title em {
     display: none;
   }
 
   .cv-toolbar-tail {
-    width: 100%;
+    gap: 2px;
   }
 
-  .cv-views {
-    flex: 1;
+  .cv-view-pick {
+    padding: 0 4px 0 8px;
   }
 
-  .cv-view {
-    flex: 1;
-    padding: 0 6px;
-  }
-
-  .cv-view.is-desktop-only {
+  .cv-shell.is-view-agenda .cv-nav .cv-icon-btn {
     display: none;
+  }
+
+  /* Day view moves by the strip and by swiping, so only "Today" stays — and
+     only when today isn't already showing. */
+  .cv-nav {
+    padding: 0;
+    background: transparent;
+  }
+
+  .cv-shell.is-view-day .cv-nav .cv-icon-btn,
+  .cv-today.is-current {
+    display: none;
+  }
+
+  .cv-today {
+    height: 30px;
+    padding: 0 11px;
+    background: var(--cv-control);
+    box-shadow: none;
+  }
+
+  .cv-nav .cv-icon-btn {
+    width: 26px;
   }
 
   .cv-search-field {
     width: 100%;
   }
 
-  .cv-toolbar.is-searching .cv-views {
+  .cv-toolbar.is-searching .cv-heading,
+  .cv-toolbar.is-searching .cv-nav,
+  .cv-toolbar.is-searching .cv-view-pick {
     display: none;
   }
 
+  .cv-toolbar.is-searching .cv-toolbar-tail,
   .cv-toolbar.is-searching .cv-search {
     flex: 1;
   }
@@ -3447,18 +3503,95 @@ body.calendar-modal-open .mobile-profile-trigger {
     width: calc(100vw - 48px);
   }
 
+  /* Week strip */
+  .cv-strip {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    padding: 0 10px 10px;
+    border-bottom: 1px solid var(--cv-line);
+    touch-action: pan-y;
+  }
+
+  .cv-strip-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 0;
+    border: 0;
+    background: transparent;
+    color: var(--cv-ink);
+    cursor: pointer;
+  }
+
+  .cv-strip-wd {
+    color: var(--cv-ink-3);
+    font-size: 10.5px;
+    font-weight: 700;
+  }
+
+  .cv-strip-num {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border-radius: 50%;
+    font-size: 16px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .cv-strip-day.is-past .cv-strip-num {
+    color: var(--cv-ink-2);
+  }
+
+  .cv-strip-day.is-today .cv-strip-wd,
+  .cv-strip-day.is-today .cv-strip-num {
+    color: var(--cv-now-ink);
+  }
+
+  .cv-strip-day.is-selected .cv-strip-num {
+    background: var(--cv-primary-bg);
+    color: var(--cv-primary-ink);
+  }
+
+  .cv-strip-day.is-selected.is-today .cv-strip-num {
+    background: var(--cv-now);
+    color: var(--cv-on-now);
+  }
+
+  .cv-strip-dots {
+    display: flex;
+    height: 4px;
+    gap: 2px;
+  }
+
+  .cv-strip-dots i {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--ev);
+  }
+
+  /* The strip already names the day; the grid's own day header would repeat it. */
+  .cv-shell.is-view-day .cv-dayheads {
+    display: none;
+  }
+
+  .cv-shell.is-view-day .cv-grid-head {
+    box-shadow: none;
+  }
+
+  /* The timeline ends above the dock instead of running under it. */
   .cv-stage {
-    height: calc(100svh - 210px);
-    min-height: 420px;
+    height: calc(100svh - 196px);
+    min-height: 360px;
     flex: none;
   }
 
-  .cv-dayview.has-brief {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .cv-brief {
-    display: none;
+  .cv-shell.is-view-day .cv-stage {
+    height: calc(100svh - 266px);
   }
 
   .cv-dayhead-num {
@@ -3550,19 +3683,6 @@ body.calendar-modal-open .mobile-profile-trigger {
     height: 16px;
     padding: 0 3px;
     font-size: 9.5px;
-  }
-
-  /* The phone avatar badge sits over the toolbar's top-right corner. */
-  .cv-toolbar-lead {
-    margin-right: 56px;
-  }
-
-  .cv-nav .cv-icon-btn {
-    width: 26px;
-  }
-
-  .cv-today {
-    padding: 0 9px;
   }
 
   /* Floating cards become bottom sheets. */
