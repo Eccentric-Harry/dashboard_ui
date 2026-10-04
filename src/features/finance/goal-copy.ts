@@ -7,6 +7,10 @@ import { monthYear, shortDate, spanWords, type GoalPlan } from '@/lib/finance-go
 
 export type GoalTone = 'good' | 'watch' | 'quiet' | 'done'
 
+/** "Oct 3, 2027" — a day said in full. */
+export const fullDate = (iso: string): string =>
+  new Date(`${iso}T00:00:00`).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+
 /** "₹23.6k", "₹1.6L" — for pills where a full figure won't fit. */
 export const compactInr = (n: number): string => {
   const v = Math.round(n)

@@ -9,8 +9,8 @@
 // - Why you want it: the user's reasons in their own words, then the maker's highlights.
 // - Getting closer: quarter, half, three-quarters, yours — each with its date. Early on it
 //   counts what's in, later what's left (Koo & Fishbach's small-area effect).
-// - Plan & numbers, folded away: the pace simulator and month waterfall, every row that
-//   moved the goal, and what it really costs.
+// - Plan & numbers, folded away (goal-numbers.tsx): pace, whether it fits your month,
+//   the price, and every row that moved the goal — one card, each figure once.
 //
 // A safety net or open saving has no picture to pull toward, so it keeps the numbers-first
 // layout: hero, plan, ledger.
@@ -20,7 +20,6 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
   Check,
-  ChevronDown,
   ChevronLeft,
   ExternalLink,
   Lightbulb,
@@ -37,7 +36,6 @@ import type { SavingsGoal, ShowcaseUpdateRequest } from '@/types/finance'
 import type { LedgerEntry } from '@/lib/finance-ledger'
 import { inr } from '@/lib/insights/engine'
 import {
-  DAYS_PER_MONTH,
   KIND_LABEL,
   landingDate,
   nearAppleLaunch,
@@ -48,7 +46,7 @@ import {
   type MonthCapacity,
 } from '@/lib/finance-goals'
 import { cn } from '@/lib/utils'
-import { findingLine, statusLine } from '../goal-copy'
+import { findingLine, fullDate, statusLine } from '../goal-copy'
 import { goalIcon } from '../goal-icons'
 import { GoalChart } from './goal-chart'
 import { GoalJar } from './goal-jar'
@@ -57,6 +55,7 @@ import { Filmstrip, PhotoLightbox, ShowcaseStage } from './goal-showcase'
 import { useLivePhotos } from '../use-live-photos'
 import { withPresetShowcase } from '../goal-presets'
 import { GoalPhotosModal, GoalReasonModal } from './goal-photos-modal'
+import { GoalNumbers, GoalRow } from './goal-numbers'
 
 interface GoalWorkspaceProps {
   plan: GoalPlan | null
@@ -93,8 +92,6 @@ interface GoalWorkspaceProps {
   canFindByName: boolean
 }
 
-const fullDate = (iso: string) =>
-  new Date(`${iso}T00:00:00`).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
 
 function GoalWorkspace(props: GoalWorkspaceProps) {
   const { plan, color, loading, onBack } = props
@@ -249,22 +246,7 @@ function ShowcaseLayout(props: GoalWorkspaceProps & { plan: GoalPlan; builtInPho
           }}
         />
 
-        <section id="fin-goal-numbers" className={cn('fin-goal-numbers', numbersOpen && 'is-open')} aria-label="Plan and numbers">
-          <button type="button" className="fin-goal-numbers-toggle" aria-expanded={numbersOpen} onClick={toggleNumbers}>
-            <span>
-              <b>Plan & numbers</b>
-              <small>{numbersSummary(plan, props.room)}</small>
-            </span>
-            <ChevronDown size={16} strokeWidth={2.4} aria-hidden="true" />
-          </button>
-          {numbersOpen && (
-            <div className="finance-dashboard-grid fin-goal-numbers-grid">
-              <PlanCard {...props} plan={plan} />
-              {goal.kind === 'PURCHASE' && <PriceCard {...props} plan={plan} />}
-              <HistoryCard {...props} plan={plan} />
-            </div>
-          )}
-        </section>
+        <GoalNumbers {...props} plan={plan} open={numbersOpen} onToggle={toggleNumbers} />
       </div>
 
       {viewing && live.length > 0 && (
@@ -298,17 +280,6 @@ function ShowcaseLayout(props: GoalWorkspaceProps & { plan: GoalPlan; builtInPho
       />
     </>
   )
-}
-
-function numbersSummary(plan: GoalPlan, room: number | null): string {
-  const bits: string[] = []
-  const need = plan.monthlyNeed ?? plan.goal.plannedMonthly
-  if (need && plan.state !== 'bought' && plan.state !== 'ready') {
-    bits.push(`${inr(need)} a month${room != null ? (need <= room ? ' · fits' : ' · tight') : ''}`)
-  }
-  bits.push(`${plan.goal.contributions} set-aside${plan.goal.contributions === 1 ? '' : 's'}`)
-  if (plan.goal.kind === 'PURCHASE' && (plan.goal.listPrice ?? plan.target)) bits.push(`price ${inr(plan.goal.listPrice ?? plan.target ?? 0)}`)
-  return bits.join(' · ')
 }
 
 /** The right-hand side of the showcase: name, what's in, when it's yours, the next move. */
@@ -894,10 +865,8 @@ function PlanCard({
 
 function HistoryCard({ plan, rows, onOpenEntry }: GoalWorkspaceProps & { plan: GoalPlan }) {
   const sorted = [...rows].sort((a, b) => b.day.localeCompare(a.day) || b.at - a.at)
-  // Beside the plan for a trip (Plan & numbers has no price card); full width otherwise.
-  const wide = plan.goal.kind !== 'TRIP'
   return (
-    <section className={cn('finance-card fin-goal-history', wide && 'is-wide')} style={{ '--i': 2 } as CSSProperties} aria-label="Money in this goal">
+    <section className="finance-card fin-goal-history is-wide" style={{ '--i': 2 } as CSSProperties} aria-label="Money in this goal">
       <div className="finance-section-head compact">
         <div>
           <span className="finance-eyebrow">Ledger</span>
@@ -918,78 +887,6 @@ function HistoryCard({ plan, rows, onOpenEntry }: GoalWorkspaceProps & { plan: G
           ))}
         </ul>
       )}
-    </section>
-  )
-}
-
-function GoalRow({ r, onOpenEntry }: { r: LedgerEntry; onOpenEntry: (entry: LedgerEntry) => void }) {
-  const purchase = r.kind === 'spending'
-  const out = r.kind === 'transfer-in'
-  return (
-    <li>
-      <button type="button" onClick={() => onOpenEntry(r)} disabled={!r.id}>
-        <span className={cn('fin-goal-row-ic', purchase ? 'is-buy' : out ? 'is-out' : 'is-in')} aria-hidden="true">
-          {purchase ? <ShoppingBag size={13} strokeWidth={2.3} /> : out ? <ArrowDownLeft size={13} strokeWidth={2.4} /> : <ArrowUpRight size={13} strokeWidth={2.4} />}
-        </span>
-        <span className="fin-goal-row-main">
-          <b>{r.description || (purchase ? 'Purchase' : out ? 'Taken out' : 'Set aside')}</b>
-          <small>
-            {fullDate(r.day)}
-            {purchase && ` · ${r.category}`}
-          </small>
-        </span>
-        <strong className={cn(purchase ? 'is-buy' : out ? 'is-out' : 'is-in')}>
-          {purchase ? '' : out ? '−' : '+'}
-          {inr(r.amount)}
-        </strong>
-      </button>
-    </li>
-  )
-}
-
-// ── What it really costs ─────────────────────────────────────────────────────
-
-function PriceCard({ plan, onEdit }: GoalWorkspaceProps & { plan: GoalPlan }) {
-  const { goal } = plan
-  const list = goal.listPrice ?? plan.target ?? 0
-  const perDay = plan.monthlyNeed ? plan.monthlyNeed / DAYS_PER_MONTH : null
-  return (
-    <section className="finance-card fin-goal-price" style={{ '--i': 3 } as CSSProperties} aria-label="What it really costs">
-      <div className="finance-section-head compact">
-        <div>
-          <span className="finance-eyebrow">Price</span>
-          <h2>What it really costs</h2>
-        </div>
-        <button type="button" className="fin-icon-btn" onClick={onEdit} aria-label="Edit price" title="Edit price">
-          <Pencil size={13} strokeWidth={2.4} />
-        </button>
-      </div>
-      <dl className="fin-goal-price-list">
-        <div>
-          <dt>Price</dt>
-          <dd>{inr(list)}</dd>
-        </div>
-        <div>
-          <dt>Old-phone exchange</dt>
-          <dd>{goal.exchangeValue ? `−${inr(goal.exchangeValue)}` : '—'}</dd>
-        </div>
-        <div>
-          <dt>Card offer / cashback</dt>
-          <dd>{goal.cardOffer ? `−${inr(goal.cardOffer)}` : '—'}</dd>
-        </div>
-        <div className="is-total">
-          <dt>You need</dt>
-          <dd>{inr(plan.target ?? list)}</dd>
-        </div>
-      </dl>
-      <p className="fin-goal-note">
-        Exchange value is usually the biggest lever — often worth more than any interest the savings earn.
-        {perDay != null && ` Every ₹1,000 off the price is about ${Math.max(1, Math.round(1000 / perDay))} days sooner.`}
-      </p>
-      <p className="fin-goal-note">
-        "No-cost" EMI isn't free: it often drops the cash discount, adds 18% GST on the interest part and a
-        processing fee. Saving first keeps the discount.
-      </p>
     </section>
   )
 }

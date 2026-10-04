@@ -2147,12 +2147,11 @@ li:hover > .fin-goal-x,
   margin: 4px 0 0;
 }
 
-/* Plan & numbers, folded */
-.fin-goal-numbers {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  min-width: 0;
+/* Plan & numbers, folded: one card — a header row, then short columns split by
+   hairlines (pace | your month | price) and the set-asides under one more hairline. */
+.finance-dashboard .fin-goal-numbers {
+  padding: 0;
+  overflow: clip;
 }
 
 .finance-dashboard .fin-goal-numbers-toggle {
@@ -2161,10 +2160,9 @@ li:hover > .fin-goal-x,
   justify-content: space-between;
   gap: 12px;
   width: 100%;
-  padding: 13px 20px;
-  border: 1px solid var(--ntr-line);
-  border-radius: var(--ntr-radius);
-  background-color: var(--ntr-card);
+  padding: 14px 22px;
+  border: 0;
+  background: transparent;
   color: var(--fin-ink);
   font: inherit;
   text-align: left;
@@ -2200,32 +2198,295 @@ li:hover > .fin-goal-x,
   transform: rotate(180deg);
 }
 
-.fin-goal-numbers-grid > .fin-goal-plan {
-  grid-column: span 7;
+.fin-goal-numbers-body {
+  margin: 0 22px;
+  border-top: 1px solid var(--fin-hairline);
 }
 
-.fin-goal-numbers-grid > .fin-goal-price,
-.fin-goal-numbers-grid > .fin-goal-history {
-  grid-column: span 5;
+.fin-goal-cols {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
 }
 
-.fin-goal-numbers-grid > .fin-goal-history.is-wide {
-  grid-column: 1 / -1;
+.fin-goal-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 16px 22px 18px;
+}
+
+.fin-goal-col:first-child {
+  padding-left: 0;
+}
+
+.fin-goal-col:last-child {
+  padding-right: 0;
+}
+
+.fin-goal-col + .fin-goal-col {
+  border-left: 1px solid var(--fin-hairline);
 }
 
 @container finbento (max-width: 780px) {
-  .fin-goal-numbers-grid > .fin-goal-plan,
-  .fin-goal-numbers-grid > .fin-goal-price,
-  .fin-goal-numbers-grid > .fin-goal-history {
-    grid-column: 1 / -1;
+  .fin-goal-cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fin-goal-col {
+    padding: 14px 0 16px;
+  }
+
+  .fin-goal-col + .fin-goal-col {
+    border-top: 1px solid var(--fin-hairline);
+    border-left: 0;
   }
 }
 
-@media (max-width: 768px) {
-  .fin-goal-numbers-grid > .fin-goal-plan,
-  .fin-goal-numbers-grid > .fin-goal-price,
-  .fin-goal-numbers-grid > .fin-goal-history {
-    grid-column: 1 / -1;
+.fin-goal-col-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--fin-ink-faint);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.finance-dashboard .fin-goal-col-label .fin-text-btn {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.finance-dashboard .fin-goal-col-figure {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 2px 0 0;
+  color: var(--fin-ink);
+  font-family: var(--fin-num-font);
+  font-size: 26px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.fin-goal-col-figure small {
+  color: var(--fin-ink-soft);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.finance-dashboard .fin-goal-col-line {
+  margin: 0;
+  color: var(--fin-ink-soft);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.fin-goal-col-line b {
+  color: var(--fin-ink);
+  font-weight: 800;
+}
+
+.finance-dashboard .fin-goal-col-line .fin-text-btn {
+  margin: 0;
+  font-size: 12px;
+}
+
+.finance-dashboard .fin-goal-col-verdict {
+  margin: 2px 0 0;
+  color: var(--fin-ink);
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.fin-goal-col-verdict.is-good b { color: var(--fin-mood-good); }
+.fin-goal-col-verdict.is-watch b { color: var(--fin-mood-watch); }
+
+.fin-goal-col-foot {
+  margin-top: auto;
+  padding-top: 6px;
+}
+
+.fin-goal-col-foot small {
+  color: var(--fin-ink-faint);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.finance-dashboard .fin-goal-col-foot .fin-text-btn {
+  margin: 0;
+  font-size: 11px;
+}
+
+.fin-goal-pace input[type='range'] {
+  width: 100%;
+  height: 22px;
+  margin: 2px 0 0;
+  accent-color: var(--goal-hue);
+  cursor: pointer;
+}
+
+/* Your month: take-home as one capsule, filled left to right by where it goes. */
+.fin-goal-month-bar {
+  position: relative;
+  display: flex;
+  gap: 2px;
+  height: 10px;
+  margin-top: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--fin-well);
+}
+
+.fin-goal-month-bar i {
+  flex: none;
+  height: 100%;
+}
+
+.fin-goal-month-limit {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--fin-mood-watch);
+}
+
+.fin-goal-month-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 12px;
+  margin: 2px 0 0;
+  padding: 0;
+  color: var(--fin-ink-soft);
+  font-size: 11.5px;
+  font-weight: 600;
+  list-style: none;
+}
+
+.fin-goal-month-key li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.fin-goal-month-key li > i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.fin-goal-month-key b {
+  color: var(--fin-ink);
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.finance-dashboard .fin-goal-month-key .fin-text-btn {
+  margin: 0 0 0 2px;
+}
+
+.fin-goal-month :is(.fin-goal-month-bar, .fin-goal-month-key) .is-spend { background: rgba(23, 28, 25, 0.32); }
+.fin-goal-month :is(.fin-goal-month-bar, .fin-goal-month-key) .is-other { background: rgba(23, 28, 25, 0.22); }
+.fin-goal-month :is(.fin-goal-month-bar, .fin-goal-month-key) .is-home { background: rgba(23, 28, 25, 0.13); }
+.fin-goal-month :is(.fin-goal-month-bar, .fin-goal-month-key) .is-first { background: color-mix(in srgb, var(--goal-hue) 40%, transparent); }
+.fin-goal-month :is(.fin-goal-month-bar, .fin-goal-month-key) .is-goal { background: var(--goal-hue); }
+
+/* Price */
+.fin-goal-offs {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  color: var(--fin-ink-soft);
+  font-size: 12.5px;
+  font-weight: 600;
+  list-style: none;
+}
+
+.fin-goal-offs li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.fin-goal-offs b {
+  color: var(--fin-ink);
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+/* After a purchase: keep the habit going. */
+.fin-goal-numbers-next {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 14px 0;
+}
+
+.fin-goal-cols + .fin-goal-numbers-next {
+  border-top: 1px solid var(--fin-hairline);
+}
+
+.finance-dashboard .fin-goal-numbers-next p {
+  margin: 0;
+  color: var(--fin-ink-soft);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+/* Every row that moved the goal; two columns once there are more than a few. */
+.fin-goal-numbers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 0 12px;
+}
+
+.fin-goal-numbers-body > * + .fin-goal-numbers-list {
+  border-top: 1px solid var(--fin-hairline);
+}
+
+.fin-goal-numbers-list > .fin-goal-rows {
+  margin: 0;
+}
+
+.fin-goal-rows.is-split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 28px;
+}
+
+.fin-goal-rows.is-split li + li {
+  border-top: 0;
+}
+
+.fin-goal-rows.is-split li:nth-child(n + 3) {
+  border-top: 1px solid var(--fin-hairline);
+}
+
+@container finbento (max-width: 780px) {
+  .fin-goal-rows.is-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fin-goal-rows.is-split li:nth-child(2) {
+    border-top: 1px solid var(--fin-hairline);
   }
 }
 
