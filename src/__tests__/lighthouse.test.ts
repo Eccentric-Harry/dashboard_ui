@@ -13,6 +13,7 @@ import {
   nextRun,
   phaseOf,
   quietRun,
+  startedEarly,
   targetOn,
   weekCount,
   who5Concern,
@@ -92,6 +93,18 @@ describe('days and phases', () => {
     expect(activeTracks(p, day(8))).toEqual(['lift', 'protein', 'mood', 'screen', 'regard'])
     expect(activeTracks(p, day(15))).toContain('run')
     expect(activeTracks(p, day(36))).toHaveLength(8)
+  })
+
+  it('lets a track start early — from the day chosen, never before day 1, never later than planned', () => {
+    const base = program()
+    const p = { ...base, tracks: base.tracks.map((t) => (t.key === 'run' ? { ...t, openedOn: day(3) } : t.key === 'lift' ? { ...t, openedOn: addDays(START, -2) } : t)) }
+    expect(activeTracks(p, day(2))).not.toContain('run')
+    expect(activeTracks(p, day(3))).toContain('run')
+    expect(activeTracks(p, day(1))).toContain('lift')
+    expect(startedEarly(p, 'run')).toBe(true)
+    expect(startedEarly(p, 'protein')).toBe(false)
+    const late = { ...base, tracks: base.tracks.map((t) => (t.key === 'run' ? { ...t, openedOn: day(30) } : t)) }
+    expect(activeTracks(late, day(15))).toContain('run')
   })
 })
 

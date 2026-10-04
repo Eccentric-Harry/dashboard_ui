@@ -274,6 +274,18 @@ export function resolveGuestProgram(url: URL, method: string, rawBody?: string):
           track.plan = plan?.trim() || null;
         }
       }
+      if (s.opens) {
+        for (const [k, date] of Object.entries(s.opens)) {
+          const track = p.tracks.find((t) => t.key === k);
+          if (!track) return bad(`Unknown track: ${k}`);
+          if (!date) {
+            track.openedOn = null;
+            continue;
+          }
+          if (date > p.endDate) return bad("A track can't start after the program ends");
+          track.openedOn = date < p.startDate ? p.startDate : date;
+        }
+      }
       p.updatedAt = now();
       return ok(view());
     }

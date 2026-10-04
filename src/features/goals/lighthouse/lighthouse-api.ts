@@ -19,6 +19,8 @@ export interface LogOptions {
   detail?: string
   /** Where the celebration bursts from. */
   anchor?: HTMLElement | null
+  /** The sound already played at the gesture — don't play it again when the server answers. */
+  soundPlayed?: boolean
 }
 
 export interface LighthouseApi {

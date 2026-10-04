@@ -6,6 +6,7 @@ import type { LiftSet, ProgramLog, ProgramTrackKey } from '@/types/program'
 import { learningsService } from '@/services/learnings-service'
 import { cn } from '@/lib/utils'
 import { CampSheet } from '../components/camp-sheet'
+import { campSound } from '../camp-sound'
 import { addDays } from '../goal-format'
 import {
   BUNDLE_TIP,
@@ -25,15 +26,19 @@ import {
   consistency,
   dateOfDay,
   dayCell,
+  dayNumber,
   isBaseline,
   isOn,
+  keptPromises,
   lastSet,
   logsOn,
   nextLiftDay,
   nextRun,
   opensDay,
   progressionHint,
+  scheduledDay,
   screenMinutes,
+  startedEarly,
   targetOn,
   type ProgramCtx,
 } from './program-engine'
@@ -92,19 +97,28 @@ function TrackSheet({ open, track, origin, ctx, api, busy, onClose, onCoach, onU
           <div className="lh-sheet-main">
             {locked ? (
               <div className="lh-locked-intro">
-                <p>
-                  {meta.name} switches on <b>{shortDay(dateOfDay(ctx.program, opensDay(ctx.program, key)))}</b>, so it doesn’t crowd the first weeks. Starting
-                  eight habits on one day is the most common way plans like this fall apart.
-                </p>
+                {startedEarly(ctx.program, key) ? (
+                  <p>
+                    You moved {meta.name.toLowerCase()} up: it starts with the program on <b>day 1, {shortDay(ctx.program.startDate)}</b>, and every session from
+                    then on is recorded.
+                  </p>
+                ) : (
+                  <p>
+                    {meta.name} switches on <b>{shortDay(dateOfDay(ctx.program, opensDay(ctx.program, key)))}</b>. The tracks come in a few at a time so the
+                    first weeks stay light — that’s the default, not a rule.
+                  </p>
+                )}
                 <p className="lh-small">
                   Full version: {fillCopy(meta.full, target, floor)}. Bad-day version: {fillCopy(meta.min, target, floor)} — and it counts.
                 </p>
+                {startedEarly(ctx.program, key) ? <EarlyNote track={key} ctx={ctx} api={api} /> : <StartNow track={key} ctx={ctx} api={api} />}
               </div>
             ) : (
               <TrackForm track={key} ctx={ctx} api={api} busy={busy} onCoach={onCoach} onUrge={onUrge} onNavigate={onNavigate} />
             )}
           </div>
           <aside className="lh-sheet-side">
+            {!locked && startedEarly(ctx.program, key) && <EarlyNote track={key} ctx={ctx} api={api} />}
             {key !== 'mood' && <PlanEditor key={`${key}:${ctx.program.tracks.find((t) => t.key === key)?.plan ?? ''}`} ctx={ctx} track={key} api={api} />}
             <Why track={key} ctx={ctx} />
             <Recent track={key} ctx={ctx} api={api} />
@@ -531,7 +545,13 @@ function RegardForm({ ctx, api, busy }: FormProps) {
   const [kind, setKind] = useState('')
   const [prompt, setPrompt] = useState(() => Math.abs(ctx.today.split('-').reduce((n, x) => n + Number(x), 0)) % KIND_PROMPTS.length)
   const save = async () => {
-    const saved = await api.addLog({ track: 'regard', date: ctx.today, level: kind.trim() ? 'FULL' : 'MIN', text: promise.trim(), kind: kind.trim() || null }, { anchor: anchor('regard') })
+    // The stone sounds as you press, not when the server answers; a milestone rings bigger.
+    const next = keptPromises(ctx.logs) + 1
+    campSound.play(next === 25 || next === 50 || next === 100 ? 'week-kept' : 'stone')
+    const saved = await api.addLog(
+      { track: 'regard', date: ctx.today, level: kind.trim() ? 'FULL' : 'MIN', text: promise.trim(), kind: kind.trim() || null },
+      { anchor: anchor('regard'), soundPlayed: true },
+    )
     if (saved) {
       setPromise('')
       setKind('')
@@ -566,6 +586,58 @@ function RegardForm({ ctx, api, busy }: FormProps) {
         </ul>
       )}
     </div>
+  )
+}
+
+// ── Starting a track before its day ────────────────────────────────────
+
+/**
+ * The schedule staggers the tracks, but a person who wants to run now should be able to.
+ * The evidence is mixed (some studies favour one habit at a time, others a bundle that
+ * reinforces itself), so this is the user's call: it counts from today (or day 1).
+ */
+function StartNow({ track, ctx, api }: { track: ProgramTrackKey; ctx: ProgramCtx; api: LighthouseApi }) {
+  const [saving, setSaving] = useState(false)
+  const meta = trackMeta(track)
+  const beforeStart = dayNumber(ctx.program, ctx.today) < 1
+  return (
+    <div className="lh-start-now" data-color={meta.color}>
+      <span className="lh-start-now-text">
+        <strong>Ready to start {meta.name.toLowerCase()} now?</strong>
+        <small>
+          It’s on from {beforeStart ? `day 1, ${shortDay(ctx.program.startDate)}` : 'today'} and every session is recorded, with the usual targets. You can put it back on the
+          schedule later.
+        </small>
+      </span>
+      <button
+        type="button"
+        className="lh-btn lh-btn--candy"
+        disabled={saving}
+        onClick={async () => {
+          setSaving(true)
+          const ok = await api.saveSettings({ opens: { [track]: ctx.today } }, `${meta.name} is on from ${beforeStart ? 'day 1' : 'today'}.`)
+          setSaving(false)
+          if (ok) campSound.play('start')
+        }}
+      >
+        <Play size={14} strokeWidth={3} aria-hidden="true" /> Start {beforeStart ? 'on day 1' : 'today'}
+      </button>
+    </div>
+  )
+}
+
+function EarlyNote({ track, ctx, api }: { track: ProgramTrackKey; ctx: ProgramCtx; api: LighthouseApi }) {
+  const opened = dateOfDay(ctx.program, opensDay(ctx.program, track))
+  const scheduled = dateOfDay(ctx.program, scheduledDay(ctx.program, track))
+  return (
+    <p className="lh-note-line lh-early-note">
+      <span>
+        {dayNumber(ctx.program, ctx.today) < 1 ? `Starting early, on ${dayMonth(opened)}.` : `Started early, on ${dayMonth(opened)}.`}{' '}
+        <button type="button" className="lh-link" onClick={() => void api.saveSettings({ opens: { [track]: '' } }, `Back on the schedule — from ${dayMonth(scheduled)}.`)}>
+          Back to the schedule ({dayMonth(scheduled)})
+        </button>
+      </span>
+    </p>
   )
 }
 

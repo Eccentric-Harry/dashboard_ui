@@ -12,10 +12,12 @@
 import type { ProgramTrackKey } from '@/types/program'
 import type { PipMood } from '../buddy-brain'
 import { addDays } from '../goal-format'
-import { fillCopy, trackMeta } from './program-content'
+import { TRACKS, fillCopy, trackMeta } from './program-content'
 import {
   activeTracks,
   dayNumber,
+  isOn,
+  startedEarly,
   daysAway,
   decidedOn,
   isDone,
@@ -198,6 +200,13 @@ export function situationLine(ctx: ProgramCtx, now: Date, buddy = 'Pip'): Keeper
   if (phase) {
     const [start] = phaseRange(p, phase)
     if (phase.key === 'audit') {
+      const early = TRACKS.filter((t) => startedEarly(p, t.key) && isOn(p, t.key, ctx.today)).map((t) => t.name.toLowerCase())
+      if (early.length) {
+        return {
+          mood: 'eager',
+          line: `Audit week — screen time and mood stay as they are, while ${early.join(' and ')} ${early.length === 1 ? 'starts' : 'start'} early. Your call; it counts.`,
+        }
+      }
       return {
         mood: 'content',
         line: pick(

@@ -1,8 +1,9 @@
-import type { MouseEvent } from 'react'
+import type { MouseEvent, PointerEvent } from 'react'
 import { Check, ChevronRight, Lock, Moon, PenLine, Sprout, Waves } from 'lucide-react'
 import type { ProgramTrackKey } from '@/types/program'
 import { cn } from '@/lib/utils'
 import { useHold } from '../use-hold'
+import { campSound } from '../camp-sound'
 import { addDays } from '../goal-format'
 import { LIFT_PLANS, MOOD_SCALE, SPEAK_PROMPTS, fillCopy, trackMeta } from './program-content'
 import {
@@ -110,12 +111,39 @@ const DONE_WORD: Partial<Record<DayCell['status'], string>> = { full: 'Done', mi
 
 /** Hold the circle to log the full version — a ring winds up, then the check lands. */
 function HoldCircle({ done, rest, busy, label, onComplete, onTap }: { done: boolean; rest: boolean; busy: boolean; label: string; onComplete: () => void; onTap: () => void }) {
-  const hold = useHold({ enabled: !done && !busy, onComplete, onTap })
+  const hold = useHold({
+    enabled: !done && !busy,
+    onComplete: () => {
+      campSound.chargeStop()
+      onComplete()
+    },
+    onTap,
+  })
+  // The hum starts on the press itself and stops the moment the finger lifts.
+  const handlers = {
+    ...hold.handlers,
+    onPointerDown: (e: PointerEvent<HTMLElement>) => {
+      if (!done && !busy && e.button === 0) campSound.chargeStart()
+      hold.handlers.onPointerDown(e)
+    },
+    onPointerUp: () => {
+      campSound.chargeStop()
+      hold.handlers.onPointerUp()
+    },
+    onPointerCancel: () => {
+      campSound.chargeStop()
+      hold.handlers.onPointerCancel()
+    },
+    onPointerLeave: () => {
+      campSound.chargeStop()
+      hold.handlers.onPointerLeave()
+    },
+  }
   return (
     <button
       type="button"
       className={cn('lh-hold', done && 'is-done', hold.charging && 'is-charging', hold.nudged && 'is-nudged')}
-      {...hold.handlers}
+      {...handlers}
       disabled={busy}
       aria-label={done ? `${label} — logged. Open it` : `Hold to log: ${label}`}
       title={done ? undefined : 'Hold to log'}

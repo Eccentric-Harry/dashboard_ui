@@ -160,7 +160,7 @@ function TodayDeck({ ctx, assessments, busy, reviewDue, onHoldFull, onSmall, onO
       {upcoming.length > 0 && (
         <section className="lh-upcoming" aria-label="Tracks still to come">
           <h3 className="lh-sky-title">
-            Opening soon <small>tap one to write its if-then plan</small>
+            Opening soon <small>tap one to plan it, or start it now</small>
           </h3>
           <div className="lh-upcoming-row">
             {upcoming.map((k) => (

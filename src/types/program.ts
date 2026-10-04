@@ -22,6 +22,8 @@ export interface ProgramTrack {
   floor?: number | null;
   /** The user's if-then plan. */
   plan?: string | null;
+  /** Started before its scheduled day ("Start it now"): on from this date. */
+  openedOn?: string | null;
 }
 
 export interface ProgramLetter {
@@ -191,6 +193,8 @@ export interface ProgramSettingsPayload {
   answers?: Record<string, string>;
   /** Track key → if-then plan; '' clears it. */
   plans?: Partial<Record<ProgramTrackKey, string>>;
+  /** Track key → the date it starts early; '' puts it back on the schedule. */
+  opens?: Partial<Record<ProgramTrackKey, string>>;
 }
 
 export type ProgramLogPayload = Omit<ProgramLog, 'id' | 'programId' | 'createdAt' | 'updatedAt'>;

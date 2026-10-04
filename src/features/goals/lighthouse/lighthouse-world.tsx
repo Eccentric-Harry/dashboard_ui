@@ -234,17 +234,17 @@ function LighthouseWorld({ onBack, onLeave }: LighthouseWorldProps) {
             detail: k >= 100 ? 'The beam is on' : k >= 50 ? 'The lamp is lit' : 'The lamp room is built',
             once: { key: `lh-kept-${k}`, scope: after.program.id },
           })
-          campSound.play('week-kept')
+          if (!opts?.soundPlayed) campSound.play('week-kept')
           setMoment({ kind: 'milestone', kept: k })
         } else {
           celebrationActions.celebrate({ anchor, palette: 'candy', intensity: 'echo', label: `Kept promise ${k}` })
-          campSound.play('sparkle')
+          if (!opts?.soundPlayed) campSound.play('stone')
           setMoment({ kind: 'kept', kept: k })
         }
         return
       }
       if (log.track === 'mood') {
-        campSound.play('tap')
+        if (!opts?.soundPlayed) campSound.play('tap')
         setMoment({ kind: 'mood', score: log.value ?? 3 })
         return
       }
@@ -275,7 +275,7 @@ function LighthouseWorld({ onBack, onLeave }: LighthouseWorldProps) {
         const a = weekCount(after, log.track, w)
         if (a.target != null && a.done >= a.target && b.done < a.target) {
           celebrationActions.celebrate({ anchor, palette: 'candy', label: `${meta.name}: ${a.done} of ${a.target} this week`, once: { key: `lh-week-${log.track}`, scope: w } })
-          campSound.play('week-kept')
+          if (!opts?.soundPlayed) campSound.play('week-kept')
           setMoment({ kind: 'logged', track: log.track, level, detail: opts?.detail })
           return
         }
@@ -284,7 +284,7 @@ function LighthouseWorld({ onBack, onLeave }: LighthouseWorldProps) {
         celebrationActions.celebrate({ anchor, palette: 'candy', intensity: 'echo', label: level === 'MIN' ? `${meta.name}: small version, done` : `${meta.name} done` })
       }
       const doneToday = after.program.tracks.filter((t) => ['full', 'min'].includes(dayCell(after, t.key, after.today).status)).length
-      campSound.play(level === 'FULL' ? 'pop' : level === 'MIN' ? 'chime' : 'tap', { step: Math.max(0, doneToday - 1) })
+      if (!opts?.soundPlayed) campSound.play(level === 'FULL' ? 'pop' : level === 'MIN' ? 'chime' : 'tap', { step: Math.max(0, doneToday - 1) })
       setMoment({ kind: 'logged', track: log.track, level, detail: opts?.detail })
     },
     [currentCtx],
@@ -502,11 +502,30 @@ function LighthouseWorld({ onBack, onLeave }: LighthouseWorldProps) {
     }
   }
 
+  /**
+   * The sound for a log lands on the gesture, not when the server answers (a round-trip to
+   * the database is long enough to hear). It's predicted from what's on screen: closing the
+   * week's target rings the week, otherwise a pop that climbs with how many are done today.
+   */
+  const soundNow = (track: ProgramTrackKey, level: 'FULL' | 'MIN') => {
+    if (!ctx) return
+    if (isWeekly(track)) {
+      const wk = weekCount(ctx, track, weekStartOf(today))
+      if (wk.target != null && wk.done + 1 === wk.target && !['full', 'min'].includes(dayCell(ctx, track, today).status)) {
+        campSound.play('week-kept')
+        return
+      }
+    }
+    const doneToday = ctx.program.tracks.filter((t) => t.key !== track && ['full', 'min'].includes(dayCell(ctx, t.key, today).status)).length
+    campSound.play(level === 'FULL' ? 'pop' : 'chime', { step: doneToday })
+  }
+
   const logSession = (track: ProgramTrackKey, level: 'FULL' | 'MIN', el: HTMLElement) => {
+    soundNow(track, level)
     if (track === 'english') {
-      void api.addLog({ track, date: today, level, minutes: level === 'FULL' ? 15 : 5 }, { anchor: el, detail: level === 'FULL' ? '15 minutes out loud' : undefined })
+      void api.addLog({ track, date: today, level, minutes: level === 'FULL' ? 15 : 5 }, { anchor: el, detail: level === 'FULL' ? '15 minutes out loud' : undefined, soundPlayed: true })
     } else {
-      void api.addLog({ track, date: today, level, minutes: track === 'learn' ? (level === 'FULL' ? 25 : 10) : undefined }, { anchor: el })
+      void api.addLog({ track, date: today, level, minutes: track === 'learn' ? (level === 'FULL' ? 25 : 10) : undefined }, { anchor: el, soundPlayed: true })
     }
   }
 
@@ -514,7 +533,8 @@ function LighthouseWorld({ onBack, onLeave }: LighthouseWorldProps) {
     if (!ctx) return
     const existing = [...ctx.logs].reverse().find((l) => l.track === 'mood' && l.date === today && l.value != null)
     const payload = { track: 'mood' as const, date: today, value: score, tag: existing?.tag ?? null, note: existing?.note ?? null }
-    void (existing ? api.updateLog(existing.id, payload, { anchor: el }) : api.addLog(payload, { anchor: el }))
+    campSound.play('tap')
+    void (existing ? api.updateLog(existing.id, payload, { anchor: el, soundPlayed: true }) : api.addLog(payload, { anchor: el, soundPlayed: true }))
   }
 
   const sheetOpen = sheet != null

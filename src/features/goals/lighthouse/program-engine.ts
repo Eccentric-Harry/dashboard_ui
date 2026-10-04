@@ -65,7 +65,16 @@ export function phaseRange(p: Program, phase: PhaseInfo): [number, number] {
   return [scaleDay(phase.from, length), phase.to === PROGRAM_DAYS ? length : scaleDay(phase.to, length)]
 }
 
-export const opensDay = (p: Program, key: ProgramTrackKey) => scaleDay(trackMeta(key).opensDay, programLength(p))
+/** The day a track opens on the schedule (tracks are staged so they don't all start at once). */
+export const scheduledDay = (p: Program, key: ProgramTrackKey) => scaleDay(trackMeta(key).opensDay, programLength(p))
+/** The day a track actually opens: its scheduled day, or earlier if the user started it now. */
+export const opensDay = (p: Program, key: ProgramTrackKey) => {
+  const scheduled = scheduledDay(p, key)
+  const early = p.tracks.find((t) => t.key === key)?.openedOn
+  return early ? Math.min(scheduled, Math.max(1, dayNumber(p, early))) : scheduled
+}
+/** Started before its scheduled day. */
+export const startedEarly = (p: Program, key: ProgramTrackKey) => opensDay(p, key) < scheduledDay(p, key)
 export const isOn = (p: Program, key: ProgramTrackKey, date: string) => dayNumber(p, date) >= opensDay(p, key)
 /** Audit week: screen and protein are watched, not judged. */
 export const isBaseline = (p: Program, key: ProgramTrackKey, date: string) =>
