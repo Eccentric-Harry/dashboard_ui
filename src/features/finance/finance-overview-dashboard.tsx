@@ -21,7 +21,7 @@ import { iconKeyOf } from './goal-icons'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { FloatingAdd } from '@/components/ui/floating-add'
 import { getErrorMessage } from '@/lib/errors'
-import type { LendingRecord, SavingsGoal, SavingsGoalRequest } from '@/types/finance'
+import type { LendingRecord, SavingsGoal, SavingsGoalRequest, ShowcaseUpdateRequest } from '@/types/finance'
 import type { AppPath } from '@/app/routes'
 import { financeService } from '@/services/finance-service'
 import { isGuestSession } from '@/services/http/session'
@@ -570,6 +570,27 @@ function FinanceOverviewDashboard({ searchParams, onNavigate }: FinanceOverviewD
     }
   }
 
+  /** The goal's photos: from a pasted link, or by its name with none. Returns the updated goal, or null. */
+  const findShowcase = async (goal: SavingsGoal, url?: string): Promise<SavingsGoal | null> => {
+    const res = await financeService.findGoalShowcase(goal.id, url)
+    if (res.error || !res.data) {
+      toast.error(getErrorMessage(res.error, 'Couldn’t fetch photos'))
+      return null
+    }
+    void financeActions.loadGoals()
+    return res.data
+  }
+
+  const updateShowcase = async (goal: SavingsGoal, dto: ShowcaseUpdateRequest): Promise<SavingsGoal | null> => {
+    const res = await financeService.updateGoalShowcase(goal.id, dto)
+    if (res.error || !res.data) {
+      toast.error(getErrorMessage(res.error, 'Couldn’t save that'))
+      return null
+    }
+    void financeActions.loadGoals()
+    return res.data
+  }
+
   /** Funding order: this goal moves ahead of every other one. */
   const fundFirst = async (goal: SavingsGoal) => {
     const first = Math.min(...goals.map((g) => g.priority))
@@ -643,6 +664,10 @@ function FinanceOverviewDashboard({ searchParams, onNavigate }: FinanceOverviewD
           onSavePace={(patch) => workspacePlan && void savePace(workspacePlan.goal, patch)}
           onNewGoal={() => setGoalModal({ goal: null })}
           onFundFirst={() => workspacePlan && void fundFirst(workspacePlan.goal)}
+          onFindShowcase={(url) => (workspacePlan ? findShowcase(workspacePlan.goal, url) : Promise.resolve(null))}
+          onUpdateShowcase={(dto) => (workspacePlan ? updateShowcase(workspacePlan.goal, dto) : Promise.resolve(null))}
+          // Guests can't reach the web.
+          canFindByName={!isGuest}
         />
       ) : (
       <>

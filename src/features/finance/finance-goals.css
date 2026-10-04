@@ -1398,3 +1398,1154 @@
   background: color-mix(in srgb, var(--goal-hue) 14%, transparent);
   color: var(--goal-hue);
 }
+
+/* ── Showcase workspace (a purchase or a trip) ────────────────────────────────
+   The thing leads: its photos on a stage beside what's in and when it's yours, then
+   the reasons and the milestones, then the numbers folded away. Photo backdrops are
+   literal colours matched to each photo's own edges (black studio shots, white
+   cut-outs), so those rules carry a `:where(:root:not([data-theme='none']))` prefix —
+   it names data-theme, which the derived dark/solid passes skip, and adds no
+   specificity. */
+.fin-goal-ws-grid.is-showcase > .fin-goal-show,
+.fin-goal-ws-grid.is-showcase > .fin-goal-numbers {
+  grid-column: 1 / -1;
+}
+
+.fin-goal-ws-grid.is-showcase > .fin-goal-why,
+.fin-goal-ws-grid.is-showcase > .fin-goal-journey {
+  grid-column: span 6;
+}
+
+@container finbento (max-width: 780px) {
+  .fin-goal-ws-grid.is-showcase > .fin-goal-why,
+  .fin-goal-ws-grid.is-showcase > .fin-goal-journey {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 768px) {
+  .fin-goal-ws-grid.is-showcase > .fin-goal-why,
+  .fin-goal-ws-grid.is-showcase > .fin-goal-journey {
+    grid-column: 1 / -1;
+  }
+}
+
+.finance-dashboard .fin-goal-show {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(250px, 1fr);
+  gap: 22px;
+  padding: 12px 22px 12px 12px;
+  overflow: clip;
+  isolation: isolate;
+}
+
+/* The goal's hue, faintly, from behind the info column. */
+.finance-dashboard .fin-goal-show::before {
+  position: absolute;
+  z-index: -1;
+  top: -140px;
+  right: -140px;
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--goal-hue) 11%, transparent), transparent);
+  content: '';
+  pointer-events: none;
+}
+
+@container finbento (max-width: 780px) {
+  .finance-dashboard .fin-goal-show {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    padding: 10px 10px 16px;
+  }
+
+  .fin-goal-show-info {
+    padding: 0 8px;
+  }
+}
+
+.fin-goal-show-media {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Stage */
+.fin-goal-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9.5;
+  max-height: 430px;
+  overflow: hidden;
+  border-radius: 18px;
+  color: #ffffff;
+  transition: background-color 0.6s ease;
+}
+
+:where(:root:not([data-theme='none'])) .fin-goal-stage.is-dark,
+:where(:root:not([data-theme='none'])) .fin-goal-stage.is-mid {
+  background-color: #050506;
+  color: #ffffff;
+}
+
+:where(:root:not([data-theme='none'])) .fin-goal-stage.is-light {
+  background-color: #ffffff;
+  color: #101312;
+  box-shadow: inset 0 0 0 1px rgba(16, 19, 18, 0.06);
+}
+
+.finance-dashboard .fin-goal-stage-frame {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+
+.fin-goal-stage-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  user-select: none;
+  animation: finStageIn 0.9s ease both;
+}
+
+/* Wide shots fill the stage and drift in slowly, the way a product film holds a shot. */
+.fin-goal-stage-img.is-fill {
+  object-fit: cover;
+  animation:
+    finStageIn 0.9s ease both,
+    finStageDrift 7.5s ease-out both;
+}
+
+.fin-goal-stage-img.is-whole {
+  box-sizing: border-box;
+  padding: 5%;
+  object-fit: contain;
+}
+
+@keyframes finStageIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes finStageDrift {
+  from { transform: scale(1); }
+  to { transform: scale(1.045); }
+}
+
+.finance-dashboard .fin-goal-stage-nav {
+  position: absolute;
+  top: 50%;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(-50%);
+  backdrop-filter: blur(14px) saturate(160%);
+  transition: opacity 0.2s ease, background-color 0.2s ease;
+}
+
+.finance-dashboard .fin-goal-stage-nav.is-prev { left: 12px; }
+.finance-dashboard .fin-goal-stage-nav.is-next { right: 12px; }
+
+.fin-goal-stage:hover .fin-goal-stage-nav,
+.fin-goal-stage:focus-within .fin-goal-stage-nav {
+  opacity: 1;
+}
+
+.fin-goal-stage-top {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 6px;
+}
+
+.finance-dashboard .fin-goal-stage-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  color: inherit;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  opacity: 0.82;
+  backdrop-filter: blur(14px) saturate(160%);
+  transition: opacity 0.2s ease;
+}
+
+.finance-dashboard .fin-goal-stage-pill.is-icon {
+  width: 26px;
+  justify-content: center;
+  padding: 0;
+  opacity: 0;
+}
+
+.fin-goal-stage:hover .fin-goal-stage-pill,
+.fin-goal-stage:focus-within .fin-goal-stage-pill {
+  opacity: 1;
+}
+
+:where(:root:not([data-theme='none'])) .fin-goal-stage:is(.is-dark, .is-mid) :is(.fin-goal-stage-nav, .fin-goal-stage-pill) {
+  background-color: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+
+:where(:root:not([data-theme='none'])) .fin-goal-stage:is(.is-dark, .is-mid) :is(.fin-goal-stage-nav, .fin-goal-stage-pill):hover {
+  background-color: rgba(255, 255, 255, 0.24);
+}
+
+:where(:root:not([data-theme='none'])) .fin-goal-stage.is-light :is(.fin-goal-stage-nav, .fin-goal-stage-pill) {
+  background-color: rgba(16, 19, 18, 0.07);
+  color: #101312;
+}
+
+.fin-goal-stage-dots {
+  position: absolute;
+  bottom: 11px;
+  left: 50%;
+  display: flex;
+  gap: 4px;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.fin-goal-stage-dots i {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.32;
+  transition: width 0.3s ease, opacity 0.3s ease;
+}
+
+.fin-goal-stage-dots i.is-active {
+  width: 16px;
+  opacity: 0.9;
+}
+
+/* Empty: the goal's mark on a wash of its hue, and the way to fill it. */
+.fin-goal-stage.is-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  box-sizing: border-box;
+  background:
+    radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--goal-hue) 16%, transparent), transparent 70%),
+    var(--fin-well);
+  color: var(--fin-ink);
+  text-align: center;
+}
+
+.finance-dashboard .fin-goal-stage.is-empty h3 {
+  margin: 6px 0 0;
+  color: var(--fin-ink);
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.finance-dashboard .fin-goal-stage.is-empty p {
+  max-width: 360px;
+  margin: 0;
+  color: var(--fin-ink-soft);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.fin-goal-stage-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.fin-goal-stage.is-finding::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.45) 50%, transparent 70%);
+  background-size: 220% 100%;
+  content: '';
+  animation: finStageSheen 1.6s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes finStageSheen {
+  from { background-position: 120% 0; }
+  to { background-position: -120% 0; }
+}
+
+/* Filmstrip */
+.fin-goal-strip {
+  display: flex;
+  gap: 6px;
+  padding: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.fin-goal-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.finance-dashboard .fin-goal-thumb {
+  position: relative;
+  flex: none;
+  width: 60px;
+  height: 38px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 9px;
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 0.2s ease, box-shadow 0.2s ease;
+}
+
+:where(:root:not([data-theme='none'])) .fin-goal-thumb:is(.is-dark, .is-mid) { background-color: #050506; }
+:where(:root:not([data-theme='none'])) .fin-goal-thumb.is-light { background-color: #ffffff; }
+
+.fin-goal-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.fin-goal-thumb img.is-whole {
+  box-sizing: border-box;
+  padding: 3px;
+  object-fit: contain;
+}
+
+.finance-dashboard .fin-goal-thumb:hover {
+  opacity: 0.85;
+}
+
+.finance-dashboard .fin-goal-thumb.is-active {
+  opacity: 1;
+  box-shadow: 0 0 0 2px var(--goal-hue);
+}
+
+/* Info column */
+.fin-goal-show-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 8px 0 4px;
+}
+
+.fin-goal-show-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.fin-goal-show-top .finance-eyebrow {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.finance-dashboard .fin-goal-show-name {
+  margin: 12px 0 0;
+  color: var(--fin-ink);
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 34px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.04;
+}
+
+.finance-dashboard .fin-goal-show-tagline {
+  margin: 6px 0 0;
+  color: var(--fin-ink-soft);
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 15px;
+  font-style: italic;
+  line-height: 1.3;
+}
+
+.fin-goal-show-figure {
+  margin-top: 20px;
+}
+
+.fin-goal-show-figure > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+
+.finance-dashboard .fin-goal-show-figure strong {
+  color: var(--fin-ink);
+  font-family: var(--fin-num-font);
+  font-size: 38px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+}
+
+.fin-goal-show-figure .fin-goal-of {
+  margin-bottom: 0;
+}
+
+.fin-goal-show-meter {
+  display: block;
+  margin-top: 10px;
+}
+
+/* A cut in the capsule at each quarter — the milestones, without labels. */
+.fin-goal-notch {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--ntr-card);
+  opacity: 0.9;
+}
+
+.finance-dashboard .fin-goal-show-when {
+  margin: 16px 0 0;
+  color: var(--fin-ink-soft);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.finance-dashboard .fin-goal-show-when b {
+  color: var(--fin-ink);
+  font-weight: 800;
+}
+
+.finance-dashboard .fin-goal-show-meta {
+  margin-top: 4px;
+}
+
+.fin-goal-show-actions {
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+.finance-dashboard .fin-soft-btn.is-quiet {
+  background: transparent;
+  color: var(--fin-ink-soft);
+}
+
+.finance-dashboard .fin-soft-btn.is-quiet:hover {
+  background: var(--fin-well);
+  color: var(--fin-ink);
+}
+
+/* Why you want it */
+.finance-dashboard .fin-goal-why,
+.finance-dashboard .fin-goal-journey {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 22px;
+}
+
+.fin-goal-reasons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fin-goal-reasons li {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 36px 11px 13px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--goal-hue) 9%, transparent);
+}
+
+.fin-goal-reasons li > svg {
+  flex: none;
+  margin-top: 3px;
+  color: var(--goal-hue);
+}
+
+.fin-goal-reasons li > span {
+  color: var(--fin-ink);
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 16px;
+  line-height: 1.32;
+}
+
+.finance-dashboard .fin-goal-x {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--fin-ink-faint);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(-50%);
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.finance-dashboard .fin-goal-x:hover {
+  background: rgba(23, 28, 25, 0.07);
+  color: var(--fin-ink);
+}
+
+li:hover > .fin-goal-x,
+.fin-goal-x:focus-visible {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .finance-dashboard .fin-goal-x {
+    opacity: 0.7;
+  }
+}
+
+.finance-dashboard .fin-goal-reason-empty {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 14px;
+  border: 1.5px dashed color-mix(in srgb, var(--goal-hue) 40%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--goal-hue) 5%, transparent);
+  color: var(--fin-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.finance-dashboard .fin-goal-reason-empty:hover {
+  background: color-mix(in srgb, var(--goal-hue) 10%, transparent);
+}
+
+.fin-goal-reason-empty > svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--goal-hue);
+}
+
+.fin-goal-reason-empty b {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.fin-goal-reason-empty small {
+  display: block;
+  margin-top: 2px;
+  color: var(--fin-ink-soft);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+.fin-goal-highlights {
+  padding-top: 4px;
+}
+
+.fin-goal-highlights-label {
+  color: var(--fin-ink-faint);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.fin-goal-highlights-label a {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--fin-ink-soft);
+  text-decoration: none;
+}
+
+.fin-goal-highlights-label a:hover {
+  color: var(--fin-ink);
+}
+
+.fin-goal-highlights ul {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fin-goal-highlights li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 26px;
+  padding-right: 28px;
+  color: var(--fin-ink);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.fin-goal-highlights li > svg {
+  flex: none;
+  color: var(--goal-hue);
+}
+
+/* Getting closer */
+.fin-goal-stops {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The rail between the first and last stop. */
+.fin-goal-stops::before {
+  position: absolute;
+  top: 10px;
+  right: 12.5%;
+  left: 12.5%;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--fin-hairline);
+  content: '';
+}
+
+.fin-goal-stops li {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: 0;
+  text-align: center;
+}
+
+.fin-goal-stops i {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  box-sizing: border-box;
+  place-items: center;
+  margin-bottom: 6px;
+  border: 2px solid var(--ntr-line);
+  border-radius: 50%;
+  background: var(--ntr-card);
+  color: #ffffff;
+}
+
+.fin-goal-stops li.is-reached i {
+  border-color: var(--goal-hue);
+  background: var(--goal-hue);
+}
+
+.fin-goal-stops li.is-next i {
+  border-color: var(--goal-hue);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--goal-hue) 16%, transparent);
+}
+
+.fin-goal-stops b {
+  color: var(--fin-ink);
+  font-size: 11.5px;
+  font-weight: 800;
+}
+
+.fin-goal-stops span {
+  color: var(--fin-ink-soft);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.fin-goal-stops small {
+  color: var(--fin-ink-faint);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.fin-goal-stops li.is-reached small {
+  color: var(--goal-hue);
+}
+
+.fin-goal-recent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--fin-hairline);
+}
+
+.fin-goal-recent > .fin-goal-rows {
+  width: 100%;
+  margin: 0;
+}
+
+.fin-goal-recent-label {
+  color: var(--fin-ink-faint);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.finance-dashboard .fin-goal-rows.is-compact button {
+  min-height: 40px;
+}
+
+.fin-goal-recent .fin-goal-empty {
+  margin: 4px 0;
+  padding: 0;
+}
+
+.finance-dashboard .fin-goal-recent > .fin-text-btn {
+  margin: 4px 0 0;
+}
+
+/* Plan & numbers, folded */
+.fin-goal-numbers {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.finance-dashboard .fin-goal-numbers-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 20px;
+  border: 1px solid var(--ntr-line);
+  border-radius: var(--ntr-radius);
+  background-color: var(--ntr-card);
+  color: var(--fin-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.finance-dashboard .fin-goal-numbers-toggle:hover {
+  background-color: var(--fin-well);
+}
+
+.fin-goal-numbers-toggle b {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 800;
+}
+
+.fin-goal-numbers-toggle small {
+  display: block;
+  margin-top: 2px;
+  color: var(--fin-ink-soft);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.fin-goal-numbers-toggle > svg {
+  flex: none;
+  color: var(--fin-ink-soft);
+  transition: transform 0.25s var(--fin-ease, ease);
+}
+
+.fin-goal-numbers.is-open .fin-goal-numbers-toggle > svg {
+  transform: rotate(180deg);
+}
+
+.fin-goal-numbers-grid > .fin-goal-plan {
+  grid-column: span 7;
+}
+
+.fin-goal-numbers-grid > .fin-goal-price,
+.fin-goal-numbers-grid > .fin-goal-history {
+  grid-column: span 5;
+}
+
+.fin-goal-numbers-grid > .fin-goal-history.is-wide {
+  grid-column: 1 / -1;
+}
+
+@container finbento (max-width: 780px) {
+  .fin-goal-numbers-grid > .fin-goal-plan,
+  .fin-goal-numbers-grid > .fin-goal-price,
+  .fin-goal-numbers-grid > .fin-goal-history {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 768px) {
+  .fin-goal-numbers-grid > .fin-goal-plan,
+  .fin-goal-numbers-grid > .fin-goal-price,
+  .fin-goal-numbers-grid > .fin-goal-history {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Full-screen viewer: always dark, whatever the theme — it's a lightbox. */
+:where(:root:not([data-theme='none'])) .fin-goal-lightbox {
+  position: fixed;
+  z-index: 9996;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  background: rgba(6, 7, 7, 0.95);
+  color: #ffffff;
+  animation: finStageIn 0.22s ease both;
+  backdrop-filter: blur(10px);
+}
+
+.fin-goal-lightbox-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px 10px 20px;
+}
+
+.fin-goal-lightbox-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.fin-goal-lightbox-name small {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.55;
+}
+
+:where(:root:not([data-theme='none'])) .fin-goal-lightbox-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+:where(:root:not([data-theme='none'])) .fin-goal-lightbox-source:hover {
+  color: #ffffff;
+}
+
+:where(:root:not([data-theme='none'])) .fin-goal-lightbox :is(.fin-goal-lightbox-close, .fin-goal-lightbox-nav) {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+:where(:root:not([data-theme='none'])) .fin-goal-lightbox :is(.fin-goal-lightbox-close, .fin-goal-lightbox-nav):hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.fin-goal-lightbox-close {
+  width: 34px;
+  height: 34px;
+  margin-left: auto;
+}
+
+.fin-goal-lightbox-source + .fin-goal-lightbox-close {
+  margin-left: 0;
+}
+
+.fin-goal-lightbox-stage {
+  position: relative;
+  display: grid;
+  min-height: 0;
+  place-items: center;
+  padding: 0 72px;
+}
+
+.fin-goal-lightbox-img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 14px;
+  object-fit: contain;
+  animation: finStageIn 0.4s ease both;
+}
+
+:where(:root:not([data-theme='none'])) .fin-goal-lightbox-img.is-light {
+  background: #ffffff;
+}
+
+.fin-goal-lightbox-nav {
+  position: absolute;
+  top: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translateY(-50%);
+}
+
+.fin-goal-lightbox-nav.is-prev { left: 16px; }
+.fin-goal-lightbox-nav.is-next { right: 16px; }
+
+.fin-goal-lightbox-strip {
+  display: flex;
+  justify-content: safe center;
+  gap: 6px;
+  padding: 12px 18px 18px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+:where(:root:not([data-theme='none'])) .fin-goal-lightbox-strip button {
+  flex: none;
+  width: 64px;
+  height: 40px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 8px;
+  background: #050506;
+  cursor: pointer;
+  opacity: 0.45;
+  transition: opacity 0.2s ease;
+}
+
+.fin-goal-lightbox-strip button:hover {
+  opacity: 0.8;
+}
+
+:where(:root:not([data-theme='none'])) .fin-goal-lightbox-strip button.is-active {
+  opacity: 1;
+  box-shadow: 0 0 0 2px #ffffff;
+}
+
+.fin-goal-lightbox-strip img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 768px) {
+  .fin-goal-lightbox-stage {
+    padding: 0 8px;
+  }
+
+  .fin-goal-lightbox-nav {
+    display: none;
+  }
+}
+
+/* Photos modal */
+.finance-modal-popover.fin-form-modal.fin-goal-photos-modal {
+  width: min(720px, calc(100vw - 32px));
+  max-width: 720px;
+}
+
+.fin-goal-link-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fin-goal-link-field {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--ntr-line);
+  border-radius: 12px;
+  background: var(--fin-well);
+  color: var(--fin-ink-soft);
+}
+
+.fin-goal-link-field input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--fin-ink);
+  font: inherit;
+  font-size: 13px;
+}
+
+.finance-dashboard .fin-goal-link-row .fin-goal-primary {
+  height: 40px;
+}
+
+.fin-goal-link-hint {
+  margin: 7px 2px 14px;
+  color: var(--fin-ink-soft);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.finance-dashboard .fin-goal-link-hint .fin-text-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin: 0;
+  font-size: 11.5px;
+}
+
+.fin-goal-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.fin-goal-photo-grid li {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+:where(:root:not([data-theme='none'])) .fin-goal-photo-grid li.is-dark { background: #050506; }
+:where(:root:not([data-theme='none'])) .fin-goal-photo-grid li.is-light { background: #ffffff; box-shadow: inset 0 0 0 1px rgba(16, 19, 18, 0.08); }
+
+.fin-goal-photo-grid img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.fin-goal-photo-grid li.is-cover {
+  box-shadow: 0 0 0 2px var(--goal-hue);
+}
+
+.fin-goal-photo-badge {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--goal-hue);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+:where(:root:not([data-theme='none'])) .fin-goal-photo-act {
+  position: absolute;
+  top: 6px;
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #ffffff;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.fin-goal-photo-act.is-cover { left: 6px; }
+.fin-goal-photo-act.is-remove { right: 6px; }
+
+:where(:root:not([data-theme='none'])) .fin-goal-photo-act:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.fin-goal-photo-grid li:hover .fin-goal-photo-act,
+.fin-goal-photo-act:focus-visible {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .fin-goal-photo-act {
+    opacity: 1;
+  }
+}
+
+/* Reason modal */
+.finance-modal-popover.fin-form-modal.fin-goal-reason-modal {
+  width: min(480px, calc(100vw - 32px));
+}
+
+.fin-goal-reason-modal textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 13px;
+  border: 1px solid var(--ntr-line);
+  border-radius: 12px;
+  background: var(--fin-well);
+  color: var(--fin-ink);
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 16px;
+  line-height: 1.35;
+  resize: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fin-goal-stage-img,
+  .fin-goal-stage-img.is-fill,
+  .fin-goal-lightbox-img {
+    animation: none;
+  }
+
+  .fin-goal-stage.is-finding::after {
+    animation: none;
+  }
+}

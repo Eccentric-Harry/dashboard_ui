@@ -23,6 +23,7 @@ import type {
   GoalMoneyRequest,
   GoalPurchaseRequest,
   IncomePlanRequest,
+  ShowcaseUpdateRequest,
 } from '../types/finance';
 import * as E from './endpoints/finance-endpoints';
 
@@ -59,6 +60,9 @@ export interface FinanceServiceInterface {
   takeOutOfGoal(id: string, dto: GoalMoneyRequest): Promise<SafeResult<SavingsGoal>>;
   buyGoal(id: string, dto: GoalPurchaseRequest): Promise<SafeResult<SavingsGoal>>;
   archiveGoal(id: string, release: boolean): Promise<SafeResult<SavingsGoal>>;
+  /** A page link brings its photos + highlights, an image link adds one photo, no link searches by name. Slow (seconds). */
+  findGoalShowcase(id: string, url?: string): Promise<SafeResult<SavingsGoal>>;
+  updateGoalShowcase(id: string, dto: ShowcaseUpdateRequest): Promise<SafeResult<SavingsGoal>>;
 }
 
 export const financeService: FinanceServiceInterface = {
@@ -104,4 +108,9 @@ export const financeService: FinanceServiceInterface = {
   buyGoal: (id, dto) => instance.safeCall<SavingsGoal>(E.API_BUY_GOAL, { params: { id }, body: dto }),
   archiveGoal: (id, release) =>
     instance.safeCall<SavingsGoal>(E.API_ARCHIVE_GOAL, { params: { id }, body: { release } }),
+  // A web search plus a page and ~16 photos measured server-side: allow it time.
+  findGoalShowcase: (id, url) =>
+    instance.safeCall<SavingsGoal>(E.API_FIND_GOAL_SHOWCASE, { params: { id }, body: url ? { url } : {}, timeoutMs: 90_000 }),
+  updateGoalShowcase: (id, dto) =>
+    instance.safeCall<SavingsGoal>(E.API_UPDATE_GOAL_SHOWCASE, { params: { id }, body: dto }),
 };

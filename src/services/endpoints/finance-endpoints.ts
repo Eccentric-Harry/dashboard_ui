@@ -73,6 +73,14 @@ export const API_BUY_GOAL: ApiEndpoint<{ id: string }> = {
   url: ({ id }) => `/savings-goals/${id}/buy`,
   method: 'post',
 };
+export const API_FIND_GOAL_SHOWCASE: ApiEndpoint<{ id: string }> = {
+  url: ({ id }) => `/savings-goals/${id}/showcase/find`,
+  method: 'post',
+};
+export const API_UPDATE_GOAL_SHOWCASE: ApiEndpoint<{ id: string }> = {
+  url: ({ id }) => `/savings-goals/${id}/showcase`,
+  method: 'put',
+};
 export const API_ARCHIVE_GOAL: ApiEndpoint<{ id: string }> = {
   url: ({ id }) => `/savings-goals/${id}/archive`,
   method: 'post',

@@ -205,6 +205,8 @@ export interface SavingsGoal {
   status: SavingsGoalStatus;
   boughtOn: string | null;
   boughtFor: number | null;
+  /** Photos, highlights and the user's reasons — what it looks like. Null until found or added. */
+  showcase: GoalShowcase | null;
   /** Still set aside (set aside − taken out). */
   saved: number;
   setAside: number;
@@ -213,6 +215,38 @@ export interface SavingsGoal {
   contributions: number;
   firstContributionDate: string | null;
   lastContributionDate: string | null;
+}
+
+/** One showcase photo, hotlinked from where it was found; size and edge tone measured server-side. */
+export interface GoalPhoto {
+  url: string;
+  width: number | null;
+  height: number | null;
+  /** The colour of the photo's edges — sets the backdrop when it's shown whole. */
+  tone: 'DARK' | 'LIGHT' | null;
+}
+
+/** What a savings goal looks like (GoalShowcase.java). Never touched by the plan's PUT. */
+export interface GoalShowcase {
+  /** The product page the photos came from; null when every photo was added by link. */
+  sourceUrl: string | null;
+  /** "apple.com" */
+  sourceName: string | null;
+  title: string | null;
+  /** Short lines from the page's description. */
+  highlights: string[];
+  /** In display order; the first is the cover. */
+  photos: GoalPhoto[];
+  /** The user's own words for why they want it. */
+  reasons: string[];
+  fetchedAt: string | null;
+}
+
+/** Curate the showcase; an omitted list stays as it is. Photos and highlights can only be reordered or removed. */
+export interface ShowcaseUpdateRequest {
+  photos?: string[];
+  highlights?: string[];
+  reasons?: string[];
 }
 
 export interface SavingsGoalRequest {

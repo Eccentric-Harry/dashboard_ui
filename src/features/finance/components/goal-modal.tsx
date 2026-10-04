@@ -147,6 +147,7 @@ export function GoalModal({
       status: 'ACTIVE',
       boughtOn: null,
       boughtFor: null,
+      showcase: null,
       saved: goal?.saved ?? 0,
       setAside: 0,
       takenOut: 0,

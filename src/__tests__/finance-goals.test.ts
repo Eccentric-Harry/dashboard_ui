@@ -32,6 +32,7 @@ const goal = (over: Partial<SavingsGoal> = {}): SavingsGoal => ({
   status: 'ACTIVE',
   boughtOn: null,
   boughtFor: null,
+  showcase: null,
   saved: 0,
   setAside: 0,
   takenOut: 0,

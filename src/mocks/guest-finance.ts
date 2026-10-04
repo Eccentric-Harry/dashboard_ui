@@ -17,8 +17,10 @@ import type {
   BudgetScope,
   DailyFinancialLog,
   FinancialTransaction,
+  GoalShowcase,
   SavingsGoal,
   SavingsGoalRequest,
+  ShowcaseUpdateRequest,
   SubscriptionDTO,
   TransactionDTO,
 } from '@/types/finance';
@@ -334,7 +336,20 @@ const baseGoal = (over: Partial<GuestGoal> & Pick<GuestGoal, 'id' | 'name' | 'ki
   status: 'ACTIVE',
   boughtOn: null,
   boughtFor: null,
+  showcase: null,
   ...over,
+});
+
+// The iPhone's photos are built into the app (features/finance/goal-presets.ts), so the
+// guest goal only carries reasons — the server-side part of a showcase.
+const reasonsOnly = (reasons: string[]): GoalShowcase => ({
+  sourceUrl: null,
+  sourceName: null,
+  title: null,
+  highlights: [],
+  photos: [],
+  reasons,
+  fetchedAt: null,
 });
 
 let goals: GuestGoal[] = [
@@ -346,6 +361,7 @@ let goals: GuestGoal[] = [
     id: 'goal-guest-phone', name: 'iPhone 18 Pro', kind: 'PURCHASE', icon: 'phone', color: 'sky',
     listPrice: 164900, exchangeValue: 30000, cardOffer: 5000, targetAmount: 129900,
     targetDate: isoShift(5), keptAt: 'SBI RD', startDate: isoShift(-2), priority: 1,
+    showcase: reasonsOnly(['Shoot the December trip properly — in the dark too', 'My phone is on its last legs']),
   }),
   baseGoal({
     id: 'goal-guest-goa', name: 'Goa in December', kind: 'TRIP', icon: 'beach', color: 'sand',
@@ -463,6 +479,30 @@ function resolveGuestGoals(path: string, method: string, body: () => Record<stri
       goal.status = 'ARCHIVED';
     }
     return ok(goalDto(goal));
+  }
+
+  const showcase = path.match(/\/api\/v1\/savings-goals\/([^/]+)\/showcase(\/find)?$/);
+  if (showcase) {
+    const goal = goals.find((g) => g.id === showcase[1]);
+    if (!goal) return bad('Savings goal not found');
+    if (showcase[2] && method === 'POST') {
+      return bad("Guest mode can't reach the web — sign in to pull photos from a link");
+    }
+    if (!showcase[2] && method === 'PUT') {
+      const next = body() as ShowcaseUpdateRequest;
+      const current: GoalShowcase = goal.showcase ?? {
+        sourceUrl: null, sourceName: null, title: null, highlights: [], photos: [], reasons: [], fetchedAt: null,
+      };
+      const photos = next.photos
+        ? next.photos.map((u) => current.photos.find((p) => p.url === u)).filter((p) => p != null)
+        : current.photos;
+      const highlights = next.highlights ? next.highlights.filter((h) => current.highlights.includes(h)) : current.highlights;
+      const reasons = next.reasons
+        ? [...new Set(next.reasons.map((r) => r.trim().replace(/\s+/g, ' ')).filter(Boolean))]
+        : current.reasons;
+      goal.showcase = photos.length || highlights.length || reasons.length ? { ...current, photos, highlights, reasons } : null;
+      return ok(goalDto(goal));
+    }
   }
 
   const one = path.match(/\/api\/v1\/savings-goals\/([^/]+)$/);

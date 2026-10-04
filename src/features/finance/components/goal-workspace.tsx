@@ -1,17 +1,39 @@
 // One savings goal, full page (`/finance?goal=<id>`) — deep content you work in gets its
-// own view, not a sheet. Nutrition's grammar per card: an eyebrow, a serif finding line,
-// one figure and one visual.
+// own view, not a sheet.
 //
-// - Hero: what's left to go and whether it's on pace, the saved figure, a progress
-//   capsule with the plan's tick, the next set-aside, and the goal over time.
-// - Plan: drag what you'd set aside each month and see where it lands; under it the
-//   month's waterfall — take-home, a typical month of spending and money sent home, the
-//   goals funded first — so "can I afford this pace?" has a real answer.
-// - Money in this goal: every row that moved it, each one editable.
-// - What it really costs (purchases): price, exchange, card offer, and a word on EMI.
+// Something to buy or a trip leads with the thing itself, because a goal you can picture is
+// one you keep feeding (Soman & Cheema: a visual reminder lifts the savings rate; an
+// emotional "why" beat financial education 73% to 22% in the sentimental-savings study):
+// - Showcase: the product's own photos (found from its page), how much is in, and when it's
+//   yours — with the next set-aside one tap away.
+// - Why you want it: the user's reasons in their own words, then the maker's highlights.
+// - Getting closer: quarter, half, three-quarters, yours — each with its date. Early on it
+//   counts what's in, later what's left (Koo & Fishbach's small-area effect).
+// - Plan & numbers, folded away: the pace simulator and month waterfall, every row that
+//   moved the goal, and what it really costs.
+//
+// A safety net or open saving has no picture to pull toward, so it keeps the numbers-first
+// layout: hero, plan, ledger.
 
-import { useMemo, useState, type CSSProperties } from 'react'
-import { ArrowDownLeft, ArrowUpRight, ChevronLeft, Lightbulb, Pencil, ShoppingBag, Wallet } from 'lucide-react'
+import { useCallback, useMemo, useState, type CSSProperties } from 'react'
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ExternalLink,
+  Lightbulb,
+  PenLine,
+  Pencil,
+  Plus,
+  Quote,
+  ShoppingBag,
+  Wallet,
+  X,
+} from 'lucide-react'
+import toast from 'react-hot-toast'
+import type { SavingsGoal, ShowcaseUpdateRequest } from '@/types/finance'
 import type { LedgerEntry } from '@/lib/finance-ledger'
 import { inr } from '@/lib/insights/engine'
 import {
@@ -31,6 +53,10 @@ import { goalIcon } from '../goal-icons'
 import { GoalChart } from './goal-chart'
 import { GoalJar } from './goal-jar'
 import { Money } from './money'
+import { Filmstrip, PhotoLightbox, ShowcaseStage } from './goal-showcase'
+import { useLivePhotos } from '../use-live-photos'
+import { withPresetShowcase } from '../goal-presets'
+import { GoalPhotosModal, GoalReasonModal } from './goal-photos-modal'
 
 interface GoalWorkspaceProps {
   plan: GoalPlan | null
@@ -60,6 +86,11 @@ interface GoalWorkspaceProps {
   onNewGoal: () => void
   /** Move this goal to the front of the funding order. */
   onFundFirst: () => void
+  /** Fill the showcase from a link, or by the goal's name with none. Resolves the updated goal, or null on failure. */
+  onFindShowcase: (url?: string) => Promise<SavingsGoal | null>
+  onUpdateShowcase: (dto: ShowcaseUpdateRequest) => Promise<SavingsGoal | null>
+  /** Whether "Find photos" by name can work here (guest mode can't reach the web). */
+  canFindByName: boolean
 }
 
 const fullDate = (iso: string) =>
@@ -103,13 +134,476 @@ function GoalWorkspace(props: GoalWorkspaceProps) {
         </button>
       </div>
 
-      <div className="finance-dashboard-grid fin-bento fin-goal-ws-grid">
-        <GoalHero {...props} plan={plan} />
-        <PlanCard {...props} plan={plan} />
-        <HistoryCard {...props} plan={plan} />
-        {plan.goal.kind === 'PURCHASE' && <PriceCard {...props} plan={plan} />}
+      {plan.goal.kind === 'PURCHASE' || plan.goal.kind === 'TRIP' ? (
+        <ShowcaseLayout {...props} {...withPreset(plan)} />
+      ) : (
+        <div className="finance-dashboard-grid fin-bento fin-goal-ws-grid">
+          <GoalHero {...props} plan={plan} />
+          <PlanCard {...props} plan={plan} />
+          <HistoryCard {...props} plan={plan} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Showcase layout (a purchase or a trip) ───────────────────────────────────
+
+/** The plan with any built-in photos filled in, and whether they're the built-in set. */
+function withPreset(plan: GoalPlan): { plan: GoalPlan; builtInPhotos: boolean } {
+  const goal = withPresetShowcase(plan.goal)
+  return goal === plan.goal ? { plan, builtInPhotos: false } : { plan: { ...plan, goal }, builtInPhotos: true }
+}
+
+const NUMBERS_KEY = 'fin-goal-numbers-open'
+const readOpen = (): boolean => {
+  try {
+    return localStorage.getItem(NUMBERS_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function ShowcaseLayout(props: GoalWorkspaceProps & { plan: GoalPlan; builtInPhotos: boolean }) {
+  const { plan, color, onFindShowcase, onUpdateShowcase, canFindByName, builtInPhotos } = props
+  const { goal } = plan
+  const showcase = goal.showcase
+  const { live, markBroken } = useLivePhotos(showcase?.photos ?? [])
+  const [index, setIndex] = useState(0)
+  const [viewing, setViewing] = useState(false)
+  const [photosOpen, setPhotosOpen] = useState(false)
+  const [reasonOpen, setReasonOpen] = useState(false)
+  const [finding, setFinding] = useState(false)
+  const [numbersOpen, setNumbersOpen] = useState(readOpen)
+  const shown = Math.min(index, Math.max(0, live.length - 1))
+
+  const find = useCallback(
+    async (url?: string): Promise<boolean> => {
+      setFinding(true)
+      const updated = await onFindShowcase(url)
+      setFinding(false)
+      if (!updated) return false
+      setIndex(0)
+      const n = updated.showcase?.photos.length ?? 0
+      toast.success(
+        url && updated.showcase?.sourceUrl !== url && n > 0 && !updated.showcase?.sourceName
+          ? 'Photo added'
+          : `${n} photo${n === 1 ? '' : 's'}${updated.showcase?.sourceName ? ` from ${updated.showcase.sourceName}` : ''}`,
+      )
+      return true
+    },
+    [onFindShowcase],
+  )
+
+  const toggleNumbers = () => {
+    setNumbersOpen((open) => {
+      try {
+        localStorage.setItem(NUMBERS_KEY, open ? '0' : '1')
+      } catch {
+        // Private mode: the panel just won't remember.
+      }
+      return !open
+    })
+  }
+
+  const saveReasons = async (reasons: string[]) => Boolean(await onUpdateShowcase({ reasons }))
+
+  return (
+    <>
+      <div className="finance-dashboard-grid fin-bento fin-goal-ws-grid is-showcase">
+        <section className="finance-card fin-goal-show" style={{ '--i': 0 } as CSSProperties} aria-label={goal.name}>
+          <div className="fin-goal-show-media">
+            <ShowcaseStage
+              goal={goal}
+              photos={live}
+              index={shown}
+              onIndex={setIndex}
+              onBroken={markBroken}
+              onOpen={() => setViewing(true)}
+              onEdit={() => setPhotosOpen(true)}
+              onFind={canFindByName ? () => void find() : null}
+              onPasteLink={() => setPhotosOpen(true)}
+              finding={finding}
+              paused={viewing || photosOpen || reasonOpen}
+            />
+            <Filmstrip photos={live} index={shown} onIndex={setIndex} />
+          </div>
+          <ShowcaseInfo {...props} plan={plan} />
+        </section>
+
+        <WhyCard
+          plan={plan}
+          onAdd={() => setReasonOpen(true)}
+          onRemoveReason={(r) => void saveReasons((showcase?.reasons ?? []).filter((x) => x !== r))}
+          // Built-in highlights live in the app, not on the server — nothing to remove there.
+          onRemoveHighlight={
+            builtInPhotos ? null : (h) => void onUpdateShowcase({ highlights: (showcase?.highlights ?? []).filter((x) => x !== h) })
+          }
+        />
+        <JourneyCard
+          {...props}
+          plan={plan}
+          onSeeAll={() => {
+            if (!numbersOpen) toggleNumbers()
+            window.setTimeout(() => document.getElementById('fin-goal-numbers')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60)
+          }}
+        />
+
+        <section id="fin-goal-numbers" className={cn('fin-goal-numbers', numbersOpen && 'is-open')} aria-label="Plan and numbers">
+          <button type="button" className="fin-goal-numbers-toggle" aria-expanded={numbersOpen} onClick={toggleNumbers}>
+            <span>
+              <b>Plan & numbers</b>
+              <small>{numbersSummary(plan, props.room)}</small>
+            </span>
+            <ChevronDown size={16} strokeWidth={2.4} aria-hidden="true" />
+          </button>
+          {numbersOpen && (
+            <div className="finance-dashboard-grid fin-goal-numbers-grid">
+              <PlanCard {...props} plan={plan} />
+              {goal.kind === 'PURCHASE' && <PriceCard {...props} plan={plan} />}
+              <HistoryCard {...props} plan={plan} />
+            </div>
+          )}
+        </section>
+      </div>
+
+      {viewing && live.length > 0 && (
+        <PhotoLightbox goal={goal} photos={live} index={shown} onIndex={setIndex} onClose={() => setViewing(false)} />
+      )}
+      <GoalPhotosModal
+        isOpen={photosOpen}
+        goal={goal}
+        color={color}
+        builtIn={builtInPhotos}
+        finding={finding}
+        onFindByName={canFindByName ? () => void find().then((ok) => ok && setPhotosOpen(false)) : null}
+        onFetch={async (url) => {
+          const ok = await find(url)
+          if (ok) setPhotosOpen(false)
+          return ok
+        }}
+        onSave={async (photos) => {
+          const updated = await onUpdateShowcase({ photos })
+          if (updated) setIndex(0)
+          return Boolean(updated)
+        }}
+        onClose={() => setPhotosOpen(false)}
+      />
+      <GoalReasonModal
+        isOpen={reasonOpen}
+        goal={goal}
+        color={color}
+        onSave={(reason) => saveReasons([...(showcase?.reasons ?? []), reason])}
+        onClose={() => setReasonOpen(false)}
+      />
+    </>
+  )
+}
+
+function numbersSummary(plan: GoalPlan, room: number | null): string {
+  const bits: string[] = []
+  const need = plan.monthlyNeed ?? plan.goal.plannedMonthly
+  if (need && plan.state !== 'bought' && plan.state !== 'ready') {
+    bits.push(`${inr(need)} a month${room != null ? (need <= room ? ' · fits' : ' · tight') : ''}`)
+  }
+  bits.push(`${plan.goal.contributions} set-aside${plan.goal.contributions === 1 ? '' : 's'}`)
+  if (plan.goal.kind === 'PURCHASE' && (plan.goal.listPrice ?? plan.target)) bits.push(`price ${inr(plan.goal.listPrice ?? plan.target ?? 0)}`)
+  return bits.join(' · ')
+}
+
+/** The right-hand side of the showcase: name, what's in, when it's yours, the next move. */
+function ShowcaseInfo({ plan, payday, paydayKnown, onSetAside, onTakeOut, onBuy }: GoalWorkspaceProps & { plan: GoalPlan }) {
+  const { goal } = plan
+  const showcase = goal.showcase
+  const status = statusLine(plan)
+  const pct = plan.progress != null ? Math.round(plan.progress * 100) : null
+  const saving = plan.state !== 'bought' && plan.state !== 'paused'
+  const tagline = showcase?.highlights[0] ?? null
+
+  let when: { lead: string; date: string } | null = null
+  if (plan.state === 'bought') when = goal.boughtOn ? { lead: 'Yours since', date: fullDate(goal.boughtOn) } : null
+  else if (plan.state === 'ready') when = { lead: 'Ready —', date: 'go get it' }
+  else if (plan.state === 'behind' && plan.projectedDate) when = { lead: 'At this pace, yours by', date: fullDate(plan.projectedDate) }
+  else if (goal.targetDate) when = { lead: 'Yours by', date: fullDate(goal.targetDate) }
+  else if (plan.projectedDate) when = { lead: 'Yours around', date: monthYear(plan.projectedDate) }
+
+  const meta: string[] = []
+  if (saving && plan.state !== 'ready') {
+    if (plan.monthlyNeed) meta.push(`${inr(plan.monthlyNeed)} ${goal.targetDate ? 'each payday' : 'a month'}`)
+    if (plan.paydaysLeft != null && plan.paydaysLeft > 0) meta.push(`${plan.paydaysLeft} payday${plan.paydaysLeft === 1 ? '' : 's'} to go`)
+    if (!paydayKnown) meta.push(`payday assumed the ${payday === 1 ? '1st' : payday}`)
+  }
+
+  return (
+    <div className="fin-goal-show-info">
+      <header className="fin-goal-show-top">
+        <span className="finance-eyebrow">
+          {KIND_LABEL[goal.kind]}
+          {goal.keptAt && ` · kept at ${goal.keptAt}`}
+        </span>
+        <span className={cn('fin-goal-chip', `is-${status.tone}`)}>
+          {plan.state === 'on-track' && plan.dueThisCycle >= 1 ? 'On track' : status.text.split(' · ')[0]}
+        </span>
+      </header>
+      <h1 className="fin-goal-show-name">{goal.name}</h1>
+      {tagline && <p className="fin-goal-show-tagline">{tagline}</p>}
+
+      <div className="fin-goal-show-figure">
+        <span className="fin-hero-label">{plan.state === 'bought' ? 'Paid' : 'Set aside'}</span>
+        <div>
+          <strong>
+            <Money value={plan.state === 'bought' ? goal.boughtFor ?? plan.saved : plan.saved} />
+          </strong>
+          {plan.target != null && plan.state !== 'bought' && (
+            <span className="fin-goal-of">
+              of {inr(plan.target)}
+              {pct != null && <b>{pct}%</b>}
+            </span>
+          )}
+        </div>
+        {plan.target != null && plan.state !== 'bought' && <MilestoneMeter plan={plan} />}
+      </div>
+
+      {when && (
+        <p className="fin-goal-show-when">
+          {when.lead} <b>{when.date}</b>
+        </p>
+      )}
+      {meta.length > 0 && (
+        <p className="fin-hero-meta fin-goal-show-meta">
+          {meta.map((m) => (
+            <span key={m}>{m}</span>
+          ))}
+        </p>
+      )}
+
+      <div className="fin-goal-hero-actions fin-goal-show-actions">
+        {plan.state === 'ready' && (
+          <button type="button" className="fin-goal-primary" onClick={onBuy}>
+            <ShoppingBag size={14} strokeWidth={2.4} /> Record the purchase
+          </button>
+        )}
+        {saving && plan.state !== 'ready' && (
+          <button type="button" className="fin-goal-primary" onClick={onSetAside}>
+            <ArrowUpRight size={14} strokeWidth={2.4} />
+            {plan.dueThisCycle >= 1 ? `Set aside ${inr(plan.dueThisCycle)}` : 'Set aside'}
+          </button>
+        )}
+        {saving && plan.state !== 'ready' && (
+          <button type="button" className="fin-soft-btn" onClick={onBuy}>
+            <ShoppingBag size={13} strokeWidth={2.4} /> Bought it
+          </button>
+        )}
+        {saving && plan.saved > 0 && (
+          <button type="button" className="fin-soft-btn is-quiet" onClick={onTakeOut}>
+            <ArrowDownLeft size={13} strokeWidth={2.4} /> Take out
+          </button>
+        )}
       </div>
     </div>
+  )
+}
+
+const MILESTONES = [
+  { at: 0.25, label: 'A quarter' },
+  { at: 0.5, label: 'Halfway' },
+  { at: 0.75, label: 'Three-quarters' },
+  { at: 1, label: 'Yours' },
+] as const
+
+/** The progress capsule with a notch at each quarter, the plan's tick, and the fill. */
+function MilestoneMeter({ plan }: { plan: GoalPlan }) {
+  const fill = Math.min(100, (plan.progress ?? 0) * 100)
+  const pacePct = plan.expectedByNow != null && plan.target ? Math.min(100, (plan.expectedByNow / plan.target) * 100) : null
+  return (
+    <span className="fin-meter fin-goal-meter fin-goal-show-meter" role="img" aria-label={`${Math.round(fill)}% saved`}>
+      <span className="fin-meter-track">
+        <i className="fin-meter-fill" style={{ width: `${fill}%` }} />
+        {MILESTONES.slice(0, 3).map((m) => (
+          <span key={m.at} className={cn('fin-goal-notch', fill >= m.at * 100 && 'is-passed')} style={{ left: `${m.at * 100}%` }} />
+        ))}
+        {pacePct != null && pacePct > 0 && pacePct < 100 && <span className="fin-meter-pace" style={{ left: `${pacePct}%` }} title="Where the plan expects you" />}
+      </span>
+    </span>
+  )
+}
+
+// ── Why you want it ──────────────────────────────────────────────────────────
+
+function WhyCard({
+  plan,
+  onAdd,
+  onRemoveReason,
+  onRemoveHighlight,
+}: {
+  plan: GoalPlan
+  onAdd: () => void
+  onRemoveReason: (reason: string) => void
+  onRemoveHighlight: ((highlight: string) => void) | null
+}) {
+  const showcase = plan.goal.showcase
+  const reasons = showcase?.reasons ?? []
+  // The first highlight already sits under the name as its tagline.
+  const highlights = (showcase?.highlights ?? []).slice(1)
+  return (
+    <section className="finance-card fin-goal-why" style={{ '--i': 1 } as CSSProperties} aria-label="Why you want it">
+      <div className="finance-section-head compact">
+        <div>
+          <span className="finance-eyebrow">Why</span>
+          <h2>Why you want it</h2>
+        </div>
+        {reasons.length > 0 && reasons.length < 6 && (
+          <button type="button" className="fin-icon-btn" onClick={onAdd} aria-label="Add a reason" title="Add a reason">
+            <Plus size={14} strokeWidth={2.4} />
+          </button>
+        )}
+      </div>
+
+      {reasons.length > 0 ? (
+        <ul className="fin-goal-reasons">
+          {reasons.map((r) => (
+            <li key={r}>
+              <Quote size={14} strokeWidth={2.2} aria-hidden="true" />
+              <span>{r}</span>
+              <button type="button" className="fin-goal-x" onClick={() => onRemoveReason(r)} aria-label={`Remove “${r}”`}>
+                <X size={12} strokeWidth={2.4} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <button type="button" className="fin-goal-reason-empty" onClick={onAdd}>
+          <PenLine size={16} strokeWidth={2.2} aria-hidden="true" />
+          <span>
+            <b>Add your reason</b>
+            <small>In your own words — the line you'll read when the money's tempted elsewhere.</small>
+          </span>
+        </button>
+      )}
+
+      {highlights.length > 0 && (
+        <div className="fin-goal-highlights">
+          <span className="fin-goal-highlights-label">
+            From{' '}
+            {showcase?.sourceUrl ? (
+              <a href={showcase.sourceUrl} target="_blank" rel="noopener noreferrer">
+                {showcase.sourceName} <ExternalLink size={10} strokeWidth={2.4} />
+              </a>
+            ) : (
+              showcase?.sourceName ?? 'the page'
+            )}
+          </span>
+          <ul>
+            {highlights.map((h) => (
+              <li key={h}>
+                <Check size={12} strokeWidth={2.8} aria-hidden="true" />
+                <span>{h}</span>
+                {onRemoveHighlight && (
+                  <button type="button" className="fin-goal-x" onClick={() => onRemoveHighlight(h)} aria-label={`Hide “${h}”`}>
+                    <X size={11} strokeWidth={2.4} />
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
+  )
+}
+
+// ── Getting closer ───────────────────────────────────────────────────────────
+
+function JourneyCard({ plan, rows, today, payday, onOpenEntry, onSeeAll }: GoalWorkspaceProps & { plan: GoalPlan; onSeeAll: () => void }) {
+  const { goal } = plan
+  const target = plan.target
+  const perMonth = plan.monthlyNeed ?? plan.pace ?? goal.plannedMonthly ?? null
+
+  const stops = useMemo(() => {
+    if (target == null) return []
+    // When each quarter was crossed: walk the goal's rows in date order.
+    const ordered = [...rows].sort((a, b) => a.day.localeCompare(b.day) || a.at - b.at)
+    return MILESTONES.map((m) => {
+      const amount = Math.round(target * m.at)
+      let running = 0
+      let reachedOn: string | null = null
+      for (const r of ordered) {
+        if (r.kind === 'transfer-out') running += r.amount
+        else if (r.kind === 'transfer-in') running -= r.amount
+        if (running >= amount) {
+          reachedOn = r.day
+          break
+        }
+      }
+      const reached = plan.saved >= amount || plan.state === 'bought'
+      const eta =
+        reached || !perMonth
+          ? null
+          : m.at === 1 && goal.targetDate && plan.state !== 'behind'
+            ? goal.targetDate
+            : landingDate(amount - plan.saved, perMonth, today, payday, plan.thisCycle >= perMonth)
+      return { ...m, amount, reached, date: reached ? reachedOn : eta }
+    })
+  }, [target, rows, plan.saved, plan.state, plan.thisCycle, perMonth, goal.targetDate, today, payday])
+
+  const next = stops.find((s) => !s.reached)
+  const progress = plan.progress ?? 0
+  // Small-area framing: early on, count what's in; past halfway, count what's left.
+  let line: string
+  if (plan.state === 'bought') line = goal.boughtOn ? `Bought ${shortDate(goal.boughtOn)}` : 'Bought'
+  else if (!next) line = 'All of it saved'
+  else if (plan.saved <= 0) line = 'The first set-aside starts it'
+  else if (progress < 0.5) line = `${inr(plan.saved)} in — ${goal.contributions} set-aside${goal.contributions === 1 ? '' : 's'} so far`
+  else line = `Just ${inr(plan.remaining ?? 0)} to go`
+
+  const recent = [...rows].sort((a, b) => b.day.localeCompare(a.day) || b.at - a.at).slice(0, 3)
+
+  return (
+    <section className="finance-card fin-goal-journey" style={{ '--i': 2 } as CSSProperties} aria-label="Getting closer">
+      <div className="finance-section-head compact">
+        <div>
+          <span className="finance-eyebrow">Getting closer</span>
+          <h2>{line}</h2>
+          {next && plan.state !== 'bought' && (
+            <p>
+              Next: {next.label.toLowerCase()} at {inr(next.amount)}
+              {next.date && ` · around ${monthYear(next.date)}`}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {stops.length > 0 && (
+        <ol className="fin-goal-stops">
+          {stops.map((s) => (
+            <li key={s.at} className={cn(s.reached && 'is-reached', s === next && 'is-next')}>
+              <i aria-hidden="true">{s.reached ? <Check size={11} strokeWidth={3} /> : null}</i>
+              <b>{s.label}</b>
+              <span>{inr(s.amount)}</span>
+              <small>{s.date ? (s.reached ? shortDate(s.date) : monthYear(s.date)) : s.reached ? 'done' : '—'}</small>
+            </li>
+          ))}
+        </ol>
+      )}
+
+      <div className="fin-goal-recent">
+        <span className="fin-goal-recent-label">Recent</span>
+        {recent.length === 0 ? (
+          <p className="fin-goal-empty">Nothing set aside yet.</p>
+        ) : (
+          <ul className="fin-goal-rows is-compact">
+            {recent.map((r) => (
+              <GoalRow key={r.id || `${r.day}-${r.amount}`} r={r} onOpenEntry={onOpenEntry} />
+            ))}
+          </ul>
+        )}
+        {rows.length > 3 && (
+          <button type="button" className="fin-text-btn" onClick={onSeeAll}>
+            All {rows.length} in Plan & numbers
+          </button>
+        )}
+      </div>
+    </section>
   )
 }
 
@@ -400,7 +894,8 @@ function PlanCard({
 
 function HistoryCard({ plan, rows, onOpenEntry }: GoalWorkspaceProps & { plan: GoalPlan }) {
   const sorted = [...rows].sort((a, b) => b.day.localeCompare(a.day) || b.at - a.at)
-  const wide = plan.goal.kind !== 'PURCHASE'
+  // Beside the plan for a trip (Plan & numbers has no price card); full width otherwise.
+  const wide = plan.goal.kind !== 'TRIP'
   return (
     <section className={cn('finance-card fin-goal-history', wide && 'is-wide')} style={{ '--i': 2 } as CSSProperties} aria-label="Money in this goal">
       <div className="finance-section-head compact">
@@ -418,30 +913,37 @@ function HistoryCard({ plan, rows, onOpenEntry }: GoalWorkspaceProps & { plan: G
         <p className="fin-goal-empty">Nothing set aside yet. The first set-aside starts the line above.</p>
       ) : (
         <ul className="fin-goal-rows">
-          {sorted.map((r) => {
-            const purchase = r.kind === 'spending'
-            const out = r.kind === 'transfer-in'
-            return (
-              <li key={r.id || `${r.day}-${r.amount}`}>
-                <button type="button" onClick={() => onOpenEntry(r)} disabled={!r.id}>
-                  <span className={cn('fin-goal-row-ic', purchase ? 'is-buy' : out ? 'is-out' : 'is-in')} aria-hidden="true">
-                    {purchase ? <ShoppingBag size={13} strokeWidth={2.3} /> : out ? <ArrowDownLeft size={13} strokeWidth={2.4} /> : <ArrowUpRight size={13} strokeWidth={2.4} />}
-                  </span>
-                  <span className="fin-goal-row-main">
-                    <b>{r.description || (purchase ? 'Purchase' : out ? 'Taken out' : 'Set aside')}</b>
-                    <small>{fullDate(r.day)}{purchase && ` · ${r.category}`}</small>
-                  </span>
-                  <strong className={cn(purchase ? 'is-buy' : out ? 'is-out' : 'is-in')}>
-                    {purchase ? '' : out ? '−' : '+'}
-                    {inr(r.amount)}
-                  </strong>
-                </button>
-              </li>
-            )
-          })}
+          {sorted.map((r) => (
+            <GoalRow key={r.id || `${r.day}-${r.amount}`} r={r} onOpenEntry={onOpenEntry} />
+          ))}
         </ul>
       )}
     </section>
+  )
+}
+
+function GoalRow({ r, onOpenEntry }: { r: LedgerEntry; onOpenEntry: (entry: LedgerEntry) => void }) {
+  const purchase = r.kind === 'spending'
+  const out = r.kind === 'transfer-in'
+  return (
+    <li>
+      <button type="button" onClick={() => onOpenEntry(r)} disabled={!r.id}>
+        <span className={cn('fin-goal-row-ic', purchase ? 'is-buy' : out ? 'is-out' : 'is-in')} aria-hidden="true">
+          {purchase ? <ShoppingBag size={13} strokeWidth={2.3} /> : out ? <ArrowDownLeft size={13} strokeWidth={2.4} /> : <ArrowUpRight size={13} strokeWidth={2.4} />}
+        </span>
+        <span className="fin-goal-row-main">
+          <b>{r.description || (purchase ? 'Purchase' : out ? 'Taken out' : 'Set aside')}</b>
+          <small>
+            {fullDate(r.day)}
+            {purchase && ` · ${r.category}`}
+          </small>
+        </span>
+        <strong className={cn(purchase ? 'is-buy' : out ? 'is-out' : 'is-in')}>
+          {purchase ? '' : out ? '−' : '+'}
+          {inr(r.amount)}
+        </strong>
+      </button>
+    </li>
   )
 }
 
