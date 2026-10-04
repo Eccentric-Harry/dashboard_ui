@@ -1299,3 +1299,62 @@
     transition: none !important;
   }
 }
+
+/* ---------- The lighthouse on the horizon (the way to the 90-day program) ---------- */
+
+:where(:root:not([data-theme='none'])) .camp-lighthouse {
+  position: absolute;
+  right: 21%;
+  bottom: -34px;
+  z-index: 1;
+  width: 52px;
+  height: 86px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  transition: transform 0.25s var(--tb-spring);
+}
+
+:where(:root:not([data-theme='none'])) .camp-lighthouse:hover,
+:where(:root:not([data-theme='none'])) .camp-lighthouse:focus-visible { transform: translateY(-4px) scale(1.06); }
+:where(:root:not([data-theme='none'])) .camp-lighthouse svg { width: 100%; height: 100%; overflow: visible; }
+:where(:root:not([data-theme='none'])) .camp-lh-land { fill: var(--far); transition: fill 1.4s ease; }
+:where(:root:not([data-theme='none'])) .camp-lh-tower { fill: #fffaf2; stroke: #5d4a5f; stroke-linejoin: round; stroke-width: 1.6; }
+:where(:root:not([data-theme='none'])) .camp-lh-stripe { fill: #ff8fa6; }
+:where(:root:not([data-theme='none'])) .camp-lh-gallery { fill: #5d4a5f; }
+:where(:root:not([data-theme='none'])) .camp-lh-lamp { fill: #c4e8ff; stroke: #5d4a5f; stroke-width: 1.3; }
+:where(:root:not([data-theme='none'])) .camp-lh-dome { fill: #ff8fa6; stroke: #5d4a5f; stroke-width: 1.3; }
+:where(:root:not([data-theme='none'])) .camp-lh-pole { fill: none; stroke: #5d4a5f; stroke-linecap: round; stroke-width: 1.8; }
+:where(:root:not([data-theme='none'])) .camp-lh-flag { fill: #52b4ff; transform-box: fill-box; transform-origin: left center; animation: camp-lh-flag 1.6s ease-in-out infinite alternate; }
+:where(:root:not([data-theme='none'])) .camp-lh-glow { fill: #ffd25a; opacity: 0; transition: opacity 1s ease; }
+:where(:root:not([data-theme='none'])) .camp--night .camp-lh-glow,
+:where(:root:not([data-theme='none'])) .camp-lighthouse.is-lit .camp-lh-glow { opacity: 0.4; }
+:where(:root:not([data-theme='none'])) .camp--night .camp-lh-lamp,
+:where(:root:not([data-theme='none'])) .camp-lighthouse.is-lit .camp-lh-lamp { fill: #fff3b0; }
+
+:where(:root:not([data-theme='none'])) .camp-lighthouse-flag {
+  position: absolute;
+  top: calc(100% - 6px);
+  left: 50%;
+  padding: 1px 8px 2px;
+  border: 2px solid var(--bar-chip-line);
+  border-radius: 999px;
+  background: var(--bar-chip);
+  color: var(--bar-ink);
+  font-family: var(--tb-display);
+  font-size: 11.5px;
+  font-weight: 800;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+@keyframes camp-lh-flag { from { transform: skewY(-5deg) scaleX(0.92); } to { transform: skewY(5deg) scaleX(1.05); } }
+
+@media (max-width: 760px) {
+  :where(:root:not([data-theme='none'])) .camp-lighthouse { right: 10px; bottom: 14px; width: 38px; height: 64px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(:root:not([data-theme='none'])) .camp-lh-flag { animation: none; }
+}

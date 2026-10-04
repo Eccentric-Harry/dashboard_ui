@@ -18,6 +18,9 @@ import { ChestReveal } from './components/chest-reveal'
 import { QuestLetter } from './components/quest-letter'
 import { PipCorner, type PipCornerTab } from './components/pip-corner'
 import { ShootingStar } from './components/shooting-star'
+import { CampLighthouse } from './components/camp-lighthouse'
+import { programActions, useProgramStore } from '@/store/program-store'
+import { dayNumber, keptPromises, programLength } from './lighthouse/program-engine'
 import { allDoneToday, pipState, type PipMoment } from './buddy-brain'
 import { boardHeadline, dayLabel, formatAmount, goalDay, MAX_ACTIVE_GOALS } from './goal-format'
 import { GREETING, skyPhase } from './sky-phase'
@@ -104,6 +107,8 @@ type GoalsOverviewDashboardProps = {
   onExit: () => void
   /** Walks into a goal's own world (/goals?world=<id>). */
   onOpenWorld: (goalId: string) => void
+  /** Sails to The Lighthouse, the 90-day program (/goals?program=lighthouse). */
+  onOpenLighthouse: () => void
 }
 
 type Origin = HTMLElement | null
@@ -127,8 +132,9 @@ const readLetterDay = () => {
   }
 }
 
-function GoalsOverviewDashboard({ onExit, onOpenWorld }: GoalsOverviewDashboardProps) {
+function GoalsOverviewDashboard({ onExit, onOpenWorld, onOpenLighthouse }: GoalsOverviewDashboardProps) {
   const board = useGoalsStore.use.board()
+  const programState = useProgramStore.use.state()
   const [today, setToday] = useState(goalDay)
   const [now, setNow] = useState(() => new Date())
   const [goalModal, setGoalModal] = useState<GoalModalState>(null)
@@ -145,6 +151,7 @@ function GoalsOverviewDashboard({ onExit, onOpenWorld }: GoalsOverviewDashboardP
 
   useEffect(() => {
     void goalsActions.loadBoard(today)
+    void programActions.load(today)
   }, [today])
 
   // The sky follows the clock; crossing 04:00 moves the board to the new day.
@@ -186,6 +193,7 @@ function GoalsOverviewDashboard({ onExit, onOpenWorld }: GoalsOverviewDashboardP
   )
 
   const goals = useMemo(() => board.data?.goals ?? [], [board.data])
+  const program = programState.data?.program ?? null
   const camp: CampView | undefined = board.data?.camp
   const weekStart = board.data?.weekStart ?? today
   const loading = isAwaitingData(board)
@@ -419,6 +427,16 @@ function GoalsOverviewDashboard({ onExit, onOpenWorld }: GoalsOverviewDashboardP
         <WorldBar greeting={GREETING[phase]} dateLabel={dayLabel(today)} bestStreak={bestStreak} sparks={camp?.sparks ?? 0} onExit={onExit} />
 
         <section className="world-sky" aria-label="Today's lanterns">
+          {/* Far off on the horizon: the way to the 90-day program. */}
+          <CampLighthouse
+            day={program ? dayNumber(program, today) : null}
+            length={program ? programLength(program) : 90}
+            kept={programState.data ? keptPromises(programState.data.logs) : 0}
+            onOpen={() => {
+              campSound.play('open')
+              onOpenLighthouse()
+            }}
+          />
           {board.hasErrors && !board.data ? (
             <div className="world-error" aria-live="polite">
               <p>Couldn’t reach camp just now.</p>
