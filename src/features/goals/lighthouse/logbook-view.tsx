@@ -6,9 +6,7 @@ import { addDays } from '../goal-format'
 import { C25K, TRACKS } from './program-content'
 import {
   MILESTONES,
-  auditAverage,
   c25kDone,
-  capOn,
   consistency,
   dayCell,
   dayNumber,
@@ -18,7 +16,6 @@ import {
   keptPromises,
   nextMilestone,
   programLength,
-  screenMinutes,
   type ProgramCtx,
 } from './program-engine'
 import { Photo } from './checkpoint-sheet'
@@ -325,13 +322,6 @@ function trackStory(ctx: ProgramCtx, key: ProgramTrackKey): string {
       const minutes = logs.reduce((n, l) => n + (l.minutes ?? 0), 0)
       const stretches = logs.filter((l) => l.stretch).length
       return `${formatMinutes(minutes)} spoken${stretches ? ` · ${stretches} meeting stretch${stretches === 1 ? '' : 'es'}` : ''}`
-    }
-    case 'screen': {
-      const avg = auditAverage(ctx)
-      const week = [...screenMinutes(ctx.logs).entries()].filter(([d]) => d > addDays(ctx.today, -7) && d <= ctx.today).map(([, v]) => v)
-      const recent = week.length ? Math.round(week.reduce((a, b) => a + b, 0) / week.length) : null
-      const cap = capOn(ctx, ctx.today)
-      return [avg != null ? `audit avg ${Math.round(avg)} min` : null, recent != null ? `last 7 days ${recent} min` : null, cap != null ? `cap ${cap}` : null].filter(Boolean).join(' · ') || 'Log minutes nightly'
     }
     case 'regard':
       return `${keptPromises(ctx.logs)} kept`

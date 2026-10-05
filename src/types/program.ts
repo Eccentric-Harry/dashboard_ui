@@ -1,11 +1,13 @@
 // Program domain types — single source of truth for /goals' Lighthouse world ("90 days to
 // 23", design/LIGHTHOUSE_90_PLAN.md). Mirrors the Java Program / ProgramLog / ProgramReview /
 // ProgramAssessment / ProgramMedia models and ProgramStateResponse. The server stores and
-// scores; every judged view (day, phase, statuses, consistency, the screen cap, Pip's line)
+// scores; every judged view (day, phase, statuses, consistency, Pip's line)
 // is derived client-side by features/goals/lighthouse/program-engine.ts.
 
 /** Track keys are forever — rename a label in program-content.ts, never a key. */
-export type ProgramTrackKey = 'run' | 'lift' | 'protein' | 'mood' | 'learn' | 'english' | 'screen' | 'regard';
+export type ProgramTrackKey = 'run' | 'lift' | 'protein' | 'mood' | 'learn' | 'english' | 'regard';
+/** What a log is filed under: a track, or `urge` — an urge ridden out, a tool rather than a track. */
+export type ProgramLogTrack = ProgramTrackKey | 'urge';
 /** FULL: the full version. MIN: the bad-day version — still done. REST: a planned rest day. */
 export type ProgramLevel = 'FULL' | 'MIN' | 'REST';
 export type ProgramLetterKey = 'to23' | 'from23' | 'to24';
@@ -16,7 +18,7 @@ export type LiftPlace = 'gym' | 'home';
 
 export interface ProgramTrack {
   key: ProgramTrackKey;
-  /** Per week (run, lift, learn), grams (protein), minutes (english), a cap (screen; null = from the audit week), per day (regard). */
+  /** Per week (run, lift, learn), grams (protein), minutes (english), per day (regard). */
   target?: number | null;
   /** The bad-day floor, where the track has a number for it. */
   floor?: number | null;
@@ -63,12 +65,12 @@ export interface LiftSet {
 export interface ProgramLog {
   id: string;
   programId: string;
-  track: ProgramTrackKey;
+  track: ProgramLogTrack;
   /** Local day, YYYY-MM-DD (04:00 rollover). */
   date: string;
   /** Null for evidence that isn't a completion: an urge ridden out, a meeting stretch. */
   level?: ProgramLevel | null;
-  /** Screen minutes, mood 1–5, protein grams, speaking minutes. */
+  /** Mood 1–5, protein grams, speaking minutes. */
   value?: number | null;
   minutes?: number | null;
   distanceKm?: number | null;
@@ -84,9 +86,8 @@ export interface ProgramLog {
   pursuitId?: string | null;
   /** c25k-3-2, lift-a, lift-b… */
   session?: string | null;
+  /** Always true on an `urge` log. */
   urge?: boolean | null;
-  morningRule?: boolean | null;
-  nightRule?: boolean | null;
   stretch?: boolean | null;
   createdAt?: string;
   updatedAt?: string;
@@ -202,8 +203,6 @@ export type ProgramLogPayload = Omit<ProgramLog, 'id' | 'programId' | 'createdAt
 export interface ProgramTargetEdit {
   target?: number | null;
   floor?: number | null;
-  /** Screen only: back to the cap derived from the audit week. */
-  auto?: boolean;
 }
 
 export interface ProgramReviewPayload {

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { ExternalLink, Footprints, Lightbulb, Moon, Play, RefreshCw, Trash2, Waves, X } from 'lucide-react'
+import { ExternalLink, Footprints, Lightbulb, Moon, Play, RefreshCw, Trash2, X } from 'lucide-react'
 import type { LearningPursuit } from '@/types/learnings'
 import type { LiftSet, ProgramLog, ProgramTrackKey } from '@/types/program'
 import { learningsService } from '@/services/learnings-service'
@@ -21,7 +21,6 @@ import {
   trackMeta,
 } from './program-content'
 import {
-  capOn,
   consistency,
   dateOfDay,
   dayCell,
@@ -37,7 +36,6 @@ import {
   opensDay,
   progressionHint,
   scheduledDay,
-  screenMinutes,
   startedEarly,
   targetOn,
   type ProgramCtx,
@@ -56,7 +54,6 @@ type TrackSheetProps = {
   busy: boolean
   onClose: () => void
   onCoach: (el: HTMLElement) => void
-  onUrge: (el: HTMLElement) => void
   onNavigate: (path: '/nutrition' | '/learnings') => void
 }
 
@@ -65,7 +62,7 @@ type TrackSheetProps = {
  * it's here, and the last week's entries with undo. A track that hasn't opened yet shows
  * when it will and lets you write its plan now — the audit week's real job.
  */
-function TrackSheet({ open, track, origin, ctx, api, busy, onClose, onCoach, onUrge, onNavigate }: TrackSheetProps) {
+function TrackSheet({ open, track, origin, ctx, api, busy, onClose, onCoach, onNavigate }: TrackSheetProps) {
   const [shown, setShown] = useState(track)
   if (open && track && track !== shown) setShown(track)
   const key = shown ?? 'run'
@@ -114,7 +111,7 @@ function TrackSheet({ open, track, origin, ctx, api, busy, onClose, onCoach, onU
                 {startedEarly(ctx.program, key) ? <EarlyNote track={key} ctx={ctx} api={api} /> : <StartNow track={key} ctx={ctx} api={api} />}
               </div>
             ) : (
-              <TrackForm track={key} ctx={ctx} api={api} busy={busy} onCoach={onCoach} onUrge={onUrge} onNavigate={onNavigate} />
+              <TrackForm track={key} ctx={ctx} api={api} busy={busy} onCoach={onCoach} onNavigate={onNavigate} />
             )}
           </div>
           <aside className="lh-sheet-side">
@@ -135,7 +132,6 @@ type FormProps = {
   api: LighthouseApi
   busy: boolean
   onCoach: (el: HTMLElement) => void
-  onUrge: (el: HTMLElement) => void
   onNavigate: (path: '/nutrition' | '/learnings') => void
 }
 
@@ -153,8 +149,6 @@ function TrackForm(props: FormProps) {
       return <LearnForm {...props} />
     case 'english':
       return <SpeakStudio ctx={props.ctx} api={props.api} busy={props.busy} />
-    case 'screen':
-      return <ScreenForm {...props} />
     case 'regard':
       return <RegardForm {...props} />
   }
@@ -400,7 +394,7 @@ function MoodForm({ ctx, api, busy }: FormProps) {
   return (
     <div className="lh-form">
       <p className="lh-kicker">How was today, honestly?</p>
-      <div className="lh-mood-row lh-mood-row--big" role="radiogroup" aria-label="Mood">
+      <div className="lh-mood-row" role="radiogroup" aria-label="Mood">
         {MOOD_SCALE.map((m) => (
           <button key={m.score} type="button" role="radio" aria-checked={score === m.score} className={cn('lh-mood-chip', score === m.score && 'is-on')} style={{ ['--mood' as string]: m.color }} onClick={() => setScore(m.score)}>
             <i aria-hidden="true" />
@@ -483,70 +477,6 @@ function LearnForm({ ctx, api, busy, onNavigate }: FormProps) {
       <button type="button" className="lh-link" onClick={() => onNavigate('/learnings')}>
         <ExternalLink size={14} strokeWidth={2.6} aria-hidden="true" /> Start a focus session on Learnings
       </button>
-    </div>
-  )
-}
-
-// ── Screen ──────────────────────────────────────────────────────────────
-
-function ScreenForm(props: FormProps) {
-  const [day, setDay] = useState<'today' | 'yesterday'>(new Date().getHours() < 12 ? 'yesterday' : 'today')
-  return (
-    <div className="lh-form">
-      <Seg label="Which day" value={day} onChange={setDay} options={[{ value: 'yesterday', label: 'Yesterday' }, { value: 'today', label: 'Today' }]} />
-      <p className="lh-small">Recreational time only, from your phone’s Settings → Screen Time. Work apps don’t count.</p>
-      <ScreenDay key={day} {...props} day={day} />
-    </div>
-  )
-}
-
-function ScreenDay({ ctx, api, busy, onUrge, day }: FormProps & { day: 'today' | 'yesterday' }) {
-  const date = day === 'today' ? ctx.today : addDays(ctx.today, -1)
-  const existing = [...logsOn(ctx.logs, 'screen', date)].reverse().find((l) => l.value != null)
-  const [minutes, setMinutes] = useState(existing?.value ?? screenMinutes(ctx.logs).get(addDays(date, -1)) ?? 180)
-  const [morning, setMorning] = useState<boolean | null>(existing?.morningRule ?? null)
-  const [night, setNight] = useState<boolean | null>(existing?.nightRule ?? null)
-  const cap = capOn(ctx, date)
-  const baseline = isBaseline(ctx.program, 'screen', date)
-  const save = () => {
-    const payload = { track: 'screen' as const, date, value: minutes, morningRule: morning, nightRule: night }
-    const opts = { anchor: anchor('screen'), detail: `${minutes} minutes` }
-    return existing ? api.updateLog(existing.id, payload, opts) : api.addLog(payload, opts)
-  }
-  return (
-    <>
-      <Stepper value={minutes} onChange={setMinutes} step={5} min={0} max={1440} unit="min" label="recreational minutes" big />
-      <p className="lh-note-line">
-        {baseline ? 'Audit week — no cap yet. Just the honest number.' : cap != null ? `Cap for ${day}: ${cap} min · ${minutes <= cap ? 'under it' : `${minutes - cap} over — still worth logging`}` : 'The cap appears once the audit week has three days logged.'}
-      </p>
-      <div className="lh-rules">
-        <RuleToggle label="No phone for the first 30 minutes after waking" value={morning} onChange={setMorning} />
-        <RuleToggle label="No phone for the last 30 minutes before sleep" value={night} onChange={setNight} />
-      </div>
-      <div className="lh-row">
-        <button type="button" className="lh-btn lh-btn--primary" disabled={busy} onClick={() => void save()}>
-          {existing ? 'Update' : 'Save'} {day}
-        </button>
-        <button type="button" className="lh-btn lh-btn--ghost" onClick={(e) => onUrge(e.currentTarget)}>
-          <Waves size={16} strokeWidth={2.6} aria-hidden="true" /> Ride an urge
-        </button>
-      </div>
-    </>
-  )
-}
-
-function RuleToggle({ label, value, onChange }: { label: string; value: boolean | null; onChange: (v: boolean | null) => void }) {
-  return (
-    <div className="lh-rule">
-      <span>{label}</span>
-      <div className="lh-rule-opts" role="radiogroup" aria-label={label}>
-        <button type="button" role="radio" aria-checked={value === true} className={cn('lh-chip', value === true && 'is-on')} onClick={() => onChange(value === true ? null : true)}>
-          Kept
-        </button>
-        <button type="button" role="radio" aria-checked={value === false} className={cn('lh-chip', value === false && 'is-on is-neutral')} onClick={() => onChange(value === false ? null : false)}>
-          Not today
-        </button>
-      </div>
     </div>
   )
 }
@@ -722,7 +652,6 @@ function summary(l: ProgramLog): ReactNode {
   if (l.level === 'MIN') bits.push('small version')
   if (l.level === 'REST') bits.push('rest day')
   if (l.track === 'mood' && l.value != null) bits.push(MOOD_SCALE[l.value - 1]?.word ?? String(l.value))
-  if (l.track === 'screen' && l.value != null) bits.push(`${l.value} min`)
   if (l.track === 'protein' && l.value != null) bits.push(`${l.value} g`)
   if (l.minutes) bits.push(`${l.minutes} min`)
   if (l.distanceKm) bits.push(`${l.distanceKm} km`)
@@ -732,7 +661,6 @@ function summary(l: ProgramLog): ReactNode {
   }
   if (l.sets?.length) bits.push(l.sets.map((s) => `${s.exercise.split(' ')[0]} ${s.weightKg ? `${s.weightKg}×` : ''}${s.reps}`).join(' · '))
   if (l.tag) bits.push(l.tag)
-  if (l.urge) bits.push('urge ridden out')
   if (l.stretch) bits.push('meeting stretch')
   if (l.text) bits.push(`“${l.text}”`)
   return bits.join(' · ') || (l.level === 'FULL' ? 'done' : 'logged')

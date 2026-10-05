@@ -33,7 +33,7 @@ interface Response {
 const ok = (data: unknown): Response => ({ status: 200, body: { data } });
 const bad = (message: string): Response => ({ status: 400, body: { message } });
 
-const TRACK_KEYS: ProgramTrackKey[] = ['run', 'lift', 'protein', 'mood', 'learn', 'english', 'screen', 'regard'];
+const TRACK_KEYS: ProgramTrackKey[] = ['run', 'lift', 'protein', 'mood', 'learn', 'english', 'regard'];
 const GUEST_WEIGHT_KG = 70;
 
 const toUtc = (iso: string) => {
@@ -152,19 +152,15 @@ function state(today: string): ProgramState {
 
 function validLog(p: ProgramLogPayload): string | null {
   if (!program) return 'No program is running.';
-  if (!TRACK_KEYS.includes(p.track)) return 'track must be a program track';
+  if (p.track !== 'urge' && !TRACK_KEYS.includes(p.track)) return 'track must be a program track or urge';
   if (p.date < addDays(program.startDate, -7) || p.date > addDays(program.endDate, 7)) return 'That day is outside the program.';
   if (p.track === 'mood' && (p.value == null || p.value < 1 || p.value > 5 || p.value % 1 !== 0)) return 'A mood check-in is a score from 1 to 5.';
   if (p.track === 'regard' && !p.text?.trim()) return 'Write the promise you kept.';
-  if (p.track === 'screen' && p.value == null && !p.urge && p.morningRule == null && p.nightRule == null) return 'Log the minutes, a rule, or an urge ridden out.';
+  if (p.track === 'urge' && !p.urge) return 'An urge log is an urge ridden out.';
   return null;
 }
 
-function applyTarget(track: ProgramTrack, edit: { target?: number | null; floor?: number | null; auto?: boolean }): string | null {
-  if (track.key === 'screen' && edit.auto) {
-    track.target = null;
-    return null;
-  }
+function applyTarget(track: ProgramTrack, edit: { target?: number | null; floor?: number | null }): string | null {
   if (edit.target == null) return 'A new target needs a number.';
   const t = Math.round(edit.target);
   switch (track.key) {
@@ -187,10 +183,6 @@ function applyTarget(track: ProgramTrack, edit: { target?: number | null; floor?
       if (floor != null) track.floor = Math.min(floor, t);
       return null;
     }
-    case 'screen':
-      if (t < 15 || t > 1440) return 'A cap between 15 minutes and a whole day.';
-      track.target = t;
-      return null;
     default:
       return 'That track has no target.';
   }

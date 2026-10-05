@@ -4,7 +4,7 @@
 // design/LIGHTHOUSE_90_PLAN.md. Keys are stored on the server, so they're forever.
 
 import type { LucideIcon } from 'lucide-react'
-import { Bean, BookOpen, CloudSun, Dumbbell, Footprints, HeartHandshake, Mic, Smartphone } from 'lucide-react'
+import { Bean, BookOpen, CloudSun, Dumbbell, Footprints, HeartHandshake, Mic } from 'lucide-react'
 import type { GoalColor } from '@/types/goals'
 import type { LiftPlace, ProgramTrackKey } from '@/types/program'
 
@@ -34,7 +34,7 @@ export const PHASE_COLOR: Record<PhaseKey, GoalColor> = { audit: 'sky', foundati
 
 // ── Tracks ──────────────────────────────────────────────────────────────
 
-export type TrackKind = 'weekly' | 'daily-amount' | 'checkin' | 'cap' | 'text'
+export type TrackKind = 'weekly' | 'daily-amount' | 'checkin' | 'text'
 
 export interface TrackSource {
   label: string
@@ -113,7 +113,7 @@ export const TRACKS: TrackMeta[] = [
     kind: 'checkin',
     opensDay: 1,
     full: 'Evening check-in: a score and a word',
-    min: 'The score only',
+    min: 'The score by itself',
     why: 'Not a target — weather. Seeing it beside your training shows you what actually lifts it.',
     planExample: 'If I’m brushing my teeth at night, then I open the lighthouse and log the day’s weather.',
   },
@@ -145,20 +145,6 @@ export const TRACKS: TrackMeta[] = [
     planExample: 'If I’m on my commute or walk, then I shadow the same 2-minute clip under my breath.',
   },
   {
-    key: 'screen',
-    name: 'Screen',
-    icon: Smartphone,
-    color: 'sky',
-    kind: 'cap',
-    opensDay: 1,
-    full: 'Recreational phone time under the cap',
-    min: 'Lower than yesterday',
-    unit: 'min',
-    why: 'Students who cut phone time to two hours a day for three weeks improved on well-being, stress, sleep and low mood. The benefit comes from what replaces the scrolling.',
-    source: { label: 'Pieh et al. 2025, BMC Medicine', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC11846175/' },
-    planExample: 'If I get into bed, then the phone charges in the other room.',
-  },
-  {
     key: 'regard',
     name: 'Kept promise',
     icon: HeartHandshake,
@@ -166,7 +152,7 @@ export const TRACKS: TrackMeta[] = [
     kind: 'text',
     opensDay: 8,
     full: 'One promise you kept today + one kind sentence to yourself',
-    min: 'The kept promise only',
+    min: 'The kept promise by itself',
     why: 'Confidence is built from evidence: doing what you said you would is the strongest source of self-belief there is. Self-compassion practice cuts self-criticism.',
     source: { label: 'Ferrari et al. 2019', url: 'https://contextualscience.org/publications/ferrari_hunt_harrysunker_abbott_beath_einstein_2019' },
     planExample: 'If I log my mood at night, then I write down one promise I kept.',

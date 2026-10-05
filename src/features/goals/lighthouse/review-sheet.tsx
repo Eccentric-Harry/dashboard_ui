@@ -7,20 +7,18 @@ import { addDays } from '../goal-format'
 import { SELF_TRUST_QUESTION, TRACKS, trackMeta } from './program-content'
 import {
   activeTracks,
-  capOn,
   dayCell,
   isDone,
   isOn,
   isWeekly,
   keptPromises,
-  screenMinutes,
   trackOf,
   weekCount,
   weekDates,
   type ProgramCtx,
 } from './program-engine'
 import type { LighthouseApi } from './lighthouse-api'
-import { IfThen, Seg, Stepper, TrackDisc } from './lh-ui'
+import { IfThen, Stepper, TrackDisc } from './lh-ui'
 import { dayMonth } from './lh-utils'
 
 type ReviewSheetProps = {
@@ -48,7 +46,7 @@ function ReviewSheet({ open, origin, ctx, api, weekStart, focus, onClose }: Revi
   )
 }
 
-type Draft = Partial<Record<ProgramTrackKey, { target: number; floor: number | null; auto?: boolean }>>
+type Draft = Partial<Record<ProgramTrackKey, { target: number; floor: number | null }>>
 
 function ReviewBody({ ctx, api, weekStart, focus, onClose }: { ctx: ProgramCtx; api: LighthouseApi; weekStart: string; focus?: ProgramTrackKey | null; onClose: () => void }) {
   const existing = ctx.reviews.find((r) => r.weekStart === weekStart)
@@ -66,8 +64,7 @@ function ReviewBody({ ctx, api, weekStart, focus, onClose }: { ctx: ProgramCtx; 
     const d: Draft = {}
     for (const k of editable) {
       const t = trackOf(ctx.program, k)
-      if (k === 'screen') d[k] = { target: t.target ?? capOn(ctx, ctx.today) ?? 180, floor: null, auto: t.target == null }
-      else d[k] = { target: t.target ?? 1, floor: t.floor ?? null }
+      d[k] = { target: t.target ?? 1, floor: t.floor ?? null }
     }
     return d
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -81,9 +78,6 @@ function ReviewBody({ ctx, api, weekStart, focus, onClose }: { ctx: ProgramCtx; 
       if (isWeekly(k)) {
         const { done, target } = weekCount(ctx, k, weekStart)
         out.push({ key: k, text: `${done}${target != null ? ` of ${target}` : ''} ${trackMeta(k).unit ?? ''}` })
-      } else if (k === 'screen') {
-        const vals = days.map((d) => screenMinutes(ctx.logs).get(d)).filter((v): v is number => v != null)
-        out.push({ key: k, text: vals.length ? `avg ${Math.round(vals.reduce((a, b) => a + b, 0) / vals.length)} min · ${vals.length} days logged` : 'not logged' })
       } else if (k === 'regard') {
         const kept = ctx.logs.filter((l) => l.track === 'regard' && l.text && days.includes(l.date)).length
         out.push({ key: k, text: `${kept} kept · ${keptPromises(ctx.logs)} in all` })
@@ -117,11 +111,6 @@ function ReviewBody({ ctx, api, weekStart, focus, onClose }: { ctx: ProgramCtx; 
     const a = start[k]
     const b = draft[k]
     if (!a || !b) return null
-    if (k === 'screen') {
-      if (b.auto && !a.auto) return { auto: true }
-      if (!b.auto && (a.auto || a.target !== b.target)) return { target: b.target }
-      return null
-    }
     if (a.target === b.target && a.floor === b.floor) return null
     return { target: b.target, floor: b.floor }
   }
@@ -223,27 +212,20 @@ function ReviewBody({ ctx, api, weekStart, focus, onClose }: { ctx: ProgramCtx; 
                 <li key={k} className={cn('lh-target', focus === k && 'is-focus', isChanged && 'is-changed')} data-color={meta.color}>
                   <TrackDisc track={k} size={26} />
                   <span className="lh-target-name">{meta.name}</span>
-                  {k === 'screen' ? (
-                    <div className="lh-target-ctl">
-                      <Seg label="Cap" value={d.auto ? 'auto' : 'fixed'} onChange={(v) => set(k, { auto: v === 'auto' })} options={[{ value: 'auto', label: 'Auto' }, { value: 'fixed', label: 'Set' }]} />
-                      {!d.auto && <Stepper value={d.target} onChange={(v) => set(k, { target: v })} step={15} min={15} max={1440} unit="min" label="screen cap" />}
-                    </div>
-                  ) : (
-                    <div className="lh-target-ctl">
-                      <Stepper
-                        value={d.target}
-                        onChange={(v) => set(k, { target: v, floor: d.floor != null ? Math.min(d.floor, v) : null })}
-                        step={k === 'protein' ? 5 : 1}
-                        min={k === 'protein' ? 30 : 1}
-                        max={k === 'protein' ? 400 : k === 'english' ? 180 : k === 'regard' ? 5 : 7}
-                        unit={k === 'protein' ? 'g' : k === 'english' ? 'min' : k === 'regard' ? '/day' : '/wk'}
-                        label={`${meta.name} target`}
-                      />
-                      {d.floor != null && (
-                        <Stepper value={d.floor} onChange={(v) => set(k, { floor: Math.min(v, d.target) })} step={k === 'protein' ? 5 : 1} min={1} max={d.target} unit="floor" label={`${meta.name} floor`} />
-                      )}
-                    </div>
-                  )}
+                  <div className="lh-target-ctl">
+                    <Stepper
+                      value={d.target}
+                      onChange={(v) => set(k, { target: v, floor: d.floor != null ? Math.min(d.floor, v) : null })}
+                      step={k === 'protein' ? 5 : 1}
+                      min={k === 'protein' ? 30 : 1}
+                      max={k === 'protein' ? 400 : k === 'english' ? 180 : k === 'regard' ? 5 : 7}
+                      unit={k === 'protein' ? 'g' : k === 'english' ? 'min' : k === 'regard' ? '/day' : '/wk'}
+                      label={`${meta.name} target`}
+                    />
+                    {d.floor != null && (
+                      <Stepper value={d.floor} onChange={(v) => set(k, { floor: Math.min(v, d.target) })} step={k === 'protein' ? 5 : 1} min={1} max={d.target} unit="floor" label={`${meta.name} floor`} />
+                    )}
+                  </div>
                 </li>
               )
             })}

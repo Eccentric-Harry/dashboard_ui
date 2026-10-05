@@ -3,11 +3,11 @@ import type { Program, ProgramAssessment, ProgramLog, ProgramReview, ProgramSour
 import { addDays } from '@/features/goals/goal-format'
 import {
   activeTracks,
-  capOn,
   checkpointsDue,
   consistency,
   dayCell,
   dayNumber,
+  evidenceCount,
   keptPromises,
   lighthouseStage,
   nextRun,
@@ -41,7 +41,6 @@ const program = (over: Partial<Program> = {}): Program => ({
     { key: 'mood' },
     { key: 'learn', target: 5 },
     { key: 'english', target: 15, floor: 5 },
-    { key: 'screen' },
     { key: 'regard', target: 1 },
   ],
   answers: {},
@@ -89,10 +88,10 @@ describe('days and phases', () => {
 
   it('switches tracks on in stages', () => {
     const p = program()
-    expect(activeTracks(p, day(1))).toEqual(['protein', 'mood', 'screen'])
-    expect(activeTracks(p, day(8))).toEqual(['lift', 'protein', 'mood', 'screen', 'regard'])
+    expect(activeTracks(p, day(1))).toEqual(['protein', 'mood'])
+    expect(activeTracks(p, day(8))).toEqual(['lift', 'protein', 'mood', 'regard'])
     expect(activeTracks(p, day(15))).toContain('run')
-    expect(activeTracks(p, day(36))).toHaveLength(8)
+    expect(activeTracks(p, day(36))).toHaveLength(7)
   })
 
   it('lets a track start early — from the day chosen, never before day 1, never later than planned', () => {
@@ -216,31 +215,13 @@ describe('targets change only through reviews', () => {
   })
 })
 
-describe('the screen cap', () => {
-  const audit = (minutes: number) => [1, 2, 3, 4, 5].map((n) => log('screen', day(n), { value: minutes }))
-
-  it('starts 20% under the audit average, then steps a third of the way to two hours every two weeks of the push', () => {
-    const c = ctx(day(80), audit(300))
-    expect(capOn(c, day(5))).toBeNull() // the audit only watches
-    expect(capOn(c, day(8))).toBe(240)
-    expect(capOn(c, day(35))).toBe(240)
-    expect(capOn(c, day(36))).toBe(200)
-    expect(capOn(c, day(50))).toBe(175)
-    expect(capOn(c, day(64))).toBe(155)
-    expect(capOn(c, day(80))).toBe(155) // lock in holds
-  })
-
-  it('holds an audit already under two hours, and waits for three audit days', () => {
-    expect(capOn(ctx(day(40), audit(100)), day(40))).toBe(100)
-    expect(capOn(ctx(day(10), audit(300).slice(0, 2)), day(10))).toBeNull()
-  })
-
-  it('counts under the cap as full and lower-than-yesterday as the small version', () => {
-    const logs = [...audit(300), log('screen', day(9), { value: 280 }), log('screen', day(10), { value: 260 }), log('screen', day(11), { value: 200 })]
-    const c = ctx(day(12), logs)
-    expect(dayCell(c, 'screen', day(9)).status).toBe('logged') // over the cap — data, not a miss
-    expect(dayCell(c, 'screen', day(10)).status).toBe('min')
-    expect(dayCell(c, 'screen', day(11)).status).toBe('full')
+describe('urges', () => {
+  it('counts an urge ridden out as showing up, without filing it under any track', () => {
+    const logs = [log('urge', day(9), { urge: true, note: 'rode it out after 10 min' })]
+    const c = ctx(day(9), logs)
+    expect(evidenceCount(logs)).toBe(1)
+    expect(TRACKS.map((t) => t.key)).not.toContain('urge')
+    for (const key of activeTracks(c.program, day(9))) expect(['none', 'unknown']).toContain(dayCell(c, key, day(9)).status)
   })
 })
 
@@ -288,11 +269,8 @@ describe('the lighthouse', () => {
 })
 
 describe('Pip at the lighthouse', () => {
-  // Screen logged every day, and a lift and a run in each week, so only kept promises go quiet.
-  const steady = () => [
-    ...Array.from({ length: 19 }, (_, i) => log('screen', day(i + 1), { value: 150 })),
-    ...[8, 10, 12, 15, 17, 19].map((n) => log('lift', day(n), { level: 'FULL' })),
-  ]
+  // A lift in each week and runs not yet judged, so only kept promises go quiet.
+  const steady = () => [8, 10, 12, 15, 17, 19].map((n) => log('lift', day(n), { level: 'FULL' }))
 
   it('asks what got in the way after two quiet days, and offers a smaller target after three', () => {
     const two = situationLine(ctx(day(20), [...steady(), log('regard', day(17), { text: 'a' })]), new Date(2026, 9, 24, 15))

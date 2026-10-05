@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import type { MouseEvent } from 'react'
-import { Armchair, Check, ChevronDown, ChevronRight, Flag, Mail } from 'lucide-react'
+import { Armchair, Check, ChevronDown, ChevronRight, Flag, Mail, Waves } from 'lucide-react'
 import type { ProgramAssessment, ProgramAssessmentType, ProgramTrackKey } from '@/types/program'
 import { cn } from '@/lib/utils'
 import { PHASES, TRACKS } from './program-content'
-import { activeTracks, checkpointsDue, dayNumber, phaseRange, upcomingTracks, type ProgramCtx } from './program-engine'
+import { activeTracks, checkpointsDue, dayNumber, phaseRange, programLength, upcomingTracks, type ProgramCtx } from './program-engine'
 import { LockedTrack, TrackRow } from './track-card'
 
 type TodayDeckProps = {
@@ -47,8 +47,9 @@ function SetupRing({ done, total }: { done: number; total: number }) {
 
 /**
  * Today: anything the day asks beyond the tracks (a check-in, the review) as quiet notices,
- * the first-week setup while it matters, then one row per track that's on. Tracks still to
- * come wait at the bottom with the day they open — tap one to write its if-then plan.
+ * the first-week setup while it matters, then one row per track that's on, and under them the
+ * urge timer — a tool, not a track, so it asks nothing of the day. Tracks still to come wait
+ * at the bottom with the day they open — tap one to write its if-then plan.
  */
 function TodayDeck({ ctx, assessments, busy, reviewDue, onHoldFull, onSmall, onOpen, onMood, onUrge, onCheckpoint, onLetters, onReview }: TodayDeckProps) {
   const p = ctx.program
@@ -61,8 +62,11 @@ function TodayDeck({ ctx, assessments, busy, reviewDue, onHoldFull, onSmall, onO
   const [setupOpen, setSetupOpen] = useState(true)
   const at = (fn: (el: HTMLElement) => void) => (e: MouseEvent<HTMLElement>) => fn(e.currentTarget)
 
-  const plans = p.tracks.filter((t) => t.key !== 'mood' && t.plan?.trim()).length
-  const unplanned = TRACKS.map((t) => t.key).find((k) => k !== 'mood' && !p.tracks.find((t) => t.key === k)?.plan?.trim()) ?? 'screen'
+  const plannable = TRACKS.map((t) => t.key).filter((k) => k !== 'mood')
+  const isPlanned = (k: ProgramTrackKey) => !!p.tracks.find((t) => t.key === k)?.plan?.trim()
+  const plans = plannable.filter(isPlanned).length
+  const unplanned = plannable.find((k) => !isPlanned(k)) ?? plannable[0]
+  const urgesToday = ctx.logs.filter((l) => l.track === 'urge' && l.date === ctx.today).length
   const auditDays = (track: ProgramTrackKey) =>
     new Set(ctx.logs.filter((l) => l.track === track && dayNumber(p, l.date) >= 1 && dayNumber(p, l.date) <= 7).map((l) => l.date)).size +
     (track === 'mood' ? Object.keys(ctx.sources.mood).filter((d) => dayNumber(p, d) >= 1 && dayNumber(p, d) <= 7 && !ctx.logs.some((l) => l.track === 'mood' && l.date === d)).length : 0)
@@ -73,8 +77,7 @@ function TodayDeck({ ctx, assessments, busy, reviewDue, onHoldFull, onSmall, onO
     { key: 'rosenberg', label: 'Self-esteem scale · 2 min', done: doneType('ROSENBERG'), act: (el: HTMLElement) => onCheckpoint('ROSENBERG', el) },
     { key: 'who5', label: 'Well-being check · 1 min', done: doneType('WHO5'), act: (el: HTMLElement) => onCheckpoint('WHO5', el) },
     { key: 'letter', label: 'A letter to 23-year-old you', done: !!p.letters.to23, act: onLetters },
-    { key: 'plans', label: `If-then plan for each track · ${plans}/7`, done: plans >= 7, act: (el: HTMLElement) => onOpen(unplanned, el) },
-    { key: 'screen', label: `Screen minutes each night · ${Math.min(7, auditDays('screen'))}/7`, done: auditDays('screen') >= 7, act: (el: HTMLElement) => onOpen('screen', el) },
+    { key: 'plans', label: `If-then plan for each track · ${plans}/${plannable.length}`, done: plans >= plannable.length, act: (el: HTMLElement) => onOpen(unplanned, el) },
     { key: 'mood', label: `Mood each evening · ${Math.min(7, auditDays('mood'))}/7`, done: auditDays('mood') >= 7, act: (el: HTMLElement) => onOpen('mood', el) },
   ]
   const setupDone = setup.filter((s) => s.done).length
@@ -117,7 +120,7 @@ function TodayDeck({ ctx, assessments, busy, reviewDue, onHoldFull, onSmall, onO
             <SetupRing done={setupDone} total={setup.length} />
             <span>
               <strong>{setupDone === setup.length ? 'First week, set up' : 'Your first week'}</strong>
-              <small>{day < 1 ? 'Most of these can be done tonight' : 'Seven small things before the work starts'}</small>
+              <small>{day < 1 ? 'Most of these can be done tonight' : 'Six small things before the work starts'}</small>
             </span>
             <ChevronDown className={cn('lh-setup-chev', setupOpen && 'is-open')} size={18} strokeWidth={2.6} aria-hidden="true" />
           </button>
@@ -151,10 +154,22 @@ function TodayDeck({ ctx, assessments, busy, reviewDue, onHoldFull, onSmall, onO
               onSmall={onSmall}
               onOpen={onOpen}
               onMood={onMood}
-              onUrge={onUrge}
             />
           ))}
         </section>
+      )}
+
+      {day <= programLength(p) && (
+        <button type="button" className="lh-urge" data-color="sky" onClick={at(onUrge)}>
+          <span className="lh-urge-icon" aria-hidden="true">
+            <Waves size={16} strokeWidth={2.6} />
+          </span>
+          <span className="lh-urge-text">
+            <strong>Ride an urge</strong>
+            <small>{urgesToday > 0 ? `${urgesToday} ridden out today` : 'Ten minutes. It rises, peaks and passes.'}</small>
+          </span>
+          <ChevronRight size={18} strokeWidth={2.6} aria-hidden="true" />
+        </button>
       )}
 
       {upcoming.length > 0 && (

@@ -258,10 +258,18 @@ function LighthouseWorld({ onBack, onLeave }: LighthouseWorldProps) {
     (before: ProgramCtx, log: ProgramLog, opts?: LogOptions) => {
       const after = currentCtx()
       if (!after) return
-      const meta = trackMeta(log.track)
-      const anchor = opts?.anchor ?? cardOf(log.track) ?? document.querySelector<HTMLElement>('.lh-scene')
+      if (log.track === 'urge') {
+        const anchor = opts?.anchor ?? document.querySelector<HTMLElement>('.lh-scene')
+        celebrationActions.celebrate({ anchor, palette: 'candy', intensity: 'echo', label: 'Urge ridden out' })
+        campSound.play('chime')
+        setMoment({ kind: 'urge' })
+        return
+      }
+      const track = log.track
+      const meta = trackMeta(track)
+      const anchor = opts?.anchor ?? cardOf(track) ?? document.querySelector<HTMLElement>('.lh-scene')
 
-      if (log.track === 'regard') {
+      if (track === 'regard') {
         const k = keptPromises(after.logs)
         setFresh(k - 1)
         if ((MILESTONES as readonly number[]).includes(k)) {
@@ -281,15 +289,9 @@ function LighthouseWorld({ onBack, onLeave }: LighthouseWorldProps) {
         }
         return
       }
-      if (log.track === 'mood') {
+      if (track === 'mood') {
         if (!opts?.soundPlayed) campSound.play('tap')
         setMoment({ kind: 'mood', score: log.value ?? 3 })
-        return
-      }
-      if (log.urge) {
-        celebrationActions.celebrate({ anchor, palette: 'candy', intensity: 'echo', label: 'Urge ridden out' })
-        campSound.play('chime')
-        setMoment({ kind: 'urge' })
         return
       }
       if (log.stretch) {
@@ -299,22 +301,22 @@ function LighthouseWorld({ onBack, onLeave }: LighthouseWorldProps) {
         return
       }
 
-      const was = dayCell(before, log.track, log.date).status
-      const cell = dayCell(after, log.track, log.date)
+      const was = dayCell(before, track, log.date).status
+      const cell = dayCell(after, track, log.date)
       const level = cell.status === 'full' ? 'FULL' : cell.status === 'min' ? 'MIN' : cell.status === 'rest' ? 'REST' : null
       if (!level) {
         campSound.play('tap')
         setMoment({ kind: 'checkpoint' })
         return
       }
-      if (isWeekly(log.track) && level !== 'REST') {
+      if (isWeekly(track) && level !== 'REST') {
         const w = weekStartOf(log.date)
-        const b = weekCount(before, log.track, w)
-        const a = weekCount(after, log.track, w)
+        const b = weekCount(before, track, w)
+        const a = weekCount(after, track, w)
         if (a.target != null && a.done >= a.target && b.done < a.target) {
-          celebrationActions.celebrate({ anchor, palette: 'candy', label: `${meta.name}: ${a.done} of ${a.target} this week`, once: { key: `lh-week-${log.track}`, scope: w } })
+          celebrationActions.celebrate({ anchor, palette: 'candy', label: `${meta.name}: ${a.done} of ${a.target} this week`, once: { key: `lh-week-${track}`, scope: w } })
           if (!opts?.soundPlayed) campSound.play('week-kept')
-          setMoment({ kind: 'logged', track: log.track, level, detail: opts?.detail })
+          setMoment({ kind: 'logged', track: track, level, detail: opts?.detail })
           return
         }
       }
@@ -323,7 +325,7 @@ function LighthouseWorld({ onBack, onLeave }: LighthouseWorldProps) {
       }
       const doneToday = after.program.tracks.filter((t) => ['full', 'min'].includes(dayCell(after, t.key, after.today).status)).length
       if (!opts?.soundPlayed) campSound.play(level === 'FULL' ? 'pop' : level === 'MIN' ? 'chime' : 'tap', { step: Math.max(0, doneToday - 1) })
-      setMoment({ kind: 'logged', track: log.track, level, detail: opts?.detail })
+      setMoment({ kind: 'logged', track: track, level, detail: opts?.detail })
     },
     [currentCtx],
   )
@@ -780,7 +782,6 @@ function LighthouseWorld({ onBack, onLeave }: LighthouseWorldProps) {
         busy={sheet?.kind === 'track' ? busy.has(sheet.track) : false}
         onClose={() => setSheet(null)}
         onCoach={(el) => setSheet({ kind: 'coach', origin: el })}
-        onUrge={(el) => setSheet({ kind: 'urge', origin: el })}
         onNavigate={(path) => {
           setSheet(null)
           onLeave(path)

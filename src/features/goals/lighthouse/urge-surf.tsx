@@ -53,7 +53,7 @@ function SurfBody({ ctx, api, onClose }: { ctx: ProgramCtx; api: LighthouseApi; 
 
   const rode = async () => {
     setSaving(true)
-    const saved = await api.addLog({ track: 'screen', date: ctx.today, urge: true, note: `rode it out after ${Math.max(1, Math.round(watch.elapsed / 60))} min` })
+    const saved = await api.addLog({ track: 'urge', date: ctx.today, urge: true, note: `rode it out after ${Math.max(1, Math.round(watch.elapsed / 60))} min` })
     setSaving(false)
     if (saved) setEnding('rode')
   }

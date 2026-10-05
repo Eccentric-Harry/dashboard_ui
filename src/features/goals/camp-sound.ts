@@ -1,17 +1,19 @@
-// The camp's sound — every effect synthesized with the Web Audio API, so there are no
-// audio files to fetch or license. Short, soft and musical: a lantern pops on a pentatonic
-// note that climbs as the day fills (Duolingo's combo idea), a claim rings a rising major
-// third, each character "talks" in quick pitched blips (Animal Crossing's animalese idea).
+// The camp's sound. Effects are recorded samples in `public/sounds/camp/` (Google's Material
+// sound resources and Kenney's CC0 packs, levelled and trimmed so each starts the instant it
+// plays — sources and licences in that folder's CREDITS.md), fetched and decoded once on
+// arrival. Short, soft and low: a tap is a 40 ms thock in four round-robin takes, a lantern
+// pops on a pentatonic step that climbs as the day fills (Duolingo's combo idea), each
+// character "talks" in pitched bloops (Animal Crossing's animalese idea). The bells, breath
+// tones and soundscapes of the Quiet Path are still synthesized.
 //
 // Effects are on by default and muted with one tap (remembered per device); the ambience
 // (fire crackle, crickets at night, birds by day) is a separate opt-in. Nothing plays until
 // the first gesture — browsers only start an AudioContext from one, and every effect here
 // answers a gesture anyway.
 //
-// Timing (the sounds themselves are unchanged): a press plays its sound on pointer *down* —
-// the instant a finger lands — not on click after release, and a gesture gets one sound, so
-// the tap/open/page that would follow it a beat later is dropped (onPress, PRESS_ECHOES).
-// Newer role names (confirm, celebrate, stone…) are aliases for these same original sounds.
+// Timing: a press plays its sound on pointer *down* — the instant a finger lands — not on
+// click after release, and a gesture gets one sound, so the tap/open/page that would follow
+// it a beat later is dropped (onPress, PRESS_ECHOES).
 
 import { useSyncExternalStore } from 'react'
 import { HOLD_MS } from './use-hold'
@@ -72,37 +74,51 @@ const writePref = (key: string, on: boolean) => {
   }
 }
 
-/** Role names → the original sound each one plays. */
+/** Role names → the sound each one plays. */
 const ALIASES: Partial<Record<CampSoundName, CampSoundName>> = {
   select: 'pop',
-  stone: 'sparkle',
   start: 'chime',
   small: 'chime',
   confirm: 'chime',
-  celebrate: 'week-kept',
 }
 
 /** Sounds a press already covers when they follow it within a moment. */
 const PRESS_ECHOES = new Set<CampSoundName>(['tap', 'open', 'close', 'page', 'step-up', 'step-down'])
 
-// C major pentatonic from C5 — any run of these sounds pleasant together.
-const PENTATONIC = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5, 1174.66, 1318.51, 1567.98, 1760.0]
+/** The sample bank — one file each in `public/sounds/camp/`. */
+const SAMPLES = [
+  'tap-1', 'tap-2', 'tap-3', 'tap-4', 'open', 'close', 'page', 'pop', 'blip', 'chime', 'coin',
+  'sparkle', 'stone', 'day-done', 'week-kept', 'celebrate', 'soft-no', 'nudge', 'knock-1', 'knock-2',
+  'knock-3', 'creak', 'tada', 'flourish', 'sticker', 'equip', 'wish', 'footstep',
+] as const
+type Sample = (typeof SAMPLES)[number]
 
-const VOICES: Record<CampVoice, { base: number; speed: number; wave: OscillatorType; spread: number; max: number }> = {
-  pip: { base: 520, speed: 0.052, wave: 'triangle', spread: 0.07, max: 16 },
-  wren: { base: 980, speed: 0.036, wave: 'sine', spread: 0.1, max: 20 },
-  fen: { base: 330, speed: 0.06, wave: 'square', spread: 0.06, max: 15 },
-  moss: { base: 165, speed: 0.1, wave: 'sine', spread: 0.04, max: 10 },
+/** Four takes of the tap, played in turn so a run of presses never sounds machine-made. */
+const TAPS: Sample[] = ['tap-1', 'tap-2', 'tap-3', 'tap-4']
+
+// Semitones of a major pentatonic — any run of these sounds pleasant together.
+const PENTATONIC = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21]
+
+/** The pitch of the `blip` sample, which the voices transpose. */
+const BLIP_HZ = 732
+
+const semis = (n: number) => 2 ** (n / 12)
+
+const VOICES: Record<CampVoice, { base: number; speed: number; spread: number; max: number }> = {
+  pip: { base: 520, speed: 0.052, spread: 0.07, max: 16 },
+  wren: { base: 980, speed: 0.036, spread: 0.1, max: 20 },
+  fen: { base: 330, speed: 0.06, spread: 0.06, max: 15 },
+  moss: { base: 165, speed: 0.1, spread: 0.04, max: 10 },
   // The Quiet Path: Kiri, and a voice for each resident (worlds/quiet-path/residents.ts).
-  kiri: { base: 196, speed: 0.11, wave: 'sine', spread: 0.035, max: 9 },
-  bo: { base: 240, speed: 0.075, wave: 'triangle', spread: 0.05, max: 11 },
-  tova: { base: 150, speed: 0.12, wave: 'sine', spread: 0.03, max: 8 },
-  ollie: { base: 560, speed: 0.045, wave: 'triangle', spread: 0.08, max: 16 },
-  bram: { base: 262, speed: 0.065, wave: 'triangle', spread: 0.05, max: 12 },
-  luma: { base: 1180, speed: 0.034, wave: 'sine', spread: 0.09, max: 18 },
-  dot: { base: 720, speed: 0.09, wave: 'sine', spread: 0.04, max: 9 },
-  gus: { base: 300, speed: 0.06, wave: 'square', spread: 0.05, max: 13 },
-  sora: { base: 880, speed: 0.05, wave: 'triangle', spread: 0.07, max: 15 },
+  kiri: { base: 196, speed: 0.11, spread: 0.035, max: 9 },
+  bo: { base: 240, speed: 0.075, spread: 0.05, max: 11 },
+  tova: { base: 150, speed: 0.12, spread: 0.03, max: 8 },
+  ollie: { base: 560, speed: 0.045, spread: 0.08, max: 16 },
+  bram: { base: 262, speed: 0.065, spread: 0.05, max: 12 },
+  luma: { base: 1180, speed: 0.034, spread: 0.09, max: 18 },
+  dot: { base: 720, speed: 0.09, spread: 0.04, max: 9 },
+  gus: { base: 300, speed: 0.06, spread: 0.05, max: 13 },
+  sora: { base: 880, speed: 0.05, spread: 0.07, max: 15 },
 }
 
 interface ToneOpts {
@@ -122,11 +138,21 @@ interface NoiseOpts {
   gain?: number
 }
 
+interface SampleOpts {
+  gain?: number
+  rate?: number
+  /** Cut the sample short after this many seconds (a voice's blip). */
+  dur?: number
+}
+
 class CampSoundEngine {
   private ctx: AudioContext | null = null
   private master: GainNode | null = null
   private noiseBuffer: AudioBuffer | null = null
-  private charge: { osc: OscillatorNode; gain: GainNode } | null = null
+  private buffers = new Map<Sample, AudioBuffer>()
+  private loading = false
+  private tapTurn = 0
+  private charge: AudioBufferSourceNode[] | null = null
   private ambienceTimers: number[] = []
   private ambienceBed: { src: AudioBufferSourceNode; gain: GainNode } | null = null
   private scene: AmbienceScene = 'day'
@@ -169,7 +195,10 @@ class CampSoundEngine {
     this.snapshot = { ...this.snapshot, enabled: on }
     writePref(SOUND_KEY, on)
     if (!on) this.chargeStop()
-    else this.play('tap')
+    else {
+      this.load()
+      this.play('tap')
+    }
     this.emit()
   }
 
@@ -226,6 +255,56 @@ class CampSoundEngine {
     return this.ctx
   }
 
+  /**
+   * Fetches and decodes the sample bank once. It decodes on an offline context, which needs
+   * no gesture, so the bank is ready before the first press; a sound asked for before its
+   * file arrives stays silent rather than playing late.
+   */
+  private load() {
+    if (this.loading || typeof window === 'undefined') return
+    const Offline =
+      window.OfflineAudioContext ?? (window as unknown as { webkitOfflineAudioContext?: typeof OfflineAudioContext }).webkitOfflineAudioContext
+    if (!Offline) return
+    this.loading = true
+    const decoder = new Offline(1, 1, 44100)
+    SAMPLES.forEach(async (name) => {
+      try {
+        const res = await fetch(`/sounds/camp/${name}.wav`)
+        if (res.ok) this.buffers.set(name, await decoder.decodeAudioData(await res.arrayBuffer()))
+      } catch {
+        // Offline or blocked: that one effect stays silent.
+      }
+    })
+  }
+
+  private sample(name: Sample, at = 0, o: SampleOpts = {}): AudioBufferSourceNode | null {
+    const ctx = this.ctx
+    const buffer = this.buffers.get(name)
+    if (!ctx || !this.master || !buffer) return null
+    const src = ctx.createBufferSource()
+    src.buffer = buffer
+    src.playbackRate.value = o.rate ?? 1
+    const g = ctx.createGain()
+    const start = ctx.currentTime + at
+    const peak = o.gain ?? 1
+    g.gain.setValueAtTime(peak, start)
+    src.connect(g)
+    g.connect(this.master)
+    src.start(start)
+    if (o.dur) {
+      g.gain.setValueAtTime(peak, start + o.dur * 0.6)
+      g.gain.linearRampToValueAtTime(0, start + o.dur)
+      src.stop(start + o.dur + 0.01)
+    }
+    return src
+  }
+
+  /** The next take of the tap, nudged a few cents either way. */
+  private tap(at = 0, rate = 1, gain = 1) {
+    const take = TAPS[this.tapTurn++ % TAPS.length]
+    return this.sample(take, at, { rate: rate * (1 + (Math.random() - 0.5) * 0.04), gain })
+  }
+
   private tone(freq: number, at: number, dur: number, o: ToneOpts = {}) {
     const ctx = this.ctx
     if (!ctx || !this.master) return
@@ -278,10 +357,6 @@ class CampSoundEngine {
     src.stop(start + dur + 0.02)
   }
 
-  private arpeggio(notes: number[], gap: number, dur: number, o: ToneOpts = {}, at = 0) {
-    notes.forEach((n, i) => this.tone(n, at + i * gap, dur, o))
-  }
-
   // ── Effects ──────────────────────────────────────────────────────────
 
   /** `step` picks the note for a lantern pop — how many are lit today, so the run climbs. */
@@ -290,100 +365,59 @@ class CampSoundEngine {
     // The press already answered with its own sound; the same gesture's click/open/page a
     // beat later would only sound like a late echo of it.
     if (!fromPress && PRESS_ECHOES.has(name) && performance.now() - this.lastPress < 400) return
-    switch (ALIASES[name] ?? name) {
+    const role = ALIASES[name] ?? name
+    switch (role) {
       case 'tap':
-        this.tone(520, 0, 0.08, { type: 'triangle', gain: 0.18, slideTo: 360 })
-        this.noise(0, 0.03, { freq: 2600, q: 2, gain: 0.05 })
-        break
-      case 'nudge':
-        this.tone(300, 0, 0.22, { type: 'sine', gain: 0.22, slideFrom: 620, slideTo: 260 })
-        this.tone(420, 0.09, 0.14, { type: 'sine', gain: 0.1, slideTo: 330 })
-        break
-      case 'pop': {
-        const f = PENTATONIC[Math.min(PENTATONIC.length - 1, Math.max(0, opts.step ?? 0))]
-        this.tone(f, 0, 0.2, { type: 'sine', gain: 0.38, slideFrom: f * 0.55 })
-        this.tone(f * 2, 0.04, 0.42, { type: 'triangle', gain: 0.09 })
-        this.tone(f * 3, 0.07, 0.3, { type: 'sine', gain: 0.04 })
-        this.noise(0, 0.06, { filter: 'highpass', freq: 5000, gain: 0.05 })
-        break
-      }
-      case 'chime':
-        this.tone(1046.5, 0, 0.32, { type: 'triangle', gain: 0.2 })
-        this.tone(1318.51, 0.1, 0.55, { type: 'triangle', gain: 0.2 })
-        this.tone(2637, 0.1, 0.4, { type: 'sine', gain: 0.03 })
-        break
-      case 'coin':
-        this.tone(987.77, 0, 0.07, { type: 'square', gain: 0.06, lowpass: 5000 })
-        this.tone(1318.51, 0.07, 0.3, { type: 'square', gain: 0.06, lowpass: 5000 })
-        break
-      case 'sparkle':
-        this.arpeggio([2093, 2637, 3136, 4186, 3520], 0.045, 0.16, { type: 'triangle', gain: 0.05 })
-        break
-      case 'open':
-        this.noise(0, 0.24, { freq: 420, freqTo: 2400, q: 0.9, gain: 0.08 })
-        this.tone(660, 0.05, 0.16, { type: 'sine', gain: 0.06, slideFrom: 440 })
-        break
-      case 'close':
-        this.noise(0, 0.2, { freq: 2200, freqTo: 480, q: 0.9, gain: 0.06 })
-        break
-      case 'page':
-        this.noise(0, 0.22, { filter: 'bandpass', freq: 3200, freqTo: 1100, q: 0.7, gain: 0.09 })
-        this.noise(0.12, 0.05, { filter: 'highpass', freq: 4000, gain: 0.04 })
+        this.tap()
         break
       case 'step-up':
-        this.tone(760, 0, 0.05, { type: 'triangle', gain: 0.09 })
+        this.tap(0, semis(4))
         break
       case 'step-down':
-        this.tone(560, 0, 0.05, { type: 'triangle', gain: 0.08 })
+        this.tap(0, semis(-3))
         break
+      case 'pop': {
+        // The bloop climbs the pentatonic from a little below its own pitch.
+        const at = PENTATONIC[Math.min(7, Math.max(0, opts.step ?? 0))]
+        this.sample('pop', 0, { rate: semis(at - 3) })
+        break
+      }
       case 'chest-shake':
-        ;[0, 0.11, 0.2].forEach((t, i) => {
-          this.tone(150 + i * 18, t, 0.09, { type: 'triangle', gain: 0.22, slideTo: 110 })
-          this.noise(t, 0.05, { freq: 900, q: 1.4, gain: 0.07 })
-        })
+        this.sample('knock-1', 0)
+        this.sample('knock-2', 0.11, { rate: semis(1) })
+        this.sample('knock-3', 0.2, { rate: semis(2) })
         break
       case 'chest-open':
-        this.tone(200, 0, 0.32, { type: 'sawtooth', gain: 0.035, slideTo: 260, lowpass: 900 })
-        this.tone(95, 0.18, 0.3, { type: 'sine', gain: 0.45, slideTo: 48 })
-        this.noise(0.18, 0.12, { freq: 600, q: 0.8, gain: 0.12 })
-        this.arpeggio([523.25, 659.25, 783.99, 1046.5], 0.085, 0.4, { type: 'triangle', gain: 0.16 }, 0.3)
-        this.arpeggio([2093, 2637, 3136, 4186], 0.05, 0.2, { type: 'sine', gain: 0.04 }, 0.62)
-        break
-      case 'sticker':
-        this.noise(0, 0.16, { filter: 'highpass', freq: 6500, freqTo: 1800, gain: 0.08 })
-        this.tone(880, 0.12, 0.18, { type: 'sine', gain: 0.22, slideFrom: 520 })
-        this.tone(1760, 0.15, 0.3, { type: 'triangle', gain: 0.05 })
+        this.sample('creak')
+        this.sample('tada', 0.22)
         break
       case 'buy':
-        this.play('coin')
-        this.tone(1567.98, 0.2, 0.5, { type: 'triangle', gain: 0.12 })
-        this.arpeggio([2093, 2637, 3136], 0.05, 0.18, { type: 'sine', gain: 0.04 }, 0.25)
+        this.sample('coin')
+        this.sample('flourish', 0.08)
         break
-      case 'equip':
-        this.tone(990, 0, 0.16, { type: 'sine', gain: 0.18, slideFrom: 620 })
-        this.arpeggio([1975.5, 2637], 0.06, 0.18, { type: 'triangle', gain: 0.05 }, 0.08)
-        break
-      case 'day-done':
-        this.arpeggio([523.25, 659.25, 783.99, 1046.5, 1318.51], 0.09, 0.34, { type: 'triangle', gain: 0.17 })
-        ;[1046.5, 1318.51, 1567.98].forEach((n) => this.tone(n, 0.5, 1.1, { type: 'sine', gain: 0.07, attack: 0.04 }))
-        this.arpeggio([2637, 3136, 4186, 5274], 0.06, 0.2, { type: 'sine', gain: 0.03 }, 0.55)
-        break
-      case 'week-kept':
-        this.arpeggio([523.25, 783.99, 1046.5, 1318.51, 1567.98], 0.07, 0.5, { type: 'triangle', gain: 0.16 })
-        this.tone(2093, 0.4, 0.9, { type: 'sine', gain: 0.05, attack: 0.03 })
-        break
-      case 'soft-no':
-        this.tone(240, 0, 0.14, { type: 'sine', gain: 0.16, slideTo: 200 })
-        break
-      case 'wish':
-        this.arpeggio([1567.98, 2093, 2637, 3136, 4186, 5274], 0.07, 0.5, { type: 'sine', gain: 0.05, attack: 0.02 })
+      case 'coin':
+        this.sample('coin', 0, { rate: 1 + (Math.random() - 0.5) * 0.06 })
         break
       case 'step':
-        // A soft footfall on earth, then one warm note.
-        this.noise(0, 0.09, { filter: 'lowpass', freq: 520, gain: 0.16 })
-        this.tone(130, 0, 0.12, { type: 'sine', gain: 0.18, slideTo: 90 })
-        this.tone(659.25, 0.1, 0.9, { type: 'sine', gain: 0.1, attack: 0.03 })
-        this.tone(987.77, 0.16, 0.8, { type: 'sine', gain: 0.04, attack: 0.04 })
+        // A soft footfall, then one warm note.
+        this.sample('footstep')
+        this.sample('chime', 0.1, { gain: 0.4 })
+        break
+      case 'nudge':
+      case 'chime':
+      case 'sparkle':
+      case 'stone':
+      case 'open':
+      case 'close':
+      case 'page':
+      case 'sticker':
+      case 'equip':
+      case 'day-done':
+      case 'week-kept':
+      case 'celebrate':
+      case 'soft-no':
+      case 'wish':
+        this.sample(role)
         break
       case 'bell':
         // A small temple-ish bell: a fundamental and inharmonic partials, long decay.
@@ -422,38 +456,39 @@ class CampSoundEngine {
     }
   }
 
-  /** The hum while a lantern is held: it rises with the charge and stops on release. */
+  /**
+   * While a lantern is held it winds up like a ratchet: soft ticks that come closer together
+   * and climb as the charge fills. Releasing early cancels the ticks still to come.
+   */
   chargeStart() {
     if (!this.snapshot.enabled || this.charge) return
-    const ctx = this.audio()
-    if (!ctx || !this.master) return
-    const osc = ctx.createOscillator()
-    const g = ctx.createGain()
-    osc.type = 'triangle'
-    const t = ctx.currentTime
-    osc.frequency.setValueAtTime(220, t)
-    osc.frequency.exponentialRampToValueAtTime(880, t + HOLD_MS / 1000)
-    g.gain.setValueAtTime(0.0001, t)
-    g.gain.exponentialRampToValueAtTime(0.07, t + 0.08)
-    osc.connect(g)
-    g.connect(this.master)
-    osc.start(t)
-    this.charge = { osc, gain: g }
+    if (!this.audio()) return
+    const ticks: AudioBufferSourceNode[] = []
+    const total = HOLD_MS / 1000
+    for (let t = 0; t < total; ) {
+      const p = t / total
+      const tick = this.tap(t, semis(-2 + p * 12), 0.55 + 0.45 * p)
+      if (tick) ticks.push(tick)
+      t += 0.13 - 0.08 * p
+    }
+    this.charge = ticks
   }
 
   chargeStop() {
-    const c = this.charge
+    const ticks = this.charge
     const ctx = this.ctx
-    if (!c || !ctx) return
+    if (!ticks || !ctx) return
     this.charge = null
-    const t = ctx.currentTime
-    c.gain.gain.cancelScheduledValues(t)
-    c.gain.gain.setValueAtTime(Math.max(0.0001, c.gain.gain.value), t)
-    c.gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.07)
-    c.osc.stop(t + 0.09)
+    ticks.forEach((tick) => {
+      try {
+        tick.stop(ctx.currentTime)
+      } catch {
+        // Already played out.
+      }
+    })
   }
 
-  /** A character "says" a line: one pitched blip per letter, capped so it never drones. */
+  /** A character "says" a line: one pitched bloop per letter, capped so it never drones. */
   voice(who: CampVoice, text: string) {
     if (!this.snapshot.enabled || !this.audio()) return
     const v = VOICES[who]
@@ -462,10 +497,10 @@ class CampSoundEngine {
       const code = letters.charCodeAt(i) - 97
       const vowel = 'aeiou'.includes(letters[i])
       const f = v.base * (1 + ((code % 7) - 3) * v.spread) * (vowel ? 1.12 : 1)
-      this.tone(f, i * v.speed, v.speed * (vowel ? 1.1 : 0.8), {
-        type: v.wave,
-        gain: v.wave === 'square' ? 0.035 : 0.08,
-        lowpass: v.wave === 'square' ? 1800 : undefined,
+      this.sample('blip', i * v.speed, {
+        rate: Math.min(2.2, Math.max(0.45, f / BLIP_HZ)),
+        gain: 0.5,
+        dur: v.speed * (vowel ? 1.1 : 0.8),
       })
     }
   }
@@ -728,6 +763,7 @@ class CampSoundEngine {
   /** Arriving at camp: pick the ambience back up if it was on. */
   enter() {
     this.active = true
+    if (this.snapshot.enabled) this.load()
     if (this.snapshot.ambience && this.ctx) this.startAmbience()
     if (typeof document !== 'undefined') {
       document.addEventListener('pointerdown', this.onPress, { capture: true })

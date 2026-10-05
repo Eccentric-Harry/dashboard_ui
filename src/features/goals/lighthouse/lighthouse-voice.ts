@@ -130,8 +130,6 @@ function fullLine(key: ProgramTrackKey, ctx: ProgramCtx, detail?: string): strin
   switch (key) {
     case 'english':
       return `${what}. Out loud is the part that counts.`
-    case 'screen':
-      return `${what}. Under the cap — you chose that.`
     case 'regard':
       return `Kept promise number ${keptPromises(ctx.logs)}. The tower’s a stone taller.`
     default:
@@ -179,14 +177,6 @@ export function situationLine(ctx: ProgramCtx, now: Date, buddy = 'Pip'): Keeper
     const { target, floor } = targetOn(ctx, quiet.key, ctx.today)
     const small = lower(fillCopy(meta.min, target, floor))
     const unit = isWeekly(quiet.key) ? 'weeks' : 'days'
-    if (quiet.n >= 3 && quiet.key === 'screen') {
-      return {
-        mood: 'eager',
-        line: `Screen hasn’t been logged for ${quiet.n} days. The number from your phone’s Screen Time takes ten seconds — or loosen the cap in the review if it’s too tight.`,
-        offer: { kind: 'review', track: quiet.key },
-        pinned: true,
-      }
-    }
     if (quiet.n >= 3) {
       return {
         mood: 'eager',
@@ -216,14 +206,14 @@ export function situationLine(ctx: ProgramCtx, now: Date, buddy = 'Pip'): Keeper
       if (early.length) {
         return {
           mood: 'eager',
-          line: `Audit week — screen time and mood stay as they are, while ${early.join(' and ')} ${early.length === 1 ? 'starts' : 'start'} early. Your call; it counts.`,
+          line: `Audit week — your meals and mood stay as they are, while ${early.join(' and ')} ${early.length === 1 ? 'starts' : 'start'} early. Your call; it counts.`,
         }
       }
       return {
         mood: 'content',
         line: pick(
           [
-            'Audit week: change nothing. Log screen time and mood, eat as usual — we’re just looking.',
+            'Audit week: change nothing. Log your mood, eat as usual — we’re just looking.',
             'This week we simply watch. Honest numbers now make the next 83 days fair.',
             'No targets yet. Write down what’s true; that’s the whole job this week.',
           ],

@@ -76,9 +76,9 @@ export const opensDay = (p: Program, key: ProgramTrackKey) => {
 /** Started before its scheduled day. */
 export const startedEarly = (p: Program, key: ProgramTrackKey) => opensDay(p, key) < scheduledDay(p, key)
 export const isOn = (p: Program, key: ProgramTrackKey, date: string) => dayNumber(p, date) >= opensDay(p, key)
-/** Audit week: screen and protein are watched, not judged. */
+/** Audit week: protein is watched, not judged. */
 export const isBaseline = (p: Program, key: ProgramTrackKey, date: string) =>
-  (key === 'screen' || key === 'protein') && dayNumber(p, date) <= phaseRange(p, PHASES[0])[1]
+  key === 'protein' && dayNumber(p, date) <= phaseRange(p, PHASES[0])[1]
 
 export const trackOf = (p: Program, key: ProgramTrackKey): ProgramTrack => p.tracks.find((t) => t.key === key) ?? { key }
 
@@ -110,58 +110,11 @@ export function targetOn(ctx: Pick<ProgramCtx, 'program' | 'reviews'>, key: Prog
   return { target, floor }
 }
 
-// ── The screen cap ─────────────────────────────────────────────────────
-
-const round5 = (n: number) => Math.round(n / 5) * 5
-/** Where the cap heads: two hours a day (Pieh et al. 2025). */
-export const SCREEN_GOAL_MIN = 120
-
-/** Screen minutes logged per day (the latest log with a value wins). */
-export function screenMinutes(logs: ProgramLog[]): Map<string, number> {
-  const out = new Map<string, number>()
-  for (const l of logs) if (l.track === 'screen' && l.value != null) out.set(l.date, l.value)
-  return out
-}
-
-/** The audit week's average, once at least three of its days are logged. */
-export function auditAverage(ctx: Pick<ProgramCtx, 'program' | 'logs'>): number | null {
-  const [, auditEnd] = phaseRange(ctx.program, PHASES[0])
-  const vals = [...screenMinutes(ctx.logs).entries()]
-    .filter(([d]) => dayNumber(ctx.program, d) >= 1 && dayNumber(ctx.program, d) <= auditEnd)
-    .map(([, v]) => v)
-  if (vals.length < 3) return null
-  return vals.reduce((a, b) => a + b, 0) / vals.length
-}
-
-/**
- * The cap on `date`: a review's number if one was set, otherwise derived — 20% under the
- * audit average from Foundation, then a third of the way to 120 min every two weeks of the
- * Push (three steps), held through Lock in. Null during the audit or before there's data.
- */
-export function capOn(ctx: Pick<ProgramCtx, 'program' | 'logs' | 'reviews'>, date: string): number | null {
-  const set = targetOn(ctx, 'screen', date).target
-  if (set != null) return set
-  const p = ctx.program
-  const day = dayNumber(p, date)
-  const [, auditEnd] = phaseRange(p, PHASES[0])
-  if (day <= auditEnd) return null
-  const avg = auditAverage(ctx)
-  if (avg == null) return null
-  let cap = avg <= SCREEN_GOAL_MIN ? round5(avg) : Math.max(SCREEN_GOAL_MIN, round5(avg * 0.8))
-  const [pushStart] = phaseRange(p, PHASES[2])
-  const steps = day < pushStart ? 0 : Math.min(3, Math.floor((day - pushStart) / 14) + 1)
-  for (let i = 0; i < steps; i++) {
-    if (cap <= SCREEN_GOAL_MIN) break
-    cap = Math.max(SCREEN_GOAL_MIN, round5(cap - (cap - SCREEN_GOAL_MIN) / 3))
-  }
-  return cap
-}
-
 // ── A day on a track ───────────────────────────────────────────────────
 
 /**
  * full / min — done (min drawn lighter). rest — a planned rest day. logged — showed up, not
- * judged (mood, baseline weeks, screen over its cap, protein under its floor). none — nothing
+ * judged (mood, the audit week, protein under its floor). none — nothing
  * yet (neutral grey, never red). unknown — no data to judge (no food logged). off — before the
  * track opens. future — not yet.
  */
@@ -246,16 +199,6 @@ export function dayCell(ctx: ProgramCtx, key: ProgramTrackKey, date: string): Da
       if (level === 'full' || (known && target != null && grams >= target)) return { date, status: 'full', value: known ? grams : undefined, source }
       if (level === 'min' || (known && floor != null && grams >= floor)) return { date, status: 'min', value: known ? grams : undefined, source }
       return known ? { date, status: 'logged', value: grams, source } : { date, status: 'unknown' }
-    }
-    case 'screen': {
-      const minutes = screenMinutes(mine).get(date)
-      if (minutes == null) return { date, status: 'none' }
-      if (isBaseline(p, key, date)) return { date, status: 'logged', value: minutes, source: 'manual' }
-      const cap = capOn(ctx, date)
-      if (cap != null && minutes <= cap) return { date, status: 'full', value: minutes, source: 'manual' }
-      const yesterday = screenMinutes(ctx.logs).get(addDays(date, -1))
-      if (yesterday != null && minutes < yesterday) return { date, status: 'min', value: minutes, source: 'manual' }
-      return { date, status: 'logged', value: minutes, source: 'manual' }
     }
     case 'regard': {
       const kept = mine.filter((l) => l.text?.trim())

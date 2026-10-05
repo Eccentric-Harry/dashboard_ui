@@ -1,13 +1,11 @@
 import type { MouseEvent, PointerEvent } from 'react'
-import { Check, ChevronRight, Lock, Moon, PenLine, Sprout, Waves } from 'lucide-react'
+import { Check, ChevronRight, Lock, Moon, PenLine, Sprout } from 'lucide-react'
 import type { ProgramTrackKey } from '@/types/program'
 import { cn } from '@/lib/utils'
 import { useHold } from '../use-hold'
 import { campSound } from '../camp-sound'
-import { addDays } from '../goal-format'
 import { LIFT_PLANS, MOOD_SCALE, SPEAK_PROMPTS, fillCopy, trackMeta } from './program-content'
 import {
-  capOn,
   dateOfDay,
   dayCell,
   dayNumber,
@@ -19,7 +17,6 @@ import {
   nextLiftDay,
   nextRun,
   opensDay,
-  screenMinutes,
   targetOn,
   weekCount,
   weekDates,
@@ -38,7 +35,6 @@ type TrackRowProps = {
   onSmall: (track: ProgramTrackKey, el: HTMLElement) => void
   onOpen: (track: ProgramTrackKey, el: HTMLElement) => void
   onMood: (score: number, el: HTMLElement) => void
-  onUrge: (el: HTMLElement) => void
 }
 
 /** One short line about what today holds on this track. */
@@ -59,12 +55,6 @@ function trackHint(ctx: ProgramCtx, track: ProgramTrackKey): string {
     }
     case 'english':
       return SPEAK_PROMPTS[Math.max(0, dayNumber(ctx.program, today) - 1) % SPEAK_PROMPTS.length]
-    case 'screen': {
-      if (isBaseline(ctx.program, 'screen', today)) return 'Audit week · log tonight’s number, change nothing'
-      const cap = capOn(ctx, today)
-      const y = screenMinutes(ctx.logs).get(addDays(today, -1))
-      return cap != null ? `Cap ${cap} min${y != null ? ` · yesterday ${y}` : ''}` : 'The cap appears after three audit days'
-    }
     case 'protein':
       return isBaseline(ctx.program, 'protein', today) ? 'Audit week · eat as usual, it reads from Nutrition' : 'Read from your meals on Nutrition'
     case 'regard':
@@ -182,7 +172,7 @@ function HoldCircle({
  * quiet "small version" link for a hard day; both count. Mood is five words to tap, and the
  * tracks that need words or numbers open their sheet. No row is ever red or "missed".
  */
-function TrackRow({ ctx, track, busy, onHoldFull, onSmall, onOpen, onMood, onUrge }: TrackRowProps) {
+function TrackRow({ ctx, track, busy, onHoldFull, onSmall, onOpen, onMood }: TrackRowProps) {
   const meta = trackMeta(track)
   const cell = dayCell(ctx, track, ctx.today)
   const done = isDone(cell.status) || cell.status === 'rest'
@@ -274,16 +264,6 @@ function TrackRow({ ctx, track, busy, onHoldFull, onSmall, onOpen, onMood, onUrg
         </div>
       ) : (
         <div className="lh-track-act">
-          {track === 'screen' && (
-            <>
-              <button type="button" className={cn('lh-pill', cell.value == null && 'is-primary')} onClick={at((el) => onOpen(track, el))} disabled={busy}>
-                {cell.value == null ? 'Log' : `${cell.value} min`}
-              </button>
-              <button type="button" className="lh-small-link" onClick={at(onUrge)}>
-                <Waves size={13} strokeWidth={2.8} aria-hidden="true" /> urge
-              </button>
-            </>
-          )}
           {track === 'regard' && (
             <button type="button" className={cn('lh-pill', !isDone(cell.status) && 'is-primary')} onClick={at((el) => onOpen(track, el))} disabled={busy}>
               {isDone(cell.status) ? (

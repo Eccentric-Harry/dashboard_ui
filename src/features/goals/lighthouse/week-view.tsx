@@ -15,7 +15,7 @@ type WeekViewProps = {
 }
 
 // Training first, then mood straight under it, so the two read on one timeline.
-const ORDER: ProgramTrackKey[] = ['run', 'lift', 'mood', 'protein', 'learn', 'english', 'screen', 'regard']
+const ORDER: ProgramTrackKey[] = ['run', 'lift', 'mood', 'protein', 'learn', 'english', 'regard']
 
 const STATUS_LABEL: Record<DayCell['status'], string> = {
   full: 'done',

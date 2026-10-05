@@ -1026,6 +1026,33 @@
 :where(:root:not([data-theme='none'])) .lh-setup-item.is-done .lh-setup-box { border-color: #23a56f; background: #3fcb91; }
 :where(:root:not([data-theme='none'])) .lh-setup-item.is-done .lh-setup-label { color: var(--lh-muted); text-decoration: line-through; text-decoration-color: var(--lh-faint); }
 
+/* Ride an urge: a tool, not a track — a quiet slip under today's tracks, one tap away. */
+:where(:root:not([data-theme='none'])) .lh-urge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 12px 7px 7px;
+  border: 1.5px solid color-mix(in srgb, var(--lh-paper) 80%, transparent);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--lh-paper) 62%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: var(--lh-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s var(--tb-spring);
+}
+
+:where(:root:not([data-theme='none'])) .lh-urge:hover { background: var(--lh-paper); transform: translateY(-1px); }
+:where(:root:not([data-theme='none'])) .lh-urge:active { transform: translateY(1px) scale(0.99); transition-duration: 0.08s; }
+:where(:root:not([data-theme='none'])) .lh-urge-icon { display: grid; flex: 0 0 auto; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: var(--c-fill); box-shadow: 0 3px 0 var(--c-lip); color: var(--c-on); }
+:where(:root:not([data-theme='none'])) .lh-urge-text { display: flex; flex: 1 1 auto; flex-direction: column; min-width: 0; }
+:where(:root:not([data-theme='none'])) .lh-urge-text strong { font-size: 14px; font-weight: 900; line-height: 1.15; }
+:where(:root:not([data-theme='none'])) .lh-urge-text small { color: var(--lh-text); font-size: 11.5px; font-weight: 750; opacity: 0.8; }
+:where(:root:not([data-theme='none'])) .lh-urge > svg { flex: 0 0 auto; color: var(--lh-muted); }
+
 /* Tracks still to come. */
 :where(:root:not([data-theme='none'])) .lh-upcoming { display: flex; flex-direction: column; gap: 8px; }
 :where(:root:not([data-theme='none'])) .lh-upcoming-row { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -1302,7 +1329,31 @@
 
 :where(:root:not([data-theme='none'])) .lh-chip:disabled { opacity: 0.5; cursor: default; }
 :where(:root:not([data-theme='none'])) .lh-chip.is-on { border-color: var(--c-fill, var(--tb-ink)); background: var(--c-soft, #f2eefa); color: var(--c-ink, var(--tb-ink)); }
-:where(:root:not([data-theme='none'])) .lh-chip.is-on.is-neutral { border-color: var(--tb-ink-3); background: var(--tb-well); color: var(--tb-ink-2); }
+
+/* The mood sheet's scale: the card's five dots, big enough to choose by — dusk to sun, none of them "bad". */
+:where(:root:not([data-theme='none'])) .lh-mood-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+
+:where(:root:not([data-theme='none'])) .lh-mood-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 12px 4px 10px;
+  border: 2px solid var(--tb-rim);
+  border-radius: 18px;
+  background: #ffffff;
+  color: var(--tb-ink-2);
+  font: 800 13px var(--tb-body);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s var(--tb-spring);
+}
+
+:where(:root:not([data-theme='none'])) .lh-mood-chip i { width: 34px; height: 34px; border-radius: 50%; background: var(--mood); box-shadow: inset 0 -4px 0 rgba(43, 36, 65, 0.12); transition: transform 0.2s var(--tb-spring), box-shadow 0.2s ease; }
+:where(:root:not([data-theme='none'])) .lh-mood-chip:hover i { transform: scale(1.08); }
+:where(:root:not([data-theme='none'])) .lh-mood-chip:active { transform: translateY(1px) scale(0.97); transition-duration: 0.08s; }
+:where(:root:not([data-theme='none'])) .lh-mood-chip.is-on { border-color: var(--mood); background: color-mix(in srgb, var(--mood) 22%, #ffffff); color: var(--tb-ink); }
+:where(:root:not([data-theme='none'])) .lh-mood-chip.is-on i { box-shadow: 0 0 0 3px #ffffff, 0 0 0 5px var(--mood); }
 
 :where(:root:not([data-theme='none'])) .lh-seg {
   display: inline-flex;
@@ -1576,9 +1627,6 @@
 :where(:root:not([data-theme='none'])) .lh-foods small { color: var(--tb-ink-3); }
 :where(:root:not([data-theme='none'])) .lh-foods b { color: var(--tb-ink); }
 
-:where(:root:not([data-theme='none'])) .lh-rules { display: flex; flex-direction: column; gap: 6px; }
-:where(:root:not([data-theme='none'])) .lh-rule { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 10px; border-radius: 14px; background: #ffffff; box-shadow: inset 0 0 0 2px var(--tb-rim); font-size: 12.5px; font-weight: 800; }
-:where(:root:not([data-theme='none'])) .lh-rule-opts { display: flex; flex: 0 0 auto; gap: 4px; }
 
 :where(:root:not([data-theme='none'])) .lh-kept-mini { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; font-size: 13px; font-weight: 750; line-height: 1.35; }
 :where(:root:not([data-theme='none'])) .lh-kept-mini small { margin-right: 4px; color: var(--tb-ink-3); font-weight: 850; }
