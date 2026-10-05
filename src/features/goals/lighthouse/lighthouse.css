@@ -96,6 +96,9 @@
 :where(:root:not([data-theme='none'])) .lh-bar-title strong { font-size: 20px; font-weight: 900; letter-spacing: -0.01em; line-height: 1.1; }
 :where(:root:not([data-theme='none'])) .lh-bar-title small { margin-top: 1px; font-size: 12.5px; font-weight: 700; opacity: 0.72; }
 :where(:root:not([data-theme='none'])) .lh-bar-chips { display: flex; align-items: center; gap: 8px; }
+/* Phone-only pieces: the "more" menu and the log sheet's grabber. */
+:where(:root:not([data-theme='none'])) .lh-more,
+:where(:root:not([data-theme='none'])) .lh-grabber { display: none; }
 :where(:root:not([data-theme='none'])) .lh-bar-chips .world-chip { cursor: default; font-weight: 800; }
 :where(:root:not([data-theme='none'])) .lh-bar-chips .world-chip strong { font-weight: 900; }
 :where(:root:not([data-theme='none'])) .lh-bar-chips button.world-chip { cursor: pointer; border: 1.5px solid var(--bar-chip-line); font: inherit; color: var(--bar-ink); }
@@ -334,25 +337,39 @@
 :where(:root:not([data-theme='none'])) .lh-beam-rig { opacity: 0.55; animation: lh-beam 9s linear infinite; }
 :where(:root:not([data-theme='none'])) .camp--night .lh-beam-rig { opacity: 0.95; }
 
-/* Things to tap in the picture. Tags show on hover and focus, always on touch screens, and
-   on anything that needs you (with a small badge). */
+/* Things to tap in the picture. Hover and focus lift a thing 2px and rim it in a soft glow
+   (the point-and-click signal: this can be used); a press settles it back down at once.
+   Never set the CSS `transform` property here — on an SVG element it replaces the element's
+   own transform attribute (where it's placed) and sends it to the corner. `translate` and
+   `scale` are separate properties that compose with that attribute, so they're safe. */
+:where(:root:not([data-theme='none'])) .lh-world { --lh-hover-glow: rgba(255, 255, 255, 0.95); }
+:where(:root:not([data-theme='none'])) .camp--night.lh-world,
+:where(:root:not([data-theme='none'])) .camp--golden.lh-world { --lh-hover-glow: rgba(255, 228, 150, 0.85); }
 :where(:root:not([data-theme='none'])) .lh-obj { cursor: pointer; outline: none; }
-:where(:root:not([data-theme='none'])) .lh-obj > :not(.lh-tag):not(.lh-obj-hit):not(.lh-light-pool) { transition: transform 0.2s var(--tb-spring); }
-:where(:root:not([data-theme='none'])) .lh-obj:hover > :not(.lh-tag):not(.lh-obj-hit),
-:where(:root:not([data-theme='none'])) .lh-obj:focus-visible > :not(.lh-tag):not(.lh-obj-hit) { transform: translateY(-2px); }
+:where(:root:not([data-theme='none'])) .lh-obj > :not(.lh-tag):not(.lh-obj-hit):not(.lh-light-pool):not(.lh-light-tip) { transition: translate 0.2s var(--tb-spring), scale 0.2s var(--tb-spring), filter 0.2s ease; }
+:where(:root:not([data-theme='none'])) .lh-obj:hover > :not(.lh-tag):not(.lh-obj-hit):not(.lh-light-pool):not(.lh-light-tip),
+:where(:root:not([data-theme='none'])) .lh-obj:focus-visible > :not(.lh-tag):not(.lh-obj-hit):not(.lh-light-pool):not(.lh-light-tip) {
+  translate: 0 -2px;
+  filter: drop-shadow(0 0 1.5px var(--lh-hover-glow)) drop-shadow(0 0 5px var(--lh-hover-glow));
+}
+:where(:root:not([data-theme='none'])) .lh-obj:active > :not(.lh-tag):not(.lh-obj-hit):not(.lh-light-pool):not(.lh-light-tip) { translate: 0 0.5px; transition-duration: 0.08s; }
 :where(:root:not([data-theme='none'])) .lh-obj-hit { fill: transparent; }
 :where(:root:not([data-theme='none'])) .lh-obj:focus-visible .lh-obj-hit { stroke: #52b4ff; stroke-width: 3; }
 :where(:root:not([data-theme='none'])) .lh-obj--tower:hover > *,
-:where(:root:not([data-theme='none'])) .lh-obj--tower:focus-visible > * { transform: none; }
+:where(:root:not([data-theme='none'])) .lh-obj--tower:focus-visible > * { translate: none; filter: none; }
+/* The tower's art is drawn apart from its hit area, so it lights up from there. */
+:where(:root:not([data-theme='none'])) .lh-tower { transition: filter 0.2s ease; }
+:where(:root:not([data-theme='none'])) .lh-art:has(.lh-obj--tower:hover) .lh-tower,
+:where(:root:not([data-theme='none'])) .lh-art:has(.lh-obj--tower:focus-visible) .lh-tower { filter: drop-shadow(0 0 2px var(--lh-hover-glow)) drop-shadow(0 0 8px var(--lh-hover-glow)); }
 
-:where(:root:not([data-theme='none'])) .lh-tag { pointer-events: none; transition: transform 0.18s var(--tb-spring); }
+:where(:root:not([data-theme='none'])) .lh-tag { pointer-events: none; transition: translate 0.18s var(--tb-spring); }
 :where(:root:not([data-theme='none'])) .lh-tag-lip { fill: var(--lh-paper-lip); }
 :where(:root:not([data-theme='none'])) .lh-tag-face { fill: var(--lh-paper); transition: fill 0.18s ease; }
 :where(:root:not([data-theme='none'])) .lh-tag text { fill: var(--lh-ink); font-family: var(--lh-font); font-size: 9.5px; font-weight: 900; letter-spacing: 0.01em; }
 :where(:root:not([data-theme='none'])) .lh-tag-dot { fill: #ff6f95; stroke: var(--lh-paper); stroke-width: 2; }
 :where(:root:not([data-theme='none'])) .camp--night .lh-tag { opacity: 0.94; }
 :where(:root:not([data-theme='none'])) .lh-obj:hover .lh-tag,
-:where(:root:not([data-theme='none'])) .lh-obj:focus-visible .lh-tag { transform: translateY(-1.5px); }
+:where(:root:not([data-theme='none'])) .lh-obj:focus-visible .lh-tag { translate: 0 -1.5px; }
 :where(:root:not([data-theme='none'])) .lh-obj:hover .lh-tag-face,
 :where(:root:not([data-theme='none'])) .lh-obj:focus-visible .lh-tag-face,
 :where(:root:not([data-theme='none'])) .lh-obj.is-due .lh-tag-face { fill: #fff6c8; }
@@ -367,7 +384,7 @@
 
 :where(:root:not([data-theme='none'])) .lh-bench-seat { fill: #c98e57; }
 :where(:root:not([data-theme='none'])) .lh-bench-legs { fill: none; stroke: #9c6536; stroke-linecap: round; stroke-width: 2.6; }
-:where(:root:not([data-theme='none'])) .lh-due-glow { fill: #ffd25a; opacity: 0.35; transform-box: fill-box; transform-origin: center; animation: lh-pulse 2.2s ease-in-out infinite; }
+:where(:root:not([data-theme='none'])) .lh-due-glow { opacity: 0.7; transform-box: fill-box; transform-origin: center; animation: lh-pulse 2.6s ease-in-out infinite; pointer-events: none; }
 
 :where(:root:not([data-theme='none'])) .lh-flagpole { fill: none; stroke: #6b5440; stroke-linecap: round; stroke-width: 2.6; }
 :where(:root:not([data-theme='none'])) .lh-flag-cap { fill: #ffcb3d; }
@@ -386,6 +403,17 @@
 /* ---------- Pip talks: tap him, or the arrow, for the next thing on his mind ---------- */
 
 :where(:root:not([data-theme='none'])) .lh-pip-talk { cursor: pointer; outline: none; }
+:where(:root:not([data-theme='none'])) .lh-pip-hop { transition: filter 0.2s ease; }
+:where(:root:not([data-theme='none'])) .lh-pip-talk:hover .lh-pip-hop,
+:where(:root:not([data-theme='none'])) .lh-pip-talk:focus-visible .lh-pip-hop { filter: drop-shadow(0 0 2px var(--lh-hover-glow)) drop-shadow(0 0 6px var(--lh-hover-glow)); }
+
+/* A lantern's name, as a small ink tooltip over it on hover or focus (the lanterns show
+   only an icon; the row's own paper tag stays put). */
+:where(:root:not([data-theme='none'])) .lh-light-tip { opacity: 0; translate: 0 3px; pointer-events: none; transition: opacity 0.15s ease, translate 0.15s ease; }
+:where(:root:not([data-theme='none'])) .lh-light-tip rect { fill: var(--lh-ink); }
+:where(:root:not([data-theme='none'])) .lh-light-tip text { fill: #fffaf0; font-family: var(--lh-font); font-size: 8.5px; font-weight: 850; }
+:where(:root:not([data-theme='none'])) .lh-light:hover .lh-light-tip,
+:where(:root:not([data-theme='none'])) .lh-light:focus-visible .lh-light-tip { opacity: 1; translate: 0 0; }
 :where(:root:not([data-theme='none'])) .lh-pip-talk .lh-obj-hit { fill: transparent; }
 :where(:root:not([data-theme='none'])) .lh-pip-talk:focus-visible .lh-obj-hit { stroke: #52b4ff; stroke-width: 3; }
 :where(:root:not([data-theme='none'])) .lh-pip-hop { transform-box: fill-box; transform-origin: 50% 100%; animation: lh-hop 0.5s var(--tb-spring); }
@@ -624,6 +652,7 @@
 
 :where(:root:not([data-theme='none'])) .lh-tab svg { opacity: 0.75; }
 :where(:root:not([data-theme='none'])) .lh-tab:hover { transform: translateY(-1px); }
+:where(:root:not([data-theme='none'])) .lh-tab:active { transform: translateY(1px) scale(0.97); transition-duration: 0.08s; }
 :where(:root:not([data-theme='none'])) .lh-tab.is-on { border-color: var(--paper); background: var(--paper); box-shadow: 0 3px 0 var(--paper-lip); color: var(--paper-ink); }
 :where(:root:not([data-theme='none'])) .lh-tab.is-on svg { opacity: 1; }
 
@@ -2450,6 +2479,19 @@
 :where(:root:not([data-theme='none'])) .lh-skeleton span:first-child { height: 104px; border-radius: 18px; background: color-mix(in srgb, var(--wood) 45%, transparent); }
 :where(:root:not([data-theme='none'])) .lh-error { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 4px; padding: 30px 16px; border-radius: 22px; background: var(--lh-paper); box-shadow: var(--lh-slip-shadow); font-weight: 800; }
 
+/* ---------- Press feedback ---------- */
+
+/* Everything you can press answers within ~100 ms: it settles down a touch, then springs
+   back on release — the log feels as physical as the island. */
+:where(:root:not([data-theme='none'])) .lh-notice { transition: transform 0.2s var(--tb-spring), box-shadow 0.2s ease; }
+:where(:root:not([data-theme='none'])) .lh-notice:hover { transform: translateY(-1px); }
+:where(:root:not([data-theme='none'])) .lh-notice:active { transform: translateY(2px); box-shadow: 0 1px 0 color-mix(in srgb, var(--c-fill) 40%, var(--lh-paper-lip)); transition-duration: 0.08s; }
+:where(:root:not([data-theme='none'])) .lh-track:has(.lh-track-main:active) { transform: translateY(2px); box-shadow: 0 1px 0 var(--lh-paper-lip), 0 6px 16px rgba(42, 33, 64, 0.1); transition-duration: 0.08s; }
+:where(:root:not([data-theme='none'])) .lh-locked:active { transform: translateY(1px) scale(0.98); transition-duration: 0.08s; }
+
+/* Switching views: the new page rises in rather than snapping. */
+:where(:root:not([data-theme='none'])) .lh-deck-body > :first-child { animation: lh-view-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1); }
+
 /* ---------- Motion ---------- */
 
 @keyframes lh-hop { 0% { transform: translateY(0) scale(1, 1); } 30% { transform: translateY(-9px) scale(0.96, 1.05); } 60% { transform: translateY(0) scale(1.06, 0.94); } 100% { transform: none; } }
@@ -2458,6 +2500,7 @@
 @keyframes lh-ship { from { transform: translateX(0); } to { transform: translateX(40px); } }
 @keyframes lh-zz { 0% { opacity: 0; transform: translateY(4px); } 40% { opacity: 0.8; } 100% { opacity: 0; transform: translateY(-6px); } }
 @keyframes lh-firefly { 0%, 100% { opacity: 0.15; transform: translate(0, 0); } 30% { opacity: 1; transform: translate(4px, -5px); } 60% { opacity: 0.5; transform: translate(-3px, -2px); } }
+@keyframes lh-view-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @keyframes lh-bubble-in { from { opacity: 0; transform: translateY(8px) scale(0.96); } to { opacity: 1; transform: none; } }
 @keyframes lh-qz-in { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
 @keyframes lh-gauge-in { from { stroke-dasharray: 0 var(--len); } }
@@ -2510,6 +2553,61 @@
   :where(:root:not([data-theme='none'])) .lh-bar .world-breathe { width: 34px; height: 34px; padding: 0; justify-content: center; }
   :where(:root:not([data-theme='none'])) .lh-bar .world-chip { height: 34px; padding: 0 10px 0 9px; gap: 5px; }
   :where(:root:not([data-theme='none'])) .lh-bar-chips { gap: 4px; }
+  :where(:root:not([data-theme='none'])) .lh-bar-wide { display: none; }
+  :where(:root:not([data-theme='none'])) .lh-more { display: block; }
+  :where(:root:not([data-theme='none'])) .lh-more .world-sound-menu { right: 0; min-width: 220px; }
+
+  /* The log is a sheet over the island (the Maps pattern): the island stays pinned while
+     the sheet slides up over it, with a grabber at its top. */
+  :where(:root:not([data-theme='none'])) .lh-scene { position: sticky; top: 0; z-index: 0; }
+  :where(:root:not([data-theme='none'])) .lh-deck {
+    position: relative;
+    z-index: 4;
+    margin-top: -4px;
+    padding: 0 14px 0;
+    border-radius: 28px 28px 0 0;
+    background: color-mix(in srgb, var(--sea-deep) 90%, #ffffff);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 -12px 30px rgba(10, 8, 30, 0.22);
+  }
+  :where(:root:not([data-theme='none'])) .camp--night .lh-deck { background: #1b2156; }
+  :where(:root:not([data-theme='none'])) .lh-grabber { display: grid; place-items: center; width: 100%; height: 26px; margin: 0 0 2px; padding: 0; border: 0; background: none; cursor: pointer; }
+  :where(:root:not([data-theme='none'])) .lh-grabber span { width: 42px; height: 5px; border-radius: 999px; background: rgba(255, 255, 255, 0.45); }
+
+  /* The views move to a floating bar at the bottom, where the thumb already is. */
+  :where(:root:not([data-theme='none'])) .lh-tabs {
+    position: fixed;
+    left: 50%;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    z-index: 30;
+    width: min(calc(100% - 32px), 380px);
+    margin: 0;
+    padding: 5px;
+    border-radius: 999px;
+    background: var(--lh-paper);
+    box-shadow: 0 4px 0 var(--lh-paper-lip), 0 14px 30px rgba(10, 8, 30, 0.3);
+    transform: translateX(-50%);
+  }
+  :where(:root:not([data-theme='none'])) .lh-tabs .lh-tab { height: 42px; border: 0; background: transparent; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; color: var(--lh-text); }
+  :where(:root:not([data-theme='none'])) .lh-tabs .lh-tab.is-on { background: var(--lh-ink); box-shadow: none; color: var(--lh-paper); }
+  :where(:root:not([data-theme='none'])) .lh-deck-body { padding-bottom: calc(86px + env(safe-area-inset-bottom)); }
+
+  /* What the day asks beyond the tracks: two compact chips side by side, not two banners. */
+  :where(:root:not([data-theme='none'])) .lh-notices { flex-direction: row; gap: 8px; }
+  :where(:root:not([data-theme='none'])) .lh-notice { flex: 1 1 0; min-width: 0; gap: 8px; padding: 8px 10px 8px 8px; border-radius: 16px; }
+  :where(:root:not([data-theme='none'])) .lh-notice-icon { width: 30px; height: 30px; border-radius: 10px; }
+  :where(:root:not([data-theme='none'])) .lh-notice-text strong { font-size: 13.5px; white-space: nowrap; }
+  :where(:root:not([data-theme='none'])) .lh-notice-text small { display: none; }
+  :where(:root:not([data-theme='none'])) .lh-notice > svg:last-child { display: none; }
+
+  /* Track rows: the week's dots and their count may take two lines; the act column never
+     spills over them. */
+  :where(:root:not([data-theme='none'])) .lh-track { gap: 8px; padding: 10px 10px 10px 10px; }
+  :where(:root:not([data-theme='none'])) .lh-track-main { gap: 10px; }
+  :where(:root:not([data-theme='none'])) .lh-track-name { font-size: 15.5px; }
+  :where(:root:not([data-theme='none'])) .lh-track-hint { font-size: 12.5px; }
+  :where(:root:not([data-theme='none'])) .lh-meter-row { flex-wrap: wrap; row-gap: 3px; }
+  :where(:root:not([data-theme='none'])) .lh-track-act { min-width: 64px; }
+  :where(:root:not([data-theme='none'])) .lh-small-link { white-space: nowrap; }
 
   /* Pip's bubble fits the phone and leaves the tower in view. */
   :where(:root:not([data-theme='none'])) .lh-bubble { padding: 8px 12px 10px; border-radius: 18px; }

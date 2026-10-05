@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
-import { ArrowLeft, Cake, CalendarDays, CircleHelp, HeartHandshake, LifeBuoy, NotebookText, Settings2, Sun, Volume2, VolumeX } from 'lucide-react'
+import { ArrowLeft, Cake, CalendarDays, CircleHelp, Ellipsis, HeartHandshake, LifeBuoy, NotebookText, Settings2, Sun, Volume2, VolumeX } from 'lucide-react'
 import type {
   ProgramAssessmentType,
   ProgramLetterKey,
@@ -107,6 +107,24 @@ function LighthouseWorld({ onBack, onLeave }: LighthouseWorldProps) {
   const [guideSeen, setGuideSeen] = useState(() => readStored(GUIDE_KEY) != null)
   const deckRef = useRef<HTMLDivElement | null>(null)
   const { enabled: soundOn } = useCampSoundPrefs()
+  // Phones fold the guide, settings and sound into one "more" menu (the Spiral Breaker stays out).
+  const [more, setMore] = useState(false)
+  const moreRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    if (!more) return
+    const onDown = (e: PointerEvent) => {
+      if (!moreRef.current?.contains(e.target as Node)) setMore(false)
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMore(false)
+    }
+    document.addEventListener('pointerdown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('pointerdown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [more])
 
   useEffect(() => {
     void programActions.load(today)
@@ -592,20 +610,63 @@ function LighthouseWorld({ onBack, onLeave }: LighthouseWorldProps) {
                 <small>{dayMonth(ctx.program.birthday ?? ctx.program.endDate)}</small>
               </span>
             )}
-            <button type="button" className={cn('world-breathe lh-guide-btn', !guideSeen && 'is-new')} onClick={(e) => openGuide(e.currentTarget)} aria-label="What’s what — a short guide" title="What’s what">
+            <button type="button" className={cn('world-breathe lh-guide-btn lh-bar-wide', !guideSeen && 'is-new')} onClick={(e) => openGuide(e.currentTarget)} aria-label="What’s what — a short guide" title="What’s what">
               <CircleHelp size={16} strokeWidth={2.4} />
             </button>
             {ctx && (
-              <button type="button" className="world-breathe" onClick={(e) => setSheet({ kind: 'settings', origin: e.currentTarget })} aria-label="Program settings" title="Program settings">
+              <button type="button" className="world-breathe lh-bar-wide" onClick={(e) => setSheet({ kind: 'settings', origin: e.currentTarget })} aria-label="Program settings" title="Program settings">
                 <Settings2 size={16} strokeWidth={2.4} />
               </button>
             )}
-            <button type="button" className={cn('world-breathe', !soundOn && 'is-off')} onClick={() => campSound.setEnabled(!soundOn)} aria-label={soundOn ? 'Sound on — turn off' : 'Sound off — turn on'} title="Sound">
+            <button type="button" className={cn('world-breathe lh-bar-wide', !soundOn && 'is-off')} onClick={() => campSound.setEnabled(!soundOn)} aria-label={soundOn ? 'Sound on — turn off' : 'Sound off — turn on'} title="Sound">
               {soundOn ? <Volume2 size={16} strokeWidth={2.4} /> : <VolumeX size={16} strokeWidth={2.4} />}
             </button>
             <button type="button" className="world-breathe" onClick={() => spiralActions.open()} aria-label="Spiral breaker" title="Spiral breaker">
               <LifeBuoy size={16} strokeWidth={2.4} />
             </button>
+            <div className="world-sound lh-more" ref={moreRef}>
+              <button type="button" className={cn('world-breathe', !guideSeen && 'lh-guide-btn is-new')} onClick={() => setMore((m) => !m)} aria-label="More — guide, settings, sound" aria-expanded={more} aria-haspopup="menu">
+                <Ellipsis size={18} strokeWidth={2.6} />
+              </button>
+              {more && (
+                <div className="world-sound-menu" role="menu">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={(e) => {
+                      setMore(false)
+                      openGuide(e.currentTarget)
+                    }}
+                  >
+                    <CircleHelp size={15} strokeWidth={2.4} />
+                    <span>
+                      What’s what<small>A short guide to the island</small>
+                    </span>
+                  </button>
+                  {ctx && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={(e) => {
+                        setMore(false)
+                        setSheet({ kind: 'settings', origin: e.currentTarget })
+                      }}
+                    >
+                      <Settings2 size={15} strokeWidth={2.4} />
+                      <span>
+                        Program settings<small>Dates, tracks, targets</small>
+                      </span>
+                    </button>
+                  )}
+                  <button type="button" role="menuitemcheckbox" aria-checked={soundOn} onClick={() => campSound.setEnabled(!soundOn)}>
+                    {soundOn ? <Volume2 size={15} strokeWidth={2.4} /> : <VolumeX size={15} strokeWidth={2.4} />}
+                    <span>
+                      Sound effects<small>{soundOn ? 'On' : 'Off'}</small>
+                    </span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
@@ -633,6 +694,21 @@ function LighthouseWorld({ onBack, onLeave }: LighthouseWorldProps) {
           />
 
           <section className="lh-deck" ref={deckRef} aria-label="The program">
+            {/* Phones: the log is a sheet over the island; its grabber pulls it up or lets it back down. */}
+            <button
+              type="button"
+              className="lh-grabber"
+              aria-label="Slide the log up or down"
+              onClick={() => {
+                const world = deckRef.current?.closest('.lh-world')
+                const deck = deckRef.current
+                if (!world || !deck) return
+                const top = deck.getBoundingClientRect().top - world.getBoundingClientRect().top
+                world.scrollTo({ top: top > 40 ? world.scrollTop + top : 0, behavior: 'smooth' })
+              }}
+            >
+              <span aria-hidden="true" />
+            </button>
             {remote.hasErrors && !data ? (
               <div className="lh-error" aria-live="polite">
                 <p>Couldn’t reach the lighthouse just now.</p>

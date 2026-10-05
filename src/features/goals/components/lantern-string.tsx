@@ -33,18 +33,20 @@ const dropAt = (i: number, n: number, sag: number) => {
 }
 
 /**
- * The camp's lantern strings — one string across the sky on wide screens, rows of three
- * on a phone. The string's sag and each lantern's drop come from the same curve, so they
+ * The camp's lantern string — across the sky on wide screens; on a phone the same single
+ * string scrolls sideways with the next lantern peeking in. The string's sag and each lantern's drop come from the same curve, so they
  * always hang where the cord actually is. An empty hook at the end hangs a new lantern.
  */
 function LanternString({ loading, goals, pending, onComplete, onOpen, onAdd }: LanternStringProps) {
   const narrow = useMediaQuery('(max-width: 760px)')
-  const perRow = narrow ? 3 : MAX_ACTIVE_GOALS + 1
-  const sag = narrow ? 18 : 34
+  // One string everywhere; on a phone it scrolls sideways (snapping lantern to lantern)
+  // instead of wrapping into rows, so the sky stays one line and the next lantern peeks in.
+  const perRow = MAX_ACTIVE_GOALS + 1
+  const sag = narrow ? 22 : 34
 
   const renderRow = (row: Slot[], r: number) => {
     return (
-      <div className="lantern-row" key={r}>
+      <div className="lantern-row" key={r} style={{ ['--n' as string]: row.length }}>
         {/* One viewBox unit is one pixel vertically, so the cord's sag matches each lantern's drop. */}
         <svg
           className="lantern-cordline"
@@ -114,7 +116,11 @@ function LanternString({ loading, goals, pending, onComplete, onOpen, onAdd }: L
 
   if (loading) {
     const ghosts: Slot[] = Array.from({ length: narrow ? 3 : 5 }, () => ({ kind: 'ghost' }))
-    return <div className="lanterns">{renderRow(ghosts, 0)}</div>
+    return (
+      <div className="lanterns">
+        <div className="lantern-scroller">{renderRow(ghosts, 0)}</div>
+      </div>
+    )
   }
 
   const slots: Slot[] = goals.map((view) => ({ kind: 'goal', view }))
@@ -124,7 +130,7 @@ function LanternString({ loading, goals, pending, onComplete, onOpen, onAdd }: L
 
   return (
     <div className="lanterns">
-      {rows.map((row, r) => renderRow(row, r))}
+      <div className="lantern-scroller">{rows.map((row, r) => renderRow(row, r))}</div>
 
       {goals.length === 0 && (
         <div className="starter-note">

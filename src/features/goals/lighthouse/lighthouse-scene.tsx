@@ -107,10 +107,10 @@ function onActivate(fn: (el: HTMLElement) => void) {
  * The label under a thing to tap — one paper tag, the same everywhere, always shown. A dot on
  * it means that place has something waiting; the tag itself never comes and goes.
  */
-function Tag({ x, y, text, due }: { x: number; y: number; text: string; due?: boolean }) {
+function Tag({ x, y, text, due, scale = 1 }: { x: number; y: number; text: string; due?: boolean; scale?: number }) {
   const w = Math.round(text.length * 5.5 + 16)
   return (
-    <g className={cn('lh-tag', due && 'is-due')} transform={`translate(${x} ${y})`} aria-hidden="true">
+    <g className={cn('lh-tag', due && 'is-due')} transform={`translate(${x} ${y}) scale(${scale})`} aria-hidden="true">
       <rect className="lh-tag-lip" x={-w / 2} y={-7.5} width={w} height={17} rx={8.5} />
       <rect className="lh-tag-face" x={-w / 2} y={-9} width={w} height={17} rx={8.5} />
       <text x={0} y={3.2} textAnchor="middle">
@@ -124,7 +124,7 @@ function Tag({ x, y, text, due }: { x: number; y: number; text: string; due?: bo
 export type SceneLight = { key: ProgramTrackKey; lit: boolean }
 
 /** Today's lights: one paper lantern floating in front of the island per track that's on. */
-function Lights({ lights, label, onLight }: { lights: SceneLight[]; label: string; onLight: (track: ProgramTrackKey, el: HTMLElement) => void }) {
+function Lights({ lights, label, scale, onLight }: { lights: SceneLight[]; label: string; scale: number; onLight: (track: ProgramTrackKey, el: HTMLElement) => void }) {
   if (!lights.length) return null
   const gap = Math.min(46, 330 / Math.max(1, lights.length - 1))
   const x0 = LIGHTS_CX - (gap * (lights.length - 1)) / 2
@@ -140,7 +140,7 @@ function Lights({ lights, label, onLight }: { lights: SceneLight[]; label: strin
             key={l.key}
             className={cn('lh-obj lh-light', l.lit ? 'is-lit' : 'is-dim')}
             data-color={meta.color}
-            transform={`translate(${x.toFixed(1)} ${y.toFixed(1)})`}
+            transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${Math.min(scale, 1.15)})`}
             role="button"
             tabIndex={0}
             aria-label={`${meta.name} — ${l.lit ? 'lit today' : 'not lit yet today'}`}
@@ -156,10 +156,16 @@ function Lights({ lights, label, onLight }: { lights: SceneLight[]; label: strin
               <rect className="lh-light-cap" x="-6.5" y="-15" width="13" height="3.6" rx="1.6" />
               <Icon className="lh-light-icon" x={-5.5} y={-7} width={11} height={11} strokeWidth={2.6} />
             </g>
+            <g className="lh-light-tip" aria-hidden="true">
+              <rect x={-(meta.name.length * 2.6 + 7)} y="-33" width={meta.name.length * 5.2 + 14} height="13" rx="6.5" />
+              <text x="0" y="-23.6" textAnchor="middle">
+                {meta.name}
+              </text>
+            </g>
           </g>
         )
       })}
-      <Tag x={LIGHTS_CX} y={LIGHTS_Y + 25} text={label} />
+      <Tag x={LIGHTS_CX} y={LIGHTS_Y + 25 + (scale - 1) * 6} text={label} scale={scale} />
     </g>
   )
 }
@@ -225,6 +231,11 @@ function LighthouseScene({
   const sceneRef = useRef<HTMLElement | null>(null)
   const anchor = useAnchor(sceneRef)
   const [poked, setPoked] = useState(0)
+  // Tags are drawn at 9.5 art units; when the art is drawn small (a phone draws it at about
+  // three quarters) they grow back to about 10px on screen — never past 1.4, where they still
+  // fit their one line without touching.
+  const artScale = anchor ? Math.min(anchor.w / VB.w, anchor.h / VB.h) : 1
+  const tagScale = Math.round(Math.min(1.4, Math.max(1, 10 / (9.5 * artScale))) * 20) / 20
 
   // The bubble sits over Pip, kept inside the scene; its tail points at his head.
   const bubbleW = anchor ? Math.min(anchor.w - 24, anchor.w < 520 ? 288 : 340) : 340
@@ -507,7 +518,7 @@ function LighthouseScene({
               <path d="M-4.5 -3.5 l-3 -1.6 l0.6 3 Z" fill="#a9b4c8" />
             </g>
           </g>
-          <Tag x={407} y={LABEL_Y} text="Logbook" />
+          <Tag x={407} y={LABEL_Y} text="Logbook" scale={tagScale} />
         </g>
 
         {/* The tower — every stone a kept promise. */}
@@ -572,7 +583,7 @@ function LighthouseScene({
         </g>
         <g className="lh-obj lh-obj--tower" role="button" tabIndex={0} aria-label={`The tower — ${kept} kept promise${kept === 1 ? '' : 's'}`} {...onActivate((el) => onObject('tower', el))}>
           <path className="lh-obj-hit" d={`M${CX - 38} ${TOWER_BASE + 6} L${CX - 36} 82 L${CX + 36} 82 L${CX + 38} ${TOWER_BASE + 6} Z`} />
-          <Tag x={CX} y={LABEL_Y} text={kept > 0 ? `Tower · ${kept}` : 'Tower'} />
+          <Tag x={CX} y={LABEL_Y} text={kept > 0 && tagScale <= 1.1 ? `Tower · ${kept}` : 'Tower'} scale={tagScale} />
         </g>
 
         {/* Fireflies over the grass at night. */}
@@ -588,15 +599,15 @@ function LighthouseScene({
           <path className="lh-flagpole" d="M236 350 V250" />
           <circle className="lh-flag-cap" cx="236" cy="249" r="2.6" />
           <path className={cn('lh-flag', flagUp ? 'is-up' : 'is-down')} d={flagUp ? 'M237 253 L264 261 L237 271 Z' : 'M237 322 L256 328 L237 336 Z'} />
-          <Tag x={236} y={LABEL_Y} text="Check-in" due={flagUp} />
+          <Tag x={236} y={LABEL_Y} text="Check-in" due={flagUp} scale={tagScale} />
         </g>
 
         <g className={cn('lh-obj', reviewDue && 'is-due')} role="button" tabIndex={0} aria-label={reviewDue ? 'The bench — this week’s review is ready' : 'The bench — the weekly review'} {...onActivate((el) => onObject('bench', el))}>
           <rect className="lh-obj-hit" x="458" y="318" width="50" height="46" rx="10" />
-          {reviewDue && <circle className="lh-due-glow" cx="483" cy="340" r="22" />}
+          {reviewDue && <circle className="lh-due-glow" cx="483" cy="340" r="28" fill="url(#lh-warm)" />}
           <rect className="lh-bench-seat" x="466" y="337" width="34" height="5" rx="2" />
           <path className="lh-bench-legs" d="M470 342 V352 M496 342 V352 M468 337 V326 H498 V337" />
-          <Tag x={483} y={LABEL_Y} text="Review" due={reviewDue} />
+          <Tag x={483} y={LABEL_Y} text="Review" due={reviewDue} scale={tagScale} />
         </g>
 
         <g className={cn('lh-obj lh-bottle', bottleGlint && 'is-due')} role="button" tabIndex={0} aria-label="A bottle washed up on the sand — your letters" {...onActivate((el) => onObject('bottle', el))}>
@@ -610,11 +621,11 @@ function LighthouseScene({
             <path className="lh-bottle-shine" d="M-11 -3.2 H1" />
             <rect className="lh-bottle-cork" x="12.4" y="-2.9" width="3.6" height="5.8" rx="1.1" />
           </g>
-          <Tag x={592} y={LABEL_Y} text="Letters" due={bottleGlint} />
+          <Tag x={592} y={LABEL_Y} text="Letters" due={bottleGlint} scale={tagScale} />
         </g>
 
         {/* Today's lights on the water. */}
-        {lights && <Lights lights={lights} label={lightsLabel} onLight={onLight} />}
+        {lights && <Lights lights={lights} label={lightsLabel} scale={tagScale} onLight={onLight} />}
 
         {/* Pip, by the bench, under open sky. Tap him for the next thing on his mind. */}
         <g
