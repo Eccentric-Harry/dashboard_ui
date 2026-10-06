@@ -7,6 +7,8 @@
 import { localToday } from '@/lib/finance-ledger';
 import type {
   CampChestItem,
+  CampFirstLight,
+  CampFirstLightPayload,
   CampQuest,
   CampQuestKind,
   CampSeason,
@@ -266,6 +268,10 @@ const ITEMS: { id: string; slot: string; price: number }[] = [
   { id: 'picnic', slot: 'decor', price: 95 },
   { id: 'signpost', slot: 'decor', price: 70 },
   { id: 'cherry-tree', slot: 'decor', price: 220 },
+  { id: 'night-cap', slot: 'hat', price: 75 },
+  { id: 'keeper-cap', slot: 'hat', price: 140 },
+  { id: 'star-scarf', slot: 'neck', price: 70 },
+  { id: 'moon-monocle', slot: 'face', price: 95 },
 ];
 
 /** Java's String.hashCode, so the guest picks the same quests the server would. */
@@ -425,9 +431,10 @@ interface GuestCamp {
   decorAt: Record<string, CampDecorSpot>;
   chestPaid: Record<string, number>;
   questsClaimed: string[];
+  firstLight: CampFirstLight | null;
 }
 
-const camp: GuestCamp = { buddyName: null, sparks: 0, sparksEarned: 0, owned: [], equipped: {}, decor: [], decorAt: {}, chestPaid: {}, questsClaimed: [] };
+const camp: GuestCamp = { buddyName: null, sparks: 0, sparksEarned: 0, owned: [], equipped: {}, decor: [], decorAt: {}, chestPaid: {}, questsClaimed: [], firstLight: null };
 
 const activeGoals = () => goals.filter((g) => g.status === 'ACTIVE').sort((a, b) => a.order - b.order);
 
@@ -452,6 +459,7 @@ function campView(today: string): CampView {
     quests: campQuests(today, active, claimed),
     questsYesterday: campQuests(addDays(today, -1), active, claimed).filter((q) => q.done && !q.claimed),
     season: campSeason(active, today),
+    firstLight: camp.firstLight && camp.firstLight.date >= today && activeIds.has(camp.firstLight.goalId) ? { ...camp.firstLight } : null,
   };
 }
 
@@ -495,6 +503,18 @@ function resolveCamp(path: string, method: string, body: () => unknown, today: s
     camp.owned.push(itemId);
     if ((WEAR_SLOTS as readonly string[]).includes(item.slot)) camp.equipped[item.slot as CampWearSlot] = itemId;
     else camp.decor.push(itemId);
+    return ok(campView(today));
+  }
+
+  if (path.endsWith('/goals/camp/first-light') && method === 'PUT') {
+    const { date, goalId } = body() as CampFirstLightPayload;
+    if (date !== today && date !== addDays(today, 1)) return bad('Hoot only plans for today or tomorrow.');
+    if (!goalId) {
+      camp.firstLight = null;
+      return ok(campView(today));
+    }
+    if (!activeGoals().some((g) => g.id === goalId)) return bad("That lantern isn't at camp.");
+    camp.firstLight = { date, goalId };
     return ok(campView(today));
   }
 

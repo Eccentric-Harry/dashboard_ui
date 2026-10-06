@@ -39,3 +39,4 @@ export const API_OPEN_CAMP_CHEST: ApiEndpoint = { url: '/goals/camp/chest/open',
 export const API_CLAIM_CAMP_QUEST: ApiEndpoint = { url: '/goals/camp/quests/claim', method: 'post' };
 export const API_BUY_CAMP_ITEM: ApiEndpoint = { url: '/goals/camp/shop/buy', method: 'post' };
 export const API_SET_CAMP_LOOK: ApiEndpoint = { url: '/goals/camp/look', method: 'put' };
+export const API_SET_CAMP_FIRST_LIGHT: ApiEndpoint = { url: '/goals/camp/first-light', method: 'put' };

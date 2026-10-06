@@ -125,6 +125,12 @@ describe('pip brain', () => {
       { kind: 'bought', item: 'Knit beanie' },
       { kind: 'bought' },
       { kind: 'wish' },
+      { kind: 'first-light', goalTitle: 'Read' },
+      { kind: 'festival', festival: 'diwali' },
+      { kind: 'festival', festival: 'new-year-eve' },
+      { kind: 'festival', festival: 'new-year' },
+      { kind: 'festival', festival: 'birthday' },
+      { kind: 'festival', festival: 'birthday', letterWaiting: true },
     ]
     const days = ['2026-09-28', '2026-09-29', '2026-10-01', '2026-10-03', '2026-10-04']
     const lines = new Set<string>()
@@ -140,6 +146,7 @@ describe('pip brain', () => {
               ]
               const s = pipState(goals, day, at(hour, day), moment)
               lines.add(s.line)
+              lines.add(pipState(goals, day, at(hour, day), moment, 'Pip', 'g3').line)
               expect(['welcome', 'waking', 'content', 'eager', 'celebrating', 'proud', 'cozy']).toContain(s.mood)
             }
           }

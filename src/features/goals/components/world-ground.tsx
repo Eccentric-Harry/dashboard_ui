@@ -1,4 +1,4 @@
-import type { MouseEvent } from 'react'
+import type { MouseEvent, ReactNode } from 'react'
 import { BookHeart } from 'lucide-react'
 import type { GoalProgressView } from '@/types/goals'
 import { cn } from '@/lib/utils'
@@ -37,6 +37,10 @@ type WorldGroundProps = {
   onOpenChest: (origin: HTMLElement) => void
   onOpenLetter: (origin: HTMLElement) => void
   onOpenCorner: (tab: PipCornerTab, origin: HTMLElement) => void
+  /** The campfire: Fireside Tales, the week so far as a storybook. */
+  onOpenFireside: (origin: HTMLElement) => void
+  /** Whatever else is out on the grass today — a visitor, a festival's decorations. */
+  meadow?: ReactNode
   /** The meadow: where decorations stand, and whether they're being moved. */
   yard: {
     decorAt: Record<string, CampDecorSpot>
@@ -91,6 +95,8 @@ function WorldGround({
   onOpenChest,
   onOpenLetter,
   onOpenCorner,
+  onOpenFireside,
+  meadow,
   yard,
 }: WorldGroundProps) {
   const lit = goals.filter((g) => g.today.hit).length
@@ -138,6 +144,8 @@ function WorldGround({
       </svg>
 
       <CampYard decor={look.decor} decorAt={yard.decorAt} arranging={yard.arranging} saving={yard.saving} onDone={yard.onDone} onCancel={yard.onCancel} />
+
+      {meadow}
 
       <div className="ground-stage" inert={yard.arranging}>
         <div className="ground-trail-side">
@@ -263,6 +271,13 @@ function WorldGround({
               <TentDecor ids={look.decor} />
               <Pip mood={pip.mood} size={104} x={4} y={140 - 110} className="camp-pip" wear={look.wear} stage={look.stage} name={buddyName} />
             </svg>
+            <button
+              type="button"
+              className="fire-hit"
+              data-sound="open"
+              onClick={at(onOpenFireside)}
+              aria-label="The campfire — sit down for Fireside Tales, the story of your week so far"
+            />
             <button
               type="button"
               className="pip-hit"

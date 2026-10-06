@@ -10,6 +10,7 @@ import {
   GraduationCap,
   Home,
   LogOut,
+  ShoppingCart,
   Terminal,
   Users,
   Utensils,
@@ -39,6 +40,7 @@ export const navItems: DashboardNavItem[] = [
   { label: 'Workouts', icon: Dumbbell, to: '/workouts' },
   { label: 'Prompts', icon: Terminal, to: '/prompts' },
   { label: 'Tasks', icon: CheckSquare, to: '/tasks' },
+  { label: 'Shopping', icon: ShoppingCart, to: '/shopping' },
   { label: 'Mind Space', icon: Brain, to: '/mind' },
   { label: 'People', icon: Users, to: '/people' },
 ]

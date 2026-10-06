@@ -19,6 +19,12 @@ import { ChestReveal } from './components/chest-reveal'
 import { QuestLetter } from './components/quest-letter'
 import { PipCorner, type PipCornerTab } from './components/pip-corner'
 import { ShootingStar } from './components/shooting-star'
+import { NightKeeper } from './components/night-keeper'
+import { FiresideBook } from './components/fireside-book'
+import { CampVisitor, Guestbook } from './components/camp-visitor'
+import { FestivalGround, FestivalSky, SeasonFall } from './components/camp-weather'
+import { calendarSeason, campPreview, festivalOn } from './camp-calendar'
+import { readGreeted, readPinned, saveGreeted, savePinned, visitorOn } from './camp-visitors'
 import { CampLighthouse } from './components/camp-lighthouse'
 import { programActions, useProgramStore } from '@/store/program-store'
 import { dayNumber, keptPromises, programLength } from './lighthouse/program-engine'
@@ -31,6 +37,7 @@ import { claimable } from './camp-quests'
 import { pipGrowth } from './pip-growth'
 import './camp-ui.css'
 import './goals-overview.css'
+import './camp-magic.css'
 
 type GoalModalState =
   | { mode: 'create'; preset?: GoalPayload; origin?: HTMLElement | null }
@@ -56,6 +63,7 @@ function momentFor(
   next: GoalProgressView,
   board: GoalProgressView[],
   today: string,
+  firstLightId: string | null,
 ): PipMoment | null {
   if (!prev) return null
   const anchor = goalElement(next.goal.id)
@@ -79,6 +87,16 @@ function momentFor(
       once: { key: 'goals-day', scope: today },
     })
     return { kind: 'day-done' }
+  }
+  if (next.goal.id === firstLightId) {
+    celebrationActions.celebrate({
+      anchor,
+      palette: 'candy',
+      label: 'First light',
+      detail: `${next.goal.title}, just as you planned`,
+      once: { key: `goal-first-light-${next.goal.id}`, scope: today },
+    })
+    return { kind: 'first-light', goalTitle: next.goal.title }
   }
   celebrationActions.celebrate({
     anchor,
@@ -148,6 +166,13 @@ function GoalsOverviewDashboard({ onExit, onOpenWorld, onOpenLighthouse }: Goals
   const [chestOpen, setChestOpen] = useState(false)
   const [talking, setTalking] = useState<CampCast | null>(null)
   const [letterDay, setLetterDay] = useState(readLetterDay)
+  const [fireside, setFireside] = useState<{ origin: Origin } | null>(null)
+  const [guestbook, setGuestbook] = useState<{ origin: Origin } | null>(null)
+  // Who's been greeted: as of this visit (it picks today's visitor, so a hello never swaps
+  // them out mid-visit), and live (it clears the "new" sparkle).
+  const [greetedAtStart] = useState(readGreeted)
+  const [greeted, setGreeted] = useState(greetedAtStart)
+  const [preview] = useState(campPreview)
   const talkTimer = useRef<number | null>(null)
 
   useEffect(() => {
@@ -200,7 +225,10 @@ function GoalsOverviewDashboard({ onExit, onOpenWorld, onOpenLighthouse }: Goals
   const loading = isAwaitingData(board)
   const buddyName = buddyNameOf(camp?.buddyName)
   const headline = useMemo(() => boardHeadline(goals, today, weekStart), [goals, today, weekStart])
-  const pip = useMemo(() => pipState(goals, today, now, moment, buddyName), [goals, today, now, moment, buddyName])
+  const pip = useMemo(
+    () => pipState(goals, today, now, moment, buddyName, board.data?.camp.firstLight?.date === today ? board.data.camp.firstLight.goalId : null),
+    [goals, today, now, moment, buddyName, board.data],
+  )
   const bestStreak = useMemo(() => goals.reduce((m, g) => Math.max(m, g.weekStreak), 0), [goals])
   const grownWeeks = camp?.grownWeeks ?? goals.reduce((sum, g) => sum + g.weeksKept, 0)
   const growth = pipGrowth(grownWeeks)
@@ -218,6 +246,58 @@ function GoalsOverviewDashboard({ onExit, onOpenWorld, onOpenLighthouse }: Goals
     decor: camp?.decor ?? [],
   }
   const logView = logState ? goals.find((g) => g.goal.id === logState.goalId) ?? null : null
+
+  // ── The calendar: the season's weather, today's festival, today's visitor ──
+  const season = preview.season ?? camp?.season.name ?? calendarSeason(today)
+  const festival = preview.festival ?? festivalOn(today, program?.birthday ?? program?.endDate)
+  const visitor = useMemo(
+    () => (camp ? visitorOn(today, grownWeeks, greetedAtStart, readPinned(today)) : null),
+    [camp, today, grownWeeks, greetedAtStart],
+  )
+  useEffect(() => {
+    if (visitor) savePinned(today, visitor.id)
+  }, [visitor, today])
+  const firstLight = camp?.firstLight ?? null
+  const firstLightToday = firstLight?.date === today ? firstLight.goalId : null
+
+  // A festival says hello once per visit, the moment the camp is up.
+  const festivalKey = !loading && festival ? `${today}:${festival}` : null
+  const [festivalSaid, setFestivalSaid] = useState<string | null>(null)
+  if (festivalKey && festivalSaid !== festivalKey) {
+    setFestivalSaid(festivalKey)
+    setMoment({ kind: 'festival', festival: festival ?? undefined, letterWaiting: festival === 'birthday' && !!program?.letters?.to23 })
+  }
+  useEffect(() => {
+    if (festivalKey?.endsWith(':birthday')) {
+      celebrationActions.celebrate({
+        anchor: document.querySelector<HTMLElement>('.camp-diorama'),
+        palette: 'candy',
+        label: 'Happy birthday',
+        detail: 'The whole camp is in on it',
+        once: { key: 'camp-birthday', scope: festivalKey },
+      })
+    }
+  }, [festivalKey])
+
+  const greet = (id: string) => {
+    setGreeted((prev) => {
+      const next = new Set(prev).add(id)
+      saveGreeted(next)
+      return next
+    })
+  }
+
+  const handlePickFirstLight = useCallback(
+    async (goalId: string | null, date: string) => {
+      const res = await goalsService.setFirstLight({ goalId, date }, today)
+      if (res.error || !res.data) {
+        toast.error(res.error?.message || 'Hoot dropped the star — try again.')
+        return
+      }
+      goalsActions.applyCamp(res.data)
+    },
+    [today],
+  )
 
   const markPending = (id: string, on: boolean) =>
     setPending((prev) => {
@@ -245,7 +325,8 @@ function GoalsOverviewDashboard({ onExit, onOpenWorld, onOpenLighthouse }: Goals
         if (res.error || !res.data) throw new Error(res.error?.message ?? 'No response')
         goalsActions.applyGoal(res.data)
         const nextBoard = useGoalsStore.getState().board.data?.goals ?? []
-        const m = momentFor(prev, res.data, nextBoard, today)
+        const pick = useGoalsStore.getState().board.data?.camp.firstLight
+        const m = momentFor(prev, res.data, nextBoard, today, pick?.date === today ? pick.goalId : null)
         soundFor(prev, res.data, nextBoard, today, m)
         if (m) setMoment(m)
         // Quests and the chest move with progress.
@@ -434,14 +515,38 @@ function GoalsOverviewDashboard({ onExit, onOpenWorld, onOpenLighthouse }: Goals
     setChestOpen(true)
   }
 
-  const sheetOpen = goalModal != null || logState != null || journal != null || letter != null || corner != null || chestOpen
+  const sheetOpen =
+    goalModal != null || logState != null || journal != null || letter != null || corner != null || chestOpen || fireside != null || guestbook != null
   const letterNew = (camp?.quests.length ?? 0) > 0 && letterDay !== today
 
   return (
     <main className={cn('camp-world', `camp--${phase}`)} aria-label="The camp — your goals">
       <div className="camp-scene" inert={sheetOpen}>
         <SkyDeco />
+        <SeasonFall season={season} />
+        {festival && <FestivalSky festival={festival} night={phase === 'night' || phase === 'golden'} />}
         {phase === 'night' && !sheetOpen && <ShootingStar onWish={() => setMoment({ kind: 'wish' })} />}
+        {!loading && (
+          <NightKeeper
+            phase={phase}
+            goals={goals}
+            weekStart={weekStart}
+            today={today}
+            hidden={sheetOpen}
+            firstLight={firstLight}
+            onPickFirstLight={handlePickFirstLight}
+          />
+        )}
+        {visitor?.place === 'sky' && (
+          <CampVisitor
+            visitor={visitor}
+            today={today}
+            isNew={!greeted.has(visitor.id)}
+            night={phase === 'night'}
+            onGreet={greet}
+            onOpenGuestbook={(origin) => setGuestbook({ origin })}
+          />
+        )}
         <WorldBar greeting={GREETING[phase]} dateLabel={dayLabel(today)} bestStreak={bestStreak} sparks={camp?.sparks ?? 0} onExit={onExit} onArrange={hasYard && !arranging ? () => setArranging(true) : undefined} />
 
         <section className="world-sky" aria-label="Today's lanterns">
@@ -470,6 +575,7 @@ function GoalsOverviewDashboard({ onExit, onOpenWorld, onOpenLighthouse }: Goals
               onComplete={(view) => void handleComplete(view)}
               onOpen={openLog}
               onAdd={openCreate}
+              firstLightId={firstLightToday}
             />
           )}
         </section>
@@ -492,9 +598,46 @@ function GoalsOverviewDashboard({ onExit, onOpenWorld, onOpenLighthouse }: Goals
           onOpenChest={openChestReveal}
           onOpenLetter={openLetter}
           onOpenCorner={openCorner}
+          onOpenFireside={(origin) => {
+            speak('pip')
+            setFireside({ origin })
+          }}
+          meadow={
+            <>
+              {festival && <FestivalGround festival={festival} year={Number(today.slice(0, 4))} />}
+              {visitor?.place === 'meadow' && (
+                <CampVisitor
+                  visitor={visitor}
+                  today={today}
+                  isNew={!greeted.has(visitor.id)}
+                  night={phase === 'night'}
+                  onGreet={greet}
+                  onOpenGuestbook={(origin) => setGuestbook({ origin })}
+                />
+              )}
+            </>
+          }
           yard={{ decorAt: camp?.decorAt ?? {}, arranging, saving: savingYard, onDone: (spots) => void saveYard(spots), onCancel: () => setArranging(false) }}
         />
       </div>
+
+      <FiresideBook
+        open={fireside != null}
+        origin={fireside?.origin ?? null}
+        goals={goals}
+        today={today}
+        weekStart={weekStart}
+        buddyName={buddyName}
+        onClose={() => setFireside(null)}
+      />
+
+      <Guestbook
+        open={guestbook != null}
+        origin={guestbook?.origin ?? null}
+        grownWeeks={grownWeeks}
+        todayVisitor={visitor?.id ?? null}
+        onClose={() => setGuestbook(null)}
+      />
 
       <JournalBook
         page={journal?.page ?? null}

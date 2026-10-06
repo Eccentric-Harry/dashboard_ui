@@ -11,6 +11,7 @@ export const APP_PATHS = [
   '/calendar',
   '/prompts',
   '/tasks',
+  '/shopping',
   '/people',
   '/profile',
   '/mind',

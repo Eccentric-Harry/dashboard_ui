@@ -2901,3 +2901,106 @@ li:hover > .fin-goal-x,
     padding-top: 14px;
   }
 }
+
+/* ── From your wishlist (/shopping) ─────────────────────────────────────────
+   A quiet foot under the goals: priced wishes that aren't goals yet, one tap from becoming one. */
+.fin-wish-strip {
+  margin-top: 4px;
+  padding: 10px 2px 2px;
+  border-top: 1px solid var(--fin-hairline);
+}
+
+.fin-wish-strip + .fin-goal-nudge {
+  margin-top: 10px;
+}
+
+.fin-wish-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.finance-dashboard .fin-wish-head span {
+  color: var(--fin-ink-soft);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.finance-dashboard .fin-wish-head button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--fin-ink-soft);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.finance-dashboard .fin-wish-head button:hover {
+  color: var(--fin-ink);
+}
+
+.fin-wish-list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fin-wish-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+}
+
+.fin-wish-thumb {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(16, 19, 18, 0.06);
+  color: #8a9590;
+}
+
+.fin-wish-thumb img {
+  width: 100%;
+  height: 100%;
+  padding: 3px;
+  box-sizing: border-box;
+  object-fit: contain;
+}
+
+.fin-wish-main {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.finance-dashboard .fin-wish-main b {
+  overflow: hidden;
+  color: var(--fin-ink);
+  font-size: 12.5px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.finance-dashboard .fin-wish-main small {
+  color: var(--fin-ink-soft);
+  font-size: 11px;
+  font-weight: 600;
+}

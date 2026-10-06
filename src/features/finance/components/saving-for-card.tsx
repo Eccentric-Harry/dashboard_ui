@@ -8,13 +8,14 @@
 // overspend costs the lead goal, or asking for the take-home that makes the plan honest.
 
 import { useState, type CSSProperties } from 'react'
-import { Check, ChevronDown, PiggyBank, Plus, ShoppingBag } from 'lucide-react'
+import { ArrowRight, Check, ChevronDown, PiggyBank, Plus, ShoppingBag } from 'lucide-react'
 import { inr } from '@/lib/insights/engine'
 import { spanWords, type GoalColor, type GoalPlan, type LeftoverOffer } from '@/lib/finance-goals'
 import { cn } from '@/lib/utils'
 import { byAttention, compactInr, statusLine } from '../goal-copy'
 import { goalIcon } from '../goal-icons'
 import { GoalJar } from './goal-jar'
+import type { WishlistItem } from '@/types/wishlist'
 
 export type GoalNudge =
   | { kind: 'leftover'; offer: LeftoverOffer; plan: GoalPlan }
@@ -33,6 +34,12 @@ interface SavingForCardProps {
   onSetAside: (plan: GoalPlan, amount?: number, note?: string) => void
   onBuy: (plan: GoalPlan) => void
   onAddIncome: () => void
+  /** A couple of priced wishes from /shopping that aren't goals yet. */
+  wishes?: WishlistItem[]
+  /** Every open wish, for "See all". */
+  wishCount?: number
+  onSaveForWish?: (wish: WishlistItem) => void
+  onOpenWishlist?: () => void
   stagger?: number
 }
 
@@ -49,6 +56,10 @@ function SavingForCard({
   onSetAside,
   onBuy,
   onAddIncome,
+  wishes = [],
+  wishCount = 0,
+  onSaveForWish,
+  onOpenWishlist,
   stagger = 0,
 }: SavingForCardProps) {
   const [expanded, setExpanded] = useState(false)
@@ -156,8 +167,59 @@ function SavingForCard({
         </>
       )}
 
+      {!loading && wishCount > 0 && onOpenWishlist && (
+        <div className="fin-wish-strip">
+          <div className="fin-wish-head">
+            <span>From your wishlist</span>
+            <button type="button" onClick={onOpenWishlist}>
+              {wishCount === 1 ? 'Open it' : `See all ${wishCount}`} <ArrowRight size={11} strokeWidth={2.6} />
+            </button>
+          </div>
+          {wishes.length > 0 && (
+            <ul className="fin-wish-list">
+              {wishes.map((wish) => (
+                <li key={wish.id} className="fin-wish-row">
+                  <WishThumb wish={wish} />
+                  <span className="fin-wish-main">
+                    <b>{wish.name}</b>
+                    <small>
+                      {inr(wish.price ?? 0)}
+                      {wish.store ? ` · ${wish.store}` : ''}
+                    </small>
+                  </span>
+                  {onSaveForWish && (
+                    <button
+                      type="button"
+                      className="fin-goal-action"
+                      onClick={() => onSaveForWish(wish)}
+                      title={`Start a goal for ${wish.name}`}
+                    >
+                      <PiggyBank size={12} strokeWidth={2.6} /> Save up
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
       {!loading && nudge && <GoalNudgeLine nudge={nudge} onSetAside={onSetAside} onAddIncome={onAddIncome} />}
     </section>
+  )
+}
+
+/** A wish's photo, linked from the store (never stored) — or a bag when there is none or it won't load. */
+function WishThumb({ wish }: { wish: WishlistItem }) {
+  const [failed, setFailed] = useState(false)
+  return (
+    <span className="fin-wish-thumb" aria-hidden="true">
+      {wish.imageUrl && !failed ? (
+        <img src={wish.imageUrl} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} />
+      ) : (
+        <ShoppingBag size={15} strokeWidth={2.2} />
+      )}
+    </span>
   )
 }
 

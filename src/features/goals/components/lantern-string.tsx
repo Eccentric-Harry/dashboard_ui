@@ -12,6 +12,8 @@ type LanternStringProps = {
   onComplete: (view: GoalProgressView) => void
   onOpen: (view: GoalProgressView, from: HTMLElement | null) => void
   onAdd: (preset?: GoalPayload, from?: HTMLElement | null) => void
+  /** The lantern Hoot hung today's first-light star on, if any. */
+  firstLightId?: string | null
 }
 
 /** Small, kind first goals for an empty camp — each opens the goal form pre-filled. */
@@ -37,7 +39,7 @@ const dropAt = (i: number, n: number, sag: number) => {
  * string scrolls sideways with the next lantern peeking in. The string's sag and each lantern's drop come from the same curve, so they
  * always hang where the cord actually is. An empty hook at the end hangs a new lantern.
  */
-function LanternString({ loading, goals, pending, onComplete, onOpen, onAdd }: LanternStringProps) {
+function LanternString({ loading, goals, pending, onComplete, onOpen, onAdd, firstLightId }: LanternStringProps) {
   const narrow = useMediaQuery('(max-width: 760px)')
   // One string everywhere; on a phone it scrolls sideways (snapping lantern to lantern)
   // instead of wrapping into rows, so the sky stays one line and the next lantern peeks in.
@@ -72,6 +74,7 @@ function LanternString({ loading, goals, pending, onComplete, onOpen, onAdd }: L
                   index={r * perRow + i}
                   onComplete={onComplete}
                   onOpen={onOpen}
+                  firstLight={slot.view.goal.id === firstLightId}
                 />
               )
             }

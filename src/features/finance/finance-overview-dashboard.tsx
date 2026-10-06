@@ -66,6 +66,9 @@ import {
   type GoalPlan,
 } from '@/lib/finance-goals'
 import { celebrationActions } from '@/store/celebration-store'
+import { useWishlistStore, wishlistActions } from '@/store/wishlist-store'
+import { wishlistService } from '@/services/wishlist-service'
+import type { WishlistItem } from '@/types/wishlist'
 
 import './finance-overview.css'
 // Redesign layer — must load after the base sheet so its refinements win.
@@ -186,6 +189,7 @@ function FinanceOverviewDashboard({ searchParams, onNavigate }: FinanceOverviewD
     void financeActions.loadAll()
     void financeActions.loadCommitments()
     void financeActions.loadGoals()
+    void wishlistActions.loadWishes()
   }, [financeActions])
 
   // ── One pass over the ledger feeds every card ─────────────────────────────
@@ -537,6 +541,25 @@ function FinanceOverviewDashboard({ searchParams, onNavigate }: FinanceOverviewD
 
   const reloadGoals = () => void financeActions.loadGoalsAndLedger()
 
+  // The wishlist (/shopping) feeds "Saving for": priced wishes that aren't goals yet, needs
+  // first, then the newest — one tap turns one into a goal with its photo.
+  const wishes = useWishlistStore.use.wishes().data
+  const openWishes = wishes.filter((w) => w.status === 'WANTED')
+  const wishPicks = openWishes
+    .filter((w) => !w.savingsGoalId && w.price != null && w.price > 0)
+    .sort((a, b) => Number(b.priority === 'NEED') - Number(a.priority === 'NEED') || (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))
+    .slice(0, 2)
+  const saveForWish = async (wish: WishlistItem) => {
+    const res = await wishlistService.saveForWish(wish.id)
+    if (res.error || !res.data) {
+      toast.error(getErrorMessage(res.error, 'Could not start saving for it'))
+      return
+    }
+    wishlistActions.applyWish(res.data)
+    await financeActions.loadGoals()
+    toast.success(`Saving for ${wish.name}`)
+  }
+
   /** After money moved: refresh, and mark a milestone crossed with the app's celebration. */
   const afterGoalMoney = (updated: SavingsGoal, mode: GoalMoneyMode) => {
     const before = planById.get(updated.id)
@@ -755,6 +778,10 @@ function FinanceOverviewDashboard({ searchParams, onNavigate }: FinanceOverviewD
             }
             onBuy={(plan: GoalPlan) => setMoneyModal({ mode: 'buy', goalId: plan.goal.id })}
             onAddIncome={() => setIncomeOpen(true)}
+            wishes={wishPicks}
+            wishCount={openWishes.length}
+            onSaveForWish={(wish) => void saveForWish(wish)}
+            onOpenWishlist={() => onNavigate?.('/shopping', '?tab=wishlist')}
             stagger={4}
           />
         </div>

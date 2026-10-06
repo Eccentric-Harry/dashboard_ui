@@ -29,7 +29,7 @@
       var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
       var path = (standalone && localStorage.getItem('pwa_last_path')) || location.pathname;
       if (path === '/') path = '/home';
-      if (localStorage.getItem('themePreference') === 'dark' && ['/home', '/nutrition', '/finance', '/learnings', '/tasks', '/workouts', '/calendar', '/calender', '/prompts', '/people', '/profile', '/mind', '/goals'].indexOf(path) !== -1) {
+      if (localStorage.getItem('themePreference') === 'dark' && ['/home', '/nutrition', '/finance', '/learnings', '/tasks', '/workouts', '/calendar', '/calender', '/prompts', '/people', '/profile', '/mind', '/goals', '/shopping'].indexOf(path) !== -1) {
         root.dataset.theme = 'dark';
         themeMeta.setAttribute('content', '#0c0d0f');
       }

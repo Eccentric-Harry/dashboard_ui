@@ -128,6 +128,19 @@ const stampFor = (day: string, source: Date = new Date()): string => {
   return new Date(y, m - 1, d, source.getHours(), source.getMinutes()).toISOString();
 };
 
+/**
+ * Gives a guest goal its first photo — the wishlist's "Save up for it" in guest mode, where the
+ * showcase can't be fetched from the web. The photo is the wish's own image URL, never stored bytes.
+ */
+export function attachGuestGoalPhoto(goalId: string, url: string): void {
+  const goal = goals.find((g) => g.id === goalId);
+  if (!goal || goal.showcase?.photos.length) return;
+  goal.showcase = {
+    sourceUrl: null, sourceName: null, title: null, highlights: [], reasons: goal.showcase?.reasons ?? [], fetchedAt: null,
+    photos: [{ url, width: null, height: null, tone: null }],
+  };
+}
+
 export function resolveGuestFinance(url: URL, method: string, rawBody?: string): Response | null {
   const path = url.pathname;
   const body = () => JSON.parse(rawBody || '{}');

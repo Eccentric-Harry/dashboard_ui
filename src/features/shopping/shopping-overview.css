@@ -1,0 +1,1401 @@
+/* /shopping — the shell (header, tabs), the Groceries tab and the shared modal grammar.
+   The Wishlist tab is in wishlist/wishlist.css. Hardcoded light colours on purpose: the dark
+   and solid themes are derived from them at build time (config/postcss-*.ts). Every selector
+   is prefixed so nothing leaks into other routes. */
+
+.shopping-dashboard {
+  position: absolute;
+  inset: 20px 58px 12px 206px;
+  z-index: 2;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 18px 12px 28px 0;
+  color: #101312;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .shopping-dashboard {
+    inset: 20px 28px 12px 120px;
+  }
+}
+
+/* ─── Header + tabs ─── */
+
+.shopping-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.shopping-title h1 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  color: #101312;
+}
+
+.shopping-title p {
+  margin: 5px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: #526057;
+}
+
+.shopping-header-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.shopping-tabs {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(16, 19, 18, 0.05);
+}
+
+.shopping-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: #526057;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.shopping-tab:hover {
+  color: #101312;
+}
+
+.shopping-tab.is-active {
+  background: rgba(255, 255, 255, 0.95);
+  color: #101312;
+  box-shadow: 0 1px 2px rgba(16, 19, 18, 0.06), 0 4px 12px rgba(16, 19, 18, 0.06);
+}
+
+.shopping-tab span {
+  min-width: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(16, 19, 18, 0.07);
+  color: #526057;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.shopping-tab.is-active span {
+  background: rgba(111, 154, 106, 0.2);
+  color: #3f6a45;
+}
+
+.shopping-ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 13px;
+  border: 1px solid rgba(16, 19, 18, 0.08);
+  background: rgba(255, 255, 255, 0.7);
+  color: #101312;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.shopping-ghost-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.shopping-ghost-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* ─── Shared card + counts ─── */
+
+.shopping-card {
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.05),
+    inset 0 1px 1px rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+}
+
+.shopping-count {
+  min-width: 20px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(16, 19, 18, 0.06);
+  color: #526057;
+  font-size: 11px;
+  font-weight: 650;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.shopping-chevron {
+  color: #526057;
+  transform: rotate(-90deg);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.shopping-chevron.is-open {
+  transform: rotate(0);
+}
+
+/* ─── Groceries layout ─── */
+
+.shopping-groceries {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 288px;
+  gap: 16px;
+  align-items: start;
+}
+
+.shopping-main {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.shopping-side {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* ─── Add bar ─── */
+
+/* Positioned and lifted so its popovers (autocomplete) always paint above the cards below,
+   whose backdrop-filter makes each one its own stacking context. */
+.shopping-add {
+  position: relative;
+  z-index: 20;
+}
+
+.shopping-add-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 52px;
+  padding: 0 7px 0 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.05),
+    inset 0 1px 1px rgba(255, 255, 255, 0.85);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.shopping-add-bar:focus-within {
+  border-color: rgba(111, 154, 106, 0.45);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.07),
+    0 0 0 4px rgba(111, 154, 106, 0.14);
+}
+
+.shopping-add-glyph {
+  flex-shrink: 0;
+  color: #6f9a6a;
+}
+
+.shopping-add-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #101312;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.shopping-add-input::placeholder {
+  color: rgba(16, 19, 18, 0.38);
+}
+
+.shopping-add-submit {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 12px;
+  background: rgba(111, 154, 106, 0.18);
+  color: #3f6a45;
+  cursor: pointer;
+  transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.shopping-add-submit:hover:not(:disabled) {
+  background: rgba(111, 154, 106, 0.3);
+}
+
+.shopping-add-submit:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* Autocomplete */
+
+.shopping-complete {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  margin: 0;
+  padding: 5px;
+  list-style: none;
+  border-radius: 16px;
+  border: 1px solid rgba(16, 19, 18, 0.06);
+  background: #ffffff;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.14);
+}
+
+.shopping-complete-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 11px;
+  background: transparent;
+  color: #101312;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.shopping-complete-option.is-active {
+  background: rgba(16, 19, 18, 0.05);
+}
+
+.shopping-complete-icon {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: 8px;
+}
+
+.shopping-complete-name {
+  flex: 1;
+  font-size: 13.5px;
+  font-weight: 550;
+}
+
+.shopping-complete-meta {
+  font-size: 11px;
+  color: #526057;
+}
+
+/* Preview chips — each one's aisle is a native select laid over its label. */
+
+.shopping-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 4px 0;
+}
+
+.shopping-preview-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px 4px 8px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 11.5px;
+  line-height: 1.2;
+  animation: shopping-pop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.shopping-preview-chip b {
+  font-weight: 650;
+}
+
+.shopping-preview-chip i {
+  font-style: normal;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.shopping-preview-aisle {
+  position: relative;
+  display: inline-flex;
+  cursor: pointer;
+}
+
+.shopping-preview-aisle em {
+  font-style: normal;
+  opacity: 0.75;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+
+.shopping-preview-aisle em::before {
+  content: '→ ';
+  display: inline-block;
+  margin-right: 2px;
+}
+
+.shopping-preview-aisle select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.shopping-preview-more,
+.shopping-preview-hint {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #526057;
+}
+
+.shopping-preview-hint {
+  margin-left: auto;
+  font-weight: 500;
+  color: rgba(16, 19, 18, 0.4);
+}
+
+.shopping-link-offer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 9px 10px 9px 14px;
+  border-radius: 14px;
+  background: rgba(165, 138, 192, 0.14);
+  color: #5d4a73;
+  font-size: 12.5px;
+  font-weight: 550;
+}
+
+.shopping-link-offer span {
+  flex: 1;
+}
+
+.shopping-link-offer button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.85);
+  color: #3e2f52;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+/* ─── The list ─── */
+
+.shopping-list-card {
+  padding: 6px 6px 8px;
+}
+
+.shopping-section {
+  padding-top: 8px;
+}
+
+.shopping-section + .shopping-section {
+  margin-top: 4px;
+  border-top: 1px solid rgba(16, 19, 18, 0.06);
+}
+
+.shopping-section-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 2px 12px 4px;
+}
+
+.shopping-section-head h2 {
+  flex: 1;
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 650;
+  letter-spacing: -0.005em;
+  color: #101312;
+}
+
+.shopping-section-icon {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: 8px;
+}
+
+.shopping-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.shopping-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  animation: shopping-row-in 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.shopping-row + .shopping-row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 46px;
+  right: 12px;
+  border-top: 1px solid rgba(16, 19, 18, 0.05);
+}
+
+.shopping-row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.shopping-row-main:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.shopping-row-main:focus-visible,
+.shopping-icon-btn:focus-visible,
+.shopping-tab:focus-visible {
+  outline: 2px solid rgba(111, 154, 106, 0.7);
+  outline-offset: -2px;
+}
+
+.shopping-check {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.8px solid rgba(16, 19, 18, 0.24);
+  color: #ffffff;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.shopping-check svg {
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 0.18s ease, transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.shopping-row-main:hover .shopping-check {
+  border-color: #6f9a6a;
+}
+
+.shopping-row.is-done .shopping-check {
+  background: #6f9a6a;
+  border-color: #6f9a6a;
+}
+
+.shopping-row.is-done .shopping-check svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.shopping-row-text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.shopping-row-name {
+  font-size: 14px;
+  font-weight: 550;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.shopping-row.is-done .shopping-row-name {
+  color: rgba(16, 19, 18, 0.45);
+  text-decoration: line-through;
+  text-decoration-color: rgba(16, 19, 18, 0.3);
+}
+
+.shopping-row.is-leaving {
+  opacity: 0.55;
+  transition: opacity 0.24s ease;
+}
+
+.shopping-row-note {
+  font-size: 11.5px;
+  color: #526057;
+  overflow-wrap: anywhere;
+}
+
+.shopping-qty {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(16, 19, 18, 0.06);
+  color: #526057;
+  font-size: 11px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.shopping-row-aisle {
+  flex-shrink: 0;
+  color: rgba(16, 19, 18, 0.35);
+}
+
+.shopping-row-actions {
+  display: flex;
+  gap: 2px;
+  padding-right: 6px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.shopping-row:hover .shopping-row-actions,
+.shopping-row:focus-within .shopping-row-actions {
+  opacity: 1;
+}
+
+.shopping-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: #526057;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.shopping-icon-btn:hover {
+  background: rgba(16, 19, 18, 0.07);
+  color: #101312;
+}
+
+.shopping-icon-btn.is-danger:hover {
+  background: rgba(241, 105, 119, 0.14);
+  color: #c4485a;
+}
+
+/* ─── Basket ─── */
+
+.shopping-basket {
+  padding: 14px 10px 12px;
+}
+
+.shopping-basket-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 4px 6px;
+}
+
+.shopping-ring {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+}
+
+.shopping-ring svg {
+  display: block;
+  transform: rotate(-90deg);
+}
+
+.shopping-ring circle {
+  fill: none;
+  stroke-width: 4.5;
+}
+
+.shopping-ring-track {
+  stroke: rgba(16, 19, 18, 0.08);
+}
+
+.shopping-ring-fill {
+  stroke: #6f9a6a;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.shopping-ring-glyph {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  color: #4f7a55;
+}
+
+.shopping-basket-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.shopping-basket-title h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.shopping-basket-title p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #526057;
+}
+
+.shopping-basket-rows {
+  max-height: 240px;
+  overflow-y: auto;
+  margin: 2px 0 8px;
+  scrollbar-width: thin;
+}
+
+.shopping-basket-rows .shopping-row-main {
+  padding: 7px 8px;
+}
+
+.shopping-basket-rows .shopping-row-name {
+  font-size: 13px;
+}
+
+.shopping-done-btn {
+  width: 100%;
+  height: 38px;
+  margin-top: 4px;
+  border: 1px solid rgba(111, 154, 106, 0.28);
+  border-radius: 13px;
+  background: rgba(111, 154, 106, 0.16);
+  color: #2f5a36;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background 0.18s ease, opacity 0.18s ease;
+}
+
+.shopping-done-btn:hover:not(:disabled) {
+  background: rgba(111, 154, 106, 0.26);
+}
+
+.shopping-done-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ─── Buy again ─── */
+
+.shopping-again {
+  padding: 14px 12px;
+}
+
+.shopping-side-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 2px 10px;
+  color: #526057;
+}
+
+.shopping-side-head h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 650;
+  color: #101312;
+}
+
+.shopping-side-empty {
+  margin: 0;
+  padding: 0 2px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #526057;
+}
+
+.shopping-again-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shopping-again-item {
+  position: relative;
+}
+
+.shopping-again-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 9px 0 4px;
+  border: 1px solid rgba(16, 19, 18, 0.07);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.75);
+  color: #101312;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.shopping-again-add:hover {
+  background: #ffffff;
+  transform: translateY(-1px);
+}
+
+.shopping-again-icon {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+}
+
+.shopping-again-plus {
+  color: #6f9a6a;
+}
+
+.shopping-again-forget {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border: none;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #526057;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.shopping-again-item:hover .shopping-again-forget,
+.shopping-again-forget:focus-visible {
+  opacity: 1;
+}
+
+/* ─── Empty / skeleton ─── */
+
+.shopping-list-card.is-empty {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 36px 24px;
+  text-align: center;
+}
+
+.shopping-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  background: rgba(111, 154, 106, 0.16);
+  color: #4f7a55;
+}
+
+.shopping-empty-title {
+  margin: 6px 0 0;
+  font-size: 15px;
+  font-weight: 650;
+  color: #101312;
+}
+
+.shopping-empty-text {
+  margin: 0;
+  max-width: 360px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #526057;
+}
+
+.shopping-skel-line,
+.shopping-skel-block {
+  border-radius: 7px;
+  background: linear-gradient(90deg, rgba(16, 19, 18, 0.05), rgba(16, 19, 18, 0.09), rgba(16, 19, 18, 0.05));
+  background-size: 200% 100%;
+  animation: shopping-shimmer 1.4s ease-in-out infinite;
+}
+
+.shopping-skel-line {
+  height: 13px;
+  margin: 12px 14px;
+}
+
+.shopping-skel-line.is-head {
+  width: 34%;
+}
+
+.shopping-skel-line.is-short {
+  width: 45%;
+}
+
+/* ─── Undo strip ─── */
+
+.shopping-undo {
+  position: sticky;
+  bottom: 8px;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 12px auto 0;
+  padding: 8px 8px 8px 18px;
+  border-radius: 22px;
+  background: rgba(16, 19, 18, 0.92);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 550;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.22);
+  animation: shopping-pop 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  grid-column: 1 / -1;
+}
+
+.shopping-undo button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.shopping-undo button:hover {
+  background: rgba(255, 255, 255, 0.26);
+}
+
+/* ─── Modals (portalled to <body>, so nothing here may depend on .shopping-dashboard) ─── */
+
+.shopping-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9990;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(16, 19, 18, 0.28);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: shopping-fade 0.18s ease;
+}
+
+.shopping-edit-modal {
+  position: relative;
+  width: min(520px, 100%);
+  max-height: 96%;
+  padding: 22px 24px 20px;
+  border-radius: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.22);
+  color: #101312;
+  animation: shopping-pop 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.shopping-checkout-modal {
+  width: min(440px, 100%);
+}
+
+.shopping-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(16, 19, 18, 0.06);
+  color: #526057;
+  cursor: pointer;
+}
+
+.shopping-modal-close:hover {
+  background: rgba(16, 19, 18, 0.12);
+}
+
+.shopping-modal-title {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.shopping-modal-sub {
+  margin: 0 40px 14px 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #526057;
+}
+
+.shopping-modal-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.shopping-modal-sub + .shopping-modal-form {
+  margin-top: 0;
+}
+
+.shopping-field {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.shopping-field > span {
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #526057;
+}
+
+.shopping-field > span small {
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: rgba(16, 19, 18, 0.45);
+}
+
+.shopping-field input,
+.shopping-field select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(16, 19, 18, 0.1);
+  background: rgba(16, 19, 18, 0.03);
+  color: #101312;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.shopping-field input:focus,
+.shopping-field select:focus {
+  border-color: rgba(16, 19, 18, 0.22);
+  box-shadow: 0 0 0 3px rgba(111, 154, 106, 0.18);
+}
+
+.shopping-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 10px;
+}
+
+.shopping-field-row.is-even {
+  grid-template-columns: 1fr 1fr;
+}
+
+.shopping-amount {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 4px 8px;
+  border-bottom: 1px solid rgba(16, 19, 18, 0.1);
+}
+
+.shopping-amount span {
+  font-size: 26px;
+  font-weight: 600;
+  color: #526057;
+}
+
+.shopping-amount input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #101312;
+  font: inherit;
+  font-size: 32px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.shopping-ledger-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(111, 154, 106, 0.1);
+  color: #33533a;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.shopping-ledger-line svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.shopping-ledger-line.is-muted {
+  background: rgba(16, 19, 18, 0.04);
+  color: #526057;
+}
+
+.shopping-chip-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.shopping-cat-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  height: 32px;
+  padding: 0 9px;
+  border-radius: 10px;
+  border: 1px solid var(--chip-line, transparent);
+  background: var(--chip-surface, color-mix(in srgb, var(--chip-hue) 10%, transparent));
+  color: var(--chip-ink, color-mix(in srgb, var(--chip-hue) 55%, #101312));
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.shopping-cat-chip svg {
+  flex-shrink: 0;
+}
+
+.shopping-cat-chip:hover {
+  background: var(--chip-surface, color-mix(in srgb, var(--chip-hue) 18%, transparent));
+}
+
+.shopping-cat-chip.is-active {
+  border-color: var(--chip-hue);
+  background: var(--chip-surface, color-mix(in srgb, var(--chip-hue) 22%, transparent));
+}
+
+.shopping-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.shopping-modal-actions.is-end {
+  justify-content: flex-end;
+}
+
+.shopping-modal-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 13px;
+  background: rgba(241, 105, 119, 0.12);
+  color: #c4485a;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.shopping-modal-delete:hover {
+  background: rgba(241, 105, 119, 0.2);
+}
+
+.shopping-modal-save {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 108px;
+  height: 38px;
+  padding: 0 20px;
+  border: 1px solid rgba(111, 154, 106, 0.3);
+  border-radius: 13px;
+  background: rgba(111, 154, 106, 0.2);
+  color: #2f5a36;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.shopping-modal-save:hover:not(:disabled) {
+  background: rgba(111, 154, 106, 0.32);
+}
+
+.shopping-modal-save:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.shopping-edit-modal .spinner {
+  animation: shopping-spin 0.8s linear infinite;
+}
+
+/* ─── Motion ─── */
+
+@keyframes shopping-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes shopping-pop {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.97);
+  }
+}
+
+@keyframes shopping-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes shopping-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes shopping-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shopping-row,
+  .shopping-preview-chip,
+  .shopping-undo,
+  .shopping-edit-modal,
+  .shopping-modal-backdrop,
+  .shopping-skel-line,
+  .shopping-skel-block {
+    animation: none;
+  }
+}
+
+@media (hover: none) {
+  .shopping-row-actions {
+    opacity: 0.7;
+  }
+
+  .shopping-again-forget {
+    opacity: 0.8;
+  }
+}
+
+@media (max-width: 960px) {
+  .shopping-groceries {
+    grid-template-columns: minmax(0, 1fr) 248px;
+  }
+}
+
+/* ─── Phones ─── */
+
+@media (max-width: 768px) {
+  .shopping-dashboard {
+    position: static;
+    padding: 20px 16px 120px;
+    overflow: visible;
+  }
+
+  /* The avatar chip is pinned top-right by TopChip; the title row keeps clear of it. */
+  .shopping-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .shopping-title {
+    padding-right: 56px;
+  }
+
+  .shopping-title h1 {
+    font-size: 26px;
+  }
+
+  .shopping-header-tools {
+    flex-direction: row-reverse;
+    justify-content: space-between;
+  }
+
+  .shopping-tabs {
+    flex: 1;
+  }
+
+  .shopping-tab {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .shopping-copy-label {
+    display: none;
+  }
+
+  .shopping-ghost-btn.is-icon {
+    width: 40px;
+    padding: 0;
+  }
+
+  .shopping-groceries {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .shopping-side {
+    position: static;
+  }
+
+  .shopping-add-input {
+    font-size: 16px; /* anything smaller makes iOS zoom the page on focus */
+  }
+
+  .shopping-preview-hint {
+    display: none;
+  }
+
+  .shopping-undo {
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 92px);
+    width: auto;
+    justify-content: space-between;
+  }
+
+  .shopping-modal-backdrop {
+    align-items: end;
+    padding: 0;
+  }
+
+  .shopping-edit-modal {
+    width: 100%;
+    border-radius: 26px 26px 0 0;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .shopping-field input,
+  .shopping-field select {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .shopping-chip-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Money fields: no browser spinners — nobody steps a price by ₹1. */
+.shopping-amount input::-webkit-outer-spin-button,
+.shopping-amount input::-webkit-inner-spin-button,
+.wish-price-input input::-webkit-outer-spin-button,
+.wish-price-input input::-webkit-inner-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+.shopping-amount input,
+.wish-price-input input {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}

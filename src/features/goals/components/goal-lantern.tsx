@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { DoorOpen } from 'lucide-react'
+import { DoorOpen, Sunrise } from 'lucide-react'
 import type { GoalProgressView } from '@/types/goals'
 import { cn } from '@/lib/utils'
 import { ruleLabel, weekdayShort } from '../goal-format'
@@ -20,6 +20,8 @@ type GoalLanternProps = {
   onComplete: (view: GoalProgressView) => void
   /** Opens the lantern up close; `from` is where it flies out of. */
   onOpen: (view: GoalProgressView, from: HTMLElement | null) => void
+  /** Hoot's first-light star: the lantern you chose to light first today. */
+  firstLight?: boolean
 }
 
 /** Names longer than this set a size smaller, so two lines still fit the tag. */
@@ -32,7 +34,7 @@ const LONG_NAME = 13
  * come. The paper tag carries the whole name (two lines if it needs them), the number
  * and the week's days.
  */
-function GoalLantern({ view, busy, drop, index, onComplete, onOpen }: GoalLanternProps) {
+function GoalLantern({ view, busy, drop, index, onComplete, onOpen, firstLight }: GoalLanternProps) {
   const ref = useRef<HTMLDivElement | null>(null)
   const { goal, today, week } = view
   const holdable = goal.measure === 'CHECK' && !today.hit && !busy
@@ -85,6 +87,12 @@ function GoalLantern({ view, busy, drop, index, onComplete, onOpen }: GoalLanter
       <LanternArt icon={goal.icon} level={level} lit={lit} busy={busy} />
 
       <span className="lantern-tag" title={goal.title}>
+        {firstLight && (
+          <span className={cn('lantern-first', lit && 'is-lit')} title={lit ? 'First light — lit, as planned' : 'Hoot’s star: your first light today'}>
+            <Sunrise size={11} strokeWidth={2.8} aria-hidden="true" />
+            <span className="sr-only">{lit ? 'First light, lit.' : 'Your first light today.'}</span>
+          </span>
+        )}
         {goal.world && (
           <span className="lantern-door" title="Has a world of its own" aria-hidden="true">
             <DoorOpen size={11} strokeWidth={2.8} />

@@ -114,6 +114,31 @@ function Hat({ id }: { id: string }) {
           <circle cx="82" cy="15" r="2.4" fill="#fff1c2" />
         </g>
       )
+    case 'night-cap':
+      return (
+        <g className="pip-wear pip-wear--hat">
+          <path d="M28 44 C 30 18, 70 8, 98 30 C 104 36, 106 46, 102 54 C 94 40, 80 32, 70 34 C 84 38, 92 42, 92 44 Z" fill="#5b5fd6" />
+          <path d="M44 26 C 48 32, 50 38, 50 42 M62 20 C 66 28, 68 36, 68 42 M80 22 C 84 28, 86 34, 86 40" stroke="#8e92ff" strokeWidth="3.2" fill="none" strokeLinecap="round" />
+          <rect x="25" y="39" width="70" height="11" rx="5.5" fill="#fff3e0" />
+          <path d="M31 44.5 h58" stroke="#e8d6bd" strokeWidth="2" strokeDasharray="2 4" strokeLinecap="round" />
+          <path transform="translate(102 56)" d="M0 -8 L2.4 -2.6 8 -2.4 3.6 1.4 5 7 0 4 -5 7 -3.6 1.4 -8 -2.4 -2.4 -2.6 Z" fill="#ffcb3d" stroke="#dfa412" strokeWidth="1.6" strokeLinejoin="round" />
+        </g>
+      )
+    case 'keeper-cap':
+      return (
+        <g className="pip-wear pip-wear--hat">
+          <path d="M30 42 C 28 22, 92 22, 90 42 Z" fill="#2f3f78" />
+          <path d="M30 42 C 44 36, 76 36, 90 42 L 90 46 C 76 40, 44 40, 30 46 Z" fill="#1f2a55" />
+          <path d="M28 46 C 40 56, 82 56, 94 46 C 82 50, 40 50, 28 46 Z" fill="#141b3a" />
+          <path d="M34 39 C 48 35, 72 35, 86 39" stroke="#ffcb3d" strokeWidth="2" fill="none" strokeLinecap="round" />
+          <g transform="translate(60 31)">
+            <rect x="-4" y="-7" width="8" height="12" rx="1.6" fill="#ffcb3d" />
+            <path d="M-5 -7 L0 -11 L5 -7 Z" fill="#ff8fa6" />
+            <rect x="-2" y="-4" width="4" height="3" rx="1" fill="#fff6d6" />
+            <path d="M5 -3 L 14 -6 L 14 0 Z" fill="#fff1a8" opacity="0.8" />
+          </g>
+        </g>
+      )
     default:
       return null
   }
@@ -183,6 +208,29 @@ function Neck({ id }: { id: string }) {
           <path d="M60 115.5 L61.8 119.4 66 119.8 62.8 122.6 63.8 126.8 60 124.6 56.2 126.8 57.2 122.6 54 119.8 58.2 119.4 Z" fill="#fff3c4" />
         </g>
       )
+    case 'star-scarf':
+      return (
+        <g className="pip-wear pip-wear--neck">
+          <path d="M80 104 L 84 127 L 95 124 L 89 102 Z" fill="#3f45b8" />
+          <path d="M22 97 C 40 107, 80 107, 98 97 L 99 107 C 80 117, 40 117, 21 107 Z" fill="#5b5fd6" />
+          {(
+            [
+              [34, 106, 3.2],
+              [52, 110, 2.4],
+              [68, 110, 3.4],
+              [86, 104, 2.4],
+              [89, 116, 2.6],
+            ] as const
+          ).map(([x, y, r]) => (
+            <path
+              key={`${x}-${y}`}
+              transform={`translate(${x} ${y}) scale(${r / 8})`}
+              d="M0 -8 L2.4 -2.6 8 -2.4 3.6 1.4 5 7 0 4 -5 7 -3.6 1.4 -8 -2.4 -2.4 -2.6 Z"
+              fill="#ffcb3d"
+            />
+          ))}
+        </g>
+      )
     default:
       return null
   }
@@ -235,6 +283,15 @@ function Face({ id }: { id: string }) {
           <path d="M56 68 Q 60 65 64 68" fill="none" stroke="#8a1c3d" strokeWidth="2.6" strokeLinecap="round" />
           <path d="M33 66 L 24 63 M87 66 L 96 63" stroke="#8a1c3d" strokeWidth="2.4" strokeLinecap="round" />
           <path d="M39 64 q2 -3 5 -3 M69 64 q2 -3 5 -3" stroke="#ffffff" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.85" />
+        </g>
+      )
+    case 'moon-monocle':
+      return (
+        <g className="pip-wear pip-wear--face">
+          <circle cx="75" cy="72" r="12" fill="rgba(255,240,190,0.28)" stroke="#dfa412" strokeWidth="3" />
+          <path d="M70 64 a9 9 0 1 0 12 12 a7 7 0 1 1 -12 -12 Z" fill="#ffcb3d" opacity="0.55" />
+          <path d="M84 80 C 90 90, 88 100, 82 108" fill="none" stroke="#dfa412" strokeWidth="1.8" strokeLinecap="round" strokeDasharray="1 3" />
+          <path d="M68 66 q3 -3 7 -3" stroke="#ffffff" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.85" />
         </g>
       )
     default:

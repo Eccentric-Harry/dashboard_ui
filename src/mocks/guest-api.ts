@@ -28,6 +28,8 @@ import {
 import { resolveGuestFinance } from './guest-finance';
 import { resolveGuestGoals } from './guest-goals';
 import { resolveGuestProgram } from './guest-program';
+import { resolveGuestShopping } from './guest-shopping';
+import { resolveGuestWishlist } from './guest-wishlist';
 
 let calendarItems = [...dummyCalendarItems];
 let lendingRecords = [...dummyLendingRecords];
@@ -375,6 +377,12 @@ export function resolveGuestRequest(request: GuestRequest): GuestResponse | null
   // Goals board, goals and check-ins (the GoalProgress rules, ported).
   const goalsResponse = resolveGuestGoals(urlObj, (request.method || 'GET').toUpperCase(), request.body);
   if (goalsResponse) return goalsResponse;
+
+  // The shopping list (ShoppingListService's rules, ported).
+  const shoppingResponse = resolveGuestShopping(urlObj, (request.method || 'GET').toUpperCase(), request.body);
+  if (shoppingResponse) return shoppingResponse;
+  const wishlistResponse = resolveGuestWishlist(urlObj, (request.method || 'GET').toUpperCase(), request.body);
+  if (wishlistResponse) return wishlistResponse;
 
   // The Lighthouse's program (ProgramController's storage rules, ported).
   const programResponse = resolveGuestProgram(urlObj, (request.method || 'GET').toUpperCase(), request.body);

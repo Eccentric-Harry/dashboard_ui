@@ -7,13 +7,18 @@
 // src/__tests__/buddy-brain.test.ts holds every line to that.
 
 import type { GoalProgressView } from '@/types/goals'
+import type { CampFestival } from './camp-calendar'
 import { formatAmount, shapeOf } from './goal-format'
 
 export type PipMood = 'welcome' | 'waking' | 'content' | 'eager' | 'celebrating' | 'proud' | 'cozy'
 
 export interface PipMoment {
-  kind: 'day-done' | 'week-kept' | 'goal-done' | 'chest' | 'quest' | 'bought' | 'wish'
+  kind: 'day-done' | 'week-kept' | 'goal-done' | 'first-light' | 'chest' | 'quest' | 'bought' | 'wish' | 'festival'
   goalTitle?: string
+  /** festival: which one the camp is dressed for. */
+  festival?: CampFestival
+  /** festival (birthday): a sealed letter is waiting at the lighthouse. */
+  letterWaiting?: boolean
   streak?: number
   /** chest / quest: how many sparks came in. */
   sparks?: number
@@ -56,10 +61,14 @@ function pick<T>(options: readonly T[], seed: string): T {
   return options[Math.abs(h) % options.length]
 }
 
-/** The goal Pip suggests next: one already in motion today, else the easiest-looking one. */
-function nextUp(goals: GoalProgressView[]): GoalProgressView | undefined {
+/**
+ * The goal Pip suggests next: the one you told Hoot you'd light first, if it's still open;
+ * then one already in motion today, else the easiest-looking one.
+ */
+function nextUp(goals: GoalProgressView[], firstLightId?: string | null): GoalProgressView | undefined {
   const open = goals.filter(stillOpen)
   return (
+    (firstLightId ? open.find((g) => g.goal.id === firstLightId) : undefined) ??
     open.find((g) => g.week.pace === 'TIGHT') ??
     open.find((g) => g.today.value > 0) ??
     open.find((g) => g.goal.measure === 'CHECK') ??
@@ -67,7 +76,25 @@ function nextUp(goals: GoalProgressView[]): GoalProgressView | undefined {
   )
 }
 
-export function pipState(goals: GoalProgressView[], today: string, now: Date, moment?: PipMoment | null, name = 'Pip'): PipState {
+const FESTIVAL_LINES: Record<CampFestival, string> = {
+  diwali: 'Happy Diwali! I lined the camp with diyas — one for every lantern, and a few spare for luck.',
+  'new-year-eve': 'Last night of the year! Fen has been saving fireworks since the summer.',
+  'new-year': 'Happy new year! Same camp, fresh pages. I like this one already.',
+  birthday: 'Happy birthday! The whole camp is in on it — Fen even baked a cake. It’s mostly icing.',
+}
+
+/**
+ * `firstLightId`: the lantern you told Hoot you'd light first today (CampView.firstLight),
+ * which Pip suggests before anything else while it's still open.
+ */
+export function pipState(
+  goals: GoalProgressView[],
+  today: string,
+  now: Date,
+  moment?: PipMoment | null,
+  name = 'Pip',
+  firstLightId?: string | null,
+): PipState {
   const hour = now.getHours()
   const seed = `${today}`
 
@@ -88,6 +115,15 @@ export function pipState(goals: GoalProgressView[], today: string, now: Date, mo
   }
   if (moment?.kind === 'quest') {
     return { mood: 'eager', line: `Wren says thanks — that’s +${moment.sparks ?? 1} sparks in the jar.` }
+  }
+  if (moment?.kind === 'festival' && moment.festival) {
+    return {
+      mood: 'celebrating',
+      line:
+        moment.festival === 'birthday' && moment.letterWaiting
+          ? 'Happy birthday! The whole camp is in on it. And there’s a letter waiting for you at the lighthouse.'
+          : FESTIVAL_LINES[moment.festival],
+    }
   }
   if (moment?.kind === 'wish') {
     return { mood: 'content', line: 'Did you see that shooting star? I made a wish for you. It’s a secret.' }
@@ -126,7 +162,17 @@ export function pipState(goals: GoalProgressView[], today: string, now: Date, mo
   }
 
   const done = goals.filter((g) => g.today.hit).length
-  const next = nextUp(goals)
+  const next = nextUp(goals, firstLightId)
+  const hootsPick = next != null && next.goal.id === firstLightId
+
+  if (moment?.kind === 'first-light') {
+    return {
+      mood: 'proud',
+      line: next
+        ? `First light: ${moment.goalTitle}, just like you told Hoot. ${next.goal.title} next?`
+        : `First light: ${moment.goalTitle}, just like you told Hoot. Hoot is being very smug about it.`,
+    }
+  }
 
   if (moment?.kind === 'goal-done' && next) {
     return {
@@ -170,6 +216,13 @@ export function pipState(goals: GoalProgressView[], today: string, now: Date, mo
     return {
       mood: 'eager',
       line: `Heads up: ${tight.goal.title} needs each day left this week. Today would do it — ${smallestStep(tight)}.`,
+    }
+  }
+
+  if (next && hootsPick && done === 0 && hour < 12) {
+    return {
+      mood: 'waking',
+      line: `Morning! Hoot hung a star on ${next.goal.title} — your first light today. ${capitalise(smallestStep(next))}.`,
     }
   }
 

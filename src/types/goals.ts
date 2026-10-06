@@ -213,6 +213,21 @@ export interface CampView {
   season: CampSeason;
   /** Lifetime kept weeks the buddy grows from — never shrinks when a goal is archived. */
   grownWeeks: number;
+  /** Hoot's pick: the lantern to light first today or tomorrow. Null when there isn't one. */
+  firstLight?: CampFirstLight | null;
+}
+
+/** The goal to light first on a local day (GoalCamp.FirstLight). */
+export interface CampFirstLight {
+  /** YYYY-MM-DD — today or tomorrow. */
+  date: string;
+  goalId: string;
+}
+
+/** PUT /goals/camp/first-light — a null goalId clears the pick. */
+export interface CampFirstLightPayload {
+  date: string;
+  goalId: string | null;
 }
 
 export interface CampChestOpenResult {

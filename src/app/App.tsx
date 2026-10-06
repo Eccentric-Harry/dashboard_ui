@@ -14,6 +14,7 @@ import { TasksOverview } from '../features/tasks/tasks-page'
 import { PeopleOverview } from '../features/people/people-page'
 import { ProfileOverview } from '../features/profile/profile-page'
 import { MindOverview } from '../features/mind/mind-page'
+import { ShoppingOverview } from '../features/shopping/shopping-page'
 import { GoalsOverview } from '../features/goals/goals-page'
 import { getAvatarImage } from '../lib/avatar'
 import { isStandalone } from '../lib/utils'
@@ -272,6 +273,8 @@ function App() {
     content = <PromptsOverview activePath={pathname} onNavigate={navigateTo} />
   } else if (pathname === '/tasks') {
     content = <TasksOverview activePath={pathname} onNavigate={navigateTo} searchParams={searchParams} />
+  } else if (pathname === '/shopping') {
+    content = <ShoppingOverview activePath={pathname} onNavigate={navigateTo} searchParams={searchParams} />
   } else if (pathname === '/people') {
     content = <PeopleOverview activePath={pathname} onNavigate={navigateTo} />
   } else if (pathname === '/profile') {

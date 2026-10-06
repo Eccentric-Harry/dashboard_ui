@@ -2153,3 +2153,34 @@
   background: transparent;
   color: var(--dk-ink-2);
 }
+
+/* ─── /shopping wishlist: store photos are shot on white. On graphite they read as pasted-on
+   stickers, so their well stays a soft light grey and the white of the photo is multiplied
+   into it. The empty (monogram) well is left to the derived pass. ─── */
+:root[data-theme='dark'] .wish-photo:not(.is-empty) {
+  background: #e6e8e5;
+}
+
+:root[data-theme='dark'] .wish-photo:not(.is-empty) img {
+  mix-blend-mode: multiply;
+}
+
+:root[data-theme='dark'] .fin-wish-thumb:has(img) {
+  background: #e6e8e5;
+}
+
+:root[data-theme='dark'] .fin-wish-thumb img {
+  mix-blend-mode: multiply;
+}
+
+/* Chips that sit on a (light) product photo: a graphite pill, so they read on white. */
+:root[data-theme='dark'] .wish-store-chip,
+:root[data-theme='dark'] .wish-need-chip {
+  background: rgba(22, 24, 27, 0.86);
+  color: #eceef0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-theme='dark'] .wish-need-chip {
+  color: #f0b8a5;
+}

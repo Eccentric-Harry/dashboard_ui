@@ -5,6 +5,7 @@ import { instance } from './http/api-request';
 import type { SafeResult } from '../types/api';
 import type {
   CampChestOpenResult,
+  CampFirstLightPayload,
   CampLookPayload,
   CampQuestClaimResult,
   CampView,
@@ -36,6 +37,7 @@ export interface GoalsServiceInterface {
   claimQuest(questId: string, today: string): Promise<SafeResult<CampQuestClaimResult>>;
   buyItem(itemId: string, today: string): Promise<SafeResult<CampView>>;
   setLook(look: CampLookPayload, today: string): Promise<SafeResult<CampView>>;
+  setFirstLight(pick: CampFirstLightPayload, today: string): Promise<SafeResult<CampView>>;
 }
 
 export const goalsService: GoalsServiceInterface = {
@@ -59,4 +61,5 @@ export const goalsService: GoalsServiceInterface = {
     instance.safeCall<CampQuestClaimResult>(E.API_CLAIM_CAMP_QUEST, { body: { questId }, query: { today } }),
   buyItem: (itemId, today) => instance.safeCall<CampView>(E.API_BUY_CAMP_ITEM, { body: { itemId }, query: { today } }),
   setLook: (look, today) => instance.safeCall<CampView>(E.API_SET_CAMP_LOOK, { body: look, query: { today } }),
+  setFirstLight: (pick, today) => instance.safeCall<CampView>(E.API_SET_CAMP_FIRST_LIGHT, { body: pick, query: { today } }),
 };
