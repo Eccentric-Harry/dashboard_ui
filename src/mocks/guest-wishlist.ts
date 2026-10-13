@@ -61,8 +61,15 @@ let wishes: WishlistItem[] = [
     imageUrl: 'https://contents.mediadecathlon.com/p3106744/e342e66f660f7c693db906127d08571c/p3106744.jpg?format=auto&f=768x0',
     price: 299, priority: 'NEED', createdAt: daysAgo(3),
   }),
-  seed({ name: 'Kindle Paperwhite', store: 'Amazon', url: 'https://www.amazon.in/dp/B0CFPJYX7P', price: 16999, createdAt: daysAgo(34) }),
-  seed({ name: 'Noise-cancelling headphones', store: 'Croma', price: 24990, note: 'Try them in the store first', createdAt: daysAgo(12) }),
+  seed({
+    name: 'Kindle Paperwhite', store: 'Amazon', url: 'https://www.amazon.in/dp/B0CFPJYX7P',
+    imageUrl: 'https://m.media-amazon.com/images/I/71YdzYI858L._SL1500_.jpg', price: 16999, createdAt: daysAgo(34),
+  }),
+  seed({
+    name: 'Noise-cancelling headphones', store: 'Croma',
+    imageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80',
+    price: 24990, note: 'Try them in the store first', createdAt: daysAgo(12),
+  }),
   seed({ name: 'Yoga mat', store: 'Decathlon', price: 1299, status: 'BOUGHT', boughtOn: localToday(), boughtFor: 1199, closedAt: daysAgo(2), createdAt: daysAgo(20) }),
   seed({ name: 'Smartwatch', store: 'Flipkart', price: 14999, status: 'LET_GO', closedAt: daysAgo(9), createdAt: daysAgo(45) }),
 ];

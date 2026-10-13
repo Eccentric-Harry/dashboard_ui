@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import {
+  AlertCircle,
   ArrowDownRight,
   ArrowUpRight,
+  Check,
   ExternalLink,
   Hourglass,
   MoreHorizontal,
@@ -9,6 +11,7 @@ import {
   PiggyBank,
   RefreshCw,
   ShoppingBag,
+  Sparkles,
   Trash2,
   Wind,
 } from 'lucide-react'
@@ -17,6 +20,7 @@ import { cn } from '@/lib/utils'
 import { budgetFit, COOLING_OFF_DAYS, coolingOff, goalProgress, priceChange, storeHue } from '@/lib/wishlist'
 import type { SavingsGoal } from '@/types/finance'
 import type { WishlistItem } from '@/types/wishlist'
+import { MarketplaceBadge } from './marketplace-badge'
 
 interface WishPhotoProps {
   wish: Pick<WishlistItem, 'imageUrl' | 'store' | 'name'>
@@ -24,22 +28,32 @@ interface WishPhotoProps {
 }
 
 /**
- * The product's photo, straight from the store's CDN — nothing is downloaded or kept. No
- * referrer is sent (some CDNs refuse hotlinks that carry one); a photo that won't load falls
- * back to the store's monogram, so a card never shows a broken image.
+ * The product's photo, showcased in a crisp studio stage.
+ * Product cutouts have a soft depth shadow and scale smoothly on card hover.
+ * When no image is present, an editorial store fallback is rendered.
  */
 export function WishPhoto({ wish, className }: WishPhotoProps) {
   const [failed, setFailed] = useState<string | null>(null)
   const src = wish.imageUrl && failed !== wish.imageUrl ? wish.imageUrl : null
   const hue = storeHue(wish.store)
+
   return (
     <span className={cn('wish-photo', !src && 'is-empty', className)} style={{ '--store-hue': hue } as CSSProperties}>
       {src ? (
-        <img src={src} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={() => setFailed(src)} />
+        <img
+          src={src}
+          alt={wish.name}
+          loading="lazy"
+          decoding="async"
+          referrerPolicy="no-referrer"
+          onError={() => setFailed(src)}
+        />
       ) : (
         <span className="wish-photo-fallback" aria-hidden="true">
-          <ShoppingBag size={26} strokeWidth={1.8} />
-          {wish.store && <b>{wish.store}</b>}
+          <div className="wish-photo-fallback-icon">
+            <ShoppingBag size={28} strokeWidth={1.75} />
+          </div>
+          {wish.store && <b className="wish-photo-fallback-store">{wish.store}</b>}
         </span>
       )}
     </span>
@@ -61,11 +75,23 @@ interface WishCardProps {
 }
 
 /**
- * One product: its photo and store, the price (and how it has moved since it was added), where
- * it stands — the 30-day cooling-off for wants, a savings jar once you're saving for it, whether
- * it fits what's left of this month's budget — and what you can do next.
+ * A curated wish item card: generous image showcase, refined marketplace badge,
+ * bold price and discount intel, cooling-off countdown with visual progress,
+ * and seamless budget integration.
  */
-export function WishCard({ wish, goal, budgetLeft, today, onBuy, onSaveFor, onOpenGoal, onEdit, onRefresh, onLetGo, onDelete }: WishCardProps) {
+export function WishCard({
+  wish,
+  goal,
+  budgetLeft,
+  today,
+  onBuy,
+  onSaveFor,
+  onOpenGoal,
+  onEdit,
+  onRefresh,
+  onLetGo,
+  onDelete,
+}: WishCardProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [checking, setChecking] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -101,23 +127,27 @@ export function WishCard({ wish, goal, budgetLeft, today, onBuy, onSaveFor, onOp
     <article className={cn('wish-card', menuOpen && 'is-menu-open', wish.priority === 'NEED' && 'is-need')}>
       <div className="wish-card-media">
         {wish.url ? (
-          <a href={wish.url} target="_blank" rel="noopener noreferrer" className="wish-photo-link" aria-label={`Open ${wish.name} on ${wish.store ?? 'the store'}`}>
+          <a
+            href={wish.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="wish-photo-link"
+            aria-label={`Open ${wish.name} on ${wish.store ?? 'the store'}`}
+          >
             <WishPhoto wish={wish} />
           </a>
         ) : (
           <WishPhoto wish={wish} />
         )}
-        <span className="wish-store-chip" style={{ '--store-hue': storeHue(wish.store) } as CSSProperties}>
-          <span className="wish-store-dot" aria-hidden="true">
-            {(wish.store ?? '?').charAt(0).toUpperCase()}
-          </span>
-          {wish.store ?? 'Anywhere'}
-        </span>
-        {wish.priority === 'NEED' && <span className="wish-need-chip">Need</span>}
+
+        <div className="wish-media-badges">
+          <MarketplaceBadge store={wish.store} />
+          {wish.priority === 'NEED' && <span className="wish-need-chip">Need</span>}
+        </div>
       </div>
 
       <div className="wish-card-body">
-        <button type="button" className="wish-name" onClick={() => onEdit(wish)} title="Edit">
+        <button type="button" className="wish-name" onClick={() => onEdit(wish)} title={`Edit ${wish.name}`}>
           {wish.name}
         </button>
 
@@ -126,27 +156,43 @@ export function WishCard({ wish, goal, budgetLeft, today, onBuy, onSaveFor, onOp
             <strong className="wish-price">{inr(wish.price)}</strong>
           ) : (
             <button type="button" className="wish-price is-missing" onClick={() => onEdit(wish)}>
-              Add a price
+              + Add price
             </button>
           )}
+
           {change && (
-            <span className={cn('wish-change', `is-${change.direction}`)} title={`Was ${inr(wish.firstPrice ?? 0)} when you added it`}>
-              {change.direction === 'down' ? <ArrowDownRight size={12} strokeWidth={2.6} /> : <ArrowUpRight size={12} strokeWidth={2.6} />}
+            <span
+              className={cn('wish-change', `is-${change.direction}`)}
+              title={`Was ${inr(wish.firstPrice ?? 0)} when added`}
+            >
+              {change.direction === 'down' ? (
+                <ArrowDownRight size={13} strokeWidth={2.6} />
+              ) : (
+                <ArrowUpRight size={13} strokeWidth={2.6} />
+              )}
               {inr(change.delta)}
+              {change.percent > 0 && <small className="wish-change-percent">({Math.round(change.percent * 100)}% off)</small>}
             </span>
           )}
         </div>
 
-        {wish.note && <p className="wish-note">{wish.note}</p>}
+        {wish.note && (
+          <div className="wish-note-callout">
+            <span className="wish-note-quote" aria-hidden="true">“</span>
+            <p className="wish-note-text">{wish.note}</p>
+            <span className="wish-note-quote" aria-hidden="true">”</span>
+          </div>
+        )}
 
         <div className="wish-status">
           {goal && progress != null ? (
-            <button type="button" className="wish-goal" onClick={() => onOpenGoal(goal.id)} title="Open in Finance">
+            <button type="button" className="wish-goal" onClick={() => onOpenGoal(goal.id)} title="Open savings goal in Finance">
               <span className="wish-bar" aria-hidden="true">
                 <span style={{ width: `${Math.round(progress * 100)}%` }} />
               </span>
               <span className="wish-status-text">
-                <PiggyBank size={12} strokeWidth={2.4} /> {inr(goal.saved)} of {inr(target ?? 0)} saved
+                <PiggyBank size={13} strokeWidth={2.4} />
+                <b>{Math.round(progress * 100)}%</b> saved ({inr(goal.saved)} of {inr(target ?? 0)})
               </span>
             </button>
           ) : cooling ? (
@@ -155,14 +201,32 @@ export function WishCard({ wish, goal, budgetLeft, today, onBuy, onSaveFor, onOp
                 <span style={{ width: `${Math.round(cooling.progress * 100)}%` }} />
               </span>
               <span className="wish-status-text">
-                <Hourglass size={12} strokeWidth={2.4} />
-                {cooling.ready ? 'Still want it? Time to decide' : `Day ${cooling.days + 1} of ${COOLING_OFF_DAYS} · cooling off`}
+                {cooling.ready ? (
+                  <>
+                    <Sparkles size={13} strokeWidth={2.4} className="wish-sparkle-icon" />
+                    <span className="wish-cooling-ready-text">Still want it? Time to decide</span>
+                  </>
+                ) : (
+                  <>
+                    <Hourglass size={12} strokeWidth={2.4} />
+                    <span>Day {cooling.days + 1} of {COOLING_OFF_DAYS} · Cooling off</span>
+                  </>
+                )}
               </span>
             </div>
           ) : null}
+
           {fit && (
             <span className={cn('wish-fit', `is-${fit}`)}>
-              {fit === 'fits' ? 'Fits what’s left this month' : `${inr((wish.price ?? 0) - (budgetLeft ?? 0))} over this month’s budget`}
+              {fit === 'fits' ? (
+                <>
+                  <Check size={11} strokeWidth={2.8} /> Fits this month’s budget
+                </>
+              ) : (
+                <>
+                  <AlertCircle size={11} strokeWidth={2.4} /> {inr((wish.price ?? 0) - (budgetLeft ?? 0))} over budget
+                </>
+              )}
             </span>
           )}
         </div>
@@ -170,18 +234,34 @@ export function WishCard({ wish, goal, budgetLeft, today, onBuy, onSaveFor, onOp
 
       <footer className="wish-actions">
         <button type="button" className="wish-buy" onClick={() => onBuy(wish)}>
-          <ShoppingBag size={13} strokeWidth={2.4} /> Bought it
+          <ShoppingBag size={14} strokeWidth={2.4} /> Bought it
         </button>
+
         {!goal && (
-          <button type="button" className="wish-icon-btn is-wide-only" onClick={() => onSaveFor(wish)} title="Save up for it (creates a goal in Finance)" aria-label={`Save up for ${wish.name}`}>
+          <button
+            type="button"
+            className="wish-icon-btn is-wide-only"
+            onClick={() => onSaveFor(wish)}
+            title="Save up for it in Finance"
+            aria-label={`Save up for ${wish.name}`}
+          >
             <PiggyBank size={15} strokeWidth={2.2} />
           </button>
         )}
+
         {wish.url && (
-          <a className="wish-icon-btn is-wide-only" href={wish.url} target="_blank" rel="noopener noreferrer" title={`Open on ${wish.store ?? 'the store'}`} aria-label={`Open on ${wish.store ?? 'the store'}`}>
+          <a
+            className="wish-icon-btn is-wide-only"
+            href={wish.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={`Open on ${wish.store ?? 'the store'}`}
+            aria-label={`Open on ${wish.store ?? 'the store'}`}
+          >
             <ExternalLink size={14} strokeWidth={2.2} />
           </a>
         )}
+
         <div className="wish-menu-wrap" ref={menuRef}>
           <button
             type="button"
@@ -189,10 +269,11 @@ export function WishCard({ wish, goal, budgetLeft, today, onBuy, onSaveFor, onOp
             onClick={() => setMenuOpen((open) => !open)}
             aria-haspopup="menu"
             aria-expanded={menuOpen}
-            aria-label="More"
+            aria-label="More actions"
           >
             <MoreHorizontal size={15} strokeWidth={2.2} />
           </button>
+
           {menuOpen && (
             <div className="wish-menu" role="menu">
               {!goal && (
@@ -201,12 +282,19 @@ export function WishCard({ wish, goal, budgetLeft, today, onBuy, onSaveFor, onOp
                 </button>
               )}
               {wish.url && (
-                <a role="menuitem" className="is-narrow-only" href={wish.url} target="_blank" rel="noopener noreferrer" onClick={() => setMenuOpen(false)}>
+                <a
+                  role="menuitem"
+                  className="is-narrow-only"
+                  href={wish.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setMenuOpen(false)}
+                >
                   <ExternalLink size={13} strokeWidth={2.2} /> Open on {wish.store ?? 'the store'}
                 </a>
               )}
               <button type="button" role="menuitem" onClick={runMenu(() => onEdit(wish))}>
-                <Pencil size={13} strokeWidth={2.2} /> Edit
+                <Pencil size={13} strokeWidth={2.2} /> Edit details
               </button>
               {wish.url && (
                 <button
@@ -218,7 +306,7 @@ export function WishCard({ wish, goal, budgetLeft, today, onBuy, onSaveFor, onOp
                     void onRefresh(wish).finally(() => setChecking(false))
                   })}
                 >
-                  <RefreshCw size={13} strokeWidth={2.2} /> Check the price
+                  <RefreshCw size={13} strokeWidth={2.2} /> Check latest price
                 </button>
               )}
               <button type="button" role="menuitem" onClick={runMenu(() => onLetGo(wish))}>
@@ -231,7 +319,8 @@ export function WishCard({ wish, goal, budgetLeft, today, onBuy, onSaveFor, onOp
           )}
         </div>
       </footer>
-      {checking && <span className="wish-checking" role="status">Checking the price…</span>}
+
+      {checking && <span className="wish-checking" role="status">Checking latest price…</span>}
     </article>
   )
 }

@@ -26,7 +26,7 @@
    the first card row share one horizon. Keep them in sync if that rule moves. */
 .gutter-clock-face {
   position: absolute;
-  top: clamp(20px, calc(100% - 739px), 161px);
+  top: clamp(16px, calc(100% - 760px), 130px);
   left: 50%;
   display: flex;
   width: max-content;

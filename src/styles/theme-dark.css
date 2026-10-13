@@ -2184,3 +2184,87 @@
 :root[data-theme='dark'] .wish-need-chip {
   color: #f0b8a5;
 }
+
+:root[data-theme='dark'] .wish-card {
+  background: rgba(24, 28, 25, 0.88);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+:root[data-theme='dark'] .wish-summary {
+  background: rgba(24, 28, 25, 0.82);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-theme='dark'] .wish-stat b {
+  color: #f1f5f9;
+}
+
+:root[data-theme='dark'] .wish-stat-header > span {
+  color: #94a3b8;
+}
+
+:root[data-theme='dark'] .wish-name {
+  color: #f1f5f9;
+}
+
+:root[data-theme='dark'] .wish-name:hover {
+  color: #4ade80;
+}
+
+:root[data-theme='dark'] .wish-price {
+  color: #f8fafc;
+}
+
+:root[data-theme='dark'] .wish-note-callout {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+}
+
+:root[data-theme='dark'] .wish-add-pill {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+:root[data-theme='dark'] .wish-add-pill .add-pill-ic {
+  background: rgba(15, 23, 42, 0.15);
+  color: #0f172a;
+}
+
+:root[data-theme='dark'] .wish-buy {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+:root[data-theme='dark'] .wish-buy:hover {
+  background: #ffffff;
+}
+
+:root[data-theme='dark'] .wish-icon-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+}
+
+:root[data-theme='dark'] .wish-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+}
+
+:root[data-theme='dark'] .wish-menu {
+  background: #181d1a;
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6);
+}
+
+:root[data-theme='dark'] .wish-menu button,
+:root[data-theme='dark'] .wish-menu a {
+  color: #f1f5f9;
+}
+
+:root[data-theme='dark'] .wish-menu a:hover,
+:root[data-theme='dark'] .wish-menu button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+}

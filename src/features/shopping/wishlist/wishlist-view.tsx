@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Gift, Link2, Plus } from 'lucide-react'
+import { Gift, Link2, Plus, ShieldCheck, ShoppingBag, Wallet } from 'lucide-react'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { inr } from '@/lib/insights/engine'
 import { localToday } from '@/lib/finance-ledger'
@@ -93,7 +93,10 @@ export function WishlistView({ pendingLink, onPendingConsumed, onNavigate }: Wis
     <div className="wish-view">
       <section className="shopping-card wish-summary">
         <div className="wish-stat">
-          <span>On the list</span>
+          <div className="wish-stat-header">
+            <span className="wish-stat-icon is-list"><ShoppingBag size={13} strokeWidth={2.4} /></span>
+            <span>On the list</span>
+          </div>
           <b>{totals.open}</b>
           <small>
             {totals.openValue > 0 ? inr(totals.openValue) : 'nothing priced yet'}
@@ -101,7 +104,10 @@ export function WishlistView({ pendingLink, onPendingConsumed, onNavigate }: Wis
           </small>
         </div>
         <div className="wish-stat">
-          <span>Left this month</span>
+          <div className="wish-stat-header">
+            <span className="wish-stat-icon is-budget"><Wallet size={13} strokeWidth={2.4} /></span>
+            <span>Left this month</span>
+          </div>
           {finance.budgetLeft != null ? (
             <>
               <b>{inr(finance.budgetLeft)}</b>
@@ -117,7 +123,10 @@ export function WishlistView({ pendingLink, onPendingConsumed, onNavigate }: Wis
           )}
         </div>
         <div className="wish-stat">
-          <span>Let go</span>
+          <div className="wish-stat-header">
+            <span className="wish-stat-icon is-saved"><ShieldCheck size={13} strokeWidth={2.4} /></span>
+            <span>Saved by letting go</span>
+          </div>
           <b>{totals.letGo > 0 ? inr(totals.letGoValue) : '—'}</b>
           <small>{totals.letGo > 0 ? `not spent on ${totals.letGo} ${totals.letGo === 1 ? 'thing' : 'things'}` : 'nothing yet'}</small>
         </div>
