@@ -257,3 +257,15 @@ export interface MealAnalysisRequest {
   mealType: string;
   date: string;
 }
+
+export interface MealTemplate {
+  id: string;
+  description: string;
+  calories: number;
+  proteinGrams: number;
+  mealType?: string;
+  mealQuality?: string;
+  itemCount?: number;
+  data?: Record<string, unknown>;
+}
+

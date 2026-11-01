@@ -29,3 +29,12 @@ export const API_UPDATE_HYDRATION: ApiEndpoint<{ id: string }> = {
   url: ({ id }) => `/health/hydration/${id}`,
   method: 'put',
 };
+
+// Saved Meal Templates / Presets (reduces redundant AI model calls for repeated meals)
+export const API_GET_MEAL_TEMPLATES: ApiEndpoint = { url: '/meals/templates', method: 'get' };
+export const API_SAVE_MEAL_TEMPLATE: ApiEndpoint = { url: '/meals/templates', method: 'post' };
+export const API_LOG_MEAL_TEMPLATE: ApiEndpoint<{ id: string }> = {
+  url: ({ id }) => `/meals/templates/${id}/log`,
+  method: 'post',
+};
+

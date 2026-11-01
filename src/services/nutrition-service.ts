@@ -11,6 +11,7 @@ import type {
   HydrationUpdateRequest,
   MealAnalysisJobStarted,
   MealAnalysisJobStatus,
+  MealTemplate,
   NutritionSummary,
 } from '../types/nutrition';
 import * as E from './endpoints/nutrition-endpoints';
@@ -35,6 +36,10 @@ export interface NutritionServiceInterface {
   getHydrationRange(days?: number, startDate?: string, endDate?: string): Promise<SafeResult<HydrationData[]>>;
   addWaterIntake(amount: number, date?: string): Promise<SafeResult<HydrationData>>;
   updateHydration(id: string, dto: HydrationUpdateRequest): Promise<SafeResult<HydrationData>>;
+  /** Presets / templates stored in backend directory */
+  getMealTemplates(): Promise<SafeResult<MealTemplate[]>>;
+  saveMealTemplate(payload: Record<string, unknown>, id?: string): Promise<SafeResult<MealTemplate>>;
+  logMealTemplate(id: string, date?: string, mealType?: string): Promise<SafeResult<FoodEntry>>;
 }
 
 export const nutritionService: NutritionServiceInterface = {
@@ -63,4 +68,10 @@ export const nutritionService: NutritionServiceInterface = {
     instance.safeCall<HydrationData>(E.API_ADD_WATER_INTAKE, { query: { amount, date } }),
   updateHydration: (id, dto) =>
     instance.safeCall<HydrationData>(E.API_UPDATE_HYDRATION, { params: { id }, body: dto }),
+  getMealTemplates: () =>
+    instance.safeCall<MealTemplate[]>(E.API_GET_MEAL_TEMPLATES),
+  saveMealTemplate: (payload, id) =>
+    instance.safeCall<MealTemplate>(E.API_SAVE_MEAL_TEMPLATE, { body: payload, query: { id } }),
+  logMealTemplate: (id, date, mealType) =>
+    instance.safeCall<FoodEntry>(E.API_LOG_MEAL_TEMPLATE, { params: { id }, query: { date, mealType } }),
 };

@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback, type CSSProperties } from 'react'
-import { X, Loader2, ClipboardCheck, ClipboardPaste, Camera, CheckCircle, AlertTriangle, RotateCcw, Upload, Wifi, Bell, Scan, Shield, TrendingUp, Sparkles, Copy, ChevronLeft, ChevronRight, ChevronDown, ImagePlus } from 'lucide-react'
+import { X, Loader2, ClipboardCheck, ClipboardPaste, Camera, CheckCircle, AlertTriangle, RotateCcw, Upload, Wifi, Bell, Scan, Shield, TrendingUp, Sparkles, Copy, ChevronLeft, ChevronRight, ChevronDown, ImagePlus, Zap, BookmarkCheck } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
-import type { MealAnalysisApiResponse, ClinicalFlag, IngredientBreakdown, FoodEntryRequest } from '@/types/nutrition'
+import type { MealAnalysisApiResponse, ClinicalFlag, IngredientBreakdown, FoodEntryRequest, MealTemplate } from '@/types/nutrition'
 import type { Prompt } from '@/types/prompts'
 import { nutritionService } from '@/services/nutrition-service'
 import { hasFullAnalysis, useNotifications } from '@/store/notification-store'
@@ -131,6 +131,18 @@ function parseMealJson(text: string): JsonParseResult {
   const items = pick(['mealItems', 'meal_items'])
   const descriptionRaw = pick(['description', 'mealLabel', 'meal_label'])
 
+  const healthAnalysisRaw = pick(['healthAnalysis', 'health_analysis'])
+  const glycaemicRaw = pick(['glycaemicAssessment', 'glycaemic_assessment'])
+  let healthAnalysis: Record<string, unknown> | null =
+    healthAnalysisRaw && typeof healthAnalysisRaw === 'object'
+      ? { ...(healthAnalysisRaw as Record<string, unknown>) }
+      : null
+  if (glycaemicRaw && healthAnalysis) {
+    if (!healthAnalysis.glycaemic_assessment) {
+      healthAnalysis.glycaemic_assessment = glycaemicRaw
+    }
+  }
+
   return {
     ok: true,
     parsed: {
@@ -157,11 +169,13 @@ function parseMealJson(text: string): JsonParseResult {
         gaps_and_warnings: pick(['gapsAndWarnings', 'gaps_and_warnings']) ?? null,
         technical_diagnostic: pick(['technicalDiagnostic', 'technical_diagnostic']) ?? null,
         acne_impact_assessment: pick(['acneImpactAssessment', 'acne_impact_assessment']) ?? null,
-        health_analysis: pick(['healthAnalysis', 'health_analysis']) ?? null,
+        health_analysis: healthAnalysis,
         recomposition_assessment: recomposition ?? null,
         satiety_and_energy_profile: pick(['satietyAndEnergyProfile', 'satiety_and_energy_profile']) ?? null,
         nutritional_balance_diagnostic: pick(['nutritionalBalanceDiagnostic', 'nutritional_balance_diagnostic']) ?? null,
         daily_context: pick(['dailyContext', 'daily_context']) ?? null,
+        glycaemic_assessment: glycaemicRaw ?? null,
+        glycaemicAssessment: glycaemicRaw ?? null,
       },
     },
   }
@@ -209,14 +223,19 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
   const [date, setDate] = useState(selectedDate)
   const [jsonPayload, setJsonPayload] = useState('')
   const [jsonPreview, setJsonPreview] = useState<JsonParseResult | null>(null)
-  // "Import from AI" is the promoted primary path — it leads the form and
-  // starts expanded; the plain manual fields sit below it, collapsed, as the
-  // fallback (auto-opened once a JSON paste autofills them for review).
-  const [showJsonImport, setShowJsonImport] = useState(true)
+  // "Import from AI" and plain manual fields start collapsed by default
+  // as disclosures (manual fields auto-open once a JSON paste autofills them for review).
+  const [showJsonImport, setShowJsonImport] = useState(false)
   const [showManualFields, setShowManualFields] = useState(false)
 
   // The push-alert nudge is advice, not a gate — let it be dismissed.
   const [alertDismissed, setAlertDismissed] = useState(false)
+
+  // Presets / Templates state (directory of json items in backend)
+  const [mealTemplates, setMealTemplates] = useState<MealTemplate[]>([])
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('')
+  const [loadingTemplates, setLoadingTemplates] = useState(false)
+  const [savingPreset, setSavingPreset] = useState(false)
 
   // AI tab state
   const [aiPhase, setAiPhase] = useState<Phase>('input')
@@ -239,6 +258,22 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
 
+  // Load presets whenever modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setLoadingTemplates(true)
+      nutritionService.getMealTemplates().then((res) => {
+        if (res.data) {
+          setMealTemplates(res.data)
+        }
+      }).finally(() => {
+        setLoadingTemplates(false)
+      })
+    } else {
+      setSelectedTemplateId('')
+    }
+  }, [isOpen])
+
   useEffect(() => {
     if (isOpen && !promptsData.loaded && !promptsData.loading) {
       // Warm the Prompts cache on open so "Copy AI prompt" can resolve the
@@ -257,6 +292,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       setShowJsonImport(false)
       setShowManualFields(true)
       setActiveTab('manual')
+      setSelectedTemplateId('')
       setCurrentTaskId(null)
     } else if (isOpen && !isEdit) {
       setMealType('')
@@ -266,9 +302,10 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       setDate(selectedDate)
       setJsonPayload('')
       setJsonPreview(null)
-      setShowJsonImport(true)
+      setShowJsonImport(false)
       setShowManualFields(false)
       setActiveTab('manual')
+      setSelectedTemplateId('')
       // Reset AI state
       setAiPhase('input')
       setImageFiles([])
@@ -439,6 +476,85 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
     }
   }
 
+  const handleSelectTemplate = (templateId: string) => {
+    setSelectedTemplateId(templateId)
+    if (!templateId) return
+
+    const tpl = mealTemplates.find(t => t.id === templateId)
+    if (!tpl) return
+
+    // Clone template data and update date/timestamp to match current logging context
+    const tplData: Record<string, unknown> = tpl.data ? JSON.parse(JSON.stringify(tpl.data)) : {}
+    tplData.description = tpl.description || tplData.description
+    tplData.calories = tpl.calories ?? tplData.calories
+    tplData.proteinGrams = tpl.proteinGrams ?? tplData.proteinGrams
+    tplData.date = date || selectedDate
+    tplData.timestamp = new Date().toISOString()
+    if (mealType) {
+      tplData.mealType = mealType
+    } else if (tpl.mealType) {
+      tplData.mealType = tpl.mealType
+    }
+
+    applyJsonText(JSON.stringify(tplData, null, 2))
+    toast.success(`Preset loaded: "${tpl.description}"`)
+  }
+
+  const handleClearPreset = () => {
+    setSelectedTemplateId('')
+    setJsonPayload('')
+    setJsonPreview(null)
+    setDescription('')
+    setCalories('')
+    setProteinGrams('')
+  }
+
+  const handleSaveAsPreset = async () => {
+    const trimmedJson = jsonPayload.trim()
+    let payloadToSave: Record<string, unknown> | null = null
+
+    if (trimmedJson) {
+      try {
+        payloadToSave = JSON.parse(trimmedJson)
+      } catch {
+        toast.error('Cannot save invalid JSON as preset')
+        return
+      }
+    } else if (description.trim()) {
+      payloadToSave = {
+        description: description.trim(),
+        calories: parseInt(calories, 10) || 0,
+        proteinGrams: parseInt(proteinGrams, 10) || 0,
+        mealType: mealType || 'Breakfast',
+        date: date || selectedDate,
+      }
+    } else {
+      toast.error('Please enter food details or paste JSON to save as a preset')
+      return
+    }
+
+    if (!payloadToSave) return
+
+    setSavingPreset(true)
+    try {
+      const res = await nutritionService.saveMealTemplate(payloadToSave)
+      if (res.error) throw new Error(res.error.message)
+      if (res.data) {
+        const savedData: MealTemplate = res.data
+        toast.success(`Saved "${savedData.description}" as a preset!`)
+        setMealTemplates(prev => {
+          const exists = prev.some(t => t.id === savedData.id)
+          return exists ? prev.map(t => t.id === savedData.id ? savedData : t) : [...prev, savedData]
+        })
+        setSelectedTemplateId(savedData.id)
+      }
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to save preset'))
+    } finally {
+      setSavingPreset(false)
+    }
+  }
+
   // ── Manual form submit ────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -492,6 +608,7 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
       proteinGrams: numProtein,
       mealType: finalMealType,
       date: finalDate,
+      timestamp: new Date().toISOString(),
     }
 
     setLoading(true)
@@ -656,8 +773,67 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
         {/* ═══════════════ MANUAL TAB ═══════════════ */}
         {activeTab === 'manual' && (
           <form onSubmit={handleSubmit} className="add-tx-form" style={{ flex: 1, overflowY: 'auto', paddingRight: '6px' }}>
-            {/* "Import from AI" — promoted to the top as the primary logging
-                path; the manual fields below are the fallback. Starts expanded. */}
+            {/* Quick Presets Dropdown — directory of json items in backend */}
+            <div className="af-preset-block">
+              <div className="af-preset-header">
+                <div className="af-preset-title-wrap">
+                  <Zap size={14} />
+                  <span>Saved Meals / Quick Presets</span>
+                </div>
+              </div>
+
+              <div className="af-preset-dropdown-wrap">
+                <select
+                  className="af-preset-select"
+                  value={selectedTemplateId}
+                  onChange={(e) => handleSelectTemplate(e.target.value)}
+                  id="af-preset-dropdown"
+                  disabled={loadingTemplates}
+                  aria-label="Select a saved meal template"
+                >
+                  <option value="">
+                    {loadingTemplates ? 'Loading presets…' : '-- Choose from saved meals / presets --'}
+                  </option>
+                  {mealTemplates.map((tpl) => (
+                    <option key={tpl.id} value={tpl.id}>
+                      {tpl.description} ({tpl.calories} kcal · {tpl.proteinGrams}g P{tpl.mealQuality ? ` · Grade ${tpl.mealQuality}` : ''})
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown size={14} className="af-preset-select-arrow" />
+              </div>
+
+              {selectedTemplateId && (
+                <div className="af-preset-active-card">
+                  <div className="af-preset-active-info">
+                    <span style={{ fontWeight: 600 }}>Active preset:</span>
+                    {(() => {
+                      const tpl = mealTemplates.find(t => t.id === selectedTemplateId)
+                      if (!tpl) return null
+                      return (
+                        <>
+                          <span className="af-preset-active-pill cal">{tpl.calories} kcal</span>
+                          <span className="af-preset-active-pill prot">{tpl.proteinGrams}g P</span>
+                          {tpl.mealQuality && <span className="af-preset-active-pill grade">Grade {tpl.mealQuality}</span>}
+                          {tpl.itemCount ? <span className="af-preset-active-pill">{tpl.itemCount} items</span> : null}
+                        </>
+                      )
+                    })()}
+                  </div>
+                  <button
+                    type="button"
+                    className="af-preset-clear-btn"
+                    onClick={handleClearPreset}
+                    id="af-preset-clear-btn"
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* "Import from AI" — collapsible disclosure for pasting AI JSON.
+                Starts collapsed by default. */}
             <div className="af-json-import-block af-json-import-block--lead">
               <button
                 type="button"
@@ -676,6 +852,17 @@ export function AddFoodModal({ isOpen, onClose, onSuccess, isEdit, initialData, 
                   <div className="af-json-head">
                     <label>Import from AI (paste JSON)</label>
                     <div className="af-json-head-actions">
+                      <button
+                        type="button"
+                        className="af-json-paste-btn af-preset-save-btn"
+                        onClick={handleSaveAsPreset}
+                        disabled={savingPreset}
+                        id="af-save-preset-btn"
+                        title="Save this meal to the backend directory as a preset"
+                      >
+                        {savingPreset ? <Loader2 size={12} className="spin" /> : <BookmarkCheck size={12} />}
+                        Save as Preset
+                      </button>
                       <button
                         type="button"
                         className="af-json-paste-btn"

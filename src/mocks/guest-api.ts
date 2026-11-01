@@ -960,6 +960,179 @@ export function resolveGuestRequest(request: GuestRequest): GuestResponse | null
     return respondWith({ data: entries });
   }
 
+  // Meal Templates / Presets (directory of json items)
+  if (urlStr.includes('/meals/templates')) {
+    const method = (request.method || 'GET').toUpperCase();
+    if (urlStr.includes('/log')) {
+      const date = urlObj.searchParams.get('date') || new Date().toISOString().split('T')[0];
+      const mealType = urlObj.searchParams.get('mealType') || 'Breakfast';
+      return respondWith({
+        data: {
+          id: `meal-template-log-${Date.now()}`,
+          date,
+          mealType,
+          description: 'Logged Meal from Preset',
+          calories: 500,
+          proteinGrams: 35,
+        },
+      });
+    }
+    if (method === 'POST') {
+      const bodyStr = typeof request.body === 'string' ? request.body : '{}';
+      const parsed = JSON.parse(bodyStr);
+      const id = urlObj.searchParams.get('id') || (parsed.description || 'custom-template').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      const newTemplate = {
+        id,
+        description: parsed.description || 'Custom Preset',
+        calories: parsed.calories || 0,
+        proteinGrams: parsed.proteinGrams || 0,
+        mealType: parsed.mealType || 'Breakfast',
+        mealQuality: parsed.mealQuality || 'B',
+        itemCount: Array.isArray(parsed.mealItems) ? parsed.mealItems.length : 0,
+        data: parsed,
+      };
+      return respondWith({ data: newTemplate });
+    }
+    return respondWith({
+      data: [
+        {
+          id: 'protein-oats-with-milk',
+          description: 'Protein oats with milk',
+          calories: 682,
+          proteinGrams: 42,
+          mealType: 'Breakfast',
+          mealQuality: 'B',
+          itemCount: 2,
+          data: {
+            description: 'Protein oats with milk',
+            calories: 682,
+            proteinGrams: 42,
+            mealQuality: 'B',
+            mealType: 'Breakfast',
+            date: '2026-10-01',
+            mealItems: [
+              {
+                name: 'Pintola High Protein Oats, Dark Chocolate',
+                serving_size: '100.0g',
+                confidence: 'high',
+                calories: 392.0,
+                protein: 26.0,
+                carbs: 54.6,
+                fat: 7.8,
+                fiber: 9.6,
+                sugar: 14.0,
+                sodium: 130.0,
+                saturated_fat: 2.1,
+                is_hidden: false,
+                clinical_item_flags: ['FORTIFIED_FUNCTIONAL', 'HIGH_PROTEIN', 'HIGH_FIBER', 'HIGH_GL'],
+              },
+              {
+                name: 'Toned milk',
+                serving_size: '500.0ml',
+                confidence: 'high',
+                calories: 290.0,
+                protein: 15.5,
+                carbs: 24.0,
+                fat: 15.0,
+                fiber: 0.0,
+                sugar: 24.0,
+                sodium: 220.0,
+                saturated_fat: 9.5,
+                is_hidden: false,
+                clinical_item_flags: ['WHOLE_FOOD', 'HIGH_PROTEIN', 'HIGH_SAT_FAT', 'INTRINSIC_SUGAR'],
+              },
+            ],
+            totalSummary: {
+              calories_kcal: 682.0,
+              protein_g: 41.5,
+              carbs_g: 78.6,
+              fat_g: 22.8,
+              fiber_g: 9.6,
+              sugar_g: 38.0,
+              free_sugar_g: 9.5,
+              sodium_mg: 350.0,
+              saturated_fat_g: 11.6,
+              whole_food_pct: 74.4,
+            },
+            glycaemicAssessment: {
+              total_meal_glycaemic_load: 34.2,
+              gl_adjusted: 24.4,
+              gl_classification: 'High (GL≥20)',
+              insulin_impact_summary: 'Oats and lactose give raw GL 34.2, and 6.2 of it is jaggery that no co-ingestion can blunt. Fibre, protein and fat cut the rest by 35%, leaving 24.4.',
+            },
+          },
+        },
+        {
+          id: 'protein-bread-peanut-butter',
+          description: 'Protein bread peanut butter sandwich',
+          calories: 393,
+          proteinGrams: 30,
+          mealType: 'Breakfast',
+          mealQuality: 'B',
+          itemCount: 2,
+          data: {
+            description: 'Protein bread peanut butter sandwich',
+            calories: 393,
+            proteinGrams: 30,
+            mealQuality: 'B',
+            mealType: 'Breakfast',
+            date: '2026-09-20',
+            mealItems: [
+              {
+                name: 'Protein Chef Double Protein Bread, 3 slices',
+                serving_size: '81.0g',
+                confidence: 'high',
+                calories: 218.9,
+                protein: 19.0,
+                carbs: 26.1,
+                fat: 4.3,
+                fiber: 10.4,
+                sugar: 3.6,
+                sodium: 353.0,
+                saturated_fat: 0.4,
+                is_hidden: false,
+                clinical_item_flags: ['FORTIFIED_FUNCTIONAL', 'HIGH_PROTEIN', 'HIGH_FIBER'],
+              },
+              {
+                name: 'Pintola High Protein Peanut Butter, crunchy, unsweetened',
+                serving_size: '30.0g',
+                confidence: 'medium',
+                calories: 174.0,
+                protein: 11.1,
+                carbs: 5.4,
+                fat: 12.6,
+                fiber: 2.4,
+                sugar: 0.9,
+                sodium: 16.5,
+                saturated_fat: 2.1,
+                is_hidden: false,
+                clinical_item_flags: ['FORTIFIED_FUNCTIONAL', 'HIGH_OMEGA6'],
+              },
+            ],
+            totalSummary: {
+              calories_kcal: 392.9,
+              protein_g: 30.1,
+              carbs_g: 31.5,
+              fat_g: 16.9,
+              fiber_g: 12.8,
+              sugar_g: 4.5,
+              free_sugar_g: 3.6,
+              sodium_mg: 369.5,
+              saturated_fat_g: 2.5,
+              whole_food_pct: 38.1,
+            },
+            glycaemicAssessment: {
+              total_meal_glycaemic_load: 8.3,
+              gl_adjusted: 6.2,
+              gl_classification: 'Low (GL<10)',
+              insulin_impact_summary: 'Only 15.7 g available carbs, carried on 23% protein whole-wheat bread. Fat, protein and 12.8 g fibre cut the reducible load by the full 35%, leaving a flat glucose curve.',
+            },
+          },
+        },
+      ],
+    });
+  }
+
   // Health: Hydration range (used by the nutrition insights engine via fetchHydrationRange)
   if (urlStr.includes('/api/v1/health/hydration/range')) {
     const overrides: Record<string, number> = JSON.parse(localStorage.getItem('guest_hydration_overrides') || '{}');
